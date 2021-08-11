@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 import requests
+from actstream.actions import unfollow
 from django.conf import settings
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
@@ -309,3 +310,12 @@ def test_evaluation_notifications(
         assert str(recipient) in str(Notification.objects.all())
     for notification in Notification.objects.all():
         assert "failed" in str(notification.action)
+
+    # check that when admin unsubscribed from phase, they no longer
+    # receive notifications about activity related to that phase
+    Notification.objects.all().delete()
+    unfollow(user=submission.phase.challenge.creator, obj=submission.phase)
+    evaluation.update_status(status=evaluation.SUCCESS)
+    assert str(submission.phase.challenge.creator) not in str(
+        Notification.objects.all()
+    )
