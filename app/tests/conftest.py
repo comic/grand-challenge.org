@@ -684,7 +684,23 @@ def _reader_study_with_gt(metric="ACC"):
             ),
         ]
     elif metric == "AUC":
-        pass
+        q1, q2, q3 = [
+            QuestionFactory(
+                reader_study=rs,
+                answer_type=Question.AnswerType.BOOL,
+                question_text="q1",
+            ),
+            QuestionFactory(
+                reader_study=rs,
+                answer_type=Question.AnswerType.BOOL,
+                question_text="q2",
+            ),
+            QuestionFactory(
+                reader_study=rs,
+                answer_type=Question.AnswerType.BOOL,
+                question_text="q3",
+            ),
+        ]
 
     r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
     rs.add_reader(r1)

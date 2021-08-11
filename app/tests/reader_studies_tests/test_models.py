@@ -300,13 +300,34 @@ def test_statistics(reader_study_with_gt, settings):
         )
 
 
-# copy paste test use reader_study_with_gt_auc
 @pytest.mark.django_db  # noqa - C901
 def test_score_for_user(reader_study_with_gt, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     rs = reader_study_with_gt
+    r1 = rs.readers_group.user_set.first()
+
+    with capture_on_commit_callbacks(execute=True):
+        for i, question in enumerate(rs.questions.all()):
+            for j, im in enumerate(rs.images.all()):
+                ans = AnswerFactory(
+                    question=question, creator=r1, answer=(i + j) % 2 == 0
+                )
+                ans.images.add(im)
+
+    score = rs.score_for_user(r1)
+    assert Answer.objects.filter(is_ground_truth=False).count() == 6
+    assert score["score__sum"] == 3.0
+    assert score["score__avg"] == 0.5
+
+
+@pytest.mark.django_db  # noqa - C901
+def test_score_for_user_auc(reader_study_with_gt_auc, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    rs = reader_study_with_gt_auc
     r1 = rs.readers_group.user_set.first()
 
     with capture_on_commit_callbacks(execute=True):
