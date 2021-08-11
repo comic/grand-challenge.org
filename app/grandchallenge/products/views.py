@@ -229,11 +229,12 @@ class ImportDataView(PermissionRequiredMixin, FormView):
         form = self.get_form()
         if form.is_valid():
             di = DataImporter()
-            di.import_data(
-                product_data=form.cleaned_data["products_file"],
-                company_data=form.cleaned_data["companies_file"],
-                images_zip=form.cleaned_data["images_zip"][0].open(),
-            )
+            with form.cleaned_data["images_zip"][0].open() as images_zip:
+                di.import_data(
+                    product_data=form.cleaned_data["products_file"],
+                    company_data=form.cleaned_data["companies_file"],
+                    images_zip=images_zip,
+                )
         return response
 
     def get_success_url(self):
