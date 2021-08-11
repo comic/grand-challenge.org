@@ -300,6 +300,7 @@ def test_statistics(reader_study_with_gt, settings):
         )
 
 
+# copy paste test use reader_study_with_gt_auc
 @pytest.mark.django_db  # noqa - C901
 def test_score_for_user(reader_study_with_gt, settings):
     settings.task_eager_propagates = (True,)

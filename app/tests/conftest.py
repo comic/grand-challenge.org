@@ -662,27 +662,29 @@ def archive_patient_study_images_set():
     return generate_archive_patient_study_image_set()
 
 
-@pytest.fixture
-def reader_study_with_gt():
+def _reader_study_with_gt(metric="ACC"):
     rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
-    q1, q2, q3 = [
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.AnswerType.BOOL,
-            question_text="q1",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.AnswerType.BOOL,
-            question_text="q2",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.AnswerType.BOOL,
-            question_text="q3",
-        ),
-    ]
+    if metric == "ACC":
+        q1, q2, q3 = [
+            QuestionFactory(
+                reader_study=rs,
+                answer_type=Question.AnswerType.BOOL,
+                question_text="q1",
+            ),
+            QuestionFactory(
+                reader_study=rs,
+                answer_type=Question.AnswerType.BOOL,
+                question_text="q2",
+            ),
+            QuestionFactory(
+                reader_study=rs,
+                answer_type=Question.AnswerType.BOOL,
+                question_text="q3",
+            ),
+        ]
+    elif metric == "AUC":
+        pass
 
     r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
     rs.add_reader(r1)
@@ -703,6 +705,16 @@ def reader_study_with_gt():
             ans.images.add(im)
 
     return rs
+
+
+@pytest.fixture
+def reader_study_with_gt():
+    return _reader_study_with_gt()
+
+
+@pytest.fixture
+def reader_study_with_gt_auc():
+    return _reader_study_with_gt(metric="AUC")
 
 
 @pytest.fixture
