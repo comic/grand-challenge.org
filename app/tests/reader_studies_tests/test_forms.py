@@ -176,6 +176,7 @@ def test_question_create(client):
                 "order": 1,
                 "image_port": "",
                 "direction": "H",
+                "scoring_function": "ACC",
                 "options-TOTAL_FORMS": 2,
                 "options-INITIAL_FORMS": 1,
                 "options-MIN_NUM_FORMS": 0,
@@ -208,6 +209,7 @@ def test_question_update(client):
         question_text="foo",
         reader_study=rs,
         answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        scoring_function=Question.ScoringFunction.ACCURACY,
         direction=Question.Direction.HORIZONTAL,
         order=100,
     )
@@ -246,6 +248,7 @@ def test_question_update(client):
         data={
             "question_text": "bar",
             "answer_type": Question.AnswerType.BOOL,
+            "scoring_function": Question.ScoringFunction.ACCURACY,
             "direction": Question.Direction.VERTICAL,
             "order": 200,
             "options-TOTAL_FORMS": 2,
@@ -274,6 +277,7 @@ def test_question_update(client):
         data={
             "question_text": "foo",
             "answer_type": Question.AnswerType.SINGLE_LINE_TEXT,
+            "scoring_function": Question.ScoringFunction.ACCURACY,
             "direction": Question.Direction.HORIZONTAL,
             "order": 100,
             "options-TOTAL_FORMS": 2,
@@ -329,6 +333,7 @@ def test_image_port_only_with_bounding_box(
             "order": 1,
             "image_port": port,
             "direction": "H",
+            "scoring_function": Question.ScoringFunction.ACCURACY,
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,

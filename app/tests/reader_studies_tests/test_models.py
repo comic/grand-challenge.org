@@ -334,7 +334,7 @@ def test_score_for_user_auc(reader_study_with_gt_auc, settings):
         for i, question in enumerate(rs.questions.all()):
             for j, im in enumerate(rs.images.all()):
                 ans = AnswerFactory(
-                    question=question, creator=r1, answer=(i + j) % 2 == 0
+                    question=question, creator=r1, answer=1 / (i + j + 1)
                 )
                 ans.images.add(im)
 

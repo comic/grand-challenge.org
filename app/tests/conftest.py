@@ -687,17 +687,17 @@ def _reader_study_with_gt(metric="ACC"):
         q1, q2, q3 = [
             QuestionFactory(
                 reader_study=rs,
-                answer_type=Question.AnswerType.BOOL,
+                answer_type=Question.AnswerType.NUMBER,
                 question_text="q1",
             ),
             QuestionFactory(
                 reader_study=rs,
-                answer_type=Question.AnswerType.BOOL,
+                answer_type=Question.AnswerType.NUMBER,
                 question_text="q2",
             ),
             QuestionFactory(
                 reader_study=rs,
-                answer_type=Question.AnswerType.BOOL,
+                answer_type=Question.AnswerType.NUMBER,
                 question_text="q3",
             ),
         ]
