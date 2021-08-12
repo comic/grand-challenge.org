@@ -339,9 +339,10 @@ def test_score_for_user_auc(reader_study_with_gt_auc, settings):
                 ans.images.add(im)
 
     score = rs.score_for_user(r1)
+    print(score)
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
     assert score["score__sum"] == 3.0
-    assert score["score__avg"] == 0.5
+    assert score["score__avg"] == pytest.approx(0.5555556)
 
 
 @pytest.mark.django_db

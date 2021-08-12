@@ -710,16 +710,23 @@ def _reader_study_with_gt(metric="ACC"):
     rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
     rs.save()
 
-    for question in [q1, q2, q3]:
-        for im in [im1, im2]:
-            ans = AnswerFactory(
-                question=question,
-                creator=editor,
-                answer=True,
-                is_ground_truth=True,
-            )
+    for i, question in enumerate([q1, q2, q3]):
+        for j, im in enumerate([im1, im2]):
+            if metric == "ACC":
+                ans = AnswerFactory(
+                    question=question,
+                    creator=editor,
+                    answer=True,
+                    is_ground_truth=True,
+                )
+            elif metric == "AUC":
+                ans = AnswerFactory(
+                    question=question,
+                    creator=editor,
+                    answer=(i + j) % 2,
+                    is_ground_truth=True,
+                )
             ans.images.add(im)
-
     return rs
 
 
