@@ -91,7 +91,7 @@ function handleJobStatus(jobs) {
 
     if (jobStatuses.every(s => s === "succeeded")) {
         setCardCompleteMessage(cards.job, "View Results");
-    } else if (jobStatuses.some(s => ["started", "provisioning", "provisioned", "executing", "executed", "parsing"].includes(s))) {
+    } else if (jobStatuses.some(s => ["started", "provisioning", "provisioned", "executing", "executed", "parsing outputs"].includes(s))) {
         setCardActiveMessage(cards.job, `Started, ${moment.duration(estimatedRemainingTime).humanize()} remaining`);
         setTimeout(function () {
             getJobStatus(jobUrls)

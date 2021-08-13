@@ -30,7 +30,7 @@ function handleJobStatus(job) {
 
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
-    } else if (["started", "provisioning", "provisioned", "executing", "executed", "parsing"].includes(jobStatus)) {
+    } else if (["started", "provisioning", "provisioned", "executing", "executed", "parsing outputs"].includes(jobStatus)) {
         setCardActiveMessage(cards.job, `Started, ${moment.duration(estimatedRemainingTime).humanize()} remaining`);
         setTimeout(function () {
             getJobStatus(job.api_url)
