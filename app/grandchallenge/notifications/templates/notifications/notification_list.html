@@ -47,8 +47,10 @@
                             {% endif %}
                             {% get_content_type object.action.actor as actor_ct %}
                             {% if actor_ct %}
-                                {% if actor_ct.model == 'user' %}
+                                {% if actor_ct.model == 'user' and object.action.actor != request.user %}
                                     {{ object.action.actor|user_profile_link }}
+                                {% elif actor_ct.model == 'user' and object.action.actor == request.user %}
+                                    You {% if 'were' in object.action.verb or 'was' in object.action.verb or 'created' in object.action.verb or 'is' in object.action.verb or 'posted' in object.action.verb or 'responded' in object.action.verb %} {% else %}were {% endif %}
                                 {% elif actor_ct.model == 'algorithmpermissionrequest' or actor_ct.model == 'readerstudypermissionrequest' or actor_ct.model == 'archivepermissionrequest' %}
                                     Your registration request for <a href="{{ object.action.actor.base_object.get_absolute_url }}">{{ object.action.actor.object_name }}</a>
                                 {% elif actor_ct.model == 'registrationrequest' %}
@@ -61,7 +63,7 @@
                             {% endif %}
                             {% if object.action.target %}
                                 {% get_content_type object.action.target as target_ct %}
-                                {% if target_ct.model == "forum" or target_ct.model == "topic" %}
+                                {% if target_ct.model == "forum" %}
                                     in
                                 {% endif %}
                                 <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
