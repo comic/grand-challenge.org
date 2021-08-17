@@ -70,10 +70,10 @@ class Post(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse("blogs:detail", kwargs={"slug": self.slug})
-
-    def get_absolute_url_air(self):
-        return reverse("products:blogs-detail", kwargs={"slug": self.slug})
+        if self.publish_location == "gc":
+            return reverse("blogs:detail", kwargs={"slug": self.slug})
+        elif self.publish_location == "air":
+            return reverse("products:blogs-detail", kwargs={"slug": self.slug})
 
     @property
     def public(self):

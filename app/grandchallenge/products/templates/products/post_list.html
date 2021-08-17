@@ -29,7 +29,7 @@
     {% for object in object_list %}
         <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
             <div class="col-lg-6 py-5">
-                <a href="{{ object.get_absolute_url_air }}">
+                <a href="{{ object.get_absolute_url }}">
                     <img class="w-100 rounded shadow"
                          src="{{ object.logo.x20.url }}"
                          srcset="{{ object.logo.x10.url }} 1x,
@@ -39,17 +39,17 @@
                 </a>
             </div>
             <div class="col-lg-6 align-self-center">
-                <h3><a href="{{ object.get_absolute_url_air }}">{{ object.title }}</a></h3>
+                <h3><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></h3>
                 <p>
                     {{ object.created|date:"j N Y" }}
                     by
                     {# @formatter:off #}
-            {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<a href="{% url 'profile-detail' username=author.username %}">{% firstof author.get_full_name author.username %}</a>{% endfor %}
+            {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}{% firstof author.get_full_name author.username %}{% endfor %}
             {# @formatter:on #}
                 </p>
 
                 <p>{{ object.description }}</p>
-                <p><a class="btn btn-radboud href='{{ object.get_absolute_url_air }}'">Read More</a></p>
+                <p><a class="btn btn-radboud" href='{{ object.get_absolute_url }}'>Read More</a></p>
             </div>
         </div>
     {% empty %}

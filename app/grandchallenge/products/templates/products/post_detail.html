@@ -17,22 +17,13 @@
     <div class="row mb-3">
         <div class="col-lg-8">
             <h2>{{ object.title }}</h2>
-            <p>Published {{ object.created|date:"j N Y" }}</p>
+            <p class="text-muted">Published {{ object.created|date:"j N Y" }} <br> By
+                {# @formatter:off #}
+                    {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}{% firstof author.get_full_name author.username %}{% endfor %}
+                {# @formatter:on #}</p>
             {{ object.content|md2html }}
         </div>
         <div class="col-lg-4">
-            <div class="row mb-1">
-                <h3>Authors</h3>
-            </div>
-            <div class="row mb-3">
-                <ul class="list-group list-group-flush">
-                    {% for author in object.authors.all %}
-                        <li class="list-group-item border-0">
-                            {{ author|user_profile_link }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
             {% if object.tags.count != 0 %}
                 <div class="row mb-1">
                     <h3>Tags</h3>
@@ -41,7 +32,7 @@
                     <ul class="list-group list-group-flush">
                         {% for tag in object.tags.all %}
                             <li class="list-group-item border-0">
-                                <a href="{% url 'products:blogs-list' %}?tags={{ tag.pk }}"><i class="fa fa-tags"
+                                <a href="{% url 'products:blogs-list' %}?tags={{ tag.pk }}"><i class="fas fa-angle-right text-radboud"
                                                                                       aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}
                                 </a>
                             </li>
