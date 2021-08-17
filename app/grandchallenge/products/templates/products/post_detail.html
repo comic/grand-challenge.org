@@ -1,0 +1,71 @@
+{% extends "products/base.html" %}
+{% load url %}
+{% load profiles %}
+{% load bleach %}
+{% load guardian_tags %}
+{% load static %}
+
+{% block title %}{{ object.title }} - Blogs - {{ block.super }}{% endblock %}
+
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'products:blogs-list' %}">Blogs</a></li>
+        <li class="breadcrumb-item active">{{ object.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-3">
+        <div class="col-lg-8">
+            <h2>{{ object.title }}</h2>
+            <p>Published {{ object.created|date:"j N Y" }}</p>
+            {{ object.content|md2html }}
+        </div>
+        <div class="col-lg-4">
+            <div class="row mb-1">
+                <h3>Authors</h3>
+            </div>
+            <div class="row mb-3">
+                <ul class="list-group list-group-flush">
+                    {% for author in object.authors.all %}
+                        <li class="list-group-item border-0">
+                            {{ author|user_profile_link }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% if object.tags.count != 0 %}
+                <div class="row mb-1">
+                    <h3>Tags</h3>
+                </div>
+                <div class="row mb-3">
+                    <ul class="list-group list-group-flush">
+                        {% for tag in object.tags.all %}
+                            <li class="list-group-item border-0">
+                                <a href="{% url 'products:blogs-list' %}?tags={{ tag.pk }}"><i class="fa fa-tags"
+                                                                                      aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% get_obj_perms request.user for object as "object_perms" %}
+            {% if "change_post" in object_perms %}
+	        {% if not object.published %}
+                    <div class="alert alert-warning" role="alert">
+                        This post is currently unpublished.
+                        Please bookmark this URL in case you want to come back to edit it.
+                    </div>
+		{% endif %}
+                <p>
+                    <a href="{% url 'products:blogs-update' slug=object.slug %}"
+                       class="btn btn-primary">
+                        <i class="fa fa-edit"></i> Edit post
+                    </a>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

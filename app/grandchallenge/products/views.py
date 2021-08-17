@@ -7,6 +7,12 @@ from django.shortcuts import reverse
 from django.views.generic import CreateView, DetailView, ListView, TemplateView
 from django.views.generic.edit import FormView
 
+from grandchallenge.blogs.views import (
+    PostCreate,
+    PostDetail,
+    PostList,
+    PostUpdate,
+)
 from grandchallenge.products.forms import ImportForm, ProjectAirFilesForm
 from grandchallenge.products.models import (
     Company,
@@ -212,6 +218,15 @@ class ProjectAirPage(ListView):
     queryset = ProjectAirFiles.objects.all()
 
 
+class ProjectAirForm(PermissionRequiredMixin, CreateView):
+    template_name = "products/projectairfiles_form.html"
+    form_class = ProjectAirFilesForm
+    permission_required = f"{ProjectAirFiles._meta.app_label}.add_{ProjectAirFiles._meta.model_name}"
+
+    def get_success_url(self):
+        return reverse("products:project-air")
+
+
 class ImportDataView(PermissionRequiredMixin, FormView):
     template_name = "products/import_data.html"
     form_class = ImportForm
@@ -241,10 +256,17 @@ class ImportDataView(PermissionRequiredMixin, FormView):
         return reverse("products:product-list")
 
 
-class ProjectAirForm(PermissionRequiredMixin, CreateView):
-    template_name = "products/projectairfiles_form.html"
-    form_class = ProjectAirFilesForm
-    permission_required = f"{ProjectAirFiles._meta.app_label}.add_{ProjectAirFiles._meta.model_name}"
+class ProductsPostCreate(PostCreate):
+    template_name = "products/post_form.html"
 
-    def get_success_url(self):
-        return reverse("products:project-air")
+
+class ProductsPostList(PostList):
+    template_name = "products/post_list.html"
+
+
+class ProductsPostDetail(PostDetail):
+    template_name = "products/post_detail.html"
+
+
+class ProductsPostUpdate(PostUpdate):
+    template_name = "products/post_form.html"
