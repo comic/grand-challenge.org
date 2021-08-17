@@ -1,4 +1,4 @@
-{% extends "products/base.html" %}
+{% extends 'products/base.html' %}
 {% load url %}
 {% load static %}
 
@@ -53,7 +53,7 @@
                 </p>
 
                 <p>{{ object.description }}</p>
-                <p><a class="btn btn-square btn-radboud href='{{ object.get_absolute_url }}'">Read More</a></p>
+                <p><a class="btn btn-radboud href='{{ object.get_absolute_url }}'">Read More</a></p>
             </div>
         </div>
     {% empty %}
