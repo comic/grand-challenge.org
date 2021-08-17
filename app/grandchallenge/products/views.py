@@ -262,6 +262,9 @@ class ProductsPostCreate(PostCreate):
 
 class ProductsPostList(PostList):
     template_name = "products/post_list.html"
+    queryset = PostList.Post.objects.filter(
+        published=True, publish_location="air"
+    )
 
 
 class ProductsPostDetail(PostDetail):

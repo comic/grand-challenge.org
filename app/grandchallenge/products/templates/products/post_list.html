@@ -6,14 +6,10 @@
 
 {% block breadcrumbs %}
     {% if tag %}
-        <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'products:blogs-list' %}">Blogs</a></li>
             <li class="breadcrumb-item active">Tag: {{ tag }}</li>
-        </ol>
     {% else %}
-        <ol class="breadcrumb">
             <li class="breadcrumb-item active">Blogs</li>
-        </ol>
     {% endif %}
 {% endblock %}
 
@@ -33,7 +29,7 @@
     {% for object in object_list %}
         <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
             <div class="col-lg-6 py-5">
-                <a href="{{ object.get_absolute_url }}">
+                <a href="{{ object.get_absolute_url_air }}">
                     <img class="w-100 rounded shadow"
                          src="{{ object.logo.x20.url }}"
                          srcset="{{ object.logo.x10.url }} 1x,
@@ -43,7 +39,7 @@
                 </a>
             </div>
             <div class="col-lg-6 align-self-center">
-                <h3><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></h3>
+                <h3><a href="{{ object.get_absolute_url_air }}">{{ object.title }}</a></h3>
                 <p>
                     {{ object.created|date:"j N Y" }}
                     by
@@ -53,7 +49,7 @@
                 </p>
 
                 <p>{{ object.description }}</p>
-                <p><a class="btn btn-radboud href='{{ object.get_absolute_url }}'">Read More</a></p>
+                <p><a class="btn btn-radboud href='{{ object.get_absolute_url_air }}'">Read More</a></p>
             </div>
         </div>
     {% empty %}

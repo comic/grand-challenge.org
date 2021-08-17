@@ -19,6 +19,10 @@ class Tag(models.Model):
 
 
 class Post(models.Model):
+    class PublishLocation(models.TextChoices):
+        GC = "gc", "Grand Challenge"
+        AIR = "air", "AI for Radiology"
+
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -41,6 +45,12 @@ class Post(models.Model):
 
     published = models.BooleanField(default=False)
 
+    publish_location = models.CharField(
+        choices=PublishLocation.choices,
+        max_length=3,
+        default=PublishLocation.GC,
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -61,6 +71,9 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse("blogs:detail", kwargs={"slug": self.slug})
+
+    def get_absolute_url_air(self):
+        return reverse("products:blogs-detail", kwargs={"slug": self.slug})
 
     @property
     def public(self):

@@ -9,10 +9,8 @@
 
 
 {% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active"><a href="{% url 'products:blogs-list' %}">Blogs</a></li>
-        <li class="breadcrumb-item active">{{ object.title }}</li>
-    </ol>
+    <li class="breadcrumb-item active"><a href="{% url 'products:blogs-list' %}">Blogs</a></li>
+    <li class="breadcrumb-item active">{{ object.title }}</li>
 {% endblock %}
 
 {% block content %}
