@@ -1,0 +1,10 @@
+{% extends "groups/groups_form_base.html" %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'blogs:list' %}">Blogs</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Add author</li>
+    </ol>
+{% endblock %}
