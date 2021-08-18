@@ -24,11 +24,10 @@ class Page(models.Model):
     ALL = "ALL"
     REGISTERED_ONLY = "REG"
     ADMIN_ONLY = "ADM"
-    STAFF_ONLY = "STF"
 
     PERMISSIONS_CHOICES = (
         (ALL, "All"),
-        (REGISTERED_ONLY, "Registered users only"),
+        (REGISTERED_ONLY, "Participants only"),
         (ADMIN_ONLY, "Administrators only"),
     )
 

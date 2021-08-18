@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                     models.CharField(
                         choices=[
                             ("ALL", "All"),
-                            ("REG", "Registered users only"),
+                            ("REG", "Participants only"),
                             ("ADM", "Administrators only"),
                         ],
                         default="ALL",
