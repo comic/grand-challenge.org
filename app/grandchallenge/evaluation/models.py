@@ -388,6 +388,18 @@ class Phase(UUIDModel):
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="evaluation_outputs"
     )
+    algorithm_inputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="+",
+        blank=True,
+        help_text="The input interfaces that the algorithms for this phase must use",
+    )
+    algorithm_outputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="+",
+        blank=True,
+        help_text="The output interfaces that the algorithms for this phase must use",
+    )
 
     class Meta:
         unique_together = (
