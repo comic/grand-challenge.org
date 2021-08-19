@@ -5,6 +5,7 @@ from grandchallenge.evaluation.models import Phase
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmJobFactory,
 )
 from tests.factories import UserFactory
 from tests.verification_tests.factories import VerificationFactory
@@ -50,6 +51,8 @@ class TestSubmissionForm:
         user = UserFactory()
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
+        alg.inputs.clear()
+        alg.outputs.clear()
 
         form = SubmissionForm(
             user=user, algorithm_submission=True, data={"algorithm": alg.pk},
@@ -64,7 +67,11 @@ class TestSubmissionForm:
         user = UserFactory()
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
-        AlgorithmImageFactory(ready=True, algorithm=alg)
+        alg.inputs.clear()
+        alg.outputs.clear()
+
+        ai = AlgorithmImageFactory(ready=True, algorithm=alg)
+        AlgorithmJobFactory(algorithm_image=ai, status=4)
 
         form = SubmissionForm(
             user=user,

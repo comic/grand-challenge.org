@@ -220,8 +220,10 @@ class SubmissionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self._creator_must_be_verified = creator_must_be_verified
-        self._phase_inputs = phase_inputs
-        self._phase_outputs = phase_outputs
+        self._phase_inputs = phase_inputs if phase_inputs is not None else []
+        self._phase_outputs = (
+            phase_outputs if phase_outputs is not None else []
+        )
 
         if not display_comment_field:
             del self.fields["comment"]
