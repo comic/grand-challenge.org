@@ -33,6 +33,12 @@
                     {% endfor %}
                 </ul>
             </div>
+            {% get_obj_perms request.user for object as "object_perms" %}
+            {% if "change_post" in object_perms %}
+                <a class="btn btn-primary mb-3" href="{% url 'blogs:authors-update' slug=object.slug %}">
+                    <i class="fa fa-plus"></i> Add Author
+                </a>
+            {% endif %}
             {% if object.tags.count != 0 %}
                 <div class="row mb-1">
                     <h3>Tags</h3>
@@ -49,7 +55,6 @@
                     </ul>
                 </div>
             {% endif %}
-            {% get_obj_perms request.user for object as "object_perms" %}
             {% if "change_post" in object_perms %}
 	        {% if not object.published %}
                     <div class="alert alert-warning" role="alert">

@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -7,9 +8,10 @@ from guardian.mixins import (
 )
 
 from grandchallenge.blogs.filters import BlogFilter
-from grandchallenge.blogs.forms import PostForm, PostUpdateForm
+from grandchallenge.blogs.forms import AuthorsForm, PostForm, PostUpdateForm
 from grandchallenge.blogs.models import Post
 from grandchallenge.core.filters import FilterMixin
+from grandchallenge.groups.views import UserGroupUpdateMixin
 
 
 class AuthorFormKwargsMixin:
@@ -66,3 +68,15 @@ class PostUpdate(
     form_class = PostUpdateForm
     permission_required = "blogs.change_post"
     raise_exception = True
+
+
+class AuthorsUpdate(UserGroupUpdateMixin):
+    model = Post
+    form_class = AuthorsForm
+    template_name = "blogs/authors_update_form.html"
+    permission_required = "blogs.change_post"
+    success_message = "Authors successfully updated"
+
+    @property
+    def obj(self):
+        return get_object_or_404(Post, slug=self.kwargs["slug"])
