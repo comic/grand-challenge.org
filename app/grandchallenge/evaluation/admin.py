@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.transaction import on_commit
 
 from grandchallenge.components.admin import ComponentImageAdmin
 from grandchallenge.evaluation.models import (
@@ -31,6 +32,16 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
 
 
+def requeue_evaluations(modeladmin, request, queryset):
+    queryset.update(status=Evaluation.RETRY)
+    for evaluation in queryset:
+        on_commit(evaluation.signature.apply_async)
+
+
+requeue_evaluations.short_description = "Requeue selected evaluations"
+requeue_evaluations.allowed_permissions = ("change",)
+
+
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "submission", "status", "error_message")
@@ -56,6 +67,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "error_message",
         "input_prefixes",
     )
+    actions = (requeue_evaluations,)
 
 
 admin.site.register(Phase, PhaseAdmin)
