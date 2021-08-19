@@ -262,7 +262,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
                     perm=perm, user_or_group=group, obj=self.workstation
                 )
 
-    @property
+    @cached_property
     def latest_ready_image(self):
         """
         Returns
@@ -275,7 +275,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             .first()
         )
 
-    @property
+    @cached_property
     def default_workstation(self):
         """
         Returns the default workstation, creating it if it does not already
