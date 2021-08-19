@@ -44,6 +44,7 @@ from tests.fixtures import create_uploaded_image
 from tests.patients_tests.factories import PatientFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
+    CategoricalOptionFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -700,6 +701,51 @@ def reader_study_with_gt():
                 answer=True,
                 is_ground_truth=True,
             )
+            ans.images.add(im)
+
+    return rs
+
+
+@pytest.fixture
+def reader_study_with_mc_gt(reader_study_with_gt):
+    rs = reader_study_with_gt
+
+    q_choice = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.CHOICE,
+        question_text="C",
+    )
+    q_multiple_choice = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.MULTIPLE_CHOICE,
+        question_text="MC",
+    )
+
+    c_options = [
+        CategoricalOptionFactory(question=q_choice, title="fee"),
+        CategoricalOptionFactory(question=q_choice, title="foh"),
+        CategoricalOptionFactory(question=q_choice, title="fum"),
+    ]
+
+    mc_options = [
+        CategoricalOptionFactory(question=q_multiple_choice, title="fee"),
+        CategoricalOptionFactory(question=q_multiple_choice, title="foh"),
+        CategoricalOptionFactory(question=q_multiple_choice, title="fum"),
+    ]
+
+    editor = rs.editors_group.user_set.first()
+    images = reader_study_with_gt.images.all()
+    for question, answer in [
+        (q_choice, c_options[0].id),
+        (q_multiple_choice, [mc_options[0].id, mc_options[1].id]),
+    ]:
+        ans = AnswerFactory(
+            question=question,
+            creator=editor,
+            answer=answer,
+            is_ground_truth=True,
+        )
+        for im in images:
             ans.images.add(im)
 
     return rs
