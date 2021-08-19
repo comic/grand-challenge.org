@@ -184,7 +184,7 @@ class AlgorithmImageForm(ModelForm):
     requires_memory_gb = IntegerField(
         min_value=1,
         max_value=24,
-        initial=4,
+        initial=16,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
 
@@ -192,6 +192,7 @@ class AlgorithmImageForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.fields["chunked_upload"].widget.user = user
+        self.fields["requires_gpu"].initial = True
 
     def clean_chunked_upload(self):
         files = self.cleaned_data["chunked_upload"]
