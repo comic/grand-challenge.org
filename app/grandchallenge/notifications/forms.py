@@ -33,7 +33,10 @@ class FollowForm(SaveFormInitMixin, forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        obj_id = cleaned_data["object_id"]
+        try:
+            obj_id = cleaned_data["object_id"]
+        except KeyError:
+            raise ValidationError("You cannot create this subscription!")
 
         if cleaned_data["content_type"] == ContentType.objects.get(
             app_label="forum", model="forum"
