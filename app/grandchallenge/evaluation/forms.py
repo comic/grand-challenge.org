@@ -202,8 +202,8 @@ class SubmissionForm(forms.ModelForm):
         user,
         creator_must_be_verified=False,
         algorithm_submission=False,
-        phase_inputs=None,
-        phase_outputs=None,
+        algorithm_inputs=None,
+        algorithm_outputs=None,
         display_comment_field=False,
         supplementary_file_choice=Phase.OFF,
         supplementary_file_label="",
@@ -220,9 +220,11 @@ class SubmissionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self._creator_must_be_verified = creator_must_be_verified
-        self._phase_inputs = phase_inputs if phase_inputs is not None else []
-        self._phase_outputs = (
-            phase_outputs if phase_outputs is not None else []
+        self._algorithm_inputs = (
+            algorithm_inputs if algorithm_inputs is not None else []
+        )
+        self._algorithm_outputs = (
+            algorithm_outputs if algorithm_outputs is not None else []
         )
 
         if not display_comment_field:
@@ -289,20 +291,20 @@ class SubmissionForm(forms.ModelForm):
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
 
-        if set(self._phase_inputs) != set(algorithm.inputs.all()):
+        if set(self._algorithm_inputs) != set(algorithm.inputs.all()):
             raise ValidationError(
                 "The inputs for your algorithm do not match the ones "
                 "required by this phase, please update your algorithm "
                 "to work with: "
-                f"{oxford_comma(self._phase_inputs)}. "
+                f"{oxford_comma(self._algorithm_inputs)}. "
             )
 
-        if set(self._phase_outputs) != set(algorithm.outputs.all()):
+        if set(self._algorithm_outputs) != set(algorithm.outputs.all()):
             raise ValidationError(
                 "The outputs from your algorithm do not match the ones "
                 "required by this phase, please update your algorithm "
                 "to produce: "
-                f"{oxford_comma(self._phase_outputs)}. "
+                f"{oxford_comma(self._algorithm_outputs)}. "
             )
 
         if algorithm.latest_ready_image is None:

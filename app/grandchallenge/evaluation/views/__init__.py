@@ -186,8 +186,8 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 "supplementary_url_help_text": self.phase.supplementary_url_help_text,
                 "algorithm_submission": self.phase.submission_kind
                 == self.phase.SubmissionKind.ALGORITHM,
-                "phase_inputs": self.phase.inputs.all(),
-                "phase_outputs": self.phase.outputs.all(),
+                "algorithm_inputs": self.phase.algorithm_inputs.all(),
+                "algorithm_outputs": self.phase.algorithm_outputs.all(),
             }
         )
 

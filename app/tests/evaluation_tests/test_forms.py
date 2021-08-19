@@ -51,8 +51,6 @@ class TestSubmissionForm:
         user = UserFactory()
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
-        alg.inputs.clear()
-        alg.outputs.clear()
 
         form = SubmissionForm(
             user=user, algorithm_submission=True, data={"algorithm": alg.pk},
@@ -67,8 +65,6 @@ class TestSubmissionForm:
         user = UserFactory()
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
-        alg.inputs.clear()
-        alg.outputs.clear()
 
         ai = AlgorithmImageFactory(ready=True, algorithm=alg)
         AlgorithmJobFactory(algorithm_image=ai, status=4)
