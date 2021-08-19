@@ -326,6 +326,8 @@ is one number per evaluation. For example:</p>
 <li><p><strong>evaluation_comparison_observable_url</strong> (<em>URLField</em>) – Evaluation comparison observable url. The URL of the embeddable observable notebook for comparingresults. Must be of the form <a class="reference external" href="https://observablehq.com/embed/&#64;user/notebook?cell=">https://observablehq.com/embed/&#64;user/notebook?cell=</a>…</p></li>
 <li><p><strong>inputs</strong> (<em>ManyToManyField</em>) – Inputs</p></li>
 <li><p><strong>outputs</strong> (<em>ManyToManyField</em>) – Outputs</p></li>
+<li><p><strong>algorithm_inputs</strong> (<em>ManyToManyField</em>) – Algorithm inputs. The input interfaces that the algorithms for this phase must use</p></li>
+<li><p><strong>algorithm_outputs</strong> (<em>ManyToManyField</em>) – Algorithm outputs. The output interfaces that the algorithms for this phase must use</p></li>
 </ul>
 </dd>
 </dl>
