@@ -456,7 +456,7 @@ def test_algorithm_input_image_multiple_files(
     # job = Job.objects.first()
     # assert job.status == job.FAILURE
     # assert job.error_message == (
-    #     "Job can't be started, input is missing for interface(s): "
+    #     "Job can't be started, input is missing for "
     #     "['Generic Medical Image'] "
     #     "ValueError('Image imports should result in a single image')"
     # )
@@ -514,10 +514,7 @@ def test_execute_algorithm_job_for_inputs(
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
-    assert (
-        "Job can't be started, input is missing for interface(s):"
-        in job.error_message
-    )
+    assert "Job can't be started, input is missing for " in job.error_message
 
 
 @pytest.mark.django_db

@@ -19,6 +19,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.subdomains.utils import reverse
 
@@ -65,8 +66,8 @@ def on_chord_error(self, task_id, *args, **kwargs):
     missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
     if missing_inputs:
         error_message += (
-            f"Job can't be started, input is missing for interface(s):"
-            f" {list(c.interface.title for c in missing_inputs)} "
+            f"Job can't be started, input is missing for "
+            f"{oxford_comma([c.interface.title for c in missing_inputs])}"
         )
 
     res = self.AsyncResult(task_id).result
@@ -118,8 +119,8 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         job.update_status(
             status=job.FAILURE,
             error_message=(
-                f"Job can't be started, input is missing for interface(s):"
-                f" {list(c.interface.title for c in missing_inputs)}"
+                f"Job can't be started, input is missing for "
+                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
             ),
         )
         on_commit(linked_task.apply_async)
