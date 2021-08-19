@@ -15,7 +15,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.evaluation.models import Method
 from grandchallenge.workstations.models import Workstation
-from tests.conftest import create_uploaded_image
+from tests.fixtures import create_uploaded_image
 
 
 def run():
@@ -130,13 +130,13 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
 
 @contextmanager
 def _uploaded_container_image():
-    path = "tests/resources/gc_demo_algorithm/algorithm_io.tar"
+    path = "scripts/algorithm_io.tar"
     yield from _uploaded_file(path=path)
 
 
 @contextmanager
 def _uploaded_image_file():
-    path = "tests/cases_tests/resources/image10x10x10.mha"
+    path = "scripts/image10x10x10.mha"
     yield from _uploaded_file(path=path)
 
 
