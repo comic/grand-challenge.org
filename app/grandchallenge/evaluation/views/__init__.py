@@ -467,9 +467,18 @@ class LeaderboardDetail(
                     else "User",
                     sort_field="submission__creator__username",
                 ),
-                Column(title="Created", sort_field="created"),
             ]
         )
+
+        if self.phase.submission_kind == self.phase.SubmissionKind.ALGORITHM:
+            columns.append(
+                Column(
+                    title="Algorithm",
+                    sort_field="submission__algorithm_image__algorithm__title",
+                )
+            )
+
+        columns.append(Column(title="Created", sort_field="created"))
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
@@ -546,6 +555,7 @@ class LeaderboardDetail(
                 "submission__creator__user_profile",
                 "submission__creator__verification",
                 "submission__phase__challenge",
+                "submission__algorithm_image__algorithm",
             )
             .filter(
                 submission__phase=self.phase,

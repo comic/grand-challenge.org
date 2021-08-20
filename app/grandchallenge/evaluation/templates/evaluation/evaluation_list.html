@@ -82,7 +82,7 @@
                             {% else %}
                                 Submission is under review by the challenge admins.
                             {% endif %}
-                        {% elif evaluation.FAILURE %}
+                        {% elif evaluation.status == evaluation.FAILURE %}
                             {% firstof evaluation.error_message evaluation.get_status_display %}
                         {% endif %}
                     </td>

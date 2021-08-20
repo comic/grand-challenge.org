@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
+from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
@@ -33,6 +33,8 @@ def run():
         participant=users["demop"],
         archive=archive,
         suffix=suffix,
+        inputs=inputs,
+        outputs=outputs,
     )
     _create_algorithm(
         creator=users["demop"], inputs=inputs, outputs=outputs, suffix=suffix
@@ -88,7 +90,9 @@ def _create_archive(*, creator, interfaces, suffix, items=5):
     return a
 
 
-def _create_challenge(*, creator, participant, archive, suffix):
+def _create_challenge(
+    *, creator, participant, archive, suffix, inputs, outputs
+):
     c = Challenge.objects.create(
         short_name=f"algorithm-evaluation-{suffix}",
         creator=creator,
@@ -99,9 +103,13 @@ def _create_challenge(*, creator, participant, archive, suffix):
 
     p = c.phase_set.first()
 
+    p.algorithm_inputs.set(inputs)
+    p.algorithm_outputs.set(outputs)
+
     p.title = "Algorithm Evaluation"
     p.submission_kind = p.SubmissionKind.ALGORITHM
     p.archive = archive
+    p.score_jsonpath = "score"
     p.save()
 
     m = Method(creator=creator, phase=p)
@@ -126,6 +134,9 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
     with _uploaded_container_image() as container:
         algorithm_image.image.save("algorithm_io.tar", container)
         algorithm_image.save()
+
+    # A successful job is required for challenge submission
+    Job.objects.create(algorithm_image=algorithm_image, status=Job.SUCCESS)
 
 
 @contextmanager

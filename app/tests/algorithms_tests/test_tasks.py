@@ -401,14 +401,16 @@ def test_algorithm_multiple_inputs(
     job = Job.objects.get()
     assert job.error_message == ""
     assert job.status == job.SUCCESS
+
+    # Remove fake value for score
+    output_dict = job.outputs.first().value
+    output_dict.pop("score")
+
     assert {f"/input/{x.relative_path}" for x in job.inputs.all()} == set(
-        job.outputs.first().value.keys()
+        output_dict.keys()
     )
     assert sorted(
-        map(
-            lambda x: x if x != {} else "json",
-            job.outputs.first().value.values(),
-        )
+        map(lambda x: x if x != {} else "json", output_dict.values(),)
     ) == sorted(expected)
 
 
