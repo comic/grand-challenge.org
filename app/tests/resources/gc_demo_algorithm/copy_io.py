@@ -4,7 +4,7 @@ from shutil import copy
 from warnings import warn
 
 if __name__ == "__main__":
-    res = {}
+    res = {"score": 1}  # dummy metric for ranking on leaderboard
     files = {x for x in Path("/input").rglob("*") if x.is_file()}
 
     for file in files:

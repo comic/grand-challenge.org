@@ -69,6 +69,13 @@
                 <a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
                     {{ object.submission.phase.title }}</a></dd>
 
+            {% if object.submission.algorithm_image %}
+                <dt>Algorithm</dt>
+                <dd>
+                    <a href="{{ object.submission.algorithm_image.algorithm.get_absolute_url }}">{{ object.submission.algorithm_image.algorithm.title }}</a>
+                </dd>
+            {% endif %}
+
             <dt>Submission created</dt>
             <dd>{{ object.submission.created }}</dd>
 
