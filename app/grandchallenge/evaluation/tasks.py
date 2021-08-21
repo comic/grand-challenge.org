@@ -133,7 +133,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 
 
 @shared_task
-def handle_failed_jobs(*_, evaluation_pk, job_pks):
+def handle_failed_jobs(*, evaluation_pk, job_pks):
     # Set the evaluation to failed
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
@@ -155,7 +155,7 @@ def handle_failed_jobs(*_, evaluation_pk, job_pks):
 
 
 @shared_task
-def set_evaluation_inputs(evaluation_pk, job_pks):
+def set_evaluation_inputs(*, evaluation_pk, job_pks):
     """
     Sets the inputs to the Evaluation for a algorithm submission.
 
@@ -178,7 +178,7 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
     )
 
     if unsuccessful_jobs:
-        handle_failed_jobs(evaluation_pk=evaluation_pk)
+        handle_failed_jobs(evaluation_pk=evaluation_pk, job_pks=job_pks)
     else:
         from grandchallenge.algorithms.serializers import JobSerializer
         from grandchallenge.components.models import (
