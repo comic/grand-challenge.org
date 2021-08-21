@@ -110,7 +110,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
     )
 
     # If any of the jobs fail then mark the evaluation as failed.
-    on_error = mark_evaluation_failed.signature(
+    on_error = handle_failed_jobs.signature(
         kwargs={"evaluation_pk": evaluation.pk}, immutable=True
     )
 
@@ -126,24 +126,32 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
         extra_viewer_groups=groups,
         linked_task=linked_task,
         on_error=on_error,
+        execute_one_first=True,
     )
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
 
 @shared_task
-def mark_evaluation_failed(*_, evaluation_pk):
+def handle_failed_jobs(*_, evaluation_pk, job_pks):
+    # Set the evaluation to failed
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-
     evaluation = Evaluation.objects.get(pk=evaluation_pk)
-
     if evaluation.status != evaluation.FAILURE:
         evaluation.update_status(
             status=evaluation.FAILURE,
             error_message="The algorithm failed on one or more cases.",
         )
+
+    # Cancel any pending jobs for this evaluation
+    Job = apps.get_model(  # noqa: N806
+        app_label="algorithms", model_name="Job"
+    )
+    Job.objects.filter(
+        pk__in=job_pks, status__in=[Job.PENDING, Job.PROVISIONED]
+    ).update(status=Job.CANCELLED)
 
 
 @shared_task
@@ -170,7 +178,7 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
     )
 
     if unsuccessful_jobs:
-        mark_evaluation_failed(evaluation_pk=evaluation_pk)
+        handle_failed_jobs(evaluation_pk=evaluation_pk)
     else:
         from grandchallenge.algorithms.serializers import JobSerializer
         from grandchallenge.components.models import (
