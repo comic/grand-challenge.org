@@ -188,12 +188,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         self.assign_permissions()
         self.assign_workstation_permissions()
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
             app_label=self._meta.app_label, model=self._meta.model_name
         ).get()
         Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete()
+        super().delete(*args, **kwargs)
 
     def create_groups(self):
         self.editors_group = Group.objects.create(
