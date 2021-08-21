@@ -379,6 +379,7 @@ class EvaluationList(
             "submission__creator__user_profile",
             "submission__creator__verification",
             "submission__phase__challenge",
+            "submission__algorithm_image__algorithm",
         )
 
         if self.request.challenge.is_admin(self.request.user):
