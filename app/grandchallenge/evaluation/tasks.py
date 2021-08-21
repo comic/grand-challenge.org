@@ -109,6 +109,11 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
         kwargs={"evaluation_pk": evaluation.pk}, immutable=True
     )
 
+    # If any of the jobs fail then mark the evaluation as failed.
+    on_error = mark_evaluation_failed.signature(
+        kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+    )
+
     execute_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
         civ_sets=[
@@ -120,7 +125,23 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
         creator=None,
         extra_viewer_groups=groups,
         linked_task=linked_task,
+        on_error=on_error,
     )
+
+
+@shared_task
+def mark_evaluation_failed(*_, evaluation_pk):
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    if evaluation.status != evaluation.FAILURE:
+        evaluation.update_status(
+            status=evaluation.FAILURE,
+            error_message="The algorithm failed on one or more cases.",
+        )
 
 
 @shared_task
@@ -138,33 +159,28 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
     evaluation_pk
         The primary key of the evaluation.Evaluation object
     """
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
-
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
 
     unsuccessful_jobs = (
         Job.objects.filter(pk__in=job_pks).exclude(status=Job.SUCCESS).count()
     )
 
     if unsuccessful_jobs:
-        evaluation.update_status(
-            status=evaluation.FAILURE,
-            error_message=(
-                f"The algorithm failed to execute on {unsuccessful_jobs} "
-                f"images."
-            ),
-        )
+        mark_evaluation_failed(evaluation_pk=evaluation_pk)
     else:
         from grandchallenge.algorithms.serializers import JobSerializer
         from grandchallenge.components.models import (
             ComponentInterface,
             ComponentInterfaceValue,
         )
+
+        Evaluation = apps.get_model(  # noqa: N806
+            app_label="evaluation", model_name="Evaluation"
+        )
+
+        evaluation = Evaluation.objects.get(pk=evaluation_pk)
 
         algorithm_jobs = (
             Job.objects.filter(pk__in=job_pks)
