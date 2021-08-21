@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
@@ -116,7 +116,6 @@ def _create_challenge(
 
     with _uploaded_container_image() as container:
         m.image.save("algorithm_io.tar", container)
-        m.save()
 
 
 def _create_algorithm(*, creator, inputs, outputs, suffix):
@@ -133,10 +132,6 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
 
     with _uploaded_container_image() as container:
         algorithm_image.image.save("algorithm_io.tar", container)
-        algorithm_image.save()
-
-    # A successful job is required for challenge submission
-    Job.objects.create(algorithm_image=algorithm_image, status=Job.SUCCESS)
 
 
 @contextmanager
