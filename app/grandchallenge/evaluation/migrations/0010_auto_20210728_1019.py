@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
                     (8, "Executing"),
                     (9, "Executed"),
                     (10, "Parsing Outputs"),
+                    (11, "Executing Algorithm"),
                 ],
                 db_index=True,
                 default=0,

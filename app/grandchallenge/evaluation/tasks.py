@@ -128,6 +128,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
         on_error=on_error,
     )
 
+    evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
+
 
 @shared_task
 def mark_evaluation_failed(*_, evaluation_pk):
@@ -202,6 +204,7 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
         evaluation.input_prefixes = {
             str(o.pk): f"{j.pk}/output/" for o, j in output_to_job.items()
         }
+        evaluation.status = Evaluation.PENDING
         evaluation.save()
 
         on_commit(evaluation.signature.apply_async)

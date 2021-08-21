@@ -691,6 +691,7 @@ class ComponentJob(models.Model):
     EXECUTING = 8
     EXECUTED = 9
     PARSING = 10
+    EXECUTING_PREREQUISITES = 11
 
     STATUS_CHOICES = (
         (PENDING, "Queued"),
@@ -704,6 +705,7 @@ class ComponentJob(models.Model):
         (EXECUTING, "Executing"),
         (EXECUTED, "Executed"),
         (PARSING, "Parsing Outputs"),
+        (EXECUTING_PREREQUISITES, "Executing Algorithm"),
     )
 
     status = models.PositiveSmallIntegerField(
@@ -846,6 +848,7 @@ class ComponentJob(models.Model):
             self.EXECUTING,
             self.EXECUTED,
             self.PARSING,
+            self.EXECUTING_PREREQUISITES,
         }
 
     @property
@@ -866,6 +869,7 @@ class ComponentJob(models.Model):
             self.EXECUTING,
             self.EXECUTED,
             self.PARSING,
+            self.EXECUTING_PREREQUISITES,
         }:
             return "info"
         else:
