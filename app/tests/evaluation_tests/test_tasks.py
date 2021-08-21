@@ -193,7 +193,7 @@ class TestSetEvaluationInputs(TestCase):
         assert evaluation.status == evaluation.FAILURE
         assert (
             evaluation.error_message
-            == "The algorithm failed to execute on 1 images."
+            == "The algorithm failed on one or more cases."
         )
 
     def test_set_evaluation_inputs(self):

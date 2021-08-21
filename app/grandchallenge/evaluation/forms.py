@@ -14,7 +14,7 @@ from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
@@ -313,19 +313,10 @@ class SubmissionForm(forms.ModelForm):
                 "Please add one and try again."
             )
 
-        if not Job.objects.filter(
-            algorithm_image=algorithm.latest_ready_image, status=Job.SUCCESS
-        ).exists():
-            raise ValidationError(
-                "The active container image for this algorithm has "
-                "not been used successfully yet, please try this "
-                "out on your own data first using the "
-                "'Try-out algorithm' page."
-            )
-
         if Submission.objects.filter(
             algorithm_image=algorithm.latest_ready_image
         ).exists():
+            # TODO filter by phase
             raise ValidationError(
                 "A submission for this algorithm container image "
                 "already exists."

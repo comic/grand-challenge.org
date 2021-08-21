@@ -98,6 +98,7 @@ class AWSBatchExecutor:
         return outputs
 
     def deprovision(self):
+        # TODO - this should also cancel any running job
         shutil.rmtree(self._job_directory)
         self._deregister_job_definitions()
 

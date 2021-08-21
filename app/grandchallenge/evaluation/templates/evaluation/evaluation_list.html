@@ -37,6 +37,9 @@
                     <th>User</th>
                 {% endif %}
                 <th>Status</th>
+                {% if "change_challenge" in challenge_perms %}
+                    <th>Algorithm Results</th>
+                {% endif %}
                 <th>Output</th>
                 <th>Position</th>
                 <th>Comment</th>
@@ -74,6 +77,14 @@
                         {{ evaluation.get_status_display }}
                     </span>
                     </td>
+
+                    {% if "change_challenge" in challenge_perms %}
+                        <td>
+                            {% if evaluation.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKind.ALGORITHM %}
+                                <a href="{% url 'algorithms:job-list' slug=evaluation.submission.algorithm_image.algorithm.slug %}">{{ evaluation.submission.algorithm_image.algorithm.title }}</a>
+                            {% endif %}
+                        </td>
+                    {% endif %}
 
                     <td>
                         {% if evaluation.status == evaluation.SUCCESS %}
