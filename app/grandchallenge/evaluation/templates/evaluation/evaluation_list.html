@@ -38,14 +38,12 @@
                 {% endif %}
                 <th>Status</th>
                 {% if "change_challenge" in challenge_perms %}
+                    <th>Hide/Publish</th>
                     <th>Algorithm Results</th>
                 {% endif %}
                 <th>Output</th>
                 <th>Position</th>
                 <th>Comment</th>
-                {% if "change_challenge" in challenge_perms %}
-                    <th>Hide/Publish</th>
-                {% endif %}
             </tr>
             </thead>
             <tbody>
@@ -80,6 +78,29 @@
 
                     {% if "change_challenge" in challenge_perms %}
                         <td>
+                            {% if evaluation.status == evaluation.SUCCESS %}
+                                <form method="post"
+                                      action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=evaluation.pk %}">
+                                    {% csrf_token %}
+                                    {% if evaluation.published %}
+                                        <input type="hidden" name="published"
+                                               value="false">
+                                        <button type="submit"
+                                                class="btn btn-xs btn-danger">
+                                            Hide Result
+                                        </button>
+                                    {% else %}
+                                        <input type="hidden" name="published"
+                                               value="true">
+                                        <button type="submit"
+                                                class="btn btn-xs btn-primary">
+                                            Publish Result
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            {% endif %}
+                        </td>
+                        <td>
                             {% if evaluation.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKind.ALGORITHM %}
                                 <a href="{% url 'algorithms:job-list' slug=evaluation.submission.algorithm_image.algorithm.slug %}">{{ evaluation.submission.algorithm_image.algorithm.title }}</a>
                             {% endif %}
@@ -110,33 +131,6 @@
                     </td>
 
                     <td>{{ evaluation.submission.comment }}</td>
-
-                    {% if "change_challenge" in challenge_perms %}
-                        <td>
-                            {% if evaluation.status == evaluation.SUCCESS %}
-                                <form method="post"
-                                      action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=evaluation.pk %}">
-                                    {% csrf_token %}
-                                    {% if evaluation.published %}
-                                        <input type="hidden" name="published"
-                                               value="false">
-                                        <button type="submit"
-                                                class="btn btn-xs btn-danger">
-                                            Hide Result
-                                        </button>
-                                    {% else %}
-                                        <input type="hidden" name="published"
-                                               value="true">
-                                        <button type="submit"
-                                                class="btn btn-xs btn-primary">
-                                            Publish Result
-                                        </button>
-                                    {% endif %}
-                                </form>
-                            {% endif %}
-                        </td>
-                    {% endif %}
-
                 </tr>
             {% endfor %}
 
