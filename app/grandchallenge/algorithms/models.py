@@ -2,7 +2,7 @@ import logging
 from datetime import timedelta
 
 from actstream import action
-from actstream.actions import follow
+from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -490,6 +490,23 @@ class Job(UUIDModel, ComponentJob):
 
         if adding:
             self.init_permissions()
+            followers = list(
+                self.algorithm_image.algorithm.editors_group.user_set.all()
+            )
+            followers.append(self.creator)
+            for follower in set(followers):
+                if not is_following(
+                    user=follower,
+                    obj=self.algorithm_image.algorithm,
+                    flag="algorithm-job-follow",
+                ):
+                    follow(
+                        user=follower,
+                        obj=self.algorithm_image.algorithm,
+                        actor_only=False,
+                        send_action=False,
+                        flag="algorithm-job-follow",
+                    )
 
         if adding or self._public_orig != self.public:
             self.update_viewer_groups_for_public()
