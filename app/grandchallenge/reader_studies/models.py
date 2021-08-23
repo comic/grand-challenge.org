@@ -1279,7 +1279,7 @@ class Answer(UUIDModel):
         valid_options = question.options.values_list("id", flat=True)
         if question.answer_type == Question.AnswerType.CHOICE:
             if not question.required:
-                valid_options.append(None)
+                valid_options = (*valid_options, None)
             if answer not in valid_options:
                 raise ValidationError(
                     "Provided option is not valid for this question"
