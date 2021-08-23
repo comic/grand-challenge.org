@@ -1088,14 +1088,21 @@ class Question(UUIDModel):
             self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
         ]
 
+    @property
+    def allow_null_types(self):
+        return [
+            *self.annotation_types,
+            self.AnswerType.CHOICE,
+            self.AnswerType.NUMBER,
+        ]
+
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
         allowed_types = [
             {"$ref": f"#/definitions/{self.answer_type}"},
         ]
 
-        allow_null = self.answer_type in self.annotation_types
-        if allow_null:
+        if self.answer_type in self.allow_null_types:
             allowed_types.append({"$ref": "#/definitions/null"})
 
         try:
