@@ -2,6 +2,7 @@ import logging
 import uuid
 from statistics import mean, median
 
+from actstream import action
 from celery import shared_task
 from django.apps import apps
 from django.core.files import File
@@ -13,7 +14,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.emails import send_missing_method_email
 from grandchallenge.evaluation.utils import Metric, rank_results
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -44,7 +44,11 @@ def create_evaluation(*, submission_pk):
     method = submission.latest_ready_method
     if not method:
         logger.info("No method ready for this submission")
-        send_missing_method_email(submission)
+        action.send(
+            sender=submission,
+            verb="no method for this submission",
+            target=submission.phase,
+        )
         return
 
     evaluation, created = Evaluation.objects.get_or_create(

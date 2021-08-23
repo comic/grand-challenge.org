@@ -1,5 +1,5 @@
 from actstream import action
-from actstream.actions import follow
+from actstream.actions import follow, is_following
 from actstream.models import Action, Follow, followers
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save, pre_delete
@@ -60,7 +60,16 @@ def create_post_action(sender, *, instance, created, **_):
 @receiver(post_save, sender=Action)
 def create_notification(*, instance, **_):
     if instance.target:
-        follower_group = followers(instance.target)
+        if instance.target_content_type.model == "phase":
+            follower_group = [
+                admin
+                for admin in instance.target.challenge.get_admins()
+                if is_following(admin, instance.target)
+            ]
+            if instance.actor_content_type.model == "evaluation":
+                follower_group.append(instance.actor.submission.creator)
+        else:
+            follower_group = followers(instance.target)
         for follower in follower_group:
             # only send notifications to followers other than the poster
             if follower != instance.actor:
