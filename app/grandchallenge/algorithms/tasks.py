@@ -56,7 +56,7 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
     job = Job.objects.get(pk=job_pk)
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
+    linked_task = send_failed_jobs_notifications.signature(
         kwargs={"job_pks": [job.pk]}, immutable=True
     )
 
@@ -106,7 +106,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
+    linked_task = send_failed_jobs_notifications.signature(
         kwargs={"job_pks": [job.pk]}, immutable=True
     )
 
@@ -138,7 +138,7 @@ def create_algorithm_jobs_for_session(
     groups = [algorithm_image.algorithm.editors_group]
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
+    linked_task = send_failed_jobs_notifications.signature(
         kwargs={"session_pk": session.pk}, immutable=True
     )
 
@@ -342,7 +342,7 @@ def remaining_jobs(*, creator, algorithm_image):
 
 
 @shared_task
-def send_failed_jobs_email(*, job_pks, session_pk=None):
+def send_failed_jobs_notifications(*, job_pks, session_pk=None):
     excluded_images_count = 0
 
     if session_pk:
@@ -373,7 +373,7 @@ def send_failed_jobs_email(*, job_pks, session_pk=None):
         if failed_jobs.count() > 0:
             action.send(
                 sender=algorithm,
-                verb=f"Unfortunately {failed_jobs.count()} of the jobs for algorithm {algorithm.title}"
+                verb=f"Unfortunately {failed_jobs.count()} of the jobs for algorithm {algorithm.title} "
                 f"failed with an error.",
                 description=f"{experiment_url}",
                 target=creator,

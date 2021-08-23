@@ -16,6 +16,7 @@ from grandchallenge.algorithms.tasks import (
     execute_jobs,
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
+    send_failed_jobs_notifications,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -23,6 +24,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
+from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -603,3 +605,38 @@ class TestJobCreation:
         )
 
         assert filtered_civ_sets == civ_sets[1:]
+
+
+@pytest.mark.django_db
+def test_failed_job_notifications(client, algorithm_io_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+    editor = UserFactory()
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
+    )
+    alg.algorithm.add_editor(editor)
+
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+
+    # mark job as failed
+    job.status = Job.FAILURE
+    job.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        send_failed_jobs_notifications(job_pks=[job.pk])
+
+    # 2 notifications: for the editor of the algorithm and the job creator
+    assert Notification.objects.count() == 2
+    assert creator.username in str(Notification.objects.all())
+    assert editor.username in str(Notification.objects.all())
+    assert (
+        f"Unfortunately 1 of the jobs for algorithm {alg.algorithm.title} failed with an error"
+        in str(Notification.objects.first().action)
+    )
