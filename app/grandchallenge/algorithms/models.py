@@ -493,7 +493,8 @@ class Job(UUIDModel, ComponentJob):
             followers = list(
                 self.algorithm_image.algorithm.editors_group.user_set.all()
             )
-            followers.append(self.creator)
+            if self.creator:
+                followers.append(self.creator)
             for follower in set(followers):
                 if not is_following(
                     user=follower,
