@@ -22,7 +22,7 @@
                     <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.kwargs.slug == phase.slug%}active{% endif %}"
                            href="{% url 'workspaces:create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
                 {% else %}
-                    <a class="nav-link mr-1 px-4 py-1 "
+                    <a class="nav-link mr-1 px-4 py-1 {% if object.submission.phase.slug == phase.slug %}active{% endif %}"
                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
                 {% endif %}
             </li>
