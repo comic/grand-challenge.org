@@ -104,7 +104,7 @@ def update_editor_follows(  # noqa: C901
             follow_objects.append(group.editors_of_readerstudy)
         elif hasattr(group, "admins_of_challenge"):
             # NOTE: only admins of a challenge should follow a challenge
-            # and it's phases
+            # and its phases
             follow_objects.append(group.admins_of_challenge)
             for phase in group.admins_of_challenge.phase_set.all():
                 follow_objects.append(phase)
