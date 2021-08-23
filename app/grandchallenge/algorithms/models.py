@@ -499,14 +499,14 @@ class Job(UUIDModel, ComponentJob):
                 if not is_following(
                     user=follower,
                     obj=self.algorithm_image.algorithm,
-                    flag="algorithm-job-follow",
+                    flag="job",
                 ):
                     follow(
                         user=follower,
                         obj=self.algorithm_image.algorithm,
                         actor_only=False,
                         send_action=False,
-                        flag="algorithm-job-follow",
+                        flag="job",
                     )
 
         if adding or self._public_orig != self.public:

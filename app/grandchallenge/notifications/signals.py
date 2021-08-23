@@ -74,7 +74,7 @@ def create_notification(*, instance, **_):
         else:
             follower_group = followers(instance.target)
     elif instance.target and instance.actor_content_type.model == "algorithm":
-        follower_group = followers(instance.actor, flag="algorithm-job-follow")
+        follower_group = followers(instance.actor, flag="job")
     elif instance.action_object:
         follower_group = []
         # notify only the actor when there is no target, but an action object
