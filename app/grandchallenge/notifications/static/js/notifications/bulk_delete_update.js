@@ -13,13 +13,23 @@ window.toggleCheckboxes = function toggleCheckboxes(source) {
 function sendAjaxCall(type, data) {
     let arrayOfPromises = [];
         $('input[name="checkbox"]:checked').each(function () {
-            arrayOfPromises.push($.ajax({
-                type: type,
-                url: $(this).data('url'),
-                data: JSON.stringify(data),
-                contentType: 'application/json',
-                accept: 'application/json',
-            }))
+            if ($(this).data('flag') == 'job-follow') {
+                arrayOfPromises.push($.ajax({
+                    type: 'PATCH',
+                    url: $(this).data('url'),
+                    data: JSON.stringify({flag: "job-inactive"}),
+                    contentType: 'application/json',
+                    accept: 'application/json',
+                }))
+            } else {
+                arrayOfPromises.push($.ajax({
+                    type: type,
+                    url: $(this).data('url'),
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    accept: 'application/json',
+                }))
+            }
         })
         Promise.all(arrayOfPromises).then(function () {
             window.location.replace(window.location.href);

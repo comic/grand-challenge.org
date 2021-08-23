@@ -13,4 +13,4 @@ class NotificationSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
-        fields = ("pk",)
+        fields = ("pk", "flag")
