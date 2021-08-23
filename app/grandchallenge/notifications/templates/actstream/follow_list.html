@@ -43,7 +43,7 @@
                                    value="{{ follow.pk }}" data-url="{% url 'api:follow-detail' pk=follow.pk %}">
                             <a href="{{ follow.follow_object.get_absolute_url }}">{{ follow.follow_object }}</a>
                             <span class="text-truncate font-italic text-muted align-middle mx-2 ">{{ follow_ct.name|title }}
-                                {% if follow.flag != 'job' and follow_ct.model == 'algorithm' %} Access Requests {% endif %}{% if follow.flag == 'job' %} Job Notifications {% endif %}| subscribed to since {{ follow.started|date:'F j, Y' }} {% if forum.follow_object.last_post_on %}| last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
+                                {% if follow.flag != 'job' and follow_ct.model == 'algorithm' %} Access Requests {% elif follow.flag == 'job' %} Job Notifications {% endif %}| subscribed to since {{ follow.started|date:'F j, Y' }} {% if forum.follow_object.last_post_on %}| last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
                         </div>
                     </div>
                 </li>
