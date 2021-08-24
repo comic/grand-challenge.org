@@ -18,7 +18,11 @@
         {% elif not object.signup_email_is_trusted and not object.email_is_verified %}
             Please check your email for the link to confirm your account.
         {% elif object.is_verified == None %}
-            Your verification request is under review by the site administrators.
+            Thank you for confirming your email.
+            Your verification request will be manually reviewed by site administrators
+            within {{ object.review_deadline|timeuntil }} from now.
+            Please do not contact support until that time.
+            We will contact you if we require more information.
         {% else %}
             Your request for verification was rejected.
         {% endif %}

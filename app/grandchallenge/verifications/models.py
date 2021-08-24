@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from allauth.account.signals import email_confirmed
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -62,6 +64,10 @@ class Verification(models.Model):
     @property
     def verification_url(self):
         return reverse("verifications:confirm", kwargs={"token": self.token},)
+
+    @property
+    def review_deadline(self):
+        return self.modified + timedelta(days=3)
 
     def save(self, *args, **kwargs):
         if self.signup_email_is_trusted or self.verification_email_is_trusted:
