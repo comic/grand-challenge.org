@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Mapping, Union
 
+from actstream.actions import follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
@@ -85,6 +86,12 @@ class RawImageUploadSession(UUIDModel):
                 )
                 assign_perm(
                     f"change_{self._meta.model_name}", self.creator, self
+                )
+                follow(
+                    user=self.creator,
+                    obj=self,
+                    send_action=False,
+                    actor_only=False,
                 )
 
     def process_images(self, linked_task=None):
