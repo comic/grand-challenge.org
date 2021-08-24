@@ -59,7 +59,10 @@ def create_post_action(sender, *, instance, created, **_):
 
 @receiver(post_save, sender=Action)
 def create_notification(*, instance, **_):
-    if instance.target:
+    if (
+        instance.target
+        and not instance.actor_content_type.model == "algorithm"
+    ):
         if instance.target_content_type.model == "phase":
             follower_group = [
                 admin
@@ -70,19 +73,19 @@ def create_notification(*, instance, **_):
                 follower_group.append(instance.actor.submission.creator)
         else:
             follower_group = followers(instance.target)
-        for follower in follower_group:
-            # only send notifications to followers other than the poster
-            if follower != instance.actor:
-                Notification(user=follower, action=instance).save()
+    elif instance.target and instance.actor_content_type.model == "algorithm":
+        follower_group = followers(instance.actor, flag="job-active")
     elif instance.action_object:
-        # notify only the actor when there is not target, but an action object
+        follower_group = []
+        # notify only the actor when there is no target, but an action object
         Notification(user=instance.actor, action=instance).save()
     else:
         follower_group = followers(instance.actor)
-        for follower in follower_group:
-            # only send notifications to followers other than the poster
-            if follower != instance.actor:
-                Notification(user=follower, action=instance).save()
+
+    for follower in set(follower_group):
+        # only send notifications to followers other than the poster
+        if follower != instance.actor:
+            Notification(user=follower, action=instance).save()
 
 
 @receiver(post_save, sender=Follow)

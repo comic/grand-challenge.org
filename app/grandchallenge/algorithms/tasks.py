@@ -1,7 +1,5 @@
+from actstream import action
 from celery import chain, chord, group, shared_task
-from django.conf import settings
-from django.contrib.sites.models import Site
-from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
@@ -58,7 +56,7 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
     job = Job.objects.get(pk=job_pk)
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
+    linked_task = send_failed_jobs_notifications.signature(
         kwargs={"job_pks": [job.pk]}, immutable=True
     )
 
@@ -108,7 +106,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
+    linked_task = send_failed_jobs_notifications.signature(
         kwargs={"job_pks": [job.pk]}, immutable=True
     )
 
@@ -140,7 +138,7 @@ def create_algorithm_jobs_for_session(
     groups = [algorithm_image.algorithm.editors_group]
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
+    linked_task = send_failed_jobs_notifications.signature(
         kwargs={"session_pk": session.pk}, immutable=True
     )
 
@@ -344,7 +342,7 @@ def remaining_jobs(*, creator, algorithm_image):
 
 
 @shared_task
-def send_failed_jobs_email(*, job_pks, session_pk=None):
+def send_failed_jobs_notifications(*, job_pks, session_pk=None):
     excluded_images_count = 0
 
     if session_pk:
@@ -372,46 +370,21 @@ def send_failed_jobs_email(*, job_pks, session_pk=None):
                 kwargs={"slug": algorithm.slug, "pk": session_pk},
             )
 
-        message = ""
         if failed_jobs.count() > 0:
-            message = (
-                f"Unfortunately {failed_jobs.count()} of your jobs for algorithm "
-                f"'{algorithm.title}' failed with an error. "
+            action.send(
+                sender=algorithm,
+                verb=f"Unfortunately {failed_jobs.count()} of the jobs for algorithm {algorithm.title} "
+                f"failed with an error.",
+                description=f"{experiment_url}",
+                target=creator,
             )
 
         if excluded_images_count > 0:
-            message = (
-                f"{message}"
-                f"{excluded_images_count} of your jobs for algorithm "
-                f"'{algorithm.title}' were not started because the number of allowed "
-                f"jobs was reached. "
-            )
-
-        message = (
-            f"{message}"
-            f"You can inspect the output and any error messages at "
-            f"{experiment_url}.\n\n"
-            f"You may wish to try and correct any errors and try again, "
-            f"or contact the algorithm editors. "
-            f"The following information may help them:\n"
-        )
-        if creator is not None:
-            message += f"User: {creator.username}\n"
-        if session_pk is not None:
-            message += f"Experiment ID: {session_pk}\n"
-
-        receivers = {o.email for o in algorithm.editors_group.user_set.all()}
-        if creator is not None:
-            receivers.add(creator.email)
-
-        for email in receivers:
-            send_mail(
-                subject=(
-                    f"[{Site.objects.get_current().domain.lower()}] "
-                    f"[{algorithm.title.lower()}] "
-                    f"Jobs Failed"
-                ),
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
+            action.send(
+                sender=algorithm,
+                verb=f"Unfortunately {excluded_images_count} of the jobs "
+                f"for algorithm {algorithm.title} were not started because the number of allowed "
+                f"jobs was reached.",
+                description=f"{experiment_url}",
+                target=creator,
             )

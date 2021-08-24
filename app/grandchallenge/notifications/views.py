@@ -55,7 +55,9 @@ class NotificationViewSet(
 
 
 class FollowViewSet(
-    mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet,
+    mixins.DestroyModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.ReadOnlyModelViewSet,
 ):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
@@ -68,6 +70,14 @@ class FollowViewSet(
             request, messages.SUCCESS, "Subscription successfully deleted.",
         )
         return response
+
+    def perform_update(self, serializer):
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            "Subscription successfully updated.",
+        )
+        return serializer.save()
 
 
 class NotificationList(
