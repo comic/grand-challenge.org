@@ -19,10 +19,6 @@ class Tag(models.Model):
 
 
 class Post(models.Model):
-    class PublishLocation(models.TextChoices):
-        GC = "gc", "Grand Challenge"
-        AIR = "air", "AI for Radiology"
-
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -45,12 +41,6 @@ class Post(models.Model):
 
     published = models.BooleanField(default=False)
 
-    publish_location = models.CharField(
-        choices=PublishLocation.choices,
-        max_length=3,
-        default=PublishLocation.GC,
-    )
-
     history = HistoricalRecords()
 
     class Meta:
@@ -70,10 +60,10 @@ class Post(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        if self.publish_location == "gc":
-            return reverse("blogs:detail", kwargs={"slug": self.slug})
-        elif self.publish_location == "air":
+        if self.tags.filter(name="AI for Radiology").exists():
             return reverse("products:blogs-detail", kwargs={"slug": self.slug})
+        else:
+            return reverse("blogs:detail", kwargs={"slug": self.slug})
 
     @property
     def public(self):

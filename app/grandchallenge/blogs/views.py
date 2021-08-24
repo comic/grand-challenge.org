@@ -42,7 +42,7 @@ class PostCreate(
 class PostList(FilterMixin, ListView):
     model = Post
     filter_class = BlogFilter
-    queryset = Post.objects.filter(published=True, publish_location="gc")
+    queryset = Post.objects.filter(published=True)
 
 
 class PostDetail(DetailView):
