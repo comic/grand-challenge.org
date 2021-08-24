@@ -226,7 +226,6 @@ def execute_jobs(
 
     if jobs:
         if on_error is not None:
-            on_error.kwargs.update({"job_pks": [j.pk for j in jobs]})
             signatures = [j.signature.on_error(on_error) for j in jobs]
         else:
             signatures = [j.signature for j in jobs]
@@ -319,6 +318,8 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
         # Check interfaces are complete
         civ_interfaces = {civ.interface for civ in civ_set}
         if input_interfaces.issubset(civ_interfaces):
+            # If the algorithm works with a subset of the interfaces
+            # present in the set then only feed these through to the algorithm
             valid_input = {
                 civ for civ in civ_set if civ.interface in input_interfaces
             }

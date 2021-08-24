@@ -6,6 +6,7 @@ from actstream import action
 from celery import shared_task
 from django.apps import apps
 from django.core.files import File
+from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.tasks import execute_jobs
@@ -137,7 +138,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 
 
 @shared_task
-def handle_failed_jobs(*, evaluation_pk, job_pks):
+def handle_failed_jobs(*, evaluation_pk):
     # Set the evaluation to failed
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
@@ -149,17 +150,20 @@ def handle_failed_jobs(*, evaluation_pk, job_pks):
             error_message="The algorithm failed on one or more cases.",
         )
 
-    # Cancel any pending jobs for this evaluation
+    # Cancel any pending jobs for this algorithm image,
+    # we could limit by archive here but if non-evaluation
+    # jobs are cancelled then it is no big loss.
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
     Job.objects.filter(
-        pk__in=job_pks, status__in=[Job.PENDING, Job.PROVISIONED]
+        algorithm_image=evaluation.submission.algorithm_image,
+        status__in=[Job.PENDING, Job.PROVISIONED],
     ).update(status=Job.CANCELLED)
 
 
 @shared_task
-def set_evaluation_inputs(*, evaluation_pk, job_pks):
+def set_evaluation_inputs(*, evaluation_pk):
     """
     Sets the inputs to the Evaluation for a algorithm submission.
 
@@ -176,30 +180,45 @@ def set_evaluation_inputs(*, evaluation_pk, job_pks):
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
-
-    unsuccessful_jobs = (
-        Job.objects.filter(pk__in=job_pks).exclude(status=Job.SUCCESS).count()
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
     )
 
-    if unsuccessful_jobs:
-        handle_failed_jobs(evaluation_pk=evaluation_pk, job_pks=job_pks)
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    civ_sets = {
+        i.values.all() for i in evaluation.submission.phase.archive.items.all()
+    }
+
+    # Get the successful algorithm jobs for the phases archive.
+    algorithm_jobs = (
+        Job.objects.filter(
+            algorithm_image=evaluation.submission.algorithm_image,
+            status=Job.SUCCESS,
+        )
+        .annotate(
+            inputs_match_count=Count(
+                "inputs",
+                filter=Q(
+                    inputs__in={civ for civ_set in civ_sets for civ in civ_set}
+                ),
+            )
+        )
+        .filter(
+            inputs_match_count=evaluation.submission.phase.algorithm_inputs.count()
+        )
+        .distinct()
+        .prefetch_related("outputs__interface", "inputs__interface")
+        .select_related("algorithm_image__algorithm")
+    )
+
+    if algorithm_jobs.count() != len(civ_sets):
+        handle_failed_jobs(evaluation_pk=evaluation_pk)
     else:
         from grandchallenge.algorithms.serializers import JobSerializer
         from grandchallenge.components.models import (
             ComponentInterface,
             ComponentInterfaceValue,
-        )
-
-        Evaluation = apps.get_model(  # noqa: N806
-            app_label="evaluation", model_name="Evaluation"
-        )
-
-        evaluation = Evaluation.objects.get(pk=evaluation_pk)
-
-        algorithm_jobs = (
-            Job.objects.filter(pk__in=job_pks)
-            .prefetch_related("outputs__interface", "inputs__interface")
-            .select_related("algorithm_image__algorithm")
         )
 
         serializer = JobSerializer(algorithm_jobs, many=True)

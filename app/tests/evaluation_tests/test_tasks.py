@@ -182,14 +182,12 @@ class TestSetEvaluationInputs(TestCase):
     def test_unsuccessful_jobs_fail_evaluation(self):
         submission = SubmissionFactory()
         evaluation = EvaluationFactory(submission=submission)
-        jobs = (
+        _ = (
             AlgorithmJobFactory(status=Job.SUCCESS),
             AlgorithmJobFactory(status=Job.FAILURE),
         )
 
-        set_evaluation_inputs(
-            evaluation_pk=evaluation.pk, job_pks=[j.pk for j in jobs]
-        )
+        set_evaluation_inputs(evaluation_pk=evaluation.pk)
 
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.FAILURE
@@ -207,9 +205,7 @@ class TestSetEvaluationInputs(TestCase):
         for alg, civ in zip(jobs, civs):
             alg.outputs.set([civ])
 
-        set_evaluation_inputs(
-            evaluation_pk=evaluation.pk, job_pks=[j.pk for j in jobs]
-        )
+        set_evaluation_inputs(evaluation_pk=evaluation.pk)
 
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.PENDING
