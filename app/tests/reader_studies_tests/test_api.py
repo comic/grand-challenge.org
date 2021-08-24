@@ -651,6 +651,47 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type", (Question.AnswerType.CHOICE, Question.AnswerType.NUMBER),
+)
+def test_only_non_required_can_be_null(client, answer_type):
+    im = ImageFactory()
+    rs = ReaderStudyFactory()
+    rs.images.add(im)
+    rs.save()
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    q = QuestionFactory(
+        reader_study=rs, answer_type=answer_type, required=True
+    )
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=reader,
+        client=client,
+        method=client.post,
+        data={"answer": None, "images": [im.api_url], "question": q.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+    q = QuestionFactory(
+        reader_study=rs, answer_type=answer_type, required=False
+    )
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=reader,
+        client=client,
+        method=client.post,
+        data={"answer": None, "images": [im.api_url], "question": q.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
 def test_mine(client):
     im1, im2 = ImageFactory(), ImageFactory()
     rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
