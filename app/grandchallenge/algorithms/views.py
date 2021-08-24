@@ -6,7 +6,6 @@ import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -34,6 +33,7 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
+    LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )

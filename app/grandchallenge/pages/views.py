@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q
 from django.views.generic import (
     CreateView,
@@ -9,6 +9,7 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import (
+    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

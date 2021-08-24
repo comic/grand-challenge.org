@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
@@ -7,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, UpdateView
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (
+    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_objects_for_user

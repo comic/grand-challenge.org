@@ -1,8 +1,8 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, FormView
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.emails import send_verification_email

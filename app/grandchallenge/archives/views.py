@@ -1,8 +1,5 @@
 from celery import chain, chord, group
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
@@ -27,6 +24,7 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
+    LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
