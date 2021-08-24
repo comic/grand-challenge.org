@@ -31,17 +31,28 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
             "logo",
             "authors",
             "tags",
+            # "companies",
         )
         widgets = {
             "tags": Select2MultipleWidget,
+            # "companies": Select2MultipleWidget,
             "authors": forms.MultipleHiddenInput,
         }
 
 
 class PostUpdateForm(PostForm):
     class Meta(PostForm.Meta):
-        fields = (*PostForm.Meta.fields, "published", "content")
+        # if Post.tags.filter(name="Products").exists():
+        fields = (*PostForm.Meta.fields, "published", "companies", "content")
         widgets = {
             **PostForm.Meta.widgets,
             "content": MarkdownEditorWidget,
+            "companies": Select2MultipleWidget,
         }
+
+    # else:
+    #     fields = (*PostForm.Meta.fields, "published", "content")
+    #     widgets = {
+    #         **PostForm.Meta.widgets,
+    #         "content": MarkdownEditorWidget,
+    #     }

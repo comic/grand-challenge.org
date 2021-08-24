@@ -30,7 +30,7 @@ class PostAdmin(MarkdownxModelAdmin):
         "title",
         "published",
     )
-    list_filter = ("tags",)
+    list_filter = ("tags", "companies")
     autocomplete_fields = ("authors",)
 
 

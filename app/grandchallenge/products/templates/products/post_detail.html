@@ -21,7 +21,15 @@
                 {# @formatter:off #}
                     {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}{% firstof author.get_full_name author.username %}{% endfor %}
                 {# @formatter:on #}</p>
-            {{ object.content|md2html }}
+
+            {% if object.tags.all %}
+            <div class="embed-responsive embed-responsive-1by1">
+                <iframe class="embed-responsive-item" src="{{ object.content }}" title="Newsletter" allowfullscreen></iframe>
+            </div>
+            {% else %}
+                {{ object.content|md2html }}
+            {% endif %}
+
         </div>
         <div class="col-lg-1"></div>
         <div class="col-lg-3">
@@ -41,6 +49,22 @@
                     </ul>
                 </div>
             {% endif %}
+            {% if object.companies.count != 0 %}
+            <div class="row mb-1">
+                <h4 class=text-muted>Featured companies</h4>
+            </div>
+            <div class="row mb-3">
+                <ul class="list-group list-group-flush">
+                    {% for company in object.companies.all %}
+                        <li class="list-group-item border-0">
+                            <a href="{% url 'products:company-detail' slug=company.slug %}"><i class="fas fa-angle-right text-radboud"
+                                                                                  aria-hidden="true"></i>&nbsp;&nbsp;{{ company.company_name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
             <div class="row mb-2">
                 <h4 class=text-muted>Share</h4>
             </div>

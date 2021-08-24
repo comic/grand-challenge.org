@@ -7,6 +7,7 @@ from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
+from grandchallenge.products.models import Company
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -38,6 +39,10 @@ class Post(models.Model):
     )
 
     tags = models.ManyToManyField(to=Tag, blank=True, related_name="posts")
+
+    companies = models.ManyToManyField(
+        to=Company, blank=True, related_name="posts"
+    )
 
     published = models.BooleanField(default=False)
 
