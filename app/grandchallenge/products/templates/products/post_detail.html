@@ -23,10 +23,11 @@
                 {# @formatter:on #}</p>
             {{ object.content|md2html }}
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-1"></div>
+        <div class="col-lg-3">
             {% if object.tags.count != 0 %}
                 <div class="row mb-1">
-                    <h3>Tags</h3>
+                    <h4 class=text-muted>Tags</h4>
                 </div>
                 <div class="row mb-3">
                     <ul class="list-group list-group-flush">
@@ -40,21 +41,36 @@
                     </ul>
                 </div>
             {% endif %}
-            {% get_obj_perms request.user for object as "object_perms" %}
-            {% if "change_post" in object_perms %}
-	        {% if not object.published %}
-                    <div class="alert alert-warning" role="alert">
-                        This post is currently unpublished.
-                        Please bookmark this URL in case you want to come back to edit it.
-                    </div>
-		{% endif %}
-                <p>
-                    <a href="{% url 'products:blogs-update' slug=object.slug %}"
-                       class="btn btn-primary">
-                        <i class="fa fa-edit"></i> Edit post
-                    </a>
-                </p>
-            {% endif %}
+            <div class="row mb-2">
+                <h4 class=text-muted>Share</h4>
+            </div>
+            <div class="row mb-4">
+                <a class="btn btn-secondary" href="#!" role="button"><i class="fab fa-linkedin-in"></i></a> &nbsp;&nbsp;
+                <a class="btn btn-secondary" href="#!" role="button"><i class="fab fa-twitter"></i></a>
+            </div>
+            <div class="row mb-1">
+                <h4 class=text-muted>Newsletter</h4>
+            </div>
+            <div class="row mb-3">
+                <p>Hear about new blogs and other developments in the field? <a class=text-radboud href="http://eepurl.com/hrqfdr">Subscribe to our newsletter.</a> </p>
+            </div>
+            <div class="row mb-1">
+                {% get_obj_perms request.user for object as "object_perms" %}
+                {% if "change_post" in object_perms %}
+                    {% if not object.published %}
+                        <div class="alert alert-warning" role="alert">
+                            This post is currently unpublished.
+                            Please bookmark this URL in case you want to come back to edit it.
+                        </div>
+                    {% endif %}
+                    <p>
+                        <a href="{% url 'products:blogs-update' slug=object.slug %}"
+                        class="btn btn-primary">
+                            <i class="fa fa-edit"></i> Edit post
+                        </a>
+                    </p>
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endblock %}
