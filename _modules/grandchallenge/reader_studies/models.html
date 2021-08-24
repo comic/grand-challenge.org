@@ -1251,14 +1251,21 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS_IMAGE</span><span class="p">,</span>
         <span class="p">]</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_null_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation_types</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">,</span>
+        <span class="p">]</span>
+
 <div class="viewcode-block" id="Question.is_answer_valid"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.is_answer_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_answer_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">answer</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``.&quot;&quot;&quot;</span>
         <span class="n">allowed_types</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;#/definitions/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">},</span>
         <span class="p">]</span>
 
-        <span class="n">allow_null</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotation_types</span>
-        <span class="k">if</span> <span class="n">allow_null</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_null_types</span><span class="p">:</span>
             <span class="n">allowed_types</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/null&quot;</span><span class="p">})</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -1432,23 +1439,32 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">creator</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s2">&quot;read_readerstudy&quot;</span><span class="p">,</span> <span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;This user is not a reader for this study.&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span>
-            <span class="ow">and</span> <span class="n">answer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;Provided option is not valid for this question&quot;</span>
-            <span class="p">)</span>
+        <span class="n">valid_options</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">question</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+                <span class="n">valid_options</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">valid_options</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">answer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_options</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;Provided option is not valid for this question&quot;</span>
+                <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
             <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
             <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
         <span class="p">):</span>
-            <span class="n">options</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">valid_options</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;Provided options are not valid for this question&quot;</span>
-                <span class="p">)</span></div>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span>
+            <span class="ow">and</span> <span class="n">question</span><span class="o">.</span><span class="n">required</span>
+            <span class="ow">and</span> <span class="n">answer</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Answer for required question cannot be None&quot;</span>
+            <span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">answer_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
