@@ -24,6 +24,9 @@ def init_notification_permissions(*_, **__):
     assign_perm(
         f"{Follow._meta.app_label}.delete_{Follow._meta.model_name}", g,
     )
+    assign_perm(
+        f"{Follow._meta.app_label}.change_{Follow._meta.model_name}", g,
+    )
 
 
 class NotificationsConfig(AppConfig):

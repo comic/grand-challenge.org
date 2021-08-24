@@ -3,6 +3,7 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from actstream.models import Follow
 from django.core.files.base import File
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
@@ -40,6 +41,7 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -640,3 +642,32 @@ def test_failed_job_notifications(client, algorithm_io_image, settings):
         f"Unfortunately 1 of the jobs for algorithm {alg.algorithm.title} failed with an error"
         in str(Notification.objects.first().action)
     )
+
+    # delete notifications for easier testing below
+    Notification.objects.all().delete()
+    # unsubscribe editor from job notifications
+    _ = get_view_for_user(
+        viewname="api:follow-detail",
+        client=client,
+        method=client.patch,
+        reverse_kwargs={
+            "pk": Follow.objects.filter(user=editor, flag="job-active")
+            .get()
+            .pk
+        },
+        content_type="application/json",
+        data={"flag": "job-inactive"},
+        user=editor,
+    )
+
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+
+    # mark job as failed
+    job.status = Job.FAILURE
+    job.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        send_failed_jobs_notifications(job_pks=[job.pk])
+
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user is not editor
