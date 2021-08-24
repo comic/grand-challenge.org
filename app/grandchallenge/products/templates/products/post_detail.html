@@ -32,47 +32,44 @@
 
         </div>
         <div class="col-lg-1"></div>
+
         <div class="col-lg-3">
             {% if object.tags.count != 0 %}
                 <div class="row mb-1">
                     <h4 class=text-muted>Tags</h4>
                 </div>
-                <div class="row mb-3">
-                    <ul class="list-group list-group-flush">
-                        {% for tag in object.tags.all %}
-                            <li class="list-group-item border-0">
-                                <a href="{% url 'products:blogs-list' %}?tags={{ tag.pk }}"><i class="fas fa-angle-right text-radboud"
-                                                                                      aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+
+                {% for tag in object.tags.all %}
+                    <div class="row">
+                        <p><i class="fas fa-angle-right text-radboud"
+                            aria-hidden="true"></i>&nbsp;&nbsp;
+                            <a href="{% url 'products:blogs-list' %}?tags={{ tag.pk }}">{{ tag.name }}</a></p>
+                    </div>
+                {% endfor %}
             {% endif %}
+
             {% if object.companies.count != 0 %}
-            <div class="row mb-1">
-                <h4 class=text-muted>Featured companies</h4>
-            </div>
-            <div class="row mb-3">
-                <ul class="list-group list-group-flush">
-                    {% for company in object.companies.all %}
-                        <li class="list-group-item border-0">
-                            <a href="{% url 'products:company-detail' slug=company.slug %}"><i class="fas fa-angle-right text-radboud"
-                                                                                  aria-hidden="true"></i>&nbsp;&nbsp;{{ company.company_name }}
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-            <div class="row mb-2">
+                <div class="row mb-1 mt-4">
+                    <h4 class=text-muted>Featured companies</h4>
+                </div>
+
+                {% for company in object.companies.all %}
+                    <div class="row">
+                        <p><i class="fas fa-angle-right text-radboud"
+                            aria-hidden="true"></i>&nbsp;&nbsp;
+                            <a href="{% url 'products:company-detail' slug=company.slug %}">{{ company.company_name }}</a></p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row mb-2 mt-4">
                 <h4 class=text-muted>Share</h4>
             </div>
             <div class="row mb-4">
                 <a class="btn btn-secondary" href="#!" role="button"><i class="fab fa-linkedin-in"></i></a> &nbsp;&nbsp;
                 <a class="btn btn-secondary" href="#!" role="button"><i class="fab fa-twitter"></i></a>
             </div>
-            <div class="row mb-1">
+            <div class="row mb-1 mt-5">
                 <h4 class=text-muted>Newsletter</h4>
             </div>
             <div class="row mb-3">
