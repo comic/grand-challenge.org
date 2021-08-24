@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
@@ -8,11 +9,9 @@ from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import CreateView, ListView, UpdateView
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -36,10 +35,12 @@ class ParticipantsList(
 
 
 class RegistrationRequestCreate(
-    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = RegistrationRequest
     fields = ()
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def get_success_url(self):
         challenge = self.request.challenge

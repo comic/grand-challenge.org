@@ -2,7 +2,10 @@ import csv
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
@@ -32,7 +35,6 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
@@ -52,7 +54,6 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
@@ -258,8 +259,8 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
 
 
 class ReaderStudyUpdate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
+    UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     UpdateView,
@@ -394,8 +395,8 @@ class QuestionOptionMixin:
 
 
 class QuestionUpdate(
-    QuestionOptionMixin,
     LoginRequiredMixin,
+    QuestionOptionMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
@@ -702,7 +703,7 @@ class AnswersRemove(
 
 
 class ReaderStudyPermissionRequestCreate(
-    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = ReaderStudyPermissionRequest
     fields = ()

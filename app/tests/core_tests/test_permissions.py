@@ -1,15 +1,15 @@
 import pytest
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.test import RequestFactory
 from django.views.generic import View
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.core.permissions.mixins import (
+from grandchallenge.teams.permissions.mixins import (
     UserIsChallengeParticipantOrAdminMixin,
 )
 from tests.factories import ChallengeFactory, UserFactory

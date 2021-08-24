@@ -1,10 +1,10 @@
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )

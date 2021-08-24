@@ -4,10 +4,16 @@ from typing import Dict
 
 import requests
 from django.conf import settings
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
+    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
@@ -28,7 +34,6 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
@@ -76,7 +81,6 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
@@ -93,8 +97,28 @@ class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
 
 
+class VerificationRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        try:
+            verified = self.request.user.verification.is_verified
+        except ObjectDoesNotExist:
+            verified = False
+
+        if not verified:
+            messages.error(
+                self.request,
+                "You need to verify your account before you can do this",
+            )
+
+        return verified
+
+
 class AlgorithmCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
+    CreateView,
 ):
     model = Algorithm
     form_class = AlgorithmForm
@@ -196,8 +220,8 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
 
 
 class AlgorithmUpdate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
+    UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
@@ -256,8 +280,9 @@ class JobViewersUpdate(JobUserGroupUpdateMixin):
 
 
 class AlgorithmImageCreate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
     CreateView,
 ):
@@ -358,9 +383,9 @@ class RemainingJobsMixin:
 
 
 class AlgorithmExecutionSessionCreate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    UserFormKwargsMixin,
     CreateView,
     RemainingJobsMixin,
 ):
@@ -416,9 +441,9 @@ class AlgorithmExecutionSessionCreate(
 
 
 class AlgorithmExperimentCreate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    UserFormKwargsMixin,
     FormView,
     RemainingJobsMixin,
 ):
@@ -683,7 +708,7 @@ class JobViewSet(
 
 
 class AlgorithmPermissionRequestCreate(
-    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = AlgorithmPermissionRequest
     fields = ()

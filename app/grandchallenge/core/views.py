@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from random import choice
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     ImproperlyConfigured,
@@ -18,8 +19,7 @@ from guardian.mixins import (
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 @dataclass
@@ -136,7 +136,7 @@ class HomeTemplate(TemplateView):
 
 
 class PermissionRequestUpdate(
-    UserIsNotAnonMixin,
+    LoginRequiredMixin,
     SuccessMessageMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
@@ -148,6 +148,7 @@ class PermissionRequestUpdate(
     # Checks on whether the permission request user is in these groups
     user_check_attrs = ["is_user", "is_editor"]
     raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

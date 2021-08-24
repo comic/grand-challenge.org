@@ -1,5 +1,8 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -8,7 +11,6 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.permissions import IsAuthenticated

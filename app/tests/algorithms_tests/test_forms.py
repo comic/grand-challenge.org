@@ -13,6 +13,7 @@ from tests.algorithms_tests.factories import (
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.factories import UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -110,6 +111,7 @@ def test_user_update_form(client):
 def test_algorithm_create(client, uploaded_image):
     # The algorithm creator should automatically get added to the editors group
     creator = get_algorithm_creator()
+    VerificationFactory(user=creator, is_verified=True)
 
     ws = WorkstationFactory()
     ci = ComponentInterface.objects.get(slug="generic-medical-image")

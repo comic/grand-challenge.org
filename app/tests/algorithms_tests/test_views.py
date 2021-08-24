@@ -22,6 +22,7 @@ from tests.algorithms_tests.factories import (
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.factories import StagedFileFactory, UserFactory
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -121,6 +122,7 @@ def test_algorithm_image_create_link_view(client):
 @pytest.mark.django_db
 def test_algorithm_image_create_detail(client):
     user = UserFactory()
+    VerificationFactory(user=user, is_verified=True)
     algorithm = AlgorithmFactory()
     algorithm.add_editor(user)
 
@@ -502,6 +504,8 @@ class TestObjectPermissionRequiredViews:
         u = UserFactory()
         j = AlgorithmJobFactory(algorithm_image=ai)
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
+
+        VerificationFactory(user=u, is_verified=True)
 
         for view_name, kwargs, permission, obj, redirect in [
             ("create", {}, "algorithms.add_algorithm", None, None),

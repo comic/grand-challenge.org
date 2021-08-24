@@ -1,9 +1,11 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Sum
 from django.views.generic import CreateView, ListView
 from guardian.core import ObjectPermissionChecker
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.archives.models import Archive

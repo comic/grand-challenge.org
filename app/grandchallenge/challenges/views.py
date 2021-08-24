@@ -1,4 +1,7 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
@@ -10,7 +13,6 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
