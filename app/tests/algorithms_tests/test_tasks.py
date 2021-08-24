@@ -17,7 +17,7 @@ from grandchallenge.algorithms.tasks import (
     execute_jobs,
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
-    send_failed_jobs_notifications,
+    send_failed_job_notification,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -632,14 +632,14 @@ def test_failed_job_notifications(client, algorithm_io_image, settings):
     job.save()
 
     with capture_on_commit_callbacks(execute=True):
-        send_failed_jobs_notifications(job_pks=[job.pk])
+        send_failed_job_notification(job_pk=job.pk)
 
     # 2 notifications: for the editor of the algorithm and the job creator
     assert Notification.objects.count() == 2
     assert creator.username in str(Notification.objects.all())
     assert editor.username in str(Notification.objects.all())
     assert (
-        f"Unfortunately 1 of the jobs for algorithm {alg.algorithm.title} failed with an error"
+        f"Unfortunately one of the jobs for algorithm {alg.algorithm.title} failed with an error"
         in str(Notification.objects.first().action)
     )
 
@@ -667,7 +667,7 @@ def test_failed_job_notifications(client, algorithm_io_image, settings):
     job.save()
 
     with capture_on_commit_callbacks(execute=True):
-        send_failed_jobs_notifications(job_pks=[job.pk])
+        send_failed_job_notification(job_pk=job.pk)
 
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user is not editor
