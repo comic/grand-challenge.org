@@ -263,7 +263,7 @@ class ProductsPostCreate(PostCreate):
 class ProductsPostList(PostList):
     template_name = "products/post_list.html"
     queryset = PostList.model.objects.filter(
-        published=True, tags__name__contains="AI for Radiology"
+        published=True, tags__name__contains="Products"
     )
 
 
