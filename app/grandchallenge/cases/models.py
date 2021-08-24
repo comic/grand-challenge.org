@@ -5,12 +5,14 @@ from tempfile import TemporaryDirectory
 from typing import List, Mapping, Union
 
 from actstream.actions import follow
+from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
@@ -132,6 +134,20 @@ class RawImageUploadSession(UUIDModel):
     @property
     def api_url(self):
         return reverse("api:upload-session-detail", kwargs={"pk": self.pk})
+
+
+@receiver(pre_delete, sender=RawImageUploadSession)
+def delete_session_follows(*_, instance: RawImageUploadSession, **__):
+    """
+    Deletes the related follows.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
+    """
+    ct = ContentType.objects.filter(
+        app_label=instance._meta.app_label, model=instance._meta.model_name
+    ).get()
+    Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()
 
 
 class RawImageFile(UUIDModel):
