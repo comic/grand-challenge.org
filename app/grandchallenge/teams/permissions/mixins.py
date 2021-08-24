@@ -1,10 +1,10 @@
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import get_object_or_404
 
-from grandchallenge.core.permissions.mixins import UserAuthAndTestMixin
 from grandchallenge.teams.models import Team, TeamMember
 
 
-class UserIsTeamOwnerOrChallengeAdminMixin(UserAuthAndTestMixin):
+class UserIsTeamOwnerOrChallengeAdminMixin(UserPassesTestMixin):
     def test_func(self):
         challenge = self.request.challenge
         team = get_object_or_404(Team, pk=self.kwargs["pk"])
@@ -14,7 +14,7 @@ class UserIsTeamOwnerOrChallengeAdminMixin(UserAuthAndTestMixin):
 
 
 class UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin(
-    UserAuthAndTestMixin
+    UserPassesTestMixin
 ):
     def test_func(self):
         challenge = self.request.challenge
@@ -24,3 +24,10 @@ class UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin(
             or (self.request.user == team_member.team.owner)
             or challenge.is_admin(self.request.user)
         )
+
+
+class UserIsChallengeParticipantOrAdminMixin(UserPassesTestMixin):
+    def test_func(self):
+        user = self.request.user
+        challenge = self.request.challenge
+        return challenge.is_admin(user) or challenge.is_participant(user)

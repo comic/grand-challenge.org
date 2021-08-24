@@ -69,7 +69,6 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
@@ -193,8 +192,8 @@ class ArchiveDetail(
 
 
 class ArchiveUpdate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
+    UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
@@ -233,7 +232,7 @@ class ArchiveUsersUpdate(ArchiveGroupUpdateMixin):
 
 
 class ArchivePermissionRequestCreate(
-    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = ArchivePermissionRequest
     fields = ()
@@ -319,8 +318,8 @@ class ArchivePermissionRequestUpdate(PermissionRequestUpdate):
 
 
 class ArchiveUploadSessionCreate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
+    UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
     CreateView,
 ):
@@ -361,8 +360,8 @@ class ArchiveUploadSessionCreate(
 
 
 class ArchiveEditArchiveItem(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
+    UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
     FormView,
 ):

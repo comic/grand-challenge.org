@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q
 from django.views.generic import (
     CreateView,
@@ -12,7 +13,6 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.core.permissions.mixins import UserAuthAndTestMixin
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import ErrorPage, Page
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -67,12 +67,11 @@ class PageList(
 
 
 class PageDetail(
-    UserAuthAndTestMixin, ChallengeFilteredQuerysetMixin, DetailView
+    UserPassesTestMixin, ChallengeFilteredQuerysetMixin, DetailView
 ):
     model = Page
     slug_url_kwarg = "page_title"
     slug_field = "title__iexact"
-    login_required = False
 
     def test_func(self):
         user = self.request.user

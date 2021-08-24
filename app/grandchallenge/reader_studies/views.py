@@ -52,7 +52,6 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
@@ -258,8 +257,8 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
 
 
 class ReaderStudyUpdate(
-    UserFormKwargsMixin,
     LoginRequiredMixin,
+    UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     UpdateView,
@@ -394,8 +393,8 @@ class QuestionOptionMixin:
 
 
 class QuestionUpdate(
-    QuestionOptionMixin,
     LoginRequiredMixin,
+    QuestionOptionMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
@@ -702,7 +701,7 @@ class AnswersRemove(
 
 
 class ReaderStudyPermissionRequestCreate(
-    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin, SuccessMessageMixin, CreateView
 ):
     model = ReaderStudyPermissionRequest
     fields = ()

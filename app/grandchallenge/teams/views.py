@@ -10,21 +10,24 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeParticipantOrAdminMixin,
-)
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.teams.permissions.mixins import (
+    UserIsChallengeParticipantOrAdminMixin,
     UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
     UserIsTeamOwnerOrChallengeAdminMixin,
 )
 
 
-class TeamCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
+class TeamCreate(
+    LoginRequiredMixin, UserIsChallengeParticipantOrAdminMixin, CreateView
+):
     model = Team
     fields = ("name", "department", "institution", "website")
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def form_valid(self, form):
         form.instance.challenge = self.request.challenge
@@ -53,8 +56,12 @@ class TeamDetail(DetailView):
         return context
 
 
-class TeamList(UserIsChallengeParticipantOrAdminMixin, ListView):
+class TeamList(
+    LoginRequiredMixin, UserIsChallengeParticipantOrAdminMixin, ListView
+):
     model = Team
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -69,14 +76,22 @@ class TeamList(UserIsChallengeParticipantOrAdminMixin, ListView):
         return queryset.filter(Q(challenge=self.request.challenge))
 
 
-class TeamUpdate(UserIsTeamOwnerOrChallengeAdminMixin, UpdateView):
+class TeamUpdate(
+    LoginRequiredMixin, UserIsTeamOwnerOrChallengeAdminMixin, UpdateView
+):
     model = Team
     fields = ("name", "website", "department", "institution")
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
-class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, DeleteView):
+class TeamDelete(
+    LoginRequiredMixin, UserIsTeamOwnerOrChallengeAdminMixin, DeleteView
+):
     model = Team
     success_message = "Team successfully deleted"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
@@ -89,9 +104,13 @@ class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, DeleteView):
         )
 
 
-class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
+class TeamMemberCreate(
+    LoginRequiredMixin, UserIsChallengeParticipantOrAdminMixin, CreateView
+):
     model = TeamMember
     fields = ()
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -108,10 +127,14 @@ class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
 
 
 class TeamMemberDelete(
-    UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin, DeleteView
+    LoginRequiredMixin,
+    UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
+    DeleteView,
 ):
     model = TeamMember
     success_message = "User successfully removed from team"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
