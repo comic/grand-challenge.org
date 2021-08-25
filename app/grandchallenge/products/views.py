@@ -270,6 +270,13 @@ class ProductsPostList(PostList):
 class ProductsPostDetail(PostDetail):
     template_name = "products/post_detail.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = context["object"]
+        is_news = obj.tags.all().filter(name="News").exists()
+        context.update({"is_news": is_news})
+        return context
+
 
 class ProductsPostUpdate(PostUpdate):
     template_name = "products/post_form.html"

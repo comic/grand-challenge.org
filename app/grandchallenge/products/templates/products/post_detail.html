@@ -22,7 +22,7 @@
                     {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}{% firstof author.get_full_name author.username %}{% endfor %}
                 {# @formatter:on #}</p>
 
-            {% if object.tags.all %}
+            {% if is_news %}
             <div class="embed-responsive embed-responsive-1by1">
                 <iframe class="embed-responsive-item" src="{{ object.content }}" title="Newsletter" allowfullscreen></iframe>
             </div>
