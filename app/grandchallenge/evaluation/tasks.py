@@ -6,6 +6,7 @@ from actstream import action
 from celery import shared_task
 from django.apps import apps
 from django.core.files import File
+from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
@@ -183,62 +184,81 @@ def set_evaluation_inputs(*, evaluation_pk):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
+    evaluation_queryset = Evaluation.objects.filter(
+        pk=evaluation_pk
+    ).select_for_update(nowait=True)
 
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    with transaction.atomic():
+        # Acquire lock
+        evaluation = evaluation_queryset.get()
 
-    civ_sets = {
-        i.values.all() for i in evaluation.submission.phase.archive.items.all()
-    }
-
-    # Get the successful algorithm jobs for the phases archive.
-    algorithm_jobs = (
-        Job.objects.filter(
-            algorithm_image=evaluation.submission.algorithm_image,
-            status=Job.SUCCESS,
-        )
-        .annotate(
-            inputs_match_count=Count(
-                "inputs",
-                filter=Q(
-                    inputs__in={civ for civ_set in civ_sets for civ in civ_set}
-                ),
-            )
-        )
-        .filter(
-            inputs_match_count=evaluation.submission.phase.algorithm_inputs.count()
-        )
-        .distinct()
-        .prefetch_related("outputs__interface", "inputs__interface")
-        .select_related("algorithm_image__algorithm")
-    )
-
-    if algorithm_jobs.count() != len(civ_sets):
-        handle_failed_jobs(evaluation_pk=evaluation_pk)
-    else:
-        from grandchallenge.algorithms.serializers import JobSerializer
-        from grandchallenge.components.models import (
-            ComponentInterface,
-            ComponentInterfaceValue,
-        )
-
-        serializer = JobSerializer(algorithm_jobs, many=True)
-        interface = ComponentInterface.objects.get(
-            slug="predictions-json-file"
-        )
-        civ = ComponentInterfaceValue.objects.create(
-            interface=interface, value=serializer.data
-        )
-
-        output_to_job = {o: j for j in algorithm_jobs for o in j.outputs.all()}
-
-        evaluation.inputs.set([civ, *output_to_job.keys()])
-        evaluation.input_prefixes = {
-            str(o.pk): f"{j.pk}/output/" for o, j in output_to_job.items()
+        civ_sets = {
+            i.values.all()
+            for i in evaluation.submission.phase.archive.items.all()
         }
-        evaluation.status = Evaluation.PENDING
-        evaluation.save()
 
-        on_commit(evaluation.signature.apply_async)
+        jobs_queryset = (
+            Job.objects.filter(
+                algorithm_image=evaluation.submission.algorithm_image,
+            )
+            .annotate(
+                inputs_match_count=Count(
+                    "inputs",
+                    filter=Q(
+                        inputs__in={
+                            civ for civ_set in civ_sets for civ in civ_set
+                        }
+                    ),
+                )
+            )
+            .filter(
+                inputs_match_count=evaluation.submission.phase.algorithm_inputs.count()
+            )
+            .distinct()
+            .prefetch_related("outputs__interface", "inputs__interface")
+            .select_related("algorithm_image__algorithm")
+        )
+
+        pending_jobs = jobs_queryset.exclude(
+            status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED]
+        )
+        successful_jobs = jobs_queryset.filter(status=Job.SUCCESS)
+
+        if (
+            pending_jobs.exists()
+            or evaluation.status != evaluation.EXECUTING_PREREQUISITES
+        ):
+            # Nothing to do
+            return
+        elif successful_jobs.count() == len(civ_sets):
+            from grandchallenge.algorithms.serializers import JobSerializer
+            from grandchallenge.components.models import (
+                ComponentInterface,
+                ComponentInterfaceValue,
+            )
+
+            serializer = JobSerializer(successful_jobs.all(), many=True)
+            interface = ComponentInterface.objects.get(
+                slug="predictions-json-file"
+            )
+            civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=serializer.data
+            )
+
+            output_to_job = {
+                o: j for j in successful_jobs.all() for o in j.outputs.all()
+            }
+
+            evaluation.inputs.set([civ, *output_to_job.keys()])
+            evaluation.input_prefixes = {
+                str(o.pk): f"{j.pk}/output/" for o, j in output_to_job.items()
+            }
+            evaluation.status = Evaluation.PENDING
+            evaluation.save()
+
+            on_commit(evaluation.signature.apply_async)
+        else:
+            handle_failed_jobs(evaluation_pk=evaluation_pk)
 
 
 def filter_by_creators_most_recent(*, evaluations):

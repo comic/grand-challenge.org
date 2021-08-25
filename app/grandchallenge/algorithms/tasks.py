@@ -422,8 +422,13 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
         inputs__image__in=session.image_set.all()
     ).distinct()
 
-    if queryset.exclude(status__in=[Job.SUCCESS, Job.FAILURE]).exists():
-        # Some jobs have not finished
+    pending_jobs = queryset.exclude(
+        status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED]
+    )
+    failed_jobs = queryset.filter(status=Job.FAILURE)
+
+    if pending_jobs.exists():
+        # Nothing to do
         return
     elif session.creator is not None:
         # TODO this task isn't really idempotent
@@ -436,7 +441,7 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
         # still a problem.
         # We could of course just notify on each failure, but then
         # this should be an on_error task for each job.
-        failed_jobs_count = queryset.filter(status=Job.FAILURE).count()
+        failed_jobs_count = failed_jobs.count()
         if failed_jobs_count:
             experiment_url = reverse(
                 "algorithms:execution-session-detail",
