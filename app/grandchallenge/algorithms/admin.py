@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 from django.db.transaction import on_commit
 from guardian.admin import GuardedModelAdmin
 
@@ -9,6 +10,31 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.components.admin import ComponentImageAdmin
+
+
+class AlgorithmAdmin(GuardedModelAdmin):
+    list_display = (
+        "title",
+        "created",
+        "public",
+        "credits_per_job",
+        "average_duration",
+        "container_count",
+    )
+    list_filter = (
+        "public",
+        "use_flexible_inputs",
+    )
+
+    def container_count(self, obj):
+        return obj.container_count
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            container_count=Count("algorithm_container_images")
+        )
+        return queryset
 
 
 def requeue_jobs(modeladmin, request, queryset):
@@ -73,7 +99,7 @@ class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
     )
 
 
-admin.site.register(Algorithm, GuardedModelAdmin)
+admin.site.register(Algorithm, AlgorithmAdmin)
 admin.site.register(AlgorithmImage, ComponentImageAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(

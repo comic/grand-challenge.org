@@ -272,3 +272,30 @@ def test_new_answer_type_listed():
     q = Question(answer_type="TEST")
     with pytest.raises(RuntimeError):
         q.is_answer_valid(answer="foo")
+
+
+@pytest.mark.parametrize(
+    "answer_type,allow_null",
+    [
+        ["STXT", False],
+        ["MTXT", False],
+        ["BOOL", False],
+        ["NUMB", True],
+        ["2DBB", True],
+        ["M2DB", True],
+        ["DIST", True],
+        ["MDIS", True],
+        ["POIN", True],
+        ["MPOI", True],
+        ["POLY", True],
+        ["PIMG", True],
+        ["MPOL", True],
+        ["MPIM", True],
+        ["CHOI", True],
+        ["MCHO", False],
+        ["MCHD", False],
+    ],
+)
+def test_answer_type_allows_null(answer_type, allow_null):
+    q = Question(answer_type=answer_type)
+    assert q.is_answer_valid(answer=None) == allow_null

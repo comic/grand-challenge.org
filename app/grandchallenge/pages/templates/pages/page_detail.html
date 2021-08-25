@@ -33,6 +33,13 @@
                     <li class="nav-item">
                         <a class="nav-link px-4 py-1 mb-1 {% if page == currentpage %}active{% endif %}"
                            href="{{ page.get_absolute_url }}">
+                            {% if page.permission_level == page.REGISTERED_ONLY %}
+                                <i class="fas fa-lock fa-fw" title="Page is only visible by participants of this challenge"></i>
+                            {% elif page.permission_level == page.ADMIN_ONLY %}
+                                <i class="fas fa-lock fa-fw text-danger" title="Page is only visible by admins of this challenge"></i>
+                            {% else %}
+                                <i class="fa fa-fw"></i>
+                            {% endif %}
                             {% filter title %}
                                 {% firstof page.display_title page.title %}
                             {% endfilter %}

@@ -73,3 +73,6 @@ class Post(models.Model):
     @property
     def public(self):
         return self.published
+
+    def add_author(self, user):
+        self.authors.add(user)

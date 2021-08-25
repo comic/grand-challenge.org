@@ -17,6 +17,7 @@ from typing import (
     Tuple,
 )
 
+from actstream import action
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from django.conf import settings
@@ -29,7 +30,6 @@ from django.utils import timezone
 from panimg import convert
 from panimg.models import PanImgResult
 
-from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -513,8 +513,10 @@ def _handle_raw_files(
             f"{len(unconsumed_files)} file(s) could not be imported"
         )
 
-        if upload_session.creator and upload_session.creator.email:
-            send_failed_file_import(n_errors, upload_session)
+        if upload_session.creator:
+            action.send(
+                sender=upload_session, verb=f"failed with {n_errors} errors"
+            )
 
 
 def _delete_session_files(*, session_files):

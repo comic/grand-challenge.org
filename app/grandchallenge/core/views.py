@@ -13,13 +13,13 @@ from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import (
+    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 @dataclass
@@ -136,7 +136,7 @@ class HomeTemplate(TemplateView):
 
 
 class PermissionRequestUpdate(
-    UserIsNotAnonMixin,
+    LoginRequiredMixin,
     SuccessMessageMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
@@ -148,6 +148,7 @@ class PermissionRequestUpdate(
     # Checks on whether the permission request user is in these groups
     user_check_attrs = ["is_user", "is_editor"]
     raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

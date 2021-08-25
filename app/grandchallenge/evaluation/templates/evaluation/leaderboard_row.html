@@ -31,6 +31,11 @@
 {% endif %}
 <split></split>
 
+{% if object.submission.phase.submission_kind == object.submission.phase.SubmissionKind.ALGORITHM %}
+    <a href="{{ object.submission.algorithm_image.algorithm.get_absolute_url }}">{{ object.submission.algorithm_image.algorithm.title }}</a>
+    <split></split>
+{% endif %}
+
 {{ object.submission.created|date:"j N Y" }}
 <split></split>
 

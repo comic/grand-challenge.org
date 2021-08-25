@@ -2,7 +2,7 @@ import logging
 from datetime import timedelta
 
 from actstream import action
-from actstream.actions import follow
+from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -188,12 +188,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         self.assign_permissions()
         self.assign_workstation_permissions()
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
             app_label=self._meta.app_label, model=self._meta.model_name
         ).get()
         Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete()
+        super().delete(*args, **kwargs)
 
     def create_groups(self):
         self.editors_group = Group.objects.create(
@@ -262,7 +262,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
                     perm=perm, user_or_group=group, obj=self.workstation
                 )
 
-    @property
+    @cached_property
     def latest_ready_image(self):
         """
         Returns
@@ -275,7 +275,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             .first()
         )
 
-    @property
+    @cached_property
     def default_workstation(self):
         """
         Returns the default workstation, creating it if it does not already
@@ -490,6 +490,28 @@ class Job(UUIDModel, ComponentJob):
 
         if adding:
             self.init_permissions()
+            followers = list(
+                self.algorithm_image.algorithm.editors_group.user_set.all()
+            )
+            if self.creator:
+                followers.append(self.creator)
+            for follower in set(followers):
+                if not is_following(
+                    user=follower,
+                    obj=self.algorithm_image.algorithm,
+                    flag="job-active",
+                ) and not is_following(
+                    user=follower,
+                    obj=self.algorithm_image.algorithm,
+                    flag="job-inactive",
+                ):
+                    follow(
+                        user=follower,
+                        obj=self.algorithm_image.algorithm,
+                        actor_only=False,
+                        send_action=False,
+                        flag="job-active",
+                    )
 
         if adding or self._public_orig != self.public:
             self.update_viewer_groups_for_public()

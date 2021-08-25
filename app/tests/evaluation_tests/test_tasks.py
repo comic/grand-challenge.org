@@ -2,18 +2,25 @@ from pathlib import Path
 
 import pytest
 import requests
+from actstream.actions import unfollow
 from django.conf import settings
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
 )
 from grandchallenge.evaluation.models import Method
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from grandchallenge.notifications.models import Notification
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+)
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
@@ -177,44 +184,65 @@ def test_method_validation_not_a_docker_tar(submission_file):
 
 
 class TestSetEvaluationInputs(TestCase):
+    def setUp(self):
+        interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
+        )
+
+        archive = ArchiveFactory()
+        ais = ArchiveItemFactory.create_batch(2)
+        archive.items.set(ais)
+
+        input_civs = ComponentInterfaceValueFactory.create_batch(
+            2, interface=interface
+        )
+        output_civs = ComponentInterfaceValueFactory.create_batch(
+            2, interface=interface
+        )
+
+        for ai, civ in zip(ais, input_civs):
+            ai.values.set([civ])
+
+        alg = AlgorithmImageFactory()
+        submission = SubmissionFactory(algorithm_image=alg)
+        submission.phase.archive = archive
+        submission.phase.save()
+        submission.phase.algorithm_inputs.set([interface])
+
+        jobs = []
+        for inpt, output in zip(input_civs, output_civs):
+            j = AlgorithmJobFactory(status=Job.SUCCESS, algorithm_image=alg)
+            j.inputs.set([inpt])
+            j.outputs.set([output])
+            jobs.append(j)
+
+        self.evaluation = EvaluationFactory(submission=submission)
+        self.jobs = jobs
+        self.output_civs = output_civs
+
     def test_unsuccessful_jobs_fail_evaluation(self):
-        submission = SubmissionFactory()
-        evaluation = EvaluationFactory(submission=submission)
-        jobs = (
-            AlgorithmJobFactory(status=Job.SUCCESS),
-            AlgorithmJobFactory(status=Job.FAILURE),
-        )
+        self.jobs[0].status = Job.FAILURE
+        self.jobs[0].save()
 
-        set_evaluation_inputs(
-            evaluation_pk=evaluation.pk, job_pks=[j.pk for j in jobs]
-        )
+        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
 
-        evaluation.refresh_from_db()
-        assert evaluation.status == evaluation.FAILURE
+        self.evaluation.refresh_from_db()
+        assert self.evaluation.status == self.evaluation.FAILURE
         assert (
-            evaluation.error_message
-            == "The algorithm failed to execute on 1 images."
+            self.evaluation.error_message
+            == "The algorithm failed on one or more cases."
         )
 
     def test_set_evaluation_inputs(self):
-        submission = SubmissionFactory()
-        evaluation = EvaluationFactory(submission=submission)
-        jobs = AlgorithmJobFactory.create_batch(2, status=Job.SUCCESS)
-        civs = ComponentInterfaceValueFactory.create_batch(2)
+        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
 
-        for alg, civ in zip(jobs, civs):
-            alg.outputs.set([civ])
-
-        set_evaluation_inputs(
-            evaluation_pk=evaluation.pk, job_pks=[j.pk for j in jobs]
-        )
-
-        evaluation.refresh_from_db()
-        assert evaluation.status == evaluation.PENDING
-        assert evaluation.error_message == ""
-        assert evaluation.inputs.count() == 3
-        assert evaluation.input_prefixes == {
-            str(civ.pk): f"{alg.pk}/output/" for alg, civ in zip(jobs, civs)
+        self.evaluation.refresh_from_db()
+        assert self.evaluation.status == self.evaluation.PENDING
+        assert self.evaluation.error_message == ""
+        assert self.evaluation.inputs.count() == 3
+        assert self.evaluation.input_prefixes == {
+            str(civ.pk): f"{alg.pk}/output/"
+            for alg, civ in zip(self.jobs, self.output_civs)
         }
 
 
@@ -248,3 +276,72 @@ def test_non_zip_submission_failure(
         "7z-compressed files are not supported."
     )
     assert evaluation.status == evaluation.FAILURE
+
+
+@pytest.mark.django_db
+def test_evaluation_notifications(
+    client, evaluation_image, submission_file, settings
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # Try to upload a submission without a method in place
+    with capture_on_commit_callbacks(execute=True):
+        submission = SubmissionFactory(
+            predictions_file__from_path=submission_file
+        )
+    # Missing should result in notification for admins of the challenge
+    # There are 2 notifications here. The second is about admin addition to the
+    # challenge, both notifications are for the admin.
+    for notification in Notification.objects.all():
+        assert notification.user == submission.phase.challenge.creator
+    notifications = [
+        str(notification.action) for notification in Notification.objects.all()
+    ]
+    assert "no method for this submission" in str(notifications)
+
+    # Add method and upload a submission
+    eval_container, sha256 = evaluation_image
+    method = MethodFactory(
+        image__from_path=eval_container, image_sha256=sha256, ready=True
+    )
+    # clear notifications for easier testing later
+    Notification.objects.all().delete()
+    # create submission and wait for it to be evaluated
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            submission = SubmissionFactory(
+                predictions_file__from_path=submission_file, phase=method.phase
+            )
+    # creator of submission and admins of challenge should get notification
+    # about successful submission
+    recipients = list(submission.phase.challenge.get_admins())
+    recipients.append(submission.creator)
+    assert Notification.objects.count() == len(recipients)
+    for recipient in recipients:
+        assert str(recipient) in str(Notification.objects.all())
+    for notification in Notification.objects.all():
+        assert "succeeded" in str(notification.action)
+
+    Notification.objects.all().delete()
+
+    # update evaluation status to failed
+    evaluation = submission.evaluation_set.first()
+    evaluation.update_status(status=evaluation.FAILURE)
+    assert evaluation.status == evaluation.FAILURE
+    # notifications for admin and creator of submission
+    assert Notification.objects.count() == len(recipients)
+    for recipient in recipients:
+        assert str(recipient) in str(Notification.objects.all())
+    for notification in Notification.objects.all():
+        assert "failed" in str(notification.action)
+
+    # check that when admin unsubscribed from phase, they no longer
+    # receive notifications about activity related to that phase
+    Notification.objects.all().delete()
+    unfollow(user=submission.phase.challenge.creator, obj=submission.phase)
+    evaluation.update_status(status=evaluation.SUCCESS)
+    assert str(submission.phase.challenge.creator) not in str(
+        Notification.objects.all()
+    )

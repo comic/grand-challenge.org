@@ -86,8 +86,8 @@ development_fixtures:
 
 algorithm_evaluation_fixtures:
 	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
-	docker save algorithm_io -o app/tests/resources/gc_demo_algorithm/algorithm_io.tar
-	chmod a+r app/tests/resources/gc_demo_algorithm/algorithm_io.tar
+	docker save algorithm_io -o scripts/algorithm_io.tar
+	chmod a+r scripts/algorithm_io.tar
 	docker-compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
 		--rm \

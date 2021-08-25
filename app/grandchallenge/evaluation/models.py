@@ -1,6 +1,8 @@
 import logging
 from urllib.parse import parse_qs, urljoin, urlparse
 
+from actstream import action
+from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -25,10 +27,6 @@ from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONValidator,
     MimeTypeValidator,
-)
-from grandchallenge.evaluation.emails import (
-    send_failed_evaluation_email,
-    send_successful_evaluation_email,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
 from grandchallenge.subdomains.utils import reverse
@@ -388,6 +386,18 @@ class Phase(UUIDModel):
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="evaluation_outputs"
     )
+    algorithm_inputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="+",
+        blank=True,
+        help_text="The input interfaces that the algorithms for this phase must use",
+    )
+    algorithm_outputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="+",
+        blank=True,
+        help_text="The output interfaces that the algorithms for this phase must use",
+    )
 
     class Meta:
         unique_together = (
@@ -411,6 +421,14 @@ class Phase(UUIDModel):
         if adding:
             self.set_default_interfaces()
             self.assign_permissions()
+            for admin in self.challenge.get_admins():
+                if not is_following(admin, self):
+                    follow(
+                        user=admin,
+                        obj=self,
+                        actor_only=False,
+                        send_action=False,
+                    )
 
         on_commit(
             lambda: calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
@@ -583,6 +601,13 @@ class Submission(UUIDModel):
 
         if adding:
             self.assign_permissions()
+            if not is_following(self.creator, self.phase):
+                follow(
+                    user=self.creator,
+                    obj=self.phase,
+                    actor_only=False,
+                    send_action=False,
+                )
             e = create_evaluation.signature(
                 kwargs={"submission_pk": self.pk}, immutable=True,
             )
@@ -697,10 +722,14 @@ class Evaluation(UUIDModel, ComponentJob):
         res = super().update_status(*args, **kwargs)
 
         if self.status == self.FAILURE:
-            send_failed_evaluation_email(self)
+            action.send(
+                sender=self, verb="failed", target=self.submission.phase
+            )
 
         if self.status == self.SUCCESS:
-            send_successful_evaluation_email(self)
+            action.send(
+                sender=self, verb="succeeded", target=self.submission.phase
+            )
 
         return res
 

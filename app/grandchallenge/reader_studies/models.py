@@ -805,18 +805,54 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .order_by("score__avg")
         )
 
+        options = {}
+        for option in CategoricalOption.objects.filter(
+            question__reader_study=self
+        ).values("id", "title", "question"):
+            qt = option["question"]
+            options[qt] = options.get(qt, {})
+            options[qt].update({option["id"]: option["title"]})
+
         ground_truths = {}
-        questions = set()
-        for gt in Answer.objects.filter(
-            question__reader_study=self, is_ground_truth=True
-        ).values("images__name", "answer", "question__question_text"):
+        questions = []
+        for gt in (
+            Answer.objects.filter(
+                question__reader_study=self, is_ground_truth=True
+            )
+            .values(
+                "images__name",
+                "answer",
+                "question",
+                "question__question_text",
+                "question__answer_type",
+            )
+            .order_by("question__order", "question__created")
+        ):
+            questions.append(gt["question__question_text"])
+
             ground_truths[gt["images__name"]] = ground_truths.get(
                 gt["images__name"], {}
             )
+
+            if gt["question__answer_type"] in [
+                Question.AnswerType.MULTIPLE_CHOICE,
+                Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+            ]:
+                human_readable_answers = [
+                    options[gt["question"]].get(a, a) for a in gt["answer"]
+                ]
+                human_readable_answers.sort()
+                human_readable_answer = ", ".join(human_readable_answers)
+            else:
+                human_readable_answer = options.get(gt["question"], {}).get(
+                    gt["answer"], gt["answer"]
+                )
+
             ground_truths[gt["images__name"]][
                 gt["question__question_text"]
-            ] = gt["answer"]
-            questions.add(gt["question__question_text"])
+            ] = human_readable_answer
+
+        questions = list(dict.fromkeys(questions))
 
         return {
             "max_score_questions": float(len(self.hanging_list))
@@ -1052,14 +1088,21 @@ class Question(UUIDModel):
             self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
         ]
 
+    @property
+    def allow_null_types(self):
+        return [
+            *self.annotation_types,
+            self.AnswerType.CHOICE,
+            self.AnswerType.NUMBER,
+        ]
+
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
         allowed_types = [
             {"$ref": f"#/definitions/{self.answer_type}"},
         ]
 
-        allow_null = self.answer_type in self.annotation_types
-        if allow_null:
+        if self.answer_type in self.allow_null_types:
             allowed_types.append({"$ref": "#/definitions/null"})
 
         try:
@@ -1233,23 +1276,32 @@ class Answer(UUIDModel):
         if not creator.has_perm("read_readerstudy", question.reader_study):
             raise ValidationError("This user is not a reader for this study.")
 
-        if (
-            question.answer_type == Question.AnswerType.CHOICE
-            and answer not in question.options.values_list("id", flat=True)
-        ):
-            raise ValidationError(
-                "Provided option is not valid for this question"
-            )
+        valid_options = question.options.values_list("id", flat=True)
+        if question.answer_type == Question.AnswerType.CHOICE:
+            if not question.required:
+                valid_options = (*valid_options, None)
+            if answer not in valid_options:
+                raise ValidationError(
+                    "Provided option is not valid for this question"
+                )
 
         if question.answer_type in (
             Question.AnswerType.MULTIPLE_CHOICE,
             Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ):
-            options = question.options.values_list("id", flat=True)
-            if not all(x in options for x in answer):
+            if not all(x in valid_options for x in answer):
                 raise ValidationError(
                     "Provided options are not valid for this question"
                 )
+
+        if (
+            question.answer_type == Question.AnswerType.NUMBER
+            and question.required
+            and answer is None
+        ):
+            raise ValidationError(
+                "Answer for required question cannot be None"
+            )
 
     @property
     def answer_text(self):
@@ -1265,9 +1317,9 @@ class Answer(UUIDModel):
             Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ):
             return ", ".join(
-                self.question.options.filter(pk__in=self.answer).values_list(
-                    "title", flat=True
-                )
+                self.question.options.filter(pk__in=self.answer)
+                .order_by("title")
+                .values_list("title", flat=True)
             )
         return self.answer
 

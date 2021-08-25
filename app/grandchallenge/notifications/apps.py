@@ -24,6 +24,9 @@ def init_notification_permissions(*_, **__):
     assign_perm(
         f"{Follow._meta.app_label}.delete_{Follow._meta.model_name}", g,
     )
+    assign_perm(
+        f"{Follow._meta.app_label}.change_{Follow._meta.model_name}", g,
+    )
 
 
 class NotificationsConfig(AppConfig):
@@ -49,6 +52,10 @@ class NotificationsConfig(AppConfig):
         registry.register(apps.get_model("challenges.Challenge"))
         registry.register(apps.get_model("challenges.ExternalChallenge"))
         registry.register(apps.get_model("participants.RegistrationRequest"))
+        registry.register(apps.get_model("evaluation.Submission"))
+        registry.register(apps.get_model("evaluation.Evaluation"))
+        registry.register(apps.get_model("evaluation.Phase"))
+        registry.register(apps.get_model("cases.RawImageUploadSession"))
         post_migrate.connect(init_notification_permissions, sender=self)
 
         # noinspection PyUnresolvedReferences

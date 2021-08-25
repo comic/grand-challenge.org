@@ -172,23 +172,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-
-        kwargs.update(
-            {
-                "user": self.request.user,
-                "creator_must_be_verified": self.phase.creator_must_be_verified,
-                "display_comment_field": self.phase.allow_submission_comments,
-                "supplementary_file_choice": self.phase.supplementary_file_choice,
-                "supplementary_file_label": self.phase.supplementary_file_label,
-                "supplementary_file_help_text": self.phase.supplementary_file_help_text,
-                "supplementary_url_choice": self.phase.supplementary_url_choice,
-                "supplementary_url_label": self.phase.supplementary_url_label,
-                "supplementary_url_help_text": self.phase.supplementary_url_help_text,
-                "algorithm_submission": self.phase.submission_kind
-                == self.phase.SubmissionKind.ALGORITHM,
-            }
-        )
-
+        kwargs.update({"user": self.request.user, "phase": self.phase})
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -259,8 +243,6 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         }
 
     def form_valid(self, form):
-        form.instance.phase = self.phase
-
         if "algorithm" in form.cleaned_data:
             # Algorithm submission
             form.instance.algorithm_image = form.cleaned_data[
@@ -377,6 +359,7 @@ class EvaluationList(
             "submission__creator__user_profile",
             "submission__creator__verification",
             "submission__phase__challenge",
+            "submission__algorithm_image__algorithm",
         )
 
         if self.request.challenge.is_admin(self.request.user):
@@ -465,9 +448,18 @@ class LeaderboardDetail(
                     else "User",
                     sort_field="submission__creator__username",
                 ),
-                Column(title="Created", sort_field="created"),
             ]
         )
+
+        if self.phase.submission_kind == self.phase.SubmissionKind.ALGORITHM:
+            columns.append(
+                Column(
+                    title="Algorithm",
+                    sort_field="submission__algorithm_image__algorithm__title",
+                )
+            )
+
+        columns.append(Column(title="Created", sort_field="created"))
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
@@ -544,6 +536,7 @@ class LeaderboardDetail(
                 "submission__creator__user_profile",
                 "submission__creator__verification",
                 "submission__phase__challenge",
+                "submission__algorithm_image__algorithm",
             )
             .filter(
                 submission__phase=self.phase,

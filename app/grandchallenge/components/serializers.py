@@ -24,6 +24,7 @@ class ComponentInterfaceSerializer(serializers.ModelSerializer):
             "pk",
             "default_value",
             "super_kind",
+            "relative_path",
         ]
 
     def get_super_kind(self, obj: ComponentInterface) -> str:

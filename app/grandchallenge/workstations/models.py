@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
@@ -77,7 +78,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created", "title")
 
-    @property
+    @cached_property
     def latest_ready_image(self):
         """
         Returns

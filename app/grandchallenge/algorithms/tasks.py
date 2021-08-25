@@ -1,7 +1,5 @@
+from actstream import action
 from celery import chain, chord, group, shared_task
-from django.conf import settings
-from django.contrib.sites.models import Site
-from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
@@ -19,6 +17,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.subdomains.utils import reverse
 
@@ -45,28 +44,28 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
             for civ_pk, upload_pk in upload_pks.items()
         )
         start_jobs = chord(image_tasks, start_jobs).on_error(
-            group(on_chord_error.s(job_pk=job_pk))
+            group(on_job_creation_error.s(job_pk=job_pk))
         )
 
     on_commit(start_jobs.apply_async)
 
 
 @shared_task(bind=True)
-def on_chord_error(self, task_id, *args, **kwargs):
+def on_job_creation_error(self, task_id, *args, **kwargs):
     job_pk = kwargs.pop("job_pk")
     job = Job.objects.get(pk=job_pk)
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
-        kwargs={"job_pks": [job.pk]}, immutable=True
+    linked_task = send_failed_job_notification.signature(
+        kwargs={"job_pk": job.pk}, immutable=True
     )
 
     error_message = ""
     missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
     if missing_inputs:
         error_message += (
-            f"Job can't be started, input is missing for interface(s):"
-            f" {list(c.interface.title for c in missing_inputs)} "
+            f"Job can't be started, input is missing for "
+            f"{oxford_comma([c.interface.title for c in missing_inputs])}"
         )
 
     res = self.AsyncResult(task_id).result
@@ -107,8 +106,8 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
-        kwargs={"job_pks": [job.pk]}, immutable=True
+    linked_task = send_failed_job_notification.signature(
+        kwargs={"job_pk": job.pk}, immutable=True
     )
 
     # check if all ComponentInterfaceValue's have a value.
@@ -118,8 +117,8 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         job.update_status(
             status=job.FAILURE,
             error_message=(
-                f"Job can't be started, input is missing for interface(s):"
-                f" {list(c.interface.title for c in missing_inputs)}"
+                f"Job can't be started, input is missing for "
+                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
             ),
         )
         on_commit(linked_task.apply_async)
@@ -139,8 +138,12 @@ def create_algorithm_jobs_for_session(
     groups = [algorithm_image.algorithm.editors_group]
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
-        kwargs={"session_pk": session.pk}, immutable=True
+    linked_task = send_failed_session_jobs_notifications.signature(
+        kwargs={
+            "session_pk": session.pk,
+            "algorithm_pk": algorithm_image.algorithm.pk,
+        },
+        immutable=True,
     )
 
     default_input_interface = ComponentInterface.objects.get(
@@ -211,6 +214,8 @@ def execute_jobs(
     creator=None,
     extra_viewer_groups=None,
     linked_task=None,
+    on_error=None,
+    execute_one_first=False,
 ):
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
@@ -220,10 +225,19 @@ def execute_jobs(
     )
 
     if jobs:
-        workflow = group(j.signature for j in jobs)
+        if on_error is not None:
+            signatures = [j.signature.on_error(on_error) for j in jobs]
+        else:
+            signatures = [j.signature for j in jobs]
+
+        if execute_one_first and len(signatures) > 1:
+            # Execute 1 job first before trying the rest in parallel
+            # in case this job doesn't work at all
+            workflow = signatures[0] | group(signatures[1:])
+        else:
+            workflow = group(signatures)
 
         if linked_task is not None:
-            linked_task.kwargs.update({"job_pks": [j.pk for j in jobs]})
             workflow |= linked_task
 
         on_commit(workflow.apply_async)
@@ -304,6 +318,8 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
         # Check interfaces are complete
         civ_interfaces = {civ.interface for civ in civ_set}
         if input_interfaces.issubset(civ_interfaces):
+            # If the algorithm works with a subset of the interfaces
+            # present in the set then only feed these through to the algorithm
             valid_input = {
                 civ for civ in civ_set if civ.interface in input_interfaces
             }
@@ -330,74 +346,63 @@ def remaining_jobs(*, creator, algorithm_image):
 
 
 @shared_task
-def send_failed_jobs_email(*, job_pks, session_pk=None):
-    excluded_images_count = 0
+def send_failed_job_notification(*, job_pk):
+    job = Job.objects.get(pk=job_pk)
 
-    if session_pk:
-        session = RawImageUploadSession.objects.get(pk=session_pk)
+    if job.status == Job.FAILURE and job.creator is not None:
+        algorithm = job.algorithm_image.algorithm
+        experiment_url = reverse(
+            "algorithms:job-list", kwargs={"slug": algorithm.slug}
+        )
+        action.send(
+            sender=algorithm,
+            verb=(
+                f"Unfortunately one of the jobs for algorithm {algorithm.title} "
+                f"failed with an error."
+            ),
+            description=f"{experiment_url}",
+            target=job.creator,
+        )
+
+
+@shared_task
+def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
+    session = RawImageUploadSession.objects.get(pk=session_pk)
+    algorithm = Algorithm.objects.get(pk=algorithm_pk)
+
+    if session.creator is not None:
+        experiment_url = reverse(
+            "algorithms:execution-session-detail",
+            kwargs={"slug": algorithm.slug, "pk": session_pk},
+        )
+
         excluded_images_count = session.image_set.filter(
             componentinterfacevalue__algorithms_jobs_as_input__isnull=True
         ).count()
 
-    failed_jobs = Job.objects.filter(
-        status=Job.FAILURE, pk__in=job_pks
-    ).distinct()
-
-    if failed_jobs.exists() or excluded_images_count > 0:
-        # Note: this would not work if you could route jobs to different
-        # algorithms from 1 upload session, but that is not supported right now
-        algorithm = failed_jobs.first().algorithm_image.algorithm
-        creator = failed_jobs.first().creator
-
-        experiment_url = reverse(
-            "algorithms:job-list", kwargs={"slug": algorithm.slug}
-        )
-        if session_pk is not None:
-            experiment_url = reverse(
-                "algorithms:execution-session-detail",
-                kwargs={"slug": algorithm.slug, "pk": session_pk},
-            )
-
-        message = ""
-        if failed_jobs.count() > 0:
-            message = (
-                f"Unfortunately {failed_jobs.count()} of your jobs for algorithm "
-                f"'{algorithm.title}' failed with an error. "
-            )
-
         if excluded_images_count > 0:
-            message = (
-                f"{message}"
-                f"{excluded_images_count} of your jobs for algorithm "
-                f"'{algorithm.title}' were not started because the number of allowed "
-                f"jobs was reached. "
+            action.send(
+                sender=algorithm,
+                verb=(
+                    f"Unfortunately {excluded_images_count} of the jobs "
+                    f"for algorithm {algorithm.title} were not started because the number of allowed "
+                    f"jobs was reached."
+                ),
+                description=f"{experiment_url}",
+                target=session.creator,
             )
 
-        message = (
-            f"{message}"
-            f"You can inspect the output and any error messages at "
-            f"{experiment_url}.\n\n"
-            f"You may wish to try and correct any errors and try again, "
-            f"or contact the algorithm editors. "
-            f"The following information may help them:\n"
-        )
-        if creator is not None:
-            message += f"User: {creator.username}\n"
-        if session_pk is not None:
-            message += f"Experiment ID: {session_pk}\n"
+        failed_jobs = Job.objects.filter(
+            status=Job.FAILURE, inputs__image__in=session.image_set.all()
+        ).distinct()
 
-        receivers = {o.email for o in algorithm.editors_group.user_set.all()}
-        if creator is not None:
-            receivers.add(creator.email)
-
-        for email in receivers:
-            send_mail(
-                subject=(
-                    f"[{Site.objects.get_current().domain.lower()}] "
-                    f"[{algorithm.title.lower()}] "
-                    f"Jobs Failed"
+        if failed_jobs.exists():
+            action.send(
+                sender=algorithm,
+                verb=(
+                    f"Unfortunately {failed_jobs.count()} of the jobs for algorithm {algorithm.title} "
+                    f"failed with an error."
                 ),
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
+                description=f"{experiment_url}",
+                target=session.creator,
             )

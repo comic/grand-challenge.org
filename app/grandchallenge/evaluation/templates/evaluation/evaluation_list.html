@@ -37,12 +37,13 @@
                     <th>User</th>
                 {% endif %}
                 <th>Status</th>
+                {% if "change_challenge" in challenge_perms %}
+                    <th>Hide/Publish</th>
+                    <th>Algorithm Results</th>
+                {% endif %}
                 <th>Output</th>
                 <th>Position</th>
                 <th>Comment</th>
-                {% if "change_challenge" in challenge_perms %}
-                    <th>Hide/Publish</th>
-                {% endif %}
             </tr>
             </thead>
             <tbody>
@@ -75,31 +76,6 @@
                     </span>
                     </td>
 
-                    <td>
-                        {% if evaluation.status == evaluation.SUCCESS %}
-                            {% if evaluation.published %}
-                                <a href="{{ evaluation.get_absolute_url }}">Result</a>
-                            {% else %}
-                                Submission is under review by the challenge admins.
-                            {% endif %}
-                        {% elif evaluation.FAILURE %}
-                            {% firstof evaluation.error_message evaluation.get_status_display %}
-                        {% endif %}
-                    </td>
-
-                    <td data-order="{{ evaluation.rank }}">
-                        {% if evaluation.rank > 0 %}
-                            {{ evaluation.rank }}
-                        {% endif %}
-                        {% if evaluation.submission.supplementary_file %}
-                            <a href="{{ evaluation.submission.supplementary_file.url }}">
-                                <i class="fa fa-file"></i>
-                            </a>
-                        {% endif %}
-                    </td>
-
-                    <td>{{ evaluation.submission.comment }}</td>
-
                     {% if "change_challenge" in challenge_perms %}
                         <td>
                             {% if evaluation.status == evaluation.SUCCESS %}
@@ -124,8 +100,37 @@
                                 </form>
                             {% endif %}
                         </td>
+                        <td>
+                            {% if evaluation.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKind.ALGORITHM %}
+                                <a href="{% url 'algorithms:job-list' slug=evaluation.submission.algorithm_image.algorithm.slug %}">{{ evaluation.submission.algorithm_image.algorithm.title }}</a>
+                            {% endif %}
+                        </td>
                     {% endif %}
 
+                    <td>
+                        {% if evaluation.status == evaluation.SUCCESS %}
+                            {% if evaluation.published %}
+                                <a href="{{ evaluation.get_absolute_url }}">Result</a>
+                            {% else %}
+                                Submission is under review by the challenge admins.
+                            {% endif %}
+                        {% elif evaluation.status == evaluation.FAILURE %}
+                            {% firstof evaluation.error_message evaluation.get_status_display %}
+                        {% endif %}
+                    </td>
+
+                    <td data-order="{{ evaluation.rank }}">
+                        {% if evaluation.rank > 0 %}
+                            {{ evaluation.rank }}
+                        {% endif %}
+                        {% if evaluation.submission.supplementary_file %}
+                            <a href="{{ evaluation.submission.supplementary_file.url }}">
+                                <i class="fa fa-file"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ evaluation.submission.comment }}</td>
                 </tr>
             {% endfor %}
 

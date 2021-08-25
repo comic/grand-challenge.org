@@ -40,38 +40,66 @@
                 <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
                     <div class="d-flex justify-content-between">
                         <div class="py-2 pl-3">
-                            <input class="checkbox pr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
+                            <input class="checkbox pr-1 mr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
                                    value="{{ object.id }}" data-url="{% url 'api:notification-detail' pk=object.pk %}">
                             {% if not object.read %}
-                                <span class="text-primary align-middle ml-2"><i class="fa fa-circle pl-2"></i></span>
+                                <span class="text-primary align-middle mr-1"><i class="fa fa-circle pl-1"></i></span>
                             {% endif %}
-                            {% get_content_type object.action.actor as actor_ct %}
-                            {% if actor_ct %}
-                                {% if actor_ct.model == 'user' and object.action.actor != request.user %}
+                            {% if object.action.actor %}
+                                {% if object.action.actor_content_type.model == 'user' and object.action.actor != request.user %}
                                     {{ object.action.actor|user_profile_link }}
-                                {% elif actor_ct.model == 'user' and object.action.actor == request.user %}
+                                {% elif object.action.actor_content_type.model == 'user' and object.action.actor == request.user %}
                                     You {% if 'were' in object.action.verb or 'was' in object.action.verb or 'created' in object.action.verb or 'is' in object.action.verb or 'posted' in object.action.verb or 'responded' in object.action.verb %} {% else %}were {% endif %}
-                                {% elif actor_ct.model == 'algorithmpermissionrequest' or actor_ct.model == 'readerstudypermissionrequest' or actor_ct.model == 'archivepermissionrequest' %}
+                                {% elif object.action.actor_content_type.model == 'submission' %}
+                                    The <a href="{{ object.action.actor.get_absolute_url }}">submission</a> from {{ object.action.actor.creator|user_profile_link }} could not be evaluated because of there is no valid evaluation method for the <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target}}</a>.
+                                {% elif object.action.actor_content_type.model == 'algorithmpermissionrequest' or object.action.actor_content_type.model == 'readerstudypermissionrequest' or object.action.actor_content_type.model == 'archivepermissionrequest' %}
                                     Your registration request for <a href="{{ object.action.actor.base_object.get_absolute_url }}">{{ object.action.actor.object_name }}</a>
-                                {% elif actor_ct.model == 'registrationrequest' %}
+                                {% elif object.action.actor_content_type.model == 'registrationrequest' %}
                                     Your participation request for <a href="{{ object.action.actor.challenge.get_absolute_url }}">{{ object.action.actor.challenge }}</a>
+                                {% elif object.action.actor_content_type.model == 'evaluation' and object.action.actor.submission.creator == request.user %}
+                                    {% if object.action.verb == "failed" %}
+                                        Your <a href="{{ object.action.actor.submission.get_absolute_url }}">submission</a> to <a href="{{ object.action.target.challenge.get_absolute_url }}">{{ object.action.target.challenge.short_name }}</a> failed. <span class="text-truncate font-italic text-muted align-middle mx-2 ">{{ object.action.actor.error_message }}</span>
+                                    {% else %}
+                                        Your <a href="{{ object.action.actor.submission.get_absolute_url }}">submission</a> to <a href="{{ object.action.target.challenge.get_absolute_url }}">{{ object.action.target.challenge.short_name }}</a> was successful.
+                                    {% endif %}
+                                {% elif object.action.actor_content_type.model == 'evaluation' and object.action.target.creator != request.user %}
+                                    {% if object.action.verb == "failed" %}
+                                       The <a href="{{ object.action.actor.submission.get_absolute_url }}">submission</a> from {{ object.action.actor.submission.creator|user_profile_link }} to <a href="{{ object.action.target.challenge.get_absolute_url }}">{{ object.action.target.challenge.short_name }}</a> failed. <span class="text-truncate font-italic text-muted align-middle mx-2 ">{{ object.action.actor.error_message }}</span>
+                                    {% else %}
+                                        There is a new <a href="{{ object.action.actor.submission.get_absolute_url }}">result</a> for <a href="{{ object.action.target.challenge.get_absolute_url }}">{{ object.action.target.challenge.short_name }}</a> from {{ object.action.actor.submission.creator|user_profile_link }}.
+                                    {% endif %}
+                                {% elif object.action.actor_content_type.model == 'algorithm' %}
+                                    {% if object.action.target == request.user %}
+                                        {{ object.action.verb }} <span class="text-truncate font-italic text-muted align-middle mx-2 ">| Inspect the output and any error messages <a href="{{ object.action.description }}">here</a>.</span>
+                                    {% else %}
+                                        {{ object.action.verb }} <span class="text-truncate font-italic text-muted align-middle mx-2 ">| {% if object.action.target %} Creator: {{ object.action.target|user_profile_link }} | {% endif %}Inspect the output and any error messages <a href="{{ object.action.description }}">here</a>.</span>
+                                    {% endif %}
+                                {% elif object.action.actor_content_type.model == 'rawimageuploadsession' %}
+                                    Your recent <a href="{{ object.action.actor.get_absolute_url }}">upload</a> {{ object.action.verb }}.
+                                {% endif %}
+                                {% if object.action.actor_content_type.model == "evaluation" and  object.action.actor.published and object.action.verb != 'failed' %}
+                                    <span class="text-truncate font-italic text-muted align-middle mx-2 ">Inspect the result on the <a href="{% url  "evaluation:leaderboard" challenge_short_name=object.action.target.challenge.short_name slug=object.action.target.slug %}">leaderboard</a>.</span>
+                                {% elif  object.action.actor_content_type.model == "evaluation" and not object.action.actor.published and object.action.verb != 'failed'%}
+                                    <span class="text-truncate font-italic text-muted align-middle mx-2 ">You can publish the result on the leaderboard <a href="{{ object.action.actor.get_absolute_url }}">here</a></span>
                                 {% endif %}
                             {% endif %}
-                            {{ object.action.verb }}
-                            {% if object.action.action_object %}
-                                <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
-                            {% endif %}
-                            {% if object.action.target %}
-                                {% get_content_type object.action.target as target_ct %}
-                                {% if target_ct.model == "forum" %}
-                                    in
+                            {% if object.action.actor_content_type.model == 'evaluation' or object.action.actor_content_type.model == 'algorithm' or object.action.target_content_type.model == 'phase' or object.action.actor_content_type.model == 'rawimageuploadsession' %}
+                            {% else %}
+                                {{ object.action.verb }}
+                                {% if object.action.action_object %}
+                                    <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
                                 {% endif %}
-                                <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
-                            {% endif %}
-                            {{ object.action.timestamp|naturaltime }}
-                            {% if object.action.target %}
-                                {% if target_ct.model == 'challenge' %}
-                                    <span class="text-truncate font-italic text-muted align-middle mx-2 ">| Accept or decline <a href="{% url 'participants:registration-list' challenge_short_name=object.action.target.short_name %}">here</a>.</span>
+                                {% if object.action.target %}
+                                    {% if object.action.target_content_type.model == "forum" %}
+                                        in
+                                    {% endif %}
+                                    <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
+                                {% endif %}
+                                {{ object.action.timestamp|naturaltime }}
+                                {% if object.action.target %}
+                                    {% if object.action.target_content_type.model == 'challenge' %}
+                                        <span class="text-truncate font-italic text-muted align-middle mx-2 ">| Accept or decline <a href="{% url 'participants:registration-list' challenge_short_name=object.action.target.short_name %}">here</a>.</span>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         </div>

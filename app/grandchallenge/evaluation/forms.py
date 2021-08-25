@@ -16,6 +16,7 @@ from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
     ExtensionValidator,
     MimeTypeValidator,
@@ -169,6 +170,7 @@ class MethodForm(SaveFormInitMixin, forms.ModelForm):
 
 submission_fields = (
     "creator",
+    "phase",
     "comment",
     "supplementary_file",
     "supplementary_url",
@@ -196,58 +198,56 @@ class SubmissionForm(forms.ModelForm):
     )
 
     def __init__(  # noqa: C901
-        self,
-        *args,
-        user,
-        creator_must_be_verified=False,
-        algorithm_submission=False,
-        display_comment_field=False,
-        supplementary_file_choice=Phase.OFF,
-        supplementary_file_label="",
-        supplementary_file_help_text="",
-        supplementary_url_choice=Phase.OFF,
-        supplementary_url_label="",
-        supplementary_url_help_text="",
-        **kwargs,
+        self, *args, user, phase: Phase, **kwargs,
     ):
-        """
-        Conditionally render the comment field based on the
-        display_comment_field kwarg
-        """
         super().__init__(*args, **kwargs)
 
-        self.creator_must_be_verified = creator_must_be_verified
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=user.pk
+        )
+        self.fields["creator"].initial = user
 
-        if not display_comment_field:
+        # Note that the validation of creator and algorithm require
+        # access to the phase properties, so those validations
+        # would need to be updated if phase selections are allowed.
+        self._phase = phase
+        self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
+        self.fields["phase"].initial = phase
+
+        if not self._phase.allow_submission_comments:
             del self.fields["comment"]
 
-        if supplementary_file_label:
-            self.fields["supplementary_file"].label = supplementary_file_label
+        if self._phase.supplementary_file_label:
+            self.fields[
+                "supplementary_file"
+            ].label = self._phase.supplementary_file_label
 
-        if supplementary_file_help_text:
+        if self._phase.supplementary_file_help_text:
             self.fields["supplementary_file"].help_text = clean(
-                supplementary_file_help_text
+                self._phase.supplementary_file_help_text
             )
 
-        if supplementary_file_choice == Phase.REQUIRED:
+        if self._phase.supplementary_file_choice == Phase.REQUIRED:
             self.fields["supplementary_file"].required = True
-        elif supplementary_file_choice == Phase.OFF:
+        elif self._phase.supplementary_file_choice == Phase.OFF:
             del self.fields["supplementary_file"]
 
-        if supplementary_url_label:
-            self.fields["supplementary_url"].label = supplementary_url_label
+        if self._phase.supplementary_url_label:
+            self.fields[
+                "supplementary_url"
+            ].label = self._phase.supplementary_url_label
 
-        if supplementary_url_help_text:
+        if self._phase.supplementary_url_help_text:
             self.fields["supplementary_url"].help_text = clean(
-                supplementary_url_help_text
+                self._phase.supplementary_url_help_text
             )
 
-        if supplementary_url_choice == Phase.REQUIRED:
+        if self._phase.supplementary_url_choice == Phase.REQUIRED:
             self.fields["supplementary_url"].required = True
-        elif supplementary_url_choice == Phase.OFF:
+        elif self._phase.supplementary_url_choice == Phase.OFF:
             del self.fields["supplementary_url"]
 
-        if algorithm_submission:
+        if self._phase.submission_kind == self._phase.SubmissionKind.ALGORITHM:
             del self.fields["chunked_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
@@ -255,15 +255,13 @@ class SubmissionForm(forms.ModelForm):
                 f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}",
                 Algorithm,
             ).order_by("title")
+
+            self._algorithm_inputs = self._phase.algorithm_inputs.all()
+            self._algorithm_outputs = self._phase.algorithm_outputs.all()
         else:
             del self.fields["algorithm"]
 
             self.fields["chunked_upload"].widget.user = user
-
-        self.fields["creator"].queryset = get_user_model().objects.filter(
-            pk=user.pk
-        )
-        self.fields["creator"].initial = user
 
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
@@ -282,10 +280,34 @@ class SubmissionForm(forms.ModelForm):
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
 
+        if set(self._algorithm_inputs) != set(algorithm.inputs.all()):
+            raise ValidationError(
+                "The inputs for your algorithm do not match the ones "
+                "required by this phase, please update your algorithm "
+                "to work with: "
+                f"{oxford_comma(self._algorithm_inputs)}. "
+            )
+
+        if set(self._algorithm_outputs) != set(algorithm.outputs.all()):
+            raise ValidationError(
+                "The outputs from your algorithm do not match the ones "
+                "required by this phase, please update your algorithm "
+                "to produce: "
+                f"{oxford_comma(self._algorithm_outputs)}. "
+            )
+
         if algorithm.latest_ready_image is None:
             raise ValidationError(
                 "This algorithm does not have a usable container image. "
                 "Please add one and try again."
+            )
+
+        if Submission.objects.filter(
+            algorithm_image=algorithm.latest_ready_image, phase=self._phase,
+        ).exists():
+            raise ValidationError(
+                "A submission for this algorithm container image "
+                "for this phase already exists."
             )
 
         return algorithm
@@ -298,7 +320,7 @@ class SubmissionForm(forms.ModelForm):
         except ObjectDoesNotExist:
             user_is_verified = False
 
-        if self.creator_must_be_verified and not user_is_verified:
+        if self._phase.creator_must_be_verified and not user_is_verified:
             error_message = format_html(
                 "You must verify your account before you can make a "
                 "submission to this phase. Please "
@@ -316,7 +338,7 @@ class SubmissionForm(forms.ModelForm):
     class Meta:
         model = Submission
         fields = submission_fields
-        widgets = {"creator": forms.HiddenInput}
+        widgets = {"creator": forms.HiddenInput, "phase": forms.HiddenInput}
 
 
 class LegacySubmissionForm(SubmissionForm):
@@ -329,9 +351,5 @@ class LegacySubmissionForm(SubmissionForm):
             Lower("username")
         )
 
-        # For legacy submissions an admin is able to create submissions
-        # for any participant
-        self.creator_must_be_verified = False
-
     class Meta(SubmissionForm.Meta):
-        widgets = {"creator": Select2Widget}
+        widgets = {"creator": Select2Widget, "phase": forms.HiddenInput}

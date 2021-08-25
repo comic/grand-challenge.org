@@ -429,8 +429,8 @@ def _create_user_tokens(users):
     user_tokens = {
         "admin": "1b9436200001f2eaf57cd77db075cbb60a49a00a",
         "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
-        "algorithmuser": "dc3526c2008609b429514b6361a33f8516541464",
         "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
+        "demop": "00aa710f4dc5621a0cb64b0795fbba02e39d7700",
     }
 
     out = f"{'*' * 80}\n"

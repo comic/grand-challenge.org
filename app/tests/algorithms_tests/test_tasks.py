@@ -3,6 +3,7 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from actstream.models import Follow
 from django.core.files.base import File
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
@@ -16,6 +17,7 @@ from grandchallenge.algorithms.tasks import (
     execute_jobs,
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
+    send_failed_job_notification,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -23,6 +25,7 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
+from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -38,6 +41,7 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -401,14 +405,16 @@ def test_algorithm_multiple_inputs(
     job = Job.objects.get()
     assert job.error_message == ""
     assert job.status == job.SUCCESS
+
+    # Remove fake value for score
+    output_dict = job.outputs.first().value
+    output_dict.pop("score")
+
     assert {f"/input/{x.relative_path}" for x in job.inputs.all()} == set(
-        job.outputs.first().value.keys()
+        output_dict.keys()
     )
     assert sorted(
-        map(
-            lambda x: x if x != {} else "json",
-            job.outputs.first().value.values(),
-        )
+        map(lambda x: x if x != {} else "json", output_dict.values(),)
     ) == sorted(expected)
 
 
@@ -456,7 +462,7 @@ def test_algorithm_input_image_multiple_files(
     # job = Job.objects.first()
     # assert job.status == job.FAILURE
     # assert job.error_message == (
-    #     "Job can't be started, input is missing for interface(s): "
+    #     "Job can't be started, input is missing for "
     #     "['Generic Medical Image'] "
     #     "ValueError('Image imports should result in a single image')"
     # )
@@ -514,10 +520,7 @@ def test_execute_algorithm_job_for_inputs(
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
-    assert (
-        "Job can't be started, input is missing for interface(s):"
-        in job.error_message
-    )
+    assert "Job can't be started, input is missing for " in job.error_message
 
 
 @pytest.mark.django_db
@@ -604,3 +607,67 @@ class TestJobCreation:
         )
 
         assert filtered_civ_sets == civ_sets[1:]
+
+
+@pytest.mark.django_db
+def test_failed_job_notifications(client, algorithm_io_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+    editor = UserFactory()
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
+    )
+    alg.algorithm.add_editor(editor)
+
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+
+    # mark job as failed
+    job.status = Job.FAILURE
+    job.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        send_failed_job_notification(job_pk=job.pk)
+
+    # 2 notifications: for the editor of the algorithm and the job creator
+    assert Notification.objects.count() == 2
+    assert creator.username in str(Notification.objects.all())
+    assert editor.username in str(Notification.objects.all())
+    assert (
+        f"Unfortunately one of the jobs for algorithm {alg.algorithm.title} failed with an error"
+        in str(Notification.objects.first().action)
+    )
+
+    # delete notifications for easier testing below
+    Notification.objects.all().delete()
+    # unsubscribe editor from job notifications
+    _ = get_view_for_user(
+        viewname="api:follow-detail",
+        client=client,
+        method=client.patch,
+        reverse_kwargs={
+            "pk": Follow.objects.filter(user=editor, flag="job-active")
+            .get()
+            .pk
+        },
+        content_type="application/json",
+        data={"flag": "job-inactive"},
+        user=editor,
+    )
+
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+
+    # mark job as failed
+    job.status = Job.FAILURE
+    job.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        send_failed_job_notification(job_pk=job.pk)
+
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user is not editor
