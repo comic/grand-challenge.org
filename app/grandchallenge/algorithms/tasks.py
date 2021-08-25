@@ -215,8 +215,34 @@ def execute_jobs(
     extra_viewer_groups=None,
     linked_task=None,
     on_error=None,
-    execute_one_first=False,
+    execute_one_first=False,  # TODO fixme
 ):
+    """
+    Execute an algorithm image on sets of component interface values.
+
+    The resulting jobs will be applied in parallel. Note that using
+    a chord here is not supported due to the message size limit of
+    SQS (https://github.com/celery/kombu/issues/279).
+
+    Parameters
+    ----------
+    algorithm_image
+        The algorithm image to use
+    civ_sets
+        The sets of component interface values that will be used as input
+        for the algorithm image
+    creator
+        The creator of the algorithm jobs
+    extra_viewer_groups
+        The viewer groups that will also get access to view the job
+    linked_task
+        A task that is run after each job completion. This must be able
+        to handle being called more than once, and in parallel.
+    on_error
+        A task that is run every time a job fails
+    execute_one_first
+        Option to run only one task first
+    """
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
         civ_sets=civ_sets,
@@ -224,21 +250,14 @@ def execute_jobs(
         extra_viewer_groups=extra_viewer_groups,
     )
 
-    if jobs:
-        if on_error is not None:
-            signatures = [j.signature.on_error(on_error) for j in jobs]
-        else:
-            signatures = [j.signature for j in jobs]
-
-        if execute_one_first and len(signatures) > 1:
-            # Execute 1 job first before trying the rest in parallel
-            # in case this job doesn't work at all
-            workflow = signatures[0] | group(signatures[1:])
-        else:
-            workflow = group(signatures)
+    for j in jobs:
+        workflow = j.signature
 
         if linked_task is not None:
             workflow |= linked_task
+
+        if on_error is not None:
+            workflow = workflow.on_error(on_error)
 
         on_commit(workflow.apply_async)
 
