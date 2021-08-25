@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def create_evaluation(*, submission_pk, max_jobs=1):
+def create_evaluation(*, submission_pk, max_initial_jobs=1):
     """
     Creates an Evaluation for a Submission
 
@@ -31,7 +31,7 @@ def create_evaluation(*, submission_pk, max_jobs=1):
     ----------
     submission_pk
         The primary key of the Submission
-    max_jobs
+    max_initial_jobs
         The maximum number of algorithm jobs to schedule first
     """
     Submission = apps.get_model(  # noqa: N806
@@ -72,7 +72,10 @@ def create_evaluation(*, submission_pk, max_jobs=1):
     if submission.algorithm_image:
         on_commit(
             lambda: create_algorithm_jobs_for_evaluation.apply_async(
-                kwargs={"evaluation_pk": evaluation.pk, "max_jobs": max_jobs}
+                kwargs={
+                    "evaluation_pk": evaluation.pk,
+                    "max_jobs": max_initial_jobs,
+                }
             )
         )
     elif submission.predictions_file:
@@ -140,7 +143,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         )
     else:
         # Run with 1 job and then if that goes well, come back and
-        # run all jobs.
+        # run all jobs. Note that setting None here is caught by
+        # the if statement to schedule `set_evaluation_inputs`
         linked_task = create_algorithm_jobs_for_evaluation.signature(
             kwargs={"evaluation_pk": evaluation_pk, "max_jobs": None},
             immutable=True,

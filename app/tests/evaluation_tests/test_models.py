@@ -40,7 +40,7 @@ class TestSubmission(TestCase):
         )
 
         with capture_on_commit_callbacks(execute=True):
-            create_evaluation(submission_pk=s.pk, max_jobs=None)
+            create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
 
         assert Job.objects.count() == 2
         assert [
@@ -55,7 +55,7 @@ class TestSubmission(TestCase):
         )
 
         with capture_on_commit_callbacks(execute=True):
-            create_evaluation(submission_pk=s.pk, max_jobs=None)
-            create_evaluation(submission_pk=s.pk, max_jobs=None)
+            create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+            create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
 
         assert Job.objects.count() == 2
