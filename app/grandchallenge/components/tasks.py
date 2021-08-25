@@ -407,6 +407,7 @@ def parse_job_outputs(
         job.update_status(
             status=job.FAILURE, error_message=str(e),
         )
+        raise PriorStepFailed("Could not parse outputs")
     except Exception:
         job.update_status(
             status=job.FAILURE, error_message="Could not parse outputs",

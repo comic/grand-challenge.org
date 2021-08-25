@@ -158,13 +158,34 @@ def create_algorithm_jobs_for_session(
         for image in session.image_set.all()
     ]
 
-    execute_jobs(
+    new_jobs = execute_jobs(
         algorithm_image=algorithm_image,
         civ_sets=civ_sets,
         creator=session.creator,
         extra_viewer_groups=groups,
         linked_task=linked_task,
     )
+
+    unscheduled_jobs = len(civ_sets) - len(new_jobs)
+
+    if session.creator is not None and unscheduled_jobs:
+        experiment_url = reverse(
+            "algorithms:execution-session-detail",
+            kwargs={
+                "slug": algorithm_image.algorithm.slug,
+                "pk": upload_session_pk,
+            },
+        )
+        action.send(
+            sender=algorithm_image.algorithm,
+            verb=(
+                f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
+                f"{algorithm_image.algorithm.title} were not started because "
+                f"the number of allowed jobs was reached."
+            ),
+            description=experiment_url,
+            target=session.creator,
+        )
 
 
 @shared_task
@@ -242,6 +263,12 @@ def execute_jobs(
         A task that is run every time a job fails
     execute_one_first
         Option to run only one task first
+
+    Returns
+    -------
+    jobs
+        A list of Job objects that have been scheduled
+
     """
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
@@ -260,6 +287,8 @@ def execute_jobs(
             workflow = workflow.on_error(on_error)
 
         on_commit(workflow.apply_async)
+
+    return jobs
 
 
 def create_algorithm_jobs(
@@ -389,39 +418,36 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
     session = RawImageUploadSession.objects.get(pk=session_pk)
     algorithm = Algorithm.objects.get(pk=algorithm_pk)
 
-    if session.creator is not None:
-        experiment_url = reverse(
-            "algorithms:execution-session-detail",
-            kwargs={"slug": algorithm.slug, "pk": session_pk},
-        )
+    queryset = Job.objects.filter(
+        inputs__image__in=session.image_set.all()
+    ).distinct()
 
-        excluded_images_count = session.image_set.filter(
-            componentinterfacevalue__algorithms_jobs_as_input__isnull=True
-        ).count()
-
-        if excluded_images_count > 0:
-            action.send(
-                sender=algorithm,
-                verb=(
-                    f"Unfortunately {excluded_images_count} of the jobs "
-                    f"for algorithm {algorithm.title} were not started because the number of allowed "
-                    f"jobs was reached."
-                ),
-                description=f"{experiment_url}",
-                target=session.creator,
+    if queryset.exclude(status__in=[Job.SUCCESS, Job.FAILURE]).exists():
+        # Some jobs have not finished
+        return
+    elif session.creator is not None:
+        # TODO this task isn't really idempotent
+        # This task is not guaranteed to only be delivered once after
+        # all jobs have completed. We could end up in a situation where
+        # this is run multiple times after the action is sent and
+        # multiple notifications sent with the same message.
+        # We cannot really check if the action has already been sent
+        # which would then reduce this down to a race condition, but
+        # still a problem.
+        # We could of course just notify on each failure, but then
+        # this should be an on_error task for each job.
+        failed_jobs_count = queryset.filter(status=Job.FAILURE).count()
+        if failed_jobs_count:
+            experiment_url = reverse(
+                "algorithms:execution-session-detail",
+                kwargs={"slug": algorithm.slug, "pk": session_pk},
             )
-
-        failed_jobs = Job.objects.filter(
-            status=Job.FAILURE, inputs__image__in=session.image_set.all()
-        ).distinct()
-
-        if failed_jobs.exists():
             action.send(
                 sender=algorithm,
                 verb=(
-                    f"Unfortunately {failed_jobs.count()} of the jobs for algorithm {algorithm.title} "
-                    f"failed with an error."
+                    f"Unfortunately {failed_jobs_count} of the jobs for "
+                    f"algorithm {algorithm.title} failed with an error."
                 ),
-                description=f"{experiment_url}",
+                description=experiment_url,
                 target=session.creator,
             )
