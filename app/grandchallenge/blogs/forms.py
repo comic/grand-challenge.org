@@ -32,18 +32,16 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
             "logo",
             "authors",
             "tags",
-            # "companies",
         )
         widgets = {
             "tags": Select2MultipleWidget,
-            # "companies": Select2MultipleWidget,
             "authors": forms.MultipleHiddenInput,
         }
 
 
 class PostUpdateForm(PostForm):
     class Meta(PostForm.Meta):
-        # if Post.tags.filter(name="Products").exists():
+        # if is_products:
         fields = (*PostForm.Meta.fields, "published", "companies", "content")
         widgets = {
             **PostForm.Meta.widgets,

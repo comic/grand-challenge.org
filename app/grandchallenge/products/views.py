@@ -274,7 +274,8 @@ class ProductsPostDetail(PostDetail):
         context = super().get_context_data(**kwargs)
         obj = context["object"]
         is_news = obj.tags.all().filter(name="News").exists()
-        context.update({"is_news": is_news})
+        is_products = obj.tags.all().filter(name="Products").exists()
+        context.update({"is_news": is_news, "is_products": is_products})
         return context
 
 
