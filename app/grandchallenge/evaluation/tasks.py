@@ -19,7 +19,6 @@ from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import Metric, rank_results
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -98,7 +97,7 @@ def create_evaluation(*, submission_pk):
 
 
 @shared_task
-def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run=True):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
@@ -111,9 +110,15 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 
     # Once the algorithm has been run, score the submission. No emails as
     # algorithm editors should not have access to the underlying images.
-    linked_task = set_evaluation_inputs.signature(
-        kwargs={"evaluation_pk": evaluation.pk}, immutable=True
-    )
+    if first_run:
+        linked_task = create_algorithm_jobs_for_evaluation.signature(
+            kwargs={"evaluation_pk": evaluation_pk, "first_run": False},
+            immutable=True,
+        )
+    else:
+        linked_task = set_evaluation_inputs.signature(
+            kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+        )
 
     # If any of the jobs fail then mark the evaluation as failed.
     on_error = handle_failed_jobs.signature(
@@ -132,7 +137,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
         extra_viewer_groups=groups,
         linked_task=linked_task,
         on_error=on_error,
-        execute_one_first=True,
+        max_jobs=1 if first_run else None,
     )
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)

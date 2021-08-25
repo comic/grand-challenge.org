@@ -236,7 +236,7 @@ def execute_jobs(
     extra_viewer_groups=None,
     linked_task=None,
     on_error=None,
-    execute_one_first=False,  # TODO fixme
+    max_jobs=None,
 ):
     """
     Execute an algorithm image on sets of component interface values.
@@ -261,8 +261,8 @@ def execute_jobs(
         to handle being called more than once, and in parallel.
     on_error
         A task that is run every time a job fails
-    execute_one_first
-        Option to run only one task first
+    max_jobs
+        The maximum number of jobs to schedule
 
     Returns
     -------
@@ -275,6 +275,7 @@ def execute_jobs(
         civ_sets=civ_sets,
         creator=creator,
         extra_viewer_groups=extra_viewer_groups,
+        max_jobs=max_jobs,
     )
 
     for j in jobs:
@@ -292,8 +293,30 @@ def execute_jobs(
 
 
 def create_algorithm_jobs(
-    *, algorithm_image, civ_sets, creator=None, extra_viewer_groups=None,
+    *,
+    algorithm_image,
+    civ_sets,
+    creator=None,
+    extra_viewer_groups=None,
+    max_jobs=None,
 ):
+    """
+    Creates algorithm jobs for sets of component interface values
+
+    Parameters
+    ----------
+    algorithm_image
+        The algorithm image to use
+    civ_sets
+        The sets of component interface values that will be used as input
+        for the algorithm image
+    creator
+        The creator of the algorithm jobs
+    extra_viewer_groups
+        The viewer groups that will also get access to view the job
+    max_jobs
+        The maximum number of jobs to schedule
+    """
     civ_sets = filter_civs_for_algorithm(
         civ_sets=civ_sets, algorithm_image=algorithm_image
     )
@@ -311,6 +334,9 @@ def create_algorithm_jobs(
         else:
             # Out of credits
             return []
+
+    if max_jobs is not None:
+        civ_sets = civ_sets[:max_jobs]
 
     jobs = []
     for civ_set in civ_sets:
