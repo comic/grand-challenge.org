@@ -294,6 +294,7 @@ def test_new_answer_type_listed():
         ["CHOI", True],
         ["MCHO", False],
         ["MCHD", False],
+        ["MASK", True],
     ],
 )
 def test_answer_type_allows_null(answer_type, allow_null):

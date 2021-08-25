@@ -909,6 +909,7 @@ class Question(UUIDModel):
         CHOICE = "CHOI", "Choice"
         MULTIPLE_CHOICE = "MCHO", "Multiple choice"
         MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
+        MASK = "MASK", "Mask"
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -1086,6 +1087,7 @@ class Question(UUIDModel):
             self.AnswerType.POLYGON_IMAGE,
             self.AnswerType.MULTIPLE_POLYGONS,
             self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
+            self.AnswerType.MASK,
         ]
 
     @property
@@ -1125,6 +1127,7 @@ class Question(UUIDModel):
         return self.answer_type in [
             self.AnswerType.POLYGON_IMAGE,
             self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
+            self.AnswerType.MASK,
         ]
 
     def get_absolute_url(self):
