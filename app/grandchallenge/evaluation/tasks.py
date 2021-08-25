@@ -159,7 +159,7 @@ def handle_failed_jobs(*, evaluation_pk):
     )
     Job.objects.filter(
         algorithm_image=evaluation.submission.algorithm_image,
-        status__in=[Job.PENDING, Job.PROVISIONED],
+        status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
     ).update(status=Job.CANCELLED)
 
 

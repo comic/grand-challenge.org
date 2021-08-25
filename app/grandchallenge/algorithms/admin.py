@@ -53,9 +53,9 @@ requeue_jobs.allowed_permissions = ("change",)
 
 
 def cancel_jobs(modeladmin, request, queryset):
-    queryset.filter(status__in=[Job.PROVISIONED, Job.EXECUTED]).update(
-        status=Job.CANCELLED
-    )
+    queryset.filter(
+        status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY]
+    ).update(status=Job.CANCELLED)
 
 
 cancel_jobs.short_description = "Cancel selected jobs"
