@@ -23,7 +23,17 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def create_evaluation(*, submission_pk):
+def create_evaluation(*, submission_pk, max_jobs=1):
+    """
+    Creates an Evaluation for a Submission
+
+    Parameters
+    ----------
+    submission_pk
+        The primary key of the Submission
+    max_jobs
+        The maximum number of algorithm jobs to schedule first
+    """
     Submission = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Submission"
     )
@@ -62,7 +72,7 @@ def create_evaluation(*, submission_pk):
     if submission.algorithm_image:
         on_commit(
             lambda: create_algorithm_jobs_for_evaluation.apply_async(
-                kwargs={"evaluation_pk": evaluation.pk}
+                kwargs={"evaluation_pk": evaluation.pk, "max_jobs": max_jobs}
             )
         )
     elif submission.predictions_file:
@@ -97,7 +107,21 @@ def create_evaluation(*, submission_pk):
 
 
 @shared_task
-def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run=True):
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
+    """
+    Creates the algorithm jobs for the evaluation
+
+    By default the number of jobs are limited to allow for failures.
+    Once this task is called without limits the remaining jobs are
+    scheduled (if any), and the evaluation run.
+
+    Parameters
+    ----------
+    evaluation_pk
+        The primary key of the evaluation
+    max_jobs
+        The maximum number of jobs to create
+    """
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
@@ -108,16 +132,18 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run=True):
     # be able to see the test data.
     groups = [evaluation.submission.phase.challenge.admins_group]
 
-    # Once the algorithm has been run, score the submission. No emails as
-    # algorithm editors should not have access to the underlying images.
-    if first_run:
-        linked_task = create_algorithm_jobs_for_evaluation.signature(
-            kwargs={"evaluation_pk": evaluation_pk, "first_run": False},
-            immutable=True,
-        )
-    else:
+    if max_jobs is None:
+        # Once the algorithm has been run, score the submission. No emails as
+        # algorithm editors should not have access to the underlying images.
         linked_task = set_evaluation_inputs.signature(
             kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+        )
+    else:
+        # Run with 1 job and then if that goes well, come back and
+        # run all jobs.
+        linked_task = create_algorithm_jobs_for_evaluation.signature(
+            kwargs={"evaluation_pk": evaluation_pk, "max_jobs": None},
+            immutable=True,
         )
 
     # If any of the jobs fail then mark the evaluation as failed.
@@ -137,7 +163,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run=True):
         extra_viewer_groups=groups,
         linked_task=linked_task,
         on_error=on_error,
-        max_jobs=1 if first_run else None,
+        max_jobs=max_jobs,
     )
 
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
