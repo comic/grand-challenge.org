@@ -55,6 +55,7 @@ class NotificationsConfig(AppConfig):
         registry.register(apps.get_model("evaluation.Submission"))
         registry.register(apps.get_model("evaluation.Evaluation"))
         registry.register(apps.get_model("evaluation.Phase"))
+        registry.register(apps.get_model("cases.RawImageUploadSession"))
         post_migrate.connect(init_notification_permissions, sender=self)
 
         # noinspection PyUnresolvedReferences

@@ -35,7 +35,7 @@
     <ul class="list-group">
         {% for follow in object_list %}
             {% get_content_type follow.follow_object as follow_ct %}
-            {% if not 'permissionrequest' in follow_ct.model and follow_ct.model != 'registrationrequest' and follow.flag != 'job-inactive' and follow_ct %}
+            {% if not 'permissionrequest' in follow_ct.model and follow_ct.model != 'registrationrequest' and follow_ct.model != 'rawimageuploadsession' and follow.flag != 'job-inactive' and follow_ct %}
                 <li class="list-group-item p-1 pl-3">
                     <div class="d-flex justify-content-between">
                         <div class="mt-1 pt-2 p-0">

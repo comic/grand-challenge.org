@@ -6,6 +6,7 @@ from unittest import mock
 
 import SimpleITK
 import pytest
+from actstream.actions import is_following
 from billiard.exceptions import SoftTimeLimitExceeded
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -27,6 +28,7 @@ from grandchallenge.cases.tasks import (
     check_compressed_and_extract,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from grandchallenge.notifications.models import Notification
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory, UserFactory
 from tests.jqfileupload_tests.external_test_support import (
@@ -499,3 +501,23 @@ def test_soft_time_limit(_):
     session.refresh_from_db()
     assert session.status == session.FAILURE
     assert session.error_message == "Time limit exceeded."
+
+
+@pytest.mark.django_db
+def test_failed_image_import_notification():
+    image = ["corrupt.png"]
+    session, _ = create_raw_upload_image_session(images=image)
+
+    build_images(upload_session_pk=session.pk)
+    session.refresh_from_db()
+
+    assert RawImageUploadSession.objects.count() == 1
+    assert is_following(
+        user=RawImageUploadSession.objects.get().creator,
+        obj=RawImageUploadSession.objects.get(),
+    )
+    assert Notification.objects.count() == 1
+    assert (
+        Notification.objects.get().user
+        == RawImageUploadSession.objects.get().creator
+    )
