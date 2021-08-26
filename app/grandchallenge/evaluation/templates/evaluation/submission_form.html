@@ -38,8 +38,7 @@
         {% if request.resolver_match.view_name != "evaluation:submission-create-legacy" %}
 
             <p>
-                As an admin for this challenge you can make as many submissions as
-                you like. Challenge participants will be allowed to make
+                Challenge participants will be allowed to make
                 {{ phase.submission_limit }} submission{{ phase.submission_limit|pluralize }}
                 {% if phase.submission_limit_period %}
                     per {{ phase.submission_limit_period }} day{{ phase.submission_limit_period|pluralize }}
@@ -50,7 +49,8 @@
                 Phase Settings</a>. Please use
                 <a href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name slug=phase.slug %}">
                     this form</a>
-                if you would like to create a submission on the behalf of one of the participants of this challenge.
+                if you would like to create a submission on the behalf of one of the participants of this challenge,
+                or make submissions to the phase whilst it is closed to participants.
             </p>
 
         {% endif %}
@@ -59,7 +59,7 @@
 
     {% else %}
 
-        {% if pending_evaluations %}
+        {% if has_pending_evaluations %}
 
             <p>
                 You need to wait until all of your existing submissions have

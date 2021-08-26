@@ -522,7 +522,7 @@ class Phase(UUIDModel):
     def submission_limit_period_timedelta(self):
         return timedelta(days=self.submission_limit_period)
 
-    def next_submission(self, *, user):
+    def next_submission_info(self, *, user):
         """
         Determines the number of submissions left for the user,
         and when they can next submit.
@@ -568,6 +568,21 @@ class Phase(UUIDModel):
             "remaining_submissions": remaining_submissions,
             "next_submission_at": next_sub_at,
         }
+
+    def has_pending_evaluations(self, *, user):
+        return (
+            Evaluation.objects.filter(
+                submission__phase=self, submission__creator=user,
+            )
+            .exclude(
+                status__in=(
+                    Evaluation.SUCCESS,
+                    Evaluation.FAILURE,
+                    Evaluation.CANCELLED,
+                )
+            )
+            .exists()
+        )
 
 
 class Method(UUIDModel, ComponentImage):

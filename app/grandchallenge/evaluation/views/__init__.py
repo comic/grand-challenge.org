@@ -175,28 +175,15 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        context.update(self.phase.next_submission(user=self.request.user))
-
-        pending_evaluations = (
-            Evaluation.objects.filter(
-                submission__phase__challenge=self.request.challenge,
-                submission__creator=self.request.user,
-            )
-            .exclude(
-                status__in=(
-                    Evaluation.SUCCESS,
-                    Evaluation.FAILURE,
-                    Evaluation.CANCELLED,
-                )
-            )
-            .count()
-        )
-
         context.update(
-            {"pending_evaluations": pending_evaluations, "phase": self.phase}
+            {
+                **self.phase.next_submission_info(user=self.request.user),
+                "has_ending_evaluations": self.phase.has_pending_evaluations(
+                    user=self.request.user
+                ),
+                "phase": self.phase,
+            }
         )
-
         return context
 
     def form_valid(self, form):

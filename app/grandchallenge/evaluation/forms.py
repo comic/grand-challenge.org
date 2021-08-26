@@ -336,6 +336,22 @@ class SubmissionForm(forms.ModelForm):
 
         return creator
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        phase = cleaned_data["phase"]
+        user = cleaned_data["creator"]
+
+        if phase.next_submission_info(user=user)["remaining_submissions"] < 1:
+            raise ValidationError("No submissions remaining")
+
+        if phase.has_pending_evaluations(user=user):
+            raise ValidationError(
+                "Please wait for existing evaluations to complete"
+            )
+
+        return cleaned_data
+
     class Meta:
         model = Submission
         fields = submission_fields
@@ -346,11 +362,10 @@ class LegacySubmissionForm(SubmissionForm):
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "creator"
-        ].queryset = challenge.participants_group.user_set.all().order_by(
-            Lower("username")
-        )
+        self.fields["creator"].queryset = (
+            challenge.participants_group.user_set.all()
+            | challenge.admins_group.user_set.all()
+        ).order_by(Lower("username"))
 
     class Meta(SubmissionForm.Meta):
         widgets = {"creator": Select2Widget, "phase": forms.HiddenInput}
