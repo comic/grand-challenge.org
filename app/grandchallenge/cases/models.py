@@ -384,9 +384,7 @@ class Image(UUIDModel):
 
     @property
     def has_metaio_file(self) -> bool:
-        return not self.files.filter(
-            image_type=ImageFile.IMAGE_TYPE_MHD
-        ).exists()
+        return self.files.filter(image_type=ImageFile.IMAGE_TYPE_MHD).exists()
 
     def get_mh_header(self) -> Mapping[str, Union[str, None]]:
         """
