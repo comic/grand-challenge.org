@@ -382,6 +382,12 @@ class Image(UUIDModel):
                 spacing = [1] * int(mh_header["NDims"])
         return spacing
 
+    @property
+    def has_metaio_file(self) -> bool:
+        return not self.files.filter(
+            image_type=ImageFile.IMAGE_TYPE_MHD
+        ).exists()
+
     def get_mh_header(self) -> Mapping[str, Union[str, None]]:
         """
         Return header from mhd/mha file as key value pairs

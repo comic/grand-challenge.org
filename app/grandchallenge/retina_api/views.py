@@ -110,6 +110,7 @@ class ArchiveAPIView(APIView):
             else:
                 return HttpResponse(status=status.HTTP_404_NOT_FOUND)
 
+        images = [i for i in images if i.has_metaio_file]
         objects_serialized = TreeObjectSerializer(objects, many=True).data
         images_serialized = TreeImageSerializer(images, many=True).data
 
