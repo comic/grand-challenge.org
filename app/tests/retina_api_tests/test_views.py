@@ -235,5 +235,8 @@ class TestBase64ThumbnailView:
     def test_16bit_image(self, client):
         image = ImageFactoryWithImageFile16Bit()
         self.do_test_thumbnail_creation(
-            client, max_dimension=[10, 10], image=image, is_3d=True
+            client,
+            max_dimension=settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
+            image=image,
+            is_3d=True,
         )
