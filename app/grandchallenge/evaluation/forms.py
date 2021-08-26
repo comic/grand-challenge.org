@@ -339,13 +339,15 @@ class SubmissionForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        phase = cleaned_data["phase"]
         user = cleaned_data["creator"]
 
-        if phase.next_submission_info(user=user)["remaining_submissions"] < 1:
+        if (
+            self._phase.get_next_submission(user=user)["remaining_submissions"]
+            < 1
+        ):
             raise ValidationError("No submissions remaining")
 
-        if phase.has_pending_evaluations(user=user):
+        if self._phase.has_pending_evaluations(user=user):
             raise ValidationError(
                 "Please wait for existing evaluations to complete"
             )

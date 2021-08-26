@@ -177,8 +177,8 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                **self.phase.next_submission_info(user=self.request.user),
-                "has_ending_evaluations": self.phase.has_pending_evaluations(
+                **self.phase.get_next_submission(user=self.request.user),
+                "has_pending_evaluations": self.phase.has_pending_evaluations(
                     user=self.request.user
                 ),
                 "phase": self.phase,

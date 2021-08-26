@@ -522,7 +522,7 @@ class Phase(UUIDModel):
     def submission_limit_period_timedelta(self):
         return timedelta(days=self.submission_limit_period)
 
-    def next_submission_info(self, *, user):
+    def get_next_submission(self, *, user):
         """
         Determines the number of submissions left for the user,
         and when they can next submit.
@@ -552,17 +552,16 @@ class Phase(UUIDModel):
 
         if remaining_submissions > 0:
             next_sub_at = now
+        elif (
+            self.submission_limit == 0 or self.submission_limit_period is None
+        ):
+            # User is never going to be able to submit again
+            next_sub_at = None
         else:
-            if self.submission_limit_period is None:
-                next_sub_at = None
-            else:
-                try:
-                    next_sub_at = (
-                        subs_in_period[self.submission_limit - 1].created
-                        + self.submission_limit_period_timedelta
-                    )
-                except AssertionError:
-                    next_sub_at = None
+            next_sub_at = (
+                subs_in_period[self.submission_limit - 1].created
+                + self.submission_limit_period_timedelta
+            )
 
         return {
             "remaining_submissions": remaining_submissions,
