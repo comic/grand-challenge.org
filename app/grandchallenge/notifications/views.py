@@ -90,7 +90,15 @@ class NotificationList(
 
     def get_queryset(self):
         return prefetch_nested_generic_foreign_key_objects(
-            super().get_queryset().order_by("-created")
+            super()
+            .get_queryset()
+            .select_related(
+                "action__actor_content_type",
+                "action__target_content_type",
+                "action__action_object_content_type",
+                "user",
+            )
+            .order_by("-created")
         )
 
 
@@ -106,7 +114,7 @@ class FollowList(
         return prefetch_generic_foreign_key_objects(
             super()
             .get_queryset()
-            .select_related("user")
+            .select_related("user", "content_type")
             .order_by("content_type")
         )
 
