@@ -334,22 +334,20 @@ class SubmissionForm(forms.ModelForm):
 
             raise ValidationError(error_message)
 
-        return creator
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        user = cleaned_data["creator"]
-        is_challenge_admin = self._phase.challenge.is_admin(user=user)
+        is_challenge_admin = self._phase.challenge.is_admin(user=creator)
         can_submit = (
-            self._phase.get_next_submission(user=user)["remaining_submissions"]
+            self._phase.get_next_submission(user=creator)[
+                "remaining_submissions"
+            ]
             >= 1
-        ) and not self._phase.has_pending_evaluations(user=user)
+        ) and not self._phase.has_pending_evaluations(user=creator)
 
         if not is_challenge_admin and not can_submit:
-            raise ValidationError("You cannot submit at this time")
+            error_message = "A new submission cannot be created for this user"
+            self.add_error(None, error_message)
+            raise ValidationError(error_message)
 
-        return cleaned_data
+        return creator
 
     class Meta:
         model = Submission
