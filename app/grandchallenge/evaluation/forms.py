@@ -340,17 +340,14 @@ class SubmissionForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         user = cleaned_data["creator"]
-
-        if (
+        is_challenge_admin = self._phase.challenge.is_admin(user=user)
+        can_submit = (
             self._phase.get_next_submission(user=user)["remaining_submissions"]
-            < 1
-        ):
-            raise ValidationError("No submissions remaining")
+            >= 1
+        ) and not self._phase.has_pending_evaluations(user=user)
 
-        if self._phase.has_pending_evaluations(user=user):
-            raise ValidationError(
-                "Please wait for existing evaluations to complete"
-            )
+        if not is_challenge_admin and not can_submit:
+            raise ValidationError("You cannot submit at this time")
 
         return cleaned_data
 
