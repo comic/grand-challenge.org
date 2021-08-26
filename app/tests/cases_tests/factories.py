@@ -116,6 +116,10 @@ class ImageFileFactoryWithMHDFileNoSpacingWith123Size(ImageFileFactory):
     )
 
 
+class ImageFileFactoryWithMHA16Bit(ImageFileFactory):
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "image16bit.mha")
+
+
 class ImageFactoryWithoutImageFile(ImageFactory):
     eye_choice = factory.Iterator([x[0] for x in Image.EYE_CHOICES])
     stereoscopic_choice = factory.Iterator(
@@ -186,6 +190,19 @@ class ImageFactoryWithImageFile2DLarge(ImageFactoryWithImageFile):
         if create and not extracted:
             ImageFileFactoryWithMHDFile2DLarge(image=self)
             ImageFileFactoryWithRAWFile2DLarge(image=self)
+
+
+class ImageFactoryWithImageFile16Bit(ImageFactoryWithImageFile):
+    @factory.post_generation
+    def files(self, create, extracted, **kwargs):
+        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
+        if not create:
+            return
+        if extracted:
+            for image in extracted:
+                self.files.add(image)
+        if create and not extracted:
+            ImageFileFactoryWithMHA16Bit(image=self)
 
 
 class ImageFactoryWithImageFile3DLarge3Slices(ImageFactoryWithImageFile3D):
