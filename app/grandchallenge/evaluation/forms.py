@@ -37,7 +37,8 @@ phase_options = ("title",)
 submission_options = (
     "submission_page_html",
     "creator_must_be_verified",
-    "daily_submission_limit",
+    "submission_limit",
+    "submission_limit_period",
     "allow_submission_comments",
     "supplementary_file_choice",
     "supplementary_file_label",

@@ -40,9 +40,12 @@
             <p>
                 As an admin for this challenge you can make as many submissions as
                 you like. Challenge participants will be allowed to make
-                {{ phase.daily_submission_limit }}
-                submission{{ phase.daily_submission_limit|pluralize }}
-                per day to this phase. You can change the Daily Submission Limit in <a
+                {{ phase.submission_limit }} submission{{ phase.submission_limit|pluralize }}
+                {% if phase.submission_limit_period %}
+                    per {{ phase.submission_limit_period }} day{{ phase.submission_limit_period|pluralize }}
+                {% endif %}
+                to this phase.
+                You can change the Daily Submission Limit in <a
                     href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
                 Phase Settings</a>. Please use
                 <a href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name slug=phase.slug %}">
@@ -67,21 +70,31 @@
                 to see their status.
             </p>
 
-        {% elif phase.daily_submission_limit == 0 %}
+        {% elif phase.submission_limit == 0 %}
 
             <p>Submissions are closed for this phase.</p>
 
         {% elif remaining_submissions <= 0 %}
 
             <p>
-                You have reached your submission limit for today. You can make
-                another submission in {{ next_submission_at|timeuntil }}.</p>
+                You have reached your submission limit.
+                {% if next_submission_at %}
+                    You can make another submission in {{ next_submission_at|timeuntil }}.
+                {% else %}
+                    Thank you for participating in this phase.
+                {% endif %}
+            </p>
 
         {% else %}
 
             <p>
                 You can make {{ remaining_submissions }} more
-                submission{{ remaining_submissions|pluralize }} today.
+                submission{{ remaining_submissions|pluralize }}
+                {% if phase.submission_limit_period %}
+                    in the next {{ phase.submission_limit_period }} day{{ phase.submission_limit_period|pluralize }}.
+                {% else %}
+                    in total.
+                {% endif %}
             </p>
 
             {% crispy form %}
