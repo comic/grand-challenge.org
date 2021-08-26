@@ -158,13 +158,34 @@ def create_algorithm_jobs_for_session(
         for image in session.image_set.all()
     ]
 
-    execute_jobs(
+    new_jobs = execute_jobs(
         algorithm_image=algorithm_image,
         civ_sets=civ_sets,
         creator=session.creator,
         extra_viewer_groups=groups,
         linked_task=linked_task,
     )
+
+    unscheduled_jobs = len(civ_sets) - len(new_jobs)
+
+    if session.creator is not None and unscheduled_jobs:
+        experiment_url = reverse(
+            "algorithms:execution-session-detail",
+            kwargs={
+                "slug": algorithm_image.algorithm.slug,
+                "pk": upload_session_pk,
+            },
+        )
+        action.send(
+            sender=algorithm_image.algorithm,
+            verb=(
+                f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
+                f"{algorithm_image.algorithm.title} were not started because "
+                f"the number of allowed jobs was reached."
+            ),
+            description=experiment_url,
+            target=session.creator,
+        )
 
 
 @shared_task
@@ -215,37 +236,87 @@ def execute_jobs(
     extra_viewer_groups=None,
     linked_task=None,
     on_error=None,
-    execute_one_first=False,
+    max_jobs=None,
 ):
+    """
+    Execute an algorithm image on sets of component interface values.
+
+    The resulting jobs will be applied in parallel. Note that using
+    a chord here is not supported due to the message size limit of
+    SQS (https://github.com/celery/kombu/issues/279).
+
+    Parameters
+    ----------
+    algorithm_image
+        The algorithm image to use
+    civ_sets
+        The sets of component interface values that will be used as input
+        for the algorithm image
+    creator
+        The creator of the algorithm jobs
+    extra_viewer_groups
+        The viewer groups that will also get access to view the job
+    linked_task
+        A task that is run after each job completion. This must be able
+        to handle being called more than once, and in parallel.
+    on_error
+        A task that is run every time a job fails
+    max_jobs
+        The maximum number of jobs to schedule
+
+    Returns
+    -------
+    jobs
+        A list of Job objects that have been scheduled
+
+    """
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
         civ_sets=civ_sets,
         creator=creator,
         extra_viewer_groups=extra_viewer_groups,
+        max_jobs=max_jobs,
     )
 
-    if jobs:
-        if on_error is not None:
-            signatures = [j.signature.on_error(on_error) for j in jobs]
-        else:
-            signatures = [j.signature for j in jobs]
-
-        if execute_one_first and len(signatures) > 1:
-            # Execute 1 job first before trying the rest in parallel
-            # in case this job doesn't work at all
-            workflow = signatures[0] | group(signatures[1:])
-        else:
-            workflow = group(signatures)
+    for j in jobs:
+        workflow = j.signature
 
         if linked_task is not None:
             workflow |= linked_task
 
+        if on_error is not None:
+            workflow = workflow.on_error(on_error)
+
         on_commit(workflow.apply_async)
+
+    return jobs
 
 
 def create_algorithm_jobs(
-    *, algorithm_image, civ_sets, creator=None, extra_viewer_groups=None,
+    *,
+    algorithm_image,
+    civ_sets,
+    creator=None,
+    extra_viewer_groups=None,
+    max_jobs=None,
 ):
+    """
+    Creates algorithm jobs for sets of component interface values
+
+    Parameters
+    ----------
+    algorithm_image
+        The algorithm image to use
+    civ_sets
+        The sets of component interface values that will be used as input
+        for the algorithm image
+    creator
+        The creator of the algorithm jobs
+    extra_viewer_groups
+        The viewer groups that will also get access to view the job
+    max_jobs
+        The maximum number of jobs to schedule
+    """
     civ_sets = filter_civs_for_algorithm(
         civ_sets=civ_sets, algorithm_image=algorithm_image
     )
@@ -263,6 +334,9 @@ def create_algorithm_jobs(
         else:
             # Out of credits
             return []
+
+    if max_jobs is not None:
+        civ_sets = civ_sets[:max_jobs]
 
     jobs = []
     for civ_set in civ_sets:
@@ -370,39 +444,41 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
     session = RawImageUploadSession.objects.get(pk=session_pk)
     algorithm = Algorithm.objects.get(pk=algorithm_pk)
 
-    if session.creator is not None:
-        experiment_url = reverse(
-            "algorithms:execution-session-detail",
-            kwargs={"slug": algorithm.slug, "pk": session_pk},
-        )
+    queryset = Job.objects.filter(
+        inputs__image__in=session.image_set.all()
+    ).distinct()
 
-        excluded_images_count = session.image_set.filter(
-            componentinterfacevalue__algorithms_jobs_as_input__isnull=True
-        ).count()
+    pending_jobs = queryset.exclude(
+        status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED]
+    )
+    failed_jobs = queryset.filter(status=Job.FAILURE)
 
-        if excluded_images_count > 0:
-            action.send(
-                sender=algorithm,
-                verb=(
-                    f"Unfortunately {excluded_images_count} of the jobs "
-                    f"for algorithm {algorithm.title} were not started because the number of allowed "
-                    f"jobs was reached."
-                ),
-                description=f"{experiment_url}",
-                target=session.creator,
+    if pending_jobs.exists():
+        # Nothing to do
+        return
+    elif session.creator is not None:
+        # TODO this task isn't really idempotent
+        # This task is not guaranteed to only be delivered once after
+        # all jobs have completed. We could end up in a situation where
+        # this is run multiple times after the action is sent and
+        # multiple notifications sent with the same message.
+        # We cannot really check if the action has already been sent
+        # which would then reduce this down to a race condition, but
+        # still a problem.
+        # We could of course just notify on each failure, but then
+        # this should be an on_error task for each job.
+        failed_jobs_count = failed_jobs.count()
+        if failed_jobs_count:
+            experiment_url = reverse(
+                "algorithms:execution-session-detail",
+                kwargs={"slug": algorithm.slug, "pk": session_pk},
             )
-
-        failed_jobs = Job.objects.filter(
-            status=Job.FAILURE, inputs__image__in=session.image_set.all()
-        ).distinct()
-
-        if failed_jobs.exists():
             action.send(
                 sender=algorithm,
                 verb=(
-                    f"Unfortunately {failed_jobs.count()} of the jobs for algorithm {algorithm.title} "
-                    f"failed with an error."
+                    f"Unfortunately {failed_jobs_count} of the jobs for "
+                    f"algorithm {algorithm.title} failed with an error."
                 ),
-                description=f"{experiment_url}",
+                description=experiment_url,
                 target=session.creator,
             )

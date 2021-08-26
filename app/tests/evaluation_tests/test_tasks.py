@@ -13,7 +13,7 @@ from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
 )
-from grandchallenge.evaluation.models import Method
+from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
@@ -216,7 +216,9 @@ class TestSetEvaluationInputs(TestCase):
             j.outputs.set([output])
             jobs.append(j)
 
-        self.evaluation = EvaluationFactory(submission=submission)
+        self.evaluation = EvaluationFactory(
+            submission=submission, status=Evaluation.EXECUTING_PREREQUISITES
+        )
         self.jobs = jobs
         self.output_civs = output_civs
 
