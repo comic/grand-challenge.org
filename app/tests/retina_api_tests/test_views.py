@@ -21,6 +21,7 @@ from grandchallenge.retina_api.serializers import (
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
+    ImageFactoryWithImageFile16Bit,
     ImageFactoryWithImageFile2DLarge,
     ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile3DLarge4Slices,
@@ -229,4 +230,10 @@ class TestBase64ThumbnailView:
             max_dimension = settings.RETINA_DEFAULT_THUMBNAIL_SIZE
         self.do_test_thumbnail_creation(
             client, max_dimension, image, is_3d=is_3d
+        )
+
+    def test_16bit_image(self, client):
+        image = ImageFactoryWithImageFile16Bit()
+        self.do_test_thumbnail_creation(
+            client, max_dimension=[10, 10], image=image, is_3d=True
         )
