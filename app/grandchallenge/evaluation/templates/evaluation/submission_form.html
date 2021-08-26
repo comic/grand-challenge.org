@@ -91,7 +91,9 @@
                 You can make {{ remaining_submissions }} more
                 submission{{ remaining_submissions|pluralize }}
                 {% if phase.submission_limit_period %}
-                    in the next {{ phase.submission_limit_period }} day{{ phase.submission_limit_period|pluralize }}.
+                    in the next
+                    {% if phase.submission_limit_period > 1 %}{{ phase.submission_limit_period }}{% endif %}
+                    day{{ phase.submission_limit_period|pluralize }}.
                 {% else %}
                     in total.
                 {% endif %}
