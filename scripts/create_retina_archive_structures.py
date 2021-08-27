@@ -41,49 +41,67 @@ def load_as_bytes_io(fp):
     return bio
 
 
-def create_image_set_for_study(archive, study):
+def create_image_set_for_study(archive, study, nums):
     image_set = {
         "oct16bit": [
             {
-                "sitk_image": Sitk.Image([256, 128, 128], Sitk.sitkUInt16),
+                "sitk_image": Sitk.GaussianSource(
+                    Sitk.sitkUInt16,
+                    [256, 128, 128],
+                    spacing=[0.25, 0.5, 0.5],
+                    scale=2 ** 16 - 1,
+                ),
                 "modality": ImagingModality.objects.get_or_create(
                     modality="OCT"
                 )[0],
                 "color_space": Image.COLOR_SPACE_GRAY,
             }
-            for _ in range(2)
+            for _ in range(nums["oct16bit"])
         ],
         "oct8bit": [
             {
-                "sitk_image": Sitk.Image([256, 128, 128], Sitk.sitkUInt8),
+                "sitk_image": Sitk.GaussianSource(
+                    Sitk.sitkUInt8, [256, 128, 128], spacing=[0.25, 0.5, 0.5]
+                ),
                 "modality": ImagingModality.objects.get_or_create(
                     modality="OCT"
                 )[0],
                 "color_space": Image.COLOR_SPACE_GRAY,
             }
-            for _ in range(2)
+            for _ in range(nums["oct8bit"])
         ],
         "enface_rgb": [
             {
-                "sitk_image": Sitk.Image(
-                    [1024, 1024], Sitk.sitkVectorUInt8, 3
+                "sitk_image": (
+                    Sitk.GetImageFromArray(
+                        Sitk.GetArrayFromImage(
+                            Sitk.GaussianSource(
+                                Sitk.sitkUInt8,
+                                [3, 128, 256],
+                                spacing=[64 / 3, 0.5, 0.25],
+                            )
+                        ),
+                        isVector=True,
+                    )
                 ),
                 "modality": ImagingModality.objects.get_or_create(
                     modality="Fundus Photography"
                 )[0],
                 "color_space": Image.COLOR_SPACE_RGB,
             }
-            for _ in range(5)
+            for _ in range(nums["enface_rgb"])
         ],
         "enface_grey": [
             {
-                "sitk_image": Sitk.Image([1024, 1024], Sitk.sitkUInt8),
+                "sitk_image": Sitk.GaussianSource(
+                    Sitk.sitkUInt8, [1024, 1024], spacing=[0.0625, 0.0625]
+                ),
                 "modality": ImagingModality.objects.get_or_create(
                     modality="Infrared Reflectance Imaging"
                 )[0],
                 "color_space": Image.COLOR_SPACE_GRAY,
             }
-            for _ in range(5)
+            for _ in range(nums["enface_grey"])
         ],
     }
     for name, images in image_set.items():
@@ -142,37 +160,32 @@ def create_image_set_for_study(archive, study):
             item.values.set([civ])
 
 
-def create_archive_patient_study_structure(
-    user, num_archives, num_patients, num_studies
-):
-    archive_structure_dict = {}
-    for a in range(num_archives):
+def create_archive_patient_study_structure(user, nums):
+    for a in range(nums["archives"]):
         archive = create_archive(f"Archive {a}", user)
-        patients = {}
-        for p in range(num_patients):
+        for p in range(nums["patients"]):
             patient = Patient.objects.get_or_create(name=f"Patient {p}")[0]
-            studies = []
-            for s in range(num_studies):
+            for s in range(nums["studies"]):
                 study = Study.objects.get_or_create(
                     name=f"Study {s}", patient=patient
                 )[0]
-                create_image_set_for_study(archive, study)
-                studies.append(study)
+                create_image_set_for_study(archive, study, nums)
                 print(
-                    f"A={a}/{num_archives} P={p}/{num_patients} S={s}/{num_studies}"
+                    f"A={a + 1}/{nums['archives']} P={p + 1}/{nums['patients']} S={s + 1}/{nums['studies']}"
                 )
-
-            patients[patient.name] = {
-                "patient": patient,
-                "studies": studies,
-            }
-        archive_structure_dict[archive.title] = {
-            "archive": archive,
-            "patients": patients,
-        }
-    return archive_structure_dict
 
 
 def run():
     user = get_user_model().objects.get(username="retina")
-    create_archive_patient_study_structure(user, 1, 1, 1)
+    create_archive_patient_study_structure(
+        user,
+        nums={
+            "archives": 3,
+            "patients": 3,
+            "studies": 3,
+            "oct8bit": 2,
+            "oct16bit": 2,
+            "enface_rgb": 5,
+            "enface_grey": 5,
+        },
+    )
