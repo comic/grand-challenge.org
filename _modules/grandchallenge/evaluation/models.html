@@ -162,6 +162,7 @@
             
   <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">parse_qs</span><span class="p">,</span> <span class="n">urljoin</span><span class="p">,</span> <span class="n">urlparse</span>
 
 <span class="kn">from</span> <span class="nn">actstream</span> <span class="kn">import</span> <span class="n">action</span>
@@ -169,9 +170,13 @@
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
-<span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">RegexValidator</span>
+<span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MinValueValidator</span><span class="p">,</span>
+    <span class="n">RegexValidator</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
+<span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
@@ -478,12 +483,25 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Show a link to the supplementary url on the results page&quot;</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">daily_submission_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+    <span class="n">submission_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;The limit on the number of times that a user can make a &quot;</span>
-            <span class="s2">&quot;submission in a 24 hour period.&quot;</span>
+            <span class="s2">&quot;submission over the submission limit period.&quot;</span>
         <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">submission_limit_period</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The number of days to consider for the submission limit period. &quot;</span>
+            <span class="s2">&quot;If this is set to 1, then the submission limit is applied &quot;</span>
+            <span class="s2">&quot;over the previous day. If it is set to 365, then the submission &quot;</span>
+            <span class="s2">&quot;limit is applied over the previous year. If the value is not &quot;</span>
+            <span class="s2">&quot;set, then the limit is applied over all time.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MinValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
     <span class="p">)</span>
     <span class="n">submissions_open</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -661,7 +679,69 @@
         <span class="n">url</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_observable_url</span><span class="p">(</span>
             <span class="n">view_kind</span><span class="o">=</span><span class="s2">&quot;comparison&quot;</span><span class="p">,</span> <span class="n">url_kind</span><span class="o">=</span><span class="s2">&quot;edit&quot;</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">url</span></div>
+        <span class="k">return</span> <span class="n">url</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">submission_limit_period_timedelta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Phase.get_next_submission"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.get_next_submission">[docs]</a>    <span class="k">def</span> <span class="nf">get_next_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines the number of submissions left for the user,</span>
+<span class="sd">        and when they can next submit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+        <span class="n">filter_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;creator&quot;</span><span class="p">:</span> <span class="n">user</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filter_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;created__gte&quot;</span><span class="p">:</span> <span class="n">now</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period_timedelta</span><span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="n">evals_in_period</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">filter_kwargs</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">evaluation__status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-created&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">remaining_submissions</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="n">evals_in_period</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">remaining_submissions</span><span class="p">:</span>
+            <span class="n">next_sub_at</span> <span class="o">=</span> <span class="n">now</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="c1"># User is never going to be able to submit again</span>
+            <span class="n">next_sub_at</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">next_sub_at</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">evals_in_period</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span>
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period_timedelta</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;remaining_submissions&quot;</span><span class="p">:</span> <span class="n">remaining_submissions</span><span class="p">,</span>
+            <span class="s2">&quot;next_submission_at&quot;</span><span class="p">:</span> <span class="n">next_sub_at</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+    <span class="k">def</span> <span class="nf">has_pending_evaluations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">submission__phase</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">submission__creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">status__in</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">Evaluation</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
+                    <span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
+                    <span class="n">Evaluation</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span></div>
 
 
 <span class="k">class</span> <span class="nc">Method</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
