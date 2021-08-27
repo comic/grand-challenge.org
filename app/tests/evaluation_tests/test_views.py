@@ -289,21 +289,21 @@ def test_submission_time_limit(client, two_challenge_sets):
             },
         )
 
-    assert "make 9 more" in get_submission_view().rendered_content
+    assert "create 9 more" in get_submission_view().rendered_content
 
     s = SubmissionFactory(
         phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
     )
     s.created = timezone.now() - timedelta(hours=23)
     s.save()
-    assert "make 8 more" in get_submission_view().rendered_content
+    assert "create 8 more" in get_submission_view().rendered_content
 
     s = SubmissionFactory(
         phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
     )
     s.created = timezone.now() - timedelta(hours=25)
     s.save()
-    assert "make 8 more" in get_submission_view().rendered_content
+    assert "create 8 more" in get_submission_view().rendered_content
 
 
 @pytest.mark.django_db

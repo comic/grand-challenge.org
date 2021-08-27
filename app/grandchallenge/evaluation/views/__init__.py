@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta
-from typing import Dict
+from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
@@ -8,7 +7,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -177,70 +175,16 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         context.update(
-            self.get_next_submission(
-                max_subs=self.phase.daily_submission_limit
-            )
+            {
+                **self.phase.get_next_submission(user=self.request.user),
+                "has_pending_evaluations": self.phase.has_pending_evaluations(
+                    user=self.request.user
+                ),
+                "phase": self.phase,
+            }
         )
-
-        pending_evaluations = (
-            Evaluation.objects.filter(
-                submission__phase__challenge=self.request.challenge,
-                submission__creator=self.request.user,
-            )
-            .exclude(
-                status__in=(
-                    Evaluation.SUCCESS,
-                    Evaluation.FAILURE,
-                    Evaluation.CANCELLED,
-                )
-            )
-            .count()
-        )
-
-        context.update(
-            {"pending_evaluations": pending_evaluations, "phase": self.phase}
-        )
-
         return context
-
-    def get_next_submission(
-        self, *, max_subs: int, period: timedelta = None, now: datetime = None
-    ) -> Dict:
-        """
-        Determines the number of submissions left for the user in a given time
-        period, and when they can next submit.
-
-        :return: A dictionary containing remaining_submissions (int) and
-        next_submission_at (datetime)
-        """
-        if now is None:
-            now = timezone.now()
-
-        if period is None:
-            period = timedelta(days=1)
-
-        subs = (
-            Submission.objects.filter(
-                phase__challenge=self.request.challenge,
-                creator=self.request.user,
-                created__gte=now - period,
-            )
-            .exclude(evaluation__status=Evaluation.FAILURE)
-            .order_by("-created")
-            .distinct()
-        )
-
-        try:
-            next_sub_at = subs[max_subs - 1].created + period
-        except (IndexError, AssertionError):
-            next_sub_at = now
-
-        return {
-            "remaining_submissions": max_subs - len(subs),
-            "next_submission_at": next_sub_at,
-        }
 
     def form_valid(self, form):
         if "algorithm" in form.cleaned_data:
