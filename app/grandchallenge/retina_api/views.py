@@ -37,7 +37,7 @@ from grandchallenge.annotations.serializers import (
     SinglePolygonAnnotationSerializer,
 )
 from grandchallenge.archives.models import Archive
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.patients.models import Patient
 from grandchallenge.retina_api.filters import (
     RetinaAnnotationFilter,
@@ -88,10 +88,15 @@ class ArchiveAPIView(APIView):
                     objects = Patient.objects.filter(
                         study__image__componentinterfacevalue__archive_items__archive__pk=pk
                     ).distinct()
-                    images = Image.objects.filter(
-                        componentinterfacevalue__archive_items__archive__pk=pk,
-                        study=None,
-                    ).prefetch_related(*image_prefetch_related)
+                    images = (
+                        Image.objects.filter(
+                            componentinterfacevalue__archive_items__archive__pk=pk,
+                            study=None,
+                            files__image_type=ImageFile.IMAGE_TYPE_MHD,
+                        )
+                        .prefetch_related(*image_prefetch_related)
+                        .distinct()
+                    )
             elif Patient.objects.filter(pk=pk).exists():
                 objects = Study.objects.filter(
                     patient__pk=pk,
@@ -101,16 +106,20 @@ class ArchiveAPIView(APIView):
                 ).distinct()
 
             elif Study.objects.filter(pk=pk).exists():
-                images = Image.objects.filter(
-                    study__pk=pk,
-                    componentinterfacevalue__archive_items__archive__in=get_objects_for_user(
-                        request.user, "archives.view_archive"
-                    ),
-                ).prefetch_related(*image_prefetch_related)
+                images = (
+                    Image.objects.filter(
+                        study__pk=pk,
+                        componentinterfacevalue__archive_items__archive__in=get_objects_for_user(
+                            request.user, "archives.view_archive"
+                        ),
+                        files__image_type=ImageFile.IMAGE_TYPE_MHD,
+                    )
+                    .prefetch_related(*image_prefetch_related)
+                    .distinct()
+                )
             else:
                 return HttpResponse(status=status.HTTP_404_NOT_FOUND)
 
-        images = [i for i in images if i.has_metaio_file]
         objects_serialized = TreeObjectSerializer(objects, many=True).data
         images_serialized = TreeImageSerializer(images, many=True).data
 

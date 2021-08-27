@@ -174,6 +174,20 @@ class TestArchiveAPIView:
         }
         assert res_img_ids == exp_img_ids
 
+    def test_number_of_queries(
+        self,
+        client,
+        archive_patient_study_image_set,
+        django_assert_num_queries,
+    ):
+        cache.clear()
+        user = get_user_from_str("retina_user")
+        archive_patient_study_image_set.archive1.add_user(user)
+        pk = archive_patient_study_image_set.study113.pk
+
+        with django_assert_num_queries(22):
+            self.perform_request_as_user(client, user, pk)
+
 
 @pytest.mark.django_db
 class TestBase64ThumbnailView:
