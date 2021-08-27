@@ -335,14 +335,21 @@ class SubmissionForm(forms.ModelForm):
             raise ValidationError(error_message)
 
         is_challenge_admin = self._phase.challenge.is_admin(user=creator)
-        can_submit = (
+        has_remaining_submissions = (
             self._phase.get_next_submission(user=creator)[
                 "remaining_submissions"
             ]
             >= 1
-        ) and not self._phase.has_pending_evaluations(user=creator)
+        )
+        has_pending_evaluations = self._phase.has_pending_evaluations(
+            user=creator
+        )
 
-        if not is_challenge_admin and not can_submit:
+        can_submit = is_challenge_admin or (
+            has_remaining_submissions and not has_pending_evaluations
+        )
+
+        if not can_submit:
             error_message = "A new submission cannot be created for this user"
             self.add_error(None, error_message)
             raise ValidationError(error_message)
