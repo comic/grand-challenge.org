@@ -359,10 +359,11 @@ class LegacySubmissionForm(SubmissionForm):
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["creator"].queryset = (
-            challenge.participants_group.user_set.all()
-            | challenge.admins_group.user_set.all()
-        ).order_by(Lower("username"))
+        self.fields[
+            "creator"
+        ].queryset = challenge.participants_group.user_set.all().order_by(
+            Lower("username")
+        )
 
     class Meta(SubmissionForm.Meta):
         widgets = {"creator": Select2Widget, "phase": forms.HiddenInput}
