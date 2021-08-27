@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from actstream import action
@@ -6,9 +7,13 @@ from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import (
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.db.transaction import on_commit
+from django.utils import timezone
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
@@ -315,12 +320,25 @@ class Phase(UUIDModel):
         default=False,
         help_text=("Show a link to the supplementary url on the results page"),
     )
-    daily_submission_limit = models.PositiveIntegerField(
+    submission_limit = models.PositiveIntegerField(
         default=10,
         help_text=(
             "The limit on the number of times that a user can make a "
-            "submission in a 24 hour period."
+            "submission over the submission limit period."
         ),
+    )
+    submission_limit_period = models.PositiveSmallIntegerField(
+        default=1,
+        null=True,
+        blank=True,
+        help_text=(
+            "The number of days to consider for the submission limit period. "
+            "If this is set to 1, then the submission limit is applied "
+            "over the previous day. If it is set to 365, then the submission "
+            "limit is applied over the previous year. If the value is not "
+            "set, then the limit is applied over all time."
+        ),
+        validators=[MinValueValidator(limit_value=1)],
     )
     submissions_open = models.DateTimeField(
         null=True,
@@ -499,6 +517,68 @@ class Phase(UUIDModel):
             view_kind="comparison", url_kind="edit"
         )
         return url
+
+    @property
+    def submission_limit_period_timedelta(self):
+        return timedelta(days=self.submission_limit_period)
+
+    def get_next_submission(self, *, user):
+        """
+        Determines the number of submissions left for the user,
+        and when they can next submit.
+        """
+        now = timezone.now()
+
+        filter_kwargs = {"creator": user}
+
+        if self.submission_limit_period is not None:
+            filter_kwargs.update(
+                {"created__gte": now - self.submission_limit_period_timedelta}
+            )
+
+        evals_in_period = (
+            self.submission_set.filter(**filter_kwargs)
+            .exclude(evaluation__status=Evaluation.FAILURE)
+            .distinct()
+            .order_by("-created")
+        )
+
+        remaining_submissions = max(
+            0, self.submission_limit - evals_in_period.count()
+        )
+
+        if remaining_submissions:
+            next_sub_at = now
+        elif (
+            self.submission_limit == 0 or self.submission_limit_period is None
+        ):
+            # User is never going to be able to submit again
+            next_sub_at = None
+        else:
+            next_sub_at = (
+                evals_in_period[self.submission_limit - 1].created
+                + self.submission_limit_period_timedelta
+            )
+
+        return {
+            "remaining_submissions": remaining_submissions,
+            "next_submission_at": next_sub_at,
+        }
+
+    def has_pending_evaluations(self, *, user):
+        return (
+            Evaluation.objects.filter(
+                submission__phase=self, submission__creator=user,
+            )
+            .exclude(
+                status__in=(
+                    Evaluation.SUCCESS,
+                    Evaluation.FAILURE,
+                    Evaluation.CANCELLED,
+                )
+            )
+            .exists()
+        )
 
 
 class Method(UUIDModel, ComponentImage):

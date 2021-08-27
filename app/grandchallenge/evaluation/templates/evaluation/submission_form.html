@@ -37,18 +37,32 @@
 
         {% if request.resolver_match.view_name != "evaluation:submission-create-legacy" %}
 
-            <p>
-                As an admin for this challenge you can make as many submissions as
-                you like. Challenge participants will be allowed to make
-                {{ phase.daily_submission_limit }}
-                submission{{ phase.daily_submission_limit|pluralize }}
-                per day to this phase. You can change the Daily Submission Limit in <a
-                    href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                Phase Settings</a>. Please use
-                <a href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                    this form</a>
-                if you would like to create a submission on the behalf of one of the participants of this challenge.
-            </p>
+            <div class="alert alert-info" role="alert">
+                <p>
+                    Challenge participants will be allowed to create
+                    {{ phase.submission_limit }} submission{{ phase.submission_limit|pluralize }}
+                    {% if phase.submission_limit_period %}
+                        per {% if phase.submission_limit_period > 1 %}{{ phase.submission_limit_period }}{% endif %}
+                        day{{ phase.submission_limit_period|pluralize }}
+                    {% else %}
+                        in total
+                    {% endif %}
+                    to this phase.
+                    You can change the submission limit and period in
+                    <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                        Phase Settings</a>.
+                </p>
+                <p>
+                    As an admin for this challenge you can create as many submissions as you like.
+                </p>
+                <hr>
+                <p class="mb-0">
+                    Please use
+                    <a href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                        this form</a>
+                    if you would like to create a submission on the behalf of one of the participants of this challenge.
+                </p>
+            </div>
 
         {% endif %}
 
@@ -56,33 +70,47 @@
 
     {% else %}
 
-        {% if pending_evaluations %}
+        {% if has_pending_evaluations %}
 
-            <p>
+            <div class="alert alert-danger" role="alert">
                 You need to wait until all of your existing submissions have
                 been evaluated before you can make another submission.
                 <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
-                    Click here
-                </a>
+                    Click here</a>
                 to see their status.
-            </p>
+            </div>
 
-        {% elif phase.daily_submission_limit == 0 %}
+        {% elif phase.submission_limit == 0 %}
 
-            <p>Submissions are closed for this phase.</p>
+            <div class="alert alert-danger" role="alert">
+                Submissions are closed for this phase.
+            </div>
 
-        {% elif remaining_submissions <= 0 %}
+        {% elif remaining_submissions == 0 %}
 
-            <p>
-                You have reached your submission limit for today. You can make
-                another submission in {{ next_submission_at|timeuntil }}.</p>
+            <div class="alert alert-danger" role="alert">
+                You have reached your submission limit.
+                {% if next_submission_at %}
+                    You can make another submission in {{ next_submission_at|timeuntil }}.
+                {% else %}
+                    Thank you for participating in this phase.
+                {% endif %}
+            </div>
 
         {% else %}
 
-            <p>
-                You can make {{ remaining_submissions }} more
-                submission{{ remaining_submissions|pluralize }} today.
-            </p>
+            <div class="alert alert-info" role="alert">
+                You can create {{ remaining_submissions }} more
+                submission{{ remaining_submissions|pluralize }}
+                {% if phase.submission_limit_period %}
+                    in the next
+                    {% if phase.submission_limit_period > 1 %}{{ phase.submission_limit_period }}{% endif %}
+                    day{{ phase.submission_limit_period|pluralize }}
+                {% else %}
+                    in total
+                {% endif %}
+                to this phase.
+            </div>
 
             {% crispy form %}
 
