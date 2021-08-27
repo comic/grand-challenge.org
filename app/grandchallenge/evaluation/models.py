@@ -529,30 +529,25 @@ class Phase(UUIDModel):
         """
         now = timezone.now()
 
-        filter_kwargs = {
-            "submission__creator": user,
-            "submission__phase": self,
-        }
+        filter_kwargs = {"creator": user}
 
         if self.submission_limit_period is not None:
             filter_kwargs.update(
-                {
-                    "submission__created__gte": (
-                        now - self.submission_limit_period_timedelta
-                    )
-                }
+                {"created__gte": now - self.submission_limit_period_timedelta}
             )
 
         evals_in_period = (
-            Evaluation.objects.filter(**filter_kwargs)
-            .exclude(status=Evaluation.FAILURE)
+            self.submission_set.filter(**filter_kwargs)
+            .exclude(evaluation__status=Evaluation.FAILURE)
             .distinct()
             .order_by("-created")
         )
 
-        remaining_submissions = self.submission_limit - evals_in_period.count()
+        remaining_submissions = max(
+            0, self.submission_limit - evals_in_period.count()
+        )
 
-        if remaining_submissions > 0:
+        if remaining_submissions:
             next_sub_at = now
         elif (
             self.submission_limit == 0 or self.submission_limit_period is None
