@@ -37,7 +37,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_perms
+from guardian.shortcuts import assign_perm, get_perms
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -122,9 +122,7 @@ class AlgorithmCreate(
 ):
     model = Algorithm
     form_class = AlgorithmForm
-    permission_required = (
-        f"{Algorithm._meta.app_label}.add_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.add_algorithm"
 
     def form_valid(self, form):
         response = super().form_valid(form=form)
@@ -134,9 +132,7 @@ class AlgorithmCreate(
 
 class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     model = Algorithm
-    permission_required = {
-        f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
-    }
+    permission_required = "algorithms.view_algorithm"
     ordering = "-created"
     filter_class = AlgorithmFilter
     paginate_by = 40
@@ -164,9 +160,7 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
 
 class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Algorithm
-    permission_required = (
-        f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.view_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
         "algorithm_container_images__build__webhook_message"
@@ -227,17 +221,13 @@ class AlgorithmUpdate(
 ):
     model = Algorithm
     form_class = AlgorithmForm
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
 
 class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "algorithms/user_groups_form.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.change_algorithm"
 
     @property
     def obj(self):
@@ -246,9 +236,7 @@ class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
 
 class JobUserGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "algorithms/user_groups_form.html"
-    permission_required = (
-        f"{Job._meta.app_label}.change_{Job._meta.model_name}"
-    )
+    permission_required = "algorithms.change_job"
 
     @property
     def obj(self):
@@ -288,9 +276,7 @@ class AlgorithmImageCreate(
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
     @property
@@ -319,7 +305,7 @@ class AlgorithmImageDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = AlgorithmImage
-    permission_required = f"{AlgorithmImage._meta.app_label}.view_{AlgorithmImage._meta.model_name}"
+    permission_required = "algorithms.view_algorithmimage"
     raise_exception = True
     queryset = AlgorithmImage.objects.prefetch_related(
         "build__webhook_message"
@@ -331,7 +317,7 @@ class AlgorithmImageUpdate(
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageUpdateForm
-    permission_required = f"{AlgorithmImage._meta.app_label}.change_{AlgorithmImage._meta.model_name}"
+    permission_required = "algorithms.change_algorithmimage"
     raise_exception = True
 
     def get_context_data(self, *args, **kwargs):
@@ -392,9 +378,7 @@ class AlgorithmExecutionSessionCreate(
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "algorithms/algorithm_execution_session_create.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.execute_algorithm"
     raise_exception = True
 
     def get_form_kwargs(self):
@@ -449,9 +433,7 @@ class AlgorithmExperimentCreate(
 ):
     form_class = AlgorithmInputsForm
     template_name = "algorithms/algorithm_inputs_form.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.execute_algorithm"
     raise_exception = True
 
     def get_permission_object(self):
@@ -495,7 +477,11 @@ class AlgorithmExperimentCreate(
             algorithm_image=self.algorithm.latest_ready_image,
         )
 
+        # TODO AUG2021 JM permission management should be done in 1 place
+        # The execution for jobs over the API or non-sessions needs
+        # to be cleaned up. See callers of `execute_jobs`.
         job.viewer_groups.add(self.algorithm.editors_group)
+        assign_perm("algorithms.view_logs", self.algorithm.editors_group, job)
 
         upload_pks = {}
         civs = []
@@ -537,7 +523,7 @@ class JobExperimentDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     template_name = "algorithms/job_experiment_detail.html"
-    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    permission_required = "algorithms.view_job"
     model = Job
     raise_exception = True
 
@@ -571,7 +557,7 @@ class AlgorithmExecutionSessionDetail(
 
 class JobsList(PermissionListMixin, PaginatedTableListView):
     model = Job
-    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    permission_required = "algorithms.view_job"
     row_template = "algorithms/job_list_row.html"
     search_fields = [
         "pk",
@@ -619,7 +605,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):
-    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    permission_required = "algorithms.view_job"
     raise_exception = True
     queryset = (
         Job.objects.with_duration()
@@ -648,9 +634,6 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
             {
                 "viewers_form": viewers_form,
                 "job_perms": get_perms(self.request.user, self.object),
-                "algorithm_perms": get_perms(
-                    self.request.user, self.object.algorithm_image.algorithm
-                ),
             }
         )
 
@@ -660,9 +643,7 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
 class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     model = Job
     form_class = JobForm
-    permission_required = (
-        f"{Job._meta.app_label}.change_{Job._meta.model_name}"
-    )
+    permission_required = "algorithms.change_job"
     raise_exception = True
 
 
@@ -750,9 +731,7 @@ class AlgorithmPermissionRequestCreate(
 
 class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
     model = AlgorithmPermissionRequest
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
     @property
@@ -782,9 +761,7 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
     form_class = AlgorithmPermissionRequestUpdateForm
     base_model = Algorithm
     redirect_namespace = "algorithms"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.change_algorithm"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -798,9 +775,7 @@ class AlgorithmAddRepo(
     model = Algorithm
     form_class = AlgorithmRepoForm
     template_name = "algorithms/algorithm_add_repo.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
     def get_form_kwargs(self):

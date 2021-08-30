@@ -426,8 +426,9 @@ class Job(UUIDModel, ComponentJob):
     )
     credits_set = JobQuerySet.as_manager()
 
-    class Meta:
+    class Meta(UUIDModel.Meta, ComponentJob.Meta):
         ordering = ("created",)
+        permissions = [("view_logs", "Can view the jobs logs")]
 
     def __str__(self):
         return f"Job {self.pk}"
@@ -532,7 +533,7 @@ class Job(UUIDModel, ComponentJob):
         # If there is a creator they can view and change this job
         if self.creator:
             self.viewers.user_set.add(self.creator)
-            assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+            assign_perm("change_job", self.creator, self)
 
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(

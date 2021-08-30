@@ -133,7 +133,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     # Only the challenge admins should be able to view these jobs, never
     # the algorithm editors as these are participants - they must never
     # be able to see the test data.
-    groups = [evaluation.submission.phase.challenge.admins_group]
+    challenge_admins = [evaluation.submission.phase.challenge.admins_group]
 
     if max_jobs is None:
         # Once the algorithm has been run, score the submission. No emails as
@@ -164,7 +164,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             )
         ],
         creator=None,
-        extra_viewer_groups=groups,
+        extra_viewer_groups=challenge_admins,
+        extra_logs_viewer_groups=challenge_admins,
         linked_task=linked_task,
         on_error=on_error,
         max_jobs=max_jobs,
