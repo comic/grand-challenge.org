@@ -158,3 +158,4 @@ class Product(models.Model):
 class ProjectAirFiles(models.Model):
     title = models.CharField(max_length=150)
     study_file = models.FileField(upload_to=get_pdf_path)
+    archive = models.BooleanField(default=False)
