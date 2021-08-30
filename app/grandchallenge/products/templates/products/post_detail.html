@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row mb-3">
+    <div class="row mb-5">
         <div class="col-lg-8">
             <h2>{{ object.title }}</h2>
             <p class="text-muted">Published {{ object.created|date:"j N Y" }} <br> By
@@ -23,9 +23,9 @@
                 {# @formatter:on #}</p>
 
             {% if is_news %}
-            <div class="embed-responsive embed-responsive-1by1">
-                <iframe class="embed-responsive-item" src="{{ object.content }}" title="Newsletter" allowfullscreen></iframe>
-            </div>
+                <div class="embed-responsive embed-responsive-1by1">
+                    <iframe class="embed-responsive-item" src="{{ object.content }}" title="Newsletter" allowfullscreen sandbox></iframe>
+                </div>
             {% else %}
                 {{ object.content|md2html }}
             {% endif %}
@@ -63,7 +63,7 @@
             {% endif %}
 
 
-            <div class="row mb-1 mt-5">
+            <div class="row mb-1 mt-4">
                 <h4 class=text-muted>Newsletter</h4>
             </div>
             <div class="row mb-3">

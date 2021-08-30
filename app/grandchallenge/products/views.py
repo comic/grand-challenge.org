@@ -13,7 +13,11 @@ from grandchallenge.blogs.views import (
     PostList,
     PostUpdate,
 )
-from grandchallenge.products.forms import ImportForm, ProjectAirFilesForm
+from grandchallenge.products.forms import (
+    ImportForm,
+    ProductsPostUpdateForm,
+    ProjectAirFilesForm,
+)
 from grandchallenge.products.models import (
     Company,
     Product,
@@ -274,10 +278,10 @@ class ProductsPostDetail(PostDetail):
         context = super().get_context_data(**kwargs)
         obj = context["object"]
         is_news = obj.tags.all().filter(name="News").exists()
-        is_products = obj.tags.all().filter(name="Products").exists()
-        context.update({"is_news": is_news, "is_products": is_products})
+        context.update({"is_news": is_news})
         return context
 
 
 class ProductsPostUpdate(PostUpdate):
     template_name = "products/post_form.html"
+    form_class = ProductsPostUpdateForm

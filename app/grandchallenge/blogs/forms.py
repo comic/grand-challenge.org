@@ -41,20 +41,11 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
 
 class PostUpdateForm(PostForm):
     class Meta(PostForm.Meta):
-        # if is_products:
-        fields = (*PostForm.Meta.fields, "published", "companies", "content")
+        fields = (*PostForm.Meta.fields, "published", "content")
         widgets = {
             **PostForm.Meta.widgets,
             "content": MarkdownEditorWidget,
-            "companies": Select2MultipleWidget,
         }
-
-    # else:
-    #     fields = (*PostForm.Meta.fields, "published", "content")
-    #     widgets = {
-    #         **PostForm.Meta.widgets,
-    #         "content": MarkdownEditorWidget,
-    #     }
 
 
 class AuthorsForm(UserGroupForm):
