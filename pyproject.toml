@@ -96,7 +96,6 @@ django-activity-stream = "*"
 django-stdimage = "*"
 django-permissions-policy = "*"
 aws-xray-sdk = "*"
-django-social-share = "^2.2.1"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

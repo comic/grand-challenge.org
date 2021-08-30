@@ -443,7 +443,6 @@ THIRD_PARTY_APPS = [
     # Overridden apps
     "grandchallenge.forum_conversation",
     "grandchallenge.forum_member",
-    "django_social_share",
 ]
 
 LOCAL_APPS = [

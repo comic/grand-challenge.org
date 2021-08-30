@@ -688,14 +688,6 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-name = "django-social-share"
-version = "2.2.1"
-description = "Templatetags for 'tweet this' and 'share on facebook'"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "django-stdimage"
 version = "5.3.0"
 description = "Django Standarized Image Field"
