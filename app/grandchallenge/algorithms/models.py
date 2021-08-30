@@ -426,8 +426,9 @@ class Job(UUIDModel, ComponentJob):
     )
     credits_set = JobQuerySet.as_manager()
 
-    class Meta:
+    class Meta(UUIDModel.Meta, ComponentJob.Meta):
         ordering = ("created",)
+        permissions = [("view_logs", "Can view the jobs logs")]
 
     def __str__(self):
         return f"Job {self.pk}"
