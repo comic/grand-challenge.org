@@ -2,6 +2,7 @@ from actstream import action
 from celery import chain, chord, group, shared_task
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import (
@@ -234,6 +235,7 @@ def execute_jobs(
     civ_sets,
     creator=None,
     extra_viewer_groups=None,
+    extra_logs_viewer_groups=None,
     linked_task=None,
     on_error=None,
     max_jobs=None,
@@ -255,7 +257,10 @@ def execute_jobs(
     creator
         The creator of the algorithm jobs
     extra_viewer_groups
-        The viewer groups that will also get access to view the job
+        The groups that will also get permission to view the jobs
+    extra_logs_viewer_groups
+        The groups that will also get permission to view the logs for
+        the jobs
     linked_task
         A task that is run after each job completion. This must be able
         to handle being called more than once, and in parallel.
@@ -275,6 +280,7 @@ def execute_jobs(
         civ_sets=civ_sets,
         creator=creator,
         extra_viewer_groups=extra_viewer_groups,
+        extra_logs_viewer_groups=extra_logs_viewer_groups,
         max_jobs=max_jobs,
     )
 
@@ -298,6 +304,7 @@ def create_algorithm_jobs(
     civ_sets,
     creator=None,
     extra_viewer_groups=None,
+    extra_logs_viewer_groups=None,
     max_jobs=None,
 ):
     """
@@ -313,7 +320,10 @@ def create_algorithm_jobs(
     creator
         The creator of the algorithm jobs
     extra_viewer_groups
-        The viewer groups that will also get access to view the job
+        The groups that will also get permission to view the jobs
+    extra_logs_viewer_groups
+        The groups that will also get permission to view the logs for
+        the jobs
     max_jobs
         The maximum number of jobs to schedule
     """
@@ -347,6 +357,10 @@ def create_algorithm_jobs(
 
         if extra_viewer_groups is not None:
             j.viewer_groups.add(*extra_viewer_groups)
+
+        if extra_logs_viewer_groups is not None:
+            for g in extra_logs_viewer_groups:
+                assign_perm("algorithms.view_logs", g, j)
 
         jobs.append(j)
 

@@ -27,7 +27,10 @@ from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import EvaluationFactory
-from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
+from tests.evaluation_tests.test_permissions import (
+    get_groups_with_set_perms,
+    get_users_with_set_perms,
+)
 from tests.factories import (
     ImageFactory,
     UploadSessionFactory,
@@ -290,9 +293,10 @@ class TestJobPermissions(TestCase):
             job.viewers: {"view_job"},
         }
         # The Session Creator should be able to change the job
-        assert get_users_with_perms(
+        # and view the logs
+        assert get_users_with_set_perms(
             job, attach_perms=True, with_group_users=False
-        ) == {u: ["change_job"]}
+        ) == {u: {"change_job", "view_logs"}}
         # The only member of the viewers group should be the creator
         assert {*job.viewers.user_set.all()} == {u}
 
@@ -364,10 +368,14 @@ class TestJobPermissions(TestCase):
         job = Job.objects.get()
 
         # Only the challenge admins and job viewers should be able to view the
-        # job. NOTE: NOT THE ALGORITHM EDITORS, they are the participants
+        # job and logs.
+        # NOTE: NOT THE *ALGORITHM* EDITORS, they are the participants
         # to the challenge and should not be able to see the test data
         assert get_groups_with_set_perms(job) == {
-            evaluation.submission.phase.challenge.admins_group: {"view_job"},
+            evaluation.submission.phase.challenge.admins_group: {
+                "view_job",
+                "view_logs",
+            },
             job.viewers: {"view_job"},
         }
         # No-one should be able to change the job
