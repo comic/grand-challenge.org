@@ -252,9 +252,7 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["chunked_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}",
-                Algorithm,
+                user, "algorithms.change_algorithm", Algorithm,
             ).order_by("title")
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
