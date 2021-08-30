@@ -33,25 +33,27 @@
       </div>
     </div>
 
-    <div class="row pb-4">
-      <div class="col-sm-8">
-        <div class="row pt-2 bg-light">
-          <div class="col-sm d-flex justify-content-between" data-toggle="collapse" href="#archive" role="button" aria-expanded="false" aria-controls="archive">
-            <p>View archived protocols</p>
-            <p><i class="fas fa-angle-down text-radboud"></i></p>
+    {% if is_archive %}
+      <div class="row pb-4">
+        <div class="col-sm-8">
+          <div class="row pt-2 bg-light">
+            <div class="col-sm d-flex justify-content-between" data-toggle="collapse" href="#archive" role="button" aria-expanded="false" aria-controls="archive">
+              <p>View archived protocols</p>
+              <p><i class="fas fa-angle-down text-radboud"></i></p>
+            </div>
+          </div>
+          <div class="collapse" id="archive">
+            <ul class="list-group list-group-flush">
+              {% for project_air_file in is_archive %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">{{ project_air_file.title }}
+                      <a href="{{ project_air_file.study_file.url }}" class="btn-sm btn-square btn-radboud" target="_blank" download>Download</a>
+                  </li>
+              {% endfor %}
+            </ul>
           </div>
         </div>
-        <div class="collapse" id="archive">
-          <ul class="list-group list-group-flush">
-            {% for project_air_file in is_archive %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">{{ project_air_file.title }}
-                    <a href="{{ project_air_file.study_file.url }}" class="btn-sm btn-square btn-radboud" target="_blank" download>Download</a>
-                </li>
-            {% endfor %}
-          </ul>
-        </div>
       </div>
-    </div>
+    {% endif %}
 
   </div>
 {% endblock %}
