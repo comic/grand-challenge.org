@@ -289,14 +289,14 @@ class TestJobPermissions(TestCase):
 
         # Editors and viewers should be able to view the job
         assert get_groups_with_set_perms(job) == {
-            ai.algorithm.editors_group: {"view_job"},
+            ai.algorithm.editors_group: {"view_job", "view_logs"},
             job.viewers: {"view_job"},
         }
         # The Session Creator should be able to change the job
         # and view the logs
         assert get_users_with_set_perms(
             job, attach_perms=True, with_group_users=False
-        ) == {u: {"change_job", "view_logs"}}
+        ) == {u: {"change_job"}}
         # The only member of the viewers group should be the creator
         assert {*job.viewers.user_set.all()} == {u}
 

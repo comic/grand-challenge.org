@@ -37,7 +37,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_perms
+from guardian.shortcuts import assign_perm, get_perms
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -477,7 +477,11 @@ class AlgorithmExperimentCreate(
             algorithm_image=self.algorithm.latest_ready_image,
         )
 
+        # TODO AUG2021 JM permission management should be done in 1 place
+        # The execution for jobs over the API or non-sessions needs
+        # to be cleaned up. See callers of `execute_jobs`.
         job.viewer_groups.add(self.algorithm.editors_group)
+        assign_perm("algorithms.view_logs", self.algorithm.editors_group, job)
 
         upload_pks = {}
         civs = []
@@ -630,9 +634,6 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
             {
                 "viewers_form": viewers_form,
                 "job_perms": get_perms(self.request.user, self.object),
-                "algorithm_perms": get_perms(
-                    self.request.user, self.object.algorithm_image.algorithm
-                ),
             }
         )
 

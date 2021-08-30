@@ -534,7 +534,6 @@ class Job(UUIDModel, ComponentJob):
         if self.creator:
             self.viewers.user_set.add(self.creator)
             assign_perm("change_job", self.creator, self)
-            assign_perm("view_logs", self.creator, self)
 
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(

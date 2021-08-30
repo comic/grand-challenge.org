@@ -136,7 +136,7 @@ def create_algorithm_jobs_for_session(
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
     # Editors group should be able to view session jobs for debugging
-    groups = [algorithm_image.algorithm.editors_group]
+    algorithm_editors = [algorithm_image.algorithm.editors_group]
 
     # Send an email to the algorithm editors and creator on job failure
     linked_task = send_failed_session_jobs_notifications.signature(
@@ -163,7 +163,8 @@ def create_algorithm_jobs_for_session(
         algorithm_image=algorithm_image,
         civ_sets=civ_sets,
         creator=session.creator,
-        extra_viewer_groups=groups,
+        extra_viewer_groups=algorithm_editors,
+        extra_logs_viewer_groups=algorithm_editors,
         linked_task=linked_task,
     )
 
