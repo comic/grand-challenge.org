@@ -177,12 +177,13 @@ class JobPostSerializer(JobSerializer):
             upload_session = input_data.pop("upload_session", None)
             civ = ComponentInterfaceValue(**input_data)
             if upload_session:
-                upload_pks[civ.pk] = upload_session.pk
-            else:
                 # CIVs with upload sessions cannot be validated, done in
                 # run_algorithm_job_for_inputs
+                civ.save()
+                upload_pks[civ.pk] = upload_session.pk
+            else:
                 civ.full_clean()
-            civ.save()
+                civ.save()
             component_interface_values.append(civ)
 
         # use interface defaults if no value was provided
