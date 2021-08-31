@@ -294,9 +294,6 @@ def test_handle_complex_files(tmpdir_factory):
     )
     mock_image.copy.assert_called()
     assert "xres" in mock_image.copy.call_args[1]
-    assert (
-        pyvips.base.version(0) == 8 and pyvips.base.version(1) < 10
-    ), "Remove work-around calculation of xres and yres in _convert_to_tiff function."
 
 
 def test_error_handling(tmpdir_factory):
