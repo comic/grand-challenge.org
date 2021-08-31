@@ -158,4 +158,7 @@ class Product(models.Model):
 class ProjectAirFiles(models.Model):
     title = models.CharField(max_length=150)
     study_file = models.FileField(upload_to=get_pdf_path)
-    archive = models.BooleanField(default=False)
+    archive = models.BooleanField(
+        default=False,
+        help_text="Set to True if the file is no longer the most recent version. It will remain available on the page for download under archived protocols.",
+    )
