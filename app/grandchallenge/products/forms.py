@@ -5,7 +5,6 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.blogs.forms import PostForm, PostUpdateForm
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.products.models import ProjectAirFiles
@@ -32,10 +31,9 @@ class ProjectAirFilesForm(SaveFormInitMixin, forms.ModelForm):
 
 
 class ProductsPostUpdateForm(PostUpdateForm):
-    class Meta(PostForm.Meta):
-        fields = (*PostForm.Meta.fields, "published", "companies", "content")
+    class Meta(PostUpdateForm.Meta):
+        fields = (*PostUpdateForm.Meta.fields, "companies")
         widgets = {
             **PostForm.Meta.widgets,
-            "content": MarkdownEditorWidget,
             "companies": Select2MultipleWidget,
         }
