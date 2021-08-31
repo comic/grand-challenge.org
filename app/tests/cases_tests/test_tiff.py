@@ -1,21 +1,16 @@
 import os
 import shutil
-from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, Mock
 from uuid import uuid4
 
 import pytest
-import pyvips
 import tifffile as tiff_lib
 from panimg.exceptions import ValidationError
 from panimg.image_builders.tiff import (
     GrandChallengeTiffFile,
-    _convert,
     _extract_tags,
     _get_color_space,
-    _get_mrxs_files,
     _load_with_tiff,
     image_builder_tiff,
 )
@@ -264,36 +259,6 @@ def test_image_builder_tiff(tmpdir_factory,):
 
     # Assert that both tiff images are imported
     assert len(image_builder_result.new_image_files) == 2
-
-
-def test_handle_complex_files(tmpdir_factory):
-    # Copy resource files to writable temp folder
-    temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
-    shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
-    files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
-
-    # set up mock object to mock pyvips
-    properties = {
-        "xres": 1,
-        "yres": 1,
-        "openslide.mpp-x": 0.2525,
-        "openslide.mpp-y": 0.2525,
-    }
-
-    mock_converter = MagicMock(pyvips)
-    mock_image = mock_converter.Image.new_from_file.return_value
-    mock_image.get = Mock(return_value=1)
-    mock_image.get_fields = Mock(return_value=properties)
-
-    _convert(
-        files=files,
-        associated_files_getter=_get_mrxs_files,
-        converter=mock_converter,
-        output_directory=Path(tmpdir_factory.mktemp("output")),
-        file_errors=defaultdict(list),
-    )
-    mock_image.copy.assert_called()
-    assert "xres" in mock_image.copy.call_args[1]
 
 
 def test_error_handling(tmpdir_factory):
