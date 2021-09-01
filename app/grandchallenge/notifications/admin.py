@@ -20,6 +20,21 @@ class FollowAdmin(ModelAdmin):
 
 class NotificationAdmin(ModelAdmin):
     readonly_fields = ("user",)
+    list_display = (
+        "__str__",
+        "type",
+        "actor",
+        "verb",
+        "action_object",
+        "target",
+        "read",
+    )
+    list_filter = ("type", "read")
+    raw_id_fields = (
+        "actor_content_type",
+        "target_content_type",
+        "action_object_content_type",
+    )
 
 
 admin.site.unregister(Follow)

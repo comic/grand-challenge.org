@@ -1,12 +1,42 @@
-from actstream.models import Action
+from actstream.models import Action, followers
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db import models
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
+from grandchallenge.subdomains.utils import reverse
+
+
+class NotificationTypeChoices(models.TextChoices):
+    """Notification type choices."""
+
+    GENERIC = "GENERIC", _("Generic")
+    FORUM_POST = "FRM-POST", _("Forum post")
+    FORUM_POST_REPLY = "FRM-RPL", _("Forum post reply")
+    ACCESS_REQUEST = "ACC-REQ", _("Access request")
+    REQUEST_UPDATE = "REQ-UPD", _("Request update")
+    NEW_ADMIN = "ADMIN", _("New admin")
+    EVALUATION_STATUS = "EVAL", _("Evaluation status update")
+    MISSING_METHOD = "MISSING-METHOD", _("Missing method")
+    JOB_STATUS = "JOB", _("Job status update")
+    IMAGE_IMPORT_STATUS = "IMAGE-IMPORT", _("Image import status update")
+
+
+class NotificationType:
+    """Notification type."""
+
+    NotificationTypeChoices = NotificationTypeChoices
 
 
 class Notification(UUIDModel):
+    Type = NotificationType.NotificationTypeChoices
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -14,13 +44,76 @@ class Notification(UUIDModel):
         on_delete=models.CASCADE,
     )
 
+    type = models.CharField(
+        max_length=15,
+        choices=Type.choices,
+        default=Type.GENERIC,
+        help_text=("Of what type is this notification?"),
+    )
+
     action = models.ForeignKey(
         Action,
+        blank=True,
+        null=True,
         help_text="Which action is associated with this notification?",
         on_delete=models.CASCADE,
     )
 
     read = models.BooleanField(default=False, db_index=True)
+
+    context_class = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text="Bootstrap contextual class to style notification list items.",
+    )
+
+    # action-related fields (taken from actstream.models.Action)
+    actor_content_type = models.ForeignKey(
+        ContentType,
+        blank=True,
+        null=True,
+        related_name="notification_actor",
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+    actor_object_id = models.CharField(
+        max_length=255, db_index=True, blank=True, null=True
+    )
+    actor = GenericForeignKey("actor_content_type", "actor_object_id")
+
+    verb = models.CharField(
+        max_length=255, db_index=True, blank=True, null=True
+    )
+    description = models.TextField(blank=True, null=True)
+
+    target_content_type = models.ForeignKey(
+        ContentType,
+        blank=True,
+        null=True,
+        related_name="notification_target",
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+    target_object_id = models.CharField(
+        max_length=255, blank=True, null=True, db_index=True
+    )
+    target = GenericForeignKey("target_content_type", "target_object_id")
+
+    action_object_content_type = models.ForeignKey(
+        ContentType,
+        blank=True,
+        null=True,
+        related_name="notification_action_object",
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+    action_object_object_id = models.CharField(
+        max_length=255, blank=True, null=True, db_index=True
+    )
+    action_object = GenericForeignKey(
+        "action_object_content_type", "action_object_object_id"
+    )
 
     def __str__(self):
         return f"Notification for {self.user}"
@@ -37,3 +130,282 @@ class Notification(UUIDModel):
         assign_perm("view_notification", self.user, self)
         assign_perm("delete_notification", self.user, self)
         assign_perm("change_notification", self.user, self)
+
+    @staticmethod
+    def send(type, **kwargs):  # noqa: C901
+        verb = kwargs.pop("verb")
+        try:
+            actor = kwargs.pop("actor")
+        except KeyError:
+            actor = None
+        try:
+            action_object = kwargs.pop("action_object")
+        except KeyError:
+            action_object = None
+        try:
+            target = kwargs.pop("target")
+        except KeyError:
+            target = None
+        try:
+            description = kwargs.pop("description")
+        except KeyError:
+            description = None
+        try:
+            context_class = kwargs.pop("context_class")
+        except KeyError:
+            context_class = None
+
+        if (
+            type == NotificationType.NotificationTypeChoices.FORUM_POST
+            or type
+            == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
+            or type == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+            or type == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
+            or type == NotificationType.NotificationTypeChoices.MISSING_METHOD
+        ):
+            if actor:
+                receivers = [
+                    follower
+                    for follower in followers(target)
+                    if follower != actor
+                ]
+            else:
+                receivers = followers(target)
+        elif type == NotificationType.NotificationTypeChoices.NEW_ADMIN:
+            receivers = [action_object]
+        elif (
+            type == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+        ):
+            receivers = followers(target)
+            receivers.append(actor)
+        elif type == NotificationType.NotificationTypeChoices.JOB_STATUS:
+            receivers = followers(target, flag="job-active")
+        elif (
+            type
+            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
+        ):
+            receivers = followers(action_object)
+
+        for receiver in receivers:
+            Notification.objects.create(
+                user=receiver,
+                type=type,
+                verb=verb,
+                actor=actor,
+                action_object=action_object,
+                target=target,
+                description=description,
+                context_class=context_class,
+            )
+
+    def print_notification(self, user):  # noqa: C901
+        if self.type == NotificationType.NotificationTypeChoices.FORUM_POST:
+            return format_html(
+                "{} {} {} in {} {}.",
+                user_profile_link(self.actor),
+                self.verb,
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (
+                        self.action_object.get_absolute_url(),
+                        self.action_object,
+                    )
+                ),
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (self.target.get_absolute_url(), self.target)
+                ),
+                naturaltime(self.created),
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
+            or self.type
+            == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+        ):
+            if (
+                self.type
+                == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+                and self.target_content_type.model == "challenge"
+            ):
+                notification_addition = mark_safe(
+                    '<span class="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| Accept or decline <a href="%s"> here </a>.</span>'
+                    % (
+                        reverse(
+                            "participants:registration-list",
+                            kwargs={
+                                "challenge_short_name": self.target.short_name
+                            },
+                        )
+                    )
+                )
+            else:
+                notification_addition = ""
+            return format_html(
+                "{} {} {} {}. {}",
+                user_profile_link(self.actor),
+                self.verb,
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (self.target.get_absolute_url(), self.target)
+                ),
+                naturaltime(self.created),
+                notification_addition,
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
+        ):
+            if self.target.challenge:
+                target_url = self.target.challenge.get_absolute_url()
+                target_name = self.target.challenge.short_name
+            else:
+                target_url = self.target.base_obj.get_absolute_url()
+                target_name = self.target.object_name
+            return format_html(
+                "Your registration request for {} {} {}.",
+                mark_safe(f'<a href="{target_url}">{target_name}</a>'),
+                self.verb,
+                naturaltime(self.created),
+            )
+        elif self.type == NotificationType.NotificationTypeChoices.NEW_ADMIN:
+            return format_html(
+                "You were {} {} {}.",
+                self.verb,
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (self.target.get_absolute_url(), self.target)
+                ),
+                naturaltime(self.created),
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+            and user == self.user
+        ):
+            return format_html(
+                "Your {} to {} {} {}. {}",
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (
+                        self.action_object.submission.get_absolute_url(),
+                        "submission",
+                    )
+                ),
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (
+                        self.target.challenge.get_absolute_url(),
+                        self.target.challenge.short_name,
+                    )
+                ),
+                self.verb,
+                naturaltime(self.created),
+                mark_safe(
+                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| %s</span>' % self.action_object.error_message
+                ),
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+            and user != self.user
+            and self.verb == "failed"
+        ):
+            return format_html(
+                "The {} from {} to {} {} {}. | {}",
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (
+                        self.action_object.submission.get_absolute_url(),
+                        "submission",
+                    )
+                ),
+                user_profile_link(self.actor),
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (
+                        self.target.challenge.get_absolute_url(),
+                        self.target.challenge.short_name,
+                    )
+                ),
+                self.verb,
+                naturaltime(self.created),
+                mark_safe(
+                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    'mx-2">%s</span>' % self.action_object.error_message
+                ),
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+            and user != self.user
+            and self.verb == "succeeded"
+        ):
+            return format_html(
+                "There is a new {} for {} from {} {}.",
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (
+                        self.action_object.submission.get_absolute_url(),
+                        "result",
+                    )
+                ),
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (
+                        self.target.challenge.get_absolute_url(),
+                        self.target.challenge.short_name,
+                    )
+                ),
+                user_profile_link(self.actor),
+                naturaltime(self.created),
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.MISSING_METHOD
+        ):
+            return format_html(
+                "The {} from {} {} could not be evaluated because "
+                "there is no valid evaluation method for {}.",
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (self.action_object.get_absolute_url(), "submission")
+                ),
+                user_profile_link(self.actor),
+                naturaltime(self.created),
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (self.target.get_absolute_url(), self.target)
+                ),
+            )
+        elif self.type == NotificationType.NotificationTypeChoices.JOB_STATUS:
+            if user != self.user and self.actor:
+                addition = format_html(" | {}", user_profile_link(self.actor))
+            else:
+                addition = ""
+            return format_html(
+                "{} {}. {} {}",
+                self.verb,
+                naturaltime(self.created),
+                addition,
+                mark_safe(
+                    '<span class="text-truncate font-italic text-muted align-middle '
+                    'mx-2 ">| Inspect the output and any error messages <a href="%s">'
+                    "here</a>.</span>" % self.description
+                ),
+            )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
+        ):
+            return format_html(
+                "Your {} {} {}.",
+                mark_safe(
+                    '<a href="%s">%s</a>'
+                    % (self.action_object.get_absolute_url(), "upload")
+                ),
+                naturaltime(self.created),
+                self.verb,
+            )
