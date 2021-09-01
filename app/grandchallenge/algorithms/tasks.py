@@ -1,4 +1,3 @@
-from actstream import action
 from celery import chain, chord, group, shared_task
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
@@ -20,6 +19,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -178,15 +178,14 @@ def create_algorithm_jobs_for_session(
                 "pk": upload_session_pk,
             },
         )
-        action.send(
-            sender=algorithm_image.algorithm,
-            verb=(
-                f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
-                f"{algorithm_image.algorithm.title} were not started because "
-                f"the number of allowed jobs was reached."
-            ),
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+            actor=session.creator,
+            verb=f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
+            f"{algorithm_image.algorithm.title} were not started because "
+            f"the number of allowed jobs was reached.",
+            target=algorithm_image.algorithm,
             description=experiment_url,
-            target=session.creator,
         )
 
 
@@ -443,14 +442,13 @@ def send_failed_job_notification(*, job_pk):
         experiment_url = reverse(
             "algorithms:job-list", kwargs={"slug": algorithm.slug}
         )
-        action.send(
-            sender=algorithm,
-            verb=(
-                f"Unfortunately one of the jobs for algorithm {algorithm.title} "
-                f"failed with an error."
-            ),
-            description=f"{experiment_url}",
-            target=job.creator,
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+            actor=job.creator,
+            verb=f"Unfortunately one of the jobs for algorithm {algorithm.title} "
+            f"failed with an error",
+            target=algorithm,
+            description=experiment_url,
         )
 
 
@@ -488,12 +486,11 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
                 "algorithms:execution-session-detail",
                 kwargs={"slug": algorithm.slug, "pk": session_pk},
             )
-            action.send(
-                sender=algorithm,
-                verb=(
-                    f"Unfortunately {failed_jobs_count} of the jobs for "
-                    f"algorithm {algorithm.title} failed with an error."
-                ),
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+                actor=session.creator,
+                verb=f"Unfortunately {failed_jobs_count} of the jobs for "
+                f"algorithm {algorithm.title} failed with an error ",
+                target=algorithm,
                 description=experiment_url,
-                target=session.creator,
             )

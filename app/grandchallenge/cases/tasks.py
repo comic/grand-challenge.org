@@ -17,7 +17,6 @@ from typing import (
     Tuple,
 )
 
-from actstream import action
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from django.conf import settings
@@ -26,6 +25,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
 from django.db.transaction import on_commit
+from django.template.defaultfilters import pluralize
 from django.utils import timezone
 from panimg import convert
 from panimg.models import PanImgResult
@@ -42,6 +42,7 @@ from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
     StagedAjaxFile,
 )
+from grandchallenge.notifications.models import Notification, NotificationType
 
 
 def _populate_tmp_dir(tmp_dir, upload_session):
@@ -514,8 +515,10 @@ def _handle_raw_files(
         )
 
         if upload_session.creator:
-            action.send(
-                sender=upload_session, verb=f"failed with {n_errors} errors"
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                verb=f"failed with {n_errors} error{pluralize(n_errors)}",
+                action_object=upload_session,
             )
 
 

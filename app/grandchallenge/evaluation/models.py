@@ -2,7 +2,6 @@ import logging
 from datetime import timedelta
 from urllib.parse import parse_qs, urljoin, urlparse
 
-from actstream import action
 from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -34,6 +33,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -803,13 +803,21 @@ class Evaluation(UUIDModel, ComponentJob):
         res = super().update_status(*args, **kwargs)
 
         if self.status == self.FAILURE:
-            action.send(
-                sender=self, verb="failed", target=self.submission.phase
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
+                actor=self.submission.creator,
+                verb="failed",
+                action_object=self,
+                target=self.submission.phase,
             )
 
         if self.status == self.SUCCESS:
-            action.send(
-                sender=self, verb="succeeded", target=self.submission.phase
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
+                actor=self.submission.creator,
+                verb="succeeded",
+                action_object=self,
+                target=self.submission.phase,
             )
 
         return res

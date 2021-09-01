@@ -24,7 +24,6 @@ from grandchallenge.notifications.serializers import (
 )
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
-    prefetch_nested_generic_foreign_key_objects,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -89,13 +88,14 @@ class NotificationList(
     paginate_by = 50
 
     def get_queryset(self):
-        return prefetch_nested_generic_foreign_key_objects(
+        # TODO: refactor prefetch function after migration to new model is complete
+        return prefetch_generic_foreign_key_objects(
             super()
             .get_queryset()
             .select_related(
-                "action__actor_content_type",
-                "action__target_content_type",
-                "action__action_object_content_type",
+                "actor_content_type",
+                "target_content_type",
+                "action_object_content_type",
                 "user",
             )
             .order_by("-created")

@@ -3,7 +3,6 @@ import json
 from collections import Counter
 
 import numpy as np
-from actstream import action
 from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
@@ -36,6 +35,7 @@ from grandchallenge.core.storage import (
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -1402,9 +1402,10 @@ class ReaderStudyPermissionRequest(RequestBase):
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
             )
-            action.send(
-                sender=self.user,
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
                 verb="requested access to",
+                actor=self.user,
                 target=self.base_object,
             )
 

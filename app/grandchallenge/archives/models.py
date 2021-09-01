@@ -1,4 +1,3 @@
-from actstream import action
 from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
@@ -19,6 +18,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -278,9 +278,10 @@ class ArchivePermissionRequest(RequestBase):
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
             )
-            action.send(
-                sender=self.user,
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
                 verb="requested access to",
+                actor=self.user,
                 target=self.base_object,
             )
 

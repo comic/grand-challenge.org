@@ -50,7 +50,7 @@ class Notification(UUIDModel):
         default=Type.GENERIC,
         help_text=("Of what type is this notification?"),
     )
-
+    # TODO: deprecate this field after old notifications have been transferred
     action = models.ForeignKey(
         Action,
         blank=True,
@@ -257,11 +257,11 @@ class Notification(UUIDModel):
             self.type
             == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
         ):
-            if self.target.challenge:
+            if self.target._meta.model_name == "registrationrequest":
                 target_url = self.target.challenge.get_absolute_url()
                 target_name = self.target.challenge.short_name
             else:
-                target_url = self.target.base_obj.get_absolute_url()
+                target_url = self.target.base_object.get_absolute_url()
                 target_name = self.target.object_name
             return format_html(
                 "Your registration request for {} {} {}.",
