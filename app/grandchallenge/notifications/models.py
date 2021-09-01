@@ -5,7 +5,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db import models
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from guardian.shortcuts import assign_perm
 
@@ -204,16 +203,15 @@ class Notification(UUIDModel):
                 "{} {} {} in {} {}.",
                 user_profile_link(self.actor),
                 self.verb,
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (
-                        self.action_object.get_absolute_url(),
-                        self.action_object,
-                    )
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.get_absolute_url(),
+                    self.action_object,
                 ),
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (self.target.get_absolute_url(), self.target)
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
                 ),
                 naturaltime(self.created),
             )
@@ -228,17 +226,15 @@ class Notification(UUIDModel):
                 == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
                 and self.target_content_type.model == "challenge"
             ):
-                notification_addition = mark_safe(
+                notification_addition = format_html(
                     '<span class="text-truncate font-italic text-muted align-middle '
-                    'mx-2">| Accept or decline <a href="%s"> here </a>.</span>'
-                    % (
-                        reverse(
-                            "participants:registration-list",
-                            kwargs={
-                                "challenge_short_name": self.target.short_name
-                            },
-                        )
-                    )
+                    'mx-2">| Accept or decline <a href="{}"> here </a>.</span>',
+                    reverse(
+                        "participants:registration-list",
+                        kwargs={
+                            "challenge_short_name": self.target.short_name
+                        },
+                    ),
                 )
             else:
                 notification_addition = ""
@@ -246,9 +242,10 @@ class Notification(UUIDModel):
                 "{} {} {} {}. {}",
                 user_profile_link(self.actor),
                 self.verb,
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (self.target.get_absolute_url(), self.target)
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
                 ),
                 naturaltime(self.created),
                 notification_addition,
@@ -265,7 +262,7 @@ class Notification(UUIDModel):
                 target_name = self.target.object_name
             return format_html(
                 "Your registration request for {} {} {}.",
-                mark_safe(f'<a href="{target_url}">{target_name}</a>'),
+                format_html(f'<a href="{target_url}">{target_name}</a>'),
                 self.verb,
                 naturaltime(self.created),
             )
@@ -273,9 +270,10 @@ class Notification(UUIDModel):
             return format_html(
                 "You were {} {} {}.",
                 self.verb,
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (self.target.get_absolute_url(), self.target)
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
                 ),
                 naturaltime(self.created),
             )
@@ -286,25 +284,22 @@ class Notification(UUIDModel):
         ):
             return format_html(
                 "Your {} to {} {} {}. {}",
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (
-                        self.action_object.submission.get_absolute_url(),
-                        "submission",
-                    )
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.submission.get_absolute_url(),
+                    "submission",
                 ),
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (
-                        self.target.challenge.get_absolute_url(),
-                        self.target.challenge.short_name,
-                    )
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
                 ),
                 self.verb,
                 naturaltime(self.created),
-                mark_safe(
+                format_html(
                     '<span class ="text-truncate font-italic text-muted align-middle '
-                    'mx-2">| %s</span>' % self.action_object.error_message
+                    'mx-2">| {}</span>',
+                    self.action_object.error_message,
                 ),
             )
         elif (
@@ -315,26 +310,23 @@ class Notification(UUIDModel):
         ):
             return format_html(
                 "The {} from {} to {} {} {}. | {}",
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (
-                        self.action_object.submission.get_absolute_url(),
-                        "submission",
-                    )
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.submission.get_absolute_url(),
+                    "submission",
                 ),
                 user_profile_link(self.actor),
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (
-                        self.target.challenge.get_absolute_url(),
-                        self.target.challenge.short_name,
-                    )
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
                 ),
                 self.verb,
                 naturaltime(self.created),
-                mark_safe(
+                format_html(
                     '<span class ="text-truncate font-italic text-muted align-middle '
-                    'mx-2">%s</span>' % self.action_object.error_message
+                    'mx-2">{}</span>',
+                    self.action_object.error_message,
                 ),
             )
         elif (
@@ -345,19 +337,15 @@ class Notification(UUIDModel):
         ):
             return format_html(
                 "There is a new {} for {} from {} {}.",
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (
-                        self.action_object.submission.get_absolute_url(),
-                        "result",
-                    )
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.submission.get_absolute_url(),
+                    "result",
                 ),
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (
-                        self.target.challenge.get_absolute_url(),
-                        self.target.challenge.short_name,
-                    )
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
                 ),
                 user_profile_link(self.actor),
                 naturaltime(self.created),
@@ -369,15 +357,17 @@ class Notification(UUIDModel):
             return format_html(
                 "The {} from {} {} could not be evaluated because "
                 "there is no valid evaluation method for {}.",
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (self.action_object.get_absolute_url(), "submission")
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.get_absolute_url(),
+                    "submission",
                 ),
                 user_profile_link(self.actor),
                 naturaltime(self.created),
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (self.target.get_absolute_url(), self.target)
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
                 ),
             )
         elif self.type == NotificationType.NotificationTypeChoices.JOB_STATUS:
@@ -390,10 +380,11 @@ class Notification(UUIDModel):
                 self.verb,
                 naturaltime(self.created),
                 addition,
-                mark_safe(
+                format_html(
                     '<span class="text-truncate font-italic text-muted align-middle '
-                    'mx-2 ">| Inspect the output and any error messages <a href="%s">'
-                    "here</a>.</span>" % self.description
+                    'mx-2 ">| Inspect the output and any error messages <a href="{}">'
+                    "here</a>.</span>",
+                    self.description,
                 ),
             )
         elif (
@@ -402,9 +393,10 @@ class Notification(UUIDModel):
         ):
             return format_html(
                 "Your {} {} {}.",
-                mark_safe(
-                    '<a href="%s">%s</a>'
-                    % (self.action_object.get_absolute_url(), "upload")
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.get_absolute_url(),
+                    "upload",
                 ),
                 naturaltime(self.created),
                 self.verb,
