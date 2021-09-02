@@ -78,13 +78,13 @@ def test_submission_evaluation(
                 / "submission.csv",
                 phase=method.phase,
             )
-
+    evaluation = submission.evaluation_set.first()
     assert len(submission.evaluation_set.all()) == 1
     assert evaluation.status == evaluation.SUCCESS
     assert (
-        submission.evaluation_set.first()
-        .outputs.get(interface__slug="metrics-json-file")
-        .value["acc"]
+        evaluation.outputs.get(interface__slug="metrics-json-file").value[
+            "acc"
+        ]
         == 0.5
     )
 

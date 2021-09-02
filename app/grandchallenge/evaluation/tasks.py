@@ -85,7 +85,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
             interface = ComponentInterface.objects.get(
                 slug="predictions-zip-file"
             )
-        elif mimetype == "text/plain":
+        elif mimetype in ["text/plain", "application/csv"]:
             interface = ComponentInterface.objects.get(
                 slug="predictions-csv-file"
             )
