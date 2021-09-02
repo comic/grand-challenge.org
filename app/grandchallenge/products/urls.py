@@ -8,6 +8,10 @@ from grandchallenge.products.views import (
     ImportDataView,
     ProductDetail,
     ProductList,
+    ProductsPostCreate,
+    ProductsPostDetail,
+    ProductsPostList,
+    ProductsPostUpdate,
     ProjectAirForm,
     ProjectAirPage,
 )
@@ -27,5 +31,13 @@ urlpatterns = [
         "project-air-files/",
         ProjectAirForm.as_view(),
         name="project-air-files",
+    ),
+    path("blogs/", ProductsPostList.as_view(), name="blogs-list"),
+    path("blogs/create/", ProductsPostCreate.as_view(), name="blogs-create"),
+    path("blogs/<slug>/", ProductsPostDetail.as_view(), name="blogs-detail"),
+    path(
+        "blogs/<slug>/update/",
+        ProductsPostUpdate.as_view(),
+        name="blogs-update",
     ),
 ]

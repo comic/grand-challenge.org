@@ -1,0 +1,20 @@
+{% extends 'products/base.html' %}
+{% load crispy_forms_tags %}
+{% load url %}
+{% load static %}
+
+{% block title %}{% if object %}Update{% else %}Create{% endif %} Post - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'products:blogs-list' %}">Blogs</a></li>
+    {% if object %}
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">{% if object %}Update{% else %}Create{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+    <h2>{% if object %}Update{% else %}Create{% endif %} Post</h2>
+
+    {% crispy form %}
+{% endblock %}
