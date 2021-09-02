@@ -233,6 +233,14 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["upload_session_pk"],
             "additionalProperties": False,
         },
+        "MASK": {
+            "type": "object",
+            "properties": {
+                "upload_session_pk": {"type": "string", "format": "uuid"}
+            },
+            "required": ["upload_session_pk"],
+            "additionalProperties": False,
+        },
         "2D-bounding-box-object": {
             "type": "object",
             "properties": {
@@ -303,6 +311,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MCHO"},
         {"$ref": "#/definitions/MCHD"},
         {"$ref": "#/definitions/M2DB"},
+        {"$ref": "#/definitions/MASK"},
     ],
 }
 

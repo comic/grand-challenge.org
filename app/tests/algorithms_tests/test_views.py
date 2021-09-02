@@ -705,7 +705,7 @@ class TestJobDetailView:
 
         for content, permission, permission_object in [
             ("<h2>Viewers</h2>", "change_job", j),
-            ("<h2>Logs</h2>", "change_algorithm", j.algorithm_image.algorithm),
+            ("<h2>Logs</h2>", "view_logs", j),
         ]:
             view_kwargs = {
                 "client": client,

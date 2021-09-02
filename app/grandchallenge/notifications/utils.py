@@ -19,43 +19,17 @@ def _queryset_foreign_keys(queryset, nested):
     """
     fks = {}
     for name, field in queryset.model.__dict__.items():
-        if nested and not isinstance(field, ForwardManyToOneDescriptor):
-            continue
-        elif not nested and not isinstance(field, GenericForeignKey):
-            continue
-        fks[name] = field
+        if nested and isinstance(field, ForwardManyToOneDescriptor):
+            for _, field2 in field.field.related_model.__dict__.items():
+                if not isinstance(field2, GenericForeignKey):
+                    continue
+                fks[field2.name] = field2
+        elif not nested and isinstance(field, GenericForeignKey):
+            fks[name] = field
     return fks
 
 
-def _content_type_to_content_mapping_for_nested_gfks(queryset, fks):
-    """
-    Build mapping of content_type -> [content_pk] for the given queryset and
-    its nested generic foreign keys.
-    """
-    data = collections.defaultdict(list)
-    gfks = {}
-    for weak_model in queryset:
-        for _, fk_field in fks.items():
-            for name, fk in fk_field.field.related_model.__dict__.items():
-                if not isinstance(fk, GenericForeignKey):
-                    continue
-                gfks[name] = fk
-                (
-                    related_content_type,
-                    related_object_id,
-                ) = _get_related_content_type_and_related_object_pk(
-                    weak_model.action, fk_field.field.related_model, fk
-                )
-                if related_content_type is None:
-                    continue
-                if related_object_id is None:
-                    continue
-
-                data[related_content_type].append(related_object_id)
-    return data, gfks
-
-
-def _content_type_to_content_mapping_for_gfks(queryset, gfks):
+def _content_type_to_content_mapping_for_gfks(queryset, gfks, nested):
     """
     Build mapping of content_type -> [content_pk] for the given queryset and
     its generic foreign keys.
@@ -66,22 +40,18 @@ def _content_type_to_content_mapping_for_gfks(queryset, gfks):
         _field_name,
         content_type,
         object_pk,
-    ) in _queryset_gfk_content_generator(queryset, gfks):
-        data[content_type].append(object_pk)
+    ) in _queryset_gfk_content_generator(queryset, gfks, nested=nested):
+        if content_type and object_pk:
+            data[content_type].append(object_pk)
     return data
 
 
-def _get_related_content_type_and_related_object_pk(model, fk_field, fk):
+def _get_related_content_type_and_related_object_pk(model, fk):
     """Get related object's pk and content type."""
 
     try:
-        related_content_type_id = getattr(
-            model, fk_field._meta.get_field(fk.ct_field).get_attname(),
-        )
+        related_content_type = getattr(model, fk.ct_field,)
         related_object_id = getattr(model, fk.fk_field)
-        related_content_type = ContentType.objects.get_for_id(
-            related_content_type_id
-        )
     except TypeError:
         related_object_id = None
         related_content_type = None
@@ -92,7 +62,7 @@ def _get_related_content_type_and_related_object_pk(model, fk_field, fk):
     return related_content_type, related_object_id
 
 
-def _queryset_gfk_content_generator(queryset, gfks):
+def _queryset_gfk_content_generator(queryset, gfks, nested):
     """
     Generator function that yields information about all GenericForeignKey
     fields for all models of a queryset.
@@ -102,20 +72,28 @@ def _queryset_gfk_content_generator(queryset, gfks):
             "data", ["model", "field_name", "content_type", "object_pk"]
         )
         for field_name, field in gfks.items():
-            (
-                content_type,
-                object_pk,
-            ) = _get_related_content_type_and_related_object_pk(
-                model, field.model, field
-            )
+            if nested:
+                (
+                    content_type,
+                    object_pk,
+                ) = _get_related_content_type_and_related_object_pk(
+                    model.action, field
+                )
+            else:
+                (
+                    content_type,
+                    object_pk,
+                ) = _get_related_content_type_and_related_object_pk(
+                    model, field
+                )
             yield data(model, field_name, content_type, object_pk)
 
 
 def prefetch_nested_generic_foreign_key_objects(queryset):
     """Prefetch nested generic foreign key objects."""
-    fks = _queryset_foreign_keys(queryset, nested=True)
-    data, gfks = _content_type_to_content_mapping_for_nested_gfks(
-        queryset, fks
+    gfks = _queryset_foreign_keys(queryset, nested=True)
+    data = _content_type_to_content_mapping_for_gfks(
+        queryset, gfks, nested=True
     )
 
     for content_type, object_ids in data.items():
@@ -123,6 +101,7 @@ def prefetch_nested_generic_foreign_key_objects(queryset):
         models = prefetch_nested_generic_foreign_key_objects(
             model_class.objects.filter(pk__in=object_ids).select_related()
         )
+
         for model in models:
             for weak_model in queryset:
                 for gfk_name, gfk_field in gfks.items():
@@ -130,9 +109,9 @@ def prefetch_nested_generic_foreign_key_objects(queryset):
                         related_content_type,
                         related_object_id,
                     ) = _get_related_content_type_and_related_object_pk(
-                        weak_model.action, gfk_field.model, gfk_field
+                        weak_model.action, gfk_field
                     )
-                    if related_object_id != model.pk:
+                    if str(related_object_id) != str(model.pk):
                         continue
                     if related_content_type != content_type:
                         continue
@@ -144,7 +123,9 @@ def prefetch_nested_generic_foreign_key_objects(queryset):
 def prefetch_generic_foreign_key_objects(queryset):
     """Prefetch generic foreign key objects."""
     gfks = _queryset_foreign_keys(queryset, nested=False)
-    gfks_data = _content_type_to_content_mapping_for_gfks(queryset, gfks)
+    gfks_data = _content_type_to_content_mapping_for_gfks(
+        queryset, gfks, nested=False
+    )
 
     for content_type, object_pks in gfks_data.items():
         gfk_models = prefetch_generic_foreign_key_objects(
@@ -153,8 +134,9 @@ def prefetch_generic_foreign_key_objects(queryset):
             .select_related()
         )
         for gfk_model in gfk_models:
-            for data in _queryset_gfk_content_generator(queryset, gfks):
-
+            for data in _queryset_gfk_content_generator(
+                queryset, gfks, nested=False
+            ):
                 if data.content_type != content_type:
                     continue
                 if data.object_pk != str(gfk_model.pk):

@@ -52,6 +52,16 @@ requeue_jobs.short_description = "Requeue selected jobs"
 requeue_jobs.allowed_permissions = ("change",)
 
 
+def cancel_jobs(modeladmin, request, queryset):
+    queryset.filter(
+        status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY]
+    ).update(status=Job.CANCELLED)
+
+
+cancel_jobs.short_description = "Cancel selected jobs"
+cancel_jobs.allowed_permissions = ("change",)
+
+
 class JobAdmin(GuardedModelAdmin):
     autocomplete_fields = ("viewer_groups",)
     ordering = ("-created",)
@@ -86,7 +96,7 @@ class JobAdmin(GuardedModelAdmin):
         "pk",
         "algorithm_image__algorithm__slug",
     )
-    actions = (requeue_jobs,)
+    actions = (requeue_jobs, cancel_jobs)
 
     def algorithm(self, obj):
         return obj.algorithm_image.algorithm

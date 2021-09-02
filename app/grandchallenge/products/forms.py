@@ -37,3 +37,4 @@ class ProductsPostUpdateForm(PostUpdateForm):
             **PostForm.Meta.widgets,
             "companies": Select2MultipleWidget,
         }
+        fields = ["title", "study_file", "archive"]

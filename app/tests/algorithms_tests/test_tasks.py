@@ -205,7 +205,7 @@ class TestCreateJobsWorkflow(TestCase):
         ]
         with capture_on_commit_callbacks() as callbacks:
             execute_jobs(algorithm_image=ai, civ_sets=civ_sets)
-        assert len(callbacks) == 1
+        assert len(callbacks) == 2
 
 
 @pytest.mark.django_db

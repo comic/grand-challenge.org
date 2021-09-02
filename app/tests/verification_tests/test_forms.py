@@ -15,11 +15,11 @@ class TestVerificationForm:
         (
             (
                 "user@mailinator.com",
-                "Email hosted by mailinator.com cannot be used",
+                "Email hosted by mailinator.com cannot be used for verification due to abuse. Please contact support to verify your account another way.",
             ),
             (
                 "user@gmail.com",
-                "Email hosted by gmail.com cannot be used for verification",
+                "Email hosted by gmail.com cannot be used for verification, please provide your work, corporate or institutional email.",
             ),
         ),
     )

@@ -221,6 +221,13 @@ class ProjectAirPage(ListView):
     context_object_name = "project_air_files"
     queryset = ProjectAirFiles.objects.all()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        is_archive = self.queryset.filter(archive=True)
+        is_current = self.queryset.filter(archive=False)
+        context.update({"is_archive": is_archive, "is_current": is_current})
+        return context
+
 
 class ProjectAirForm(PermissionRequiredMixin, CreateView):
     template_name = "products/projectairfiles_form.html"

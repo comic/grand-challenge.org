@@ -37,7 +37,8 @@ phase_options = ("title",)
 submission_options = (
     "submission_page_html",
     "creator_must_be_verified",
-    "daily_submission_limit",
+    "submission_limit",
+    "submission_limit_period",
     "allow_submission_comments",
     "supplementary_file_choice",
     "supplementary_file_label",
@@ -251,9 +252,7 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["chunked_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}",
-                Algorithm,
+                user, "algorithms.change_algorithm", Algorithm,
             ).order_by("title")
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
@@ -331,6 +330,26 @@ class SubmissionForm(forms.ModelForm):
             # Add this to the non-field errors as we use a HiddenInput
             self.add_error(None, error_message)
 
+            raise ValidationError(error_message)
+
+        is_challenge_admin = self._phase.challenge.is_admin(user=creator)
+        has_remaining_submissions = (
+            self._phase.get_next_submission(user=creator)[
+                "remaining_submissions"
+            ]
+            >= 1
+        )
+        has_pending_evaluations = self._phase.has_pending_evaluations(
+            user=creator
+        )
+
+        can_submit = is_challenge_admin or (
+            has_remaining_submissions and not has_pending_evaluations
+        )
+
+        if not can_submit:
+            error_message = "A new submission cannot be created for this user"
+            self.add_error(None, error_message)
             raise ValidationError(error_message)
 
         return creator

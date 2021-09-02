@@ -285,7 +285,7 @@ class Migration(migrations.Migration):
                     "daily_submission_limit",
                     models.PositiveIntegerField(
                         default=10,
-                        help_text="The limit on the number of times that a user can make a submission in a 24 hour period.",
+                        help_text="The limit on the number of times that a user can make a submission over the submission limit period. Set this to 0 to close submissions for this phase.",
                     ),
                 ),
                 (
