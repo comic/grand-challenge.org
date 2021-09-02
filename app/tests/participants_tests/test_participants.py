@@ -1,9 +1,11 @@
 import pytest
 from actstream.actions import is_following
 from actstream.models import Follow
+from django.utils.html import format_html
 
 from grandchallenge.notifications.models import Notification
 from grandchallenge.participants.models import RegistrationRequest
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.factories import (
     ChallengeFactory,
     RegistrationRequestFactory,
@@ -121,8 +123,11 @@ def test_participation_request_notification_flow(client):
     # for the admins of the challenge
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user == ch.creator
-    assert f"{user2} requested access to {ch}" in str(
-        Notification.objects.get().action
+    target_string = format_html(
+        '<a href="{}">{}</a>', ch.get_absolute_url(), ch
+    )
+    assert f"{user_profile_link(user2)} requested access to {target_string}" in Notification.objects.get().print_notification(
+        user=ch.creator
     )
 
     Notification.objects.all().delete()
@@ -142,7 +147,9 @@ def test_participation_request_notification_flow(client):
     assert Notification.objects.count() == 1
     # upon request acceptance, the user gets notified
     assert Notification.objects.first().user == user2
-    assert "was approved" in str(Notification.objects.first().action)
+    assert "was approved" in Notification.objects.first().print_notification(
+        user=user2
+    )
     Notification.objects.all().delete()
 
     # reject permission request
@@ -160,4 +167,6 @@ def test_participation_request_notification_flow(client):
     assert reg2.status == "RJCT"
     # upon request rejection, the user gets notified
     assert Notification.objects.get().user == user2
-    assert "was rejected" in str(Notification.objects.get().action)
+    assert "was rejected" in Notification.objects.get().print_notification(
+        user=user2
+    )

@@ -298,10 +298,11 @@ def test_evaluation_notifications(
     # challenge, both notifications are for the admin.
     for notification in Notification.objects.all():
         assert notification.user == submission.phase.challenge.creator
-    notifications = [
-        str(notification.action) for notification in Notification.objects.all()
-    ]
-    assert "no method for this submission" in str(notifications)
+    assert "there is no valid evaluation method" in Notification.objects.filter(
+        verb="missing method"
+    ).get().print_notification(
+        user=submission.phase.challenge.creator
+    )
 
     # Add method and upload a submission
     eval_container, sha256 = evaluation_image
@@ -323,8 +324,12 @@ def test_evaluation_notifications(
     assert Notification.objects.count() == len(recipients)
     for recipient in recipients:
         assert str(recipient) in str(Notification.objects.all())
-    for notification in Notification.objects.all():
-        assert "succeeded" in str(notification.action)
+    assert "succeeded" in Notification.objects.filter(
+        user=recipients[0]
+    ).get().print_notification(user=recipients[0])
+    assert "succeeded" in Notification.objects.filter(
+        user=recipients[1]
+    ).get().print_notification(user=recipients[1])
 
     Notification.objects.all().delete()
 
@@ -336,8 +341,12 @@ def test_evaluation_notifications(
     assert Notification.objects.count() == len(recipients)
     for recipient in recipients:
         assert str(recipient) in str(Notification.objects.all())
-    for notification in Notification.objects.all():
-        assert "failed" in str(notification.action)
+    assert "failed" in Notification.objects.filter(
+        user=recipients[0]
+    ).get().print_notification(user=recipients[0])
+    assert "failed" in Notification.objects.filter(
+        user=recipients[1]
+    ).get().print_notification(user=recipients[1])
 
     # check that when admin unsubscribed from phase, they no longer
     # receive notifications about activity related to that phase

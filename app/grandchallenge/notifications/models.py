@@ -175,8 +175,7 @@ class Notification(UUIDModel):
         elif (
             type == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
         ):
-            receivers = followers(target)
-            receivers.append(actor)
+            receivers = followers(target)  # receivers include the actor here
         elif type == NotificationType.NotificationTypeChoices.JOB_STATUS:
             receivers = followers(target, flag="job-active")
         elif (
@@ -185,7 +184,7 @@ class Notification(UUIDModel):
         ):
             receivers = followers(action_object)
 
-        for receiver in receivers:
+        for receiver in set(receivers):
             Notification.objects.create(
                 user=receiver,
                 type=type,
@@ -262,7 +261,7 @@ class Notification(UUIDModel):
                 target_name = self.target.object_name
             return format_html(
                 "Your registration request for {} {} {}.",
-                format_html(f'<a href="{target_url}">{target_name}</a>'),
+                format_html('<a href="{}">{}</a>', target_url, target_name),
                 self.verb,
                 naturaltime(self.created),
             )

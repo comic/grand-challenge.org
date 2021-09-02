@@ -1,6 +1,6 @@
 import pytest
 from actstream.actions import follow, is_following
-from actstream.models import Action, Follow
+from actstream.models import Follow
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
@@ -12,6 +12,7 @@ from machina.apps.forum_permission.models import (
 )
 
 from grandchallenge.notifications.models import Notification
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory
 from tests.notifications_tests.factories import (
     ForumFactory,
@@ -31,11 +32,10 @@ def test_logged_in_view(client):
 
 @pytest.mark.django_db
 def test_notification_mark_as_read_or_unread(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
-    notification = NotificationFactory(user=user2, action=Action.objects.get())
+    user = UserFactory()
+    notification = NotificationFactory(
+        user=user, type=Notification.Type.GENERIC
+    )
 
     assert not notification.read
 
@@ -46,7 +46,7 @@ def test_notification_mark_as_read_or_unread(client):
         data={"read": True},
         reverse_kwargs={"pk": notification.id},
         content_type="application/json",
-        user=user2,
+        user=user,
     )
 
     assert response.status_code == 200
@@ -59,7 +59,7 @@ def test_notification_mark_as_read_or_unread(client):
         data={"read": False},
         reverse_kwargs={"pk": notification.id},
         content_type="application/json",
-        user=user2,
+        user=user,
     )
 
     assert response.status_code == 200
@@ -68,11 +68,10 @@ def test_notification_mark_as_read_or_unread(client):
 
 @pytest.mark.django_db
 def test_notification_deletion(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
-    notification = NotificationFactory(user=user2, action=Action.objects.get())
+    user = UserFactory()
+    notification = NotificationFactory(
+        user=user, type=Notification.Type.GENERIC
+    )
 
     response = get_view_for_user(
         viewname="api:notification-detail",
@@ -80,7 +79,7 @@ def test_notification_deletion(client):
         method=client.delete,
         reverse_kwargs={"pk": notification.id},
         content_type="application/json",
-        user=user2,
+        user=user,
     )
 
     assert response.status_code == 204
@@ -91,20 +90,13 @@ def test_notification_deletion(client):
 def test_notification_view_permissions(client):
     user1 = UserFactory()
     user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
-    notification = NotificationFactory(user=user2, action=Action.objects.get())
-
-    response = get_view_for_user(
-        viewname="notifications:list",
-        client=client,
-        method=client.get,
-        user=user2,
+    notification = NotificationFactory(
+        user=user1,
+        verb="requested access to",
+        target=AlgorithmFactory(),
+        type=Notification.Type.ACCESS_REQUEST,
     )
-    assert response.status_code == 200
-    assert str(notification.action.action_object) in response.rendered_content
 
-    # user1 cannot see user2 notifications
     response = get_view_for_user(
         viewname="notifications:list",
         client=client,
@@ -113,7 +105,21 @@ def test_notification_view_permissions(client):
     )
     assert response.status_code == 200
     assert (
-        str(notification.action.action_object) not in response.rendered_content
+        notification.print_notification(user=user1)
+        in response.rendered_content
+    )
+
+    # user2 cannot see user1 notifications
+    response = get_view_for_user(
+        viewname="notifications:list",
+        client=client,
+        method=client.get,
+        user=user2,
+    )
+    assert response.status_code == 200
+    assert (
+        notification.print_notification(user=user2)
+        not in response.rendered_content
     )
     assert "You have no notifications" in response.rendered_content
 
@@ -126,9 +132,9 @@ def test_notification_view_permissions(client):
 def test_notification_update_and_delete_permissions(client, type, data):
     user1 = UserFactory()
     user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
-    notification = NotificationFactory(user=user2, action=Action.objects.get())
+    notification = NotificationFactory(
+        user=user1, type=Notification.Type.GENERIC
+    )
 
     if type == "delete":
         method = client.delete
@@ -142,7 +148,7 @@ def test_notification_update_and_delete_permissions(client, type, data):
         data=data,
         reverse_kwargs={"pk": notification.id},
         content_type="application/json",
-        user=user1,
+        user=user2,
     )
     assert response.status_code == 404
 
@@ -153,7 +159,7 @@ def test_notification_update_and_delete_permissions(client, type, data):
         data=data,
         reverse_kwargs={"pk": notification.id},
         content_type="application/json",
-        user=user2,
+        user=user1,
     )
     if type == "delete":
         assert response.status_code == 204

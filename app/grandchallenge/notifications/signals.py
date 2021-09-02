@@ -11,7 +11,7 @@ from grandchallenge.notifications.models import Notification, NotificationType
 
 
 @receiver(post_save, sender=Topic)
-def create_topic_action(sender, *, instance, created, **_):
+def create_topic_notification(sender, *, instance, created, **_):
     if created:
         follow(
             user=instance.poster,
@@ -40,7 +40,7 @@ def create_topic_action(sender, *, instance, created, **_):
 
 
 @receiver(post_save, sender=Post)
-def create_post_action(sender, *, instance, created, **_):
+def create_post_notification(sender, *, instance, created, **_):
     if (
         created
         and instance.topic.posts_count != 0

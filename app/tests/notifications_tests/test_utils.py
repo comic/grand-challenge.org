@@ -4,55 +4,55 @@ from actstream.models import Follow
 from django.conf import settings
 from django.db import connection, reset_queries
 from machina.apps.forum.models import Forum
-from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
-    prefetch_nested_generic_foreign_key_objects,
 )
-from tests.factories import ChallengeFactory, UserFactory
+from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.factories import UserFactory
 from tests.notifications_tests.factories import (
     ForumFactory,
-    TopicFactory,
+    NotificationFactory,
 )
 
 
 @pytest.mark.django_db
 def test_notification_list_view_num_queries(client, django_assert_num_queries):
     user1 = UserFactory()
-    user2 = UserFactory()
-    c = ChallengeFactory(creator=user1)
-    # delete Notification that resulted from adding a new admin the the challenge
-    Notification.objects.all().delete()
-    _ = TopicFactory(forum=c.forum, poster=user2, type=Topic.TOPIC_POST)
+    _ = NotificationFactory(
+        user=user1,
+        verb="requested access to",
+        target=AlgorithmFactory(),
+        type=Notification.Type.ACCESS_REQUEST,
+    )
 
     notifications = Notification.objects.select_related(
-        "action__actor_content_type",
-        "action__target_content_type",
-        "action__action_object_content_type",
+        "actor_content_type",
+        "target_content_type",
+        "action_object_content_type",
         "user",
     ).all()
 
-    notifications_with_prefetched_gfks = prefetch_nested_generic_foreign_key_objects(
+    notifications_with_prefetched_fks = prefetch_generic_foreign_key_objects(
         Notification.objects.select_related(
-            "action__actor_content_type",
-            "action__target_content_type",
-            "action__action_object_content_type",
+            "actor_content_type",
+            "target_content_type",
+            "action_object_content_type",
             "user",
         ).all()
     )
     # double check that there is an action target for the test below to be meaningful
-    assert notifications[0].action.target
+    assert notifications[0].target
 
     try:
         settings.DEBUG = True
-        notifications[0].action.target
+        notifications[0].target
         # when the generic foreign keys have not been prefetched, accessing the
         # action target, result in two db calls
         assert len(connection.queries) == 2
         reset_queries()
-        notifications_with_prefetched_gfks[0].action.target
+        notifications_with_prefetched_fks[0].target
         # when gfks have been prefetched, accessing the action target
         # no longer requires any db calls
         assert len(connection.queries) == 0
