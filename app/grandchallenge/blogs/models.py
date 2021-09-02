@@ -65,7 +65,7 @@ class Post(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        if self.tags.filter(name="Products").exists():
+        if self.tags.filter(slug="products").exists():
             return reverse("products:blogs-detail", kwargs={"slug": self.slug})
         else:
             return reverse("blogs:detail", kwargs={"slug": self.slug})
