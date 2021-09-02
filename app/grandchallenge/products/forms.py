@@ -27,7 +27,7 @@ class ImportForm(SaveFormInitMixin, forms.Form):
 class ProjectAirFilesForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = ProjectAirFiles
-        fields = ["title", "study_file"]
+        fields = ["title", "study_file", "archive"]
 
 
 class ProductsPostUpdateForm(PostUpdateForm):
@@ -37,4 +37,3 @@ class ProductsPostUpdateForm(PostUpdateForm):
             **PostForm.Meta.widgets,
             "companies": Select2MultipleWidget,
         }
-        fields = ["title", "study_file", "archive"]
