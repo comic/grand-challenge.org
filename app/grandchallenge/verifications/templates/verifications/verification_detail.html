@@ -16,7 +16,7 @@
         {% if object.is_verified %}
             Your verification request has been approved.
         {% elif not object.signup_email_is_trusted and not object.email_is_verified %}
-            Please check your email for the link to confirm your account.
+            Please check your institutional email for the confirmation link.
         {% elif object.is_verified == None %}
             Thank you for confirming your email.
             Your verification request will be manually reviewed by site administrators

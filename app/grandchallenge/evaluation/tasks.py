@@ -222,7 +222,7 @@ def set_evaluation_inputs(*, evaluation_pk):
     )
     evaluation_queryset = Evaluation.objects.filter(
         pk=evaluation_pk
-    ).select_for_update(nowait=True)
+    ).select_for_update()
 
     with transaction.atomic():
         # Acquire lock
