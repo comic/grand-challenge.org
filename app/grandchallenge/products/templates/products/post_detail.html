@@ -1,0 +1,91 @@
+{% extends 'products/base.html' %}
+{% load url %}
+{% load profiles %}
+{% load bleach %}
+{% load guardian_tags %}
+{% load static %}
+
+{% block title %}{{ object.title }} - Blogs - {{ block.super }}{% endblock %}
+
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active"><a href="{% url 'products:blogs-list' %}">Blogs</a></li>
+    <li class="breadcrumb-item active">{{ object.title }}</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-5">
+        <div class="col-lg-8">
+            <h2>{{ object.title }}</h2>
+            <p class="text-muted">Published {{ object.created|date:"j N Y" }} <br> By
+                {# @formatter:off #}
+                    {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}{% firstof author.get_full_name author.username %}{% endfor %}
+                {# @formatter:on #}</p>
+
+            {% if is_news %}
+                <div class="embed-responsive embed-responsive-1by1">
+                    <iframe class="embed-responsive-item" src="{{ object.content }}" title="Newsletter" allowfullscreen sandbox></iframe>
+                </div>
+            {% else %}
+                {{ object.content|md2html }}
+            {% endif %}
+
+        </div>
+        <div class="col-lg-1"></div>
+
+        <div class="col-lg-3">
+            {% if object.tags.count != 0 %}
+                <div class="row mb-1">
+                    <h4 class=text-muted>Tags</h4>
+                </div>
+
+                {% for tag in object.tags.all %}
+                    <div class="row">
+                        <p><i class="fas fa-angle-right text-radboud"
+                            aria-hidden="true"></i>&nbsp;&nbsp;
+                            <a href="{% url 'products:blogs-list' %}?tags={{ tag.pk }}">{{ tag.name }}</a></p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if object.companies.count != 0 %}
+                <div class="row mb-1 mt-4">
+                    <h4 class=text-muted>Featured companies</h4>
+                </div>
+
+                {% for company in object.companies.all %}
+                    <div class="row">
+                        <p><i class="fas fa-angle-right text-radboud"
+                            aria-hidden="true"></i>&nbsp;&nbsp;
+                            <a href="{% url 'products:company-detail' slug=company.slug %}">{{ company.company_name }}</a></p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+
+            <div class="row mb-1 mt-4">
+                <h4 class=text-muted>Newsletter</h4>
+            </div>
+            <div class="row mb-3">
+                <p>Hear about new blogs and other developments in the field? <a class=text-radboud href="http://eepurl.com/hrqfdr">Subscribe to our newsletter.</a> </p>
+            </div>
+            <div class="row mb-1">
+                {% get_obj_perms request.user for object as "object_perms" %}
+                {% if "change_post" in object_perms %}
+                    {% if not object.published %}
+                        <div class="alert alert-warning" role="alert">
+                            This post is currently unpublished.
+                            Please bookmark this URL in case you want to come back to edit it.
+                        </div>
+                    {% endif %}
+                    <p>
+                        <a href="{% url 'products:blogs-update' slug=object.slug %}"
+                        class="btn btn-primary">
+                            <i class="fa fa-edit"></i> Edit post
+                        </a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

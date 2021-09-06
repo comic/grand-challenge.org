@@ -537,6 +537,7 @@ class ComponentInterfaceValue(models.Model):
                     "application/json",
                     "application/zip",
                     "text/plain",
+                    "application/csv",
                 )
             ),
         ],

@@ -107,7 +107,8 @@ class VerificationRequiredMixin(UserPassesTestMixin):
         if not verified:
             messages.error(
                 self.request,
-                "You need to verify your account before you can do this",
+                "You need to verify your account before you can do this,"
+                "you can request this from your profile page.",
             )
 
         return verified

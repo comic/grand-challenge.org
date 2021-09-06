@@ -1,0 +1,59 @@
+{% extends 'products/base.html' %}
+{% load url %}
+{% load static %}
+
+{% block title %}Blogs - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    {% if tag %}
+            <li class="breadcrumb-item"><a href="{% url 'products:blogs-list' %}">Blogs</a></li>
+            <li class="breadcrumb-item active">Tag: {{ tag }}</li>
+    {% else %}
+            <li class="breadcrumb-item active">Blogs</li>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+    {% if perms.blogs.add_post %}
+        <p>
+            <a href="{% url 'products:blogs-create' %}"
+               class="btn btn-square btn-radboud">
+                <i class="fa fa-plus"></i> Add a new post
+            </a>
+        </p>
+    {% endif %}
+
+    {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
+
+    {% for object in object_list %}
+        <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
+            <div class="col-lg-6 py-5">
+                <a href="{{ object.get_absolute_url }}">
+                    <img class="w-100 rounded shadow"
+                         src="{{ object.logo.x20.url }}"
+                         srcset="{{ object.logo.x10.url }} 1x,
+                                 {{ object.logo.x15.url }} 1.5x,
+                                 {{ object.logo.x20.url }} 2x"
+                         alt="Logo for blog post {{ object.title }}"/>
+                </a>
+            </div>
+            <div class="col-lg-6 align-self-center">
+                <h3><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></h3>
+                <p>
+                    {{ object.created|date:"j N Y" }}
+                    by
+                    {# @formatter:off #}
+            {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}{% firstof author.get_full_name author.username %}{% endfor %}
+            {# @formatter:on #}
+                </p>
+
+                <p>{{ object.description }}</p>
+                <p><a class="btn btn-radboud" href='{{ object.get_absolute_url }}'>Read More</a></p>
+            </div>
+        </div>
+    {% empty %}
+        <p>No blogs available.</p>
+    {% endfor %}
+
+{% endblock %}

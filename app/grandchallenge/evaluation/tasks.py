@@ -87,7 +87,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
             interface = ComponentInterface.objects.get(
                 slug="predictions-zip-file"
             )
-        elif mimetype == "text/plain":
+        elif mimetype in ["text/plain", "application/csv"]:
             interface = ComponentInterface.objects.get(
                 slug="predictions-csv-file"
             )
@@ -224,7 +224,7 @@ def set_evaluation_inputs(*, evaluation_pk):
     )
     evaluation_queryset = Evaluation.objects.filter(
         pk=evaluation_pk
-    ).select_for_update(nowait=True)
+    ).select_for_update()
 
     with transaction.atomic():
         # Acquire lock

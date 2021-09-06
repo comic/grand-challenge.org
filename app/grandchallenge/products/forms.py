@@ -1,7 +1,9 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from django_select2.forms import Select2MultipleWidget
 
+from grandchallenge.blogs.forms import PostForm, PostUpdateForm
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
@@ -26,3 +28,12 @@ class ProjectAirFilesForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = ProjectAirFiles
         fields = ["title", "study_file", "archive"]
+
+
+class ProductsPostUpdateForm(PostUpdateForm):
+    class Meta(PostUpdateForm.Meta):
+        fields = (*PostUpdateForm.Meta.fields, "companies")
+        widgets = {
+            **PostForm.Meta.widgets,
+            "companies": Select2MultipleWidget,
+        }
