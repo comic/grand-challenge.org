@@ -1404,7 +1404,7 @@ class ReaderStudyPermissionRequest(RequestBase):
             )
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-                verb="requested access to",
+                message="requested access to",
                 actor=self.user,
                 target=self.base_object,
             )

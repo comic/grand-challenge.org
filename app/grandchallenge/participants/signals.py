@@ -22,7 +22,7 @@ def process_registration(
     elif created and instance.challenge.require_participant_review:
         Notification.send(
             type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-            verb="requested access to",
+            message="requested access to",
             actor=instance.user,
             target=instance.challenge,
         )
@@ -37,14 +37,14 @@ def process_registration(
         instance.challenge.add_participant(instance.user)
         Notification.send(
             type=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
-            verb="was approved",
+            message="was approved",
             target=instance,
         )
     elif instance.status == RegistrationRequest.REJECTED:
         instance.challenge.remove_participant(instance.user)
         Notification.send(
             type=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
-            verb="was rejected",
+            message="was rejected",
             target=instance,
         )
 

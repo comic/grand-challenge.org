@@ -24,7 +24,7 @@ def create_topic_notification(sender, *, instance, created, **_):
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.FORUM_POST,
                 actor=instance.poster,
-                verb="announced",
+                message="announced",
                 action_object=instance,
                 target=instance.forum,
                 context_class="info",
@@ -33,7 +33,7 @@ def create_topic_notification(sender, *, instance, created, **_):
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.FORUM_POST,
                 actor=instance.poster,
-                verb="posted",
+                message="posted",
                 action_object=instance,
                 target=instance.forum,
             )
@@ -55,7 +55,7 @@ def create_post_notification(sender, *, instance, created, **_):
         Notification.send(
             type=NotificationType.NotificationTypeChoices.FORUM_POST_REPLY,
             actor=instance.poster,
-            verb="replied to",
+            message="replied to",
             target=instance.topic,
         )
 

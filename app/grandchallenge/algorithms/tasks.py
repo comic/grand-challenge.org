@@ -181,7 +181,7 @@ def create_algorithm_jobs_for_session(
         Notification.send(
             type=NotificationType.NotificationTypeChoices.JOB_STATUS,
             actor=session.creator,
-            verb=f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
+            message=f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
             f"{algorithm_image.algorithm.title} were not started because "
             f"the number of allowed jobs was reached.",
             target=algorithm_image.algorithm,
@@ -445,7 +445,7 @@ def send_failed_job_notification(*, job_pk):
         Notification.send(
             type=NotificationType.NotificationTypeChoices.JOB_STATUS,
             actor=job.creator,
-            verb=f"Unfortunately one of the jobs for algorithm {algorithm.title} "
+            message=f"Unfortunately one of the jobs for algorithm {algorithm.title} "
             f"failed with an error",
             target=algorithm,
             description=experiment_url,
@@ -489,7 +489,7 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.JOB_STATUS,
                 actor=session.creator,
-                verb=f"Unfortunately {failed_jobs_count} of the jobs for "
+                message=f"Unfortunately {failed_jobs_count} of the jobs for "
                 f"algorithm {algorithm.title} failed with an error ",
                 target=algorithm,
                 description=experiment_url,

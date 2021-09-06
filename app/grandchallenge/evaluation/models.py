@@ -806,7 +806,7 @@ class Evaluation(UUIDModel, ComponentJob):
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
-                verb="failed",
+                message="failed",
                 action_object=self,
                 target=self.submission.phase,
             )
@@ -815,7 +815,7 @@ class Evaluation(UUIDModel, ComponentJob):
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
-                verb="succeeded",
+                message="succeeded",
                 action_object=self,
                 target=self.submission.phase,
             )

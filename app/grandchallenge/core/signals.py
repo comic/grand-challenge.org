@@ -63,14 +63,14 @@ def process_permission_request_update(sender, instance, *_, **__):
             instance.add_method(instance.user)
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
-                verb="was accepted",
+                message="was accepted",
                 target=instance,
             )
         elif instance.status == instance.REJECTED:
             instance.remove_method(instance.user)
             Notification.send(
                 type=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
-                verb="was rejected",
+                message="was rejected",
                 target=instance,
             )
 
@@ -122,7 +122,7 @@ def update_editor_follows(  # noqa: C901
                 if obj._meta.model_name == "challenge":
                     Notification.send(
                         type=NotificationType.NotificationTypeChoices.NEW_ADMIN,
-                        verb="added as admin for",
+                        message="added as admin for",
                         action_object=user,
                         target=obj,
                     )

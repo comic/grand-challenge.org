@@ -57,7 +57,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         logger.info("No method ready for this submission")
         Notification.send(
             type=NotificationType.NotificationTypeChoices.MISSING_METHOD,
-            verb="missing method",
+            message="missing method",
             actor=submission.creator,
             action_object=submission,
             target=submission.phase,
