@@ -27,7 +27,7 @@ def test_notifications_filtered():
     follow(u1, u2)
 
     n = NotificationFactory(
-        user=u1, type=Notification.Type.GENERIC, actor=u1, verb="says hi"
+        user=u1, type=Notification.Type.GENERIC, actor=u1, message="says hi"
     )
 
     assert u2.user_profile.has_unread_notifications is False

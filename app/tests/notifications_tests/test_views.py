@@ -92,7 +92,7 @@ def test_notification_view_permissions(client):
     user2 = UserFactory()
     notification = NotificationFactory(
         user=user1,
-        verb="requested access to",
+        message="requested access to",
         target=AlgorithmFactory(),
         type=Notification.Type.ACCESS_REQUEST,
     )

@@ -299,7 +299,7 @@ def test_evaluation_notifications(
     for notification in Notification.objects.all():
         assert notification.user == submission.phase.challenge.creator
     assert "there is no valid evaluation method" in Notification.objects.filter(
-        verb="missing method"
+        message="missing method"
     ).get().print_notification(
         user=submission.phase.challenge.creator
     )

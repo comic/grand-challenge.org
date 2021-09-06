@@ -22,7 +22,7 @@ def test_notification_list_view_num_queries(client, django_assert_num_queries):
     user1 = UserFactory()
     _ = NotificationFactory(
         user=user1,
-        verb="requested access to",
+        message="requested access to",
         target=AlgorithmFactory(),
         type=Notification.Type.ACCESS_REQUEST,
     )
