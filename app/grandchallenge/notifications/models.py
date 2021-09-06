@@ -17,14 +17,14 @@ class NotificationTypeChoices(models.TextChoices):
     """Notification type choices."""
 
     GENERIC = "GENERIC", _("Generic")
-    FORUM_POST = "FRM-POST", _("Forum post")
-    FORUM_POST_REPLY = "FRM-RPL", _("Forum post reply")
-    ACCESS_REQUEST = "ACC-REQ", _("Access request")
-    REQUEST_UPDATE = "REQ-UPD", _("Request update")
-    NEW_ADMIN = "ADMIN", _("New admin")
-    EVALUATION_STATUS = "EVAL", _("Evaluation status update")
+    FORUM_POST = "FORUM-POST", _("Forum post")
+    FORUM_POST_REPLY = "FORUM-REPLY", _("Forum post reply")
+    ACCESS_REQUEST = "ACCESS-REQUEST", _("Access request")
+    REQUEST_UPDATE = "REQUEST-UPDATE", _("Request update")
+    NEW_ADMIN = "NEW-ADMIN", _("New admin")
+    EVALUATION_STATUS = "EVALUATION-STATUS", _("Evaluation status update")
     MISSING_METHOD = "MISSING-METHOD", _("Missing method")
-    JOB_STATUS = "JOB", _("Job status update")
+    JOB_STATUS = "JOB-STATUS", _("Job status update")
     IMAGE_IMPORT_STATUS = "IMAGE-IMPORT", _("Image import status update")
 
 
@@ -44,7 +44,7 @@ class Notification(UUIDModel):
     )
 
     type = models.CharField(
-        max_length=15,
+        max_length=20,
         choices=Type.choices,
         default=Type.GENERIC,
         help_text=("Of what type is this notification?"),
@@ -81,7 +81,7 @@ class Notification(UUIDModel):
     )
     actor = GenericForeignKey("actor_content_type", "actor_object_id")
 
-    verb = models.CharField(
+    message = models.CharField(
         max_length=255, db_index=True, blank=True, null=True
     )
     description = models.TextField(blank=True, null=True)
@@ -132,27 +132,12 @@ class Notification(UUIDModel):
 
     @staticmethod
     def send(type, **kwargs):  # noqa: C901
-        verb = kwargs.pop("verb")
-        try:
-            actor = kwargs.pop("actor")
-        except KeyError:
-            actor = None
-        try:
-            action_object = kwargs.pop("action_object")
-        except KeyError:
-            action_object = None
-        try:
-            target = kwargs.pop("target")
-        except KeyError:
-            target = None
-        try:
-            description = kwargs.pop("description")
-        except KeyError:
-            description = None
-        try:
-            context_class = kwargs.pop("context_class")
-        except KeyError:
-            context_class = None
+        actor = kwargs.pop("actor", None)
+        action_object = kwargs.pop("action_object", None)
+        target = kwargs.pop("target", None)
+        message = kwargs.pop("message", None)
+        description = kwargs.pop("description", None)
+        context_class = kwargs.pop("context_class", None)
 
         if (
             type == NotificationType.NotificationTypeChoices.FORUM_POST
@@ -188,7 +173,7 @@ class Notification(UUIDModel):
             Notification.objects.create(
                 user=receiver,
                 type=type,
-                verb=verb,
+                message=message,
                 actor=actor,
                 action_object=action_object,
                 target=target,
@@ -201,7 +186,7 @@ class Notification(UUIDModel):
             return format_html(
                 "{} {} {} in {} {}.",
                 user_profile_link(self.actor),
-                self.verb,
+                self.message,
                 format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.get_absolute_url(),
@@ -240,7 +225,7 @@ class Notification(UUIDModel):
             return format_html(
                 "{} {} {} {}. {}",
                 user_profile_link(self.actor),
-                self.verb,
+                self.message,
                 format_html(
                     '<a href="{}">{}</a>',
                     self.target.get_absolute_url(),
@@ -262,13 +247,13 @@ class Notification(UUIDModel):
             return format_html(
                 "Your registration request for {} {} {}.",
                 format_html('<a href="{}">{}</a>', target_url, target_name),
-                self.verb,
+                self.message,
                 naturaltime(self.created),
             )
         elif self.type == NotificationType.NotificationTypeChoices.NEW_ADMIN:
             return format_html(
                 "You were {} {} {}.",
-                self.verb,
+                self.message,
                 format_html(
                     '<a href="{}">{}</a>',
                     self.target.get_absolute_url(),
@@ -293,7 +278,7 @@ class Notification(UUIDModel):
                     self.target.challenge.get_absolute_url(),
                     self.target.challenge.short_name,
                 ),
-                self.verb,
+                self.message,
                 naturaltime(self.created),
                 format_html(
                     '<span class ="text-truncate font-italic text-muted align-middle '
@@ -305,7 +290,7 @@ class Notification(UUIDModel):
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
             and user != self.user
-            and self.verb == "failed"
+            and self.message == "failed"
         ):
             return format_html(
                 "The {} from {} to {} {} {}. | {}",
@@ -320,7 +305,7 @@ class Notification(UUIDModel):
                     self.target.challenge.get_absolute_url(),
                     self.target.challenge.short_name,
                 ),
-                self.verb,
+                self.message,
                 naturaltime(self.created),
                 format_html(
                     '<span class ="text-truncate font-italic text-muted align-middle '
@@ -332,7 +317,7 @@ class Notification(UUIDModel):
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
             and user != self.user
-            and self.verb == "succeeded"
+            and self.message == "succeeded"
         ):
             return format_html(
                 "There is a new {} for {} from {} {}.",
@@ -376,7 +361,7 @@ class Notification(UUIDModel):
                 addition = ""
             return format_html(
                 "{} {}. {} {}",
-                self.verb,
+                self.message,
                 naturaltime(self.created),
                 addition,
                 format_html(
@@ -398,5 +383,5 @@ class Notification(UUIDModel):
                     "upload",
                 ),
                 naturaltime(self.created),
-                self.verb,
+                self.message,
             )

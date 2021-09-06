@@ -24,7 +24,7 @@ class NotificationAdmin(ModelAdmin):
         "__str__",
         "type",
         "actor",
-        "verb",
+        "message",
         "action_object",
         "target",
         "read",

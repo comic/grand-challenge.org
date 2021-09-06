@@ -7,6 +7,7 @@ from grandchallenge.notifications.models import Notification, NotificationType
 class Command(BaseCommand):
     def handle(self, *args, **options):  # noqa: C901
         num_notifications = 0
+        total_notification = Notification.objects.all().count()
 
         for notification in Notification.objects.filter(type="GENERIC").all():
             if (
@@ -197,5 +198,7 @@ class Command(BaseCommand):
                 notification.save()
                 num_notifications += 1
         self.stdout.write(
-            self.style.SUCCESS(f"{num_notifications} notifications processed")
+            self.style.SUCCESS(
+                f"{num_notifications} of {total_notification} notifications processed."
+            )
         )
