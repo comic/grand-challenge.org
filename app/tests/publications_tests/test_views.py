@@ -6,6 +6,7 @@ from config import settings
 from grandchallenge.publications.models import Publication
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory
+from tests.publications_tests.test_models import TEST_CSL
 from tests.utils import get_view_for_user
 
 
@@ -45,7 +46,7 @@ def test_publication_creation(client):
 
 
 @pytest.mark.django_db
-def test_publication_object_visibilty(client):
+def test_publication_object_visibilty(client, mocker):
     user1 = UserFactory()
     user2 = UserFactory()
 
@@ -53,6 +54,10 @@ def test_publication_object_visibilty(client):
     alg.add_user(user1)
     assert user1.has_perm("view_algorithm", alg)
     assert not user2.has_perm("view_algorithm", alg)
+
+    mocker.patch(
+        "grandchallenge.publications.utils.get_doi_csl", return_value=TEST_CSL
+    )
 
     # create publication
     _ = get_view_for_user(
