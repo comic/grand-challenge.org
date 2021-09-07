@@ -36,7 +36,7 @@ class Command(BaseCommand):
                     notification.action_object_object_id = (
                         notification.action.action_object_object_id
                     )
-                    notification.verb = notification.action.verb
+                    notification.message = notification.action.verb
                     notification.save()
                     num_notifications += 1
                 elif (
@@ -73,7 +73,7 @@ class Command(BaseCommand):
                     notification.target_object_id = (
                         notification.action.target_object_id
                     )
-                    notification.verb = notification.action.verb
+                    notification.message = notification.action.verb
                     notification.save()
                     num_notifications += 1
             elif (
@@ -95,7 +95,7 @@ class Command(BaseCommand):
                 notification.target_content_type = (
                     notification.action.action_object_content_type
                 )
-                notification.verb = notification.action.verb
+                notification.message = notification.action.verb
                 notification.save()
                 num_notifications += 1
             elif "request" in notification.action.actor_content_type.model:
@@ -108,7 +108,7 @@ class Command(BaseCommand):
                 notification.target_content_type = (
                     notification.action.actor_content_type
                 )
-                notification.verb = notification.action.verb
+                notification.message = notification.action.verb
                 notification.save()
                 num_notifications += 1
             elif notification.action.actor_content_type.model == "evaluation":
@@ -133,7 +133,7 @@ class Command(BaseCommand):
                 notification.target_content_type = (
                     notification.action.target_content_type
                 )
-                notification.verb = notification.action.verb
+                notification.message = notification.action.verb
                 notification.save()
                 num_notifications += 1
             elif notification.action.actor_content_type.model == "submission":
@@ -158,7 +158,7 @@ class Command(BaseCommand):
                 notification.target_object_id = (
                     notification.action.target_object_id
                 )
-                notification.verb = notification.action.verb
+                notification.message = notification.action.verb
                 notification.save()
                 num_notifications += 1
             elif notification.action.actor_content_type.model == "algorithm":
@@ -178,7 +178,7 @@ class Command(BaseCommand):
                     notification.action.actor_object_id
                 )
                 notification.description = notification.action.description
-                notification.verb = notification.action.verb
+                notification.message = notification.action.verb
                 notification.save()
                 num_notifications += 1
             elif (
@@ -194,7 +194,7 @@ class Command(BaseCommand):
                 notification.action_object_object_id = (
                     notification.action.actor_object_id
                 )
-                notification.verb = notification.action.verb
+                notification.message = notification.action.verb
                 notification.save()
                 num_notifications += 1
         self.stdout.write(
