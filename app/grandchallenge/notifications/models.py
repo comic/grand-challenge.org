@@ -1,4 +1,4 @@
-from actstream.models import followers
+from actstream.models import Action, followers
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -6,6 +6,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
@@ -41,6 +42,16 @@ class Notification(UUIDModel):
         settings.AUTH_USER_MODEL,
         help_text="Which user does this notification correspond to?",
         on_delete=models.CASCADE,
+    )
+
+    action = deprecate_field(
+        models.ForeignKey(
+            Action,
+            blank=True,
+            null=True,
+            help_text="Which action is associated with this notification?",
+            on_delete=models.CASCADE,
+        )
     )
 
     type = models.CharField(
