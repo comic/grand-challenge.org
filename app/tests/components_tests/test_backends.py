@@ -92,7 +92,7 @@ def test_provision(tmp_path, settings):
     ]
     civs[2].file.save("whatever.csv", ContentFile(b"foo,\nbar,\n"))
 
-    settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = tmp_path
+    settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = tmp_path
 
     executor = AmazonECSExecutorStub(
         job_id="foo-bar-12345-67890",

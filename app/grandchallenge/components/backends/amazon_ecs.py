@@ -45,6 +45,7 @@ class AmazonECSExecutor:
             raise RuntimeError("AWS only supports 4g to 30g of memory")
 
         self.__batch_client = None
+        self.__ecs_client = None
         self.__logs_client = None
 
     def provision(self, *, input_civs, input_prefixes):
@@ -54,8 +55,8 @@ class AmazonECSExecutor:
         )
 
     def execute(self):
-        job_definition_arn = self._register_job_definition()
-        self._submit_job(job_definition_arn=job_definition_arn)
+        task_definition_arn = self._register_task_definition()
+        self._run_task(task_definition_arn=task_definition_arn)
 
     def await_completion(self):
         job_summary = self._job_summary
@@ -130,6 +131,12 @@ class AmazonECSExecutor:
         return self.__batch_client
 
     @property
+    def _ecs_client(self):
+        if self.__ecs_client is None:
+            self.__ecs_client = boto3.client("ecs")
+        return self.__ecs_client
+
+    @property
     def _logs_client(self):
         if self.__logs_client is None:
             self.__logs_client = boto3.client("logs")
@@ -141,6 +148,13 @@ class AmazonECSExecutor:
             return settings.COMPONENTS_AWS_BATCH_GPU_QUEUE_ARN
         else:
             return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
+
+    @property
+    def _log_group_name(self):
+        if self._requires_gpu:
+            return settings.COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME
+        else:
+            return settings.COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME
 
     @property
     def _job_summary(self):
@@ -216,7 +230,7 @@ class AmazonECSExecutor:
             raise ValueError(f"Invalid job id {self._job_id}")
 
         return (
-            Path(settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT)
+            Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT)
             / dir_parts[0]
             / dir_parts[1]
             / dir_parts[2]
@@ -261,80 +275,94 @@ class AmazonECSExecutor:
 
     @property
     def _resource_requirements(self):
-        requirements = [
-            # boto requires strings rather than ints
-            {"type": "MEMORY", "value": str(1024 * self._memory_limit)},
-            {
-                "type": "VCPU",
-                "value": str(4 if self._memory_limit > 16 else 2),
-            },
-        ]
         if self._requires_gpu:
-            requirements.append({"type": "GPU", "value": "1"})
-        return requirements
+            return [{"type": "GPU", "value": "1"}]
+        else:
+            return []
 
-    def _register_job_definition(self):
-        response = self._batch_client.register_job_definition(
-            jobDefinitionName=self._job_id,
-            type="container",
-            containerProperties={
-                # AWS batch does not appear to support dockerSecurityOptions,
-                # so security_opt, cap_drop are not set. However, the batch
-                # instances are heavily locked down.
-                # Also no way to set network_disabled, cpu_period, cpu_quota,
-                # cpu_shares, cpuset_cpus or runtime on batch
-                "image": self._exec_image_repo_tag,
-                "resourceRequirements": self._resource_requirements,
-                "linuxParameters": {
-                    "initProcessEnabled": True,
-                    "maxSwap": 0,
-                    "swappiness": 0,
+    @property
+    def _required_memory_units(self):
+        return 1024 * self._memory_limit
+
+    @property
+    def _required_cpu_units(self):
+        return 4096 if self._memory_limit > 16 else 2048
+
+    def _register_task_definition(self):
+        response = self._ecs_client.register_task_definition(
+            family=self._job_id,
+            requiresCompatibilities=["EC2"],
+            memory=str(self._required_memory_units),
+            cpu=str(self._required_cpu_units),
+            networkMode="none",
+            ipcMode="none",
+            volumes=[
+                {
+                    "name": f"{self._job_id}-input",
+                    "host": {"sourcePath": str(self._input_directory)},
                 },
-                "volumes": [
-                    {
-                        "name": f"{self._job_id}-input",
-                        "host": {"sourcePath": str(self._input_directory)},
+                {
+                    "name": f"{self._job_id}-output",
+                    "host": {"sourcePath": str(self._output_directory)},
+                },
+            ],
+            containerDefinitions=[
+                {
+                    "essential": True,
+                    "name": self._job_id,
+                    "image": self._exec_image_repo_tag,
+                    "memory": self._required_memory_units,
+                    "cpu": self._required_cpu_units,
+                    "resourceRequirements": self._resource_requirements,
+                    "disableNetworking": True,
+                    "dockerSecurityOptions": ["no-new-privileges"],
+                    "mountPoints": [
+                        {
+                            "containerPath": "/input",
+                            "sourceVolume": f"{self._job_id}-input",
+                            "readOnly": True,
+                        },
+                        {
+                            "containerPath": "/output",
+                            "sourceVolume": f"{self._job_id}-output",
+                            "readOnly": False,
+                        },
+                    ],
+                    "linuxParameters": {
+                        "capabilities": {"drop": ["ALL"]},
+                        "initProcessEnabled": True,
+                        "maxSwap": 0,
+                        "swappiness": 0,
                     },
-                    {
-                        "name": f"{self._job_id}-output",
-                        "host": {"sourcePath": str(self._output_directory)},
+                    "logConfiguration": {
+                        "logDriver": "awslogs",
+                        "options": {
+                            "awslogs-group": self._log_group_name,
+                            "awslogs-region": settings.COMPONENTS_AMAZON_ECS_LOGS_REGION,
+                            "awslogs-stream-prefix": "ecs",
+                        },
                     },
-                ],
-                "mountPoints": [
-                    {
-                        "containerPath": "/input",
-                        "sourceVolume": f"{self._job_id}-input",
-                        "readOnly": True,
-                    },
-                    {
-                        "containerPath": "/output",
-                        "sourceVolume": f"{self._job_id}-output",
-                        "readOnly": False,
-                    },
-                ],
-                "ulimits": [
-                    {
-                        "name": "nproc",
-                        "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
-                        "softLimit": settings.COMPONENTS_PIDS_LIMIT,
-                    }
-                ],
-                "privileged": False,
-                "user": "nobody",
-            },
-            timeout={
-                "attemptDurationSeconds": settings.CELERY_TASK_TIME_LIMIT
-            },
-            platformCapabilities=["EC2"],
-            propagateTags=True,
+                    "ulimits": [
+                        {
+                            "name": "nproc",
+                            "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
+                            "softLimit": settings.COMPONENTS_PIDS_LIMIT,
+                        }
+                    ],
+                    "privileged": False,
+                    "user": "nobody",
+                }
+            ],
         )
-        return response["jobDefinitionArn"]
+        return response["taskDefinition"]["taskDefinitionArn"]
 
-    def _submit_job(self, *, job_definition_arn):
+    def _run_task(self, *, task_definition_arn):
+        # TODO set settings.CELERY_TASK_TIME_LIMIT
+        # TODO set propagate tags
         self._batch_client.submit_job(
             jobName=self._job_id,
             jobQueue=self._queue_arn,
-            jobDefinition=job_definition_arn,
+            jobDefinition=task_definition_arn,
         )
 
     def _deregister_job_definitions(self):
