@@ -1,6 +1,4 @@
 import factory
-from actstream.models import Action
-from django.contrib.contenttypes.models import ContentType
 from django.utils.text import slugify
 from factory import fuzzy
 from factory.fuzzy import FuzzyChoice
@@ -58,27 +56,9 @@ class PostFactory(factory.django.DjangoModelFactory):
         model = Post
 
 
-# TODO: make target and action_object optional fields
-class ActionFactory(factory.django.DjangoModelFactory):
-    actor = factory.SubFactory(UserFactory)
-    verb = fuzzy.FuzzyText(length=10)
-    target_content_type = factory.LazyAttribute(
-        lambda o: ContentType.objects.get_for_model(o.target)
-    )
-    target_object_id = factory.SelfAttribute("target.id")
-    action_object_content_type = factory.LazyAttribute(
-        lambda o: ContentType.objects.get_for_model(o.action_object)
-    )
-    action_object_object_id = factory.SelfAttribute("action_object.id")
-
-    class Meta:
-        model = Action
-        exclude = ["target", "action_object"]
-
-
 class NotificationFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
-    action = factory.SubFactory(ActionFactory)
+    type = FuzzyChoice(Notification.Type.values)
 
     class Meta:
         model = Notification

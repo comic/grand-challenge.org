@@ -1,10 +1,12 @@
 import pytest
 from actstream.actions import follow, is_following
-from actstream.models import Action, Follow
+from actstream.models import Follow
+from django.utils.html import format_html
 from machina.apps.forum.models import Forum
 from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.notifications.models import Notification
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import (
     ForumFactory,
@@ -17,40 +19,63 @@ from tests.notifications_tests.factories import (
 @pytest.mark.parametrize(
     "kind", (Topic.TOPIC_ANNOUNCE, Topic.TOPIC_POST, Topic.TOPIC_STICKY,),
 )
-def test_action_created_on_new_topic(kind):
+def test_notification_sent_on_new_topic(kind):
     p = UserFactory()
+    u = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
+    follow(user=u, obj=f)
     t = TopicFactory(forum=f, poster=p, type=kind)
 
-    assert Follow.objects.is_following(user=p, instance=t)
-
-    action = Action.objects.get()
-
+    notification = Notification.objects.get()
+    topic_string = format_html('<a href="{}">{}</a>', t.get_absolute_url(), t)
     if kind == Topic.TOPIC_ANNOUNCE:
-        assert str(action).startswith(f"{p} announced {t} on {f}")
+        assert notification.print_notification(user=u).startswith(
+            f"{user_profile_link(p)} announced {topic_string}"
+        )
     else:
-        assert str(action).startswith(f"{p} posted {t} on {f}")
+        assert notification.print_notification(user=u).startswith(
+            f"{user_profile_link(p)} posted {topic_string}"
+        )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "kind", (Topic.TOPIC_ANNOUNCE, Topic.TOPIC_POST, Topic.TOPIC_STICKY,),
 )
-def test_action_created_on_new_post(kind):
-    u = UserFactory()
+def test_notification_sent_on_new_post(kind):
+    u1 = UserFactory()
+    u2 = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
-    t = TopicFactory(forum=f, type=kind)
-    PostFactory(topic=t, poster=u)
+    follow(user=u2, obj=f)
+    t = TopicFactory(forum=f, poster=u1, type=kind)
+    PostFactory(topic=t, poster=u2)
 
-    actions = Action.objects.all()
-
-    assert len(actions) == 2
-    assert str(actions[0]).startswith(f"{u} replied to {t}")
+    notifications = Notification.objects.all()
+    topic_string = format_html('<a href="{}">{}</a>', t.get_absolute_url(), t)
+    forum_string = format_html('<a href="{}">{}</a>', f.get_absolute_url(), f)
+    assert len(notifications) == 2
+    assert (
+        notifications[1]
+        .print_notification(user=u1)
+        .startswith(f"{user_profile_link(u2)} replied to {topic_string}")
+    )
 
     if kind == Topic.TOPIC_ANNOUNCE:
-        assert str(actions[1]).startswith(f"{t.poster} announced {t} on {f}")
+        assert (
+            notifications[0]
+            .print_notification(user=u2)
+            .startswith(
+                f"{user_profile_link(t.poster)} announced {topic_string} in {forum_string}"
+            )
+        )
     else:
-        assert str(actions[1]).startswith(f"{t.poster} posted {t} on {f}")
+        assert (
+            notifications[0]
+            .print_notification(user=u2)
+            .startswith(
+                f"{user_profile_link(t.poster)} posted {topic_string} in {forum_string}"
+            )
+        )
 
 
 @pytest.mark.django_db
@@ -73,9 +98,8 @@ def test_notification_created_for_target_followers_on_action_creation():
 
     # creating a post creates an action automatically
     _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
-    assert len(Action.objects.all()) == 1
-
     assert len(Notification.objects.all()) == 1
+
     notification = Notification.objects.get()
     # check that the poster did not receive a notification
     assert notification.user == user2
@@ -126,18 +150,9 @@ def test_follow_clean_up_after_forum_removal():
 
 
 @pytest.mark.django_db
-def test_notification_for_actor_only_when_only_action_object_specified():
-    # When an action does not have a target, but an action object instead,
-    # only the actor of the action should get notified.
-    # Though not intuitive, currently this is necessary to allow sending
-    # notifications to new challenge admins without also notifying
-    # existing challenge admins.
-    # If the challenge were the target or the actor of the action instead,
-    # all existing challenge admins would get notified as well.
-
+def test_notification_for_new_admin_only():
     user = UserFactory()
     admin = UserFactory()
-    # create a challenge with user as admin
     challenge = ChallengeFactory(creator=admin)
 
     # clear existing notifications for easier testing below
@@ -145,9 +160,6 @@ def test_notification_for_actor_only_when_only_action_object_specified():
 
     # add user as admin to challenge
     challenge.add_admin(user)
-    # under the hood this sends an action with the challenge as action object
-    # and the user as actor
-    # i.e., action.send(sender=user, verb="added as admin for", action_object=challenge)
 
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user == user

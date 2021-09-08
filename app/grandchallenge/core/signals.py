@@ -1,5 +1,3 @@
-import actstream
-from actstream import action
 from actstream.actions import follow, unfollow
 from actstream.models import Follow
 from django.conf import settings
@@ -20,6 +18,7 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
 
 
@@ -62,13 +61,17 @@ def process_permission_request_update(sender, instance, *_, **__):
     if instance.status != old_status:
         if instance.status == instance.ACCEPTED:
             instance.add_method(instance.user)
-            action.send(
-                sender=instance, verb="was accepted",
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
+                message="was accepted",
+                target=instance,
             )
         elif instance.status == instance.REJECTED:
             instance.remove_method(instance.user)
-            action.send(
-                sender=instance, verb="was rejected",
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
+                message="was rejected",
+                target=instance,
             )
 
 
@@ -117,10 +120,11 @@ def update_editor_follows(  # noqa: C901
                 )
                 # only new admins of a challenge get notified
                 if obj._meta.model_name == "challenge":
-                    actstream.action.send(
-                        sender=user,
-                        verb="added as admin for",
-                        action_object=obj,
+                    Notification.send(
+                        type=NotificationType.NotificationTypeChoices.NEW_ADMIN,
+                        message="added as admin for",
+                        action_object=user,
+                        target=obj,
                     )
             elif action == "pre_remove" or action == "pre_clear":
                 unfollow(user=user, obj=obj, send_action=False)
