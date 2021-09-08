@@ -288,6 +288,72 @@ class AmazonECSExecutor:
     def _required_cpu_units(self):
         return 4096 if self._memory_limit > 16 else 2048
 
+    @property
+    def _container_definitions(self):
+        container_definitions = [
+            {
+                # Add a second essential container that kills the task
+                # once the time limit is reached.
+                # See https://github.com/aws/containers-roadmap/issues/572
+                "name": f"{self._job_id}-timeout",
+                "image": settings.COMPONENTS_IO_IMAGE,
+                "command": ["sleep", str(settings.CELERY_TASK_TIME_LIMIT)],
+            },
+            {
+                "name": self._job_id,
+                "image": self._exec_image_repo_tag,
+                "memory": self._required_memory_units,
+                "cpu": self._required_cpu_units,
+                "resourceRequirements": self._resource_requirements,
+                "mountPoints": [
+                    {
+                        "containerPath": "/input",
+                        "sourceVolume": f"{self._job_id}-input",
+                        "readOnly": True,
+                    },
+                    {
+                        "containerPath": "/output",
+                        "sourceVolume": f"{self._job_id}-output",
+                        "readOnly": False,
+                    },
+                ],
+            },
+        ]
+
+        for c in container_definitions:
+            c.update(
+                {
+                    "disableNetworking": True,
+                    "dockerSecurityOptions": ["no-new-privileges"],
+                    "essential": True,  # all essential for timeout to work
+                    "linuxParameters": {
+                        "capabilities": {"drop": ["ALL"]},
+                        "initProcessEnabled": True,
+                        "maxSwap": 0,
+                        "swappiness": 0,
+                    },
+                    "logConfiguration": {
+                        "logDriver": "awslogs",
+                        "options": {
+                            "awslogs-group": self._log_group_name,
+                            "awslogs-region": settings.COMPONENTS_AMAZON_ECS_LOGS_REGION,
+                            "awslogs-stream-prefix": "ecs",
+                        },
+                    },
+                    "privileged": False,
+                    "ulimits": [
+                        {
+                            "name": "nproc",
+                            "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
+                            "softLimit": settings.COMPONENTS_PIDS_LIMIT,
+                        }
+                    ],
+                    "user": "nobody",
+                }
+            )
+
+        return container_definitions
+
     def _register_task_definition(self):
         response = self._ecs_client.register_task_definition(
             family=self._job_id,
@@ -306,58 +372,11 @@ class AmazonECSExecutor:
                     "host": {"sourcePath": str(self._output_directory)},
                 },
             ],
-            containerDefinitions=[
-                {
-                    "essential": True,
-                    "name": self._job_id,
-                    "image": self._exec_image_repo_tag,
-                    "memory": self._required_memory_units,
-                    "cpu": self._required_cpu_units,
-                    "resourceRequirements": self._resource_requirements,
-                    "disableNetworking": True,
-                    "dockerSecurityOptions": ["no-new-privileges"],
-                    "mountPoints": [
-                        {
-                            "containerPath": "/input",
-                            "sourceVolume": f"{self._job_id}-input",
-                            "readOnly": True,
-                        },
-                        {
-                            "containerPath": "/output",
-                            "sourceVolume": f"{self._job_id}-output",
-                            "readOnly": False,
-                        },
-                    ],
-                    "linuxParameters": {
-                        "capabilities": {"drop": ["ALL"]},
-                        "initProcessEnabled": True,
-                        "maxSwap": 0,
-                        "swappiness": 0,
-                    },
-                    "logConfiguration": {
-                        "logDriver": "awslogs",
-                        "options": {
-                            "awslogs-group": self._log_group_name,
-                            "awslogs-region": settings.COMPONENTS_AMAZON_ECS_LOGS_REGION,
-                            "awslogs-stream-prefix": "ecs",
-                        },
-                    },
-                    "ulimits": [
-                        {
-                            "name": "nproc",
-                            "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
-                            "softLimit": settings.COMPONENTS_PIDS_LIMIT,
-                        }
-                    ],
-                    "privileged": False,
-                    "user": "nobody",
-                }
-            ],
+            containerDefinitions=self._container_definitions,
         )
         return response["taskDefinition"]["taskDefinitionArn"]
 
     def _run_task(self, *, task_definition_arn):
-        # TODO set settings.CELERY_TASK_TIME_LIMIT
         # TODO set propagate tags
         self._batch_client.submit_job(
             jobName=self._job_id,
