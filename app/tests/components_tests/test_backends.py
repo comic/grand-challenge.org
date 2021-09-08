@@ -11,7 +11,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.components_tests.stubs import AWSBatchExecutorStub
+from tests.components_tests.stubs import AmazonECSExecutorStub
 from tests.factories import ImageFileFactory
 
 
@@ -94,7 +94,7 @@ def test_provision(tmp_path, settings):
 
     settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = tmp_path
 
-    executor = AWSBatchExecutorStub(
+    executor = AmazonECSExecutorStub(
         job_id="foo-bar-12345-67890",
         exec_image_sha256="",
         exec_image_repo_tag="",

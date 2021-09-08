@@ -1,10 +1,10 @@
 import json
 import shutil
 
-from grandchallenge.components.backends.aws_batch import AWSBatchExecutor
+from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
 
 
-class AWSBatchExecutorStub(AWSBatchExecutor):
+class AmazonECSExecutorStub(AmazonECSExecutor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

@@ -23,7 +23,7 @@ from grandchallenge.components.backends.utils import LOGLINES, user_error
 logger = logging.getLogger(__name__)
 
 
-class AWSBatchExecutor:
+class AmazonECSExecutor:
     def __init__(
         self,
         *,
