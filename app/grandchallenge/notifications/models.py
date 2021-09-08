@@ -1,4 +1,4 @@
-from actstream.models import Action, followers
+from actstream.models import followers
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -48,14 +48,6 @@ class Notification(UUIDModel):
         choices=Type.choices,
         default=Type.GENERIC,
         help_text=("Of what type is this notification?"),
-    )
-    # TODO: deprecate this field after old notifications have been transferred
-    action = models.ForeignKey(
-        Action,
-        blank=True,
-        null=True,
-        help_text="Which action is associated with this notification?",
-        on_delete=models.CASCADE,
     )
 
     read = models.BooleanField(default=False, db_index=True)
