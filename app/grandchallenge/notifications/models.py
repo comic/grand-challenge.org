@@ -44,6 +44,13 @@ class Notification(UUIDModel):
         on_delete=models.CASCADE,
     )
 
+    type = models.CharField(
+        max_length=20,
+        choices=Type.choices,
+        default=Type.GENERIC,
+        help_text=("Of what type is this notification?"),
+    )
+
     action = deprecate_field(
         models.ForeignKey(
             Action,
@@ -52,13 +59,6 @@ class Notification(UUIDModel):
             help_text="Which action is associated with this notification?",
             on_delete=models.CASCADE,
         )
-    )
-
-    type = models.CharField(
-        max_length=20,
-        choices=Type.choices,
-        default=Type.GENERIC,
-        help_text=("Of what type is this notification?"),
     )
 
     read = models.BooleanField(default=False, db_index=True)
