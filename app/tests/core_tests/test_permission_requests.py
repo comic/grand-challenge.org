@@ -1,5 +1,5 @@
 import pytest
-from actstream.actions import is_following
+from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.utils.html import format_html
 
@@ -292,3 +292,32 @@ def test_permission_request_notifications_flow(
     # when the base_obj is deleted, the follows are deleted as well
     base_object.delete()
     assert not Follow.objects.filter(object_id=base_object.pk)
+
+
+@pytest.mark.django_db
+def test_algorithm_permission_request_notification_for_admins_only(client):
+    base_object = AlgorithmFactory()
+    editor = UserFactory()
+    user = UserFactory()
+    participant = UserFactory()
+    base_object.add_editor(editor)
+    base_object.add_user(participant)
+
+    # create an algorithm job follow for participant
+    follow(user=participant, obj=base_object, flag="job-active")
+
+    permission_create_url = reverse(
+        "algorithms:permission-request-create",
+        kwargs={"slug": base_object.slug},
+    )
+
+    # Create the permission request
+    _ = get_view_for_user(
+        client=client,
+        user=user,
+        url=permission_create_url,
+        method=client.post,
+    )
+
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user == editor

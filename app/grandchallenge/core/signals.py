@@ -14,12 +14,24 @@ from django.db.models.signals import (
 )
 from django.dispatch import receiver
 from guardian.utils import get_anonymous_user
+from machina.apps.forum.models import Forum
+from machina.apps.forum_conversation.models import Topic
 
-from grandchallenge.algorithms.models import AlgorithmPermissionRequest
-from grandchallenge.archives.models import ArchivePermissionRequest
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmPermissionRequest,
+)
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
+from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.notifications.models import Notification, NotificationType
-from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
+from grandchallenge.participants.models import RegistrationRequest
+from grandchallenge.reader_studies.models import (
+    ReaderStudy,
+    ReaderStudyPermissionRequest,
+)
 
 
 @receiver(post_save, sender=get_user_model())
@@ -114,7 +126,7 @@ def update_editor_follows(  # noqa: C901
 
     for user in users:
         for obj in follow_objects:
-            if action == "post_add":
+            if action == "post_add" and obj._meta.model_name != "algorithm":
                 follow(
                     user=user, obj=obj, actor_only=False, send_action=False,
                 )
@@ -126,6 +138,14 @@ def update_editor_follows(  # noqa: C901
                         action_object=user,
                         target=obj,
                     )
+            elif action == "post_add" and obj._meta.model_name == "algorithm":
+                follow(
+                    user=user,
+                    obj=obj,
+                    actor_only=False,
+                    flag="access_request",
+                    send_action=False,
+                )
             elif action == "pre_remove" or action == "pre_clear":
                 unfollow(user=user, obj=obj, send_action=False)
 
@@ -137,4 +157,37 @@ def clean_up_user_follows(instance, **_):
     ).get()
     Follow.objects.filter(
         Q(object_id=instance.pk) | Q(user=instance.pk), content_type=ct
+    ).delete()
+    Notification.objects.filter(
+        Q(actor_object_id=instance.pk) & Q(actor_content_type=ct)
+        | Q(action_object_object_id=instance.pk)
+        & Q(action_object_content_type=ct)
+        | Q(target_object_id=instance.pk) & Q(target_content_type=ct)
+        | Q(user_id=instance.pk)
+    ).delete()
+
+
+@receiver(pre_delete, sender=AlgorithmPermissionRequest)
+@receiver(pre_delete, sender=ReaderStudyPermissionRequest)
+@receiver(pre_delete, sender=ArchivePermissionRequest)
+@receiver(pre_delete, sender=Archive)
+@receiver(pre_delete, sender=Algorithm)
+@receiver(pre_delete, sender=ReaderStudy)
+@receiver(pre_delete, sender=Challenge)
+@receiver(pre_delete, sender=Forum)
+@receiver(pre_delete, sender=Topic)
+@receiver(pre_delete, sender=RegistrationRequest)
+@receiver(pre_delete, sender=Evaluation)
+@receiver(pre_delete, sender=Phase)
+@receiver(pre_delete, sender=Submission)
+@receiver(pre_delete, sender=RawImageUploadSession)
+def clean_up_notifications(instance, **_):
+    ct = ContentType.objects.filter(
+        app_label=instance._meta.app_label, model=instance._meta.model_name
+    ).get()
+    Notification.objects.filter(
+        Q(actor_object_id=instance.pk) & Q(actor_content_type=ct)
+        | Q(action_object_object_id=instance.pk)
+        & Q(action_object_content_type=ct)
+        | Q(target_object_id=instance.pk) & Q(target_content_type=ct)
     ).delete()
