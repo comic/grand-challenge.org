@@ -900,11 +900,13 @@ class ComponentImage(models.Model):
         blank=True,
         upload_to=docker_image_path,
         validators=[
-            ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
+            ExtensionValidator(
+                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
+            )
         ],
         help_text=(
-            ".tar.gz archive of the container image produced from the command "
-            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
+            ".tar.xz archive of the container image produced from the command "
+            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
         storage=private_s3_storage,
