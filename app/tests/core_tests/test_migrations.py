@@ -1,16 +1,15 @@
+from subprocess import check_output
+
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.management import call_command
 
 
 @pytest.mark.django_db
-def test_make_migration(capsys):
-    """Ensure that migrations do not need to be made."""
-    call_command("makemigrations")
-    out, err = capsys.readouterr()
-    assert out == "No changes detected\n"
-    assert err == ""
+def test_all_migration_files_have_been_created():
+    check_output(
+        ["python", "manage.py", "makemigrations", "--dry-run", "--check"]
+    )
 
 
 @pytest.mark.django_db
