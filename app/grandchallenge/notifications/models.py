@@ -6,6 +6,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
@@ -49,13 +50,15 @@ class Notification(UUIDModel):
         default=Type.GENERIC,
         help_text=("Of what type is this notification?"),
     )
-    # TODO: deprecate this field after old notifications have been transferred
-    action = models.ForeignKey(
-        Action,
-        blank=True,
-        null=True,
-        help_text="Which action is associated with this notification?",
-        on_delete=models.CASCADE,
+
+    action = deprecate_field(
+        models.ForeignKey(
+            Action,
+            blank=True,
+            null=True,
+            help_text="Which action is associated with this notification?",
+            on_delete=models.CASCADE,
+        )
     )
 
     read = models.BooleanField(default=False, db_index=True)

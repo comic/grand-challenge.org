@@ -88,7 +88,6 @@ class NotificationList(
     paginate_by = 50
 
     def get_queryset(self):
-        # TODO: refactor prefetch function after migration to new model is complete
         return prefetch_generic_foreign_key_objects(
             super()
             .get_queryset()
@@ -96,7 +95,7 @@ class NotificationList(
                 "actor_content_type",
                 "target_content_type",
                 "action_object_content_type",
-                "user",
+                "user__verification",
             )
             .order_by("-created")
         )
