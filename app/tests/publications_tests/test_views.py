@@ -14,13 +14,17 @@ TEST_DOI = "10.1002/mrm.25227"
 
 
 @pytest.mark.django_db
-def test_publication_creation(client):
+def test_publication_creation(client, mocker):
     user1 = UserFactory()
     user2 = get_anonymous_user()
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
     assert g_reg not in user2.groups.all()
     assert Publication.objects.count() == 0
+
+    mocker.patch(
+        "grandchallenge.publications.utils.get_doi_csl", return_value=TEST_CSL
+    )
 
     # only registered users can create a publication
     response = get_view_for_user(
