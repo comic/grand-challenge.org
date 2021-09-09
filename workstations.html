@@ -428,7 +428,7 @@ workstation</p></li>
 <li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
 <li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Creator</p></li>
 <li><p><strong>staged_image_uuid</strong> (<em>UUIDField</em>) – Staged image uuid</p></li>
-<li><p><strong>image</strong> (<em>FileField</em>) – Image. .tar.gz archive of the container image produced from the command ‘docker save IMAGE | gzip -c &gt; IMAGE.tar.gz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
+<li><p><strong>image</strong> (<em>FileField</em>) – Image. .tar.xz archive of the container image produced from the command ‘docker save IMAGE | xz -c &gt; IMAGE.tar.xz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
 <li><p><strong>image_sha256</strong> (<em>CharField</em>) – Image sha256</p></li>
 <li><p><strong>ready</strong> (<em>BooleanField</em>) – Ready. Is this image ready to be used?</p></li>
 <li><p><strong>status</strong> (<em>TextField</em>) – Status</p></li>
