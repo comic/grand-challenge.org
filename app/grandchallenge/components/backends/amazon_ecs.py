@@ -150,6 +150,13 @@ class AmazonECSExecutor:
             return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
 
     @property
+    def _cluster_arn(self):
+        if self._requires_gpu:
+            return settings.COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN
+        else:
+            return settings.COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN
+
+    @property
     def _log_group_name(self):
         if self._requires_gpu:
             return settings.COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME
@@ -295,28 +302,35 @@ class AmazonECSExecutor:
                 # Add a second essential container that kills the task
                 # once the time limit is reached.
                 # See https://github.com/aws/containers-roadmap/issues/572
-                "name": f"{self._job_id}-timeout",
-                "image": settings.COMPONENTS_IO_IMAGE,
                 "command": ["sleep", str(settings.CELERY_TASK_TIME_LIMIT)],
+                "image": settings.COMPONENTS_IO_IMAGE,
+                "name": f"{self._job_id}-timeout",
             },
             {
-                "name": self._job_id,
+                "command": [
+                    # TODO remove setting command
+                    "curl",
+                    "-I",
+                    "https://www.google.com",
+                ],
+                "cpu": self._required_cpu_units,
                 "image": self._exec_image_repo_tag,
                 "memory": self._required_memory_units,
-                "cpu": self._required_cpu_units,
+                # TODO uncomment
+                # "mountPoints": [
+                #     {
+                #         "containerPath": "/input",
+                #         "sourceVolume": f"{self._job_id}-input",
+                #         "readOnly": True,
+                #     },
+                #     {
+                #         "containerPath": "/output",
+                #         "sourceVolume": f"{self._job_id}-output",
+                #         "readOnly": False,
+                #     },
+                # ],
+                "name": self._job_id,
                 "resourceRequirements": self._resource_requirements,
-                "mountPoints": [
-                    {
-                        "containerPath": "/input",
-                        "sourceVolume": f"{self._job_id}-input",
-                        "readOnly": True,
-                    },
-                    {
-                        "containerPath": "/output",
-                        "sourceVolume": f"{self._job_id}-output",
-                        "readOnly": False,
-                    },
-                ],
             },
         ]
 
@@ -356,33 +370,51 @@ class AmazonECSExecutor:
 
     def _register_task_definition(self):
         response = self._ecs_client.register_task_definition(
-            family=self._job_id,
-            requiresCompatibilities=["EC2"],
-            memory=str(self._required_memory_units),
-            cpu=str(self._required_cpu_units),
-            networkMode="none",
-            ipcMode="none",
-            volumes=[
-                {
-                    "name": f"{self._job_id}-input",
-                    "host": {"sourcePath": str(self._input_directory)},
-                },
-                {
-                    "name": f"{self._job_id}-output",
-                    "host": {"sourcePath": str(self._output_directory)},
-                },
-            ],
             containerDefinitions=self._container_definitions,
+            cpu=str(self._required_cpu_units),
+            family=self._job_id,
+            ipcMode="none",
+            memory=str(self._required_memory_units),
+            networkMode="none",
+            requiresCompatibilities=["EC2"],
+            # TODO placement constrains for GPU?
+            # TODO set tags
+            # TODO uncomment
+            # volumes=[
+            #     {
+            #         "name": f"{self._job_id}-input",
+            #         "host": {"sourcePath": str(self._input_directory)},
+            #     },
+            #     {
+            #         "name": f"{self._job_id}-output",
+            #         "host": {"sourcePath": str(self._output_directory)},
+            #     },
+            # ],
         )
+        # TODO remove print statement
+        print(response)
         return response["taskDefinition"]["taskDefinitionArn"]
 
+    """
+    >>> from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
+    >>> from django.utils.timezone import now
+    >>> e = AmazonECSExecutor(job_id=f"test-{now().strftime('%H%M%S')}", exec_image_sha256="", exec_image_repo_tag="amazonlinux:2", exec_image_file=None, memory_limit=4, requires_gpu=False)
+    >>> t = e._register_task_definition()
+    >>> e._run_task(task_definition_arn=t)
+    """
+
     def _run_task(self, *, task_definition_arn):
-        # TODO set propagate tags
-        self._batch_client.submit_job(
-            jobName=self._job_id,
-            jobQueue=self._queue_arn,
-            jobDefinition=task_definition_arn,
+        response = self.__ecs_client.run_task(
+            cluster=self._cluster_arn,
+            count=1,
+            enableExecuteCommand=False,
+            enableECSManagedTags=True,
+            propagateTags="TASK_DEFINITION",
+            referenceId=self._job_id,
+            taskDefinition=task_definition_arn,
         )
+        # TODO remove print statement
+        print(response)
 
     def _deregister_job_definitions(self):
         response = self._batch_client.describe_job_definitions(
