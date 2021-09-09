@@ -141,12 +141,12 @@ class Notification(UUIDModel):
         message = kwargs.pop("message", None)
         description = kwargs.pop("description", None)
         context_class = kwargs.pop("context_class", None)
-
         if (
             type == NotificationType.NotificationTypeChoices.FORUM_POST
             or type
             == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
             or type == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+            and target._meta.model_name != "algorithm"
             or type == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
             or type == NotificationType.NotificationTypeChoices.MISSING_METHOD
         ):
@@ -158,6 +158,11 @@ class Notification(UUIDModel):
                 ]
             else:
                 receivers = followers(target)
+        elif (
+            type == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+            and target._meta.model_name == "algorithm"
+        ):
+            receivers = followers(target, flag="access_request")
         elif type == NotificationType.NotificationTypeChoices.NEW_ADMIN:
             receivers = [action_object]
         elif (
