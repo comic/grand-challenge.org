@@ -1,7 +1,6 @@
 import logging
 from datetime import timedelta
 
-from actstream import action
 from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.conf import settings
@@ -36,6 +35,7 @@ from grandchallenge.core.storage import (
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -631,9 +631,10 @@ class AlgorithmPermissionRequest(RequestBase):
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
             )
-            action.send(
-                sender=self.user,
-                verb="requested access to",
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
+                message="requested access to",
+                actor=self.user,
                 target=self.base_object,
             )
 

@@ -26,8 +26,9 @@ def test_admins_add(client, two_challenge_sets):
     # adding an admin results in a notification for the new admin only
     assert Notification.objects.count() == 1
     notification = Notification.objects.get()
-    assert two_challenge_sets.challenge_set_1.challenge.short_name in str(
-        notification.action
+    assert (
+        two_challenge_sets.challenge_set_1.challenge.short_name
+        in notification.print_notification(user=user)
     )
     assert user == notification.user
     assert two_challenge_sets.challenge_set_1.challenge.is_admin(user=user)

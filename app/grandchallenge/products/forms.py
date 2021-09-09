@@ -3,7 +3,7 @@ from crispy_forms.layout import Submit
 from django import forms
 from django_select2.forms import Select2MultipleWidget
 
-from grandchallenge.blogs.forms import PostForm, PostUpdateForm
+from grandchallenge.blogs.forms import PostUpdateForm
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
@@ -34,6 +34,6 @@ class ProductsPostUpdateForm(PostUpdateForm):
     class Meta(PostUpdateForm.Meta):
         fields = (*PostUpdateForm.Meta.fields, "companies")
         widgets = {
-            **PostForm.Meta.widgets,
+            **PostUpdateForm.Meta.widgets,
             "companies": Select2MultipleWidget,
         }

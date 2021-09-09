@@ -272,8 +272,25 @@ def test_consortium_json():
     )
 
 
-def test_arxiv_to_citeproc():
+TEST_ARXIV_CSL = {
+    "id": "2006.12449",
+    "URL": "https://arxiv.org/abs/2006.12449",
+    "number": "2006.12449",
+    "container-title": "arXiv",
+    "publisher": "arXiv",
+    "type": "manuscript",
+    "title": "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge",
+    "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+}
+
+
+def test_arxiv_to_citeproc(mocker):
+    mocker.patch(
+        "tests.publications_tests.test_models.get_arxiv_csl",
+        return_value=TEST_ARXIV_CSL,
+    )
     csl = get_arxiv_csl(arxiv_id="2006.12449")
+
     assert (
         csl["title"]
         == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"

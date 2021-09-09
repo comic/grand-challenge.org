@@ -1,9 +1,9 @@
 import pytest
-from actstream import action
 from actstream.actions import follow
 
 from grandchallenge.notifications.models import Notification
 from tests.factories import UserFactory
+from tests.notifications_tests.factories import NotificationFactory
 
 
 @pytest.mark.django_db
@@ -26,14 +26,14 @@ def test_notifications_filtered():
 
     follow(u1, u2)
 
-    action.send(sender=u2, verb="says hi")
+    n = NotificationFactory(
+        user=u1, type=Notification.Type.GENERIC, actor=u1, message="says hi"
+    )
 
     assert u2.user_profile.has_unread_notifications is False
     assert u1.user_profile.has_unread_notifications is True
 
-    n = Notification.objects.filter(user=u1).get()
     n.read = True
     n.save()
 
     assert u1.user_profile.has_unread_notifications is False
-    assert str(u1.notification_set.get().action).startswith(f"{u2} says hi")

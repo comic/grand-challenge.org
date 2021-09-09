@@ -125,12 +125,16 @@ class Migration(migrations.Migration):
                     "image",
                     models.FileField(
                         blank=True,
-                        help_text=".tar.gz archive of the container image produced from the command 'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See https://docs.docker.com/engine/reference/commandline/save/",
+                        help_text=".tar.xz archive of the container image produced from the command 'docker save IMAGE | xz -c > IMAGE.tar.xz'. See https://docs.docker.com/engine/reference/commandline/save/",
                         storage=grandchallenge.core.storage.PrivateS3Storage(),
                         upload_to=grandchallenge.components.models.docker_image_path,
                         validators=[
                             grandchallenge.core.validators.ExtensionValidator(
-                                allowed_extensions=(".tar", ".tar.gz")
+                                allowed_extensions=(
+                                    ".tar",
+                                    ".tar.gz",
+                                    ".tar.xz",
+                                )
                             )
                         ],
                     ),

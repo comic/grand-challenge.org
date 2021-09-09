@@ -1041,33 +1041,6 @@ CELERY_BEAT_SCHEDULE = {
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },
-    # Cleanup evaluation jobs on the evaluation queue
-    "mark_long_running_evaluation_jobs_failed": {
-        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
-        "kwargs": {"app_label": "evaluation", "model_name": "evaluation"},
-        "options": {"queue": "evaluation"},
-        "schedule": timedelta(hours=1),
-    },
-    "mark_long_running_algorithm_gpu_jobs_failed": {
-        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
-        "kwargs": {
-            "app_label": "algorithms",
-            "model_name": "job",
-            "extra_filters": {"algorithm_image__requires_gpu": True},
-        },
-        "options": {"queue": "gpu"},
-        "schedule": timedelta(hours=1),
-    },
-    "mark_long_running_algorithm_jobs_failed": {
-        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
-        "kwargs": {
-            "app_label": "algorithms",
-            "model_name": "job",
-            "extra_filters": {"algorithm_image__requires_gpu": False},
-        },
-        "options": {"queue": "evaluation"},
-        "schedule": timedelta(hours=1),
-    },
 }
 
 # The name of the group whose members will be able to create algorithms
