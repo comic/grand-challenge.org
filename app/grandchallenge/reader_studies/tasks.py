@@ -52,4 +52,10 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
 
-    add_image(answer, image)
+    if (
+        str(answer.answer["upload_session_pk"]).casefold()
+        == str(upload_session_pk).casefold()
+    ):
+        add_image(answer, image)
+    else:
+        raise ValueError("Upload session for answer does not match")
