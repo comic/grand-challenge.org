@@ -38,7 +38,7 @@ class GitHubUserToken(models.Model):
 
     @property
     def access_token_is_expired(self):
-        return self.access_token_expires > timezone.now()
+        return self.access_token_expires < timezone.now()
 
     def refresh_access_token(self):
         resp = requests.post(
@@ -105,7 +105,9 @@ class GitHubWebhookMessage(models.Model):
         if adding and self.payload.get("ref_type") == "tag":
             on_commit(lambda: get_zipfile.apply_async(kwargs={"pk": self.pk}))
         if adding and self.payload.get("action") == "deleted":
-            on_commit(lambda: unlink_algorithm.apply_async(kwargs={"pk": self.pk}))
+            on_commit(
+                lambda: unlink_algorithm.apply_async(kwargs={"pk": self.pk})
+            )
 
     class Meta:
         indexes = [

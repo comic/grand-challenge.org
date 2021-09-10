@@ -6,12 +6,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('algorithms', '0013_auto_20210830_1128'),
+        ("algorithms", "0013_auto_20210830_1128"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='algorithm',
-            constraint=models.UniqueConstraint(fields=('repo_name',), name='unique_repo_name'),
+            model_name="algorithm",
+            constraint=models.UniqueConstraint(
+                fields=("repo_name",), name="unique_repo_name"
+            ),
         ),
     ]

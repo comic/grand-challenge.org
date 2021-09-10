@@ -1,7 +1,6 @@
 import base64
 import json
 import os
-import re
 import subprocess
 import tempfile
 import zipfile
@@ -59,17 +58,26 @@ def get_zipfile(*, pk):
     zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
     tmp_zip = tempfile.NamedTemporaryFile()
     with tempfile.TemporaryDirectory() as tmpdirname:
-        proces = subprocess.Popen(["git", "clone", "--recurse-submodules", "--branch",
-                                  payload['ref'], "--depth", "1", repo_url, tmpdirname])
+        proces = subprocess.Popen(
+            [
+                "git",
+                "clone",
+                "--recurse-submodules",
+                "--branch",
+                payload["ref"],
+                "--depth",
+                "1",
+                repo_url,
+                tmpdirname,
+            ]
+        )
         proces.wait()
-        with zipfile.ZipFile(tmp_zip.name, 'w') as zipf:
-            for foldername, subfolders, filenames in os.walk(tmpdirname):
+        with zipfile.ZipFile(tmp_zip.name, "w") as zipf:
+            for foldername, _subfolders, filenames in os.walk(tmpdirname):
                 for filename in filenames:
                     file_path = os.path.join(foldername, filename)
                     zipf.write(file_path, os.path.basename(file_path))
-        temp_file = files.File(
-            tmp_zip, name=zip_name,
-        )
+        temp_file = files.File(tmp_zip, name=zip_name,)
         ghwm.zipfile = temp_file
         ghwm.save()
     on_commit(
@@ -84,6 +92,6 @@ def unlink_algorithm(*, pk):
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
     for repo in ghwm.payload["repositories"]:
-        Algorithm.objects.filter(
-            repo_name=repo["full_name"]
-        ).update(repo_name="")
+        Algorithm.objects.filter(repo_name=repo["full_name"]).update(
+            repo_name=""
+        )
