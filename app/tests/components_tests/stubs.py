@@ -312,7 +312,7 @@ class ECSClientStub:
                             "image": "amazonlinux:2",
                             "runtimeId": "ewtyqpiqwyretuywq",
                             "lastStatus": "STOPPED",
-                            "exitCode": 6,
+                            "exitCode": 0,
                             "networkBindings": [],
                             "networkInterfaces": [],
                             "healthStatus": "UNKNOWN",
