@@ -73,6 +73,9 @@ def post_install_redirect(request):
 
     # TODO - does this need to be "state" or can we use "algorithm"
     slug = request.GET.get("state")
+    if slug == "None":
+        return redirect(reverse("algorithms:no-slug"))
+
     return redirect(
         reverse("algorithms:add-repo", kwargs={"slug": slug})
         + f"?{request.META['QUERY_STRING']}"

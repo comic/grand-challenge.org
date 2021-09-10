@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}
+    No algorithm found - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">No algorithm found</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+<div class="mb-2">Unfortunately something went wrong while trying to find the requested algorithm.</div>
+
+<div>If you were trying to link a github repository to an algorithm, please do so manually in the algorithm's settings.</div>
+
+{% endblock %}
