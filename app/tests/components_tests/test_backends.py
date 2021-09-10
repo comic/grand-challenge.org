@@ -108,25 +108,25 @@ def test_provision(tmp_path, settings):
     executor.await_completion()
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
-        "foo",
-        "foo/bar",
-        "foo/bar/00000000-0000-0000-0000-000000000000",
-        "foo/bar/00000000-0000-0000-0000-000000000000/input",
-        "foo/bar/00000000-0000-0000-0000-000000000000/input/test.csv",
-        "foo/bar/00000000-0000-0000-0000-000000000000/input/test",
-        "foo/bar/00000000-0000-0000-0000-000000000000/input/test/bool.json",
-        "foo/bar/00000000-0000-0000-0000-000000000000/input/images",
-        "foo/bar/00000000-0000-0000-0000-000000000000/input/images/test-image",
-        "foo/bar/00000000-0000-0000-0000-000000000000/input/images/test-image/input_file.tif",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/metrics.json",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/results.json",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/test.csv",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/test",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/test/bool.json",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/images",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/images/test-image",
-        "foo/bar/00000000-0000-0000-0000-000000000000/output/images/test-image/input_file.tif",
+        "algorithms",
+        "algorithms/job",
+        "algorithms/job/00000000-0000-0000-0000-000000000000",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/test.csv",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/test",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/test/bool.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images/test-image",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images/test-image/input_file.tif",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/metrics.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/results.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/test.csv",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/test",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/test/bool.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/images",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/images/test-image",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/images/test-image/input_file.tif",
     }
 
     # Exclude the CIV reading as this is unsupported
@@ -136,6 +136,6 @@ def test_provision(tmp_path, settings):
     executor.deprovision()
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
-        "foo",
-        "foo/bar",
+        "algorithms",
+        "algorithms/job",
     }
