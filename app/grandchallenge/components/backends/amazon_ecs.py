@@ -61,28 +61,30 @@ class AmazonECSExecutor:
 
     def await_completion(self):
         job_summary = self._task_description
-        # TODO this is out of date
-        job_status = job_summary["status"]
+        last_status = job_summary["lastStatus"]
 
-        if job_status.casefold() == "SUCCEEDED".casefold():
-            # Job was a success, continue
-            return
-        elif job_status.casefold() == "FAILED".casefold():
-            exit_code = job_summary.get("container", {}).get("exitCode")
-            if exit_code is None:
-                raise RuntimeError(f"{self._job_id} did not start")
-            elif int(exit_code) == 137:
+        if last_status.casefold() == "STOPPED".casefold():
+            container_exit_codes = {
+                c["name"]: int(c["exitCode"])
+                for c in job_summary["containers"]
+            }
+
+            if container_exit_codes[self._main_container_name] == 0:
+                # Job's a good un
+                return
+            elif container_exit_codes[self._main_container_name] == 137:
                 raise ComponentException(
                     "The container was killed as it exceeded the memory limit "
                     f"of {self._memory_limit}g."
                 )
-            elif int(exit_code) == 143:
+            elif container_exit_codes[self._timeout_container_name] == 0:
                 raise ComponentException("Time limit exceeded")
             else:
                 # TODO Implement non-unified logging and use stderr
                 raise ComponentException(user_error(self.stdout))
         else:
-            raise ComponentJobActive(job_status)
+            # TODO - handle tasks that never start
+            raise ComponentJobActive(last_status)
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -151,6 +153,14 @@ class AmazonECSExecutor:
             return settings.COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME
         else:
             return settings.COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME
+
+    @property
+    def _main_container_name(self):
+        return self._job_id
+
+    @property
+    def _timeout_container_name(self):
+        return f"{self._main_container_name}-timeout"
 
     """
         >>> from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
@@ -317,14 +327,13 @@ class AmazonECSExecutor:
                 # See https://github.com/aws/containers-roadmap/issues/572
                 "command": ["sleep", str(settings.CELERY_TASK_TIME_LIMIT)],
                 "image": settings.COMPONENTS_IO_IMAGE,
-                "name": f"{self._job_id}-timeout",
+                "name": self._timeout_container_name,
             },
             {
                 "command": [
                     # TODO remove setting command
-                    "curl",
-                    "-I",
-                    "https://www.google.com",
+                    "echo",
+                    "hello",
                 ],
                 "cpu": self._required_cpu_units,
                 "image": self._exec_image_repo_tag,
@@ -342,7 +351,7 @@ class AmazonECSExecutor:
                 #         "readOnly": False,
                 #     },
                 # ],
-                "name": self._job_id,
+                "name": self._main_container_name,
                 "resourceRequirements": self._resource_requirements,
             },
         ]
