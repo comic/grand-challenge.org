@@ -23,7 +23,7 @@ from grandchallenge.components.backends.utils import LOGLINES, user_error
 logger = logging.getLogger(__name__)
 
 
-class AWSBatchExecutor:
+class AmazonECSExecutor:
     def __init__(
         self,
         *,
@@ -44,7 +44,7 @@ class AWSBatchExecutor:
         if self._memory_limit < 4 or self._memory_limit > 30:
             raise RuntimeError("AWS only supports 4g to 30g of memory")
 
-        self.__batch_client = None
+        self.__ecs_client = None
         self.__logs_client = None
 
     def provision(self, *, input_civs, input_prefixes):
@@ -54,32 +54,39 @@ class AWSBatchExecutor:
         )
 
     def execute(self):
-        job_definition_arn = self._register_job_definition()
-        self._submit_job(job_definition_arn=job_definition_arn)
+        task_definition_arn = self._register_task_definition()
+
+        if int(task_definition_arn.split(":")[-1]) != 1:
+            raise RuntimeError("Task definition already exists")
+
+        self._run_task(task_definition_arn=task_definition_arn)
 
     def await_completion(self):
-        job_summary = self._job_summary
-        job_status = job_summary["status"]
+        job_summary = self._task_description
+        last_status = job_summary["lastStatus"]
 
-        if job_status.casefold() == "SUCCEEDED".casefold():
-            # Job was a success, continue
-            return
-        elif job_status.casefold() == "FAILED".casefold():
-            exit_code = job_summary.get("container", {}).get("exitCode")
-            if exit_code is None:
-                raise RuntimeError(f"{self._job_id} did not start")
-            elif int(exit_code) == 137:
+        if last_status.casefold() == "STOPPED".casefold():
+            container_exit_codes = {
+                c["name"]: int(c["exitCode"])
+                for c in job_summary["containers"]
+            }
+
+            if container_exit_codes[self._main_container_name] == 0:
+                # Job's a good un
+                return
+            elif container_exit_codes[self._main_container_name] == 137:
                 raise ComponentException(
                     "The container was killed as it exceeded the memory limit "
                     f"of {self._memory_limit}g."
                 )
-            elif int(exit_code) == 143:
+            elif container_exit_codes[self._timeout_container_name] == 0:
                 raise ComponentException("Time limit exceeded")
             else:
                 # TODO Implement non-unified logging and use stderr
                 raise ComponentException(user_error(self.stdout))
         else:
-            raise ComponentJobActive(job_status)
+            # TODO - handle tasks that never start
+            raise ComponentJobActive(last_status)
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -100,12 +107,12 @@ class AWSBatchExecutor:
     def deprovision(self):
         # TODO - this should also cancel any running job
         shutil.rmtree(self._job_directory)
-        self._deregister_job_definitions()
+        self._deregister_task_definitions()
 
     @property
     def stdout(self):
         try:
-            return "\n".join(self._job_last_attempt_unified_logs)
+            return "\n".join(self._task_unified_logs)
         except Exception as e:
             logger.warning(f"Could not fetch stdout: {e}")
             return ""
@@ -118,16 +125,16 @@ class AWSBatchExecutor:
     @property
     def duration(self):
         try:
-            return self._job_last_attempt_duration
+            return self._task_duration
         except Exception as e:
             logger.warning(f"Could not determine duration: {e}")
             return None
 
     @property
-    def _batch_client(self):
-        if self.__batch_client is None:
-            self.__batch_client = boto3.client("batch")
-        return self.__batch_client
+    def _ecs_client(self):
+        if self.__ecs_client is None:
+            self.__ecs_client = boto3.client("ecs")
+        return self.__ecs_client
 
     @property
     def _logs_client(self):
@@ -136,53 +143,85 @@ class AWSBatchExecutor:
         return self.__logs_client
 
     @property
-    def _queue_arn(self):
+    def _cluster_arn(self):
         if self._requires_gpu:
-            return settings.COMPONENTS_AWS_BATCH_GPU_QUEUE_ARN
+            return settings.COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN
         else:
-            return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
+            return settings.COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN
 
     @property
-    def _job_summary(self):
-        response = self._batch_client.list_jobs(
-            jobQueue=self._queue_arn,
-            filters=[{"name": "JOB_NAME", "values": [self._job_id]}],
+    def _log_group_name(self):
+        if self._requires_gpu:
+            return settings.COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME
+        else:
+            return settings.COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME
+
+    @property
+    def _log_stream_prefix(self):
+        return "ecs"
+
+    @property
+    def _main_container_name(self):
+        return self._job_id
+
+    @property
+    def _timeout_container_name(self):
+        return f"{self._main_container_name}-timeout"
+
+    @property
+    def _task_arn(self):
+        def _list_tasks(*, desired_status):
+            return self._ecs_client.list_tasks(
+                cluster=self._cluster_arn,
+                family=self._job_id,
+                desiredStatus=desired_status,
+            )
+
+        # On ECS the tasks can only have a desiredStatus of RUNNING or
+        # STOPPED, so look for the running tasks first, and if nothing is
+        # found, it should have a desired status of STOPPED
+        response = _list_tasks(desired_status="RUNNING")
+
+        if len(response["taskArns"]) == 0:
+            response = _list_tasks(desired_status="STOPPED")
+
+        task_arns = response["taskArns"]
+
+        if len(task_arns) != 1:
+            raise RuntimeError(
+                f"{len(task_arns)} task(s) found for family {self._job_id}"
+            )
+
+        return task_arns[0]
+
+    @property
+    def _task_description(self):
+        task_arn = self._task_arn
+        response = self._ecs_client.describe_tasks(
+            tasks=[task_arn], cluster=self._cluster_arn
         )
 
-        job_summary_list = response["jobSummaryList"]
+        task_descriptions = response["tasks"]
 
-        if len(job_summary_list) != 1:
+        if len(task_descriptions) != 1:
             raise RuntimeError(
-                f"{len(job_summary_list)} job(s) found for with name {self._job_id}"
+                f"{len(task_descriptions)} job(s) found for with name {self._job_id}"
             )
 
-        return job_summary_list[0]
+        return task_descriptions[0]
 
     @property
-    def _job_description(self):
-        job_id = self._job_summary["jobId"]
-        response = self._batch_client.describe_jobs(jobs=[job_id])
-
-        job_descriptions = response["jobs"]
-
-        if len(job_descriptions) != 1:
-            raise RuntimeError(
-                f"{len(job_descriptions)} job(s) found for with name {self._job_id}"
-            )
-
-        return job_descriptions[0]
+    def _task_log_stream_name(self):
+        task_id = self._task_arn.split("/")[-1]
+        return (
+            f"{self._log_stream_prefix}/{self._main_container_name}/{task_id}"
+        )
 
     @property
-    def _job_last_attempt_log_stream_name(self):
-        return self._job_description["attempts"][-1]["container"][
-            "logStreamName"
-        ]
-
-    @property
-    def _job_last_attempt_unified_logs(self):
+    def _task_unified_logs(self):
         response = self._logs_client.get_log_events(
-            logGroupName="/aws/batch/job",
-            logStreamName=self._job_last_attempt_log_stream_name,
+            logGroupName=self._log_group_name,
+            logStreamName=self._task_log_stream_name,
             limit=LOGLINES,
             startFromHead=False,
         )
@@ -202,11 +241,9 @@ class AWSBatchExecutor:
         return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
     @property
-    def _job_last_attempt_duration(self):
-        attempt_info = self._job_description["attempts"][-1]
-        started_at = self._timestamp_to_datetime(attempt_info["startedAt"])
-        stopped_at = self._timestamp_to_datetime(attempt_info["stoppedAt"])
-        return stopped_at - started_at
+    def _task_duration(self):
+        task_description = self._task_description
+        return task_description["stoppedAt"] - task_description["startedAt"]
 
     @property
     def _job_directory(self):
@@ -216,7 +253,7 @@ class AWSBatchExecutor:
             raise ValueError(f"Invalid job id {self._job_id}")
 
         return (
-            Path(settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT)
+            Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT)
             / dir_parts[0]
             / dir_parts[1]
             / dir_parts[2]
@@ -261,45 +298,34 @@ class AWSBatchExecutor:
 
     @property
     def _resource_requirements(self):
-        requirements = [
-            # boto requires strings rather than ints
-            {"type": "MEMORY", "value": str(1024 * self._memory_limit)},
-            {
-                "type": "VCPU",
-                "value": str(4 if self._memory_limit > 16 else 2),
-            },
-        ]
         if self._requires_gpu:
-            requirements.append({"type": "GPU", "value": "1"})
-        return requirements
+            return [{"type": "GPU", "value": "1"}]
+        else:
+            return []
 
-    def _register_job_definition(self):
-        response = self._batch_client.register_job_definition(
-            jobDefinitionName=self._job_id,
-            type="container",
-            containerProperties={
-                # AWS batch does not appear to support dockerSecurityOptions,
-                # so security_opt, cap_drop are not set. However, the batch
-                # instances are heavily locked down.
-                # Also no way to set network_disabled, cpu_period, cpu_quota,
-                # cpu_shares, cpuset_cpus or runtime on batch
+    @property
+    def _required_memory_units(self):
+        return 1024 * self._memory_limit
+
+    @property
+    def _required_cpu_units(self):
+        return 4096 if self._memory_limit > 16 else 2048
+
+    @property
+    def _container_definitions(self):
+        container_definitions = [
+            {
+                # Add a second essential container that kills the task
+                # once the time limit is reached.
+                # See https://github.com/aws/containers-roadmap/issues/572
+                "command": ["sleep", str(settings.CELERY_TASK_TIME_LIMIT)],
+                "image": settings.COMPONENTS_IO_IMAGE,
+                "name": self._timeout_container_name,
+            },
+            {
+                "cpu": self._required_cpu_units,
                 "image": self._exec_image_repo_tag,
-                "resourceRequirements": self._resource_requirements,
-                "linuxParameters": {
-                    "initProcessEnabled": True,
-                    "maxSwap": 0,
-                    "swappiness": 0,
-                },
-                "volumes": [
-                    {
-                        "name": f"{self._job_id}-input",
-                        "host": {"sourcePath": str(self._input_directory)},
-                    },
-                    {
-                        "name": f"{self._job_id}-output",
-                        "host": {"sourcePath": str(self._output_directory)},
-                    },
-                ],
+                "memory": self._required_memory_units,
                 "mountPoints": [
                     {
                         "containerPath": "/input",
@@ -312,44 +338,94 @@ class AWSBatchExecutor:
                         "readOnly": False,
                     },
                 ],
-                "ulimits": [
-                    {
-                        "name": "nproc",
-                        "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
-                        "softLimit": settings.COMPONENTS_PIDS_LIMIT,
-                    }
-                ],
-                "privileged": False,
-                "user": "nobody",
+                "name": self._main_container_name,
+                "resourceRequirements": self._resource_requirements,
             },
-            timeout={
-                "attemptDurationSeconds": settings.CELERY_TASK_TIME_LIMIT
-            },
-            platformCapabilities=["EC2"],
-            propagateTags=True,
-        )
-        return response["jobDefinitionArn"]
+        ]
 
-    def _submit_job(self, *, job_definition_arn):
-        self._batch_client.submit_job(
-            jobName=self._job_id,
-            jobQueue=self._queue_arn,
-            jobDefinition=job_definition_arn,
+        for c in container_definitions:
+            c.update(
+                {
+                    "disableNetworking": True,
+                    "dockerSecurityOptions": ["no-new-privileges"],
+                    "essential": True,  # all essential for timeout to work
+                    "linuxParameters": {
+                        "capabilities": {"drop": ["ALL"]},
+                        "initProcessEnabled": True,
+                        "maxSwap": 0,
+                        "swappiness": 0,
+                    },
+                    "logConfiguration": {
+                        "logDriver": "awslogs",
+                        "options": {
+                            "awslogs-group": self._log_group_name,
+                            "awslogs-region": settings.COMPONENTS_AMAZON_ECS_LOGS_REGION,
+                            "awslogs-stream-prefix": self._log_stream_prefix,
+                        },
+                    },
+                    "privileged": False,
+                    "ulimits": [
+                        {
+                            "name": "nproc",
+                            "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
+                            "softLimit": settings.COMPONENTS_PIDS_LIMIT,
+                        }
+                    ],
+                    "user": "nobody",
+                }
+            )
+
+        return container_definitions
+
+    def _register_task_definition(self):
+        response = self._ecs_client.register_task_definition(
+            containerDefinitions=self._container_definitions,
+            cpu=str(self._required_cpu_units),
+            family=self._job_id,
+            ipcMode="none",
+            memory=str(self._required_memory_units),
+            networkMode="none",
+            requiresCompatibilities=["EC2"],
+            # TODO placement constrains for GPU?
+            # TODO set tags
+            volumes=[
+                {
+                    "name": f"{self._job_id}-input",
+                    "host": {"sourcePath": str(self._input_directory)},
+                },
+                {
+                    "name": f"{self._job_id}-output",
+                    "host": {"sourcePath": str(self._output_directory)},
+                },
+            ],
         )
 
-    def _deregister_job_definitions(self):
-        response = self._batch_client.describe_job_definitions(
-            jobDefinitionName=self._job_id,
+        return response["taskDefinition"]["taskDefinitionArn"]
+
+    def _run_task(self, *, task_definition_arn):
+        self._ecs_client.run_task(
+            cluster=self._cluster_arn,
+            count=1,
+            enableExecuteCommand=False,
+            enableECSManagedTags=True,
+            propagateTags="TASK_DEFINITION",
+            referenceId=self._job_id,
+            taskDefinition=task_definition_arn,
+        )
+
+    def _deregister_task_definitions(self):
+        response = self._ecs_client.list_task_definitions(
+            familyPrefix=self._job_id, status="ACTIVE"
         )
         next_token = response.get("nextToken")
 
-        for job_definition in response["jobDefinitions"]:
-            self._batch_client.deregister_job_definition(
-                jobDefinition=job_definition["jobDefinitionArn"],
+        for task_definition_arn in response["taskDefinitionArns"]:
+            self._ecs_client.deregister_task_definition(
+                taskDefinition=task_definition_arn,
             )
 
         if next_token:
-            self._deregister_job_definitions()
+            self._deregister_task_definitions()
 
     def _create_images_result(self, *, interface):
         base_dir = Path(

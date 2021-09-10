@@ -829,7 +829,7 @@ class ComponentJob(models.Model):
             if self.container.queue_override == "acks-late-2xlarge":
                 kwargs["kwargs"].update(
                     {
-                        "backend": "grandchallenge.components.backends.aws_batch.AWSBatchExecutor"
+                        "backend": "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
                     }
                 )
 
