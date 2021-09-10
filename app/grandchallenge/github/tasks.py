@@ -1,5 +1,10 @@
 import base64
 import json
+import os
+import re
+import subprocess
+import tempfile
+import zipfile
 from datetime import datetime
 
 import jwt
@@ -10,7 +15,6 @@ from cryptography.hazmat.primitives import serialization
 from django.apps import apps
 from django.conf import settings
 from django.core import files
-from django.core.files.temp import NamedTemporaryFile
 from django.db.transaction import on_commit
 
 from grandchallenge.codebuild.tasks import create_codebuild_build
@@ -47,27 +51,26 @@ def get_zipfile(*, pk):
         timeout=10,
     )
     access_token = json.loads(resp.content)["token"]
-    full_name = payload["repository"]["full_name"]
     headers["Authorization"] = f"token {access_token}"
-    zipfile_url = (
-        f"https://api.github.com/repos/{full_name}/zipball/{payload['ref']}"
-    )
-    with requests.get(
-        zipfile_url, headers=headers, timeout=10, stream=True
-    ) as file:
-        with NamedTemporaryFile(delete=True) as tmp_file:
-            with open(tmp_file.name, "wb") as fd:
-                for chunk in file.iter_content(chunk_size=128):
-                    fd.write(chunk)
 
-            tmp_file.flush()
-            temp_file = files.File(
-                tmp_file, name=f"{ghwm.repo_name}-{ghwm.tag}.zip",
-            )
-
-            ghwm.zipfile = temp_file
-            ghwm.save()
-
+    repo_url = payload["repository"]["html_url"]
+    repo_url = repo_url.replace("//", f"//x-access-token:{access_token}@")
+    zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
+    tmp_zip = tempfile.NamedTemporaryFile()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        proces = subprocess.Popen(["git", "clone", "--recurse-submodules", "--branch",
+                                  payload['ref'], "--depth", "1", repo_url, tmpdirname])
+        proces.wait()
+        with zipfile.ZipFile(tmp_zip.name, 'w') as zipf:
+            for foldername, subfolders, filenames in os.walk(tmpdirname):
+                for filename in filenames:
+                    file_path = os.path.join(foldername, filename)
+                    zipf.write(file_path, os.path.basename(file_path))
+        temp_file = files.File(
+            tmp_zip, name=zip_name,
+        )
+        ghwm.zipfile = temp_file
+        ghwm.save()
     on_commit(
         lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm.pk})
     )
