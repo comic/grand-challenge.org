@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Min, Sum
+from django.db.models import Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -169,7 +169,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         permissions = [("execute_algorithm", "Can execute algorithm")]
         constraints = [
             models.UniqueConstraint(
-                fields=["repo_name"], name="unique_repo_name"
+                fields=["repo_name"],
+                name="unique_repo_name",
+                condition=~Q(repo_name=""),
             ),
         ]
 
