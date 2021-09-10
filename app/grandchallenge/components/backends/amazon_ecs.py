@@ -55,7 +55,10 @@ class AmazonECSExecutor:
 
     def execute(self):
         task_definition_arn = self._register_task_definition()
-        # TODO check that this is the first version of the task definition
+
+        if int(task_definition_arn.split(":")[-1]) != 1:
+            raise RuntimeError("Task definition already exists")
+
         self._run_task(task_definition_arn=task_definition_arn)
 
     def await_completion(self):
@@ -164,17 +167,6 @@ class AmazonECSExecutor:
     @property
     def _timeout_container_name(self):
         return f"{self._main_container_name}-timeout"
-
-    """
-        >>> from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
-        >>> from django.utils.timezone import now
-        >>> e = AmazonECSExecutor(job_id=f"algorithms-{now().strftime('%H%M%S')}", exec_image_sha256="", exec_image_repo_tag="amazonlinux:2", exec_image_file=None, memory_limit=4, requires_gpu=False)
-        >>> t = e._register_task_definition()
-        >>> e._run_task(task_definition_arn=t)
-        >>> e.await_completion()
-        >>> e.stdout
-        >>> e._deregister_task_definitions()
-    """
 
     @property
     def _task_arn(self):
@@ -331,27 +323,21 @@ class AmazonECSExecutor:
                 "name": self._timeout_container_name,
             },
             {
-                "command": [
-                    # TODO remove setting command
-                    "echo",
-                    "hello",
-                ],
                 "cpu": self._required_cpu_units,
                 "image": self._exec_image_repo_tag,
                 "memory": self._required_memory_units,
-                # TODO uncomment
-                # "mountPoints": [
-                #     {
-                #         "containerPath": "/input",
-                #         "sourceVolume": f"{self._job_id}-input",
-                #         "readOnly": True,
-                #     },
-                #     {
-                #         "containerPath": "/output",
-                #         "sourceVolume": f"{self._job_id}-output",
-                #         "readOnly": False,
-                #     },
-                # ],
+                "mountPoints": [
+                    {
+                        "containerPath": "/input",
+                        "sourceVolume": f"{self._job_id}-input",
+                        "readOnly": True,
+                    },
+                    {
+                        "containerPath": "/output",
+                        "sourceVolume": f"{self._job_id}-output",
+                        "readOnly": False,
+                    },
+                ],
                 "name": self._main_container_name,
                 "resourceRequirements": self._resource_requirements,
             },
@@ -402,17 +388,16 @@ class AmazonECSExecutor:
             requiresCompatibilities=["EC2"],
             # TODO placement constrains for GPU?
             # TODO set tags
-            # TODO uncomment
-            # volumes=[
-            #     {
-            #         "name": f"{self._job_id}-input",
-            #         "host": {"sourcePath": str(self._input_directory)},
-            #     },
-            #     {
-            #         "name": f"{self._job_id}-output",
-            #         "host": {"sourcePath": str(self._output_directory)},
-            #     },
-            # ],
+            volumes=[
+                {
+                    "name": f"{self._job_id}-input",
+                    "host": {"sourcePath": str(self._input_directory)},
+                },
+                {
+                    "name": f"{self._job_id}-output",
+                    "host": {"sourcePath": str(self._output_directory)},
+                },
+            ],
         )
 
         return response["taskDefinition"]["taskDefinitionArn"]
