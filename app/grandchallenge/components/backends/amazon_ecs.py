@@ -165,7 +165,7 @@ class AmazonECSExecutor:
     @property
     def _task_arn(self):
         def _list_tasks(*, desired_status):
-            return self.__ecs_client.list_tasks(
+            return self._ecs_client.list_tasks(
                 cluster=self._cluster_arn,
                 family=self._job_id,
                 desiredStatus=desired_status,
@@ -408,7 +408,7 @@ class AmazonECSExecutor:
         return response["taskDefinition"]["taskDefinitionArn"]
 
     def _run_task(self, *, task_definition_arn):
-        self.__ecs_client.run_task(
+        self._ecs_client.run_task(
             cluster=self._cluster_arn,
             count=1,
             enableExecuteCommand=False,
