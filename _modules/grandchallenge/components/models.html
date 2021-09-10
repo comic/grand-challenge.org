@@ -992,7 +992,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">queue_override</span> <span class="o">==</span> <span class="s2">&quot;acks-late-2xlarge&quot;</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;kwargs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;grandchallenge.components.backends.aws_batch.AWSBatchExecutor&quot;</span>
+                        <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor&quot;</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
 
