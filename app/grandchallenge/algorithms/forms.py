@@ -121,6 +121,10 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "job_create_page_markdown",
             "additional_terms_markdown",
             "result_template",
+            "image_requires_gpu",
+            "image_requires_gpu_memory_gb",
+            "image_requires_memory_gb",
+            "image_requires_cpu_cores",
         )
         widgets = {
             "description": TextInput,

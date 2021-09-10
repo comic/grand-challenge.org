@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
 from actstream.actions import follow, is_following
 from actstream.models import Follow
@@ -156,6 +157,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     use_flexible_inputs = models.BooleanField(default=True)
     repo_name = models.CharField(blank=True, max_length=512)
+    image_requires_gpu = models.BooleanField(default=False)
+    image_requires_gpu_memory_gb = models.PositiveIntegerField(default=4)
+    image_requires_memory_gb = models.PositiveIntegerField(default=4)
+    image_requires_cpu_cores = models.DecimalField(
+        default=Decimal("1.0"), max_digits=4, decimal_places=2
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
