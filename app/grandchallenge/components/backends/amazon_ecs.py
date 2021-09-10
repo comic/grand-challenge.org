@@ -101,7 +101,7 @@ class AmazonECSExecutor:
     def deprovision(self):
         # TODO - this should also cancel any running job
         shutil.rmtree(self._job_directory)
-        self._deregister_job_definitions()
+        self._deregister_task_definitions()
 
     @property
     def stdout(self):
@@ -391,16 +391,19 @@ class AmazonECSExecutor:
             #     },
             # ],
         )
+
         # TODO remove print statement
         print(response)
+
         return response["taskDefinition"]["taskDefinitionArn"]
 
     """
     >>> from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
     >>> from django.utils.timezone import now
-    >>> e = AmazonECSExecutor(job_id=f"test-{now().strftime('%H%M%S')}", exec_image_sha256="", exec_image_repo_tag="amazonlinux:2", exec_image_file=None, memory_limit=4, requires_gpu=False)
+    >>> e = AmazonECSExecutor(job_id=f"algorithms-{now().strftime('%H%M%S')}", exec_image_sha256="", exec_image_repo_tag="amazonlinux:2", exec_image_file=None, memory_limit=4, requires_gpu=False)
     >>> t = e._register_task_definition()
     >>> e._run_task(task_definition_arn=t)
+    >>> e._deregister_task_definitions()
     """
 
     def _run_task(self, *, task_definition_arn):
@@ -413,22 +416,29 @@ class AmazonECSExecutor:
             referenceId=self._job_id,
             taskDefinition=task_definition_arn,
         )
+
         # TODO remove print statement
         print(response)
 
-    def _deregister_job_definitions(self):
-        response = self._batch_client.describe_job_definitions(
-            jobDefinitionName=self._job_id,
+    def _deregister_task_definitions(self):
+        response = self._ecs_client.list_task_definitions(
+            familyPrefix=self._job_id, status="ACTIVE"
         )
         next_token = response.get("nextToken")
 
-        for job_definition in response["jobDefinitions"]:
-            self._batch_client.deregister_job_definition(
-                jobDefinition=job_definition["jobDefinitionArn"],
+        # TODO remove print statement
+        print(response)
+
+        for task_definition_arn in response["taskDefinitionArns"]:
+            self._ecs_client.deregister_task_definition(
+                taskDefinition=task_definition_arn,
             )
 
+            # TODO remove print statement
+            print(response)
+
         if next_token:
-            self._deregister_job_definitions()
+            self._deregister_task_definitions()
 
     def _create_images_result(self, *, interface):
         base_dir = Path(
