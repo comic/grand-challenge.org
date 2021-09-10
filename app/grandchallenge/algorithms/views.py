@@ -74,6 +74,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.codebuild.models import Build
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -208,6 +209,9 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             {
                 "pending_permission_requests": pending_permission_requests,
                 "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}",
+                "builds": Build.objects.filter(
+                    algorithm_image__algorithm=self.object
+                ),
             }
         )
 
