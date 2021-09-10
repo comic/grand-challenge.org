@@ -160,6 +160,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
         permissions = [("execute_algorithm", "Can execute algorithm")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["repo_name"], name="unique_repo_name"
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title}"
