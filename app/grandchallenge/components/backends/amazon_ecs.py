@@ -56,10 +56,12 @@ class AmazonECSExecutor:
 
     def execute(self):
         task_definition_arn = self._register_task_definition()
+        # TODO check that this is the first version of the task definition
         self._run_task(task_definition_arn=task_definition_arn)
 
     def await_completion(self):
-        job_summary = self._job_summary
+        job_summary = self._task_description
+        # TODO this is out of date
         job_status = job_summary["status"]
 
         if job_status.casefold() == "SUCCEEDED".casefold():
@@ -125,12 +127,6 @@ class AmazonECSExecutor:
             return None
 
     @property
-    def _batch_client(self):
-        if self.__batch_client is None:
-            self.__batch_client = boto3.client("batch")
-        return self.__batch_client
-
-    @property
     def _ecs_client(self):
         if self.__ecs_client is None:
             self.__ecs_client = boto3.client("ecs")
@@ -141,13 +137,6 @@ class AmazonECSExecutor:
         if self.__logs_client is None:
             self.__logs_client = boto3.client("logs")
         return self.__logs_client
-
-    @property
-    def _queue_arn(self):
-        if self._requires_gpu:
-            return settings.COMPONENTS_AWS_BATCH_GPU_QUEUE_ARN
-        else:
-            return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
 
     @property
     def _cluster_arn(self):
@@ -163,44 +152,68 @@ class AmazonECSExecutor:
         else:
             return settings.COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME
 
+    """
+        >>> from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
+        >>> from django.utils.timezone import now
+        >>> e = AmazonECSExecutor(job_id=f"algorithms-{now().strftime('%H%M%S')}", exec_image_sha256="", exec_image_repo_tag="amazonlinux:2", exec_image_file=None, memory_limit=4, requires_gpu=False)
+        >>> t = e._register_task_definition()
+        >>> e._run_task(task_definition_arn=t)
+        >>> e._task_description
+        >>> e._deregister_task_definitions()
+    """
+
     @property
-    def _job_summary(self):
-        response = self._batch_client.list_jobs(
-            jobQueue=self._queue_arn,
-            filters=[{"name": "JOB_NAME", "values": [self._job_id]}],
+    def _task_arn(self):
+        def _list_tasks(*, desired_status):
+            return self.__ecs_client.list_tasks(
+                cluster=self._cluster_arn,
+                family=self._job_id,
+                desiredStatus=desired_status,
+            )
+
+        # On ECS the tasks can only have a desiredStatus of RUNNING or
+        # STOPPED, so look for the running tasks first, and if nothing is
+        # found, it should have a desired status of STOPPED
+        response = _list_tasks(desired_status="RUNNING")
+
+        if len(response["taskArns"]) == 0:
+            response = _list_tasks(desired_status="STOPPED")
+
+        task_arns = response["taskArns"]
+
+        if len(task_arns) != 1:
+            raise RuntimeError(
+                f"{len(task_arns)} task(s) found for family {self._job_id}"
+            )
+
+        return task_arns[0]
+
+    @property
+    def _task_description(self):
+        task_arn = self._task_arn
+        response = self._ecs_client.describe_tasks(
+            tasks=[task_arn], cluster=self._cluster_arn
         )
 
-        job_summary_list = response["jobSummaryList"]
+        task_descriptions = response["tasks"]
 
-        if len(job_summary_list) != 1:
+        if len(task_descriptions) != 1:
             raise RuntimeError(
-                f"{len(job_summary_list)} job(s) found for with name {self._job_id}"
+                f"{len(task_descriptions)} job(s) found for with name {self._job_id}"
             )
 
-        return job_summary_list[0]
-
-    @property
-    def _job_description(self):
-        job_id = self._job_summary["jobId"]
-        response = self._batch_client.describe_jobs(jobs=[job_id])
-
-        job_descriptions = response["jobs"]
-
-        if len(job_descriptions) != 1:
-            raise RuntimeError(
-                f"{len(job_descriptions)} job(s) found for with name {self._job_id}"
-            )
-
-        return job_descriptions[0]
+        return task_descriptions[0]
 
     @property
     def _job_last_attempt_log_stream_name(self):
-        return self._job_description["attempts"][-1]["container"][
+        # TODO FIX
+        return self._task_description["attempts"][-1]["container"][
             "logStreamName"
         ]
 
     @property
     def _job_last_attempt_unified_logs(self):
+        # TODO Fix
         response = self._logs_client.get_log_events(
             logGroupName="/aws/batch/job",
             logStreamName=self._job_last_attempt_log_stream_name,
@@ -224,7 +237,7 @@ class AmazonECSExecutor:
 
     @property
     def _job_last_attempt_duration(self):
-        attempt_info = self._job_description["attempts"][-1]
+        attempt_info = self._task_description["attempts"][-1]
         started_at = self._timestamp_to_datetime(attempt_info["startedAt"])
         stopped_at = self._timestamp_to_datetime(attempt_info["stoppedAt"])
         return stopped_at - started_at
@@ -392,22 +405,10 @@ class AmazonECSExecutor:
             # ],
         )
 
-        # TODO remove print statement
-        print(response)
-
         return response["taskDefinition"]["taskDefinitionArn"]
 
-    """
-    >>> from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
-    >>> from django.utils.timezone import now
-    >>> e = AmazonECSExecutor(job_id=f"algorithms-{now().strftime('%H%M%S')}", exec_image_sha256="", exec_image_repo_tag="amazonlinux:2", exec_image_file=None, memory_limit=4, requires_gpu=False)
-    >>> t = e._register_task_definition()
-    >>> e._run_task(task_definition_arn=t)
-    >>> e._deregister_task_definitions()
-    """
-
     def _run_task(self, *, task_definition_arn):
-        response = self.__ecs_client.run_task(
+        self.__ecs_client.run_task(
             cluster=self._cluster_arn,
             count=1,
             enableExecuteCommand=False,
@@ -417,25 +418,16 @@ class AmazonECSExecutor:
             taskDefinition=task_definition_arn,
         )
 
-        # TODO remove print statement
-        print(response)
-
     def _deregister_task_definitions(self):
         response = self._ecs_client.list_task_definitions(
             familyPrefix=self._job_id, status="ACTIVE"
         )
         next_token = response.get("nextToken")
 
-        # TODO remove print statement
-        print(response)
-
         for task_definition_arn in response["taskDefinitionArns"]:
             self._ecs_client.deregister_task_definition(
                 taskDefinition=task_definition_arn,
             )
-
-            # TODO remove print statement
-            print(response)
 
         if next_token:
             self._deregister_task_definitions()
