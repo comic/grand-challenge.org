@@ -1,4 +1,3 @@
-from actstream.actions import follow
 from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
@@ -30,13 +29,7 @@ class Command(BaseCommand):
                     f.save()
                     updated_follows += 1
                 except Follow.DoesNotExist:
-                    follow(
-                        user=admin,
-                        obj=algorithm,
-                        actor_only=False,
-                        send_action=False,
-                        flag="access_request",
-                    )
+                    pass
 
         # delete wrong notifications
         for notification in Notification.objects.filter(
