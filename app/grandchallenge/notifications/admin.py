@@ -20,6 +20,7 @@ class FollowAdmin(ModelAdmin):
 
 class NotificationAdmin(ModelAdmin):
     readonly_fields = ("user",)
+    ordering = ("-created",)
     list_display = (
         "__str__",
         "type",
