@@ -366,7 +366,7 @@ class ECSClientStub:
             "ResponseMetadata": {"HTTPStatusCode": 200, "RetryAttempts": 0},
         }
 
-    def list_task_definitons(self, **_):
+    def list_task_definitions(self, **_):
         return {
             "taskDefinitionArns": [
                 "arn:aws:ecs:us-east-1:123456789012:task-definition/algorithms-job-00000000-0000-0000-0000-000000000000:1"
@@ -375,4 +375,4 @@ class ECSClientStub:
         }
 
     def deregister_task_definition(self, **_):
-        return self.list_task_definitons()
+        return self.list_task_definitions()
