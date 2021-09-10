@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import get_valid_filename
 
 from grandchallenge.core.storage import private_s3_storage
-from grandchallenge.github.tasks import get_zipfile
+from grandchallenge.github.tasks import get_zipfile, unlink_algorithm
 
 
 def zipfile_path(instance, filename):
@@ -104,6 +104,8 @@ class GitHubWebhookMessage(models.Model):
         super().save(*args, **kwargs)
         if adding and self.payload.get("ref_type") == "tag":
             on_commit(lambda: get_zipfile.apply_async(kwargs={"pk": self.pk}))
+        if adding and self.payload.get("action") == "deleted":
+            on_commit(lambda: unlink_algorithm.apply_async(kwargs={"pk": self.pk}))
 
     class Meta:
         indexes = [

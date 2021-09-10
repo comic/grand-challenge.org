@@ -17,6 +17,7 @@ from django.conf import settings
 from django.core import files
 from django.db.transaction import on_commit
 
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
 
 
@@ -74,3 +75,15 @@ def get_zipfile(*, pk):
     on_commit(
         lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm.pk})
     )
+
+
+@shared_task
+def unlink_algorithm(*, pk):
+    GitHubWebhookMessage = apps.get_model(  # noqa: N806
+        app_label="github", model_name="GitHubWebhookMessage"
+    )
+    ghwm = GitHubWebhookMessage.objects.get(pk=pk)
+    for repo in ghwm.payload["repositories"]:
+        Algorithm.objects.filter(
+            repo_name=repo["full_name"]
+        ).update(repo_name="")
