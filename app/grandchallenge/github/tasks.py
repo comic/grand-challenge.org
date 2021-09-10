@@ -21,13 +21,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
 
 
-@shared_task()
-def get_zipfile(*, pk):
-    GitHubWebhookMessage = apps.get_model(  # noqa: N806
-        app_label="github", model_name="GitHubWebhookMessage"
-    )
-    ghwm = GitHubWebhookMessage.objects.get(pk=pk)
-    payload = ghwm.payload
+def get_repo_url(payload):
     installation_id = payload["installation"]["id"]
     b64_key = settings.GITHUB_PRIVATE_KEY_BASE64
     b64_bytes = b64_key.encode("ascii")
@@ -52,10 +46,19 @@ def get_zipfile(*, pk):
         timeout=10,
     )
     access_token = json.loads(resp.content)["token"]
-    headers["Authorization"] = f"token {access_token}"
 
     repo_url = payload["repository"]["html_url"]
-    repo_url = repo_url.replace("//", f"//x-access-token:{access_token}@")
+    return repo_url.replace("//", f"//x-access-token:{access_token}@")
+
+
+@shared_task()
+def get_zipfile(*, pk):
+    GitHubWebhookMessage = apps.get_model(  # noqa: N806
+        app_label="github", model_name="GitHubWebhookMessage"
+    )
+    ghwm = GitHubWebhookMessage.objects.get(pk=pk)
+    payload = ghwm.payload
+    repo_url = get_repo_url(payload)
     zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
     tmp_zip = tempfile.NamedTemporaryFile()
     has_open_source_license = False
