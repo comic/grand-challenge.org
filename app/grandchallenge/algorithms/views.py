@@ -804,13 +804,15 @@ class AlgorithmAddRepo(
             timeout=5,
         ).json()
 
-        response = requests.get(
-            f"https://api.github.com/user/installations/{installations['installations'][0]['id']}/repositories",
-            headers=headers,
-            timeout=5,
-        ).json()
+        repos = []
+        for installation in installations["installations"]:
+            response = requests.get(
+                f"https://api.github.com/user/installations/{installation['id']}/repositories",
+                headers=headers,
+                timeout=5,
+            ).json()
 
-        repos = [repo["full_name"] for repo in response["repositories"]]
+            repos += [repo["full_name"] for repo in response["repositories"]]
 
         kwargs.update({"repos": repos})
         return kwargs
