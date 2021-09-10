@@ -44,7 +44,6 @@ class AmazonECSExecutor:
         if self._memory_limit < 4 or self._memory_limit > 30:
             raise RuntimeError("AWS only supports 4g to 30g of memory")
 
-        self.__batch_client = None
         self.__ecs_client = None
         self.__logs_client = None
 
@@ -110,7 +109,7 @@ class AmazonECSExecutor:
     @property
     def stdout(self):
         try:
-            return "\n".join(self._job_last_attempt_unified_logs)
+            return "\n".join(self._task_unified_logs)
         except Exception as e:
             logger.warning(f"Could not fetch stdout: {e}")
             return ""
@@ -123,7 +122,7 @@ class AmazonECSExecutor:
     @property
     def duration(self):
         try:
-            return self._job_last_attempt_duration
+            return self._task_duration
         except Exception as e:
             logger.warning(f"Could not determine duration: {e}")
             return None
@@ -155,6 +154,10 @@ class AmazonECSExecutor:
             return settings.COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME
 
     @property
+    def _log_stream_prefix(self):
+        return "ecs"
+
+    @property
     def _main_container_name(self):
         return self._job_id
 
@@ -168,7 +171,8 @@ class AmazonECSExecutor:
         >>> e = AmazonECSExecutor(job_id=f"algorithms-{now().strftime('%H%M%S')}", exec_image_sha256="", exec_image_repo_tag="amazonlinux:2", exec_image_file=None, memory_limit=4, requires_gpu=False)
         >>> t = e._register_task_definition()
         >>> e._run_task(task_definition_arn=t)
-        >>> e._task_description
+        >>> e.await_completion()
+        >>> e.stdout
         >>> e._deregister_task_definitions()
     """
 
@@ -215,18 +219,17 @@ class AmazonECSExecutor:
         return task_descriptions[0]
 
     @property
-    def _job_last_attempt_log_stream_name(self):
-        # TODO FIX
-        return self._task_description["attempts"][-1]["container"][
-            "logStreamName"
-        ]
+    def _task_log_stream_name(self):
+        task_id = self._task_arn.split("/")[-1]
+        return (
+            f"{self._log_stream_prefix}/{self._main_container_name}/{task_id}"
+        )
 
     @property
-    def _job_last_attempt_unified_logs(self):
-        # TODO Fix
+    def _task_unified_logs(self):
         response = self._logs_client.get_log_events(
-            logGroupName="/aws/batch/job",
-            logStreamName=self._job_last_attempt_log_stream_name,
+            logGroupName=self._log_group_name,
+            logStreamName=self._task_log_stream_name,
             limit=LOGLINES,
             startFromHead=False,
         )
@@ -246,11 +249,9 @@ class AmazonECSExecutor:
         return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
     @property
-    def _job_last_attempt_duration(self):
-        attempt_info = self._task_description["attempts"][-1]
-        started_at = self._timestamp_to_datetime(attempt_info["startedAt"])
-        stopped_at = self._timestamp_to_datetime(attempt_info["stoppedAt"])
-        return stopped_at - started_at
+    def _task_duration(self):
+        task_description = self._task_description
+        return task_description["stoppedAt"] - task_description["startedAt"]
 
     @property
     def _job_directory(self):
@@ -373,7 +374,7 @@ class AmazonECSExecutor:
                         "options": {
                             "awslogs-group": self._log_group_name,
                             "awslogs-region": settings.COMPONENTS_AMAZON_ECS_LOGS_REGION,
-                            "awslogs-stream-prefix": "ecs",
+                            "awslogs-stream-prefix": self._log_stream_prefix,
                         },
                     },
                     "privileged": False,
