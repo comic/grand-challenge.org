@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import re
 import subprocess
 import tempfile
 import zipfile
@@ -57,6 +58,8 @@ def get_zipfile(*, pk):
     repo_url = repo_url.replace("//", f"//x-access-token:{access_token}@")
     zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
     tmp_zip = tempfile.NamedTemporaryFile()
+    has_open_source_license = False
+    license = "No license file found"
     with tempfile.TemporaryDirectory() as tmpdirname:
         proces = subprocess.Popen(
             [
@@ -72,13 +75,28 @@ def get_zipfile(*, pk):
             ]
         )
         proces.wait()
+        process = subprocess.Popen(
+            ["licensee", tmpdirname], stdout=subprocess.PIPE
+        )
+        process.wait()
+        output = process.stdout.read()
+        regex_license = re.compile(r"License: (?P<license>.*)?$", re.M)
+        match = regex_license.search(output.decode("utf-8"))
+        if match:
+            license = match.group("license")
+            if license in settings.OPEN_SOURCE_LICENSES:
+                has_open_source_license = True
         with zipfile.ZipFile(tmp_zip.name, "w") as zipf:
             for foldername, _subfolders, filenames in os.walk(tmpdirname):
                 for filename in filenames:
                     file_path = os.path.join(foldername, filename)
-                    zipf.write(file_path, os.path.basename(file_path))
+                    zipf.write(
+                        file_path, file_path.replace(f"{tmpdirname}/", "")
+                    )
         temp_file = files.File(tmp_zip, name=zip_name,)
         ghwm.zipfile = temp_file
+        ghwm.has_open_source_license = has_open_source_license
+        ghwm.license_check_result = license
         ghwm.save()
     on_commit(
         lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm.pk})
