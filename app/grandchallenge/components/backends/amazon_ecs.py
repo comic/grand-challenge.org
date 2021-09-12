@@ -2,6 +2,7 @@ import json
 import logging
 import shutil
 from datetime import datetime, timezone
+from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
 
@@ -21,6 +22,11 @@ from grandchallenge.components.backends.exceptions import (
 from grandchallenge.components.backends.utils import LOGLINES, user_error
 
 logger = logging.getLogger(__name__)
+
+
+class TaskStatus(Enum):
+    RUNNING = "RUNNING"
+    STOPPED = "STOPPED"
 
 
 class AmazonECSExecutor:
@@ -54,21 +60,26 @@ class AmazonECSExecutor:
         )
 
     def execute(self):
-        task_definition_arn = self._register_task_definition()
-
-        if int(task_definition_arn.split(":")[-1]) != 1:
-            raise RuntimeError("Task definition already exists")
-
-        self._run_task(task_definition_arn=task_definition_arn)
+        if not self._list_task_arns(desired_status=TaskStatus.RUNNING):
+            task_definition_arn = self._register_task_definition()
+            self._run_task(task_definition_arn=task_definition_arn)
+        else:
+            logger.warning("A task is already running for this job")
 
     def await_completion(self):
-        job_summary = self._task_description
-        last_status = job_summary["lastStatus"]
+        task_description = self._latest_task_description
+        last_status = task_description["lastStatus"]
 
-        if last_status.casefold() == "STOPPED".casefold():
+        if last_status == TaskStatus.STOPPED.value:
+            # TODO Handle jobs killed by spot instance loss
+
+            if task_description["stopCode"] == "TaskFailedToStart":
+                self.execute()
+                raise ComponentJobActive("Job re-queued")
+
             container_exit_codes = {
                 c["name"]: int(c["exitCode"])
-                for c in job_summary["containers"]
+                for c in task_description["containers"]
             }
 
             if container_exit_codes[self._main_container_name] == 0:
@@ -85,7 +96,6 @@ class AmazonECSExecutor:
                 # TODO Implement non-unified logging and use stderr
                 raise ComponentException(user_error(self.stdout))
         else:
-            # TODO - handle tasks that never start
             raise ComponentJobActive(last_status)
 
     def get_outputs(self, *, output_interfaces):
@@ -105,14 +115,14 @@ class AmazonECSExecutor:
         return outputs
 
     def deprovision(self):
-        # TODO - this should also cancel any running job
         shutil.rmtree(self._job_directory)
+        self._stop_running_tasks()
         self._deregister_task_definitions()
 
     @property
     def stdout(self):
         try:
-            return "\n".join(self._task_unified_logs)
+            return "\n".join(self._latest_task_unified_logs)
         except Exception as e:
             logger.warning(f"Could not fetch stdout: {e}")
             return ""
@@ -125,7 +135,7 @@ class AmazonECSExecutor:
     @property
     def duration(self):
         try:
-            return self._task_duration
+            return self._latest_task_duration
         except Exception as e:
             logger.warning(f"Could not determine duration: {e}")
             return None
@@ -169,59 +179,30 @@ class AmazonECSExecutor:
         return f"{self._main_container_name}-timeout"
 
     @property
-    def _task_arn(self):
-        def _list_tasks(*, desired_status):
-            return self._ecs_client.list_tasks(
-                cluster=self._cluster_arn,
-                family=self._job_id,
-                desiredStatus=desired_status,
-            )
-
+    def _latest_task_description(self):
         # On ECS the tasks can only have a desiredStatus of RUNNING or
         # STOPPED, so look for the running tasks first, and if nothing is
         # found, it should have a desired status of STOPPED
-        response = _list_tasks(desired_status="RUNNING")
+        task_arns = self._list_task_arns(desired_status=TaskStatus.RUNNING)
+        task_arns += self._list_task_arns(desired_status=TaskStatus.STOPPED)
+        task_descriptions = self._list_task_descriptions(task_arns=task_arns)
 
-        if len(response["taskArns"]) == 0:
-            response = _list_tasks(desired_status="STOPPED")
-
-        task_arns = response["taskArns"]
-
-        if len(task_arns) != 1:
-            raise RuntimeError(
-                f"{len(task_arns)} task(s) found for family {self._job_id}"
-            )
-
-        return task_arns[0]
-
-    @property
-    def _task_description(self):
-        task_arn = self._task_arn
-        response = self._ecs_client.describe_tasks(
-            tasks=[task_arn], cluster=self._cluster_arn
-        )
-
-        task_descriptions = response["tasks"]
-
-        if len(task_descriptions) != 1:
-            raise RuntimeError(
-                f"{len(task_descriptions)} job(s) found for with name {self._job_id}"
-            )
+        task_descriptions.sort(key=lambda x: x["createdAt"], reverse=True)
 
         return task_descriptions[0]
 
     @property
-    def _task_log_stream_name(self):
-        task_id = self._task_arn.split("/")[-1]
+    def _latest_task_log_stream_name(self):
+        task_id = self._latest_task_description["taskArn"].split("/")[-1]
         return (
             f"{self._log_stream_prefix}/{self._main_container_name}/{task_id}"
         )
 
     @property
-    def _task_unified_logs(self):
+    def _latest_task_unified_logs(self):
         response = self._logs_client.get_log_events(
             logGroupName=self._log_group_name,
-            logStreamName=self._task_log_stream_name,
+            logStreamName=self._latest_task_log_stream_name,
             limit=LOGLINES,
             startFromHead=False,
         )
@@ -241,8 +222,8 @@ class AmazonECSExecutor:
         return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
     @property
-    def _task_duration(self):
-        task_description = self._task_description
+    def _latest_task_duration(self):
+        task_description = self._latest_task_description
         return task_description["stoppedAt"] - task_description["startedAt"]
 
     @property
@@ -319,7 +300,7 @@ class AmazonECSExecutor:
                 # once the time limit is reached.
                 # See https://github.com/aws/containers-roadmap/issues/572
                 "command": ["sleep", str(settings.CELERY_TASK_TIME_LIMIT)],
-                "image": settings.COMPONENTS_IO_IMAGE,
+                "image": "public.ecr.aws/amazonlinux/amazonlinux:2",
                 "name": self._timeout_container_name,
             },
             {
@@ -371,7 +352,6 @@ class AmazonECSExecutor:
                             "softLimit": settings.COMPONENTS_PIDS_LIMIT,
                         }
                     ],
-                    "user": "nobody",
                 }
             )
 
@@ -399,7 +379,6 @@ class AmazonECSExecutor:
                 },
             ],
         )
-
         return response["taskDefinition"]["taskDefinitionArn"]
 
     def _run_task(self, *, task_definition_arn):
@@ -412,6 +391,59 @@ class AmazonECSExecutor:
             referenceId=self._job_id,
             taskDefinition=task_definition_arn,
         )
+
+    def _list_task_arns(
+        self, *, desired_status, next_token="", task_arns=None
+    ):
+        if task_arns is None:
+            task_arns = []
+
+        response = self._ecs_client.list_tasks(
+            cluster=self._cluster_arn,
+            family=self._job_id,
+            desiredStatus=desired_status.value,
+            nextToken=next_token,
+        )
+
+        task_arns += response["taskArns"]
+
+        if "nextToken" in response:
+            return self._list_task_arns(
+                desired_status=desired_status,
+                next_token=response["nextToken"],
+                task_arns=task_arns,
+            )
+
+        return task_arns
+
+    def _list_task_descriptions(self, *, task_arns, task_descriptions=None):
+        if task_descriptions is None:
+            task_descriptions = []
+
+        limit = 100  # Defined by AWS
+
+        response = self._ecs_client.describe_tasks(
+            tasks=task_arns[:limit], cluster=self._cluster_arn
+        )
+
+        task_descriptions += response["tasks"]
+
+        if len(task_arns) > limit:
+            return self._list_task_descriptions(
+                task_arns=task_arns[limit:],
+                task_descriptions=task_descriptions,
+            )
+
+        return task_descriptions
+
+    def _stop_running_tasks(self):
+        """Stop all the running tasks for this job"""
+        task_arns = self._list_task_arns(desired_status=TaskStatus.RUNNING)
+
+        for task_arn in task_arns:
+            self._ecs_client.stop_task(
+                cluster=self._cluster_arn, task=task_arn,
+            )
 
     def _deregister_task_definitions(self):
         response = self._ecs_client.list_task_definitions(
