@@ -2,6 +2,7 @@ import json
 import logging
 import shutil
 from datetime import datetime, timezone
+from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
 
@@ -21,6 +22,11 @@ from grandchallenge.components.backends.exceptions import (
 from grandchallenge.components.backends.utils import LOGLINES, user_error
 
 logger = logging.getLogger(__name__)
+
+
+class TaskStatus(Enum):
+    RUNNING = "RUNNING"
+    STOPPED = "STOPPED"
 
 
 class AmazonECSExecutor:
@@ -54,7 +60,7 @@ class AmazonECSExecutor:
         )
 
     def execute(self):
-        if not self._list_task_arns(desired_status="RUNNING"):
+        if not self._list_task_arns(desired_status=TaskStatus.RUNNING):
             task_definition_arn = self._register_task_definition()
             self._run_task(task_definition_arn=task_definition_arn)
         else:
@@ -64,7 +70,7 @@ class AmazonECSExecutor:
         task_description = self._latest_task_description
         last_status = task_description["lastStatus"]
 
-        if last_status == "STOPPED":
+        if last_status == TaskStatus.STOPPED.value:
             # TODO Handle jobs killed by spot instance loss
 
             if task_description["stopCode"] == "TaskFailedToStart":
@@ -177,8 +183,8 @@ class AmazonECSExecutor:
         # On ECS the tasks can only have a desiredStatus of RUNNING or
         # STOPPED, so look for the running tasks first, and if nothing is
         # found, it should have a desired status of STOPPED
-        task_arns = self._list_task_arns(desired_status="RUNNING")
-        task_arns += self._list_task_arns(desired_status="STOPPED")
+        task_arns = self._list_task_arns(desired_status=TaskStatus.RUNNING)
+        task_arns += self._list_task_arns(desired_status=TaskStatus.STOPPED)
         task_descriptions = self._list_task_descriptions(task_arns=task_arns)
 
         task_descriptions.sort(key=lambda x: x["createdAt"], reverse=True)
@@ -389,17 +395,13 @@ class AmazonECSExecutor:
     def _list_task_arns(
         self, *, desired_status, next_token="", task_arns=None
     ):
-        """List the tasks for this job with the desired status"""
-        if desired_status not in ["RUNNING", "STOPPED"]:
-            raise ValueError(f"Unknown desired status: {desired_status}")
-
         if task_arns is None:
             task_arns = []
 
         response = self._ecs_client.list_tasks(
             cluster=self._cluster_arn,
             family=self._job_id,
-            desiredStatus=desired_status,
+            desiredStatus=desired_status.value,
             nextToken=next_token,
         )
 
@@ -433,7 +435,7 @@ class AmazonECSExecutor:
 
     def _stop_running_tasks(self):
         """Stop all the running tasks for this job"""
-        task_arns = self._list_task_arns(desired_status="RUNNING")
+        task_arns = self._list_task_arns(desired_status=TaskStatus.RUNNING)
 
         for task_arn in task_arns:
             self._ecs_client.stop_task(
