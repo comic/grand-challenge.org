@@ -54,9 +54,8 @@ class AmazonECSExecutor:
         )
 
     def execute(self):
-        task_definition_arn = self._register_task_definition()
-
         if not self._list_task_arns(desired_status="RUNNING"):
+            task_definition_arn = self._register_task_definition()
             self._run_task(task_definition_arn=task_definition_arn)
         else:
             logger.warning("A task is already running for this job")
