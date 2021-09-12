@@ -420,15 +420,18 @@ class AmazonECSExecutor:
         if task_descriptions is None:
             task_descriptions = []
 
+        limit = 100  # Defined by AWS
+
         response = self._ecs_client.describe_tasks(
-            tasks=task_arns[:100], cluster=self._cluster_arn
+            tasks=task_arns[:limit], cluster=self._cluster_arn
         )
 
         task_descriptions += response["tasks"]
 
-        if len(task_arns) > 100:
+        if len(task_arns) > limit:
             return self._list_task_descriptions(
-                task_arns=task_arns[100:], task_descriptions=task_descriptions
+                task_arns=task_arns[limit:],
+                task_descriptions=task_descriptions,
             )
 
         return task_descriptions
