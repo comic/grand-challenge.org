@@ -362,7 +362,6 @@ class AmazonECSExecutor:
             containerDefinitions=self._container_definitions,
             cpu=str(self._required_cpu_units),
             family=self._job_id,
-            ipcMode="none",
             memory=str(self._required_memory_units),
             networkMode="none",
             requiresCompatibilities=["EC2"],
