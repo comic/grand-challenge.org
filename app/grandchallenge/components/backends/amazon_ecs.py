@@ -386,6 +386,8 @@ class AmazonECSExecutor:
             count=1,
             enableExecuteCommand=False,
             enableECSManagedTags=True,
+            group=self._log_group_name,
+            placementConstraints=[{"type": "distinctInstance"}],
             propagateTags="TASK_DEFINITION",
             referenceId=self._job_id,
             taskDefinition=task_definition_arn,
