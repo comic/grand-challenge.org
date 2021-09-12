@@ -353,7 +353,7 @@ def await_job_completion(
             # Setting sleep here is a waste, but allows us to add a countdown.
             # There must be a better way, maybe not limiting the retries?
             sleep(30)
-            self.retry(max_retries=5760)  # 2 days
+            self.retry(countdown=0, max_retries=5760)  # 2 days
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,
