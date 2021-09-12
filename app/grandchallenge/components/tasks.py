@@ -5,6 +5,7 @@ import tarfile
 import uuid
 from datetime import timedelta
 from tempfile import NamedTemporaryFile
+from time import sleep
 from typing import Dict
 
 import boto3
@@ -345,7 +346,14 @@ def await_job_completion(
         executor.await_completion()
     except ComponentJobActive:
         try:
-            self.retry(countdown=60, max_retries=5760)  # 4 days
+            # Setting a countdown on retry can result in the task getting
+            # stuck behind a long running job. By not setting the countdown
+            # the task will hopefully be queued on another worker.
+            # https://github.com/celery/celery/issues/2541
+            # Setting sleep here is a waste, but allows us to add a countdown.
+            # There must be a better way, maybe not limiting the retries?
+            sleep(30)
+            self.retry(max_retries=5760)  # 2 days
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,
