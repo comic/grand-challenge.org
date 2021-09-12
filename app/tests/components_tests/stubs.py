@@ -210,7 +210,7 @@ class ECSClientStub:
                 {
                     "attachments": [],
                     "availabilityZone": "us-east-1a",
-                    "capacityProviderName": "grand-challenge-prod-components-cp-cpu",
+                    "capacityProviderName": "my-capacity-provider",
                     "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/grand-challenge",
                     "containerInstanceArn": "arn:aws:ecs:us-east-1:123456789012:container-instance/grand-challenge/abc1234567890",
                     "containers": [
@@ -284,7 +284,7 @@ class ECSClientStub:
                 {
                     "attachments": [],
                     "availabilityZone": "us-east-1a",
-                    "capacityProviderName": "grand-challenge-prod-components-cp-cpu",
+                    "capacityProviderName": "my-capacity-provider",
                     "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/grand-challenge",
                     "connectivity": "CONNECTED",
                     "connectivityAt": datetime(
@@ -376,3 +376,37 @@ class ECSClientStub:
 
     def deregister_task_definition(self, **_):
         return self.list_task_definitions()
+
+    def stop_task(self, **_):
+        return {
+            "task": {
+                "attachments": [],
+                "capacityProviderName": "my-capacity-provider",
+                "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/grand-challenge",
+                "containers": [],
+                "cpu": "2048",
+                "createdAt": datetime(
+                    2021, 9, 12, 8, 31, 50, 939000, tzinfo=tzlocal()
+                ),
+                "desiredStatus": "STOPPED",
+                "enableExecuteCommand": False,
+                "group": "family:algorithms-job-00000000-0000-0000-0000-000000000000",
+                "lastStatus": "PROVISIONING",
+                "launchType": "EC2",
+                "memory": "4096",
+                "overrides": {
+                    "containerOverrides": [],
+                    "inferenceAcceleratorOverrides": [],
+                },
+                "stopCode": "UserInitiated",
+                "stoppedReason": "Task stopped by user",
+                "stoppingAt": datetime(
+                    2021, 9, 12, 8, 33, 28, 648000, tzinfo=tzlocal()
+                ),
+                "tags": [],
+                "taskArn": "arn:aws:ecs:us-east-1:123456789012:task/grand-challenge/abcd1234567890",
+                "taskDefinitionArn": "",
+                "version": 2,
+            },
+            "ResponseMetadata": {"HTTPStatusCode": 200, "RetryAttempts": 0},
+        }
