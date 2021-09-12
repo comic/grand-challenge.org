@@ -286,11 +286,27 @@ class AmazonECSExecutor:
 
     @property
     def _required_memory_units(self):
-        return 1024 * self._memory_limit
+        if self._requires_gpu:
+            # g4dn.2xlarge instances has 32GB, reserve it all
+            # TODO - support multiple instance types
+            # Scaling for GPU workers is a bit broken right now as the GPU
+            # capacity is not taken into account by
+            # CapacityProviderReservation so try to reserve the entire instance
+            return 1024 * 30
+        else:
+            return 1024 * self._memory_limit
 
     @property
     def _required_cpu_units(self):
-        return 4096 if self._memory_limit > 16 else 2048
+        if self._requires_gpu:
+            # g4dn.2xlarge instances has 8CPU, reserve them all
+            # TODO - support multiple instance types
+            # Scaling for GPU workers is a bit broken right now as the GPU
+            # capacity is not taken into account by
+            # CapacityProviderReservation so try to reserve the entire instance
+            return 1024 * 8
+        else:
+            return 4096 if self._memory_limit > 16 else 2048
 
     @property
     def _container_definitions(self):
