@@ -17,7 +17,7 @@ from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
-    ComponentJobActive,
+    RetryStep,
 )
 from grandchallenge.components.backends.utils import LOGLINES, user_error
 
@@ -62,7 +62,16 @@ class AmazonECSExecutor:
     def execute(self):
         if not self._list_task_arns(desired_status=TaskStatus.RUNNING):
             task_definition_arn = self._register_task_definition()
-            self._run_task(task_definition_arn=task_definition_arn)
+            try:
+                self._run_task(task_definition_arn=task_definition_arn)
+            except self._ecs_client.exceptions.ClientException as e:
+                if (
+                    e.response["Error"]["Message"]
+                    == "Tasks provisioning capacity limit exceeded."
+                ):
+                    raise RetryStep("Capacity Limit Exceeded") from e
+                else:
+                    raise
         else:
             logger.warning("A task is already running for this job")
 
@@ -75,7 +84,7 @@ class AmazonECSExecutor:
 
             if task_description["stopCode"] == "TaskFailedToStart":
                 self.execute()
-                raise ComponentJobActive("Job re-queued")
+                raise RetryStep("Job re-queued")
 
             container_exit_codes = {
                 c["name"]: int(c["exitCode"])
@@ -96,7 +105,7 @@ class AmazonECSExecutor:
                 # TODO Implement non-unified logging and use stderr
                 raise ComponentException(user_error(self.stdout))
         else:
-            raise ComponentJobActive(last_status)
+            raise RetryStep(f"Job active: {last_status}")
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -286,27 +295,11 @@ class AmazonECSExecutor:
 
     @property
     def _required_memory_units(self):
-        if self._requires_gpu:
-            # g4dn.2xlarge instances has 32GB, reserve it all
-            # TODO - support multiple instance types
-            # Scaling for GPU workers is a bit broken right now as the GPU
-            # capacity is not taken into account by
-            # CapacityProviderReservation so try to reserve the entire instance
-            return 1024 * 30
-        else:
-            return 1024 * self._memory_limit
+        return 1024 * self._memory_limit
 
     @property
     def _required_cpu_units(self):
-        if self._requires_gpu:
-            # g4dn.2xlarge instances has 8CPU, reserve them all
-            # TODO - support multiple instance types
-            # Scaling for GPU workers is a bit broken right now as the GPU
-            # capacity is not taken into account by
-            # CapacityProviderReservation so try to reserve the entire instance
-            return 1024 * 8
-        else:
-            return 4096 if self._memory_limit > 16 else 2048
+        return 4096 if self._memory_limit > 16 else 2048
 
     @property
     def _container_definitions(self):
@@ -381,7 +374,6 @@ class AmazonECSExecutor:
             memory=str(self._required_memory_units),
             networkMode="none",
             requiresCompatibilities=["EC2"],
-            # TODO placement constrains for GPU?
             # TODO set tags
             volumes=[
                 {
