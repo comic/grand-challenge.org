@@ -102,8 +102,7 @@ class AmazonECSExecutor:
             elif container_exit_codes[self._timeout_container_name] == 0:
                 raise ComponentException("Time limit exceeded")
             else:
-                # TODO Implement non-unified logging and use stderr
-                raise ComponentException(user_error(self.stdout))
+                raise ComponentException(user_error(self.stderr))
         else:
             raise RetryStep(f"Job active: {last_status}")
 
@@ -131,15 +130,18 @@ class AmazonECSExecutor:
     @property
     def stdout(self):
         try:
-            return "\n".join(self._latest_task_unified_logs)
+            return "\n".join(self._get_task_logs(source="stdout"))
         except Exception as e:
             logger.warning(f"Could not fetch stdout: {e}")
             return ""
 
     @property
     def stderr(self):
-        # TODO Implement non-unified logging
-        return ""
+        try:
+            return "\n".join(self._get_task_logs(source="stderr"))
+        except Exception as e:
+            logger.warning(f"Could not fetch stdout: {e}")
+            return ""
 
     @property
     def duration(self):
@@ -200,28 +202,24 @@ class AmazonECSExecutor:
 
         return task_descriptions[0]
 
-    @property
-    def _latest_task_log_stream_name(self):
-        task_id = self._latest_task_description["taskArn"].split("/")[-1]
-        return (
-            f"{self._log_stream_prefix}/{self._main_container_name}/{task_id}"
-        )
-
-    @property
-    def _latest_task_unified_logs(self):
+    def _get_task_logs(self, *, source):
         response = self._logs_client.get_log_events(
             logGroupName=self._log_group_name,
-            logStreamName=self._latest_task_log_stream_name,
+            logStreamName=f"{self._log_stream_prefix}/{self._main_container_name}",
             limit=LOGLINES,
             startFromHead=False,
         )
         events = response["events"]
 
-        loglines = [
-            # Match the format of the docker logs
-            f"{self._timestamp_to_datetime(e['timestamp']).isoformat()} {e['message']}"
-            for e in events
-        ]
+        loglines = []
+
+        for e in events:
+            message = json.loads(e["message"])
+
+            if message["source"] == source:
+                loglines.append(
+                    f"{self._timestamp_to_datetime(e['timestamp']).isoformat()} {message['log']}"
+                )
 
         return loglines
 
@@ -346,11 +344,10 @@ class AmazonECSExecutor:
                         "swappiness": 0,
                     },
                     "logConfiguration": {
-                        "logDriver": "awslogs",
+                        "logDriver": "fluentd",
                         "options": {
-                            "awslogs-group": self._log_group_name,
-                            "awslogs-region": settings.COMPONENTS_AMAZON_ECS_LOGS_REGION,
-                            "awslogs-stream-prefix": self._log_stream_prefix,
+                            "fluentd-address": "unix:///tmp/fluent-bit/sock",
+                            "tag": f"/{c['name']}",
                         },
                     },
                     "privileged": False,
