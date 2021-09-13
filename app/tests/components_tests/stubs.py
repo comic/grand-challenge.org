@@ -55,24 +55,19 @@ class LogsClientStub:
         return {
             "events": [
                 {
-                    "timestamp": 1628419220719,
-                    "message": "Traceback (most recent call last):",
-                    "ingestionTime": 1628419220812,
+                    "timestamp": 1631538757000,
+                    "message": '{"container_id":"abc123","container_name":"/ecs-algorithms-blah","log":"  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current","source":"stderr"}',
+                    "ingestionTime": 1631538761528,
                 },
                 {
-                    "timestamp": 1628419220719,
-                    "message": '  File "/tmp/copy_io.py", line 26, in <module>',
-                    "ingestionTime": 1628419220812,
+                    "timestamp": 1631538757000,
+                    "message": '{"container_id":"abc123","container_name":"/ecs-algorithms-blah","log":"                                 Dload  Upload   Total   Spent    Left  Speed","source":"stderr"}',
+                    "ingestionTime": 1631538761528,
                 },
                 {
-                    "timestamp": 1628419220719,
-                    "message": '    with open(f"/output/{output_filename}.json", "w") as f:',
-                    "ingestionTime": 1628419220812,
-                },
-                {
-                    "timestamp": 1628419220719,
-                    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/output/results.json'",
-                    "ingestionTime": 1628419220812,
+                    "timestamp": 1631538757000,
+                    "message": '{"container_id":"abc123","container_name":"/ecs-algorithms-blah","log":"\\r  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0curl: (6) Could not resolve host: www.google.com","source":"stderr"}',
+                    "ingestionTime": 1631538761528,
                 },
             ],
             "nextForwardToken": "f/00000000000000000000000000000000000000000000000000000000",
