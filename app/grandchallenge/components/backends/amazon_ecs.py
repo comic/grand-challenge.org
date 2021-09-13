@@ -69,7 +69,7 @@ class AmazonECSExecutor:
                     e.response["Error"]["Message"]
                     == "Tasks provisioning capacity limit exceeded."
                 ):
-                    raise RetryStep("Capacity Limit Exceeded")
+                    raise RetryStep("Capacity Limit Exceeded") from e
                 else:
                     raise
         else:
@@ -374,7 +374,6 @@ class AmazonECSExecutor:
             memory=str(self._required_memory_units),
             networkMode="none",
             requiresCompatibilities=["EC2"],
-            # TODO placement constrains for GPU?
             # TODO set tags
             volumes=[
                 {
