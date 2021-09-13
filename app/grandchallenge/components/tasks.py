@@ -22,12 +22,15 @@ from django.utils.timezone import now
 
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
-    ComponentJobActive,
+    RetryStep,
 )
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+
+RETRY_INTERVAL_SECONDS = 30
+RETRY_DURATION_DAYS = 2
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -240,8 +243,11 @@ def provision_job(
         job.update_status(status=job.PROVISIONED)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"], bind=True
+)
 def execute_job(
+    self,
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
@@ -278,6 +284,31 @@ def execute_job(
     try:
         # This call is potentially very long
         executor.execute()
+    except RetryStep:
+        try:
+            # Setting a countdown on retry can result in the task getting
+            # stuck behind a long running job. By not setting the countdown
+            # the task will hopefully be queued on another worker.
+            # https://github.com/celery/celery/issues/2541
+            # Setting sleep here is a waste, but allows us to add a countdown.
+            # There must be a better way, maybe not limiting the retries?
+            sleep(RETRY_INTERVAL_SECONDS)
+            self.retry(
+                countdown=0,
+                max_retries=3600
+                * 24
+                * RETRY_DURATION_DAYS
+                / RETRY_INTERVAL_SECONDS,
+            )
+        except MaxRetriesExceededError:
+            job.update_status(
+                status=job.FAILURE,
+                stdout=executor.stdout,
+                stderr=executor.stderr,
+                error_message="Time limit exceeded",
+            )
+            executor.deprovision()
+            raise
     except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -325,7 +356,7 @@ def await_job_completion(
 ):
     """
     Waits for the job to complete and sets stdout and stderr.
-    `await_completion` is expected to raise `ComponentJobActive` in which
+    `await_completion` is expected to raise `RetryStep` in which
     case the job will be requeued, or `ComponentException` in which case
     the job will be marked as failed and the error returned to the user.
 
@@ -344,7 +375,7 @@ def await_job_completion(
 
     try:
         executor.await_completion()
-    except ComponentJobActive:
+    except RetryStep:
         try:
             # Setting a countdown on retry can result in the task getting
             # stuck behind a long running job. By not setting the countdown
@@ -352,8 +383,14 @@ def await_job_completion(
             # https://github.com/celery/celery/issues/2541
             # Setting sleep here is a waste, but allows us to add a countdown.
             # There must be a better way, maybe not limiting the retries?
-            sleep(30)
-            self.retry(countdown=0, max_retries=5760)  # 2 days
+            sleep(RETRY_INTERVAL_SECONDS)
+            self.retry(
+                countdown=0,
+                max_retries=3600
+                * 24
+                * RETRY_DURATION_DAYS
+                / RETRY_INTERVAL_SECONDS,
+            )
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,
