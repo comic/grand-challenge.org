@@ -15,7 +15,7 @@
     "mathjax": "^2.7.5"
   },
   "devDependencies": {
-    "sass": "^1.25.0"
+    "sass": "^1.25.0 <1.40.0"
   },
   "scripts": {
     "build": "mkdir -p dist/js/markdown-toolbar-element dist/css dist/fa/css dist/fa/webfonts && npm run copy:jquery && npm run copy:bootstrap && npm run copy:fontawesome && npm run copy:markdown && npm run sass:build",
