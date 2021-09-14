@@ -122,9 +122,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "additional_terms_markdown",
             "result_template",
             "image_requires_gpu",
-            "image_requires_gpu_memory_gb",
             "image_requires_memory_gb",
-            "image_requires_cpu_cores",
         )
         widgets = {
             "description": TextInput,
@@ -191,15 +189,16 @@ class AlgorithmImageForm(ModelForm):
     requires_memory_gb = IntegerField(
         min_value=1,
         max_value=24,
-        initial=16,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
 
     def __init__(self, *args, user, **kwargs):
+        algorithm = kwargs.pop("algorithm")
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.fields["chunked_upload"].widget.user = user
-        self.fields["requires_gpu"].initial = True
+        self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
+        self.fields["requires_memory_gb"] = algorithm.image_requires_memory_gb
 
     def clean_chunked_upload(self):
         files = self.cleaned_data["chunked_upload"]

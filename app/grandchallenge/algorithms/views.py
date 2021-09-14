@@ -289,6 +289,11 @@ class AlgorithmImageCreate(
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"algorithm": self.algorithm})
+        return kwargs
+
     def get_permission_object(self):
         return self.algorithm
 
