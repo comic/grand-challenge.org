@@ -35,10 +35,7 @@ def github_webhook(request):
         )
 
     payload = json.loads(request.body)
-    if (
-        not settings.CODEBUILD_ONLY_ALLOW_VERIFIED
-        or request.user.verification.is_verified
-    ):
+    if request.user.verification.is_verified:
         GitHubWebhookMessage.objects.create(payload=payload)
 
     return HttpResponse("ok", content_type="text/plain")
