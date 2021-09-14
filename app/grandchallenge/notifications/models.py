@@ -166,7 +166,7 @@ class Notification(UUIDModel):
                 for admin in target.challenge.get_admins()
                 if is_following(admin, target)
             ]
-            if is_following(actor, target):
+            if actor and is_following(actor, target):
                 receivers.append(actor)
         elif type == NotificationType.NotificationTypeChoices.MISSING_METHOD:
             receivers = [
@@ -180,7 +180,7 @@ class Notification(UUIDModel):
                 for editor in target.editors_group.user_set.all()
                 if is_following(editor, target, flag="job-active")
             ]
-            if is_following(actor, target, flag="job-active"):
+            if actor and is_following(actor, target, flag="job-active"):
                 receivers.append(actor)
         elif (
             type
