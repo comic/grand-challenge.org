@@ -1,3 +1,4 @@
+from actstream.actions import is_following
 from actstream.models import followers
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -137,7 +138,6 @@ class Notification(UUIDModel):
             or type == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
             and target._meta.model_name != "algorithm"
             or type == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
-            or type == NotificationType.NotificationTypeChoices.MISSING_METHOD
         ):
             if actor:
                 receivers = [
@@ -151,15 +151,37 @@ class Notification(UUIDModel):
             type == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
             and target._meta.model_name == "algorithm"
         ):
-            receivers = followers(target, flag="access_request")
+            receivers = [
+                follower
+                for follower in followers(target, flag="access_request")
+                if follower != actor
+            ]
         elif type == NotificationType.NotificationTypeChoices.NEW_ADMIN:
             receivers = [action_object]
         elif (
             type == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
         ):
-            receivers = followers(target)  # receivers include the actor here
+            receivers = [
+                admin
+                for admin in target.challenge.get_admins()
+                if is_following(admin, target)
+            ]
+            if actor and is_following(actor, target):
+                receivers.append(actor)
+        elif type == NotificationType.NotificationTypeChoices.MISSING_METHOD:
+            receivers = [
+                admin
+                for admin in target.challenge.get_admins()
+                if is_following(admin, target)
+            ]
         elif type == NotificationType.NotificationTypeChoices.JOB_STATUS:
-            receivers = followers(target, flag="job-active")
+            receivers = [
+                editor
+                for editor in target.editors_group.user_set.all()
+                if is_following(editor, target, flag="job-active")
+            ]
+            if actor and is_following(actor, target, flag="job-active"):
+                receivers.append(actor)
         elif (
             type
             == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
@@ -261,8 +283,17 @@ class Notification(UUIDModel):
         elif (
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
-            and user == self.user
+            and self.actor == user
         ):
+            if self.action_object.error_message:
+                error_message = format_html(
+                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| {}</span>',
+                    self.action_object.error_message,
+                )
+            else:
+                error_message = ""
+
             return format_html(
                 "Your {} to {} {} {}. {}",
                 format_html(
@@ -277,16 +308,12 @@ class Notification(UUIDModel):
                 ),
                 self.message,
                 naturaltime(self.created),
-                format_html(
-                    '<span class ="text-truncate font-italic text-muted align-middle '
-                    'mx-2">| {}</span>',
-                    self.action_object.error_message,
-                ),
+                error_message,
             )
         elif (
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
-            and user != self.user
+            and self.actor != user
             and self.message == "failed"
         ):
             return format_html(
@@ -313,7 +340,7 @@ class Notification(UUIDModel):
         elif (
             self.type
             == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
-            and user != self.user
+            and self.actor != user
             and self.message == "succeeded"
         ):
             return format_html(
@@ -352,7 +379,7 @@ class Notification(UUIDModel):
                 ),
             )
         elif self.type == NotificationType.NotificationTypeChoices.JOB_STATUS:
-            if user != self.user and self.actor:
+            if self.actor and self.actor != user:
                 addition = format_html(" | {}", user_profile_link(self.actor))
             else:
                 addition = ""

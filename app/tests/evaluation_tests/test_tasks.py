@@ -5,6 +5,7 @@ import requests
 from actstream.actions import unfollow
 from django.conf import settings
 from django.test import TestCase
+from django.utils.html import format_html
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
@@ -16,6 +17,7 @@ from grandchallenge.components.tasks import (
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.notifications.models import Notification
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -324,12 +326,27 @@ def test_evaluation_notifications(
     assert Notification.objects.count() == len(recipients)
     for recipient in recipients:
         assert str(recipient) in str(Notification.objects.all())
-    assert "succeeded" in Notification.objects.filter(
+    result_string = format_html(
+        '<a href="{}">result</a>', submission.get_absolute_url()
+    )
+    submission_string = format_html(
+        '<a href="{}">submission</a>', submission.get_absolute_url()
+    )
+    challenge_string = format_html(
+        '<a href="{}">{}</a>',
+        submission.phase.challenge.get_absolute_url(),
+        submission.phase.challenge.short_name,
+    )
+    assert f"There is a new {result_string} for {challenge_string}" in Notification.objects.filter(
         user=recipients[0]
-    ).get().print_notification(user=recipients[0])
-    assert "succeeded" in Notification.objects.filter(
+    ).get().print_notification(
+        user=recipients[0]
+    )
+    assert f"Your {submission_string} to {challenge_string} succeeded" in Notification.objects.filter(
         user=recipients[1]
-    ).get().print_notification(user=recipients[1])
+    ).get().print_notification(
+        user=recipients[1]
+    )
 
     Notification.objects.all().delete()
 
@@ -341,12 +358,16 @@ def test_evaluation_notifications(
     assert Notification.objects.count() == len(recipients)
     for recipient in recipients:
         assert str(recipient) in str(Notification.objects.all())
-    assert "failed" in Notification.objects.filter(
+    assert f"The {submission_string} from {user_profile_link(Notification.objects.filter(user=recipients[0]).get().actor)} to {challenge_string} failed" in Notification.objects.filter(
         user=recipients[0]
-    ).get().print_notification(user=recipients[0])
-    assert "failed" in Notification.objects.filter(
+    ).get().print_notification(
+        user=recipients[0]
+    )
+    assert f"Your {submission_string} to {challenge_string} failed" in Notification.objects.filter(
         user=recipients[1]
-    ).get().print_notification(user=recipients[1])
+    ).get().print_notification(
+        user=recipients[1]
+    )
 
     # check that when admin unsubscribed from phase, they no longer
     # receive notifications about activity related to that phase
