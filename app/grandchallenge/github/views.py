@@ -8,9 +8,10 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.transaction import non_atomic_requests
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -71,10 +72,18 @@ def post_install_redirect(request):
     user_token.update_from_payload(payload=resp.json())
     user_token.save()
 
-    # TODO - does this need to be "state" or can we use "algorithm"
     slug = request.GET.get("state")
     if slug == "None":
-        return redirect(reverse("algorithms:no-slug"))
+        msg = mark_safe(
+            '<div class="mb-2">'
+            "Unfortunately something went wrong while trying to find the requested algorithm."
+            "</div>"
+            "<div>"
+            "If you were trying to link a github repository to an algorithm, "
+            "please do so manually in the algorithm's settings."
+            "</div>"
+        )
+        raise Http404(msg)
 
     return redirect(
         reverse("algorithms:add-repo", kwargs={"slug": slug})

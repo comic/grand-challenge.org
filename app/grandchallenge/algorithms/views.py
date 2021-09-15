@@ -811,7 +811,7 @@ class AlgorithmAddRepo(
         ).json()
 
         repos = []
-        for installation in installations["installations"]:
+        for installation in installations.get("installations", []):
             response = requests.get(
                 f"https://api.github.com/user/installations/{installation['id']}/repositories",
                 headers=headers,

@@ -4,7 +4,11 @@
 
 {% block content %}
     <h2>Not Found</h2>
-    <p>
-        This content was not found.
-    </p>
+    {% if exception %}
+        {{ exception }}
+    {% else %}
+        <p>
+            This content was not found.
+        </p>
+    {% endif %}
 {% endblock %}
