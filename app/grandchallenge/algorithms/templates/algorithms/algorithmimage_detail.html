@@ -30,7 +30,7 @@
 
     {% get_obj_perms request.user for object as "algorithm_image_perms" %}
 
-    {% if "change_algorithmimage" in algorithm_image_perms %}
+    {% if object.ready and "change_algorithmimage" in algorithm_image_perms %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
