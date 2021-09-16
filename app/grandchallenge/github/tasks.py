@@ -83,8 +83,13 @@ def get_zipfile(*, pk):
         ]
         if recurse_submodules:
             cmd.insert(2, "--recurse-submodules")
-        proces = subprocess.Popen(cmd)
-        proces.wait()
+        try:
+            process = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            ghwm.error = str(err)
+            ghwm.save()
+            raise
+
         process = subprocess.Popen(
             ["licensee", tmpdirname], stdout=subprocess.PIPE
         )

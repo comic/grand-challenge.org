@@ -79,6 +79,7 @@ class GitHubWebhookMessage(models.Model):
     )
     has_open_source_license = models.BooleanField(default=False)
     license_check_result = models.CharField(max_length=1024, blank=True)
+    error = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.repo_name} {self.tag}"
