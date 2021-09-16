@@ -39,8 +39,21 @@ class AnswersAdmin(GuardedModelAdmin):
 
 
 class QuestionsAdmin(GuardedModelAdmin):
-    list_filter = ("reader_study__slug",)
+    list_filter = (
+        "answer_type",
+        "required",
+        "reader_study__slug",
+    )
     readonly_fields = ("reader_study",)
+    list_display = (
+        "question_text",
+        "image_port",
+        "reader_study",
+        "answer_type",
+        "required",
+        "order",
+    )
+    list_select_related = ("reader_study",)
 
 
 class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
