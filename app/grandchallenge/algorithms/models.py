@@ -158,6 +158,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     repo_name = models.CharField(blank=True, max_length=512)
     image_requires_gpu = models.BooleanField(default=False)
     image_requires_memory_gb = models.PositiveIntegerField(default=4)
+    recurse_submodules = models.BooleanField(
+        default=False,
+        help_text="Do a recursive git pull when a GitHub repo is linked to this algorithm.",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

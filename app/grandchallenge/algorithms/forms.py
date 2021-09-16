@@ -123,6 +123,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "result_template",
             "image_requires_gpu",
             "image_requires_memory_gb",
+            "recurse_submodules",
         )
         widgets = {
             "description": TextInput,

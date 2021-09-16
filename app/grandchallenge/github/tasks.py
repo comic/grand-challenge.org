@@ -63,20 +63,27 @@ def get_zipfile(*, pk):
     tmp_zip = tempfile.NamedTemporaryFile()
     has_open_source_license = False
     license = "No license file found"
+    try:
+        recurse_submodules = Algorithm.objects.get(
+            repo_name=ghwm.payload["repository"]["full_name"]
+        ).recurse_submodules
+
+    except Algorithm.DoesNotExist:
+        recurse_submodules = False
     with tempfile.TemporaryDirectory() as tmpdirname:
-        proces = subprocess.Popen(
-            [
-                "git",
-                "clone",
-                "--recurse-submodules",
-                "--branch",
-                payload["ref"],
-                "--depth",
-                "1",
-                repo_url,
-                tmpdirname,
-            ]
-        )
+        cmd = [
+            "git",
+            "clone",
+            "--branch",
+            payload["ref"],
+            "--depth",
+            "1",
+            repo_url,
+            tmpdirname,
+        ]
+        if recurse_submodules:
+            cmd.insert(2, "--recurse-submodules")
+        proces = subprocess.Popen(cmd)
         proces.wait()
         process = subprocess.Popen(
             ["licensee", tmpdirname], stdout=subprocess.PIPE
