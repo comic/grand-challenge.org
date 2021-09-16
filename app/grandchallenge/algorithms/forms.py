@@ -198,7 +198,9 @@ class AlgorithmImageForm(ModelForm):
         self.helper = FormHelper(self)
         self.fields["chunked_upload"].widget.user = user
         self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
-        self.fields["requires_memory_gb"] = algorithm.image_requires_memory_gb
+        self.fields[
+            "requires_memory_gb"
+        ].initial = algorithm.image_requires_memory_gb
 
     def clean_chunked_upload(self):
         files = self.cleaned_data["chunked_upload"]

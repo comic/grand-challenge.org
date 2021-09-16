@@ -9,11 +9,14 @@ from grandchallenge.github.models import GitHubWebhookMessage
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
 def test_github_webhook(client, settings):
     settings.GITHUB_WEBHOOK_SECRET = "secret"
+    user = UserFactory()
+    VerificationFactory(user=user, is_verified=True)
 
     signature = hmac.new(
         bytes(settings.GITHUB_WEBHOOK_SECRET, encoding="utf8"),
@@ -26,6 +29,7 @@ def test_github_webhook(client, settings):
     response = get_view_for_user(
         client=client,
         method=client.post,
+        user=user,
         viewname="api:github-webhook",
         data={"test": "test"},
         content_type="application/json",
@@ -38,6 +42,7 @@ def test_github_webhook(client, settings):
     response = get_view_for_user(
         client=client,
         method=client.post,
+        user=user,
         viewname="api:github-webhook",
         data={"test": "test"},
         content_type="application/json",
