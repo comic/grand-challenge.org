@@ -1,4 +1,4 @@
-{% extends 'board_base.html' %}
+{% extends 'challenge_forum_base.html' %}
 {% load i18n %}
 {% load mptt_tags %}
 {% load forum_tags %}
@@ -8,14 +8,17 @@
 {% load activity_tags %}
 {% load forum_extras %}
 {% load crispy_forms_tags %}
+{% load guardian_tags %}
+{% load url %}
+{% load static %}
 
-
-{% block sub_title %}{{ forum.name }}{% endblock sub_title %}
+{% block title %}{{ forum.name }} - Forum{% endblock %}
 
 {% block content %}
+{{ block.super }}
 <div class="row">
   <div class="col-12">
-    <h1>{{ forum.name }}</h1>
+    <h1>{{ forum.name }} Forum</h1>
   </div>
 </div>
 {% if sub_forums %}

@@ -1,0 +1,24 @@
+{% extends 'challenge_forum_base.html' %}
+{% load i18n %}
+{% load forum_conversation_tags %}
+
+{% block sub_title %}{% trans "Mark topics read" %}{% endblock sub_title %}
+
+{% block content %}
+{{ block.super }}
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="card topic-delete">
+      <div class="card-header"><h3 class="m-0 card-title h5">{% trans "Mark topics read" %}</h3></div>
+      <div class="card-body">
+        <div class="mb-3 warning-message">{% trans "Are you sure you want to mark topics read?" %}</div>
+        <form action="" method="post">{% csrf_token %}
+          <input type="hidden" name="post" value="yes" />
+          <button role="submit" class="btn btn-warning">{% trans "Yes, I'm sure" %}</button>
+          <a href="{{ forum_url }}" class="btn btn-secondary">{% trans "No, take me back" %}</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

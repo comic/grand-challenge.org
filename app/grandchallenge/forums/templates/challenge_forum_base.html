@@ -1,0 +1,43 @@
+{% extends 'challenge.html' %}
+{% load static %}
+{% load url %}
+{% load guardian_tags %}
+{% load forum_extras %}
+
+{% block css %}
+{{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/machina.board_theme.min.css' %}" />
+{% endblock %}
+
+{% block title %}{% block sub_title %}{% endblock sub_title %} - {{ forum.name }}{% endblock title %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item" ><a href="{% url 'pages:home' challenge_short_name=forum.challenge.short_name %}">
+            {% firstof forum.challenge.title forum.challenge.short_name %}</a></li>
+        {% if topic %}
+            <li class="breadcrumb-item"><a href="{% url 'forum:forum' forum.slug forum.id %}">Forum</a></li>
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ topic.subject }}
+            </li>
+        {% else %}
+            <li class="breadcrumb-item active" aria-current="page"><a href="{% url 'forum:forum' forum.slug forum.id %}">Forum</a></li>
+        {% endif %}
+    </ol>
+{% endblock %}
+
+{% block messages %}
+    {% include 'grandchallenge/partials/challenge_banner.html' with challenge=forum.challenge %}
+    {{ block.super }}
+{% endblock %}
+
+{% block topbar %}
+    {% get_obj_perms request.user for forum.challenge as "user_perms" %}
+    {% is_participant request.user forum.challenge as is_challenge_participant %}
+    {% include 'grandchallenge/partials/challenge_topbar.html' with challenge=forum.challenge challenge_perms=user_perms user_is_participant=is_challenge_participant %}
+{% endblock %}
+
+{% block content %}
+    {% include 'partials/forum_actions.html' %}
+{% endblock %}
