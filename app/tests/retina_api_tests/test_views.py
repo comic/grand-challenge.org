@@ -9,6 +9,7 @@ from PIL import Image as PILImage
 from django.conf import settings
 from django.core.cache import cache
 from knox.models import AuthToken
+from pytest_django.fixtures import django_assert_max_num_queries
 from rest_framework import status
 from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
@@ -185,7 +186,7 @@ class TestArchiveAPIView:
         archive_patient_study_image_set.archive1.add_user(user)
         pk = archive_patient_study_image_set.study113.pk
 
-        with django_assert_num_queries(22):
+        with django_assert_max_num_queries(22):
             self.perform_request_as_user(client, user, pk)
 
 
