@@ -879,6 +879,9 @@ CELERY_EMAIL_TASK_CONFIG = {
     "ignore_result": False,
 }
 
+COMPONENTS_DEFAULT_BACKEND = (
+    "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
+)
 COMPONENTS_REGISTRY_URL = os.environ.get(
     "COMPONENTS_REGISTRY_URL", "registry:5000"
 )
