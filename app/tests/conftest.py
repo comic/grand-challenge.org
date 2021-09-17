@@ -32,7 +32,7 @@ from tests.annotations_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory
 from tests.archives_tests.test_models import create_archive_items_for_images
-from tests.cases_tests.factories import ImageFactoryWithoutImageFile
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import (
@@ -616,12 +616,12 @@ def generate_archive_patient_study_image_set():
     study113 = StudyFactory(patient=patient11)
     study121 = StudyFactory(patient=patient12)
     study122 = StudyFactory(patient=patient12)
-    images111 = ImageFactoryWithoutImageFile.create_batch(4, study=study111)
-    images112 = ImageFactoryWithoutImageFile.create_batch(5, study=study112)
-    images113 = ImageFactoryWithoutImageFile.create_batch(6, study=study113)
-    images121 = ImageFactoryWithoutImageFile.create_batch(2, study=study121)
-    images122 = ImageFactoryWithoutImageFile.create_batch(3, study=study122)
-    images211 = ImageFactoryWithoutImageFile.create_batch(4, study=None)
+    images111 = ImageFactoryWithImageFile.create_batch(4, study=study111)
+    images112 = ImageFactoryWithImageFile.create_batch(5, study=study112)
+    images113 = ImageFactoryWithImageFile.create_batch(6, study=study113)
+    images121 = ImageFactoryWithImageFile.create_batch(2, study=study121)
+    images122 = ImageFactoryWithImageFile.create_batch(3, study=study122)
+    images211 = ImageFactoryWithImageFile.create_batch(4, study=None)
 
     archive1, archive2 = ArchiveFactory.create_batch(2)
 

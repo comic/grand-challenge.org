@@ -33,13 +33,14 @@ class B64ImageSerializer(serializers.Serializer):
 
         pil_image = self.convert_itk_to_pil(image_itk)
 
-        try:
-            pil_image.thumbnail(
-                (self.context["width"], self.context["height"]),
-                PILImage.ANTIALIAS,
-            )
-        except KeyError:
-            pass
+        if "width" in self.context and "height" in self.context:
+            new_dims = (self.context["width"], self.context["height"])
+            try:
+                pil_image.thumbnail(
+                    new_dims, PILImage.ANTIALIAS,
+                )
+            except ValueError:
+                pil_image = pil_image.resize(new_dims)
 
         return self.create_thumbnail_as_b64(pil_image)
 

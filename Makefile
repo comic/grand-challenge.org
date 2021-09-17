@@ -84,6 +84,15 @@ development_fixtures:
 		web \
 		bash -c "python manage.py migrate && python manage.py runscript development_fixtures"
 
+
+retina_archive_structures:
+	docker-compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+		--rm \
+		web \
+		bash -c "python manage.py runscript create_retina_archive_structures"
+
+
 algorithm_evaluation_fixtures:
 	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
 	docker save algorithm_io -o scripts/algorithm_io.tar

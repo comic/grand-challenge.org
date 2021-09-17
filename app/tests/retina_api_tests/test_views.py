@@ -14,6 +14,7 @@ from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
 from rest_framework.utils import encoders
 
+from grandchallenge.cases.models import ImageFile
 from grandchallenge.retina_api.serializers import (
     TreeImageSerializer,
     TreeObjectSerializer,
@@ -21,6 +22,7 @@ from grandchallenge.retina_api.serializers import (
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
+    ImageFactoryWithImageFile16Bit,
     ImageFactoryWithImageFile2DLarge,
     ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile3DLarge4Slices,
@@ -143,6 +145,49 @@ class TestArchiveAPIView:
             assert response.status_code == status.HTTP_200_OK
             assert response.content == b'{"directories":[],"images":[]}'
 
+    def test_only_load_metaio_images(
+        self, client, archive_patient_study_image_set
+    ):
+        cache.clear()
+        user = get_user_from_str("retina_user")
+        archive_patient_study_image_set.archive1.add_user(user)
+        pk = archive_patient_study_image_set.study113.pk
+
+        for (index, image) in enumerate(
+            archive_patient_study_image_set.images111
+        ):
+            if index % 2 == 0:
+                continue
+            for image_file in image.files.all():
+                image_file.image_type = ImageFile.IMAGE_TYPE_DZI
+                image_file.save()
+
+        response = self.perform_request_as_user(client, user, pk)
+        assert response.status_code == status.HTTP_200_OK
+        result = json.loads(response.content)
+        assert len(result["images"]) == len(
+            archive_patient_study_image_set.images113
+        )
+        res_img_ids = {i["id"] for i in result["images"]}
+        exp_img_ids = {
+            str(i.pk) for i in archive_patient_study_image_set.images113
+        }
+        assert res_img_ids == exp_img_ids
+
+    def test_number_of_queries(
+        self,
+        client,
+        archive_patient_study_image_set,
+        django_assert_max_num_queries,
+    ):
+        cache.clear()
+        user = get_user_from_str("retina_user")
+        archive_patient_study_image_set.archive1.add_user(user)
+        pk = archive_patient_study_image_set.study113.pk
+
+        with django_assert_max_num_queries(22):
+            self.perform_request_as_user(client, user, pk)
+
 
 @pytest.mark.django_db
 class TestBase64ThumbnailView:
@@ -229,4 +274,13 @@ class TestBase64ThumbnailView:
             max_dimension = settings.RETINA_DEFAULT_THUMBNAIL_SIZE
         self.do_test_thumbnail_creation(
             client, max_dimension, image, is_3d=is_3d
+        )
+
+    def test_16bit_image(self, client):
+        image = ImageFactoryWithImageFile16Bit()
+        self.do_test_thumbnail_creation(
+            client,
+            max_dimension=settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
+            image=image,
+            is_3d=True,
         )
