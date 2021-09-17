@@ -9,7 +9,6 @@ from PIL import Image as PILImage
 from django.conf import settings
 from django.core.cache import cache
 from knox.models import AuthToken
-from pytest_django.fixtures import django_assert_max_num_queries
 from rest_framework import status
 from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
@@ -179,7 +178,7 @@ class TestArchiveAPIView:
         self,
         client,
         archive_patient_study_image_set,
-        django_assert_num_queries,
+        django_assert_max_num_queries,
     ):
         cache.clear()
         user = get_user_from_str("retina_user")
