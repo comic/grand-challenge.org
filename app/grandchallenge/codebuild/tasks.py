@@ -32,9 +32,7 @@ def create_codebuild_build(*, pk):
     algorithm_image = AlgorithmImage.objects.create(
         algorithm=algorithm,
         requires_gpu=algorithm.image_requires_gpu,
-        requires_gpu_memory_gb=algorithm.image_requires_gpu_memory_gb,
         requires_memory_gb=algorithm.image_requires_memory_gb,
-        requires_cpu_cores=algorithm.image_requires_cpu_cores,
     )
 
     build = Build.objects.create(
