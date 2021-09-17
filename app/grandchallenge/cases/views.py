@@ -39,7 +39,7 @@ from grandchallenge.cases.serializers import (
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.reader_studies.tasks import (
     add_image_to_answer,
     add_images_to_reader_study,
@@ -115,7 +115,9 @@ class ImageViewSet(ReadOnlyModelViewSet):
 class RawImageUploadSessionViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
-    queryset = RawImageUploadSession.objects.all()
+    queryset = RawImageUploadSession.objects.prefetch_related(
+        "rawimagefile_set"
+    ).all()
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
 
@@ -134,15 +136,15 @@ class RawImageUploadSessionViewSet(
         if any(f_id is None for f_id in file_ids):
             raise ValidationError("File has not been staged")
 
-        files = [StagedAjaxFile(f_id) for f_id in file_ids]
+        chunks = StagedFile.objects.filter(file_id__in=file_ids)
 
-        if not all(s.exists for s in files):
-            raise ValidationError("File does not exist")
-
-        if len({f.name for f in files}) != len(files):
+        if len({c.client_filename for c in chunks}) != len(staged_files):
             raise ValidationError("Filenames must be unique")
 
-        if sum([f.size for f in files]) > settings.UPLOAD_SESSION_MAX_BYTES:
+        if (
+            sum([f.end_byte - f.start_byte for f in chunks])
+            > settings.UPLOAD_SESSION_MAX_BYTES
+        ):
             raise ValidationError(
                 "Total size of all files exceeds the upload limit"
             )
@@ -157,10 +159,9 @@ class RawImageUploadSessionViewSet(
 
         if serializer.is_valid():
             try:
-                pass
-                # self.validate_staged_files(
-                #    staged_files=upload_session.rawimagefile_set.all()
-                # )
+                self.validate_staged_files(
+                    staged_files=upload_session.rawimagefile_set.all()
+                )
             except ValidationError as e:
                 return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
