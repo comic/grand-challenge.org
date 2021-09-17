@@ -66,11 +66,14 @@
         <div class="container pb-3 mt-3">
 
             {% block messages %}
+                {% include 'challenges/challenge_banner.html' %}
                 {% include "grandchallenge/partials/messages.html" %}
             {% endblock %}
 
             {% block outer_content %}
-                {% block topbar %}{% endblock %}
+                {% block topbar %}
+                    {% include 'challenges/challenge_topbar.html' with challenge=challenge %}
+                {% endblock %}
                 {% block topbar2 %}{% endblock %}
                 <div class="row">
                     {% block sidebar %}{% endblock %}
@@ -101,6 +104,9 @@
 {% block script %}
     {% include "grandchallenge/partials/script.html" %}
     {% include "timezones/partials/detect_timezone.html" %}
+    {% if challenge %}
+        <script src="{% static 'js/challenges/dropdown.js' %}" type="module"></script>
+    {% endif %}
 {% endblock %}
 
 </body>

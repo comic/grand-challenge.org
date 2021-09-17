@@ -1,4 +1,4 @@
-{% extends "challenge.html" %}
+{% extends "base.html" %}
 {% load url %}
 {% load profiles %}
 {% load evaluation_extras %}
@@ -195,4 +195,9 @@
         {% endif %}
     {% endif %}
 
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script src="{% static 'js/challenges/dropdown.js' %}" type="module"></script>
 {% endblock %}
