@@ -156,8 +156,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     use_flexible_inputs = models.BooleanField(default=True)
     repo_name = models.CharField(blank=True, max_length=512)
-    image_requires_gpu = models.BooleanField(default=False)
-    image_requires_memory_gb = models.PositiveIntegerField(default=4)
+    image_requires_gpu = models.BooleanField(default=True)
+    image_requires_memory_gb = models.PositiveIntegerField(default=15)
     recurse_submodules = models.BooleanField(
         default=False,
         help_text="Do a recursive git pull when a GitHub repo is linked to this algorithm.",
