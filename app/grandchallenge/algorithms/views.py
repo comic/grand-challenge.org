@@ -29,7 +29,6 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
-    TemplateView,
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
@@ -822,7 +821,3 @@ class AlgorithmAddRepo(
 
         kwargs.update({"repos": repos})
         return kwargs
-
-
-class AlgorithmNotFound(LoginRequiredMixin, TemplateView):
-    template_name = "algorithms/algorithm_no_slug.html"
