@@ -889,14 +889,23 @@ COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10_737_418_240  # 10 gb
-COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = os.environ.get(
-    "COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT", "/mnt/aws-batch-nfs/"
+COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT", "/mnt/aws-batch-nfs/"
 )
-COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN = os.environ.get(
-    "COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN", ""
+COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME", ""
 )
-COMPONENTS_AWS_BATCH_GPU_QUEUE_ARN = os.environ.get(
-    "COMPONENTS_AWS_BATCH_GPU_QUEUE_ARN", ""
+COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME", ""
+)
+COMPONENTS_AMAZON_ECS_LOGS_REGION = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_LOGS_REGION", "eu-central-1"
+)
+COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN", ""
+)
+COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN", ""
 )
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
@@ -1041,33 +1050,6 @@ CELERY_BEAT_SCHEDULE = {
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },
-    # Cleanup evaluation jobs on the evaluation queue
-    "mark_long_running_evaluation_jobs_failed": {
-        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
-        "kwargs": {"app_label": "evaluation", "model_name": "evaluation"},
-        "options": {"queue": "evaluation"},
-        "schedule": timedelta(hours=1),
-    },
-    "mark_long_running_algorithm_gpu_jobs_failed": {
-        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
-        "kwargs": {
-            "app_label": "algorithms",
-            "model_name": "job",
-            "extra_filters": {"algorithm_image__requires_gpu": True},
-        },
-        "options": {"queue": "gpu"},
-        "schedule": timedelta(hours=1),
-    },
-    "mark_long_running_algorithm_jobs_failed": {
-        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
-        "kwargs": {
-            "app_label": "algorithms",
-            "model_name": "job",
-            "extra_filters": {"algorithm_image__requires_gpu": False},
-        },
-        "options": {"queue": "evaluation"},
-        "schedule": timedelta(hours=1),
-    },
 }
 
 # The name of the group whose members will be able to create algorithms
@@ -1116,6 +1098,18 @@ CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
 CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
 CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
 CODEBUILD_REGION = os.environ.get("CODEBUILD_REGION", "")
+
+OPEN_SOURCE_LICENSES = [
+    "Apache License 2.0",
+    "MIT License",
+    "GNU GPLv3",
+    "GNU AGPLv3",
+    "GNU GPLv3",
+    "GNU LGPLv3",
+    "Mozilla Public License 2.0",
+    "Boost Software License 1.0",
+    "The Unlicense",
+]
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb

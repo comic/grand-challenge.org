@@ -1,7 +1,7 @@
-from actstream import action
 from celery import chain, chord, group, shared_task
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import (
@@ -19,6 +19,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -135,7 +136,7 @@ def create_algorithm_jobs_for_session(
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
     # Editors group should be able to view session jobs for debugging
-    groups = [algorithm_image.algorithm.editors_group]
+    algorithm_editors = [algorithm_image.algorithm.editors_group]
 
     # Send an email to the algorithm editors and creator on job failure
     linked_task = send_failed_session_jobs_notifications.signature(
@@ -162,7 +163,8 @@ def create_algorithm_jobs_for_session(
         algorithm_image=algorithm_image,
         civ_sets=civ_sets,
         creator=session.creator,
-        extra_viewer_groups=groups,
+        extra_viewer_groups=algorithm_editors,
+        extra_logs_viewer_groups=algorithm_editors,
         linked_task=linked_task,
     )
 
@@ -176,15 +178,14 @@ def create_algorithm_jobs_for_session(
                 "pk": upload_session_pk,
             },
         )
-        action.send(
-            sender=algorithm_image.algorithm,
-            verb=(
-                f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
-                f"{algorithm_image.algorithm.title} were not started because "
-                f"the number of allowed jobs was reached."
-            ),
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+            actor=session.creator,
+            message=f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
+            f"{algorithm_image.algorithm.title} were not started because "
+            f"the number of allowed jobs was reached.",
+            target=algorithm_image.algorithm,
             description=experiment_url,
-            target=session.creator,
         )
 
 
@@ -234,6 +235,7 @@ def execute_jobs(
     civ_sets,
     creator=None,
     extra_viewer_groups=None,
+    extra_logs_viewer_groups=None,
     linked_task=None,
     on_error=None,
     max_jobs=None,
@@ -255,7 +257,10 @@ def execute_jobs(
     creator
         The creator of the algorithm jobs
     extra_viewer_groups
-        The viewer groups that will also get access to view the job
+        The groups that will also get permission to view the jobs
+    extra_logs_viewer_groups
+        The groups that will also get permission to view the logs for
+        the jobs
     linked_task
         A task that is run after each job completion. This must be able
         to handle being called more than once, and in parallel.
@@ -275,6 +280,7 @@ def execute_jobs(
         civ_sets=civ_sets,
         creator=creator,
         extra_viewer_groups=extra_viewer_groups,
+        extra_logs_viewer_groups=extra_logs_viewer_groups,
         max_jobs=max_jobs,
     )
 
@@ -298,6 +304,7 @@ def create_algorithm_jobs(
     civ_sets,
     creator=None,
     extra_viewer_groups=None,
+    extra_logs_viewer_groups=None,
     max_jobs=None,
 ):
     """
@@ -313,7 +320,10 @@ def create_algorithm_jobs(
     creator
         The creator of the algorithm jobs
     extra_viewer_groups
-        The viewer groups that will also get access to view the job
+        The groups that will also get permission to view the jobs
+    extra_logs_viewer_groups
+        The groups that will also get permission to view the logs for
+        the jobs
     max_jobs
         The maximum number of jobs to schedule
     """
@@ -347,6 +357,10 @@ def create_algorithm_jobs(
 
         if extra_viewer_groups is not None:
             j.viewer_groups.add(*extra_viewer_groups)
+
+        if extra_logs_viewer_groups is not None:
+            for g in extra_logs_viewer_groups:
+                assign_perm("algorithms.view_logs", g, j)
 
         jobs.append(j)
 
@@ -428,14 +442,13 @@ def send_failed_job_notification(*, job_pk):
         experiment_url = reverse(
             "algorithms:job-list", kwargs={"slug": algorithm.slug}
         )
-        action.send(
-            sender=algorithm,
-            verb=(
-                f"Unfortunately one of the jobs for algorithm {algorithm.title} "
-                f"failed with an error."
-            ),
-            description=f"{experiment_url}",
-            target=job.creator,
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+            actor=job.creator,
+            message=f"Unfortunately one of the jobs for algorithm {algorithm.title} "
+            f"failed with an error",
+            target=algorithm,
+            description=experiment_url,
         )
 
 
@@ -473,12 +486,11 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
                 "algorithms:execution-session-detail",
                 kwargs={"slug": algorithm.slug, "pk": session_pk},
             )
-            action.send(
-                sender=algorithm,
-                verb=(
-                    f"Unfortunately {failed_jobs_count} of the jobs for "
-                    f"algorithm {algorithm.title} failed with an error."
-                ),
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+                actor=session.creator,
+                message=f"Unfortunately {failed_jobs_count} of the jobs for "
+                f"algorithm {algorithm.title} failed with an error ",
+                target=algorithm,
                 description=experiment_url,
-                target=session.creator,
             )

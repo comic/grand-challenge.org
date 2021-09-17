@@ -2,6 +2,15 @@
     border-radius: 0;
 }
 
+.btn {
+    border-radius: 0;
+}
+
+.btn-primary {
+    background-color: #00afdc;
+    border-color: #00afdc;
+}
+
 html {
     overflow-y: scroll;
     position: relative;
@@ -31,7 +40,7 @@ html {
 }
 
 a {
-    color: #212529;
+    color: #00afdc;
 }
 
 a:hover {

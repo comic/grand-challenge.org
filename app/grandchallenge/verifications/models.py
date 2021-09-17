@@ -3,8 +3,8 @@ from datetime import timedelta
 from allauth.account.signals import email_confirmed
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Q
 from django.utils.html import format_html
-from django.utils.timezone import now
 from pyswot import is_academic
 
 from grandchallenge.subdomains.utils import reverse
@@ -54,10 +54,6 @@ class Verification(models.Model):
         )
 
     @property
-    def verification_email_is_trusted(self):
-        return self.email_is_verified and email_is_trusted(email=self.email)
-
-    @property
     def token(self):
         return email_verification_token_generator.make_token(self.user)
 
@@ -68,13 +64,6 @@ class Verification(models.Model):
     @property
     def review_deadline(self):
         return self.modified + timedelta(days=3)
-
-    def save(self, *args, **kwargs):
-        if self.signup_email_is_trusted or self.verification_email_is_trusted:
-            self.is_verified = True
-            self.verified_at = now()
-
-        super().save(*args, **kwargs)
 
     @property
     def user_info(self):
@@ -91,7 +80,9 @@ class Verification(models.Model):
 def create_verification(email_address, *_, **__):
     if (
         email_is_trusted(email=email_address.email)
-        and not Verification.objects.filter(user=email_address.user).exists()
+        and not Verification.objects.filter(
+            Q(user=email_address.user) | Q(email__iexact=email_address.email)
+        ).exists()
     ):
         Verification.objects.create(
             user=email_address.user, email=email_address.email

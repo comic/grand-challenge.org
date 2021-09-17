@@ -59,6 +59,11 @@
                                    href="{% url 'verifications:create' %}">
                                     <i class="fas fa-user-check"></i>&nbsp;Request Verification
                                 </a>
+                            {% else %}
+                                <a class="list-group-item list-group-item-action"
+                                   href="{% url 'verifications:detail' %}">
+                                    <i class="fas fa-user-check"></i>&nbsp;Verification Status
+                                </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'profile-update' user.username %}'><i

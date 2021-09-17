@@ -1,10 +1,12 @@
 import pytest
-from actstream.actions import is_following
+from actstream.actions import follow, is_following
 from actstream.models import Follow
+from django.utils.html import format_html
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
 from grandchallenge.notifications.models import Notification
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
@@ -221,8 +223,11 @@ def test_permission_request_notifications_flow(
     # check request results in notification for followers of base_obj
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user == editor
-    assert f"{user.username} requested access to {base_object.title}" in str(
-        Notification.objects.get().action
+    base_obj_str = format_html(
+        '<a href="{}">{}</a>', base_object.get_absolute_url(), base_object
+    )
+    assert f"{user_profile_link(user)} requested access to {base_obj_str}" in Notification.objects.get().print_notification(
+        user=editor
     )
 
     permission_update_url = reverse(
@@ -243,7 +248,11 @@ def test_permission_request_notifications_flow(
 
     # check that status update results in notification for follower of request object
     assert Notification.objects.all()[1].user == user
-    assert f"{pr} was accepted" in str(Notification.objects.all()[1].action)
+    assert f"Your registration request for {base_obj_str} was accepted" in Notification.objects.all()[
+        1
+    ].print_notification(
+        user=user
+    )
 
     # reject permission request
     _ = get_view_for_user(
@@ -257,7 +266,11 @@ def test_permission_request_notifications_flow(
     pr.refresh_from_db()
     assert pr.status == request_model.REJECTED
     assert Notification.objects.all()[2].user == user
-    assert f"{pr} was rejected" in str(Notification.objects.all()[2].action)
+    assert f"Your registration request for {base_obj_str} was rejected" in Notification.objects.all()[
+        2
+    ].print_notification(
+        user=user
+    )
 
     # when pr is deleted, the follows associated with it are too
     pr.delete()
@@ -279,3 +292,32 @@ def test_permission_request_notifications_flow(
     # when the base_obj is deleted, the follows are deleted as well
     base_object.delete()
     assert not Follow.objects.filter(object_id=base_object.pk)
+
+
+@pytest.mark.django_db
+def test_algorithm_permission_request_notification_for_admins_only(client):
+    base_object = AlgorithmFactory()
+    editor = UserFactory()
+    user = UserFactory()
+    participant = UserFactory()
+    base_object.add_editor(editor)
+    base_object.add_user(participant)
+
+    # create an algorithm job follow for participant
+    follow(user=participant, obj=base_object, flag="job-active")
+
+    permission_create_url = reverse(
+        "algorithms:permission-request-create",
+        kwargs={"slug": base_object.slug},
+    )
+
+    # Create the permission request
+    _ = get_view_for_user(
+        client=client,
+        user=user,
+        url=permission_create_url,
+        method=client.post,
+    )
+
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user == editor

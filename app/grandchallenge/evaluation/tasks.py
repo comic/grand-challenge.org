@@ -2,7 +2,6 @@ import logging
 import uuid
 from statistics import mean, median
 
-from actstream import action
 from celery import shared_task
 from django.apps import apps
 from django.core.files import File
@@ -18,6 +17,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import Metric, rank_results
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from grandchallenge.notifications.models import Notification, NotificationType
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +55,11 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
     method = submission.latest_ready_method
     if not method:
         logger.info("No method ready for this submission")
-        action.send(
-            sender=submission,
-            verb="no method for this submission",
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.MISSING_METHOD,
+            message="missing method",
+            actor=submission.creator,
+            action_object=submission,
             target=submission.phase,
         )
         return
@@ -85,7 +87,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
             interface = ComponentInterface.objects.get(
                 slug="predictions-zip-file"
             )
-        elif mimetype == "text/plain":
+        elif mimetype in ["text/plain", "application/csv"]:
             interface = ComponentInterface.objects.get(
                 slug="predictions-csv-file"
             )
@@ -133,7 +135,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     # Only the challenge admins should be able to view these jobs, never
     # the algorithm editors as these are participants - they must never
     # be able to see the test data.
-    groups = [evaluation.submission.phase.challenge.admins_group]
+    challenge_admins = [evaluation.submission.phase.challenge.admins_group]
 
     if max_jobs is None:
         # Once the algorithm has been run, score the submission. No emails as
@@ -164,7 +166,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             )
         ],
         creator=None,
-        extra_viewer_groups=groups,
+        extra_viewer_groups=challenge_admins,
+        extra_logs_viewer_groups=challenge_admins,
         linked_task=linked_task,
         on_error=on_error,
         max_jobs=max_jobs,
@@ -221,7 +224,7 @@ def set_evaluation_inputs(*, evaluation_pk):
     )
     evaluation_queryset = Evaluation.objects.filter(
         pk=evaluation_pk
-    ).select_for_update(nowait=True)
+    ).select_for_update()
 
     with transaction.atomic():
         # Acquire lock

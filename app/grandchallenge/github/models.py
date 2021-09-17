@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import get_valid_filename
 
 from grandchallenge.core.storage import private_s3_storage
-from grandchallenge.github.tasks import get_zipfile
+from grandchallenge.github.tasks import get_zipfile, unlink_algorithm
 
 
 def zipfile_path(instance, filename):
@@ -38,7 +38,7 @@ class GitHubUserToken(models.Model):
 
     @property
     def access_token_is_expired(self):
-        return self.access_token_expires > timezone.now()
+        return self.access_token_expires < timezone.now()
 
     def refresh_access_token(self):
         resp = requests.post(
@@ -77,6 +77,9 @@ class GitHubWebhookMessage(models.Model):
     zipfile = models.FileField(
         null=True, upload_to=zipfile_path, storage=private_s3_storage
     )
+    has_open_source_license = models.BooleanField(default=False)
+    license_check_result = models.CharField(max_length=1024, blank=True)
+    error = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.repo_name} {self.tag}"
@@ -104,6 +107,10 @@ class GitHubWebhookMessage(models.Model):
         super().save(*args, **kwargs)
         if adding and self.payload.get("ref_type") == "tag":
             on_commit(lambda: get_zipfile.apply_async(kwargs={"pk": self.pk}))
+        if adding and self.payload.get("action") == "deleted":
+            on_commit(
+                lambda: unlink_algorithm.apply_async(kwargs={"pk": self.pk})
+            )
 
     class Meta:
         indexes = [

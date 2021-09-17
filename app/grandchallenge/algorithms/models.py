@@ -1,7 +1,6 @@
 import logging
 from datetime import timedelta
 
-from actstream import action
 from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.conf import settings
@@ -9,7 +8,7 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Min, Sum
+from django.db.models import Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -36,6 +35,7 @@ from grandchallenge.core.storage import (
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -156,10 +156,23 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     use_flexible_inputs = models.BooleanField(default=True)
     repo_name = models.CharField(blank=True, max_length=512)
+    image_requires_gpu = models.BooleanField(default=True)
+    image_requires_memory_gb = models.PositiveIntegerField(default=15)
+    recurse_submodules = models.BooleanField(
+        default=False,
+        help_text="Do a recursive git pull when a GitHub repo is linked to this algorithm.",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
         permissions = [("execute_algorithm", "Can execute algorithm")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["repo_name"],
+                name="unique_repo_name",
+                condition=~Q(repo_name=""),
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title}"
@@ -426,8 +439,9 @@ class Job(UUIDModel, ComponentJob):
     )
     credits_set = JobQuerySet.as_manager()
 
-    class Meta:
+    class Meta(UUIDModel.Meta, ComponentJob.Meta):
         ordering = ("created",)
+        permissions = [("view_logs", "Can view the jobs logs")]
 
     def __str__(self):
         return f"Job {self.pk}"
@@ -532,7 +546,7 @@ class Job(UUIDModel, ComponentJob):
         # If there is a creator they can view and change this job
         if self.creator:
             self.viewers.user_set.add(self.creator)
-            assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+            assign_perm("change_job", self.creator, self)
 
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(
@@ -630,9 +644,10 @@ class AlgorithmPermissionRequest(RequestBase):
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
             )
-            action.send(
-                sender=self.user,
-                verb="requested access to",
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
+                message="requested access to",
+                actor=self.user,
                 target=self.base_object,
             )
 

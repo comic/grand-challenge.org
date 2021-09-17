@@ -20,8 +20,8 @@
         </div>
       </div>
       <div class="col-sm-6">
-        <div class="h6 pb-2"> <a href= "{% url 'products:company-detail' slug=product.company.slug %}" title={{product.company.company_name}} >{{ product.company.company_name }}</a></div>
-        <div class="h3 font-weight-bold mb-1"> <a href= "{% url 'products:product-detail' slug=product.slug %}" title={{product.product_name}}>{{product.product_name}}</a></div>
+        <div class="h6 pb-2"> <a class=text-dark href= "{% url 'products:company-detail' slug=product.company.slug %}" title={{product.company.company_name}} >{{ product.company.company_name }}</a></div>
+        <div class="h3 font-weight-bold mb-1"> <a class=text-dark href= "{% url 'products:product-detail' slug=product.slug %}" title={{product.product_name}}>{{product.product_name}}</a></div>
         <div class="text-muted">
           <p>{{ product.key_features|short:100 }}</p>
         </div>
@@ -43,14 +43,14 @@
 
                 <div class="h6 pr-2">
                   {% if product.ce_class %}
-                    <a href="#" data-toggle="tooltip" data-placement="top"
+                    <a class=text-dark href="#" data-toggle="tooltip" data-placement="top"
                       title= {% include "products/partials/tooltip_CE_class.html" %}>
                       {{product.ce_class}}
                     </a>
                   {% endif %}
                   {% if product.ce_under %}
                     -
-                    <a href="#" data-toggle="tooltip" data-placement="top"
+                    <a class=text-dark href="#" data-toggle="tooltip" data-placement="top"
                       title= {% include "products/partials/tooltip_CE_MDD_MDR.html" %}>
                       {{product.ce_under}}
                     </a>
@@ -64,7 +64,7 @@
                    title= {% include "products/partials/tooltip_FDA.html" %}
                    >FDA:
                 </a>
-              <div class="h6 pr-2">{% if product.fda_class %}{{product.fda_class}}{% endif %}</div>
+              <div class="h6 pr-2 text-dark">{% if product.fda_class %}{{product.fda_class}}{% endif %}</div>
               <img src="{% icon product 'fda_status' %}" alt="Logo" style="width:10%; height:10%">
             </div>
           </div>

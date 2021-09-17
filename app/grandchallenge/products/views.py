@@ -7,7 +7,17 @@ from django.shortcuts import reverse
 from django.views.generic import CreateView, DetailView, ListView, TemplateView
 from django.views.generic.edit import FormView
 
-from grandchallenge.products.forms import ImportForm, ProjectAirFilesForm
+from grandchallenge.blogs.views import (
+    PostCreate,
+    PostDetail,
+    PostList,
+    PostUpdate,
+)
+from grandchallenge.products.forms import (
+    ImportForm,
+    ProductsPostUpdateForm,
+    ProjectAirFilesForm,
+)
 from grandchallenge.products.models import (
     Company,
     Product,
@@ -211,6 +221,22 @@ class ProjectAirPage(ListView):
     context_object_name = "project_air_files"
     queryset = ProjectAirFiles.objects.all()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        is_archive = self.queryset.filter(archive=True)
+        is_current = self.queryset.filter(archive=False)
+        context.update({"is_archive": is_archive, "is_current": is_current})
+        return context
+
+
+class ProjectAirForm(PermissionRequiredMixin, CreateView):
+    template_name = "products/projectairfiles_form.html"
+    form_class = ProjectAirFilesForm
+    permission_required = f"{ProjectAirFiles._meta.app_label}.add_{ProjectAirFiles._meta.model_name}"
+
+    def get_success_url(self):
+        return reverse("products:project-air")
+
 
 class ImportDataView(PermissionRequiredMixin, FormView):
     template_name = "products/import_data.html"
@@ -241,10 +267,28 @@ class ImportDataView(PermissionRequiredMixin, FormView):
         return reverse("products:product-list")
 
 
-class ProjectAirForm(PermissionRequiredMixin, CreateView):
-    template_name = "products/projectairfiles_form.html"
-    form_class = ProjectAirFilesForm
-    permission_required = f"{ProjectAirFiles._meta.app_label}.add_{ProjectAirFiles._meta.model_name}"
+class ProductsPostCreate(PostCreate):
+    template_name = "products/post_form.html"
 
-    def get_success_url(self):
-        return reverse("products:project-air")
+
+class ProductsPostList(PostList):
+    template_name = "products/post_list.html"
+    queryset = PostList.model.objects.filter(
+        published=True, tags__name__contains="Products"
+    )
+
+
+class ProductsPostDetail(PostDetail):
+    template_name = "products/post_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = context["object"]
+        is_news = obj.tags.all().filter(slug="news").exists()
+        context.update({"is_news": is_news})
+        return context
+
+
+class ProductsPostUpdate(PostUpdate):
+    template_name = "products/post_form.html"
+    form_class = ProductsPostUpdateForm

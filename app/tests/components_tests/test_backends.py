@@ -11,7 +11,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.components_tests.stubs import AWSBatchExecutorStub
+from tests.components_tests.stubs import AmazonECSExecutorStub
 from tests.factories import ImageFileFactory
 
 
@@ -92,10 +92,10 @@ def test_provision(tmp_path, settings):
     ]
     civs[2].file.save("whatever.csv", ContentFile(b"foo,\nbar,\n"))
 
-    settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = tmp_path
+    settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = tmp_path
 
-    executor = AWSBatchExecutorStub(
-        job_id="foo-bar-12345-67890",
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
         exec_image_sha256="",
         exec_image_repo_tag="",
         exec_image_file=None,
@@ -108,25 +108,25 @@ def test_provision(tmp_path, settings):
     executor.await_completion()
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
-        "foo",
-        "foo/bar",
-        "foo/bar/12345-67890",
-        "foo/bar/12345-67890/input",
-        "foo/bar/12345-67890/input/test.csv",
-        "foo/bar/12345-67890/input/test",
-        "foo/bar/12345-67890/input/test/bool.json",
-        "foo/bar/12345-67890/input/images",
-        "foo/bar/12345-67890/input/images/test-image",
-        "foo/bar/12345-67890/input/images/test-image/input_file.tif",
-        "foo/bar/12345-67890/output",
-        "foo/bar/12345-67890/output/metrics.json",
-        "foo/bar/12345-67890/output/results.json",
-        "foo/bar/12345-67890/output/test.csv",
-        "foo/bar/12345-67890/output/test",
-        "foo/bar/12345-67890/output/test/bool.json",
-        "foo/bar/12345-67890/output/images",
-        "foo/bar/12345-67890/output/images/test-image",
-        "foo/bar/12345-67890/output/images/test-image/input_file.tif",
+        "algorithms",
+        "algorithms/job",
+        "algorithms/job/00000000-0000-0000-0000-000000000000",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/test.csv",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/test",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/test/bool.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images/test-image",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images/test-image/input_file.tif",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/metrics.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/results.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/test.csv",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/test",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/test/bool.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/images",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/images/test-image",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output/images/test-image/input_file.tif",
     }
 
     # Exclude the CIV reading as this is unsupported
@@ -136,6 +136,6 @@ def test_provision(tmp_path, settings):
     executor.deprovision()
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
-        "foo",
-        "foo/bar",
+        "algorithms",
+        "algorithms/job",
     }

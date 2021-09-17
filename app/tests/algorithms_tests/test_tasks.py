@@ -638,10 +638,11 @@ def test_failed_job_notifications(client, algorithm_io_image, settings):
     assert Notification.objects.count() == 2
     assert creator.username in str(Notification.objects.all())
     assert editor.username in str(Notification.objects.all())
-    assert (
-        f"Unfortunately one of the jobs for algorithm {alg.algorithm.title} failed with an error"
-        in str(Notification.objects.first().action)
-    )
+    for notification in Notification.objects.all():
+        assert (
+            f"Unfortunately one of the jobs for algorithm {alg.algorithm.title} failed with an error"
+            in notification.print_notification(user=notification.user)
+        )
 
     # delete notifications for easier testing below
     Notification.objects.all().delete()

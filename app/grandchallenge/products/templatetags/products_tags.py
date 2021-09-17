@@ -27,6 +27,11 @@ def navbar(context):
                 "active": url == "project-air",
                 "title": "Project AIR",
             },
+            {
+                "url": "blogs-list",
+                "active": url == "blogs-list",
+                "title": "Blogs",
+            },
             {"url": "about", "active": url == "about", "title": "About"},
             {
                 "url": "contact",

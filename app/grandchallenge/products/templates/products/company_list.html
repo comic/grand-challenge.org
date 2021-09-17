@@ -54,7 +54,7 @@
             </div>
           </div>
           <div class="col-sm-6">
-            <div class="h3 font-weight-bold mb-1"> <a href= "{% url 'products:company-detail' slug=company.slug %}" title={{ company.company_name }}>{{ company.company_name }}</a></div>
+            <div class="h3 font-weight-bold mb-1"> <a class=text-dark href= "{% url 'products:company-detail' slug=company.slug %}" title={{ company.company_name }}>{{ company.company_name }}</a></div>
             <p>{{company.description_short}}</p>
             <div class="pt-1 pb-2">
                 <a href="{% url 'products:company-detail' slug=company.slug %}" title="{{ company.company_name }}" class="btn btn-square btn-radboud">Read more</a>
@@ -64,7 +64,7 @@
             <p><b>Products:</b></p>
             {% for product in company.product_set.all %}
               <div>
-                <a href= "{% url 'products:product-detail' slug=product.slug %}" title={{product.product_name}} target="_blank">
+                <a class=text-dark href= "{% url 'products:product-detail' slug=product.slug %}" title={{product.product_name}} target="_blank">
                     {{product.product_name}}</a>
               </div>
             {% endfor %}

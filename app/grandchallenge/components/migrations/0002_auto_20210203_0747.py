@@ -42,6 +42,7 @@ class Migration(migrations.Migration):
                             "application/json",
                             "application/zip",
                             "text/plain",
+                            "application/csv",
                         )
                     ),
                 ],

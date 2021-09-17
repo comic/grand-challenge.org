@@ -492,10 +492,13 @@ class ArchiveItemsList(
     row_template = "archives/archive_items_row.html"
     search_fields = [
         "pk",
-        "name",
+        "values__interface__title",
+        "values__value",
+        "values__image__name",
+        "values__file",
     ]
     columns = [
-        Column(title="Values", sort_field="pk"),
+        Column(title="Values", sort_field="values"),
         Column(title="Edit", sort_field="pk"),
     ]
 

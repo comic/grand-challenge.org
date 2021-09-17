@@ -8,7 +8,6 @@ FROM python:${PYTHON_VERSION} as base
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y \
-        python-openssl \
         libpng-dev \
         libjpeg-dev \
         libjpeg62-turbo-dev \
@@ -18,7 +17,8 @@ RUN apt-get update \
         wget \
         gettext \
         libopenslide-dev \
-        libvips-dev
+        libvips-dev \
+        ruby-licensee
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \

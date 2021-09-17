@@ -11,7 +11,6 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
@@ -81,21 +80,6 @@ class TestSubmissionPermissions(TestCase):
         assert get_users_with_perms(
             s, attach_perms=True, with_group_users=False
         ) == {s.creator: ["view_submission"]}
-
-
-class TestAlgorithmEvaluationPermissions(TestCase):
-    def test_algorithm_evaluation_permissions(self):
-        """
-        Only the challenge admins should be able to view algorithm evaluations
-        The submission creator, algorithm groups and participants should not
-        have view permissions
-        """
-        j = AlgorithmJobFactory()
-
-        assert get_groups_with_set_perms(j) == {j.viewers: {"view_job"}}
-        assert get_users_with_perms(
-            j, attach_perms=True, with_group_users=False
-        ) == {j.creator: ["change_job"]}
 
 
 @pytest.mark.django_db

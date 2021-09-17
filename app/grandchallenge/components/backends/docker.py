@@ -1,4 +1,3 @@
-import io
 import json
 import logging
 import os
@@ -444,14 +443,7 @@ class DockerExecutor(DockerConnection):
             for file in output_files:
                 temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
                 temp_file.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(temp_file, "wb") as outfile:
-                    infile = get_file(container=reader, src=file)
-
-                    buffer = True
-                    while buffer:
-                        buffer = infile.read(1024)
-                        outfile.write(buffer)
+                get_file(container=reader, src=file, dest=temp_file)
 
             importer_result = import_images(
                 input_directory=tmpdir,
@@ -481,15 +473,17 @@ class DockerExecutor(DockerConnection):
         output_file = Path(safe_join("/output/", interface.relative_path))
 
         try:
-            file = get_file(container=reader, src=output_file)
+            with TemporaryDirectory() as tmpdir:
+                temp_file = Path(safe_join(tmpdir, "output.json"))
+                get_file(container=reader, src=output_file, dest=temp_file)
+
+                with open(temp_file, "rb") as file:
+                    result = json.loads(
+                        file.read().decode("utf-8"),
+                        parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+                    )
         except NotFound:
             raise ComponentException(f"File {output_file} was not produced")
-
-        try:
-            result = json.loads(
-                file.read().decode("utf-8"),
-                parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-            )
         except JSONDecodeError:
             raise ComponentException(
                 f"The file produced at {output_file} is not valid json"
@@ -628,18 +622,21 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: Path) -> ():
         container.put_archive(os.path.dirname(dest), tar_b)
 
 
-def get_file(*, container: ContainerApiMixin, src: Path):
+def get_file(*, container: ContainerApiMixin, src: Path, dest: Path):
+    """Gets a file from src in the container and writes it to dest"""
     tarstrm, info = container.get_archive(src)
 
-    if info["size"] > 2e9:
-        raise ValueError(f"File {src} is too big to be decompressed.")
+    with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as ftmp, open(
+        dest, "wb"
+    ) as outfile:
+        for t in tarstrm:
+            ftmp.write(t)
+        ftmp.seek(0)
 
-    file_obj = io.BytesIO()
-    for ts in tarstrm:
-        file_obj.write(ts)
+        tar = tarfile.open(mode="r", fileobj=ftmp)
+        infile = tar.extractfile(src.name)
 
-    file_obj.seek(0)
-    tar = tarfile.open(mode="r", fileobj=file_obj)
-    content = tar.extractfile(src.name)
-
-    return content
+        buffer = True
+        while buffer:
+            buffer = infile.read(1024)
+            outfile.write(buffer)

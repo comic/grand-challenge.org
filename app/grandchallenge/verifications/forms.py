@@ -40,14 +40,19 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
 
         domain = email.split("@")[1].lower()
 
-        if domain in settings.DISALLOWED_EMAIL_DOMAINS:
-            raise ValidationError(f"Email hosted by {domain} cannot be used")
+        if domain in FREE_EMAIL_DOMAINS:
+            raise ValidationError(
+                f"Email hosted by {domain} cannot be used for verification, "
+                "please provide your work, corporate or institutional email."
+            )
 
-        if domain in FREE_EMAIL_DOMAINS or _is_stoplisted(
+        if domain in settings.DISALLOWED_EMAIL_DOMAINS or _is_stoplisted(
             _domain_parts(email)
         ):
             raise ValidationError(
-                f"Email hosted by {domain} cannot be used for verification"
+                f"Email hosted by {domain} cannot be used for verification "
+                "due to abuse. Please contact support to verify your "
+                "account another way."
             )
 
         if (

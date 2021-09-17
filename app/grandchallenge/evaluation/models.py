@@ -2,7 +2,6 @@ import logging
 from datetime import timedelta
 from urllib.parse import parse_qs, urljoin, urlparse
 
-from actstream import action
 from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -34,6 +33,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -324,7 +324,8 @@ class Phase(UUIDModel):
         default=10,
         help_text=(
             "The limit on the number of times that a user can make a "
-            "submission over the submission limit period."
+            "submission over the submission limit period. "
+            "Set this to 0 to close submissions for this phase."
         ),
     )
     submission_limit_period = models.PositiveSmallIntegerField(
@@ -802,13 +803,21 @@ class Evaluation(UUIDModel, ComponentJob):
         res = super().update_status(*args, **kwargs)
 
         if self.status == self.FAILURE:
-            action.send(
-                sender=self, verb="failed", target=self.submission.phase
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
+                actor=self.submission.creator,
+                message="failed",
+                action_object=self,
+                target=self.submission.phase,
             )
 
         if self.status == self.SUCCESS:
-            action.send(
-                sender=self, verb="succeeded", target=self.submission.phase
+            Notification.send(
+                type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
+                actor=self.submission.creator,
+                message="succeeded",
+                action_object=self,
+                target=self.submission.phase,
             )
 
         return res

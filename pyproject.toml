@@ -96,6 +96,8 @@ django-activity-stream = "*"
 django-stdimage = "*"
 django-permissions-policy = "*"
 aws-xray-sdk = "*"
+django-deprecate-fields = "*"
+django-add-default-value = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

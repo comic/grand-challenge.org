@@ -1,5 +1,6 @@
 from typing import Optional
 
+from guardian.shortcuts import assign_perm
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -165,27 +166,35 @@ class JobPostSerializer(JobSerializer):
     def create(self, validated_data):
         inputs_data = validated_data.pop("inputs")
         job = Job.objects.create(**validated_data)
+
+        # TODO AUG2021 JM permission management should be done in 1 place
+        # The execution for jobs over the API or non-sessions needs
+        # to be cleaned up. See callers of `execute_jobs`.
+        editors_group = job.algorithm_image.algorithm.editors_group
+        job.viewer_groups.add(editors_group)
+        assign_perm("algorithms.view_logs", editors_group, job)
+
         component_interface_values = []
         upload_pks = {}
-        algorithm_input_pks = {
-            a.pk for a in job.algorithm_image.algorithm.inputs.all()
-        }
-        input_pks = {i["interface"].pk for i in inputs_data}
-
         for input_data in inputs_data:
             # check for upload_session in input
             upload_session = input_data.pop("upload_session", None)
             civ = ComponentInterfaceValue(**input_data)
             if upload_session:
-                upload_pks[civ.pk] = upload_session.pk
-            else:
                 # CIVs with upload sessions cannot be validated, done in
                 # run_algorithm_job_for_inputs
+                civ.save()
+                upload_pks[civ.pk] = upload_session.pk
+            else:
                 civ.full_clean()
-            civ.save()
+                civ.save()
             component_interface_values.append(civ)
 
         # use interface defaults if no value was provided
+        algorithm_input_pks = {
+            a.pk for a in job.algorithm_image.algorithm.inputs.all()
+        }
+        input_pks = {i["interface"].pk for i in inputs_data}
         defaults = job.algorithm_image.algorithm.inputs.filter(
             id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=False,
@@ -200,6 +209,6 @@ class JobPostSerializer(JobSerializer):
             component_interface_values.append(civ)
 
         job.inputs.add(*component_interface_values)
-        job.save()
         job.run_job(upload_pks=upload_pks)
+
         return job

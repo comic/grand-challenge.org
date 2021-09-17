@@ -1,6 +1,14 @@
-class ComponentException(Exception):
+class ComponentBaseException(Exception):
+    pass
+
+
+class ComponentException(ComponentBaseException):
     """These exceptions will be sent to the user"""
 
+    pass
 
-class ComponentJobActive(Exception):
-    """Raised if a job is still active"""
+
+class RetryStep(ComponentBaseException):
+    """Raised to signal that this step should be retried"""
+
+    pass

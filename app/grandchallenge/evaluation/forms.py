@@ -141,11 +141,13 @@ class MethodForm(SaveFormInitMixin, forms.ModelForm):
         widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
         label="Evaluation Method Container",
         validators=[
-            ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
+            ExtensionValidator(
+                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
+            )
         ],
         help_text=(
-            ".tar.gz archive of the container image produced from the command "
-            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
+            ".tar.xz archive of the container image produced from the command "
+            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
@@ -252,9 +254,7 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["chunked_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}",
-                Algorithm,
+                user, "algorithms.change_algorithm", Algorithm,
             ).order_by("title")
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()

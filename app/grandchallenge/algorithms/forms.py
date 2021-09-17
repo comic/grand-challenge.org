@@ -111,6 +111,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "social_image",
             "public",
             "use_flexible_inputs",
+            "repo_name",
             "inputs",
             "outputs",
             "workstation",
@@ -120,6 +121,9 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "job_create_page_markdown",
             "additional_terms_markdown",
             "result_template",
+            "image_requires_gpu",
+            "image_requires_memory_gb",
+            "recurse_submodules",
         )
         widgets = {
             "description": TextInput,
@@ -173,26 +177,31 @@ class AlgorithmImageForm(ModelForm):
         widget=uploader.AjaxUploadWidget(multifile=False),
         label="Algorithm Image",
         validators=[
-            ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
+            ExtensionValidator(
+                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
+            )
         ],
         help_text=(
-            ".tar.gz archive of the container image produced from the command "
-            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
+            ".tar.xz archive of the container image produced from the command "
+            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
     requires_memory_gb = IntegerField(
         min_value=1,
         max_value=24,
-        initial=16,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
 
     def __init__(self, *args, user, **kwargs):
+        algorithm = kwargs.pop("algorithm")
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.fields["chunked_upload"].widget.user = user
-        self.fields["requires_gpu"].initial = True
+        self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
+        self.fields[
+            "requires_memory_gb"
+        ].initial = algorithm.image_requires_memory_gb
 
     def clean_chunked_upload(self):
         files = self.cleaned_data["chunked_upload"]
