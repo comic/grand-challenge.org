@@ -157,9 +157,10 @@ class RawImageUploadSessionViewSet(
 
         if serializer.is_valid():
             try:
-                self.validate_staged_files(
-                    staged_files=upload_session.rawimagefile_set.all()
-                )
+                pass
+                # self.validate_staged_files(
+                #    staged_files=upload_session.rawimagefile_set.all()
+                # )
             except ValidationError as e:
                 return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
