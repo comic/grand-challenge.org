@@ -1,4 +1,5 @@
 {% load url %}
+{% load static %}
 
 {% if challenge %}
     <div class="row mb-3 mx-0 border-bottom">
@@ -88,3 +89,5 @@
         </div>
     </div>
 {% endif %}
+
+<script src="{% static 'js/challenges/dropdown.js' %}" type="module" defer></script>

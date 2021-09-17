@@ -72,7 +72,7 @@
 
             {% block outer_content %}
                 {% block topbar %}
-                    {% include 'challenges/challenge_topbar.html' with challenge=challenge %}
+                    {% include 'challenges/challenge_topbar.html' %}
                 {% endblock %}
                 {% block topbar2 %}{% endblock %}
                 <div class="row">
@@ -104,9 +104,6 @@
 {% block script %}
     {% include "grandchallenge/partials/script.html" %}
     {% include "timezones/partials/detect_timezone.html" %}
-    {% if challenge %}
-        <script src="{% static 'js/challenges/dropdown.js' %}" type="module"></script>
-    {% endif %}
 {% endblock %}
 
 </body>
