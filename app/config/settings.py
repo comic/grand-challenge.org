@@ -1099,6 +1099,18 @@ CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
 CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
 CODEBUILD_REGION = os.environ.get("CODEBUILD_REGION", "")
 
+OPEN_SOURCE_LICENSES = [
+    "Apache License 2.0",
+    "MIT License",
+    "GNU GPLv3",
+    "GNU AGPLv3",
+    "GNU GPLv3",
+    "GNU LGPLv3",
+    "Mozilla Public License 2.0",
+    "Boost Software License 1.0",
+    "The Unlicense",
+]
+
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 

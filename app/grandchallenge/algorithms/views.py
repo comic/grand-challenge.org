@@ -74,6 +74,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.codebuild.models import Build
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -208,6 +209,9 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             {
                 "pending_permission_requests": pending_permission_requests,
                 "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}",
+                "builds": Build.objects.filter(
+                    algorithm_image__algorithm=self.object
+                ),
             }
         )
 
@@ -283,6 +287,11 @@ class AlgorithmImageCreate(
     @property
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"algorithm": self.algorithm})
+        return kwargs
 
     def get_permission_object(self):
         return self.algorithm
@@ -800,13 +809,15 @@ class AlgorithmAddRepo(
             timeout=5,
         ).json()
 
-        response = requests.get(
-            f"https://api.github.com/user/installations/{installations['installations'][0]['id']}/repositories",
-            headers=headers,
-            timeout=5,
-        ).json()
+        repos = []
+        for installation in installations.get("installations", []):
+            response = requests.get(
+                f"https://api.github.com/user/installations/{installation['id']}/repositories",
+                headers=headers,
+                timeout=5,
+            ).json()
 
-        repos = [repo["full_name"] for repo in response["repositories"]]
+            repos += [repo["full_name"] for repo in response["repositories"]]
 
         kwargs.update({"repos": repos})
         return kwargs
