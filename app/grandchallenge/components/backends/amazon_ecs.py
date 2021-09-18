@@ -213,13 +213,13 @@ class AmazonECSExecutor:
 
         loglines = []
 
-        for e in events:
-            message = json.loads(e["message"])
+        for event in events:
+            message = json.loads(event["message"])
 
             if message["source"] == source:
-                loglines.append(
-                    f"{self._timestamp_to_datetime(e['timestamp']).isoformat()} {message['log']}"
-                )
+                timestamp = self._timestamp_to_datetime(event["timestamp"])
+                log = message["log"].replace("\x00", "")
+                loglines.append(f"{timestamp.isoformat()} {log}")
 
         return loglines
 
