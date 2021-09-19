@@ -805,7 +805,7 @@ class ComponentJob(models.Model):
         raise NotImplementedError
 
     @property
-    def signature(self):
+    def signature_kwargs(self):
         kwargs = {
             "kwargs": {
                 "job_pk": self.pk,
@@ -829,6 +829,11 @@ class ComponentJob(models.Model):
         if getattr(self.container, "queue_override", None):
             kwargs["options"].update({"queue": self.container.queue_override})
 
+        return kwargs
+
+    @property
+    def signature(self):
+        kwargs = self.signature_kwargs
         return (
             provision_job.signature(**kwargs)
             | execute_job.signature(**kwargs)

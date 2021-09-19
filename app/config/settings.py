@@ -826,10 +826,19 @@ CORS_ALLOW_CREDENTIALS = True
 
 CELERY_TASK_DECORATOR_KWARGS = {
     "acks-late-2xlarge": {
+        # For idempotent tasks that take a long time (<7200s)
+        # or require a large amount of memory
         "acks_late": True,
         "reject_on_worker_lost": True,
         "queue": "acks-late-2xlarge",
-    }
+    },
+    "acks-late-micro-short": {
+        # For idempotent tasks that take a short time (<300s)
+        # and do not require a large amount of memory
+        "acks_late": True,
+        "reject_on_worker_lost": True,
+        "queue": "acks-late-micro-short",
+    },
 }
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")

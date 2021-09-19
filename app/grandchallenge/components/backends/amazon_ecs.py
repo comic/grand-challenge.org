@@ -306,7 +306,7 @@ class AmazonECSExecutor:
                 # Add a second essential container that kills the task
                 # once the time limit is reached.
                 # See https://github.com/aws/containers-roadmap/issues/572
-                "command": ["sleep", str(settings.CELERY_TASK_TIME_LIMIT)],
+                "command": ["sleep", "7200"],  # TODO customize timeout
                 "image": "public.ecr.aws/amazonlinux/amazonlinux:2",
                 "name": self._timeout_container_name,
             },
