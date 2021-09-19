@@ -284,6 +284,7 @@ def execute_job(
         # This call is potentially very long
         executor.execute()
     except RetryStep:
+        job.update_status(status=job.PROVISIONED)
         try:
             self.retry(
                 countdown=RETRY_INTERVAL_SECONDS,
