@@ -968,7 +968,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">signature_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;kwargs&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;job_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
@@ -992,6 +992,11 @@
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">,</span> <span class="s2">&quot;queue_override&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;queue&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">queue_override</span><span class="p">})</span>
 
+        <span class="k">return</span> <span class="n">kwargs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">provision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="o">|</span> <span class="n">execute_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
