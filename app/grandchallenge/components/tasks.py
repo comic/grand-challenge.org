@@ -450,6 +450,22 @@ def parse_job_outputs(
         executor.deprovision()
 
 
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def deprovision(
+    *,
+    job_pk: uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+):
+    """Task that can be called manually in case of errors"""
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
+    executor = job.get_executor(backend=backend)
+    executor.deprovision()
+
+
 @shared_task
 def mark_long_running_jobs_failed(
     *, app_label: str, model_name: str, extra_filters: Dict[str, str] = None
