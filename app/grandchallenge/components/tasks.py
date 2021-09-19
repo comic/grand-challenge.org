@@ -5,7 +5,6 @@ import tarfile
 import uuid
 from datetime import timedelta
 from tempfile import NamedTemporaryFile
-from time import sleep
 from typing import Dict
 
 import boto3
@@ -244,7 +243,7 @@ def provision_job(
 
 
 @shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"], bind=True
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"], bind=True
 )
 def execute_job(
     self,
@@ -286,15 +285,8 @@ def execute_job(
         executor.execute()
     except RetryStep:
         try:
-            # Setting a countdown on retry can result in the task getting
-            # stuck behind a long running job. By not setting the countdown
-            # the task will hopefully be queued on another worker.
-            # https://github.com/celery/celery/issues/2541
-            # Setting sleep here is a waste, but allows us to add a countdown.
-            # There must be a better way, maybe not limiting the retries?
-            sleep(RETRY_INTERVAL_SECONDS)
             self.retry(
-                countdown=0,
+                countdown=RETRY_INTERVAL_SECONDS,
                 max_retries=3600
                 * 24
                 * RETRY_DURATION_DAYS
@@ -344,7 +336,7 @@ def execute_job(
 
 
 @shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"], bind=True
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"], bind=True
 )
 def await_job_completion(
     self,
@@ -377,15 +369,8 @@ def await_job_completion(
         executor.await_completion()
     except RetryStep:
         try:
-            # Setting a countdown on retry can result in the task getting
-            # stuck behind a long running job. By not setting the countdown
-            # the task will hopefully be queued on another worker.
-            # https://github.com/celery/celery/issues/2541
-            # Setting sleep here is a waste, but allows us to add a countdown.
-            # There must be a better way, maybe not limiting the retries?
-            sleep(RETRY_INTERVAL_SECONDS)
             self.retry(
-                countdown=0,
+                countdown=RETRY_INTERVAL_SECONDS,
                 max_retries=3600
                 * 24
                 * RETRY_DURATION_DAYS
