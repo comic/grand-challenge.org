@@ -23,7 +23,7 @@
                         <li class="breadcrumb-item"><a href="{{ forum.challenge.get_absolute_url }}">
                             {% firstof forum.challenge.title forum.challenge.short_name %}</a></li>
                         <li class="breadcrumb-item"><a
-                            href="{% url 'forum:forum' forum.slug forum.id %}">{{ forum.name }}</a></li>
+                            href="{% url 'forum:forum' forum.slug forum.id %}">Forum</a></li>
                         {% if topic %}
                             <li class="breadcrumb-item"><a
                                 href="{% url 'forum_conversation:topic' forum.slug forum.id topic.slug topic.id %}">{{ topic.subject }}</a>
