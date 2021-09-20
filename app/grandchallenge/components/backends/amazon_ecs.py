@@ -123,7 +123,13 @@ class AmazonECSExecutor:
         return outputs
 
     def deprovision(self):
-        shutil.rmtree(self._job_directory)
+        try:
+            shutil.rmtree(self._job_directory)
+        except FileNotFoundError:
+            logger.warning(
+                f"Directory not found when trying to remove it: {self._job_directory}"
+            )
+
         self._stop_running_tasks()
         self._deregister_task_definitions()
 
