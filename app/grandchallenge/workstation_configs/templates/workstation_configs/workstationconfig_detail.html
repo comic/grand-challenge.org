@@ -103,6 +103,24 @@
             </td>
         </tr>
         <tr>
+            <td class="font-weight-bold">Image switcher plugin</td>
+            <td>
+                <i class="fas {% if object.show_image_switcher_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Algorithm output plugin</td>
+            <td>
+                <i class="fas {% if object.show_algorithm_output_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Overlay plugin</td>
+            <td>
+                <i class="fas {% if object.show_overlay_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
             <td class="font-weight-bold">Invert tool</td>
             <td>
                 <i class="fas {% if object.show_invert_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
@@ -127,13 +145,21 @@
             </td>
         </tr>
         <tr>
-            <td class="font-weight-bold">Enable contrast enhancement preprocessing (fundus)</td>
-            <td><pre>{{ object.enable_contrast_enhancement }}</pre></td>
+            <td class="font-weight-bold">Overlay selection tool</td>
+            <td>
+                <i class="fas {% if object.show_overlay_selection_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
         </tr>
         <tr>
-            <td class="font-weight-bold">Client rendered sidebar</td>
+            <td class="font-weight-bold">LUT selection tool</td>
             <td>
-                <i class="fas {% if object.client_rendered_sidebar %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                <i class="fas {% if object.show_lut_selection_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Enable contrast enhancement preprocessing (fundus)</td>
+            <td>
+                <i class="fas {% if object.enable_contrast_enhancement %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
         <tr>
