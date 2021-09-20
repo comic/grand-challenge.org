@@ -51,3 +51,9 @@ def get_content_type(follow_object):
     except AttributeError:
         ct = None
     return ct
+
+
+@register.simple_tag()
+def is_participant(user, challenge):
+    if challenge.is_participant(user):
+        return True
