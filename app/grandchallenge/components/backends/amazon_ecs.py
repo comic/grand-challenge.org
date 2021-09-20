@@ -61,9 +61,11 @@ class AmazonECSExecutor:
 
     def execute(self):
         if not self._list_task_arns(desired_status=TaskStatus.RUNNING):
-            task_definition_arn = self._register_task_definition()
             try:
+                task_definition_arn = self._register_task_definition()
                 self._run_task(task_definition_arn=task_definition_arn)
+            except self._ecs_client.exceptions.ThrottlingException as e:
+                raise RetryStep("Requests throttled") from e
             except self._ecs_client.exceptions.ClientException as e:
                 if (
                     e.response["Error"]["Message"]
@@ -123,7 +125,13 @@ class AmazonECSExecutor:
         return outputs
 
     def deprovision(self):
-        shutil.rmtree(self._job_directory)
+        try:
+            shutil.rmtree(self._job_directory)
+        except FileNotFoundError:
+            logger.warning(
+                f"Directory not found when trying to remove it: {self._job_directory}"
+            )
+
         self._stop_running_tasks()
         self._deregister_task_definitions()
 
