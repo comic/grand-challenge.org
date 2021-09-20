@@ -14,7 +14,7 @@
 
 {% block body %}
     {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
-    {% if forum %}
+    {% if forum.challenge %}
         <div class="container-fluid bg-primary">
             <div class="container">
                 <nav aria-label="breadcrumb">
