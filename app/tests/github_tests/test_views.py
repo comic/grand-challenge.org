@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 from unittest.mock import patch
 
 import pytest
@@ -8,6 +9,7 @@ from requests.models import Response
 from grandchallenge.github.models import GitHubWebhookMessage
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory
+from tests.github_tests.factories import GitHubUserTokenFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
@@ -17,10 +19,11 @@ def test_github_webhook(client, settings):
     settings.GITHUB_WEBHOOK_SECRET = "secret"
     user = UserFactory()
     VerificationFactory(user=user, is_verified=True)
-
+    token = GitHubUserTokenFactory(user=user)
+    data = {"test": "test", "sender": {"id": token.github_user_id}}
     signature = hmac.new(
         bytes(settings.GITHUB_WEBHOOK_SECRET, encoding="utf8"),
-        msg=b'{"test": "test"}',
+        msg=json.dumps(data).encode(),
         digestmod=hashlib.sha256,
     ).hexdigest()
     signature = f"sha256={signature}"
@@ -31,7 +34,7 @@ def test_github_webhook(client, settings):
         method=client.post,
         user=user,
         viewname="api:github-webhook",
-        data={"test": "test"},
+        data=data,
         content_type="application/json",
         HTTP_X_HUB_SIGNATURE_256=signature[:-1],
     )
@@ -44,7 +47,7 @@ def test_github_webhook(client, settings):
         method=client.post,
         user=user,
         viewname="api:github-webhook",
-        data={"test": "test"},
+        data=data,
         content_type="application/json",
         HTTP_X_HUB_SIGNATURE_256=signature,
     )
@@ -55,13 +58,14 @@ def test_github_webhook(client, settings):
 
 @pytest.mark.django_db
 @patch("grandchallenge.github.views.requests.post")
-def test_redirect_view(post, client):
+@patch("grandchallenge.github.views.requests.get")
+def test_redirect_view(get, post, client):
     resp = Response()
     resp.status_code = 200
     resp.headers["Content-Type"] = "application/json"
-    resp._content = b'{"access_token": "tok", "expires_in": "3600", "refresh_token": "ref", "refresh_token_expires_in":"7200"}'
+    resp._content = b'{"access_token": "tok", "expires_in": "3600", "refresh_token": "ref", "refresh_token_expires_in":"7200", "id": 1}'
     post.return_value = resp
-
+    get.return_value = resp
     user = UserFactory()
     response = get_view_for_user(
         client=client,

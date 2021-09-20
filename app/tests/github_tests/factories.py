@@ -1,6 +1,9 @@
-import factory
+from datetime import timedelta
 
-from grandchallenge.github.models import GitHubWebhookMessage
+import factory
+from django.utils import timezone
+
+from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 
 PAYLOAD = {
     "description": None,
@@ -22,3 +25,20 @@ class GitHubWebhookMessageFactory(factory.django.DjangoModelFactory):
 
     payload = PAYLOAD
     zipfile = None
+
+
+class GitHubUserTokenFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = GitHubUserToken
+
+    access_token = factory.fuzzy.FuzzyText(length=10, prefix="ghu")
+    access_token_expires = factory.fuzzy.FuzzyDateTime(
+        timezone.now() + timedelta(hours=8),
+        timezone.now() + timedelta(hours=12),
+    )
+    refresh_token = factory.fuzzy.FuzzyText(length=10, prefix="ghu")
+    refresh_token_expires = factory.fuzzy.FuzzyDateTime(
+        timezone.now() + timedelta(hours=12),
+        timezone.now() + timedelta(hours=24),
+    )
+    github_user_id = factory.sequence(lambda n: n)
