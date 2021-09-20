@@ -1,0 +1,94 @@
+{% load url %}
+{% load static %}
+
+{% if challenge %}
+    <div class="row mb-3 mx-0 border-bottom">
+        <div class="col-11 px-0">
+            <div class="nav-tab-dropdown-container">
+                <a class="d-lg-none btn btn-outline-dark mb-1"
+                   data-toggle="dropdown"
+                   href="#"
+                   role="button"
+                   aria-expanded="false"><i class="fas fa-bars"></i></a>
+                <ul class="nav nav-tabs border-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
+                           href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
+                            <i class="fas fa-info fa-fw"></i>&nbsp;&nbsp;Info
+                        </a>
+                    </li>
+
+                    {% if challenge.display_forum_link %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'forum:forum' or request.resolver_match.view_name == 'forum_conversation:topic' or request.resolver_match.view_name == 'forum_conversation:topic_create' or request.resolver_match.view_name == 'forum_tracking:mark_topics_read' or request.resolver_match.view_name == 'forum_conversation:topic_update' or request.resolver_match.view_name == 'forum_conversation:post_create' or request.resolver_match.view_name == 'forum_conversation:post_update' or request.resolver_match.view_name == 'forum_conversation:post_delete' %} show active {% endif %}"
+                               href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
+                                <i class="fas fa-comments fa-fw"></i>&nbsp;&nbsp;Forum
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% if challenge.use_evaluation %}
+                        {% if challenge.use_teams %}
+                            {% if "change_challenge" in challenge_perms or user_is_participant %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.app_name == 'teams' %}active{% endif %}"
+                                       href="{% url 'teams:list' challenge_short_name=challenge.short_name %}"> <i class="fas fa-users fa-fw"></i>&nbsp;&nbsp;Teams</a>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if "change_challenge" in challenge_perms or user_is_participant %}
+                            {% if challenge.use_workspaces %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.app_name == "workspaces" %}active{% endif %}"
+                                       href="{% url 'workspaces:create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                        <i class="fas fa-tools fa-fw"></i>&nbsp;Workspaces</a>
+                                </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' %}active{% endif %}"
+                                   href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                    <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
+                            </li>
+                        {% elif not challenge.hidden %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                    {% if "change_challenge" in challenge_perms %}
+                        <div class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'pages:update' or request.resolver_match.view_name == 'pages:delete' or request.resolver_match.view_name == 'pages:create' or request.resolver_match.view_name == 'update' or request.resolver_match.view_name == 'pages:list' or request.resolver_match.app_name == 'admins' or request.resolver_match.view_name == 'participants:list' or request.resolver_match.view_name == 'participants:registration-list' or request.resolver_match.view_name == 'evaluation:phase-update' or request.resolver_match.view_name == 'evaluation:create' or request.resolver_match.view_name == 'evaluation:method-list' or request.resolver_match.view_name == 'evaluation:method-create' %}active{% endif %}"
+                               href="{% url 'update' challenge_short_name=challenge.short_name %}">
+                                <i class="fas fa-cog fa-fw"></i>
+                                    Admin
+                            </a>
+                        </div>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-1 py-0 px-0 d-flex justify-content-end">
+            {% if challenge.use_registration_page %}
+                <div>
+                    <a class="btn btn-success"
+                       href="{% url 'participants:registration-create' challenge_short_name=challenge.short_name %}"
+                       role="button">
+                            Join
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="{% static 'js/challenges/dropdown.js' %}" type="module" defer></script>
+
+{% endif %}
