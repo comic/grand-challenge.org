@@ -805,34 +805,35 @@ class ComponentJob(models.Model):
         raise NotImplementedError
 
     @property
-    def signature(self):
+    def signature_kwargs(self):
         kwargs = {
             "kwargs": {
                 "job_pk": self.pk,
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
-                "backend": "grandchallenge.components.backends.docker.DockerExecutor",
+                "backend": settings.COMPONENTS_DEFAULT_BACKEND,
             },
-            "options": {
-                # TODO: remove this
-                "queue": "evaluation",
-            },
+            "options": {},
             "immutable": True,
         }
 
-        if self.container.requires_gpu:
-            kwargs["options"].update({"queue": "gpu"})
+        if not self.container.requires_gpu:
+            # TODO move these to ECS
+            kwargs["options"].update({"queue": "evaluation"})
+            kwargs["kwargs"].update(
+                {
+                    "backend": "grandchallenge.components.backends.docker.DockerExecutor"
+                }
+            )
 
         if getattr(self.container, "queue_override", None):
             kwargs["options"].update({"queue": self.container.queue_override})
 
-            if self.container.queue_override == "acks-late-2xlarge":
-                kwargs["kwargs"].update(
-                    {
-                        "backend": "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
-                    }
-                )
+        return kwargs
 
+    @property
+    def signature(self):
+        kwargs = self.signature_kwargs
         return (
             provision_job.signature(**kwargs)
             | execute_job.signature(**kwargs)

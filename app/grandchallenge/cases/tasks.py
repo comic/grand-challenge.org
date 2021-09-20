@@ -312,7 +312,7 @@ def build_images(*, upload_session_pk):
         upload_session.status = upload_session.FAILURE
         upload_session.save()
     except Exception:
-        upload_session.error_message = "An unknown error occurred"
+        upload_session.error_message = "An unexpected error occurred"
         upload_session.status = upload_session.FAILURE
         upload_session.save()
         raise

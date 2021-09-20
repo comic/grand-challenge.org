@@ -21,7 +21,7 @@ services:
 
   minio-private:
     # This is for private data, should not be exposed to the public
-    image: minio/minio
+    image: minio/minio:RELEASE.2021-09-15T04-54-25Z
     environment:
       MINIO_ACCESS_KEY: minioprivate
       MINIO_SECRET_KEY: minioprivate12345
@@ -36,7 +36,7 @@ services:
   minio-protected.localhost:
     # This is for protected data, should only be exposed via an internal link
     # in nginx
-    image: minio/minio
+    image: minio/minio:RELEASE.2021-09-15T04-54-25Z
     environment:
       MINIO_ACCESS_KEY: minioprotected
       MINIO_SECRET_KEY: minioprotected12345
@@ -52,7 +52,7 @@ services:
 
   minio-public:
     # This is for public data and is directly exposed to the internet (in dev)
-    image: minio/minio
+    image: minio/minio:RELEASE.2021-09-15T04-54-25Z
     environment:
       MINIO_ACCESS_KEY: miniopublic
       MINIO_SECRET_KEY: miniopublic12345
@@ -186,7 +186,7 @@ services:
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: "celery -A config worker -l info -c 1 -Q evaluation,gpu,acks-late-2xlarge"
+    command: "celery -A config worker -l info -c 1 -Q evaluation,gpu,acks-late-2xlarge,acks-late-micro-short"
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:
