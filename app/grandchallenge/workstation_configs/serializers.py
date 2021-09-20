@@ -101,7 +101,8 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_window_level_tool",
             "show_reset_tool",
             "show_overlay_selection_tool",
-            "show_lut_selection_tool" "enabled_preprocessors",
+            "show_lut_selection_tool",
+            "enabled_preprocessors",
             "auto_jump_center_of_gravity",
         ]
 
