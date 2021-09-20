@@ -93,12 +93,15 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_zoom_scale",
             "show_image_info_plugin",
             "show_display_plugin",
+            "show_image_switcher_plugin",
+            "show_algorithm_output_plugin",
+            "show_overlay_plugin",
             "show_invert_tool",
             "show_flip_tool",
             "show_window_level_tool",
             "show_reset_tool",
-            "enabled_preprocessors",
-            "client_rendered_sidebar",
+            "show_overlay_selection_tool",
+            "show_lut_selection_tool" "enabled_preprocessors",
             "auto_jump_center_of_gravity",
         ]
 

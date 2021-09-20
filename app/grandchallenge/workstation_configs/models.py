@@ -232,16 +232,22 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     show_image_info_plugin = models.BooleanField(default=True)
     show_display_plugin = models.BooleanField(default=True)
+    show_image_switcher_plugin = models.BooleanField(default=True)
+    show_algorithm_output_plugin = models.BooleanField(
+        default=True,
+        help_text="Show algorithm outputs with navigation controls",
+    )
+    show_overlay_plugin = models.BooleanField(default=True)
     show_invert_tool = models.BooleanField(default=True)
     show_flip_tool = models.BooleanField(default=True)
     show_window_level_tool = models.BooleanField(default=True)
     show_reset_tool = models.BooleanField(default=True)
+    show_overlay_selection_tool = models.BooleanField(default=True)
+    show_lut_selection_tool = models.BooleanField(default=True)
+
     enable_contrast_enhancement = models.BooleanField(
         default=False,
         verbose_name="Enable contrast enhancement preprocessing (fundus)",
-    )
-    client_rendered_sidebar = models.BooleanField(
-        default=True, help_text="Use client side rendering for the side bar"
     )
     auto_jump_center_of_gravity = models.BooleanField(
         default=True,
