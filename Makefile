@@ -105,4 +105,4 @@ algorithm_evaluation_fixtures:
 
 .PHONY: docs
 docs:
-	docker-compose run --rm -v `pwd`/docs:/docs -u $(USER_ID) web bash -c "cd /docs && make html"
+	docker-compose run --rm -u $(USER_ID) web bash -c "cd docs && make html"
