@@ -64,8 +64,6 @@ class AmazonECSExecutor:
             try:
                 task_definition_arn = self._register_task_definition()
                 self._run_task(task_definition_arn=task_definition_arn)
-            except self._ecs_client.exceptions.ThrottlingException as e:
-                raise RetryStep("Requests throttled") from e
             except self._ecs_client.exceptions.ClientException as e:
                 if (
                     e.response["Error"]["Message"]
