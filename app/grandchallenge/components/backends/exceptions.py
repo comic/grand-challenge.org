@@ -12,3 +12,9 @@ class RetryStep(ComponentBaseException):
     """Raised to signal that this step should be retried"""
 
     pass
+
+
+class IrrelevantEvent(ComponentBaseException):
+    """Raised if an irrelevant event is passed"""
+
+    pass

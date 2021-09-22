@@ -26,9 +26,6 @@ from django_extensions.db.fields import AutoSlugField
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
-    await_job_completion,
-    execute_job,
-    parse_job_outputs,
     provision_job,
     validate_docker_image,
 )
@@ -833,13 +830,7 @@ class ComponentJob(models.Model):
 
     @property
     def signature(self):
-        kwargs = self.signature_kwargs
-        return (
-            provision_job.signature(**kwargs)
-            | execute_job.signature(**kwargs)
-            | await_job_completion.signature(**kwargs)
-            | parse_job_outputs.signature(**kwargs)
-        )
+        return provision_job.signature(**self.signature_kwargs)
 
     @property
     def animate(self):

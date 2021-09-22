@@ -30,6 +30,8 @@ class TaskStatus(Enum):
 
 
 class AmazonECSExecutor:
+    IS_EVENT_DRIVEN = True
+
     def __init__(
         self,
         *,
@@ -50,8 +52,17 @@ class AmazonECSExecutor:
         if self._memory_limit < 4 or self._memory_limit > 30:
             raise RuntimeError("AWS only supports 4g to 30g of memory")
 
+        self.__duration = None
+
         self.__ecs_client = None
         self.__logs_client = None
+
+    @staticmethod
+    def get_job_params(*, event):
+        task_definition_arn = event["taskDefinitionArn"]
+        job_id = task_definition_arn.split("/")[-1].split(":")[0]
+        job_app_label, job_model_name, job_pk = job_id.split("-", 2)
+        return job_app_label, job_model_name, job_pk
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()
@@ -60,51 +71,35 @@ class AmazonECSExecutor:
         )
 
     def execute(self):
-        if not self._list_task_arns(desired_status=TaskStatus.RUNNING):
-            try:
-                task_definition_arn = self._register_task_definition()
-                self._run_task(task_definition_arn=task_definition_arn)
-            except self._ecs_client.exceptions.ClientException as e:
-                if (
-                    e.response["Error"]["Message"]
-                    == "Tasks provisioning capacity limit exceeded."
-                ):
-                    raise RetryStep("Capacity Limit Exceeded") from e
-                else:
-                    raise
+        task_definition_arn = self._register_task_definition()
+        self._run_task(task_definition_arn=task_definition_arn)
+
+    def handle_event(self, *, event):
+        task_description = self._get_task_description(
+            task_arn=event["taskArn"]
+        )
+
+        if task_description["stopCode"] == "TaskFailedToStart":
+            self._run_task(task_definition_arn="taskDefinitionArn")
+
+        container_exit_codes = {
+            c["name"]: int(c["exitCode"])
+            for c in task_description["containers"]
+        }
+        self._set_duration(task_description=task_description)
+
+        if container_exit_codes[self._main_container_name] == 0:
+            # Job's a good un
+            return
+        elif container_exit_codes[self._main_container_name] == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded the memory limit "
+                f"of {self._memory_limit}g."
+            )
+        elif container_exit_codes[self._timeout_container_name] == 0:
+            raise ComponentException("Time limit exceeded")
         else:
-            logger.warning("A task is already running for this job")
-
-    def await_completion(self):
-        task_description = self._latest_task_description
-        last_status = task_description["lastStatus"]
-
-        if last_status == TaskStatus.STOPPED.value:
-            # TODO Handle jobs killed by spot instance loss
-
-            if task_description["stopCode"] == "TaskFailedToStart":
-                self.execute()
-                raise RetryStep("Job re-queued")
-
-            container_exit_codes = {
-                c["name"]: int(c["exitCode"])
-                for c in task_description["containers"]
-            }
-
-            if container_exit_codes[self._main_container_name] == 0:
-                # Job's a good un
-                return
-            elif container_exit_codes[self._main_container_name] == 137:
-                raise ComponentException(
-                    "The container was killed as it exceeded the memory limit "
-                    f"of {self._memory_limit}g."
-                )
-            elif container_exit_codes[self._timeout_container_name] == 0:
-                raise ComponentException("Time limit exceeded")
-            else:
-                raise ComponentException(user_error(self.stderr))
-        else:
-            raise RetryStep(f"Job active: {last_status}")
+            raise ComponentException(user_error(self.stderr))
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -151,11 +146,7 @@ class AmazonECSExecutor:
 
     @property
     def duration(self):
-        try:
-            return self._latest_task_duration
-        except Exception as e:
-            logger.warning(f"Could not determine duration: {e}")
-            return None
+        return self.__duration
 
     @property
     def _ecs_client(self):
@@ -195,18 +186,8 @@ class AmazonECSExecutor:
     def _timeout_container_name(self):
         return f"{self._main_container_name}-timeout"
 
-    @property
-    def _latest_task_description(self):
-        # On ECS the tasks can only have a desiredStatus of RUNNING or
-        # STOPPED, so look for the running tasks first, and if nothing is
-        # found, it should have a desired status of STOPPED
-        task_arns = self._list_task_arns(desired_status=TaskStatus.RUNNING)
-        task_arns += self._list_task_arns(desired_status=TaskStatus.STOPPED)
-        task_descriptions = self._list_task_descriptions(task_arns=task_arns)
-
-        task_descriptions.sort(key=lambda x: x["createdAt"], reverse=True)
-
-        return task_descriptions[0]
+    def _get_task_description(self, *, task_arn):
+        return self._list_task_descriptions(task_arns=[task_arn])[0]
 
     def _get_task_logs(self, *, source):
         response = self._logs_client.get_log_events(
@@ -234,10 +215,14 @@ class AmazonECSExecutor:
         """Convert AWS timestamps (ms from epoch) to datetime"""
         return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
-    @property
-    def _latest_task_duration(self):
-        task_description = self._latest_task_description
-        return task_description["stoppedAt"] - task_description["startedAt"]
+    def _set_duration(self, *, task_description):
+        try:
+            self.__duration = (
+                task_description["stoppedAt"] - task_description["startedAt"]
+            )
+        except Exception as e:
+            logger.warning(f"Could not determine duration: {e}")
+            self.__duration = None
 
     @property
     def _job_directory(self):
@@ -317,21 +302,22 @@ class AmazonECSExecutor:
                 "name": self._timeout_container_name,
             },
             {
+                "command": ["curl", "-I", "https://www.google.com"],  # TODO
                 "cpu": self._required_cpu_units,
                 "image": self._exec_image_repo_tag,
                 "memory": self._required_memory_units,
-                "mountPoints": [
-                    {
-                        "containerPath": "/input",
-                        "sourceVolume": f"{self._job_id}-input",
-                        "readOnly": True,
-                    },
-                    {
-                        "containerPath": "/output",
-                        "sourceVolume": f"{self._job_id}-output",
-                        "readOnly": False,
-                    },
-                ],
+                # "mountPoints": [
+                #     {
+                #         "containerPath": "/input",
+                #         "sourceVolume": f"{self._job_id}-input",
+                #         "readOnly": True,
+                #     },
+                #     {
+                #         "containerPath": "/output",
+                #         "sourceVolume": f"{self._job_id}-output",
+                #         "readOnly": False,
+                #     },
+                # ],
                 "name": self._main_container_name,
                 "resourceRequirements": self._resource_requirements,
             },
@@ -378,31 +364,43 @@ class AmazonECSExecutor:
             networkMode="none",
             requiresCompatibilities=["EC2"],
             # TODO set tags
-            volumes=[
-                {
-                    "name": f"{self._job_id}-input",
-                    "host": {"sourcePath": str(self._input_directory)},
-                },
-                {
-                    "name": f"{self._job_id}-output",
-                    "host": {"sourcePath": str(self._output_directory)},
-                },
-            ],
+            # volumes=[
+            #     {
+            #         "name": f"{self._job_id}-input",
+            #         "host": {"sourcePath": str(self._input_directory)},
+            #     },
+            #     {
+            #         "name": f"{self._job_id}-output",
+            #         "host": {"sourcePath": str(self._output_directory)},
+            #     },
+            # ],
         )
         return response["taskDefinition"]["taskDefinitionArn"]
 
     def _run_task(self, *, task_definition_arn):
-        self._ecs_client.run_task(
-            cluster=self._cluster_arn,
-            count=1,
-            enableExecuteCommand=False,
-            enableECSManagedTags=True,
-            group=self._log_group_name,
-            placementConstraints=[{"type": "distinctInstance"}],
-            propagateTags="TASK_DEFINITION",
-            referenceId=self._job_id,
-            taskDefinition=task_definition_arn,
-        )
+        if not self._list_task_arns(desired_status=TaskStatus.RUNNING):
+            try:
+                self._ecs_client.run_task(
+                    cluster=self._cluster_arn,
+                    count=1,
+                    enableExecuteCommand=False,
+                    enableECSManagedTags=True,
+                    group=self._log_group_name,
+                    placementConstraints=[{"type": "distinctInstance"}],
+                    propagateTags="TASK_DEFINITION",
+                    referenceId=self._job_id,
+                    taskDefinition=task_definition_arn,
+                )
+            except self._ecs_client.exceptions.ClientException as e:
+                if (
+                    e.response["Error"]["Message"]
+                    == "Tasks provisioning capacity limit exceeded."
+                ):
+                    raise RetryStep("Capacity Limit Exceeded") from e
+                else:
+                    raise
+        else:
+            logger.warning("A task is already running for this job")
 
     def _list_task_arns(
         self, *, desired_status, next_token="", task_arns=None
