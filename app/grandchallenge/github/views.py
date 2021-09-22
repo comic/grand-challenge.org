@@ -36,8 +36,7 @@ def github_webhook(request):
         )
 
     payload = json.loads(request.body)
-    if request.user.verification.is_verified:
-        GitHubWebhookMessage.objects.create(payload=payload)
+    GitHubWebhookMessage.objects.create(payload=payload)
 
     return HttpResponse("ok", content_type="text/plain")
 
@@ -70,6 +69,16 @@ def post_install_redirect(request):
         user_token = GitHubUserToken(user=request.user)
 
     user_token.update_from_payload(payload=resp.json())
+
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {user_token.access_token}",
+    }
+
+    github_user = requests.get(
+        "https://api.github.com/user", headers=headers, timeout=5,
+    ).json()
+    user_token.github_user_id = github_user["id"]
     user_token.save()
 
     slug = request.GET.get("state")

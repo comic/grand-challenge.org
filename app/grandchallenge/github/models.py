@@ -32,6 +32,7 @@ class GitHubUserToken(models.Model):
     access_token_expires = models.DateTimeField()
     refresh_token = models.CharField(max_length=128)
     refresh_token_expires = models.DateTimeField()
+    github_user_id = models.BigIntegerField(null=True)
 
     def __str__(self):
         return f"Token for {self.user}, expires at {self.access_token_expires}"
