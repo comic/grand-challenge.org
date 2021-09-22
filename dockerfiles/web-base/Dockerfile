@@ -46,6 +46,11 @@ WORKDIR /opt/poetry
 RUN poetry config virtualenvs.create false \
     && poetry install --no-dev --no-root
 
+# Apply patch to allow json SQS messages for celery (added in komby 5.1.0)
+RUN cd /usr/local/lib/python3.8/site-packages \
+    && apt-get install -y patchutils \
+    && curl https://github.com/celery/kombu/commit/2a704e35856bda908f5f122d1aaabebc6b469b0c.patch | filterdiff -p1 -x "t/*" | patch -p1
+
 ##################
 # TEST CONTAINER #
 ##################
