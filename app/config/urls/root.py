@@ -143,6 +143,12 @@ urlpatterns = [
         "publications/",
         include("grandchallenge.publications.urls", namespace="publications"),
     ),
+    path(
+        "documentation/",
+        include(
+            "grandchallenge.documentation.urls", namespace="documentation"
+        ),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
