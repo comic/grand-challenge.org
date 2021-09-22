@@ -107,8 +107,8 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_job_notification.signature(
-        kwargs={"job_pk": job.pk}, immutable=True
+    task_on_success = send_failed_job_notification.signature(
+        kwargs={"job_pk": str(job.pk)}, immutable=True
     )
 
     # check if all ComponentInterfaceValue's have a value.
@@ -122,10 +122,11 @@ def execute_algorithm_job_for_inputs(*, job_pk):
                 f"{oxford_comma([c.interface.title for c in missing_inputs])}"
             ),
         )
-        on_commit(linked_task.apply_async)
+        on_commit(task_on_success.apply_async)
     else:
-        workflow = job.signature | linked_task
-        on_commit(workflow.apply_async)
+        job.task_on_success = task_on_success
+        job.save()
+        on_commit(job.execute)
 
 
 @shared_task
@@ -139,10 +140,10 @@ def create_algorithm_jobs_for_session(
     algorithm_editors = [algorithm_image.algorithm.editors_group]
 
     # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_session_jobs_notifications.signature(
+    task_on_success = send_failed_session_jobs_notifications.signature(
         kwargs={
-            "session_pk": session.pk,
-            "algorithm_pk": algorithm_image.algorithm.pk,
+            "session_pk": str(session.pk),
+            "algorithm_pk": str(algorithm_image.algorithm.pk),
         },
         immutable=True,
     )
@@ -165,7 +166,7 @@ def create_algorithm_jobs_for_session(
         creator=session.creator,
         extra_viewer_groups=algorithm_editors,
         extra_logs_viewer_groups=algorithm_editors,
-        linked_task=linked_task,
+        task_on_success=task_on_success,
     )
 
     unscheduled_jobs = len(civ_sets) - len(new_jobs)
@@ -225,7 +226,7 @@ def create_algorithm_jobs_for_archive(
                 extra_viewer_groups=archive_groups,
                 # NOTE: no emails in case the logs leak data
                 # to the algorithm editors
-                linked_task=None,
+                task_on_success=None,
             )
 
 
@@ -236,8 +237,8 @@ def execute_jobs(
     creator=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
-    linked_task=None,
-    on_error=None,
+    task_on_success=None,
+    task_on_failure=None,
     max_jobs=None,
 ):
     """
@@ -261,11 +262,11 @@ def execute_jobs(
     extra_logs_viewer_groups
         The groups that will also get permission to view the logs for
         the jobs
-    linked_task
-        A task that is run after each job completion. This must be able
+    task_on_success
+        Celery task that is run on job success. This must be able
         to handle being called more than once, and in parallel.
-    on_error
-        A task that is run every time a job fails
+    task_on_failure
+        Celery task that is run on job failure
     max_jobs
         The maximum number of jobs to schedule
 
@@ -282,18 +283,12 @@ def execute_jobs(
         extra_viewer_groups=extra_viewer_groups,
         extra_logs_viewer_groups=extra_logs_viewer_groups,
         max_jobs=max_jobs,
+        task_on_success=task_on_success,
+        task_on_failure=task_on_failure,
     )
 
     for j in jobs:
-        workflow = j.signature
-
-        if linked_task is not None:
-            workflow |= linked_task
-
-        if on_error is not None:
-            workflow = workflow.on_error(on_error)
-
-        on_commit(workflow.apply_async)
+        on_commit(j.execute)
 
     return jobs
 
@@ -306,6 +301,8 @@ def create_algorithm_jobs(
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
     max_jobs=None,
+    task_on_success=None,
+    task_on_failure=None,
 ):
     """
     Creates algorithm jobs for sets of component interface values
@@ -326,6 +323,11 @@ def create_algorithm_jobs(
         the jobs
     max_jobs
         The maximum number of jobs to schedule
+    task_on_success
+        Celery task that is run on job success. This must be able
+        to handle being called more than once, and in parallel.
+    task_on_failure
+        Celery task that is run on job failure
     """
     civ_sets = filter_civs_for_algorithm(
         civ_sets=civ_sets, algorithm_image=algorithm_image
@@ -351,7 +353,10 @@ def create_algorithm_jobs(
     jobs = []
     for civ_set in civ_sets:
         j = Job.objects.create(
-            creator=creator, algorithm_image=algorithm_image
+            creator=creator,
+            algorithm_image=algorithm_image,
+            task_on_success=task_on_success,
+            task_on_failure=task_on_failure,
         )
         j.inputs.set(civ_set)
 

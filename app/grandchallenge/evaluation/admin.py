@@ -35,7 +35,7 @@ class SubmissionAdmin(admin.ModelAdmin):
 def requeue_evaluations(modeladmin, request, queryset):
     queryset.update(status=Evaluation.RETRY)
     for evaluation in queryset:
-        on_commit(evaluation.signature.apply_async)
+        on_commit(evaluation.execute)
 
 
 requeue_evaluations.short_description = "Requeue selected evaluations"

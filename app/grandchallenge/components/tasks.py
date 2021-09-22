@@ -24,7 +24,7 @@ from django.utils.timezone import now
 
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
-    IrrelevantEvent,
+    EventError,
     RetryStep,
 )
 from grandchallenge.components.emails import send_invalid_dockerfile_email
@@ -373,9 +373,11 @@ def handle_event(self, *, event, backend):
     Backend = import_string(backend)  # noqa: N806
 
     try:
-        job_app_label, job_model_name, job_pk = Backend.get_job_id(event=event)
-    except IrrelevantEvent:
-        logger.warning("Irrelevant event passed")
+        job_app_label, job_model_name, job_pk = Backend.get_job_params(
+            event=event
+        )
+    except EventError:
+        logger.warning("Event not handled by backend")
         return
 
     job = get_model_instance(
@@ -471,7 +473,6 @@ def parse_job_outputs(
     else:
         job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
-        on_commit(job.linked_task.apply_async)
     finally:
         executor.deprovision()
 

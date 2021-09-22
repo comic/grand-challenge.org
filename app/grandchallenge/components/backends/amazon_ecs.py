@@ -17,6 +17,7 @@ from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
+    EventError,
     RetryStep,
 )
 from grandchallenge.components.backends.utils import LOGLINES, user_error
@@ -59,9 +60,18 @@ class AmazonECSExecutor:
 
     @staticmethod
     def get_job_params(*, event):
-        task_definition_arn = event["taskDefinitionArn"]
+        try:
+            task_definition_arn = event["taskDefinitionArn"]
+            group = event["group"]
+        except KeyError as e:
+            raise EventError("Malformed event") from e
+
+        if group.starts_with("service:"):
+            raise EventError("Service events not handled")
+
         job_id = task_definition_arn.split("/")[-1].split(":")[0]
         job_app_label, job_model_name, job_pk = job_id.split("-", 2)
+
         return job_app_label, job_model_name, job_pk
 
     def provision(self, *, input_civs, input_prefixes):

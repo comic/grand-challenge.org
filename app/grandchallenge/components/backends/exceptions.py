@@ -14,7 +14,7 @@ class RetryStep(ComponentBaseException):
     pass
 
 
-class IrrelevantEvent(ComponentBaseException):
+class EventError(ComponentBaseException):
     """Raised if an irrelevant event is passed"""
 
     pass

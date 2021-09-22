@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
+from celery import signature
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -722,6 +723,18 @@ class ComponentJob(models.Model):
             "/input/foo/bar/<relative_path>"
         ),
     )
+    task_on_success = models.JSONField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Serialized task that is run on job success",
+    )
+    task_on_failure = models.JSONField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Serialized task that is run on job failure",
+    )
 
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
@@ -772,6 +785,11 @@ class ComponentJob(models.Model):
 
         self.save()
 
+        if self.status == self.SUCCESS:
+            on_commit(self.execute_task_on_success)
+        elif self.status in [self.FAILURE, self.CANCELLED]:
+            on_commit(self.execute_task_on_failure)
+
     @property
     def executor_kwargs(self):
         return {
@@ -805,7 +823,7 @@ class ComponentJob(models.Model):
     def signature_kwargs(self):
         kwargs = {
             "kwargs": {
-                "job_pk": self.pk,
+                "job_pk": str(self.pk),
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
                 "backend": settings.COMPONENTS_DEFAULT_BACKEND,
@@ -828,9 +846,16 @@ class ComponentJob(models.Model):
 
         return kwargs
 
-    @property
-    def signature(self):
-        return provision_job.signature(**self.signature_kwargs)
+    def execute(self):
+        return provision_job.signature(**self.signature_kwargs).apply_async()
+
+    def execute_task_on_success(self):
+        if self.task_on_success:
+            return signature(self.task_on_success).apply_async()
+
+    def execute_task_on_failure(self):
+        if self.task_on_failure:
+            return signature(self.task_on_failure).apply_async()
 
     @property
     def animate(self):

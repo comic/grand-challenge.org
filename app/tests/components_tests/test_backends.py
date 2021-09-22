@@ -105,7 +105,11 @@ def test_provision(tmp_path, settings):
 
     executor.provision(input_civs=civs, input_prefixes={})
     executor.execute()
-    executor.await_completion()
+    executor.handle_event(
+        event={
+            "taskArn": "algorithms-job-00000000-0000-0000-0000-000000000000"
+        }
+    )
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
         "algorithms",

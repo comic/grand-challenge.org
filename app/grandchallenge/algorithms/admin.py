@@ -46,7 +46,7 @@ def requeue_jobs(modeladmin, request, queryset):
     """
     queryset.update(status=Job.RETRY)
     for job in queryset:
-        on_commit(job.signature.apply_async)
+        on_commit(job.execute)
 
 
 requeue_jobs.short_description = "Requeue selected jobs"

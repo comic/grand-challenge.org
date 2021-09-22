@@ -29,6 +29,7 @@ from tests.evaluation_tests.factories import (
     MethodFactory,
     SubmissionFactory,
 )
+from tests.utils import recurse_callbacks
 
 
 @pytest.mark.django_db
@@ -50,11 +51,12 @@ def test_submission_evaluation(
         _ = method.image.url
 
     # This will create an evaluation, and we'll wait for it to be executed
-    with capture_on_commit_callbacks(execute=True):
-        with capture_on_commit_callbacks(execute=True):
-            submission = SubmissionFactory(
-                predictions_file__from_path=submission_file, phase=method.phase
-            )
+    with capture_on_commit_callbacks() as callbacks:
+        submission = SubmissionFactory(
+            predictions_file__from_path=submission_file, phase=method.phase
+        )
+
+    recurse_callbacks(callbacks=callbacks)
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
@@ -72,14 +74,16 @@ def test_submission_evaluation(
     )
 
     # Try with a csv file
-    with capture_on_commit_callbacks(execute=True):
-        with capture_on_commit_callbacks(execute=True):
-            submission = SubmissionFactory(
-                predictions_file__from_path=Path(__file__).parent
-                / "resources"
-                / "submission.csv",
-                phase=method.phase,
-            )
+    with capture_on_commit_callbacks() as callbacks:
+        submission = SubmissionFactory(
+            predictions_file__from_path=Path(__file__).parent
+            / "resources"
+            / "submission.csv",
+            phase=method.phase,
+        )
+
+    recurse_callbacks(callbacks=callbacks)
+
     evaluation = submission.evaluation_set.first()
     assert len(submission.evaluation_set.all()) == 1
     assert evaluation.status == evaluation.SUCCESS
@@ -314,11 +318,11 @@ def test_evaluation_notifications(
     # clear notifications for easier testing later
     Notification.objects.all().delete()
     # create submission and wait for it to be evaluated
-    with capture_on_commit_callbacks(execute=True):
-        with capture_on_commit_callbacks(execute=True):
-            submission = SubmissionFactory(
-                predictions_file__from_path=submission_file, phase=method.phase
-            )
+    with capture_on_commit_callbacks() as callbacks:
+        submission = SubmissionFactory(
+            predictions_file__from_path=submission_file, phase=method.phase
+        )
+    recurse_callbacks(callbacks=callbacks)
     # creator of submission and admins of challenge should get notification
     # about successful submission
     recipients = list(submission.phase.challenge.get_admins())

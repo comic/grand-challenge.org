@@ -41,7 +41,7 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
-from tests.utils import get_view_for_user
+from tests.utils import get_view_for_user, recurse_callbacks
 
 
 @pytest.mark.django_db
@@ -235,8 +235,9 @@ def test_algorithm(client, algorithm_image, settings):
     )
     assert civ.interface.slug == "generic-medical-image"
 
-    with capture_on_commit_callbacks(execute=True):
+    with capture_on_commit_callbacks() as callbacks:
         execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
+    recurse_callbacks(callbacks=callbacks)
 
     jobs = Job.objects.filter(algorithm_image=alg).all()
 
@@ -282,8 +283,9 @@ def test_algorithm(client, algorithm_image, settings):
         image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
     )
 
-    with capture_on_commit_callbacks(execute=True):
+    with capture_on_commit_callbacks() as callbacks:
         execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
+    recurse_callbacks(callbacks=callbacks)
 
     jobs = Job.objects.filter(
         algorithm_image=alg, inputs__image=image_file.image
@@ -329,8 +331,9 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
         image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
     )
 
-    with capture_on_commit_callbacks(execute=True):
+    with capture_on_commit_callbacks() as callbacks:
         execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
+    recurse_callbacks(callbacks=callbacks)
 
     jobs = Job.objects.filter(
         algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
@@ -397,12 +400,11 @@ def test_algorithm_multiple_inputs(
             )
             expected.append("test")
 
-    # Nested on_commits created by these tasks
-    with capture_on_commit_callbacks(execute=True):
-        with capture_on_commit_callbacks(execute=True):
-            run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
+    with capture_on_commit_callbacks() as callbacks:
+        run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
+    recurse_callbacks(callbacks=callbacks)
 
-    job = Job.objects.get()
+    job.refresh_from_db()
     assert job.error_message == ""
     assert job.status == job.SUCCESS
 
