@@ -385,7 +385,7 @@ def handle_event(self, *, event, backend):  # noqa: C901
         raise PriorStepFailed("Job is not executing")
 
     try:
-        executor.handle_event()
+        executor.handle_event(event=event)
     except TaskStillExecuting:
         # Nothing to do here, will be called when it is finished
         return
