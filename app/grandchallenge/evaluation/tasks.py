@@ -106,7 +106,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         civ.save()
 
         evaluation.inputs.set([civ])
-        on_commit(evaluation.signature.apply_async)
+        on_commit(evaluation.execute)
     else:
         raise RuntimeError("No algorithm or predictions file found")
 
@@ -140,21 +140,21 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     if max_jobs is None:
         # Once the algorithm has been run, score the submission. No emails as
         # algorithm editors should not have access to the underlying images.
-        linked_task = set_evaluation_inputs.signature(
-            kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+        task_on_success = set_evaluation_inputs.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
         )
     else:
         # Run with 1 job and then if that goes well, come back and
         # run all jobs. Note that setting None here is caught by
         # the if statement to schedule `set_evaluation_inputs`
-        linked_task = create_algorithm_jobs_for_evaluation.signature(
-            kwargs={"evaluation_pk": evaluation_pk, "max_jobs": None},
+        task_on_success = create_algorithm_jobs_for_evaluation.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": None},
             immutable=True,
         )
 
     # If any of the jobs fail then mark the evaluation as failed.
-    on_error = handle_failed_jobs.signature(
-        kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+    task_on_failure = handle_failed_jobs.signature(
+        kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
     )
 
     execute_jobs(
@@ -168,8 +168,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         creator=None,
         extra_viewer_groups=challenge_admins,
         extra_logs_viewer_groups=challenge_admins,
-        linked_task=linked_task,
-        on_error=on_error,
+        task_on_success=task_on_success,
+        task_on_failure=task_on_failure,
         max_jobs=max_jobs,
     )
 
@@ -294,7 +294,7 @@ def set_evaluation_inputs(*, evaluation_pk):
             evaluation.status = Evaluation.PENDING
             evaluation.save()
 
-            on_commit(evaluation.signature.apply_async)
+            on_commit(evaluation.execute)
         else:
             handle_failed_jobs(evaluation_pk=evaluation_pk)
 

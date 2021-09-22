@@ -7,6 +7,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.test import Client, RequestFactory
 from django.views.generic import View
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse
@@ -254,3 +255,12 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
             user=test[1],
             **kwargs,
         )
+
+
+def recurse_callbacks(callbacks):
+    with capture_on_commit_callbacks() as new_callbacks:
+        for callback in callbacks:
+            callback()
+
+    if new_callbacks:
+        recurse_callbacks(callbacks=new_callbacks)

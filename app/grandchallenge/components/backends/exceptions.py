@@ -12,3 +12,15 @@ class RetryStep(ComponentBaseException):
     """Raised to signal that this step should be retried"""
 
     pass
+
+
+class EventError(ComponentBaseException):
+    """Raised if an irrelevant event is passed"""
+
+    pass
+
+
+class TaskStillExecuting(ComponentBaseException):
+    """Raise if a task is still active"""
+
+    pass

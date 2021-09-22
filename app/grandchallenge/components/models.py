@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
+from celery import signature
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -26,9 +27,7 @@ from django_extensions.db.fields import AutoSlugField
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
-    await_job_completion,
-    execute_job,
-    parse_job_outputs,
+    deprovision_job,
     provision_job,
     validate_docker_image,
 )
@@ -725,6 +724,18 @@ class ComponentJob(models.Model):
             "/input/foo/bar/<relative_path>"
         ),
     )
+    task_on_success = models.JSONField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Serialized task that is run on job success",
+    )
+    task_on_failure = models.JSONField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Serialized task that is run on job failure",
+    )
 
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
@@ -775,6 +786,11 @@ class ComponentJob(models.Model):
 
         self.save()
 
+        if self.status == self.SUCCESS:
+            on_commit(self.execute_task_on_success)
+        elif self.status in [self.FAILURE, self.CANCELLED]:
+            on_commit(self.execute_task_on_failure)
+
     @property
     def executor_kwargs(self):
         return {
@@ -808,7 +824,7 @@ class ComponentJob(models.Model):
     def signature_kwargs(self):
         kwargs = {
             "kwargs": {
-                "job_pk": self.pk,
+                "job_pk": str(self.pk),
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
                 "backend": settings.COMPONENTS_DEFAULT_BACKEND,
@@ -831,15 +847,18 @@ class ComponentJob(models.Model):
 
         return kwargs
 
-    @property
-    def signature(self):
-        kwargs = self.signature_kwargs
-        return (
-            provision_job.signature(**kwargs)
-            | execute_job.signature(**kwargs)
-            | await_job_completion.signature(**kwargs)
-            | parse_job_outputs.signature(**kwargs)
-        )
+    def execute(self):
+        return provision_job.signature(**self.signature_kwargs).apply_async()
+
+    def execute_task_on_success(self):
+        if self.task_on_success:
+            deprovision_job.signature(**self.signature_kwargs).apply_async()
+            signature(self.task_on_success).apply_async()
+
+    def execute_task_on_failure(self):
+        if self.task_on_failure:
+            deprovision_job.signature(**self.signature_kwargs).apply_async()
+            signature(self.task_on_failure).apply_async()
 
     @property
     def animate(self):

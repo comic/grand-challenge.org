@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import subprocess
 import tarfile
 import uuid
@@ -17,18 +18,24 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.db.transaction import on_commit
+from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
+    EventError,
     RetryStep,
+    TaskStillExecuting,
 )
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
-RETRY_INTERVAL_SECONDS = 30
+logger = logging.getLogger(__name__)
+
+RETRY_INTERVAL_SECONDS = 60
 RETRY_DURATION_DAYS = 2
 
 
@@ -236,16 +243,16 @@ def provision_job(
         job.update_status(
             status=job.FAILURE, error_message="Could not provision resources",
         )
-        executor.deprovision()
         raise
     else:
         job.update_status(status=job.PROVISIONED)
+        on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
 
 
 @shared_task(
     **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"], bind=True
 )
-def execute_job(
+def execute_job(  # noqa: C901
     self,
     *,
     job_pk: uuid.UUID,
@@ -277,7 +284,6 @@ def execute_job(
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
-        executor.deprovision()
         raise PriorStepFailed(msg)
 
     try:
@@ -288,10 +294,9 @@ def execute_job(
         try:
             self.retry(
                 countdown=RETRY_INTERVAL_SECONDS,
-                max_retries=3600
-                * 24
-                * RETRY_DURATION_DAYS
-                / RETRY_INTERVAL_SECONDS,
+                max_retries=int(
+                    3600 * 24 * RETRY_DURATION_DAYS / RETRY_INTERVAL_SECONDS
+                ),
             )
         except MaxRetriesExceededError:
             job.update_status(
@@ -300,7 +305,6 @@ def execute_job(
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
-            executor.deprovision()
             raise
     except ComponentException as e:
         job = get_model_instance(
@@ -332,31 +336,45 @@ def execute_job(
             stderr=executor.stderr,
             error_message="An unexpected error occurred",
         )
-        executor.deprovision()
         raise
+    else:
+        if not executor.IS_EVENT_DRIVEN:
+            job.update_status(
+                status=job.EXECUTED,
+                stdout=executor.stdout,
+                stderr=executor.stderr,
+                duration=executor.duration,
+            )
+            on_commit(
+                parse_job_outputs.signature(**job.signature_kwargs).apply_async
+            )
 
 
 @shared_task(
     **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"], bind=True
 )
-def await_job_completion(
-    self,
-    *,
-    job_pk: uuid.UUID,
-    job_app_label: str,
-    job_model_name: str,
-    backend: str,
-):
+def handle_event(self, *, event, backend):  # noqa: C901
     """
-    Waits for the job to complete and sets stdout and stderr.
-    `await_completion` is expected to raise `RetryStep` in which
-    case the job will be requeued, or `ComponentException` in which case
+    Receives events when tasks have stops and determines what to do next.
+    In the case of transient failure the job could be scheduled again
+    on the backend. If the job is complete then sets stdout and stderr.
+    `handle_event` is expected to raise `ComponentException` in which case
     the job will be marked as failed and the error returned to the user.
 
     Job must be in the EXECUTING state.
 
     Once the job has executed it will be in the EXECUTED or FAILURE states.
     """
+    Backend = import_string(backend)  # noqa: N806
+
+    try:
+        job_app_label, job_model_name, job_pk = Backend.get_job_params(
+            event=event
+        )
+    except EventError:
+        logger.warning("Event not handled by backend")
+        return
+
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
@@ -367,15 +385,17 @@ def await_job_completion(
         raise PriorStepFailed("Job is not executing")
 
     try:
-        executor.await_completion()
+        executor.handle_event()
+    except TaskStillExecuting:
+        # Nothing to do here, will be called when it is finished
+        return
     except RetryStep:
         try:
             self.retry(
                 countdown=RETRY_INTERVAL_SECONDS,
-                max_retries=3600
-                * 24
-                * RETRY_DURATION_DAYS
-                / RETRY_INTERVAL_SECONDS,
+                max_retries=int(
+                    3600 * 24 * RETRY_DURATION_DAYS / RETRY_INTERVAL_SECONDS
+                ),
             )
         except MaxRetriesExceededError:
             job.update_status(
@@ -384,7 +404,6 @@ def await_job_completion(
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
-            executor.deprovision()
             raise
     except ComponentException as e:
         job.update_status(
@@ -400,7 +419,6 @@ def await_job_completion(
             stderr=executor.stderr,
             error_message="An unexpected error occurred",
         )
-        executor.deprovision()
         raise
     else:
         job.update_status(
@@ -408,6 +426,9 @@ def await_job_completion(
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
+        )
+        on_commit(
+            parse_job_outputs.signature(**job.signature_kwargs).apply_async
         )
 
 
@@ -447,31 +468,21 @@ def parse_job_outputs(
     else:
         job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
-    finally:
-        executor.deprovision()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def deprovision(
+def deprovision_job(
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
 ):
-    """Task that can be called manually in case of errors"""
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
     executor = job.get_executor(backend=backend)
     executor.deprovision()
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def handle_event(*args, **kwargs):
-    """Debug task to test integration"""
-    print(f"{args=}")
-    print(f"{kwargs=}")
 
 
 @shared_task

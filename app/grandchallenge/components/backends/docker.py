@@ -175,6 +175,12 @@ class DockerConnection:
 
 
 class DockerExecutor(DockerConnection):
+    IS_EVENT_DRIVEN = False
+
+    @staticmethod
+    def get_job_params(*, event):
+        raise NotImplementedError
+
     def provision(self, *, input_civs, input_prefixes):
         self._pull_images()
         self._create_io_volumes()
@@ -187,7 +193,7 @@ class DockerExecutor(DockerConnection):
         self._pull_images()
         self._execute_container()
 
-    def await_completion(self):
+    def handle_event(self):
         pass
 
     def get_outputs(self, *, output_interfaces):
