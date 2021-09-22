@@ -851,13 +851,13 @@ class ComponentJob(models.Model):
         return provision_job.signature(**self.signature_kwargs).apply_async()
 
     def execute_task_on_success(self):
+        deprovision_job.signature(**self.signature_kwargs).apply_async()
         if self.task_on_success:
-            deprovision_job.signature(**self.signature_kwargs).apply_async()
             signature(self.task_on_success).apply_async()
 
     def execute_task_on_failure(self):
+        deprovision_job.signature(**self.signature_kwargs).apply_async()
         if self.task_on_failure:
-            deprovision_job.signature(**self.signature_kwargs).apply_async()
             signature(self.task_on_failure).apply_async()
 
     @property
