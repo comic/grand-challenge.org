@@ -26,6 +26,7 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     EventError,
     RetryStep,
+    TaskStillExecuting,
 )
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
@@ -242,7 +243,6 @@ def provision_job(
         job.update_status(
             status=job.FAILURE, error_message="Could not provision resources",
         )
-        executor.deprovision()
         raise
     else:
         job.update_status(status=job.PROVISIONED)
@@ -284,7 +284,6 @@ def execute_job(  # noqa: C901
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
-        executor.deprovision()
         raise PriorStepFailed(msg)
 
     try:
@@ -306,7 +305,6 @@ def execute_job(  # noqa: C901
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
-            executor.deprovision()
             raise
     except ComponentException as e:
         job = get_model_instance(
@@ -318,7 +316,6 @@ def execute_job(  # noqa: C901
             stderr=executor.stderr,
             error_message=str(e),
         )
-        executor.deprovision()
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -329,7 +326,6 @@ def execute_job(  # noqa: C901
             stderr=executor.stderr,
             error_message="Time limit exceeded",
         )
-        executor.deprovision()
     except Exception:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -340,7 +336,6 @@ def execute_job(  # noqa: C901
             stderr=executor.stderr,
             error_message="An unexpected error occurred",
         )
-        executor.deprovision()
         raise
     else:
         if not executor.IS_EVENT_DRIVEN:
@@ -358,7 +353,7 @@ def execute_job(  # noqa: C901
 @shared_task(
     **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"], bind=True
 )
-def handle_event(self, *, event, backend):
+def handle_event(self, *, event, backend):  # noqa: C901
     """
     Receives events when tasks have stops and determines what to do next.
     In the case of transient failure the job could be scheduled again
@@ -391,6 +386,9 @@ def handle_event(self, *, event, backend):
 
     try:
         executor.handle_event()
+    except TaskStillExecuting:
+        # Nothing to do here, will be called when it is finished
+        return
     except RetryStep:
         try:
             self.retry(
@@ -406,7 +404,6 @@ def handle_event(self, *, event, backend):
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
-            executor.deprovision()
             raise
     except ComponentException as e:
         job.update_status(
@@ -415,7 +412,6 @@ def handle_event(self, *, event, backend):
             stderr=executor.stderr,
             error_message=str(e),
         )
-        executor.deprovision()
     except Exception:
         job.update_status(
             status=job.FAILURE,
@@ -423,7 +419,6 @@ def handle_event(self, *, event, backend):
             stderr=executor.stderr,
             error_message="An unexpected error occurred",
         )
-        executor.deprovision()
         raise
     else:
         job.update_status(
@@ -473,19 +468,16 @@ def parse_job_outputs(
     else:
         job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
-    finally:
-        executor.deprovision()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def deprovision(
+def deprovision_job(
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
 ):
-    """Task that can be called manually in case of errors"""
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )

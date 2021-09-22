@@ -19,6 +19,7 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     EventError,
     RetryStep,
+    TaskStillExecuting,
 )
 from grandchallenge.components.backends.utils import LOGLINES, user_error
 
@@ -66,7 +67,7 @@ class AmazonECSExecutor:
         except KeyError as e:
             raise EventError("Malformed event") from e
 
-        if group.starts_with("service:"):
+        if group.startswith("service:"):
             raise EventError("Service events not handled")
 
         job_id = task_definition_arn.split("/")[-1].split(":")[0]
@@ -90,7 +91,8 @@ class AmazonECSExecutor:
         )
 
         if task_description["stopCode"] == "TaskFailedToStart":
-            self._run_task(task_definition_arn="taskDefinitionArn")
+            self._run_task(task_definition_arn=event["taskDefinitionArn"])
+            raise TaskStillExecuting
 
         container_exit_codes = {
             c["name"]: int(c["exitCode"])
@@ -312,22 +314,21 @@ class AmazonECSExecutor:
                 "name": self._timeout_container_name,
             },
             {
-                "command": ["curl", "-I", "https://www.google.com"],  # TODO
                 "cpu": self._required_cpu_units,
                 "image": self._exec_image_repo_tag,
                 "memory": self._required_memory_units,
-                # "mountPoints": [
-                #     {
-                #         "containerPath": "/input",
-                #         "sourceVolume": f"{self._job_id}-input",
-                #         "readOnly": True,
-                #     },
-                #     {
-                #         "containerPath": "/output",
-                #         "sourceVolume": f"{self._job_id}-output",
-                #         "readOnly": False,
-                #     },
-                # ],
+                "mountPoints": [
+                    {
+                        "containerPath": "/input",
+                        "sourceVolume": f"{self._job_id}-input",
+                        "readOnly": True,
+                    },
+                    {
+                        "containerPath": "/output",
+                        "sourceVolume": f"{self._job_id}-output",
+                        "readOnly": False,
+                    },
+                ],
                 "name": self._main_container_name,
                 "resourceRequirements": self._resource_requirements,
             },
@@ -374,16 +375,16 @@ class AmazonECSExecutor:
             networkMode="none",
             requiresCompatibilities=["EC2"],
             # TODO set tags
-            # volumes=[
-            #     {
-            #         "name": f"{self._job_id}-input",
-            #         "host": {"sourcePath": str(self._input_directory)},
-            #     },
-            #     {
-            #         "name": f"{self._job_id}-output",
-            #         "host": {"sourcePath": str(self._output_directory)},
-            #     },
-            # ],
+            volumes=[
+                {
+                    "name": f"{self._job_id}-input",
+                    "host": {"sourcePath": str(self._input_directory)},
+                },
+                {
+                    "name": f"{self._job_id}-output",
+                    "host": {"sourcePath": str(self._output_directory)},
+                },
+            ],
         )
         return response["taskDefinition"]["taskDefinitionArn"]
 

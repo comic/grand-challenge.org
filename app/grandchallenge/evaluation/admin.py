@@ -66,6 +66,8 @@ class EvaluationAdmin(admin.ModelAdmin):
         "stderr",
         "error_message",
         "input_prefixes",
+        "task_on_success",
+        "task_on_failure",
     )
     actions = (requeue_evaluations,)
 

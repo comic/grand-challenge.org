@@ -10,7 +10,7 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.components.admin import ComponentImageAdmin
-from grandchallenge.components.tasks import deprovision
+from grandchallenge.components.tasks import deprovision_job
 
 
 class AlgorithmAdmin(GuardedModelAdmin):
@@ -65,7 +65,7 @@ cancel_jobs.allowed_permissions = ("change",)
 
 def deprovision_jobs(modeladmin, request, queryset):
     for job in queryset:
-        deprovision.signature(**job.signature_kwargs).apply_async()
+        deprovision_job.signature(**job.signature_kwargs).apply_async()
 
 
 deprovision_jobs.short_description = "Deprovision jobs"
@@ -100,6 +100,8 @@ class JobAdmin(GuardedModelAdmin):
         "stderr",
         "error_message",
         "input_prefixes",
+        "task_on_success",
+        "task_on_failure",
     )
     search_fields = (
         "creator__username",

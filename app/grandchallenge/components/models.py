@@ -27,6 +27,7 @@ from django_extensions.db.fields import AutoSlugField
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
+    deprovision_job,
     provision_job,
     validate_docker_image,
 )
@@ -851,11 +852,13 @@ class ComponentJob(models.Model):
 
     def execute_task_on_success(self):
         if self.task_on_success:
-            return signature(self.task_on_success).apply_async()
+            deprovision_job.signature(**self.signature_kwargs).apply_async()
+            signature(self.task_on_success).apply_async()
 
     def execute_task_on_failure(self):
         if self.task_on_failure:
-            return signature(self.task_on_failure).apply_async()
+            deprovision_job.signature(**self.signature_kwargs).apply_async()
+            signature(self.task_on_failure).apply_async()
 
     @property
     def animate(self):
