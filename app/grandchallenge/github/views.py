@@ -16,7 +16,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
-from grandchallenge.verifications.models import Verification
 
 
 @csrf_exempt
@@ -37,17 +36,7 @@ def github_webhook(request):
         )
 
     payload = json.loads(request.body)
-    try:
-        user = GitHubUserToken.objects.get(
-            github_user_id=payload["sender"]["id"]
-        ).user
-    except GitHubUserToken.DoesNotExist:
-        return HttpResponse("ok", content_type="text/plain")
-    try:
-        if user.verification.is_verified:
-            GitHubWebhookMessage.objects.create(payload=payload)
-    except Verification.DoesNotExist:
-        pass
+    GitHubWebhookMessage.objects.create(payload=payload)
 
     return HttpResponse("ok", content_type="text/plain")
 

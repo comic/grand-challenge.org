@@ -222,6 +222,7 @@ class AlgorithmUpdate(
     LoginRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    VerificationRequiredMixin,
     UpdateView,
 ):
     model = Algorithm
@@ -780,7 +781,10 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
 
 
 class AlgorithmAddRepo(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    VerificationRequiredMixin,
+    UpdateView,
 ):
     model = Algorithm
     form_class = AlgorithmRepoForm

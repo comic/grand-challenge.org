@@ -92,5 +92,18 @@ def test_redirect_view(get, post, client):
         user=user,
         follow=True,
     )
+
+    # User is not verified
+    assert response.status_code == 403
+
+    VerificationFactory(user=user, is_verified=True)
+    response = get_view_for_user(
+        client=client,
+        viewname="github:install-complete",
+        data={"state": alg.slug},
+        user=user,
+        follow=True,
+    )
+
     assert response.status_code == 200
     assert f"Add GitHub repository to {alg.title}" in response.rendered_content
