@@ -64,3 +64,10 @@ def footer_links(*_, **__):
         "policy_pages": Policy.objects.all(),
         "blog_posts": Post.objects.filter(published=True),
     }
+
+
+def general_forum(*_, **__):
+    return {
+        "GENERAL_FORUM_PK": settings.GENERAL_FORUM_PK,
+        "GENERAL_FORUM_SLUG": settings.GENERAL_FORUM_SLUG,
+    }
