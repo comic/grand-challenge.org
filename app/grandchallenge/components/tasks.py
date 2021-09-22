@@ -467,6 +467,13 @@ def deprovision(
     executor.deprovision()
 
 
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def handle_event(*args, **kwargs):
+    """Debug task to test integration"""
+    print(f"{args=}")
+    print(f"{kwargs=}")
+
+
 @shared_task
 def mark_long_running_jobs_failed(
     *, app_label: str, model_name: str, extra_filters: Dict[str, str] = None
