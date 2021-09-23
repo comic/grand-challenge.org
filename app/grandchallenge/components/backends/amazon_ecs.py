@@ -405,8 +405,6 @@ class AmazonECSExecutor:
                     referenceId=self._job_id,
                     taskDefinition=task_definition_arn,
                 )
-                task_arns = [t["taskArn"] for t in response["tasks"]]
-                logger.info(f"Scheduled {task_arns=}")
             except self._ecs_client.exceptions.ClientException as e:
                 if (
                     e.response["Error"]["Message"]
@@ -415,6 +413,15 @@ class AmazonECSExecutor:
                     raise RetryStep("Capacity Limit Exceeded") from e
                 else:
                     raise
+
+            task_arns = [t["taskArn"] for t in response["tasks"]]
+
+            if len(task_arns) == 0:
+                logger.error(f"ECS run_task {response=}")
+                raise RetryStep("No tasks started by ECS")
+            else:
+                logger.info(f"Scheduled {task_arns=}")
+
         else:
             logger.warning("A task is already running for this job")
 
