@@ -702,19 +702,17 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {"level": "DEBUG", "class": "logging.StreamHandler"}
-    },
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
     "loggers": {
         "grandchallenge": {
-            "level": "WARNING",
+            "level": os.environ.get("GRAND_CHALLENGE_LOG_LEVEL", "INFO"),
             "handlers": ["console"],
             "propagate": True,
         },
-        "django.db.backends": {
-            "level": "ERROR",
+        "django": {
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
             "handlers": ["console"],
-            "propagate": False,
+            "propagate": True,
         },
         "werkzeug": {
             "handlers": ["console"],
@@ -726,8 +724,8 @@ LOGGING = {
         # RedirectFallbackMiddleware
         "aws_xray_sdk": {
             "handlers": ["console"],
-            "propagate": True,
             "level": "CRITICAL",
+            "propagate": True,
         },
     },
 }
