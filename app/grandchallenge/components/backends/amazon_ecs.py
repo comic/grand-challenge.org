@@ -86,13 +86,16 @@ class AmazonECSExecutor:
         self._run_task(task_definition_arn=task_definition_arn)
 
     def handle_event(self, *, event):
-        task_description = self._get_task_description(
-            task_arn=event["taskArn"]
-        )
+        task_arn = event["taskArn"]
+        stop_code = event["stopCode"]
 
-        if task_description["stopCode"] == "TaskFailedToStart":
+        logger.info(f"Handling {task_arn=} with {stop_code=}")
+
+        if stop_code in ["TaskFailedToStart", "TerminationNotice"]:
             self._run_task(task_definition_arn=event["taskDefinitionArn"])
             raise TaskStillExecuting
+
+        task_description = self._get_task_description(task_arn=task_arn)
 
         container_exit_codes = {
             c["name"]: int(c["exitCode"])
@@ -391,7 +394,7 @@ class AmazonECSExecutor:
     def _run_task(self, *, task_definition_arn):
         if not self._list_task_arns(desired_status=TaskStatus.RUNNING):
             try:
-                self._ecs_client.run_task(
+                response = self._ecs_client.run_task(
                     cluster=self._cluster_arn,
                     count=1,
                     enableExecuteCommand=False,
@@ -402,6 +405,8 @@ class AmazonECSExecutor:
                     referenceId=self._job_id,
                     taskDefinition=task_definition_arn,
                 )
+                task_arns = [t["taskArn"] for t in response["tasks"]]
+                logger.info(f"Scheduled {task_arns=}")
             except self._ecs_client.exceptions.ClientException as e:
                 if (
                     e.response["Error"]["Message"]
