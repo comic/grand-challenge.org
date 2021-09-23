@@ -66,8 +66,8 @@ def footer_links(*_, **__):
     }
 
 
-def general_forum(*_, **__):
+def help_forum(*_, **__):
     return {
-        "GENERAL_FORUM_PK": settings.GENERAL_FORUM_PK,
-        "GENERAL_FORUM_SLUG": settings.GENERAL_FORUM_SLUG,
+        "DOCUMENTATION_HELP_FORUM_PK": settings.DOCUMENTATION_HELP_FORUM_PK,
+        "DOCUMENTATION_HELP_FORUM_SLUG": settings.DOCUMENTATION_HELP_FORUM_SLUG,
     }

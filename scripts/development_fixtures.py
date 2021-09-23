@@ -86,7 +86,7 @@ def run():
 
     users = _create_users(usernames=DEFAULT_USERS)
     _set_user_permissions(users)
-    _create_general_forum()
+    _create_help_forum()
     _create_demo_challenge(users)
     _create_external_challenge(users)
     _create_workstation(users)
@@ -162,7 +162,7 @@ def _set_user_permissions(users):
     users["demo"].user_permissions.add(add_archive_perm)
 
 
-def _create_general_forum():
+def _create_help_forum():
     Forum.objects.create(name="General", type=Forum.FORUM_POST)
 
 
