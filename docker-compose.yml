@@ -29,7 +29,7 @@ services:
     command: >-
       -c "
       mkdir -p /data/grand-challenge-private/
-      && minio --compat gateway nas /data
+      && minio --compat server /data
       "
     restart: always
 
@@ -46,7 +46,7 @@ services:
     command: >-
       -c "
       mkdir -p /data/grand-challenge-protected/
-      && minio --compat gateway nas --address :9081 /data
+      && minio --compat server --address :9081 /data
       "
     restart: always
 
@@ -62,7 +62,7 @@ services:
     command: >-
       -c "
       mkdir -p /data/grand-challenge-public/
-      && minio --compat gateway nas /data
+      && minio --compat server /data
       "
     restart: always
 
