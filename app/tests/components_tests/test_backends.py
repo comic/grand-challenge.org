@@ -107,7 +107,8 @@ def test_provision(tmp_path, settings):
     executor.execute()
     executor.handle_event(
         event={
-            "taskArn": "algorithms-job-00000000-0000-0000-0000-000000000000"
+            "taskArn": "algorithms-job-00000000-0000-0000-0000-000000000000",
+            "stopCode": "EssentialContainerExited",
         }
     )
 
