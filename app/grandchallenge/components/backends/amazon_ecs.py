@@ -417,7 +417,7 @@ class AmazonECSExecutor:
             task_arns = [t["taskArn"] for t in response["tasks"]]
 
             if len(task_arns) == 0:
-                logger.error(f"ECS run_task {response=}")
+                logger.info(f"ECS run_task {response=}")
                 raise RetryStep("No tasks started by ECS")
             else:
                 logger.info(f"Scheduled {task_arns=}")
