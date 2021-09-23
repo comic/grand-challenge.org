@@ -118,6 +118,14 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
+# General forum
+DOCUMENTATION_HELP_FORUM_PK = os.environ.get(
+    "DOCUMENTATION_HELP_FORUM_PK", "1"
+)
+DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
+    "DOCUMENTATION_HELP_FORUM_SLUG", "general"
+)
+
 ##############################################################################
 #
 # Storage
@@ -341,6 +349,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.debug",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
+                "grandchallenge.core.context_processors.help_forum",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
