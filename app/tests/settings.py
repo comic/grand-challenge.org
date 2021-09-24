@@ -27,11 +27,6 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 CELERY_BROKER = "memory"
 CELERY_BROKER_URL = "memory://"
 
-# Test using the docker backend
-COMPONENTS_DEFAULT_BACKEND = (
-    "grandchallenge.components.backends.docker.DockerExecutor"
-)
-
 # Disable image resizing
 STDIMAGE_LOGO_VARIATIONS = {"x20": (None,)}
 STDIMAGE_SOCIAL_VARIATIONS = {"x20": (None,)}
