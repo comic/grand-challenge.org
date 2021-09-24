@@ -282,8 +282,7 @@ class AmazonECSExecutor:
             prefix = self._input_directory
 
             if str(civ.pk) in input_prefixes:
-                # TODO
-                raise NotImplementedError
+                prefix = safe_join(prefix, input_prefixes[str(civ.pk)])
 
             if civ.decompress:
                 # TODO

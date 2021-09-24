@@ -144,3 +144,66 @@ def test_provision(tmp_path, settings):
         "algorithms",
         "algorithms/job",
     }
+
+
+@pytest.mark.django_db
+def test_input_prefixes(tmp_path, settings):
+    interfaces = [
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.BOOL, relative_path="test/bool.json"
+        ),
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.IMAGE, relative_path="images/test-image"
+        ),
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.CSV, relative_path="test.csv"
+        ),
+    ]
+    civs = [
+        ComponentInterfaceValueFactory(interface=interfaces[0], value=True),
+        ComponentInterfaceValueFactory(
+            interface=interfaces[1],
+            image=ImageFileFactory(
+                file__from_path=Path(__file__).parent.parent
+                / "algorithms_tests"
+                / "resources"
+                / "input_file.tif"
+            ).image,
+        ),
+        ComponentInterfaceValueFactory(interface=interfaces[2]),
+    ]
+    settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = tmp_path
+
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    executor.provision(
+        input_civs=civs,
+        input_prefixes={
+            str(civs[0].pk): "first/output/",
+            str(civs[1].pk): "second/output",
+        },
+    )
+
+    assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
+        "algorithms",
+        "algorithms/job",
+        "algorithms/job/00000000-0000-0000-0000-000000000000",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/test.csv",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/first",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/first/output",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/first/output/test",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/first/output/test/bool.json",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/second",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/second/output",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/second/output/images",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/second/output/images/test-image",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/second/output/images/test-image/input_file.tif",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output",
+    }
