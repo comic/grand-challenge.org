@@ -833,15 +833,6 @@ class ComponentJob(models.Model):
             "immutable": True,
         }
 
-        if not self.container.requires_gpu:
-            # TODO move these to ECS
-            kwargs["options"].update({"queue": "evaluation"})
-            kwargs["kwargs"].update(
-                {
-                    "backend": "grandchallenge.components.backends.docker.DockerExecutor"
-                }
-            )
-
         if getattr(self.container, "queue_override", None):
             kwargs["options"].update({"queue": self.container.queue_override})
 

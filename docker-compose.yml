@@ -186,7 +186,7 @@ services:
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: "celery -A config worker -l info -c 1 -Q evaluation,gpu,acks-late-2xlarge,acks-late-micro-short"
+    command: "celery -A config worker -l info -c 1 -Q acks-late-2xlarge,acks-late-micro-short"
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:
