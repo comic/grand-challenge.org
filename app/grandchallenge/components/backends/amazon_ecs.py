@@ -22,7 +22,11 @@ from grandchallenge.components.backends.exceptions import (
     RetryStep,
     TaskStillExecuting,
 )
-from grandchallenge.components.backends.utils import LOGLINES, user_error
+from grandchallenge.components.backends.utils import (
+    LOGLINES,
+    safe_extract,
+    user_error,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -284,19 +288,22 @@ class AmazonECSExecutor:
             if str(civ.pk) in input_prefixes:
                 prefix = safe_join(prefix, input_prefixes[str(civ.pk)])
 
-            if civ.decompress:
-                # TODO
-                raise NotImplementedError
-            else:
-                dest = Path(safe_join(prefix, civ.relative_path))
-
+            dest = Path(safe_join(prefix, civ.relative_path))
             # We know that the dest is within the prefix as
             # safe_join is used, so ok to create the parents here
             dest.parent.mkdir(exist_ok=True, parents=True)
 
-            with civ.input_file.open("rb") as fs, open(dest, "wb") as fd:
-                for chunk in fs.chunks():
-                    fd.write(chunk)
+            if civ.decompress:
+                try:
+                    safe_extract(src=civ.input_file, dest=dest.parent)
+                except Exception as e:
+                    raise ComponentException(
+                        "Could not extract input zip file"
+                    ) from e
+            else:
+                with civ.input_file.open("rb") as fs, open(dest, "wb") as fd:
+                    for chunk in fs.chunks():
+                        fd.write(chunk)
 
     @property
     def _resource_requirements(self):

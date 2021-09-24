@@ -2,10 +2,13 @@ import os
 from pathlib import Path
 
 import pytest
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 
 from grandchallenge.components.backends.docker import DockerConnection
-from grandchallenge.components.backends.utils import user_error
+from grandchallenge.components.backends.utils import (
+    _filter_members,
+    user_error,
+)
 from grandchallenge.components.models import InterfaceKindChoices
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -18,7 +21,7 @@ from tests.factories import ImageFileFactory
 @pytest.mark.parametrize(
     "cpuset,expected",
     (
-        ("", f"0-{os.cpu_count()-1}"),
+        ("", f"0-{os.cpu_count() - 1}"),
         ("0", "0"),
         ("1-3", "1-3"),
         ("1,2", "1,2"),
@@ -207,3 +210,91 @@ def test_input_prefixes(tmp_path, settings):
         "algorithms/job/00000000-0000-0000-0000-000000000000/input/second/output/images/test-image/input_file.tif",
         "algorithms/job/00000000-0000-0000-0000-000000000000/output",
     }
+
+
+@pytest.mark.django_db
+def test_ecs_unzip(tmp_path, settings, submission_file):
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ZIP, relative_path="preds.zip"
+    )
+    civ = ComponentInterfaceValueFactory(interface=interface)
+
+    with open(submission_file, "rb") as f:
+        civ.file.save("my_submission.zip", File(f))
+
+    settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = tmp_path
+
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    executor.provision(
+        input_civs=[civ], input_prefixes={},
+    )
+
+    assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
+        "algorithms",
+        "algorithms/job",
+        "algorithms/job/00000000-0000-0000-0000-000000000000",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/submission.csv",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images/image10x10x10.mhd",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/input/images/image10x10x10.zraw",
+        "algorithms/job/00000000-0000-0000-0000-000000000000/output",
+    }
+
+
+def test_filter_members():
+    members = _filter_members(
+        [
+            "__MACOSX/foo",
+            "submission/submission.csv",
+            "submission/__MACOSX/bar",
+            "baz/.DS_Store",
+            "submission/images/image10x10x10.mhd",
+            "submission/images/image10x10x10.zraw",
+        ]
+    )
+    assert members == [
+        {"src": "submission/submission.csv", "dest": "submission.csv"},
+        {
+            "src": "submission/images/image10x10x10.mhd",
+            "dest": "images/image10x10x10.mhd",
+        },
+        {
+            "src": "submission/images/image10x10x10.zraw",
+            "dest": "images/image10x10x10.zraw",
+        },
+    ]
+
+
+def test_filter_members_no_prefix():
+    members = _filter_members(
+        [
+            "__MACOSX/foo",
+            "submi1ssion/submission.csv",
+            "submi2ssion/__MACOSX/bar",
+            "baz/.DS_Store",
+            "submi3ssion/images/image10x10x10.mhd",
+            "submission/images/image10x10x10.zraw",
+        ]
+    )
+    assert members == [
+        {
+            "src": "submi1ssion/submission.csv",
+            "dest": "submi1ssion/submission.csv",
+        },
+        {
+            "src": "submi3ssion/images/image10x10x10.mhd",
+            "dest": "submi3ssion/images/image10x10x10.mhd",
+        },
+        {
+            "src": "submission/images/image10x10x10.zraw",
+            "dest": "submission/images/image10x10x10.zraw",
+        },
+    ]
