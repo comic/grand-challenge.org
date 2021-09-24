@@ -160,7 +160,7 @@ class AmazonECSExecutor:
         try:
             return "\n".join(self._get_task_logs(source="stdout"))
         except Exception as e:
-            logger.error(f"Could not fetch stdout: {e}")
+            logger.warning(f"Could not fetch stdout: {e}")
             return ""
 
     @property
@@ -168,7 +168,7 @@ class AmazonECSExecutor:
         try:
             return "\n".join(self._get_task_logs(source="stderr"))
         except Exception as e:
-            logger.error(f"Could not fetch stderr: {e}")
+            logger.warning(f"Could not fetch stderr: {e}")
             return ""
 
     @property
