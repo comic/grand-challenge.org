@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
+from time import sleep
 
 import boto3
 from django.conf import settings
@@ -102,6 +103,7 @@ class AmazonECSExecutor:
             for c in task_description["containers"]
         }
         self._set_duration(task_description=task_description)
+        self._wait_for_log_delivery()
 
         if container_exit_codes[self._main_container_name] == 0:
             # Job's a good un
@@ -148,7 +150,7 @@ class AmazonECSExecutor:
         try:
             return "\n".join(self._get_task_logs(source="stdout"))
         except Exception as e:
-            logger.warning(f"Could not fetch stdout: {e}")
+            logger.error(f"Could not fetch stdout: {e}")
             return ""
 
     @property
@@ -156,7 +158,7 @@ class AmazonECSExecutor:
         try:
             return "\n".join(self._get_task_logs(source="stderr"))
         except Exception as e:
-            logger.warning(f"Could not fetch stdout: {e}")
+            logger.error(f"Could not fetch stderr: {e}")
             return ""
 
     @property
@@ -203,6 +205,13 @@ class AmazonECSExecutor:
 
     def _get_task_description(self, *, task_arn):
         return self._list_task_descriptions(task_arns=[task_arn])[0]
+
+    def _wait_for_log_delivery(self):
+        # It takes some time for all of the logs to finish delivery to
+        # CloudWatch. Add a wait period here to allow for this.
+        # Maybe we should do this in a better way, but the rest of the
+        # system assumes that all the logs are available.
+        sleep(10)
 
     def _get_task_logs(self, *, source):
         response = self._logs_client.get_log_events(
