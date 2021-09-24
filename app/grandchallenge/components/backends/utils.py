@@ -74,7 +74,13 @@ def _filter_members(members: List[zipfile.ZipInfo]):
         and re.search(r"(__MACOSX|\.DS_Store|desktop.ini)", m.filename) is None
     ]
 
-    path = commonpath(members)
+    # Remove any common parent directories
+    if len(members) == 1:
+        path = str(Path(members[0]).parent)
+        path = "" if path == "." else path
+    else:
+        path = commonpath(members)
+
     if path:
         sliced_path = slice(len(path) + 1, None, None)
     else:

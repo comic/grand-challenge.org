@@ -299,3 +299,13 @@ def test_filter_members_no_prefix():
             "dest": "submission/images/image10x10x10.zraw",
         },
     ]
+
+
+def test_filter_members_single_file():
+    members = _filter_members([ZipInfo("foo")])
+    assert members == [{"src": "foo", "dest": "foo"}]
+
+
+def test_filter_members_single_file_nested():
+    members = _filter_members([ZipInfo("foo/bar")])
+    assert members == [{"src": "foo/bar", "dest": "bar"}]
