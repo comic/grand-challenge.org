@@ -56,6 +56,12 @@ class AmazonECSExecutor:
         self._memory_limit = memory_limit
         self._requires_gpu = requires_gpu
 
+        if not self._requires_gpu and self._memory_limit > 6:
+            # Currently non-GPU jobs can only get 6GB of memory
+            # due to the CPU pools instance types
+            logger.warning("Non-GPU job memory restricted")
+            self._memory_limit = 6
+
         if self._memory_limit < 4 or self._memory_limit > 30:
             raise RuntimeError("AWS only supports 4g to 30g of memory")
 
