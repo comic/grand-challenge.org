@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
+from time import sleep
 
 import boto3
 from django.conf import settings
@@ -21,7 +22,11 @@ from grandchallenge.components.backends.exceptions import (
     RetryStep,
     TaskStillExecuting,
 )
-from grandchallenge.components.backends.utils import LOGLINES, user_error
+from grandchallenge.components.backends.utils import (
+    LOGLINES,
+    safe_extract,
+    user_error,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +107,7 @@ class AmazonECSExecutor:
             for c in task_description["containers"]
         }
         self._set_duration(task_description=task_description)
+        self._wait_for_log_delivery()
 
         if container_exit_codes[self._main_container_name] == 0:
             # Job's a good un
@@ -148,7 +154,7 @@ class AmazonECSExecutor:
         try:
             return "\n".join(self._get_task_logs(source="stdout"))
         except Exception as e:
-            logger.warning(f"Could not fetch stdout: {e}")
+            logger.error(f"Could not fetch stdout: {e}")
             return ""
 
     @property
@@ -156,7 +162,7 @@ class AmazonECSExecutor:
         try:
             return "\n".join(self._get_task_logs(source="stderr"))
         except Exception as e:
-            logger.warning(f"Could not fetch stdout: {e}")
+            logger.error(f"Could not fetch stderr: {e}")
             return ""
 
     @property
@@ -203,6 +209,13 @@ class AmazonECSExecutor:
 
     def _get_task_description(self, *, task_arn):
         return self._list_task_descriptions(task_arns=[task_arn])[0]
+
+    def _wait_for_log_delivery(self):
+        # It takes some time for all of the logs to finish delivery to
+        # CloudWatch. Add a wait period here to allow for this.
+        # Maybe we should do this in a better way, but the rest of the
+        # system assumes that all the logs are available.
+        sleep(10)
 
     def _get_task_logs(self, *, source):
         response = self._logs_client.get_log_events(
@@ -273,22 +286,24 @@ class AmazonECSExecutor:
             prefix = self._input_directory
 
             if str(civ.pk) in input_prefixes:
-                # TODO
-                raise NotImplementedError
+                prefix = safe_join(prefix, input_prefixes[str(civ.pk)])
 
-            if civ.decompress:
-                # TODO
-                raise NotImplementedError
-            else:
-                dest = Path(safe_join(prefix, civ.relative_path))
-
+            dest = Path(safe_join(prefix, civ.relative_path))
             # We know that the dest is within the prefix as
             # safe_join is used, so ok to create the parents here
             dest.parent.mkdir(exist_ok=True, parents=True)
 
-            with civ.input_file.open("rb") as fs, open(dest, "wb") as fd:
-                for chunk in fs.chunks():
-                    fd.write(chunk)
+            if civ.decompress:
+                try:
+                    safe_extract(src=civ.input_file, dest=dest.parent)
+                except Exception as e:
+                    raise ComponentException(
+                        "Could not extract input zip file"
+                    ) from e
+            else:
+                with civ.input_file.open("rb") as fs, open(dest, "wb") as fd:
+                    for chunk in fs.chunks():
+                        fd.write(chunk)
 
     @property
     def _resource_requirements(self):
@@ -315,6 +330,12 @@ class AmazonECSExecutor:
                 "command": ["sleep", "7200"],  # TODO customize timeout
                 "image": "public.ecr.aws/amazonlinux/amazonlinux:2",
                 "name": self._timeout_container_name,
+                "dependsOn": [
+                    {
+                        "containerName": self._main_container_name,
+                        "condition": "START",
+                    }
+                ],
             },
             {
                 "cpu": self._required_cpu_units,
