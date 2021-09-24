@@ -324,6 +324,12 @@ class AmazonECSExecutor:
                 "command": ["sleep", "7200"],  # TODO customize timeout
                 "image": "public.ecr.aws/amazonlinux/amazonlinux:2",
                 "name": self._timeout_container_name,
+                "dependsOn": [
+                    {
+                        "containerName": self._main_container_name,
+                        "condition": "START",
+                    }
+                ],
             },
             {
                 "cpu": self._required_cpu_units,
