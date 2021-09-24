@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from zipfile import ZipInfo
 
 import pytest
 from django.core.files.base import ContentFile, File
@@ -252,12 +253,12 @@ def test_ecs_unzip(tmp_path, settings, submission_file):
 def test_filter_members():
     members = _filter_members(
         [
-            "__MACOSX/foo",
-            "submission/submission.csv",
-            "submission/__MACOSX/bar",
-            "baz/.DS_Store",
-            "submission/images/image10x10x10.mhd",
-            "submission/images/image10x10x10.zraw",
+            ZipInfo("__MACOSX/foo"),
+            ZipInfo("submission/submission.csv"),
+            ZipInfo("submission/__MACOSX/bar"),
+            ZipInfo("baz/.DS_Store"),
+            ZipInfo("submission/images/image10x10x10.mhd"),
+            ZipInfo("submission/images/image10x10x10.zraw"),
         ]
     )
     assert members == [
@@ -276,12 +277,12 @@ def test_filter_members():
 def test_filter_members_no_prefix():
     members = _filter_members(
         [
-            "__MACOSX/foo",
-            "submi1ssion/submission.csv",
-            "submi2ssion/__MACOSX/bar",
-            "baz/.DS_Store",
-            "submi3ssion/images/image10x10x10.mhd",
-            "submission/images/image10x10x10.zraw",
+            ZipInfo("__MACOSX/foo"),
+            ZipInfo("submi1ssion/submission.csv"),
+            ZipInfo("submi2ssion/__MACOSX/bar"),
+            ZipInfo("baz/.DS_Store"),
+            ZipInfo("submi3ssion/images/image10x10x10.mhd"),
+            ZipInfo("submission/images/image10x10x10.zraw"),
         ]
     )
     assert members == [

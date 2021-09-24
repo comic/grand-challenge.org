@@ -2,6 +2,7 @@ import re
 import zipfile
 from os.path import commonpath
 from pathlib import Path
+from typing import List
 
 from django.core.files import File
 from django.utils._os import safe_join
@@ -44,7 +45,7 @@ def safe_extract(*, src: File, dest: Path):
 
     with src.open() as f:
         with zipfile.ZipFile(f) as zf:
-            members = _filter_members(zf.namelist())
+            members = _filter_members(zf.infolist())
 
             for member in members:
                 file_dest = Path(safe_join(dest, member["dest"]))
@@ -64,12 +65,13 @@ def safe_extract(*, src: File, dest: Path):
                         fd.write(chunk)
 
 
-def _filter_members(members):
+def _filter_members(members: List[zipfile.ZipInfo]):
     """Filter common prefixes and uninteresting files from a zip archive"""
     members = [
-        m
+        m.filename
         for m in members
-        if re.search(r"(__MACOSX|\.DS_Store|desktop.ini)", m) is None
+        if not m.is_dir()
+        and re.search(r"(__MACOSX|\.DS_Store|desktop.ini)", m.filename) is None
     ]
 
     path = commonpath(members)
