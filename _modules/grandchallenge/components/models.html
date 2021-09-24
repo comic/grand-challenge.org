@@ -996,15 +996,6 @@
             <span class="s2">&quot;immutable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="p">}</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">requires_gpu</span><span class="p">:</span>
-            <span class="c1"># TODO move these to ECS</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;queue&quot;</span><span class="p">:</span> <span class="s2">&quot;evaluation&quot;</span><span class="p">})</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;kwargs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;grandchallenge.components.backends.docker.DockerExecutor&quot;</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
-
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">,</span> <span class="s2">&quot;queue_override&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;queue&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">queue_override</span><span class="p">})</span>
 
