@@ -18,7 +18,6 @@ Installation
 Please ensure that the correct backend is enabled in your docker settings, and run all of the following commands in the ``wsl`` shell.
 At the time of writing, we use ``Ubuntu 20.04`` from the Microsoft store as the default distro.
 As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within ``wsl`` itself.
-For the same reason, we currently recommend running PyCharm from wsl rather than from windows (see `Running WSL GUI Apps on Windows 10`_), but improved support for this should follow from JetBrains in 2021.
 
 2. Clone the repo
 
