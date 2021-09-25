@@ -1,3 +1,4 @@
+import datetime
 import os
 from pathlib import Path
 from zipfile import ZipInfo
@@ -128,6 +129,10 @@ def test_provision(tmp_path, settings):
             "startedAt": "2021-09-25T10:50:24.248Z",
             "stoppedAt": "2021-09-25T11:02:30.776Z",
         }
+    )
+
+    assert executor.duration == datetime.timedelta(
+        seconds=726, microseconds=528000
     )
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {

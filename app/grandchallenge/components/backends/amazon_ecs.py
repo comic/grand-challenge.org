@@ -8,6 +8,7 @@ from pathlib import Path
 from time import sleep
 
 import boto3
+from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -114,7 +115,9 @@ class AmazonECSExecutor:
         container_exit_codes = {
             c["name"]: int(c["exitCode"]) for c in event["containers"]
         }
-        self._set_duration(task_description=event)
+        self._set_duration(
+            started_at=event["startedAt"], stopped_at=event["stoppedAt"]
+        )
         self._wait_for_log_delivery()
 
         if container_exit_codes[self._main_container_name] == 0:
@@ -248,11 +251,9 @@ class AmazonECSExecutor:
         """Convert AWS timestamps (ms from epoch) to datetime"""
         return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
-    def _set_duration(self, *, task_description):
+    def _set_duration(self, *, started_at, stopped_at):
         try:
-            self.__duration = (
-                task_description["stoppedAt"] - task_description["startedAt"]
-            )
+            self.__duration = isoparse(stopped_at) - isoparse(started_at)
         except Exception as e:
             logger.warning(f"Could not determine duration: {e}")
             self.__duration = None
