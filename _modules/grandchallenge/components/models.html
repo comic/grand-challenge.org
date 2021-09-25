@@ -941,11 +941,10 @@
             <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">EXECUTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">]</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="n">now</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">duration</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span><span class="p">:</span>
                 <span class="c1"># TODO: maybe add separate timings for provisioning, executing, parsing and total</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">+</span> <span class="n">duration</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="n">now</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">-</span> <span class="n">duration</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
