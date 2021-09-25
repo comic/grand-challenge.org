@@ -26,6 +26,7 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     EventError,
     RetryStep,
+    TaskCancelled,
     TaskStillExecuting,
 )
 from grandchallenge.components.emails import send_invalid_dockerfile_email
@@ -391,7 +392,10 @@ def handle_event(self, *, event, backend):  # noqa: C901
     try:
         executor.handle_event(event=event)
     except TaskStillExecuting:
-        # Nothing to do here, will be called when it is finished
+        # Nothing to do here, this will be called when it is finished
+        return
+    except TaskCancelled:
+        job.update_status(status=job.CANCELLED)
         return
     except RetryStep:
         try:

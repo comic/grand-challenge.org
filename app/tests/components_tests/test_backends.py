@@ -111,8 +111,22 @@ def test_provision(tmp_path, settings):
     executor.execute()
     executor.handle_event(
         event={
-            "taskArn": "algorithms-job-00000000-0000-0000-0000-000000000000",
+            # Minimal successful event
+            "taskDefinitionArn": "arn:aws:ecs:region:123456789012:task-definition/algorithms-job-00000000-0000-0000-0000-000000000000:1",
+            "group": "components-gpu",
             "stopCode": "EssentialContainerExited",
+            "containers": [
+                {
+                    "exitCode": 143,
+                    "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+                },
+                {
+                    "exitCode": 0,
+                    "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+                },
+            ],
+            "startedAt": "2021-09-25T10:50:24.248Z",
+            "stoppedAt": "2021-09-25T11:02:30.776Z",
         }
     )
 

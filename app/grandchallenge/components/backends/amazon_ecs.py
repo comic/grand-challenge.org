@@ -20,6 +20,7 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     EventError,
     RetryStep,
+    TaskCancelled,
     TaskStillExecuting,
 )
 from grandchallenge.components.backends.utils import (
@@ -97,22 +98,23 @@ class AmazonECSExecutor:
         self._run_task(task_definition_arn=task_definition_arn)
 
     def handle_event(self, *, event):
-        task_arn = event["taskArn"]
         stop_code = event["stopCode"]
 
-        logger.info(f"Handling {task_arn=} with {stop_code=}")
+        logger.info(f"Handling {event=}")
 
         if stop_code in ["TaskFailedToStart", "TerminationNotice"]:
             self._run_task(task_definition_arn=event["taskDefinitionArn"])
             raise TaskStillExecuting
+        elif stop_code == "UserInitiated":
+            raise TaskCancelled
 
-        task_description = self._get_task_description(task_arn=task_arn)
+        # Only other state should be due to container exit, so we have access
+        # to the container info and start/stop times from this point.
 
         container_exit_codes = {
-            c["name"]: int(c["exitCode"])
-            for c in task_description["containers"]
+            c["name"]: int(c["exitCode"]) for c in event["containers"]
         }
-        self._set_duration(task_description=task_description)
+        self._set_duration(task_description=event)
         self._wait_for_log_delivery()
 
         if container_exit_codes[self._main_container_name] == 0:
@@ -212,9 +214,6 @@ class AmazonECSExecutor:
     @property
     def _timeout_container_name(self):
         return f"{self._main_container_name}-timeout"
-
-    def _get_task_description(self, *, task_arn):
-        return self._list_task_descriptions(task_arns=[task_arn])[0]
 
     def _wait_for_log_delivery(self):
         # It takes some time for all of the logs to finish delivery to
@@ -475,26 +474,6 @@ class AmazonECSExecutor:
             )
 
         return task_arns
-
-    def _list_task_descriptions(self, *, task_arns, task_descriptions=None):
-        if task_descriptions is None:
-            task_descriptions = []
-
-        limit = 100  # Defined by AWS
-
-        response = self._ecs_client.describe_tasks(
-            tasks=task_arns[:limit], cluster=self._cluster_arn
-        )
-
-        task_descriptions += response["tasks"]
-
-        if len(task_arns) > limit:
-            return self._list_task_descriptions(
-                task_arns=task_arns[limit:],
-                task_descriptions=task_descriptions,
-            )
-
-        return task_descriptions
 
     def _stop_running_tasks(self):
         """Stop all the running tasks for this job"""
