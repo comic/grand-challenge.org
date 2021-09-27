@@ -92,7 +92,7 @@ requests = "*"
 django_rest_knox = "*"
 numpy = "*"
 Pillow = "*"
-panimg = "*"
+panimg = { git = "https://github.com/DIAGNijmegen/rse-panimg.git", rev = "f49eed5c0ac560797cfa3e4043f3945540db40ca"}
 django-activity-stream = "*"
 django-stdimage = "*"
 django-permissions-policy = "*"
