@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
-from grandchallenge.algorithms.tasks import execute_jobs
+from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -157,7 +157,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
     )
 
-    execute_jobs(
+    create_algorithm_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
         civ_sets=[
             {*ai.values.all()}

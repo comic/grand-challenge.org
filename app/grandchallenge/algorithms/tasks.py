@@ -1,4 +1,5 @@
 from celery import chain, chord, group, shared_task
+from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from guardian.shortcuts import assign_perm
@@ -160,7 +161,7 @@ def create_algorithm_jobs_for_session(
         for image in session.image_set.all()
     ]
 
-    new_jobs = execute_jobs(
+    new_jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
         civ_sets=civ_sets,
         creator=session.creator,
@@ -214,7 +215,7 @@ def create_algorithm_jobs_for_archive(
             archive_items = archive.items.all()
 
         for algorithm in algorithms:
-            execute_jobs(
+            create_algorithm_jobs(
                 algorithm_image=algorithm.latest_ready_image,
                 civ_sets=[
                     {*ai.values.all()}
@@ -228,69 +229,6 @@ def create_algorithm_jobs_for_archive(
                 # to the algorithm editors
                 task_on_success=None,
             )
-
-
-def execute_jobs(
-    *,
-    algorithm_image,
-    civ_sets,
-    creator=None,
-    extra_viewer_groups=None,
-    extra_logs_viewer_groups=None,
-    task_on_success=None,
-    task_on_failure=None,
-    max_jobs=None,
-):
-    """
-    Execute an algorithm image on sets of component interface values.
-
-    The resulting jobs will be applied in parallel. Note that using
-    a chord here is not supported due to the message size limit of
-    SQS (https://github.com/celery/kombu/issues/279).
-
-    Parameters
-    ----------
-    algorithm_image
-        The algorithm image to use
-    civ_sets
-        The sets of component interface values that will be used as input
-        for the algorithm image
-    creator
-        The creator of the algorithm jobs
-    extra_viewer_groups
-        The groups that will also get permission to view the jobs
-    extra_logs_viewer_groups
-        The groups that will also get permission to view the logs for
-        the jobs
-    task_on_success
-        Celery task that is run on job success. This must be able
-        to handle being called more than once, and in parallel.
-    task_on_failure
-        Celery task that is run on job failure
-    max_jobs
-        The maximum number of jobs to schedule
-
-    Returns
-    -------
-    jobs
-        A list of Job objects that have been scheduled
-
-    """
-    jobs = create_algorithm_jobs(
-        algorithm_image=algorithm_image,
-        civ_sets=civ_sets,
-        creator=creator,
-        extra_viewer_groups=extra_viewer_groups,
-        extra_logs_viewer_groups=extra_logs_viewer_groups,
-        max_jobs=max_jobs,
-        task_on_success=task_on_success,
-        task_on_failure=task_on_failure,
-    )
-
-    for j in jobs:
-        on_commit(j.execute)
-
-    return jobs
 
 
 def create_algorithm_jobs(
@@ -352,22 +290,25 @@ def create_algorithm_jobs(
 
     jobs = []
     for civ_set in civ_sets:
-        j = Job.objects.create(
-            creator=creator,
-            algorithm_image=algorithm_image,
-            task_on_success=task_on_success,
-            task_on_failure=task_on_failure,
-        )
-        j.inputs.set(civ_set)
+        with transaction.atomic():
+            j = Job.objects.create(
+                creator=creator,
+                algorithm_image=algorithm_image,
+                task_on_success=task_on_success,
+                task_on_failure=task_on_failure,
+            )
+            j.inputs.set(civ_set)
 
-        if extra_viewer_groups is not None:
-            j.viewer_groups.add(*extra_viewer_groups)
+            if extra_viewer_groups is not None:
+                j.viewer_groups.add(*extra_viewer_groups)
 
-        if extra_logs_viewer_groups is not None:
-            for g in extra_logs_viewer_groups:
-                assign_perm("algorithms.view_logs", g, j)
+            if extra_logs_viewer_groups is not None:
+                for g in extra_logs_viewer_groups:
+                    assign_perm("algorithms.view_logs", g, j)
 
-        jobs.append(j)
+            jobs.append(j)
+
+            on_commit(j.execute)
 
     return jobs
 
