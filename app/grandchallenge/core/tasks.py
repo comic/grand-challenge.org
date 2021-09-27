@@ -1,15 +1,14 @@
-from time import sleep
-
+import boto3
 from celery import shared_task
-from django.conf import settings
 from django.contrib.sitemaps import ping_google as _ping_google
 from django.contrib.sites.models import Site
 from django.core.management import call_command
+from django.db.models import Count
 
-from grandchallenge.core.storage import (
-    private_s3_storage,
-    protected_s3_storage,
-)
+from grandchallenge.algorithms.models import Job
+from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.workstations.models import Session
 
 
 @shared_task
@@ -23,27 +22,48 @@ def ping_google():
     _ping_google()
 
 
-@shared_task(
-    bind=True, **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"]
-)
-def debug_task_queue_worker(self, duration=120, check_connectivity=True):
-    """Debug task for checking workers on a queue"""
-    print(f"{self.acks_late=}")
-    print(f"{self.reject_on_worker_lost=}")
+@shared_task
+def put_cloudwatch_metrics():
+    client = boto3.client("logs")
+    metrics = _get_metrics()
 
-    print(f"Sleeping {duration=}")
-    sleep(duration)
-    print("Awake")
+    for metric in metrics:
+        # Limit of 20 metrics per call, each model can have up to 11 status
+        # elements, so send individually
+        client.put_metric_data(
+            Namespace=metric["Namespace"], MetricData=metric["MetricData"],
+        )
 
-    if check_connectivity:
-        print("Checking db connectivity")
-        site = Site.objects.get_current()
-        print(f"{site=}")
 
-        print("Checking private S3 storage connectivity")
-        private_storage_object_exists = private_s3_storage.exists("test")
-        print(f"{private_storage_object_exists=}")
+def _get_metrics():
+    site = Site.objects.get_current()
+    metric_data = []
 
-        print("Checking protected S3 storage connectivity")
-        protected_storage_object_exists = protected_s3_storage.exists("test")
-        print(f"{protected_storage_object_exists=}")
+    # Create CloudWatch metrics for a choice field in a model
+    models = [Job, Evaluation, Session, RawImageUploadSession]
+    field = "status"
+
+    for model in models:
+        choice_to_display = dict(getattr(model, field).field.choices)
+
+        def choice_to_name(choice):
+            return f"{model.__name__}s{choice_to_display[choice]}".translate(
+                {ord(c): None for c in " -."}
+            )
+
+        qs = model.objects.values(field).annotate(Count(field)).order_by(field)
+        metric_data.append(
+            {
+                "Namespace": f"{site.domain}/{model._meta.app_label}",
+                "MetricData": [
+                    {
+                        "MetricName": choice_to_name(q[field]),
+                        "Value": q[f"{field}__count"],
+                        "Unit": "Count",
+                    }
+                    for q in qs
+                ],
+            }
+        )
+
+    return metric_data
