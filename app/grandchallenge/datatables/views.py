@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import reduce
 from operator import or_
-from typing import Tuple
+from typing import Callable, Optional, Tuple
 
 from django.db.models import Q
 from django.http import JsonResponse
@@ -54,12 +54,20 @@ class PaginatedTableListView(ListView):
             data = self.filter_queryset(self.object_list, search, order_by)
             paginator = self.get_paginator(queryset=data, per_page=page_size)
             objects = paginator.page(page)
+
+            show_columns = []
+            for c in self.columns:
+                show_columns.append(
+                    c.optional_condition is None
+                    or any(c.optional_condition(o) for o in objects)
+                )
             return JsonResponse(
                 {
                     "draw": int(request.GET.get("draw")),
                     "recordsTotal": self.object_list.count(),
                     "recordsFiltered": paginator.count,
                     "data": self.render_rows(object_list=objects),
+                    "showColumns": show_columns,
                 }
             )
         return response
@@ -81,3 +89,8 @@ class Column:
     sort_field: str
     classes: Tuple[str, ...] = ()
     identifier: str = ""
+
+    # A column will be hidden when the `optional_condition` evaluates to False
+    # for every object shown in the current list (page). `optional_condition`
+    # is a function that consumes the current object as argument
+    optional_condition: Optional[Callable] = None
