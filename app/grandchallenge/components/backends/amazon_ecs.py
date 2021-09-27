@@ -99,39 +99,12 @@ class AmazonECSExecutor:
         self._run_task(task_definition_arn=task_definition_arn)
 
     def handle_event(self, *, event):
-        stop_code = event["stopCode"]
-
         logger.info(f"Handling {event=}")
 
-        if stop_code in ["TaskFailedToStart", "TerminationNotice"]:
-            self._run_task(task_definition_arn=event["taskDefinitionArn"])
-            raise TaskStillExecuting
-        elif stop_code == "UserInitiated":
-            raise TaskCancelled
-
-        # Only other state should be due to container exit, so we have access
-        # to the container info and start/stop times from this point.
-
-        container_exit_codes = {
-            c["name"]: int(c["exitCode"]) for c in event["containers"]
-        }
-        self._set_duration(
-            started_at=event["startedAt"], stopped_at=event["stoppedAt"]
-        )
+        container_exit_codes = self._get_container_exit_codes(event=event)
+        self._set_duration(event=event)
         self._wait_for_log_delivery()
-
-        if container_exit_codes[self._main_container_name] == 0:
-            # Job's a good un
-            return
-        elif container_exit_codes[self._main_container_name] == 137:
-            raise ComponentException(
-                "The container was killed as it exceeded the memory limit "
-                f"of {self._memory_limit}g."
-            )
-        elif container_exit_codes[self._timeout_container_name] == 0:
-            raise ComponentException("Time limit exceeded")
-        else:
-            raise ComponentException(user_error(self.stderr))
+        self._handle_container_exit(container_exit_codes=container_exit_codes)
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -200,13 +173,6 @@ class AmazonECSExecutor:
             return settings.COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN
 
     @property
-    def _log_group_name(self):
-        if self._requires_gpu:
-            return settings.COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME
-        else:
-            return settings.COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME
-
-    @property
     def _log_stream_prefix(self):
         return "ecs"
 
@@ -227,7 +193,7 @@ class AmazonECSExecutor:
 
     def _get_task_logs(self, *, source):
         response = self._logs_client.get_log_events(
-            logGroupName=self._log_group_name,
+            logGroupName=settings.COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME,
             logStreamName=f"{self._log_stream_prefix}/{self._main_container_name}",
             limit=LOGLINES,
             startFromHead=False,
@@ -251,9 +217,15 @@ class AmazonECSExecutor:
         """Convert AWS timestamps (ms from epoch) to datetime"""
         return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
-    def _set_duration(self, *, started_at, stopped_at):
+    def _set_duration(self, *, event):
         try:
-            self.__duration = isoparse(stopped_at) - isoparse(started_at)
+            started = (
+                event["startedAt"]
+                if "startedAt" in event
+                else event["createdAt"]
+            )
+            stopped = event["stoppedAt"]
+            self.__duration = isoparse(stopped) - isoparse(started)
         except Exception as e:
             logger.warning(f"Could not determine duration: {e}")
             self.__duration = None
@@ -426,7 +398,7 @@ class AmazonECSExecutor:
                     count=1,
                     enableExecuteCommand=False,
                     enableECSManagedTags=True,
-                    group=self._log_group_name,
+                    group=settings.COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME,
                     placementConstraints=[{"type": "distinctInstance"}],
                     propagateTags="TASK_DEFINITION",
                     referenceId=self._job_id,
@@ -451,6 +423,46 @@ class AmazonECSExecutor:
 
         else:
             logger.warning("A task is already running for this job")
+
+    def _get_container_exit_codes(self, *, event):
+        stop_code = event["stopCode"]
+
+        container_exit_codes = {
+            c["name"]: int(c["exitCode"])
+            for c in event.get("containers", {})
+            if "exitCode" in c
+        }
+
+        if (
+            stop_code == "TaskFailedToStart"
+            and container_exit_codes.get(self._main_container_name) == 0
+        ):
+            # Sometimes the entire task fails to start, but the main
+            # container ran before the sidecar(s) could start
+            pass
+        elif stop_code in ["TaskFailedToStart", "TerminationNotice"]:
+            # Requeue the task in the event of resources not available
+            # or termination
+            self._run_task(task_definition_arn=event["taskDefinitionArn"])
+            raise TaskStillExecuting
+        elif stop_code == "UserInitiated":
+            raise TaskCancelled
+
+        return container_exit_codes
+
+    def _handle_container_exit(self, *, container_exit_codes):
+        if container_exit_codes.get(self._main_container_name) == 0:
+            # Job's a good un
+            return
+        elif container_exit_codes.get(self._main_container_name) == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded the memory limit "
+                f"of {self._memory_limit}g."
+            )
+        elif container_exit_codes.get(self._timeout_container_name) == 0:
+            raise ComponentException("Time limit exceeded")
+        else:
+            raise ComponentException(user_error(self.stderr))
 
     def _list_task_arns(
         self, *, desired_status, next_token="", task_arns=None
