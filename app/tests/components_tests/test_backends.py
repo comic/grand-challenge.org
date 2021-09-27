@@ -7,6 +7,10 @@ import pytest
 from django.core.files.base import ContentFile, File
 
 from grandchallenge.components.backends.docker import DockerConnection
+from grandchallenge.components.backends.exceptions import (
+    TaskCancelled,
+    TaskStillExecuting,
+)
 from grandchallenge.components.backends.utils import (
     _filter_members,
     user_error,
@@ -328,3 +332,163 @@ def test_filter_members_single_file():
 def test_filter_members_single_file_nested():
     members = _filter_members([ZipInfo("foo/bar")])
     assert members == [{"src": "foo/bar", "dest": "bar"}]
+
+
+def test_handle_stopped_successful_task():
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    event = {
+        "taskDefinitionArn": "arn:aws:ecs:region:123456789012:task-definition/algorithms-job-00000000-0000-0000-0000-000000000000:1",
+        "group": "components-gpu",
+        "stopCode": "EssentialContainerExited",
+        "containers": [
+            {
+                "exitCode": 143,
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+            },
+            {
+                "exitCode": 0,
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+            },
+        ],
+        "startedAt": "2021-09-25T10:50:24.248Z",
+        "stoppedAt": "2021-09-25T11:02:30.776Z",
+    }
+    assert executor._handle_stopped_task(event=event) == {
+        "algorithms-job-00000000-0000-0000-0000-000000000000": 0,
+        "algorithms-job-00000000-0000-0000-0000-000000000000-timeout": 143,
+    }
+
+
+def test_handle_stopped_successful_fast_task():
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    event = {
+        "taskDefinitionArn": "arn:aws:ecs:region:123456789012:task-definition/algorithms-job-00000000-0000-0000-0000-000000000000:1",
+        "group": "components-gpu",
+        "stopCode": "TaskFailedToStart",  # as not all container had time to start
+        "containers": [
+            {
+                # No container exit in this case
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+            },
+            {
+                "exitCode": 0,
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+            },
+        ],
+        "createdAt": "2021-09-25T10:50:24.248Z",  # No startedAt in this case
+        "stoppedAt": "2021-09-25T11:02:30.776Z",
+    }
+
+    assert executor._handle_stopped_task(event=event) == {
+        "algorithms-job-00000000-0000-0000-0000-000000000000": 0
+    }
+
+
+def test_handle_stopped_start_failed_task():
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    event = {
+        "taskDefinitionArn": "arn:aws:ecs:region:123456789012:task-definition/algorithms-job-00000000-0000-0000-0000-000000000000:1",
+        "group": "components-gpu",
+        "stopCode": "TaskFailedToStart",
+        "containers": [
+            {
+                # No container exit in this case
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+            },
+            {
+                # No container exit in this case
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+            },
+        ],
+        "createdAt": "2021-09-25T10:50:24.248Z",  # No startedAt in this case
+        "stoppedAt": "2021-09-25T11:02:30.776Z",
+    }
+
+    with pytest.raises(TaskStillExecuting):
+        # Task should be retried
+        executor._handle_stopped_task(event=event)
+
+
+def test_handle_stopped_terminated_task():
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    event = {
+        "taskDefinitionArn": "arn:aws:ecs:region:123456789012:task-definition/algorithms-job-00000000-0000-0000-0000-000000000000:1",
+        "group": "components-gpu",
+        "stopCode": "TerminationNotice",
+        "containers": [
+            {
+                # No container exit in this case
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+            },
+            {
+                # No container exit in this case
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+            },
+        ],
+        "createdAt": "2021-09-25T10:50:24.248Z",  # No startedAt in this case
+        "stoppedAt": "2021-09-25T11:02:30.776Z",
+    }
+
+    with pytest.raises(TaskStillExecuting):
+        # Task should be retried
+        executor._handle_stopped_task(event=event)
+
+
+def test_handle_stopped_cancelled_task():
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    event = {
+        "taskDefinitionArn": "arn:aws:ecs:region:123456789012:task-definition/algorithms-job-00000000-0000-0000-0000-000000000000:1",
+        "group": "components-gpu",
+        "stopCode": "UserInitiated",
+        "containers": [
+            {
+                # No container exit in this case
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+            },
+            {
+                # No container exit in this case
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+            },
+        ],
+        "createdAt": "2021-09-25T10:50:24.248Z",  # No startedAt in this case
+        "stoppedAt": "2021-09-25T11:02:30.776Z",
+    }
+
+    with pytest.raises(TaskCancelled):
+        # Task should be retried
+        executor._handle_stopped_task(event=event)

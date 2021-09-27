@@ -99,36 +99,23 @@ class AmazonECSExecutor:
         self._run_task(task_definition_arn=task_definition_arn)
 
     def handle_event(self, *, event):
-        stop_code = event["stopCode"]
-
         logger.info(f"Handling {event=}")
 
-        if stop_code in ["TaskFailedToStart", "TerminationNotice"]:
-            self._run_task(task_definition_arn=event["taskDefinitionArn"])
-            raise TaskStillExecuting
-        elif stop_code == "UserInitiated":
-            raise TaskCancelled
-
-        # Only other state should be due to container exit, so we have access
-        # to the container info and start/stop times from this point.
-
-        container_exit_codes = {
-            c["name"]: int(c["exitCode"]) for c in event["containers"]
-        }
+        container_exit_codes = self._handle_stopped_task(event=event)
         self._set_duration(
             started_at=event["startedAt"], stopped_at=event["stoppedAt"]
         )
         self._wait_for_log_delivery()
 
-        if container_exit_codes[self._main_container_name] == 0:
+        if container_exit_codes.get(self._main_container_name) == 0:
             # Job's a good un
             return
-        elif container_exit_codes[self._main_container_name] == 137:
+        elif container_exit_codes.get(self._main_container_name) == 137:
             raise ComponentException(
                 "The container was killed as it exceeded the memory limit "
                 f"of {self._memory_limit}g."
             )
-        elif container_exit_codes[self._timeout_container_name] == 0:
+        elif container_exit_codes.get(self._timeout_container_name) == 0:
             raise ComponentException("Time limit exceeded")
         else:
             raise ComponentException(user_error(self.stderr))
@@ -444,6 +431,32 @@ class AmazonECSExecutor:
 
         else:
             logger.warning("A task is already running for this job")
+
+    def _handle_stopped_task(self, *, event):
+        stop_code = event["stopCode"]
+
+        container_exit_codes = {
+            c["name"]: int(c["exitCode"])
+            for c in event.get("containers", {})
+            if "exitCode" in c
+        }
+
+        if (
+            stop_code == "TaskFailedToStart"
+            and container_exit_codes.get(self._main_container_name) == 0
+        ):
+            # Sometimes the entire task fails to start, but the main
+            # container ran before the sidecar(s) could start
+            pass
+        elif stop_code in ["TaskFailedToStart", "TerminationNotice"]:
+            # Requeue the task in the event of resources not available
+            # or termination
+            self._run_task(task_definition_arn=event["taskDefinitionArn"])
+            raise TaskStillExecuting
+        elif stop_code == "UserInitiated":
+            raise TaskCancelled
+
+        return container_exit_codes
 
     def _list_task_arns(
         self, *, desired_status, next_token="", task_arns=None
