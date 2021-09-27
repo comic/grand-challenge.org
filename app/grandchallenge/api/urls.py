@@ -40,7 +40,6 @@ from grandchallenge.retina_api.views import (
     SinglePolygonViewSet,
     TextAnnotationViewSet,
 )
-from grandchallenge.statistics.views import MetricsAPIView
 from grandchallenge.timezones.views import TimezoneAPIView
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
@@ -180,7 +179,6 @@ urlpatterns = [
     # the serializers
     path("v1/", include(router.urls)),
     path("v1/github/", github_webhook, name="github-webhook"),
-    path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
     path("v1/timezone/", TimezoneAPIView.as_view(), name="timezone"),
     path(
         "",

@@ -1,27 +1,21 @@
 from datetime import timedelta
 
-import prometheus_client
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Count, Sum
 from django.utils import timezone
 from django.views.generic import TemplateView
 from django_countries import countries
-from rest_framework.permissions import IsAdminUser
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from grandchallenge.algorithms.models import Algorithm, Job as AlgorithmJob
 from grandchallenge.archives.models import Archive
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import (
     Evaluation as EvaluationJob,
     Submission,
 )
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
-from grandchallenge.statistics import metrics
-from grandchallenge.statistics.renderers import PrometheusRenderer
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 
@@ -183,55 +177,3 @@ class StatisticsDetail(TemplateView):
         context.update(extra)
 
         return context
-
-
-class MetricsAPIView(APIView):
-    renderer_classes = [PrometheusRenderer]
-    permission_classes = [IsAdminUser]
-
-    def get(self, request, format=None):
-        self._update_metrics()
-        return Response(
-            prometheus_client.generate_latest(),
-            content_type=prometheus_client.CONTENT_TYPE_LATEST,
-        )
-
-    @staticmethod
-    def _update_metrics():
-        metrics.WORKSTATION_SESSIONS_ACTIVE.set(
-            Session.objects.filter(status=Session.STARTED).count()
-        )
-        metrics.ALGORITHM_JOBS_PENDING.set(
-            AlgorithmJob.objects.filter(status=AlgorithmJob.PENDING).count()
-        )
-        metrics.ALGORITHM_JOBS_ACTIVE.set(
-            AlgorithmJob.objects.filter(
-                status__in=[
-                    AlgorithmJob.EXECUTING,
-                    AlgorithmJob.PROVISIONING,
-                    AlgorithmJob.PARSING,
-                ]
-            ).count()
-        )
-        metrics.EVALUATION_JOBS_PENDING.set(
-            EvaluationJob.objects.filter(status=EvaluationJob.PENDING).count()
-        )
-        metrics.EVALUATION_JOBS_ACTIVE.set(
-            EvaluationJob.objects.filter(
-                status__in=[
-                    EvaluationJob.EXECUTING,
-                    EvaluationJob.PROVISIONING,
-                    AlgorithmJob.PARSING,
-                ]
-            ).count()
-        )
-        metrics.UPLOAD_SESSIONS_PENDING.set(
-            RawImageUploadSession.objects.filter(
-                status=RawImageUploadSession.REQUEUED
-            ).count()
-        )
-        metrics.UPLOAD_SESSIONS_ACTIVE.set(
-            RawImageUploadSession.objects.filter(
-                status=RawImageUploadSession.STARTED
-            ).count()
-        )

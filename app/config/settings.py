@@ -1026,6 +1026,10 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 WORKSTATIONS_GRACE_MINUTES = 5
 
 CELERY_BEAT_SCHEDULE = {
+    "push_metrics_to_cloudwatch": {
+        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
+        "schedule": timedelta(seconds=15),
+    },
     "ping_google": {
         "task": "grandchallenge.core.tasks.ping_google",
         "schedule": timedelta(days=1),

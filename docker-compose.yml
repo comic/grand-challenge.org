@@ -245,8 +245,6 @@ services:
       - "--api.insecure=true"
       - "--ping=true"
       - "--ping.entryPoint=traefik"
-      - "--metrics.prometheus=true"
-      - "--metrics.prometheus.entryPoint=metrics"
       - "--accesslog=true"
       - "--providers.docker=true"
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
