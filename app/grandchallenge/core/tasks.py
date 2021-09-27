@@ -24,15 +24,16 @@ def ping_google():
 
 @shared_task
 def put_cloudwatch_metrics():
-    client = boto3.client("logs")
+    client = boto3.client("cloudwatch")
     metrics = _get_metrics()
 
     for metric in metrics:
         # Limit of 20 metrics per call, each model can have up to 11 status
         # elements, so send individually
-        client.put_metric_data(
-            Namespace=metric["Namespace"], MetricData=metric["MetricData"],
-        )
+        if metric["MetricData"]:
+            client.put_metric_data(
+                Namespace=metric["Namespace"], MetricData=metric["MetricData"],
+            )
 
 
 def _get_metrics():
