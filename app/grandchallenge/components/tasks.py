@@ -4,9 +4,7 @@ import logging
 import subprocess
 import tarfile
 import uuid
-from datetime import timedelta
 from tempfile import NamedTemporaryFile
-from typing import Dict
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
@@ -491,41 +489,6 @@ def deprovision_job(
     )
     executor = job.get_executor(backend=backend)
     executor.deprovision()
-
-
-@shared_task
-def mark_long_running_jobs_failed(
-    *, app_label: str, model_name: str, extra_filters: Dict[str, str] = None
-):
-    """
-    Mark jobs that have been started but did not finish (maybe due to
-    an unrecoverable hardware error). It will mark tasks FAILED that have the
-    status STARTED after 1.2x the task limit (which is different for each
-    queue), so, this must be scheduled on the same queue that the execute_job
-    task is run for this app_label and model_name.
-
-    If the task is still running on Celery then it will still be able to
-    report as passed later.
-    """
-    Job = apps.get_model(  # noqa: N806
-        app_label=app_label, model_name=model_name
-    )
-
-    jobs_to_mark = Job.objects.filter(
-        started_at__lt=now()
-        - 1.2 * timedelta(seconds=settings.CELERY_TASK_TIME_LIMIT),
-        status=Job.EXECUTING,
-    )
-
-    if extra_filters:
-        jobs_to_mark = jobs_to_mark.filter(**extra_filters)
-
-    for j in jobs_to_mark:
-        j.update_status(
-            status=Job.FAILURE, error_message="Time limit exceeded."
-        )
-
-    return [j.pk for j in jobs_to_mark]
 
 
 @shared_task
