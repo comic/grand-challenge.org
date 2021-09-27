@@ -4,6 +4,7 @@ from statistics import mean, median
 
 from celery import shared_task
 from django.apps import apps
+from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Count, Q
@@ -111,7 +112,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     """
     Creates the algorithm jobs for the evaluation
