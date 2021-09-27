@@ -200,13 +200,6 @@ class AmazonECSExecutor:
             return settings.COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN
 
     @property
-    def _log_group_name(self):
-        if self._requires_gpu:
-            return settings.COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME
-        else:
-            return settings.COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME
-
-    @property
     def _log_stream_prefix(self):
         return "ecs"
 
@@ -227,7 +220,7 @@ class AmazonECSExecutor:
 
     def _get_task_logs(self, *, source):
         response = self._logs_client.get_log_events(
-            logGroupName=self._log_group_name,
+            logGroupName=settings.COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME,
             logStreamName=f"{self._log_stream_prefix}/{self._main_container_name}",
             limit=LOGLINES,
             startFromHead=False,
@@ -426,7 +419,7 @@ class AmazonECSExecutor:
                     count=1,
                     enableExecuteCommand=False,
                     enableECSManagedTags=True,
-                    group=self._log_group_name,
+                    group=settings.COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME,
                     placementConstraints=[{"type": "distinctInstance"}],
                     propagateTags="TASK_DEFINITION",
                     referenceId=self._job_id,
