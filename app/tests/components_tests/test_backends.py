@@ -360,7 +360,7 @@ def test_handle_stopped_successful_task():
         "startedAt": "2021-09-25T10:50:24.248Z",
         "stoppedAt": "2021-09-25T11:02:30.776Z",
     }
-    assert executor._handle_stopped_task(event=event) == {
+    assert executor._get_container_exit_codes(event=event) == {
         "algorithms-job-00000000-0000-0000-0000-000000000000": 0,
         "algorithms-job-00000000-0000-0000-0000-000000000000-timeout": 143,
     }
@@ -393,7 +393,7 @@ def test_handle_stopped_successful_fast_task():
         "stoppedAt": "2021-09-25T11:02:30.776Z",
     }
 
-    assert executor._handle_stopped_task(event=event) == {
+    assert executor._get_container_exit_codes(event=event) == {
         "algorithms-job-00000000-0000-0000-0000-000000000000": 0
     }
 
@@ -427,7 +427,7 @@ def test_handle_stopped_start_failed_task():
 
     with pytest.raises(TaskStillExecuting):
         # Task should be retried
-        executor._handle_stopped_task(event=event)
+        executor._get_container_exit_codes(event=event)
 
 
 def test_handle_stopped_terminated_task():
@@ -459,7 +459,7 @@ def test_handle_stopped_terminated_task():
 
     with pytest.raises(TaskStillExecuting):
         # Task should be retried
-        executor._handle_stopped_task(event=event)
+        executor._get_container_exit_codes(event=event)
 
 
 def test_handle_stopped_cancelled_task():
@@ -491,4 +491,45 @@ def test_handle_stopped_cancelled_task():
 
     with pytest.raises(TaskCancelled):
         # Task should be retried
-        executor._handle_stopped_task(event=event)
+        executor._get_container_exit_codes(event=event)
+
+
+def test_set_duration_success():
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    executor._set_duration(
+        event={
+            "createdAt": "2021-09-25T10:50:24.248Z",
+            "startedAt": "2021-09-25T10:55:24.248Z",
+            "stoppedAt": "2021-09-25T11:02:30.776Z",
+        }
+    )
+    assert executor.duration == datetime.timedelta(
+        seconds=426, microseconds=528000
+    )
+
+
+def test_set_duration_fast_task():
+    executor = AmazonECSExecutorStub(
+        job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
+    )
+    executor._set_duration(
+        event={
+            "createdAt": "2021-09-25T10:50:24.248Z",
+            "stoppedAt": "2021-09-25T11:02:30.776Z",
+        }
+    )
+    assert executor.duration == datetime.timedelta(
+        seconds=726, microseconds=528000
+    )

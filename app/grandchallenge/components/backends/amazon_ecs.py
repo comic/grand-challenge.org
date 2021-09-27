@@ -101,24 +101,10 @@ class AmazonECSExecutor:
     def handle_event(self, *, event):
         logger.info(f"Handling {event=}")
 
-        container_exit_codes = self._handle_stopped_task(event=event)
-        self._set_duration(
-            started_at=event["startedAt"], stopped_at=event["stoppedAt"]
-        )
+        container_exit_codes = self._get_container_exit_codes(event=event)
+        self._set_duration(event=event)
         self._wait_for_log_delivery()
-
-        if container_exit_codes.get(self._main_container_name) == 0:
-            # Job's a good un
-            return
-        elif container_exit_codes.get(self._main_container_name) == 137:
-            raise ComponentException(
-                "The container was killed as it exceeded the memory limit "
-                f"of {self._memory_limit}g."
-            )
-        elif container_exit_codes.get(self._timeout_container_name) == 0:
-            raise ComponentException("Time limit exceeded")
-        else:
-            raise ComponentException(user_error(self.stderr))
+        self._handle_container_exit(container_exit_codes=container_exit_codes)
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -231,9 +217,15 @@ class AmazonECSExecutor:
         """Convert AWS timestamps (ms from epoch) to datetime"""
         return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
-    def _set_duration(self, *, started_at, stopped_at):
+    def _set_duration(self, *, event):
         try:
-            self.__duration = isoparse(stopped_at) - isoparse(started_at)
+            started = (
+                event["startedAt"]
+                if "startedAt" in event
+                else event["createdAt"]
+            )
+            stopped = event["stoppedAt"]
+            self.__duration = isoparse(stopped) - isoparse(started)
         except Exception as e:
             logger.warning(f"Could not determine duration: {e}")
             self.__duration = None
@@ -432,7 +424,7 @@ class AmazonECSExecutor:
         else:
             logger.warning("A task is already running for this job")
 
-    def _handle_stopped_task(self, *, event):
+    def _get_container_exit_codes(self, *, event):
         stop_code = event["stopCode"]
 
         container_exit_codes = {
@@ -457,6 +449,20 @@ class AmazonECSExecutor:
             raise TaskCancelled
 
         return container_exit_codes
+
+    def _handle_container_exit(self, *, container_exit_codes):
+        if container_exit_codes.get(self._main_container_name) == 0:
+            # Job's a good un
+            return
+        elif container_exit_codes.get(self._main_container_name) == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded the memory limit "
+                f"of {self._memory_limit}g."
+            )
+        elif container_exit_codes.get(self._timeout_container_name) == 0:
+            raise ComponentException("Time limit exceeded")
+        else:
+            raise ComponentException(user_error(self.stderr))
 
     def _list_task_arns(
         self, *, desired_status, next_token="", task_arns=None
