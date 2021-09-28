@@ -39,4 +39,5 @@ def test_paginated_table_list_view():
         "recordsTotal": 0,
         "recordsFiltered": 0,
         "data": [],
+        "showColumns": [],
     }
