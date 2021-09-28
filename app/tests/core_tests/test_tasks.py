@@ -17,11 +17,36 @@ def test_get_metrics():
 
     # Note, this is the format expected by CloudWatch,
     # consult the API when changing this
-    assert _get_metrics() == [
+    result = _get_metrics()
+
+    assert result == [
         {
             "Namespace": "testserver/algorithms",
             "MetricData": [
-                {"MetricName": "JobsQueued", "Value": 1, "Unit": "Count"}
+                {"MetricName": "JobsQueued", "Value": 1, "Unit": "Count"},
+                {"MetricName": "JobsStarted", "Value": 0, "Unit": "Count"},
+                {"MetricName": "JobsReQueued", "Value": 0, "Unit": "Count"},
+                {"MetricName": "JobsFailed", "Value": 0, "Unit": "Count"},
+                {"MetricName": "JobsSucceeded", "Value": 0, "Unit": "Count"},
+                {"MetricName": "JobsCancelled", "Value": 0, "Unit": "Count"},
+                {
+                    "MetricName": "JobsProvisioning",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {"MetricName": "JobsProvisioned", "Value": 0, "Unit": "Count"},
+                {"MetricName": "JobsExecuting", "Value": 0, "Unit": "Count"},
+                {"MetricName": "JobsExecuted", "Value": 0, "Unit": "Count"},
+                {
+                    "MetricName": "JobsParsingOutputs",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "JobsExecutingAlgorithm",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
             ],
         },
         {
@@ -31,13 +56,72 @@ def test_get_metrics():
                     "MetricName": "EvaluationsQueued",
                     "Value": 1,
                     "Unit": "Count",
-                }
+                },
+                {
+                    "MetricName": "EvaluationsStarted",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsReQueued",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsFailed",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsSucceeded",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsCancelled",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsProvisioning",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsProvisioned",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsExecuting",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsExecuted",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsParsingOutputs",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "EvaluationsExecutingAlgorithm",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
             ],
         },
         {
             "Namespace": "testserver/workstations",
             "MetricData": [
-                {"MetricName": "SessionsQueued", "Value": 1, "Unit": "Count"}
+                {"MetricName": "SessionsQueued", "Value": 1, "Unit": "Count"},
+                {"MetricName": "SessionsStarted", "Value": 0, "Unit": "Count"},
+                {"MetricName": "SessionsRunning", "Value": 0, "Unit": "Count"},
+                {"MetricName": "SessionsFailed", "Value": 0, "Unit": "Count"},
+                {"MetricName": "SessionsStopped", "Value": 0, "Unit": "Count"},
             ],
         },
         {
@@ -49,8 +133,28 @@ def test_get_metrics():
                     "Unit": "Count",
                 },
                 {
+                    "MetricName": "RawImageUploadSessionsStarted",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
                     "MetricName": "RawImageUploadSessionsReQueued",
                     "Value": 1,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "RawImageUploadSessionsFailed",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "RawImageUploadSessionsSucceeded",
+                    "Value": 0,
+                    "Unit": "Count",
+                },
+                {
+                    "MetricName": "RawImageUploadSessionsCancelled",
+                    "Value": 0,
                     "Unit": "Count",
                 },
             ],

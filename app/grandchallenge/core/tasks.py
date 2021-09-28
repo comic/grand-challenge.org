@@ -53,16 +53,18 @@ def _get_metrics():
             )
 
         qs = model.objects.values(field).annotate(Count(field)).order_by(field)
+        counts = {q[field]: q[f"{field}__count"] for q in qs}
+
         metric_data.append(
             {
                 "Namespace": f"{site.domain}/{model._meta.app_label}",
                 "MetricData": [
                     {
-                        "MetricName": choice_to_name(q[field]),
-                        "Value": q[f"{field}__count"],
+                        "MetricName": choice_to_name(c),
+                        "Value": counts.get(c, 0),
                         "Unit": "Count",
                     }
-                    for q in qs
+                    for c in choice_to_display
                 ],
             }
         )
