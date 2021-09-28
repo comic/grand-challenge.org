@@ -912,11 +912,8 @@ COMPONENTS_MAXIMUM_IMAGE_SIZE = 10_737_418_240  # 10 gb
 COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = os.environ.get(
     "COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT", "/mnt/aws-batch-nfs/"
 )
-COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_CPU_LOG_GROUP_NAME", ""
-)
-COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_GPU_LOG_GROUP_NAME", ""
+COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME", ""
 )
 COMPONENTS_AMAZON_ECS_LOGS_REGION = os.environ.get(
     "COMPONENTS_AMAZON_ECS_LOGS_REGION", "eu-central-1"
@@ -1029,6 +1026,10 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 WORKSTATIONS_GRACE_MINUTES = 5
 
 CELERY_BEAT_SCHEDULE = {
+    "push_metrics_to_cloudwatch": {
+        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
+        "schedule": timedelta(seconds=15),
+    },
     "ping_google": {
         "task": "grandchallenge.core.tasks.ping_google",
         "schedule": timedelta(days=1),

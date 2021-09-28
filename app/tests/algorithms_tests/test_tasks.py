@@ -14,7 +14,6 @@ from grandchallenge.algorithms.tasks import (
     add_images_to_component_interface_value,
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
-    execute_jobs,
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
     send_failed_job_notification,
@@ -189,7 +188,7 @@ class TestCreateJobsWorkflow(TestCase):
     def test_no_jobs_workflow(self):
         ai = AlgorithmImageFactory()
         with capture_on_commit_callbacks() as callbacks:
-            execute_jobs(algorithm_image=ai, civ_sets=[])
+            create_algorithm_jobs(algorithm_image=ai, civ_sets=[])
         assert len(callbacks) == 0
 
     def test_jobs_workflow(self):
@@ -204,7 +203,7 @@ class TestCreateJobsWorkflow(TestCase):
             for im in images
         ]
         with capture_on_commit_callbacks() as callbacks:
-            execute_jobs(algorithm_image=ai, civ_sets=civ_sets)
+            create_algorithm_jobs(algorithm_image=ai, civ_sets=civ_sets)
         assert len(callbacks) == 2
 
 
@@ -236,7 +235,7 @@ def test_algorithm(client, algorithm_image, settings):
     assert civ.interface.slug == "generic-medical-image"
 
     with capture_on_commit_callbacks() as callbacks:
-        execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
+        create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
     recurse_callbacks(callbacks=callbacks)
 
     jobs = Job.objects.filter(algorithm_image=alg).all()
@@ -284,7 +283,7 @@ def test_algorithm(client, algorithm_image, settings):
     )
 
     with capture_on_commit_callbacks() as callbacks:
-        execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
+        create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
     recurse_callbacks(callbacks=callbacks)
 
     jobs = Job.objects.filter(
@@ -332,7 +331,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     )
 
     with capture_on_commit_callbacks() as callbacks:
-        execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
+        create_algorithm_jobs(algorithm_image=alg, civ_sets=[{civ}])
     recurse_callbacks(callbacks=callbacks)
 
     jobs = Job.objects.filter(

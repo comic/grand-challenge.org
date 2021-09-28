@@ -5,22 +5,18 @@ class ComponentBaseException(Exception):
 class ComponentException(ComponentBaseException):
     """These exceptions will be sent to the user"""
 
-    pass
-
 
 class RetryStep(ComponentBaseException):
     """Raised to signal that this step should be retried"""
-
-    pass
 
 
 class EventError(ComponentBaseException):
     """Raised if an irrelevant event is passed"""
 
-    pass
-
 
 class TaskStillExecuting(ComponentBaseException):
-    """Raise if a task is still active"""
+    """Raised if a task is still active"""
 
-    pass
+
+class TaskCancelled(ComponentBaseException):
+    """Raised if a task has been cancelled"""

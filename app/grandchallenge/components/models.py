@@ -778,11 +778,10 @@ class ComponentJob(models.Model):
             in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
             and self.completed_at is None
         ):
+            self.completed_at = now()
             if duration and self.started_at:
                 # TODO: maybe add separate timings for provisioning, executing, parsing and total
-                self.completed_at = self.started_at + duration
-            else:
-                self.completed_at = now()
+                self.started_at = self.completed_at - duration
 
         self.save()
 

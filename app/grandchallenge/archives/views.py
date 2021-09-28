@@ -538,7 +538,14 @@ class ArchiveCasesList(
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="origin__creator__username"),
         Column(title="View", sort_field="pk"),
-        Column(title="Algorithm Results", sort_field="pk"),
+        Column(
+            title="Algorithm Results",
+            sort_field="pk",
+            optional_condition=lambda o: any(
+                civ.algorithms_jobs_as_input.exists()
+                for civ in o.componentinterfacevalue_set.all()
+            ),
+        ),
         Column(title="Download", sort_field="pk"),
     ]
 
