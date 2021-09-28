@@ -65,7 +65,9 @@ def sentry_dsn(*_, **__):
 def footer_links(*_, **__):
     return {
         "policy_pages": Policy.objects.all(),
-        "about_us": FlatPage.objects.filter(title="Contributors").get(),
+        "about_us": FlatPage.objects.filter(
+            title=settings.ABOUT_FLATPAGE_TITLE
+        ).get(),
     }
 
 
@@ -93,18 +95,36 @@ def latest_algorithms(*_, **__):
 
 
 def latest_news_item(*_, **__):
+    latest_news_item = Post.objects.filter(
+        tags__slug=settings.HOMEPAGE_NEWS_BLOG_TAG
+    ).first()
+    latest_ai_for_radiology_post = (
+        Post.objects.filter(published=True, tags__name__contains="Products")
+        .order_by("-created")
+        .first()
+    )
+    latest_gc_blog_post = (
+        Post.objects.filter(published=True)
+        .exclude(tags__slug="products")
+        .order_by("-created")
+        .first()
+    )
+
+    if latest_news_item:
+        news_caroussel_items = [
+            latest_news_item,
+            latest_ai_for_radiology_post,
+            latest_gc_blog_post,
+        ]
+    else:
+        news_caroussel_items = [
+            latest_ai_for_radiology_post,
+            latest_gc_blog_post,
+        ]
     return {
         "blog_posts": Post.objects.filter(published=True).exclude(
             tags__slug="news"
         ),
-        "news_caroussel_items": [
-            Post.objects.filter(tags__slug="news").first(),
-            Post.objects.filter(
-                published=True, tags__name__contains="Products"
-            ).order_by("-created")[0],
-            Post.objects.filter(published=True)
-            .exclude(tags__slug="products")
-            .order_by("-created")[0],
-        ],
-        "latest_news_item": Post.objects.filter(tags__slug="news").first(),
+        "news_caroussel_items": news_caroussel_items,
+        "latest_news_item": latest_news_item,
     }
