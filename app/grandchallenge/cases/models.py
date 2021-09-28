@@ -309,10 +309,10 @@ class Image(UUIDModel):
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
     )
-    patient_id = models.CharField(max_length=64, null=True, blank=True)
-    patient_name = models.CharField(max_length=324, null=True, blank=True)
+    patient_id = models.CharField(max_length=64, default="")
+    patient_name = models.CharField(max_length=324, default="")
     patient_birth_date = models.DateField(null=True, blank=True)
-    patient_age = models.CharField(max_length=4, null=True, blank=True)
+    patient_age = models.CharField(max_length=4, default="")
     patient_sex = models.CharField(
         max_length=1,
         null=True,
@@ -321,12 +321,10 @@ class Image(UUIDModel):
         default=PATIENT_SEX_EMTPY,
     )
     study_date = models.DateField(null=True, blank=True)
-    study_instance_uid = models.CharField(max_length=64, null=True, blank=True)
-    series_instance_uid = models.CharField(
-        max_length=64, null=True, blank=True
-    )
-    study_description = models.CharField(max_length=64, null=True, blank=True)
-    series_description = models.CharField(max_length=64, null=True, blank=True)
+    study_instance_uid = models.CharField(max_length=64, default="")
+    series_instance_uid = models.CharField(max_length=64, default="")
+    study_description = models.CharField(max_length=64, default="")
+    series_description = models.CharField(max_length=64, default="")
 
     eye_choice = models.CharField(
         max_length=2,
