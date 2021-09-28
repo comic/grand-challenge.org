@@ -1,5 +1,6 @@
 import logging
 import os
+from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Mapping, Union
@@ -265,6 +266,22 @@ class Image(UUIDModel):
         (FOV_EMPTY, "Not applicable"),
     )
 
+    class PatientSex(str, Enum):  # TODO: import from panimg
+        MALE = "M"
+        FEMALE = "F"
+        OTHER = "O"
+
+    PATIENT_SEX_MALE = PatientSex.MALE.value
+    PATIENT_SEX_FEMALE = PatientSex.FEMALE.value
+    PATIENT_SEX_OTHER = PatientSex.OTHER.value
+    PATIENT_SEX_EMTPY = None
+    PATIENT_SEX_CHOICES = (
+        (PATIENT_SEX_MALE, "Male"),
+        (PATIENT_SEX_FEMALE, "Female"),
+        (PATIENT_SEX_OTHER, "Other"),
+        (PATIENT_SEX_EMTPY, "Empty"),
+    )
+
     name = models.CharField(max_length=4096)
     study = models.ForeignKey(
         Study, null=True, blank=True, on_delete=models.SET_NULL,
@@ -292,6 +309,24 @@ class Image(UUIDModel):
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
     )
+    patient_id = models.CharField(max_length=64, null=True, blank=True)
+    patient_name = models.CharField(max_length=324, null=True, blank=True)
+    patient_birth_date = models.DateField(null=True, blank=True)
+    patient_age = models.CharField(max_length=4, null=True, blank=True)
+    patient_sex = models.CharField(
+        max_length=1,
+        null=True,
+        blank=True,
+        choices=PATIENT_SEX_CHOICES,
+        default=PATIENT_SEX_EMTPY,
+    )
+    study_date = models.DateField(null=True, blank=True)
+    study_instance_uid = models.CharField(max_length=64, null=True, blank=True)
+    series_instance_uid = models.CharField(
+        max_length=64, null=True, blank=True
+    )
+    study_description = models.CharField(max_length=64, null=True, blank=True)
+    series_description = models.CharField(max_length=64, null=True, blank=True)
 
     eye_choice = models.CharField(
         max_length=2,
