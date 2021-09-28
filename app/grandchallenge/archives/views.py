@@ -498,7 +498,7 @@ class ArchiveItemsList(
         "values__file",
     ]
     columns = [
-        Column(title="Values", sort_field="values"),
+        Column(title="Values", sort_field="created"),
         Column(title="Edit", sort_field="pk"),
     ]
 
