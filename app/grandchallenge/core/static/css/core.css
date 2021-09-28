@@ -168,3 +168,32 @@ ul.socialaccount_providers > li {
 .phaseButton:focus, .phaseButton:hover {
     box-shadow:none !important;
 }
+
+.card, .card-header {
+    border-radius: 20px;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.card-img-top{
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.btn {
+   border-radius: 10px;
+}
+
+.carousel-indicators li {
+    margin-left: 5px;
+    margin-right: 5px;
+    background-color: #2c3e50;
+    bottom: -50px;
+}
+
+.carousel-control-next, .carousel-control-prev {
+    filter: invert(1);
+    width: 50px;
+}
