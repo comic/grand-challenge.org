@@ -8,6 +8,13 @@ $(document).ready(function () {
         serverSide: true,
         ajax: {
             url: "",
+            dataSrc: function ( json ) {
+                const table = $('#ajaxDataTable').DataTable();
+                for (const [index, visible] of json.showColumns.entries()) {
+                    table.column(index).visible(visible)
+                }
+                return json.data;
+            }
         },
         ordering: true,
     });

@@ -81,6 +81,7 @@ services:
       PUBLIC_S3_STORAGE_ACCESS_KEY: miniopublic
       PUBLIC_S3_STORAGE_SECRET_KEY: miniopublic12345
       COMPONENTS_REGISTRY_INSECURE: 'true'
+      COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
@@ -152,6 +153,7 @@ services:
       <<: *private_storage_credentials
       <<: *protected_storage_credentials
       COMPONENTS_REGISTRY_INSECURE: 'true'
+      COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
       WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
@@ -183,10 +185,11 @@ services:
       <<: *protected_storage_credentials
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
+      COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: "celery -A config worker -l info -c 1 -Q evaluation,gpu,acks-late-2xlarge,acks-late-micro-short"
+    command: "celery -A config worker -l info -c 1 -Q acks-late-2xlarge,acks-late-micro-short"
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:
@@ -242,8 +245,6 @@ services:
       - "--api.insecure=true"
       - "--ping=true"
       - "--ping.entryPoint=traefik"
-      - "--metrics.prometheus=true"
-      - "--metrics.prometheus.entryPoint=metrics"
       - "--accesslog=true"
       - "--providers.docker=true"
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
