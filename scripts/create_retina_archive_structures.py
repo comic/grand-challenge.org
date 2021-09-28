@@ -1,3 +1,5 @@
+import random
+import string
 import sys
 import tempfile
 from io import BytesIO
@@ -16,14 +18,63 @@ from grandchallenge.components.models import (
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
+from grandchallenge.workstations.models import Workstation
+from tests.fixtures import create_uploaded_image
 
 TEMP_SAVE_LOCATION = "tmp.mha"
 
 
 def create_archive(name, user):
-    a = Archive.objects.get_or_create(title=name)[0]
+    a = Archive.objects.get_or_create(
+        title=name,
+        defaults={
+            "logo": create_uploaded_image(),
+            "workstation": Workstation.objects.first(),
+        },
+    )[0]
     a.add_editor(user)
     return a
+
+
+def generate_random_metadata():
+    def generate_string(length=4):
+        return "".join(
+            random.choice(string.ascii_letters) for _ in range(length)
+        )
+
+    def generate_uid():
+        return ".".join([str(random.randint(0, 100)) for _ in range(4)])
+
+    def generate_lo(prefix="", suffix=""):
+        rand_str = generate_string()
+        return f"{prefix}{rand_str}{suffix}"
+
+    def generate_da():
+        return "-".join(
+            [
+                str(random.randint(t1, t2)).zfill(l)
+                for t1, t2, l in ((1900, 2021, 4), (1, 12, 2), (1, 28, 2))
+            ]
+        )
+
+    def generate_as():
+        return str(random.randint(0, 999)).zfill(3) + random.choice(
+            ("D", "W", "M", "Y")
+        )
+
+    def return_or_none(return_value):
+        return return_value if random.random() < 0.5 else None
+
+    return {
+        "patient_name": return_or_none(generate_lo(prefix="Patient ")),
+        "patient_birth_date": return_or_none(generate_da()),
+        "patient_age": return_or_none(generate_as()),
+        "patient_sex": return_or_none(random.choice(("F", "M", "O"))),
+        "study_date": return_or_none(generate_da()),
+        "study_instance_uid": return_or_none(generate_uid()),
+        "series_instance_uid": return_or_none(generate_uid()),
+        "series_description": return_or_none(generate_lo(prefix="Series ")),
+    }
 
 
 def load_as_bytes_io(fp):
@@ -127,6 +178,9 @@ def create_image_set_for_study(archive, study, nums):
                 ][0]
                 if name == "enface_rgb"
                 else Image.FOV_EMPTY,
+                patient_id=study.patient.name,
+                study_description=study.name,
+                **generate_random_metadata(),
             )
 
             mha_bio = None
