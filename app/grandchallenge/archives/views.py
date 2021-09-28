@@ -532,11 +532,71 @@ class ArchiveCasesList(
     search_fields = [
         "pk",
         "name",
+        "patient_id",
+        "patient_name",
+        "patient_birth_date",
+        "patient_age",
+        "patient_sex",
+        "study_date",
+        "study_instance_uid",
+        "series_instance_uid",
+        "study_description",
+        "series_description",
     ]
     columns = [
         Column(title="Name", sort_field="name"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="origin__creator__username"),
+        Column(
+            title="Patient ID",
+            sort_field="patient_id",
+            optional_condition=lambda o: o.patient_id,
+        ),
+        Column(
+            title="Patient name",
+            sort_field="patient_name",
+            optional_condition=lambda o: o.patient_name,
+        ),
+        Column(
+            title="Patient birth date",
+            sort_field="patient_birth_date",
+            optional_condition=lambda o: o.patient_birth_date,
+        ),
+        Column(
+            title="Patient age",
+            sort_field="patient_age",
+            optional_condition=lambda o: o.patient_age,
+        ),
+        Column(
+            title="Patient sex",
+            sort_field="patient_sex",
+            optional_condition=lambda o: o.patient_sex,
+        ),
+        Column(
+            title="Study Instance UID",
+            sort_field="study_instance_uid",
+            optional_condition=lambda o: o.study_instance_uid,
+        ),
+        Column(
+            title="Study description",
+            sort_field="study_description",
+            optional_condition=lambda o: o.study_description,
+        ),
+        Column(
+            title="Study date",
+            sort_field="study_date",
+            optional_condition=lambda o: o.study_date,
+        ),
+        Column(
+            title="Series Instance UID",
+            sort_field="series_instance_uid",
+            optional_condition=lambda o: o.series_instance_uid,
+        ),
+        Column(
+            title="Series description",
+            sort_field="series_description",
+            optional_condition=lambda o: o.series_description,
+        ),
         Column(title="View", sort_field="pk"),
         Column(
             title="Algorithm Results",
