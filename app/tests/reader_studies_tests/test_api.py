@@ -10,6 +10,7 @@ from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, StagedFileFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -72,9 +73,9 @@ def test_api_list_is_filtered(client):
 @pytest.mark.django_db
 def test_answer_create(client):
     im = ImageFactory()
-
+    civ = ComponentInterfaceValueFactory(image=im)
     rs = ReaderStudyFactory()
-    rs.images.add(im)
+    rs.civs.add(civ)
     rs.save()
 
     reader = UserFactory()
@@ -95,8 +96,8 @@ def test_answer_create(client):
     answer = Answer.objects.get(pk=response.data.get("pk"))
 
     assert answer.creator == reader
-    assert answer.images.count() == 1
-    assert answer.images.all()[0] == im
+    assert answer.civs.count() == 1
+    assert answer.civs.all()[0].image == im
     assert answer.question == q
     assert answer.answer is True
 
@@ -104,9 +105,12 @@ def test_answer_create(client):
 @pytest.mark.django_db
 def test_answer_update(client):
     im1, im2 = ImageFactory(), ImageFactory()
-
+    civ1, civ2 = (
+        ComponentInterfaceValueFactory(image=im1),
+        ComponentInterfaceValueFactory(image=im2),
+    )
     rs = ReaderStudyFactory()
-    rs.images.add(im1, im2)
+    rs.civs.add(civ1, civ2)
     rs.save()
 
     reader = UserFactory()
@@ -129,7 +133,7 @@ def test_answer_update(client):
 
     answer = Answer.objects.get(pk=response.data.get("pk"))
     assert answer.answer is True
-    assert answer.images.first() == im1
+    assert answer.civs.first().image == im1
     assert answer.history.count() == 1
 
     response = get_view_for_user(
@@ -150,7 +154,7 @@ def test_answer_update(client):
         ]
     }
     assert answer.answer is True
-    assert answer.images.first() == im1
+    assert answer.civs.first().image == im1
     assert answer.history.count() == 1
 
     rs.allow_answer_modification = True
@@ -172,7 +176,7 @@ def test_answer_update(client):
         "non_field_errors": ["Only the answer field can be modified."]
     }
     assert answer.answer is True
-    assert answer.images.first() == im1
+    assert answer.civs.first().image == im1
     assert answer.history.count() == 1
 
     response = get_view_for_user(
@@ -188,7 +192,7 @@ def test_answer_update(client):
 
     answer.refresh_from_db()
     assert answer.answer is False
-    assert answer.images.first() == im1
+    assert answer.civs.first().image == im1
     assert answer.history.count() == 2
 
     response = get_view_for_user(
@@ -212,7 +216,8 @@ def test_answer_creator_is_reader(client):
     rs_set = TwoReaderStudies()
 
     im = ImageFactory()
-    rs_set.rs1.images.add(im)
+    civ = ComponentInterfaceValueFactory(image=im)
+    rs_set.rs1.civs.add(civ)
 
     q = QuestionFactory(
         reader_study=rs_set.rs1, answer_type=Question.AnswerType.BOOL
@@ -631,7 +636,8 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
     im = ImageFactory()
 
     rs = ReaderStudyFactory()
-    rs.images.add(im)
+    civ = ComponentInterfaceValueFactory(image=im)
+    rs.civs.add(civ)
     rs.save()
 
     reader = UserFactory()
@@ -656,8 +662,9 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 )
 def test_only_non_required_can_be_null(client, answer_type):
     im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
     rs = ReaderStudyFactory()
-    rs.images.add(im)
+    rs.civs.add(civ)
     rs.save()
     reader = UserFactory()
     rs.add_reader(reader)
@@ -694,9 +701,13 @@ def test_only_non_required_can_be_null(client, answer_type):
 @pytest.mark.django_db
 def test_mine(client):
     im1, im2 = ImageFactory(), ImageFactory()
+    civ1, civ2 = (
+        ComponentInterfaceValueFactory(image=im1),
+        ComponentInterfaceValueFactory(image=im2),
+    )
     rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
-    rs1.images.add(im1)
-    rs2.images.add(im2)
+    rs1.civs.add(civ1)
+    rs2.civs.add(civ2)
 
     reader = UserFactory()
     rs1.add_reader(reader)
@@ -710,10 +721,10 @@ def test_mine(client):
     )
 
     a1 = AnswerFactory(question=q1, creator=reader, answer=True)
-    a1.images.add(im1)
+    a1.civs.add(civ1)
 
     a2 = AnswerFactory(question=q2, creator=reader, answer=True)
-    a2.images.add(im2)
+    a2.civs.add(civ2)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-mine",
@@ -753,8 +764,9 @@ def test_mine(client):
 @pytest.mark.django_db
 def test_ground_truth_is_excluded(client):
     im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
     rs = ReaderStudyFactory()
-    rs.images.add(im)
+    rs.civs.add(civ)
 
     editor = UserFactory()
     rs.add_editor(editor)
@@ -765,12 +777,12 @@ def test_ground_truth_is_excluded(client):
     a1 = AnswerFactory(
         question=q, creator=editor, answer=True, is_ground_truth=True
     )
-    a1.images.add(im)
+    a1.civs.add(civ)
 
     a2 = AnswerFactory(
         question=q, creator=editor, answer=True, is_ground_truth=False
     )
-    a2.images.add(im)
+    a2.civs.add(civ)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-mine",
@@ -827,9 +839,9 @@ def test_ground_truth_is_excluded(client):
 )
 def test_csv_export(client, answer_type, answer):
     im = ImageFactory()
-
+    civ = ComponentInterfaceValueFactory(image=im)
     rs = ReaderStudyFactory()
-    rs.images.add(im)
+    rs.civs.add(civ)
     rs.save()
 
     editor = UserFactory()
@@ -843,7 +855,7 @@ def test_csv_export(client, answer_type, answer):
     )
 
     a = AnswerFactory(question=q, answer=answer)
-    a.images.add(im)
+    a.civs.add(civ)
     a.save()
 
     response = get_view_for_user(
@@ -966,9 +978,10 @@ def test_remove_image_api_view(client):
     )
 
     im = ImageFactory()
-    rs.images.add(im)
+    civ = ComponentInterfaceValueFactory(image=im)
+    rs.civs.add(civ)
 
-    assert im in rs.images.all()
+    assert im.pk in rs.civs.values_list("image", flat=True)
 
     response = get_view_for_user(
         viewname="api:reader-study-remove-image",
@@ -983,7 +996,7 @@ def test_remove_image_api_view(client):
 
     assert response.status_code == 200
     assert "Image removed from reader study." in str(response.content)
-    assert im not in rs.images.all()
+    assert im not in rs.civs.values_list("image", flat=True)
 
 
 @pytest.mark.django_db
@@ -1010,20 +1023,21 @@ def test_ground_truth(client):
     op5 = CategoricalOptionFactory(question=q3, title="option1")
 
     im = ImageFactory()
-    rs.images.add(im)
+    civ = ComponentInterfaceValueFactory(image=im)
+    rs.civs.add(civ)
 
     a1 = AnswerFactory(question=q1, answer=op1.pk, is_ground_truth=True)
-    a1.images.add(im)
+    a1.civs.add(civ)
 
     a2 = AnswerFactory(
         question=q2, answer=[op2.pk, op3.pk], is_ground_truth=True
     )
-    a2.images.add(im)
+    a2.civs.add(civ)
 
     a3 = AnswerFactory(
         question=q3, answer=[op4.pk, op5.pk], is_ground_truth=True
     )
-    a3.images.add(im)
+    a3.civs.add(civ)
 
     response = get_view_for_user(
         viewname="api:reader-study-ground-truth",
@@ -1066,9 +1080,10 @@ def test_assign_answer_image(client, settings, answer_type):
     settings.task_always_eager = (True,)
     rs = ReaderStudyFactory()
     im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
     editor, reader = UserFactory(), UserFactory()
 
-    rs.images.add(im)
+    rs.civs.add(civ)
     rs.add_editor(editor)
     rs.add_reader(reader)
 
@@ -1119,9 +1134,10 @@ def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
 
     rs = ReaderStudyFactory()
     im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
     editor, reader = UserFactory(), UserFactory()
 
-    rs.images.add(im)
+    rs.civs.add(civ)
     rs.add_editor(editor)
     rs.add_reader(reader)
 
@@ -1168,9 +1184,10 @@ def test_question_accepts_image_type_answers(client, settings):
 
     rs = ReaderStudyFactory()
     im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
     reader = UserFactory()
 
-    rs.images.add(im)
+    rs.civs.add(civ)
     rs.add_reader(reader)
 
     question = QuestionFactory(

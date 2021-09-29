@@ -1,3 +1,5 @@
+import re
+
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from rest_framework.fields import CharField, ReadOnlyField, URLField
@@ -8,6 +10,7 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -104,6 +107,15 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             for pk in obj.civs.values_list("image_id", flat=True)
         ]
 
+    def _parse_uuid_from_url(self, url):
+        match = re.match(
+            ".*/?(?P<uuid>[^/]*[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12})/?",
+            url,
+        )
+        if not match:
+            raise ValueError("Could not find uuid")
+        return match.group("uuid")
+
     def validate(self, attrs):
         answer = attrs.get("answer")
         if self.instance:
@@ -113,15 +125,23 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                 raise ValidationError(
                     "This reader study does not allow answer modification."
                 )
-            if list(attrs.keys()) != ["answer"]:
+            if (
+                list(attrs.keys()) != ["answer"]
+                or "images" in self.initial_data
+            ):
                 raise ValidationError("Only the answer field can be modified.")
             question = self.instance.question
             civs = self.instance.civs.all()
             creator = self.instance.creator
         else:
-            # TODO check civs
             question = attrs.get("question")
-            civs = attrs.get("images")
+            civs = ComponentInterfaceValue.objects.filter(
+                image__in=[
+                    self._parse_uuid_from_url(url)
+                    for url in self.initial_data.get("images", [])
+                ]
+            )
+            attrs.update({"civs": civs})
             creator = self.context.get("request").user
         Answer.validate(
             creator=creator,

@@ -824,13 +824,13 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         reader_study = self.get_object()
         try:
             reader_study.civs.remove(
-                *ComponentInterfaceValue.objects.filter(image_id=image_id)
+                ComponentInterfaceValue.objects.get(image_id=image_id)
             )
             messages.add_message(
                 request, messages.SUCCESS, "Image removed from reader study."
             )
             return Response({"status": "Image removed from reader study."},)
-        except Image.DoesNotExist:
+        except ComponentInterfaceValue.DoesNotExist:
             messages.add_message(
                 request,
                 messages.ERROR,
