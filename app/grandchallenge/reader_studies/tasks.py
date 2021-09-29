@@ -2,6 +2,10 @@ from celery import shared_task
 from django.db import transaction
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 
 
@@ -24,16 +28,12 @@ def add_scores(*, instance_pk, pk_set):
     instance = Answer.objects.get(pk=instance_pk)
     if instance.is_ground_truth:
         for answer in Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=False,
-            images__in=pk_set,
+            question=instance.question, is_ground_truth=False, civs__in=pk_set,
         ):
             add_score(answer, instance.answer)
     else:
         ground_truth = Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=True,
-            images__in=pk_set,
+            question=instance.question, is_ground_truth=True, civs__in=pk_set,
         ).first()
         if ground_truth:
             add_score(instance, ground_truth.answer)
@@ -41,10 +41,14 @@ def add_scores(*, instance_pk, pk_set):
 
 @shared_task
 def add_images_to_reader_study(*, upload_session_pk, reader_study_pk):
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
     images = Image.objects.filter(origin_id=upload_session_pk)
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
-
-    reader_study.images.add(*images.all())
+    civs = [
+        ComponentInterfaceValue.objects.create(interface=ci, image=im)
+        for im in images
+    ]
+    reader_study.civs.add(*civs)
 
 
 @shared_task

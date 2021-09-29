@@ -671,8 +671,12 @@ class ArchiveCasesToReaderStudyUpdate(
     def form_valid(self, form):
         reader_study: ReaderStudy = form.cleaned_data["reader_study"]
         images = form.cleaned_data["images"]
-
-        reader_study.images.add(*images)
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        civs = [
+            ComponentInterfaceValue.objects.create(interface=ci, image=im)
+            for im in images
+        ]
+        reader_study.civs.add(*civs)
 
         self.success_url = reader_study.get_absolute_url()
         self.success_message = f"Added {len(images)} cases to {reader_study}."

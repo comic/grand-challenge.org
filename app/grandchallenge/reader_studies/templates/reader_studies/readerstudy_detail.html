@@ -47,7 +47,7 @@
                 <a class="nav-link" id="v-pills-cases-tab" data-toggle="pill"
                    href="#cases" role="tab" aria-controls="v-pills-cases"
                    aria-selected="false"><i class="fas fa-image fa-fw"></i>&nbsp;Cases&nbsp;<span
-                        class="badge badge-pill badge-secondary align-middle">{{ object.images.all.count }}</span>
+                        class="badge badge-pill badge-secondary align-middle">{{ object.civs.all.count }}</span>
                 </a>
                 <a class="nav-link" id="v-pills-questions-tab" data-toggle="pill"
                    href="#questions" role="tab"
@@ -188,8 +188,8 @@
                         with its default configuration.
                     {% endif %}
 
-                    There are {{ object.images.all.count }}
-                    image{{ object.images.all.count|pluralize }} arranged
+                    There are {{ object.civs.all.count }}
+                    image{{ object.civs.all.count|pluralize }} arranged
                     in {{ object.hanging_list|length }}
                     hanging{{ object.hanging_list|pluralize }}.
 
@@ -237,8 +237,8 @@
                 <h2>Cases</h2>
 
                 <p>
-                    There are {{ object.images.all.count }}
-                    case{{ object.images.all.count|pluralize }} in this
+                    There are {{ object.civs.all.count }}
+                    case{{ object.civs.all.count|pluralize }} in this
                     reader study.
                 </p>
 
@@ -379,7 +379,7 @@
                     <a class="btn btn-primary"
                        href="{% url 'api:reader-study-detail' pk=object.pk %}?format=csv"
                        download="reader_study_{{ object.slug }}_{{ now }}.csv">
-                        <i class="fas fa-file-csv"></i> Reader Study
+                        <i class="fas fa-file-csv"></i> Reader StudyImages
                     </a>
                 </p>
 

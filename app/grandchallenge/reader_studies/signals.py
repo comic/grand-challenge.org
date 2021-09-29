@@ -8,7 +8,7 @@ from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.reader_studies.tasks import add_scores
 
 
-@receiver(m2m_changed, sender=ReaderStudy.images.through)
+@receiver(m2m_changed, sender=ReaderStudy.civs.through)
 def update_image_permissions(instance, action, reverse, model, pk_set, **_):
     """
     Assign or remove view permissions to the readers group when images
@@ -20,7 +20,7 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         return
 
     if reverse:
-        images = Image.objects.filter(pk=instance.pk)
+        images = Image.objects.filter(componentinterfacevalue=instance.pk)
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
@@ -36,9 +36,13 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            images = instance.images.all()
+            images = Image.objects.filter(
+                componentinterfacevalue__in=instance.civs.values_list(
+                    "pk", flat=True
+                )
+            )
         else:
-            images = model.objects.filter(pk__in=pk_set)
+            images = Image.objects.filter(componentinterfacevalue__in=pk_set)
 
     op = assign_perm if "add" in action else remove_perm
 
@@ -47,7 +51,7 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         op("view_image", rs.readers_group, images)
 
 
-@receiver(m2m_changed, sender=Answer.images.through)
+@receiver(m2m_changed, sender=Answer.civs.through)
 def assign_score(instance, action, reverse, model, pk_set, **_):
     if action != "post_add":
         return

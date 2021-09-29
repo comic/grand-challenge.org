@@ -50,6 +50,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -252,7 +253,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 ).count(),
                 limit,
             ),
-            "image_offsets": range(0, self.object.images.count(), limit),
+            "image_offsets": range(0, self.object.civs.count(), limit),
         }
 
 
@@ -349,7 +350,7 @@ class ReaderStudyImagesList(
     def get_queryset(self):
         qs = super().get_queryset()
         return (
-            qs.filter(readerstudies=self.reader_study)
+            qs.filter(componentinterfacevalue__in=self.reader_study.civs.all())
             .prefetch_related("files",)
             .select_related(
                 "origin__creator__user_profile",
@@ -541,7 +542,7 @@ class ReaderStudyCopy(
         )
         rs.add_editor(self.request.user)
         if form.cleaned_data["copy_images"]:
-            rs.images.set(reader_study.images.all())
+            rs.civs.set(reader_study.civs.all())
         if form.cleaned_data["copy_hanging_list"]:
             rs.hanging_list = reader_study.hanging_list
         if form.cleaned_data["copy_case_text"]:
@@ -791,7 +792,7 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
-        "images", "questions__options"
+        "civs__image", "questions__options"
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -822,7 +823,9 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         image_id = request.data.get("image")
         reader_study = self.get_object()
         try:
-            reader_study.images.remove(Image.objects.get(id=image_id))
+            reader_study.civs.remove(
+                *ComponentInterfaceValue.objects.filter(image_id=image_id)
+            )
             messages.add_message(
                 request, messages.SUCCESS, "Image removed from reader study."
             )
@@ -843,11 +846,11 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         if not (reader_study.is_educational and reader_study.has_ground_truth):
             raise Http404()
         try:
-            image = reader_study.images.get(pk=case_pk)
+            civ = reader_study.civs.get(image_id=case_pk)
         except Image.DoesNotExist:
             raise Http404()
         answers = Answer.objects.filter(
-            images=image,
+            civs=civ,
             question__reader_study=reader_study,
             is_ground_truth=True,
         )
@@ -890,7 +893,7 @@ class AnswerViewSet(
     queryset = (
         Answer.objects.all()
         .select_related("creator", "question__reader_study")
-        .prefetch_related("images")
+        .prefetch_related("civs")
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]

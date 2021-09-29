@@ -25,6 +25,7 @@ from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -214,6 +215,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     )
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
+    )
+    civs = models.ManyToManyField(
+        ComponentInterfaceValue, related_name="readerstudy_items"
     )
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.PROTECT
@@ -486,9 +490,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         """The cleaned help text from the markdown sources"""
         return md2html(self.help_text_markdown, link_blank_target=True)
 
+    def get_study_images(self):
+        images = self.civs.values_list("image__name", "image_id")
+        return {
+            im[0]: reverse("api:image-detail", kwargs={"pk": im[1]})
+            for im in images
+        }
+
     @property
     def cleaned_case_text(self):
-        study_images = {im.name: im.api_url for im in self.images.all()}
+        study_images = self.get_study_images()
         return {
             study_images.get(k): md2html(v)
             for k, v in self.case_text.items()
@@ -498,7 +509,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def study_image_names(self):
         """Names for all images added to this ``ReaderStudy``."""
-        return self.images.values_list("name", flat=True)
+        return self.civs.values_list("image__name", flat=True)
 
     @property
     def hanging_image_names(self):
@@ -558,7 +569,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         if not self.is_valid:
             return None
 
-        study_images = {im.name: im.api_url for im in self.images.all()}
+        study_images = self.get_study_images()
 
         hanging_list_images = [
             {view: study_images.get(name) for view, name in hanging.items()}
@@ -595,7 +606,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
         answers = []
         for gt in data:
-            images = self.images.filter(name__in=gt["images"].split(";"))
+            civs = self.civs.filter(image__name__in=gt["images"].split(";"))
             for key in gt.keys():
                 if key == "images" or key.endswith("__explanation"):
                     continue
@@ -621,7 +632,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 Answer.validate(
                     creator=user,
                     question=question,
-                    images=images,
+                    civs=civs,
                     answer=_answer,
                     is_ground_truth=True,
                 )
@@ -632,7 +643,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 answers.append(
                     {
                         "answer_obj": Answer.objects.filter(
-                            images__in=images,
+                            civs__in=civs,
                             question=question,
                             is_ground_truth=True,
                         ).first()
@@ -644,7 +655,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                         ),
                         "answer": _answer,
                         "explanation": explanation,
-                        "images": images,
+                        "civs": civs,
                     }
                 )
 
@@ -652,7 +663,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             answer["answer_obj"].answer = answer["answer"]
             answer["answer_obj"].explanation = answer["explanation"]
             answer["answer_obj"].save()
-            answer["answer_obj"].images.set(answer["images"])
+            answer["answer_obj"].civs.set(answer["civs"])
             answer["answer_obj"].save()
 
     def get_hanging_list_images_for_user(self, *, user):
@@ -680,7 +691,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Each image in the ``ReaderStudy`` is assigned to the primary port of its
         own hanging.
         """
-        image_names = self.images.values_list("name", flat=True)
+        image_names = self.civs.values_list("image__name", flat=True)
         self.hanging_list = [{"main": name} for name in image_names]
         self.save()
 
@@ -1154,6 +1165,9 @@ class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
+    civs = models.ManyToManyField(
+        ComponentInterfaceValue, related_name="answers"
+    )
     answer = models.JSONField(
         null=True, validators=[JSONValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
@@ -1207,7 +1221,7 @@ class Answer(UUIDModel):
             + [
                 self.created.isoformat(),
                 self.answer_text,
-                "; ".join(self.images.values_list("name", flat=True)),
+                "; ".join(self.civs.values_list("image__name", flat=True)),
                 self.creator.username,
             ]
             + list(itertools.chain(*self.history_values))
@@ -1230,7 +1244,7 @@ class Answer(UUIDModel):
         creator,
         question,
         answer,
-        images,
+        civs,
         is_ground_truth=False,
         instance=None,
     ):
@@ -1246,16 +1260,16 @@ class Answer(UUIDModel):
                 f"{type(answer)} found."
             )
 
-        if len(images) == 0:
+        if len(civs) == 0:
             raise ValidationError(
                 "You must specify the images that this answer corresponds to."
             )
 
-        reader_study_images = question.reader_study.images.all()
-        for im in images:
-            if im not in reader_study_images:
+        reader_study_civs = question.reader_study.civs.all()
+        for civ in civs:
+            if civ not in reader_study_civs:
                 raise ValidationError(
-                    f"Image {im} does not belong to this reader study."
+                    f"Image {civ.image.name} does not belong to this reader study."
                 )
 
         if not is_ground_truth:
@@ -1265,10 +1279,10 @@ class Answer(UUIDModel):
                     creator=creator,
                     question=question,
                     is_ground_truth=False,
-                    images__in=images,
+                    civs__in=civs,
                 )
-                .annotate(count_images=Count("images", distinct=True))
-                .filter(count_images=len(images))
+                .annotate(count_civs=Count("civs", distinct=True))
+                .filter(count_civs=len(civs))
                 .exists()
             ):
                 raise ValidationError(

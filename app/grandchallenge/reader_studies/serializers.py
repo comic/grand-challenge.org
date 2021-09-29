@@ -8,7 +8,6 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from grandchallenge.cases.models import Image
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -17,6 +16,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
 )
 from grandchallenge.reader_studies.tasks import add_scores
+from grandchallenge.subdomains.utils import reverse
 
 
 class CategoricalOptionSerializer(ModelSerializer):
@@ -93,12 +93,16 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         view_name="api:reader-studies-question-detail",
         queryset=Question.objects.all(),
     )
-    images = HyperlinkedRelatedField(
-        many=True, queryset=Image.objects.all(), view_name="api:image-detail"
-    )
+    images = SerializerMethodField()
     answer_image = HyperlinkedRelatedField(
         read_only=True, view_name="api:image-detail"
     )
+
+    def get_images(self, obj):
+        return [
+            reverse("api:image-detail", kwargs={"pk": pk})
+            for pk in obj.civs.values_list("image_id", flat=True)
+        ]
 
     def validate(self, attrs):
         answer = attrs.get("answer")
@@ -112,17 +116,18 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             if list(attrs.keys()) != ["answer"]:
                 raise ValidationError("Only the answer field can be modified.")
             question = self.instance.question
-            images = self.instance.images.all()
+            civs = self.instance.civs.all()
             creator = self.instance.creator
         else:
+            # TODO check civs
             question = attrs.get("question")
-            images = attrs.get("images")
+            civs = attrs.get("images")
             creator = self.context.get("request").user
         Answer.validate(
             creator=creator,
             question=question,
             answer=answer,
-            images=images,
+            civs=civs,
             instance=self.instance,
         )
 
@@ -132,7 +137,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                     kwargs={
                         "instance_pk": str(self.instance.pk),
                         "pk_set": list(
-                            map(str, images.values_list("pk", flat=True))
+                            map(str, civs.values_list("pk", flat=True))
                         ),
                     }
                 )
