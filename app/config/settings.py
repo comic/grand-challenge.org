@@ -126,8 +126,7 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_FORUM_SLUG", "general"
 )
 
-# About flatpage
-ABOUT_FLATPAGE_TITLE = os.environ.get("ABOUT_FLATPAGE_TITLE", "About")
+# Home page new blog tag
 HOMEPAGE_NEWS_BLOG_TAG = os.environ.get(
     "HOMEPAGE_NEWS_BLOG_TAG", "homepagenews"
 )
