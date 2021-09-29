@@ -274,12 +274,10 @@ class Image(UUIDModel):
     PATIENT_SEX_MALE = PatientSex.MALE.value
     PATIENT_SEX_FEMALE = PatientSex.FEMALE.value
     PATIENT_SEX_OTHER = PatientSex.OTHER.value
-    PATIENT_SEX_EMTPY = ""
     PATIENT_SEX_CHOICES = (
         (PATIENT_SEX_MALE, "Male"),
         (PATIENT_SEX_FEMALE, "Female"),
         (PATIENT_SEX_OTHER, "Other"),
-        (PATIENT_SEX_EMTPY, "Empty"),
     )
 
     name = models.CharField(max_length=4096)
@@ -317,10 +315,7 @@ class Image(UUIDModel):
     patient_birth_date = models.DateField(null=True, blank=True)
     patient_age = models.CharField(max_length=4, default="", blank=True)
     patient_sex = models.CharField(
-        max_length=1,
-        blank=True,
-        choices=PATIENT_SEX_CHOICES,
-        default=PATIENT_SEX_EMTPY,
+        max_length=1, blank=True, choices=PATIENT_SEX_CHOICES, default="",
     )
     study_date = models.DateField(null=True, blank=True)
     study_instance_uid = models.CharField(
