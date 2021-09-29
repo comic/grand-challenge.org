@@ -310,6 +310,9 @@ class Image(UUIDModel):
         max_length=5, blank=False, choices=COLOR_SPACES
     )
     patient_id = models.CharField(max_length=64, default="", blank=True)
+    # Max length for patient_name is 5 * 64 + 4 = 324, as described for value
+    # representation PN in the DICOM standard. See table at:
+    # http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html
     patient_name = models.CharField(max_length=324, default="", blank=True)
     patient_birth_date = models.DateField(null=True, blank=True)
     patient_age = models.CharField(max_length=4, default="", blank=True)
