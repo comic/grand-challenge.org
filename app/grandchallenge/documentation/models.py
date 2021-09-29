@@ -7,6 +7,7 @@ from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
+from grandchallenge.subdomains.utils import reverse
 
 
 class LevelChoices(models.TextChoices):
@@ -120,6 +121,10 @@ class DocPage(models.Model):
         for idx, page in enumerate(pages):
             page.order = idx + 1
             page.save()
+
+    def get_absolute_url(self):
+        url = reverse("documentation:detail", kwargs={"slug": self.slug},)
+        return url
 
     # this property will be used to conditionally add a dropdown to higher level pages
     @property
