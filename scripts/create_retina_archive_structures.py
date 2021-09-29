@@ -62,18 +62,18 @@ def generate_random_metadata():
             ("D", "W", "M", "Y")
         )
 
-    def return_or_none(return_value):
-        return return_value if random.random() < 0.5 else None
+    def return_or_default(return_value, default=""):
+        return return_value if random.random() < 0.5 else default
 
     return {
-        "patient_name": return_or_none(generate_lo(prefix="Patient ")),
-        "patient_birth_date": return_or_none(generate_da()),
-        "patient_age": return_or_none(generate_as()),
-        "patient_sex": return_or_none(random.choice(("F", "M", "O"))),
-        "study_date": return_or_none(generate_da()),
-        "study_instance_uid": return_or_none(generate_uid()),
-        "series_instance_uid": return_or_none(generate_uid()),
-        "series_description": return_or_none(generate_lo(prefix="Series ")),
+        "patient_name": return_or_default(generate_lo(prefix="Patient ")),
+        "patient_birth_date": return_or_default(generate_da(), None),
+        "patient_age": return_or_default(generate_as()),
+        "patient_sex": return_or_default(random.choice(("F", "M", "O"))),
+        "study_date": return_or_default(generate_da(), None),
+        "study_instance_uid": return_or_default(generate_uid()),
+        "series_instance_uid": return_or_default(generate_uid()),
+        "series_description": return_or_default(generate_lo(prefix="Series ")),
     }
 
 
