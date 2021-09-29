@@ -36,9 +36,7 @@
                         <a class="dropdown-item" href="{% url 'archives:list' %}">Archives</a>
                         <a class="dropdown-item" href="{% url 'products:product-list' %}">Commercial products</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{{ request.scheme }}://{{ request.site.domain }}{{ about_us.url }}">
-                                   About us
-                        </a>
+                        <a class="dropdown-item" href="{% url 'about' %}">About us</a>
                         <a class="dropdown-item" href="{% url 'statistics:detail' %}">Statistics</a>
                         {% for policy in policy_pages %}
                             <a class="dropdown-item" href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>

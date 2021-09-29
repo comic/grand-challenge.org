@@ -13,7 +13,7 @@ from grandchallenge.archives.sitemaps import ArchivesSitemap
 from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
-from grandchallenge.core.views import HomeTemplate
+from grandchallenge.core.views import AboutTemplate, HomeTemplate
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
@@ -45,6 +45,7 @@ sitemaps = {
 
 urlpatterns = [
     path("", HomeTemplate.as_view(), name="home"),
+    path("about/", AboutTemplate.as_view(), name="about"),
     path(
         "robots.txt",
         TemplateView.as_view(

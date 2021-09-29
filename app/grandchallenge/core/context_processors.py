@@ -1,7 +1,6 @@
 import logging
 
 from django.conf import settings
-from django.contrib.flatpages.models import FlatPage
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
@@ -65,9 +64,6 @@ def sentry_dsn(*_, **__):
 def footer_links(*_, **__):
     return {
         "policy_pages": Policy.objects.all(),
-        "about_us": FlatPage.objects.filter(
-            title=settings.ABOUT_FLATPAGE_TITLE
-        ).get(),
     }
 
 

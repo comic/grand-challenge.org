@@ -9,8 +9,14 @@
             <hr class="m-0">
             <div class="row small">
                 <div class="col-sm-6 col-md-4 p-3">
-                    <h6>About</h6>
+                    <h6>Grand Challenge</h6>
                     <ul class="list-unstyled">
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="{% url 'about' %}">
+                                About us
+                            </a>
+                        </li>
                         {% for page in flatpages %}
                             <li class="my-1">
                                 {# Manual construction of url is used here due to flatpage redirect errors #}
@@ -26,20 +32,6 @@
                             <a class="text-muted"
                                href="{% url 'statistics:detail' %}">
                                 Statistics
-                            </a>
-                        </li>
-                        <li class="my-1">
-                            <a class="text-muted"
-                               href="https://rse.diagnijmegen.nl"
-                               title="Research Software Engineering Team, Diagnostic Image Analysis Group, Radboud University Medical Center">
-                                rse.diagnijmegen.nl
-                            </a>
-                        </li>
-                        <li class="my-1">
-                            <a class="text-muted"
-                               href="http://diagnijmegen.nl/"
-                               title="Diagnostic Image Analysis Group, Radboud University Medical Center">
-                                diagnijmegen.nl
                             </a>
                         </li>
                         <li class="my-1">

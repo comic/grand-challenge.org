@@ -204,3 +204,7 @@ class PermissionRequestUpdate(
             f"{self.redirect_namespace}:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
+
+
+class AboutTemplate(TemplateView):
+    template_name = "about.html"
