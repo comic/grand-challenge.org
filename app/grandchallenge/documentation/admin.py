@@ -8,7 +8,12 @@ from grandchallenge.documentation.models import DocPage
 class AdminDocPageForm(ModelForm):
     class Meta:
         model = DocPage
-        exclude = ()
+        fields = (
+            "title",
+            "display_title",
+            "level",
+            "content",
+        )
 
 
 class DocPageAdmin(MarkdownxModelAdmin):

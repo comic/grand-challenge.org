@@ -10,12 +10,12 @@ from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
 
-class LevelChoices(models.TextChoices):
+class LevelChoices(models.IntegerChoices):
     """Documentation page level options"""
 
-    PRIMARY = "PRIMARY", _("Top level")
-    SECONDARY = "SECONDARY", _("Second level")
-    TERTIARY = "TERTIARY", _("Third level")
+    PRIMARY = 1, _("Top level")
+    SECONDARY = 2, _("Second level")
+    TERTIARY = 3, _("Third level")
 
 
 class DocPageLevel:
@@ -50,10 +50,9 @@ class DocPage(models.Model):
 
     content = models.TextField()
 
-    level = models.CharField(
-        max_length=20,
-        choices=Level.choices,
+    level = models.PositiveSmallIntegerField(
         default=Level.PRIMARY,
+        choices=Level.choices,
         help_text=(
             "As which level should this page be displayed in the sidebar?"
         ),
@@ -65,7 +64,7 @@ class DocPage(models.Model):
         help_text="Determines order in which pages appear in side menu",
     )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=["level", "order"])
 
     def __str__(self):
         return self.title
@@ -75,13 +74,15 @@ class DocPage(models.Model):
         if not self.id:
             # get max value of order for current pages.
             try:
-                max_order = DocPage.objects.aggregate(Max("order"))
+                self.order = (
+                    DocPage.objects.aggregate(Max("order"))["order__max"] + 1
+                )
             except ObjectDoesNotExist:
-                max_order = None
-            try:
-                self.order = max_order["order__max"] + 1
+                # Use the default
+                pass
             except TypeError:
-                self.order = 1
+                # Use the default
+                pass
 
         self.html = clean(self.content)
 
@@ -126,7 +127,6 @@ class DocPage(models.Model):
         url = reverse("documentation:detail", kwargs={"slug": self.slug},)
         return url
 
-    # this property will be used to conditionally add a dropdown to higher level pages
     @property
     def next(self):
         try:
@@ -134,3 +134,40 @@ class DocPage(models.Model):
         except ObjectDoesNotExist:
             next_page = None
         return next_page
+
+    @property
+    def previous(self):
+        try:
+            previous_page = DocPage.objects.filter(order=self.order - 1).get()
+        except ObjectDoesNotExist:
+            previous_page = None
+        return previous_page
+
+    @property
+    def parent(self):
+        if self.level == "PRIMARY":
+            parent = None
+        else:
+            if self.level == "SECONDARY":
+                parent = DocPage.objects.filter(
+                    order__lt=self.order, level="PRIMARY"
+                ).last()
+            elif self.level == "TERTIARY":
+                parent = DocPage.objects.filter(
+                    order__lt=self.order, level="SECONDARY"
+                ).last()
+        return parent
+
+    @property
+    def children(self):
+        if self.level == "PRIMARY":
+            children = DocPage.objects.filter(
+                order__gt=self.order, level="SECONDARY"
+            ).all()
+        elif self.level == "SECONDARY":
+            children = DocPage.objects.filter(
+                order__gt=self.order, level="TERTIARY"
+            ).all()
+        elif self.level == "TERTIARY":
+            children = None
+        return children
