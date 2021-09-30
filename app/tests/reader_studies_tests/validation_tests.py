@@ -5,6 +5,7 @@ from grandchallenge.reader_studies.models import (
     HANGING_LIST_SCHEMA,
     Question,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
@@ -54,10 +55,11 @@ def test_hanging_list_validation(hanging_list, expected):
 
     rs = ReaderStudyFactory(hanging_list=hanging_list)
     images = [ImageFactory(name=f"image_{n}") for n in range(5)]
-    rs.images.set(images)
+    civs = [ComponentInterfaceValueFactory(image=im) for im in images]
+    rs.civs.set(civs)
     rs.save()
 
-    assert rs.images.all().count() == 5
+    assert rs.civs.all().count() == 5
 
     assert rs.hanging_list_valid == expected
 
@@ -74,7 +76,8 @@ def test_hanging_list_validation(hanging_list, expected):
 def test_non_unique_images(image_names, expected):
     rs = ReaderStudyFactory()
     images = [ImageFactory(name=name) for name in image_names]
-    rs.images.set(images)
+    civs = [ComponentInterfaceValueFactory(image=im) for im in images]
+    rs.civs.set(civs)
     rs.save()
     assert rs.non_unique_study_image_names == expected
 
@@ -85,7 +88,8 @@ def test_hanging_list_shuffle_per_user(client):
 
     rs = ReaderStudyFactory(hanging_list=hanging_list)
     images = [ImageFactory(name=f"image_{n}") for n in range(10)]
-    rs.images.set(images)
+    civs = [ComponentInterfaceValueFactory(image=im) for im in images]
+    rs.civs.set(civs)
     rs.save()
 
     # The shuffling is seeded with the users pk, so needs to stay constant
