@@ -3,6 +3,7 @@ import io
 import pytest
 
 from grandchallenge.reader_studies.models import Answer, Question
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -36,7 +37,10 @@ def test_example_ground_truth(client, tmpdir):
     )
     CategoricalOptionFactory(question=q2, title="option")
     im1, im2, im3 = (ImageFactory(), ImageFactory(), ImageFactory())
-    rs.images.set([im1, im2, im3])
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
+    civ3 = ComponentInterfaceValueFactory(image=im3)
+    rs.civs.set([civ1, civ2, civ3])
     rs.add_reader(reader)
     rs.add_editor(editor)
     rs.generate_hanging_list()
@@ -75,11 +79,11 @@ def test_example_ground_truth(client, tmpdir):
         user=editor,
     )
     assert response.status_code == 200
-    assert Answer.objects.count() == rs.images.count() * rs.questions.count()
-    for image in [im1, im2, im3]:
+    assert Answer.objects.count() == rs.civs.count() * rs.questions.count()
+    for civ in [civ1, civ2, civ3]:
         for question in [q1, q2, q3]:
             assert Answer.objects.filter(
-                images=image, question=question, is_ground_truth=True
+                civs=civ, question=question, is_ground_truth=True
             ).exists()
 
 
