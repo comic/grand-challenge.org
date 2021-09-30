@@ -144,12 +144,9 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PRIVATE_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
@@ -157,8 +154,6 @@ PRIVATE_S3_STORAGE_KWARGS = {
 }
 
 PROTECTED_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
     ),
@@ -178,8 +173,6 @@ PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
 )
 
 PUBLIC_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
