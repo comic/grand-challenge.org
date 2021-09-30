@@ -42,9 +42,33 @@ def test_page_move(move_op, expected):
 
 
 @pytest.mark.django_db
-def test_next():
-    p1 = DocPageFactory()
-    p2 = DocPageFactory()
+def test_properties():
+    p1 = DocPageFactory(level=DocPage.Level.PRIMARY)
+    p2 = DocPageFactory(level=DocPage.Level.PRIMARY)
+    p2a = DocPageFactory(level=DocPage.Level.SECONDARY)
+    p2b = DocPageFactory(level=DocPage.Level.SECONDARY)
+    p3 = DocPageFactory(level=DocPage.Level.PRIMARY)
+    p3a = DocPageFactory(level=DocPage.Level.SECONDARY)
 
-    assert [p1.order, p2.order] == [1, 2]
-    assert p1.next == p2
+    pages = [p1, p2, p2a, p2b, p3, p3a]
+    counter = 0
+
+    for p in pages[:-1]:
+        counter += 1
+        assert p.next == pages[counter]
+    assert not p3a.next
+
+    counter = len(pages) - 1
+    for p in pages[:0:-1]:
+        counter -= 1
+        assert p.previous == pages[counter]
+    assert not p1.previous
+
+    assert not p1.children
+    assert p2.children == [p2a, p2b]
+    assert p3.children == [p3a]
+
+    assert not p1.parent
+    assert not p2.parent
+    assert [p2a.parent, p2b.parent] == [p2, p2]
+    assert p3a.parent == p3

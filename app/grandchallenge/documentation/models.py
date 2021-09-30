@@ -145,29 +145,41 @@ class DocPage(models.Model):
 
     @property
     def parent(self):
-        if self.level == "PRIMARY":
+        if self.level == 1:
             parent = None
         else:
-            if self.level == "SECONDARY":
+            if self.level == 2:
                 parent = DocPage.objects.filter(
-                    order__lt=self.order, level="PRIMARY"
+                    order__lt=self.order, level=1
                 ).last()
-            elif self.level == "TERTIARY":
+            elif self.level == 3:
                 parent = DocPage.objects.filter(
-                    order__lt=self.order, level="SECONDARY"
+                    order__lt=self.order, level=2
                 ).last()
         return parent
 
     @property
     def children(self):
-        if self.level == "PRIMARY":
+        if (
+            self.level == 1
+            and self.next
+            and self.next.level == 2
+            or self.level == 2
+            and self.next
+            and self.next.level == 3
+        ):
             children = DocPage.objects.filter(
-                order__gt=self.order, level="SECONDARY"
+                order__gt=self.order, level=self.level + 1
             ).all()
-        elif self.level == "SECONDARY":
-            children = DocPage.objects.filter(
-                order__gt=self.order, level="TERTIARY"
-            ).all()
-        elif self.level == "TERTIARY":
-            children = None
-        return children
+            # the first entry of children is always a direct child
+            direct_children = [children[0]]
+            # the remaining entries might not be direct children of the parent
+            for i in range(1, len(children)):
+                try:
+                    if children[i - 1].order + 1 == children[i].order:
+                        direct_children.append(children[i])
+                except IndexError:
+                    pass
+        else:
+            direct_children = None
+        return direct_children
