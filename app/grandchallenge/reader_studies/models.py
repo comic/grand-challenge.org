@@ -217,7 +217,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "cases.Image", related_name="readerstudies"
     )
     civs = models.ManyToManyField(
-        ComponentInterfaceValue, related_name="readerstudy_items"
+        ComponentInterfaceValue, related_name="readerstudies"
     )
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.PROTECT

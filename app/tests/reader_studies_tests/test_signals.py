@@ -2,6 +2,7 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.reader_studies.models import Question
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -24,18 +25,25 @@ def test_reader_can_download_images(client, reverse):
         ImageFactory(),
     )
 
+    civ1, civ2, civ3, civ4 = (
+        ComponentInterfaceValueFactory(image=im1),
+        ComponentInterfaceValueFactory(image=im2),
+        ComponentInterfaceValueFactory(image=im3),
+        ComponentInterfaceValueFactory(image=im4),
+    )
+
     if reverse:
-        for im in [im1, im2, im3, im4]:
-            im.readerstudies.add(rs_set.rs1, rs_set.rs2)
-        for im in [im3, im4]:
-            im.readerstudies.remove(rs_set.rs1, rs_set.rs2)
-        for im in [im1, im2]:
-            im.readerstudies.remove(rs_set.rs2)
+        for civ in [civ1, civ2, civ3, civ4]:
+            civ.readerstudies.add(rs_set.rs1, rs_set.rs2)
+        for civ in [civ3, civ4]:
+            civ.readerstudies.remove(rs_set.rs1, rs_set.rs2)
+        for civ in [civ1, civ2]:
+            civ.readerstudies.remove(rs_set.rs2)
     else:
         # Test that adding images works
-        rs_set.rs1.images.add(im1, im2, im3, im4)
-        # Test that removing images works
-        rs_set.rs1.images.remove(im3, im4)
+        rs_set.rs1.civs.add(civ1, civ2, civ3, civ4)
+        # Test that removing civages works
+        rs_set.rs1.civs.remove(civ3, civ4)
 
     tests = (
         (None, 200, []),
@@ -63,10 +71,10 @@ def test_reader_can_download_images(client, reverse):
 
     # Test clearing
     if reverse:
-        im1.readerstudies.clear()
-        im2.readerstudies.clear()
+        civ1.readerstudies.clear()
+        civ2.readerstudies.clear()
     else:
-        rs_set.rs1.images.clear()
+        rs_set.rs1.civs.clear()
 
     response = get_view_for_user(
         viewname="api:image-list",
@@ -85,39 +93,40 @@ def test_assign_score(settings):
 
     rs = ReaderStudyFactory()
     im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
     q1 = QuestionFactory(reader_study=rs)
     q2 = QuestionFactory(
         reader_study=rs, answer_type=Question.AnswerType.MULTIPLE_CHOICE
     )
     e, r1, r2 = UserFactory(), UserFactory(), UserFactory()
 
-    rs.images.add(im)
+    rs.civs.add(civ)
     rs.add_editor(e)
     rs.add_reader(r1)
     rs.add_reader(r2)
 
     with capture_on_commit_callbacks(execute=True):
         a1 = AnswerFactory(question=q1, creator=r1, answer="foo")
-    a1.images.add(im)
+    a1.civs.add(civ)
     assert a1.score is None
 
     with capture_on_commit_callbacks(execute=True):
         gt = AnswerFactory(
             question=q1, creator=e, answer="foo", is_ground_truth=True
         )
-        gt.images.add(im)
+        gt.civs.add(civ)
     a1.refresh_from_db()
     assert a1.score == 1.0
 
     with capture_on_commit_callbacks(execute=True):
         a2 = AnswerFactory(question=q1, creator=r2, answer="foo")
-        a2.images.add(im)
+        a2.civs.add(civ)
     a2.refresh_from_db()
     assert a2.score == 1.0
 
     with capture_on_commit_callbacks(execute=True):
         a1 = AnswerFactory(question=q2, creator=r1, answer=[])
-        a1.images.add(im)
+        a1.civs.add(civ)
     a1.refresh_from_db()
     assert a1.score is None
 
@@ -125,12 +134,12 @@ def test_assign_score(settings):
         gt = AnswerFactory(
             question=q2, creator=e, answer=[], is_ground_truth=True
         )
-        gt.images.add(im)
+        gt.civs.add(civ)
     a1.refresh_from_db()
     assert a1.score == 1.0
 
     with capture_on_commit_callbacks(execute=True):
         a2 = AnswerFactory(question=q2, creator=r2, answer=[])
-        a2.images.add(im)
+        a2.civs.add(civ)
     a2.refresh_from_db()
     assert a2.score == 1.0
