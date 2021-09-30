@@ -139,6 +139,10 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
+AWS_DEFAULT_REGION = os.environ.get(
+    "AWS_DEFAULT_REGION", "eu-central-1"
+)
+AWS_SES_REGION_ENDPOINT = f"email.{AWS_DEFAULT_REGION}.amazonaws.com"
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
@@ -864,7 +868,7 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
             "queue_name_prefix": os.environ.get(
                 "CELERY_BROKER_QUEUE_NAME_PREFIX", "gclocalhost-"
             ),
-            "region": os.environ.get("CELERY_BROKER_REGION", "eu-central-1"),
+            "region": os.environ.get("CELERY_BROKER_REGION", AWS_DEFAULT_REGION),
             "polling_interval": int(
                 os.environ.get("CELERY_BROKER_POLLING_INTERVAL", "1")
             ),
@@ -902,7 +906,7 @@ COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME = os.environ.get(
     "COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME", ""
 )
 COMPONENTS_AMAZON_ECS_LOGS_REGION = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_LOGS_REGION", "eu-central-1"
+    "COMPONENTS_AMAZON_ECS_LOGS_REGION", AWS_DEFAULT_REGION
 )
 COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN = os.environ.get(
     "COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN", ""
@@ -982,7 +986,7 @@ WORKSTATIONS_SESSION_DURATION_LIMIT = int(
 )
 # Which regions are available for workstations to run in
 WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
-    "WORKSTATIONS_ACTIVE_REGIONS", "eu-central-1"
+    "WORKSTATIONS_ACTIVE_REGIONS", AWS_DEFAULT_REGION
 ).split(",")
 WORKSTATIONS_RENDERING_SUBDOMAINS = {
     # Possible AWS regions
