@@ -3,7 +3,6 @@ import re
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 from itertools import product
-from urllib.parse import quote
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
