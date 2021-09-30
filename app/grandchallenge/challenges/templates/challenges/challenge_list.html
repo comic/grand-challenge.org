@@ -25,11 +25,7 @@
 
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 
-    <div class='row equal-height mx-n2'>
-        {% for challenge in page_obj %}
-            {% include 'challenges/challenge_card.html' %}
-        {% endfor %}
-    </div>
+    {% include "grandchallenge/partials/cards.html" with page_obj=page_obj %}
 
     <div class="d-flex justify-content-end">
         <ul class="pagination">

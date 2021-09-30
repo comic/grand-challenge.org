@@ -20,11 +20,7 @@
 
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 
-    <div class="row equal-height mx-n2">
-        {% for object in page_obj %}
-            {% include 'algorithms/algorithm_card.html' %}
-        {% endfor %}
-    </div>
+    {% include "grandchallenge/partials/cards.html" with page_obj=page_obj %}
 
     {% include "grandchallenge/partials/pagination.html"  %}
 

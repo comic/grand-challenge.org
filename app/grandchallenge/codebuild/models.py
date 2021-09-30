@@ -39,18 +39,13 @@ class Build(UUIDModel):
     build_log = models.TextField(blank=True)
 
     BuildStatusChoices = BuildStatusChoices
-    _client = None
+    __client = None
 
     @property
     def client(self):
-        if self._client is None:
-            self._client = boto3.client(
-                "codebuild",
-                aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
-                aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
-                region_name=settings.CODEBUILD_REGION,
-            )
-        return self._client
+        if self.__client is None:
+            self.__client = boto3.client("codebuild")
+        return self.__client
 
     @property
     def build_number(self):

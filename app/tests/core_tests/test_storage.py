@@ -50,7 +50,7 @@ def test_s3_configs_differ():
         protected_s3_storage,
     )
 
-    for attr in ["access_key", "secret_key", "bucket_name", "endpoint_url"]:
+    for attr in ["bucket_name", "endpoint_url"]:
         assert getattr(private_s3_storage, attr) != getattr(
             protected_s3_storage, attr
         )
