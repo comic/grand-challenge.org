@@ -10,16 +10,16 @@ def test_add_images_is_idempotent():
     rs = ReaderStudyFactory()
     image = ImageFactory()
 
-    assert rs.images.count() == 0
+    assert rs.civs.count() == 0
 
     add_images_to_reader_study(
         upload_session_pk=image.origin.pk, reader_study_pk=rs.pk
     )
 
-    assert rs.images.count() == 1
+    assert rs.civs.count() == 1
 
     add_images_to_reader_study(
         upload_session_pk=image.origin.pk, reader_study_pk=rs.pk
     )
 
-    assert rs.images.count() == 1
+    assert rs.civs.count() == 1

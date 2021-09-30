@@ -45,7 +45,9 @@ def add_images_to_reader_study(*, upload_session_pk, reader_study_pk):
     images = Image.objects.filter(origin_id=upload_session_pk)
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     civs = [
-        ComponentInterfaceValue.objects.create(interface=ci, image=im)
+        ComponentInterfaceValue.objects.get_or_create(interface=ci, image=im)[
+            0
+        ]
         for im in images
     ]
     reader_study.civs.add(*civs)
