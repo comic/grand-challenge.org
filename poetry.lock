@@ -703,6 +703,24 @@ django-appconf = ">=0.6.0"
 test = ["pytest", "pytest-cov", "pytest-django", "selenium"]
 
 [[package]]
+name = "django-ses"
+version = "2.3.0"
+description = "A Django email backend for Amazon's Simple Email Service"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+boto3 = ">=1.0.0"
+django = ">=2.2"
+future = ">=0.16.0"
+pytz = ">=2016.10"
+
+[package.extras]
+bounce = ["requests (<3)", "m2crypto"]
+events = ["requests (<3)", "m2crypto"]
+
+[[package]]
 name = "django-simple-history"
 version = "3.0.0"
 description = "Store model history and view/revert changes from admin site."
@@ -2256,7 +2274,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "214954b85a6f9e017887637a0ffff09fa8eedda1c87ce2311f3dca9eb84326e9"
+content-hash = "89244870864a44a318f78bb64b4e853794a0650471fca5b0f023141f8c4e5bc3"
 
 [metadata.files]
 alabaster = [
@@ -2607,6 +2625,10 @@ django-rest-knox = [
 django-select2 = [
     {file = "django-select2-7.7.1.tar.gz", hash = "sha256:dd091342e99436818b3fa98783ae6c24fb2a0cbc37ebd3faa0aef68422b6e416"},
     {file = "django_select2-7.7.1-py2.py3-none-any.whl", hash = "sha256:8c54984bb931d842eab6a46d1b427c6883e5f5347529cda27dcd942fb37d87b9"},
+]
+django-ses = [
+    {file = "django-ses-2.3.0.tar.gz", hash = "sha256:fab6fc0140505498c91ed2efa6167328d812bbbb6f6b9207f4e002fea0aad017"},
+    {file = "django_ses-2.3.0-py2.py3-none-any.whl", hash = "sha256:2e027f1370b738f301c87a655a4551fc6819729bbdae5caf0fd18ef2df3bc804"},
 ]
 django-simple-history = [
     {file = "django-simple-history-3.0.0.tar.gz", hash = "sha256:66fe76c560054be393c52b1799661e104fbe372918d37d151e5d41c676158118"},
