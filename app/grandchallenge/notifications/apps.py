@@ -1,7 +1,7 @@
 from django.apps import AppConfig, apps
+from django.conf import settings
 from django.db.models.signals import post_migrate
 
-from config import settings
 
 
 def init_notification_permissions(*_, **__):
