@@ -5,6 +5,7 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
@@ -367,8 +368,10 @@ def test_reader_study_copy(client):
     )
 
     im1, im2 = ImageFactory(), ImageFactory()
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
 
-    rs.images.set([im1, im2])
+    rs.civs.set([civ1, civ2])
     rs.generate_hanging_list()
     rs.case_text = {im1.name: "test", im2.name: "test2"}
     rs.save()
@@ -421,7 +424,7 @@ def test_reader_study_copy(client):
 
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "1"
-    assert _rs.images.count() == 0
+    assert _rs.civs.count() == 0
     assert _rs.questions.count() == 0
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
@@ -444,7 +447,7 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "2"
     assert _rs.questions.count() == 2
-    assert _rs.images.count() == 0
+    assert _rs.civs.count() == 0
     assert _rs.hanging_list == []
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
@@ -466,7 +469,7 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "3"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 2
+    assert _rs.civs.count() == 2
     assert _rs.hanging_list == []
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
@@ -505,7 +508,7 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "4"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 2
+    assert _rs.civs.count() == 2
     assert _rs.hanging_list == rs.hanging_list
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
@@ -527,7 +530,7 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "5"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 2
+    assert _rs.civs.count() == 2
     assert _rs.hanging_list == []
     assert _rs.case_text == rs.case_text
     assert _rs.readers_group.user_set.count() == 0
@@ -549,7 +552,7 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "6"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 0
+    assert _rs.civs.count() == 0
     assert _rs.hanging_list == []
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 1
@@ -571,7 +574,7 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "7"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 0
+    assert _rs.civs.count() == 0
     assert _rs.hanging_list == []
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
@@ -665,7 +668,12 @@ def test_reader_study_add_ground_truth(client, settings):
         ImageFactory(name="im3"),
         ImageFactory(name="im4"),
     )
-    rs.images.set([im1.pk, im2.pk, im3.pk, im4.pk])
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
+    civ3 = ComponentInterfaceValueFactory(image=im3)
+    civ4 = ComponentInterfaceValueFactory(image=im4)
+
+    rs.civs.set([civ1, civ2, civ3, civ4])
     rs.hanging_list = [
         {"primary": "im1"},
         {"primary": "im2"},
@@ -802,21 +810,19 @@ def test_reader_study_add_ground_truth(client, settings):
     answer_count = len(rs.hanging_list) * rs.answerable_question_count
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
-    assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "yes"
+    assert Answer.objects.get(civs__in=[civ1.pk], question=q).answer == "yes"
     assert (
-        Answer.objects.get(images__in=[im1.pk], question=q).explanation
+        Answer.objects.get(civs__in=[civ1.pk], question=q).explanation
         == "explanation, with a comma"
     )
+    assert Answer.objects.get(civs__in=[civ2.pk], question=q).explanation == ""
+    assert Answer.objects.get(civs__in=[civ1.pk], question=q0).answer is True
     assert (
-        Answer.objects.get(images__in=[im2.pk], question=q).explanation == ""
-    )
-    assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is True
-    assert (
-        Answer.objects.get(images__in=[im1.pk], question=q1).answer
+        Answer.objects.get(civs__in=[civ1.pk], question=q1).answer
         == options["0-1"].pk
     )
     assert sorted(
-        Answer.objects.get(images__in=[im1.pk], question=q2).answer
+        Answer.objects.get(civs__in=[civ1.pk], question=q2).answer
     ) == sorted([options["1-1"].pk, options["1-2"].pk])
 
     with open(RESOURCE_PATH / "ground_truth_new.csv") as gt:
@@ -833,20 +839,20 @@ def test_reader_study_add_ground_truth(client, settings):
     assert response.status_code == 200
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
-    assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "no"
+    assert Answer.objects.get(civs__in=[civ1.pk], question=q).answer == "no"
     assert (
-        Answer.objects.get(images__in=[im1.pk], question=q).explanation
+        Answer.objects.get(civs__in=[civ1.pk], question=q).explanation
         == "new explanation"
     )
     assert (
-        Answer.objects.get(images__in=[im2.pk], question=q).explanation
+        Answer.objects.get(civs__in=[civ2.pk], question=q).explanation
         == "explanation"
     )
-    assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is False
+    assert Answer.objects.get(civs__in=[civ1.pk], question=q0).answer is False
     assert (
-        Answer.objects.get(images__in=[im1.pk], question=q1).answer
+        Answer.objects.get(civs__in=[civ1.pk], question=q1).answer
         == options["0-2"].pk
     )
-    assert Answer.objects.get(images__in=[im1.pk], question=q2).answer == [
+    assert Answer.objects.get(civs__in=[civ1.pk], question=q2).answer == [
         options["1-0"].pk
     ]
