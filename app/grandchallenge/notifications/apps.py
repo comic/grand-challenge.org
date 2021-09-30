@@ -3,7 +3,6 @@ from django.conf import settings
 from django.db.models.signals import post_migrate
 
 
-
 def init_notification_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
