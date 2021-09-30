@@ -33,7 +33,10 @@ from tests.annotations_tests.factories import (
 from tests.archives_tests.factories import ArchiveFactory
 from tests.archives_tests.test_models import create_archive_items_for_images
 from tests.cases_tests.factories import ImageFactoryWithImageFile
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import (
     ChallengeFactory,
@@ -667,6 +670,8 @@ def archive_patient_study_images_set():
 def reader_study_with_gt():
     rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
     q1, q2, q3 = [
         QuestionFactory(
             reader_study=rs,
@@ -689,19 +694,19 @@ def reader_study_with_gt():
     rs.add_reader(r1)
     rs.add_reader(r2)
     rs.add_editor(editor)
-    rs.images.set([im1, im2])
+    rs.civs.set([civ1, civ2])
     rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
     rs.save()
 
     for question in [q1, q2, q3]:
-        for im in [im1, im2]:
+        for civ in [civ1, civ2]:
             ans = AnswerFactory(
                 question=question,
                 creator=editor,
                 answer=True,
                 is_ground_truth=True,
             )
-            ans.images.add(im)
+            ans.civs.add(civ)
 
     return rs
 
@@ -734,7 +739,7 @@ def reader_study_with_mc_gt(reader_study_with_gt):
     ]
 
     editor = rs.editors_group.user_set.first()
-    images = reader_study_with_gt.images.all()
+    civs = reader_study_with_gt.civs.all()
     for question, answer in [
         (q_choice, c_options[0].id),
         (q_multiple_choice, [mc_options[0].id, mc_options[1].id]),
@@ -745,8 +750,8 @@ def reader_study_with_mc_gt(reader_study_with_gt):
             answer=answer,
             is_ground_truth=True,
         )
-        for im in images:
-            ans.images.add(im)
+        for civ in civs:
+            ans.civs.add(civ)
 
     return rs
 

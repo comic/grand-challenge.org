@@ -4,6 +4,7 @@ from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -69,11 +70,13 @@ def test_generate_hanging_list():
     rs = ReaderStudyFactory()
     im1 = ImageFactory(name="im1")
     im2 = ImageFactory(name="im2")
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
 
     rs.generate_hanging_list()
     assert rs.hanging_list == []
 
-    rs.images.set([im1, im2])
+    rs.civs.set([civ1, civ2])
     rs.generate_hanging_list()
     assert rs.hanging_list == [
         {"main": "im1"},
@@ -88,6 +91,8 @@ def test_progress_for_user(settings):
 
     rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
     q1, q2, q3 = [
         QuestionFactory(reader_study=rs),
         QuestionFactory(reader_study=rs),
@@ -105,7 +110,7 @@ def test_progress_for_user(settings):
         "questions": 0.0,
     }
 
-    rs.images.set([im1, im2])
+    rs.civs.set([civ1, civ2])
     rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
     rs.save()
 
@@ -114,23 +119,23 @@ def test_progress_for_user(settings):
     assert progress["questions"] == 0
 
     a11 = AnswerFactory(question=q1, answer="foo", creator=reader)
-    a11.images.add(im1)
+    a11.civs.add(civ1)
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
     assert progress["questions"] == pytest.approx(question_perc)
 
     a21 = AnswerFactory(question=q1, answer="foo", creator=reader)
-    a21.images.add(im2)
+    a21.civs.add(civ2)
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
     assert progress["questions"] == pytest.approx(question_perc * 2)
 
     a12 = AnswerFactory(question=q2, answer="foo", creator=reader)
-    a12.images.add(im1)
+    a12.civs.add(civ1)
     a13 = AnswerFactory(question=q3, answer="foo", creator=reader)
-    a13.images.add(im1)
+    a13.civs.add(civ1)
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 50
@@ -141,22 +146,22 @@ def test_progress_for_user(settings):
     rs.add_editor(editor)
 
     for q in [q1, q2, q3]:
-        for im in [im1, im2]:
+        for civ in [civ1, civ2]:
             a = AnswerFactory(
                 question=q, answer="foo", creator=editor, is_ground_truth=True
             )
-            a.images.add(im)
+            a.civs.add(civ)
 
     progress = rs.get_progress_for_user(editor)
     assert progress["hangings"] == 0
     assert progress["questions"] == 0
 
     for q in [q1, q2, q3]:
-        for im in [im1, im2]:
+        for civ in [civ1, civ2]:
             a = AnswerFactory(
                 question=q, answer="foo", creator=editor, is_ground_truth=False
             )
-            a.images.add(im)
+            a.civs.add(civ)
 
     progress = rs.get_progress_for_user(editor)
     assert progress["hangings"] == 100.0
@@ -174,9 +179,9 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
+            for civ in rs.civs.all():
                 ans = AnswerFactory(question=question, creator=r1, answer=True)
-                ans.images.add(im)
+                ans.civs.add(civ)
 
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -190,11 +195,11 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
 
     with capture_on_commit_callbacks(execute=True):
         for i, question in enumerate(rs.questions.all()):
-            for j, im in enumerate(rs.images.all()):
+            for j, civ in enumerate(rs.civs.all()):
                 ans = AnswerFactory(
                     question=question, creator=r2, answer=(i + j) % 2 == 0
                 )
-                ans.images.add(im)
+                ans.civs.add(civ)
 
     del rs.scores_by_user
     del rs.leaderboard
@@ -211,9 +216,9 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
+            for civ in rs.civs.all():
                 ans = AnswerFactory(question=question, creator=e, answer=True)
-                ans.images.add(im)
+                ans.civs.add(civ)
 
     del rs.scores_by_user
     del rs.leaderboard
@@ -241,9 +246,9 @@ def test_statistics(reader_study_with_gt, settings):
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
+            for civ in rs.civs.all():
                 ans = AnswerFactory(question=question, creator=r1, answer=True)
-                ans.images.add(im)
+                ans.civs.add(civ)
 
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -258,22 +263,24 @@ def test_statistics(reader_study_with_gt, settings):
     assert questions == set()
 
     scores = statistics["scores_by_case"]
-    assert len(scores) == rs.images.count()
-    images = set(rs.images.values_list("name", flat=True))
+    assert len(scores) == rs.civs.count()
+    civs = set(rs.civs.values_list("image__name", flat=True))
     for score in scores:
-        images -= {score["images__name"]}
+        civs -= {score["civs__image__name"]}
         assert score["score__sum"] == 3.0
         assert score["score__avg"] == 1.0
-    assert images == set()
+    assert civs == set()
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
-                answer = question.question_text == "q1" and im.name == "im1"
+            for civ in rs.civs.all():
+                answer = (
+                    question.question_text == "q1" and civ.image.name == "im1"
+                )
                 ans = AnswerFactory(
                     question=question, creator=r2, answer=answer
                 )
-                ans.images.add(im)
+                ans.civs.add(civ)
 
     del rs.statistics
     statistics = rs.statistics
@@ -293,10 +300,10 @@ def test_statistics(reader_study_with_gt, settings):
     assert questions == set()
 
     assert sorted(statistics["questions"]) == sorted(rs_questions)
-    for im in rs.images.all():
-        assert sorted(statistics["ground_truths"][im.name].keys()) == sorted(
-            rs_questions
-        )
+    for civ in rs.civs.all():
+        assert sorted(
+            statistics["ground_truths"][civ.image.name].keys()
+        ) == sorted(rs_questions)
 
 
 @pytest.mark.django_db  # noqa - C901
@@ -309,11 +316,11 @@ def test_score_for_user(reader_study_with_gt, settings):
 
     with capture_on_commit_callbacks(execute=True):
         for i, question in enumerate(rs.questions.all()):
-            for j, im in enumerate(rs.images.all()):
+            for j, civ in enumerate(rs.civs.all()):
                 ans = AnswerFactory(
                     question=question, creator=r1, answer=(i + j) % 2 == 0
                 )
-                ans.images.add(im)
+                ans.civs.add(civ)
 
     score = rs.score_for_user(r1)
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -339,14 +346,16 @@ def test_help_markdown_is_scrubbed(client):
 def test_case_text_is_scrubbed(client):
     u = UserFactory()
     im, im1 = ImageFactory(), ImageFactory()
+    civ1 = ComponentInterfaceValueFactory(image=im)
+    civ2 = ComponentInterfaceValueFactory(image=im1)
     rs = ReaderStudyFactory(
         case_text={
-            im.name: "<b>My Help Text</b><script>naughty</script>",
+            civ1.image.name: "<b>My Help Text</b><script>naughty</script>",
             "not an image name": "Shouldn't appear in result",
-            im1.name: "Doesn't belong to this study so ignore",
+            civ2.image.name: "Doesn't belong to this study so ignore",
         }
     )
-    rs.images.add(im)
+    rs.civs.add(civ1)
     rs.add_reader(u)
 
     response = get_view_for_user(client=client, url=rs.api_url, user=u)
@@ -362,13 +371,16 @@ def test_case_text_is_scrubbed(client):
 def test_validate_answer():
     u = UserFactory()
     im1, im2, im3 = ImageFactory(), ImageFactory(), ImageFactory()
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
+    civ3 = ComponentInterfaceValueFactory(image=im3)
     rs = ReaderStudyFactory(
         hanging_list=[
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
         ]
     )
-    rs.images.set([im1, im2, im3])
+    rs.civs.set([civ1, civ2, civ3])
     rs.add_reader(u)
 
     q = QuestionFactory(
@@ -378,11 +390,11 @@ def test_validate_answer():
     )
 
     answer = AnswerFactory(creator=u, question=q, answer=True,)
-    answer.images.set([im1, im3])
+    answer.civs.set([civ1, civ3])
 
     with pytest.raises(ValidationError) as e:
         Answer.validate(
-            creator=u, question=q, answer=True, images=[im1, im3],
+            creator=u, question=q, answer=True, civs=[civ1, civ3],
         )
         assert (
             e.value.message
@@ -390,7 +402,7 @@ def test_validate_answer():
         )
 
     assert (
-        Answer.validate(creator=u, question=q, answer=True, images=[im2, im3],)
+        Answer.validate(creator=u, question=q, answer=True, civs=[civ2, civ3],)
         is None
     )
 
@@ -398,13 +410,17 @@ def test_validate_answer():
 @pytest.mark.django_db
 def test_validate_hanging_list():
     im1, im2, im3 = ImageFactory(), ImageFactory(), ImageFactory()
+    civ1 = ComponentInterfaceValueFactory(image=im1)
+    civ2 = ComponentInterfaceValueFactory(image=im2)
+    civ3 = ComponentInterfaceValueFactory(image=im3)
+
     rs = ReaderStudyFactory(
         hanging_list=[
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
         ]
     )
-    rs.images.set([im1, im2, im3])
+    rs.civs.set([civ1, civ2, civ3])
 
     assert rs.hanging_list_valid is False
 

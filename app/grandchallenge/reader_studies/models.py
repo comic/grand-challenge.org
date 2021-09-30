@@ -24,7 +24,6 @@ from sklearn.metrics import accuracy_score
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -721,31 +720,31 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         # Group the answers by images and filter out the images that
         # have an inadequate amount of answers
         unanswered_images = (
-            answers.order_by("images__name")
+            answers.order_by("civs__image__name")
             .values("images__name")
-            .annotate(answer_count=Count("images__name"))
+            .annotate(answer_count=Count("civs__image__name"))
             .filter(answer_count__lt=self.answerable_question_count)
         )
         image_names = set(
-            unanswered_images.values_list("images__name", flat=True)
+            unanswered_images.values_list("civs__image__name", flat=True)
         ).union(
             set(
-                Image.objects.filter(readerstudies=self)
+                ComponentInterfaceValue.objects.filter(readerstudies=self)
                 .annotate(
                     answers_for_user=Count(
                         Subquery(
                             Answer.objects.filter(
                                 creator=user,
-                                images=OuterRef("pk"),
+                                civs=OuterRef("pk"),
                                 is_ground_truth=False,
                             ).values("pk")[:1]
                         )
                     )
                 )
                 .filter(answers_for_user=0)
-                .order_by("name")
+                .order_by("image__name")
                 .distinct()
-                .values_list("name", flat=True)
+                .values_list("image__name", flat=True)
             )
         )
         # Determine which hangings have images with unanswered questions
@@ -810,8 +809,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
             )
-            .order_by("images__name")
-            .values("images__name", "images__pk")
+            .order_by("civs__image__name")
+            .values("civs__image__name", "civs__pk")
             .annotate(Sum("score"), Avg("score"),)
             .order_by("score__avg")
         )
@@ -831,7 +830,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 question__reader_study=self, is_ground_truth=True
             )
             .values(
-                "images__name",
+                "civs__image__name",
                 "answer",
                 "question",
                 "question__question_text",
@@ -841,8 +840,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ):
             questions.append(gt["question__question_text"])
 
-            ground_truths[gt["images__name"]] = ground_truths.get(
-                gt["images__name"], {}
+            ground_truths[gt["civs__image__name"]] = ground_truths.get(
+                gt["civs__image__name"], {}
             )
 
             if gt["question__answer_type"] in [
@@ -859,7 +858,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     gt["answer"], gt["answer"]
                 )
 
-            ground_truths[gt["images__name"]][
+            ground_truths[gt["civs__image__name"]][
                 gt["question__question_text"]
             ] = human_readable_answer
 
