@@ -139,9 +139,7 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
-AWS_DEFAULT_REGION = os.environ.get(
-    "AWS_DEFAULT_REGION", "eu-central-1"
-)
+AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_SES_REGION_ENDPOINT = f"email.{AWS_DEFAULT_REGION}.amazonaws.com"
 
 # This is for storing files that should not be served to the public
@@ -868,7 +866,9 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
             "queue_name_prefix": os.environ.get(
                 "CELERY_BROKER_QUEUE_NAME_PREFIX", "gclocalhost-"
             ),
-            "region": os.environ.get("CELERY_BROKER_REGION", AWS_DEFAULT_REGION),
+            "region": os.environ.get(
+                "CELERY_BROKER_REGION", AWS_DEFAULT_REGION
+            ),
             "polling_interval": int(
                 os.environ.get("CELERY_BROKER_POLLING_INTERVAL", "1")
             ),
