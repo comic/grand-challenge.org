@@ -866,9 +866,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
 
 if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
-    celery_access_key = quote(os.environ.get("BROKER_AWS_ACCESS_KEY"), safe="")
-    celery_secret_key = quote(os.environ.get("BROKER_AWS_SECRET_KEY"), safe="")
-    CELERY_BROKER_URL = f"sqs://{celery_access_key}:{celery_secret_key}@"
+    CELERY_BROKER_URL = "sqs://"
 
     CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
     CELERY_BROKER_USE_SSL = True
