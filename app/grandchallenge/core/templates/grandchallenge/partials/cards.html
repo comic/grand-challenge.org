@@ -1,0 +1,52 @@
+{% load url %}
+{% load meta_attr %}
+{% load static %}
+
+<div class="row equal-height mx-n2">
+    {% for object in page_obj %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
+            <div class="card">
+                <a class="stretched-link" href="{{ object.get_absolute_url }}"
+                   title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
+                <div class="embed-responsive embed-responsive-1by1">
+                        <img class="card-img-top embed-responsive-item"
+                             loading="lazy"
+                             {% if object|meta_attr:'model_name' == 'challenge' and object.logo %}
+                                 alt="{{ object.short_name }} logo"
+                                 src="{{ object.logo.x20.url }}"
+                                 srcset="{{ object.logo.x10.url }} 1x,
+                                         {{ object.logo.x15.url }} 1.5x,
+                                         {{ object.logo.x20.url }} 2x"
+                             {% elif object|meta_attr:'model_name' == 'challenge' and not object.logo %}
+                                 alt="{{ object.short_name }} logo"
+                                 src="{% static 'images/3697E1-0.8.png' %}"
+                             {% else %}
+                                 src="{{ object.logo.x20.url }}"
+                                 srcset="{{ object.logo.x10.url }} 1x,
+                                             {{ object.logo.x15.url }} 1.5x,
+                                             {{ object.logo.x20.url }} 2x"
+                                 alt="{{ object }} Logo"
+                            {% endif %}
+                        >
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-truncate mb-0">
+                        {% if object|meta_attr:'model_name' == 'challenge' %}
+                            {% firstof object.title object.short_name %}
+                        {% else %}
+                            {{ object.title }}
+                        {% endif %}
+                        {% if not object.public %}
+                            <i class="fas fa-lock above-stretched-link" title="{{ object_list.model|meta_attr:'verbose_name'|title }} is private"></i>
+                        {% endif %}
+                    </h5>
+                    {% if object|meta_attr:'model_name' == 'challenge' %}
+                        {% include 'challenges/challenge_card_body.html' with challenge=object %}
+                    {% else %}
+                        <p class="card-text">{{ object.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

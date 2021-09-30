@@ -1,0 +1,95 @@
+{% load static %}
+{% load url %}
+{% load humanize %}
+
+<div class="mb-2">
+    {% if challenge.description %}
+        <a href="#challengeInfoModal"
+           class="badge badge-info above-stretched-link"
+           data-toggle="modal"
+           data-target="#challengeInfoModal"
+           data-title="{% firstof challenge.title challenge.short_name %}"
+           data-description="{{ challenge.description }}"
+           data-absolute-url="{{ challenge.get_absolute_url }}"
+           title="Challenge Info">
+            <i class="fas fa-info-circle fa-fw"></i>
+        </a>
+    {% endif %}
+
+    {% if challenge.educational %}
+        <span class="badge badge-info above-stretched-link"
+              title="This is an educational challenge">
+                                            <i class="fas fa-university fa-fw"></i>
+                                            </span>
+    {% endif %}
+
+    {% if challenge.cached_num_participants %}
+        <span class="badge badge-info above-stretched-link"
+              title="{{ challenge.cached_num_participants }} participant{{ challenge.cached_num_participants|pluralize }}">
+                                            <i class="fas fa-user fa-fw"></i>
+                                            {{ challenge.cached_num_participants|intcomma }}
+                                        </span>
+    {% endif %}
+
+    {% if challenge.use_evaluation and challenge.cached_num_results %}
+        {% with challenge.phase_set.first as phase %}
+            <a class="badge badge-info above-stretched-link"
+               href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}"
+               title="{{ challenge.cached_num_results }} result{{ challenge.cached_num_results|pluralize }}, latest {{ challenge.cached_latest_result|naturaltime }}">
+                <i class="fas fa-trophy fa-fw"></i>
+                {{ challenge.cached_num_results|intcomma }}
+            </a>
+        {% endwith %}
+    {% endif %}
+</div>
+
+<div>
+    {% if challenge.event_name %}
+        <a class="badge badge-info above-stretched-link"
+           href="{% firstof challenge.event_url challenge.get_absolute_url %}"
+           title="Associated with {{ challenge.event_name }}">
+            <i class="fas fa-globe fa-fw"></i>
+            {{ challenge.event_name }}
+        </a>
+    {% endif %}
+
+    {% for publication in challenge.publications.all %}
+        <a class="badge badge-info above-stretched-link"
+           href="{{ publication.url }}"
+           title="{{ publication.title }}">
+            <i class="fas fa-file fa-fw"></i>&nbsp;Article
+        </a>
+    {% endfor %}
+
+    {% if challenge.registered_domain %}
+        <a class="badge badge-info above-stretched-link"
+           href="{{ challenge.get_absolute_url }}"
+           title="Hosted on {{ challenge.registered_domain }}">
+            <i class="fas fa-link fa-fw"></i>
+            {{ challenge.registered_domain }}
+        </a>
+    {% endif %}
+
+    {% if challenge.upcoming_workshop_date %}
+        <a class="badge badge-info above-stretched-link"
+           href="{% firstof challenge.event_url challenge.get_absolute_url %}"
+           title="There will be a workshop on {{ challenge.upcoming_workshop_date }}">
+            <i class="fas fa-calendar-day fa-fw"></i>
+            {{ challenge.upcoming_workshop_date }}
+        </a>
+    {% else %}
+        <span class="badge badge-info above-stretched-link"
+              title="Held in {{ challenge.year }}">
+                                                <i class="fas fa-calendar-day fa-fw"></i>
+                                                {{ challenge.year }}
+                                            </span>
+    {% endif %}
+
+    {% if not challenge.is_self_hosted and perms.challenges.change_externalchallenge %}
+        <a class="badge badge-primary above-stretched-link"
+           href="{% url 'challenges:external-update' challenge.short_name %}"
+           title="Edit Challenge">
+            <i class="fas fa-edit fa-fw"></i>
+        </a>
+    {% endif %}
+</div>
