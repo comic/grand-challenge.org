@@ -9,7 +9,7 @@ p {
 }
 
 .jumbotron {
-    text-shadow: 1px 1px 3px #000000;
+    text-shadow: 0.1rem 0.1rem 0.2rem #000000;
 }
 
 .background-fill {
@@ -24,7 +24,7 @@ p {
 }
 
 .navbar-toggle {
-    margin-left: 15px;
+    margin-left: 0.9rem;
     float: left;
     margin-right: 0;
 }
@@ -112,19 +112,19 @@ ul.socialaccount_providers {
 }
 
 ul.socialaccount_providers > li {
-    min-width: 300px;
+    min-width: 19rem;
 }
 
 .nav-pills > li > .nav-link {
     color: #000;
 }
 .nav-pills > li > .nav-link:hover {
-    border-radius: 25px;
+    border-radius: 1.2rem;
     color: #000;
     background-color: #ecf0f1;
 }
 .nav-pills > li > .nav-link.active {
-    border-radius: 25px;
+    border-radius: 1.2rem;
 }
 
 .nav-tabs > .nav-item > .nav-link {
@@ -132,18 +132,18 @@ ul.socialaccount_providers > li {
     border-top: 0 transparent;
     border-right: 0 transparent;
     border-left: 0 transparent;
-    border-bottom: 4px solid transparent;
+    border-bottom: 0.25rem solid transparent;
 }
 
 .nav-tabs > .nav-item > .nav-link:hover {
     border: inherit;
-    border-bottom: 4px solid #f0f0f0;
+    border-bottom: 0.25rem solid #f0f0f0;
 }
 
 .nav-tabs > .nav-item > .nav-link.active {
     border: inherit;
     font-weight: bold;
-    border-bottom: 4px solid #2c3e50;
+    border-bottom: 0.25rem solid #2c3e50;
 }
 
 .challengeDropdown {
@@ -159,12 +159,24 @@ ul.socialaccount_providers > li {
 }
 
 .phaseButton {
-    border-radius: 20px;
     color: #000;
-    padding-top: 3px;
-    padding-bottom: 3px;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
 }
 
 .phaseButton:focus, .phaseButton:hover {
     box-shadow:none !important;
+}
+
+.gc-card {
+    border-radius: 0.9rem;
+}
+
+.gc-card:hover {
+    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.2);
+}
+
+.gc-card .card-img-top{
+    border-top-left-radius: 0.9rem;
+    border-top-right-radius: 0.9rem;
 }
