@@ -201,6 +201,7 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
+      DEBUG: 'true'
     restart: always
     command: >-
         bash -c "
