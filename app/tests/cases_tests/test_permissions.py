@@ -142,20 +142,19 @@ def test_change_job_image():
 def test_view_permission_when_reused(in_archive, in_rs, in_job):
     """When an image is reused it should have view_image set correctly"""
     im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
 
     job = AlgorithmJobFactory()
     rs = ReaderStudyFactory()
     archive = ArchiveFactory()
 
     if in_archive:
-        civ = ComponentInterfaceValueFactory(image=im)
         ai = ArchiveItemFactory(archive=archive)
         with capture_on_commit_callbacks(execute=True):
             ai.values.add(civ)
     if in_rs:
-        rs.images.add(im)
+        rs.civs.add(civ)
     if in_job:
-        civ = ComponentInterfaceValueFactory(image=im)
         job.inputs.add(civ)
 
     assert ("view_image" in get_perms(archive.editors_group, im)) is in_archive

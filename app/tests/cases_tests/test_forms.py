@@ -32,7 +32,7 @@ def test_upload_some_images(client: Client, challenge_set, settings):
     )
     assert response.status_code == 200
 
-    assert rs.images.count() == 0
+    assert rs.civs.count() == 0
     assert RawImageUploadSession.objects.count() == 0
 
     file1 = create_file_from_filepath(RESOURCE_PATH / "image10x10x10.mha")
@@ -48,7 +48,7 @@ def test_upload_some_images(client: Client, challenge_set, settings):
         )
 
     assert response.status_code == 302
-    assert rs.images.count() == 1
+    assert rs.civs.count() == 1
     sessions = RawImageUploadSession.objects.all()
     assert len(sessions) == 1
 
