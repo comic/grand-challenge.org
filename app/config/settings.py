@@ -3,7 +3,6 @@ import re
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 from itertools import product
-from urllib.parse import quote
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
@@ -144,12 +143,9 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PRIVATE_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
@@ -157,8 +153,6 @@ PRIVATE_S3_STORAGE_KWARGS = {
 }
 
 PROTECTED_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
     ),
@@ -178,8 +172,6 @@ PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
 )
 
 PUBLIC_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
@@ -866,9 +858,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
 
 if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
-    celery_access_key = quote(os.environ.get("BROKER_AWS_ACCESS_KEY"), safe="")
-    celery_secret_key = quote(os.environ.get("BROKER_AWS_SECRET_KEY"), safe="")
-    CELERY_BROKER_URL = f"sqs://{celery_access_key}:{celery_secret_key}@"
+    CELERY_BROKER_URL = "sqs://"
 
     CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
     CELERY_BROKER_USE_SSL = True
@@ -1116,9 +1106,6 @@ GITHUB_PRIVATE_KEY_BASE64 = os.environ.get("GITHUB_PRIVATE_KEY_BASE64", "")
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
-CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
-CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
-CODEBUILD_REGION = os.environ.get("CODEBUILD_REGION", "")
 
 OPEN_SOURCE_LICENSES = [
     "Apache License 2.0",
@@ -1171,6 +1158,8 @@ if DEBUG:
     )
     DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
     DEMO_ALGORITHM_SHA256 = "sha256:5e81cef3738b7dbffc12c101990eb3b97f17642c09a2e0b64d5b3d4dd144e79b"
+
+    del CELERY_BEAT_SCHEDULE["push_metrics_to_cloudwatch"]
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)

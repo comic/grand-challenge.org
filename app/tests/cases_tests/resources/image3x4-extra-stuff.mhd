@@ -27,6 +27,7 @@ PatientAge = 001Y
 PatientSex = M
 Laterality = R
 StudyDescription = super awesome study
+SeriesDescription = super awesome series
 SliceThickness = 2
 WindowCenter = 20.5
 WindowWidth = 200.5

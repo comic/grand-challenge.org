@@ -22,9 +22,6 @@ services:
   minio-private:
     # This is for private data, should not be exposed to the public
     image: minio/minio
-    environment:
-      MINIO_ACCESS_KEY: minioprivate
-      MINIO_SECRET_KEY: minioprivate12345
     entrypoint: "/bin/sh"
     command: >-
       -c "
@@ -37,9 +34,6 @@ services:
     # This is for protected data, should only be exposed via an internal link
     # in nginx
     image: minio/minio
-    environment:
-      MINIO_ACCESS_KEY: minioprotected
-      MINIO_SECRET_KEY: minioprotected12345
     ports:
       - "9081:9081"
     entrypoint: "/bin/sh"
@@ -53,9 +47,6 @@ services:
   minio-public:
     # This is for public data and is directly exposed to the internet (in dev)
     image: minio/minio
-    environment:
-      MINIO_ACCESS_KEY: miniopublic
-      MINIO_SECRET_KEY: miniopublic12345
     ports:
       - "9000:9000"
     entrypoint: "/bin/sh"
@@ -70,16 +61,11 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
-      <<: &private_storage_credentials
-        PRIVATE_S3_STORAGE_ACCESS_KEY: minioprivate
-        PRIVATE_S3_STORAGE_SECRET_KEY: minioprivate12345
-        PRIVATE_S3_STORAGE_ENDPOINT_URL: http://minio-private:9000
-      <<: &protected_storage_credentials
-        PROTECTED_S3_STORAGE_ACCESS_KEY: minioprotected
-        PROTECTED_S3_STORAGE_SECRET_KEY: minioprotected12345
+      <<: &minio_development_env
+        AWS_ACCESS_KEY_ID: minioadmin
+        AWS_SECRET_ACCESS_KEY: minioadmin
         PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected.localhost:9081
-      PUBLIC_S3_STORAGE_ACCESS_KEY: miniopublic
-      PUBLIC_S3_STORAGE_SECRET_KEY: miniopublic12345
+        PRIVATE_S3_STORAGE_ENDPOINT_URL: http://minio-private:9000
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
@@ -150,8 +136,7 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
-      <<: *private_storage_credentials
-      <<: *protected_storage_credentials
+      <<: *minio_development_env
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
@@ -181,8 +166,7 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
-      <<: *private_storage_credentials
-      <<: *protected_storage_credentials
+      <<: *minio_development_env
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
