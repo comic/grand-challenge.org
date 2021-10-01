@@ -64,6 +64,14 @@ class DocPage(models.Model):
         help_text="Determines order in which pages appear in side menu",
     )
 
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="children",
+    )
+
     history = HistoricalRecords(excluded_fields=["level", "order"])
 
     def __str__(self):
@@ -77,10 +85,7 @@ class DocPage(models.Model):
                 self.order = (
                     DocPage.objects.aggregate(Max("order"))["order__max"] + 1
                 )
-            except ObjectDoesNotExist:
-                # Use the default
-                pass
-            except TypeError:
+            except (ObjectDoesNotExist, TypeError):
                 # Use the default
                 pass
 
@@ -142,44 +147,3 @@ class DocPage(models.Model):
         except ObjectDoesNotExist:
             previous_page = None
         return previous_page
-
-    @property
-    def parent(self):
-        if self.level == 1:
-            parent = None
-        else:
-            if self.level == 2:
-                parent = DocPage.objects.filter(
-                    order__lt=self.order, level=1
-                ).last()
-            elif self.level == 3:
-                parent = DocPage.objects.filter(
-                    order__lt=self.order, level=2
-                ).last()
-        return parent
-
-    @property
-    def children(self):
-        if (
-            self.level == 1
-            and self.next
-            and self.next.level == 2
-            or self.level == 2
-            and self.next
-            and self.next.level == 3
-        ):
-            children = DocPage.objects.filter(
-                order__gt=self.order, level=self.level + 1
-            ).all()
-            # the first entry of children is always a direct child
-            direct_children = [children[0]]
-            # the remaining entries might not be direct children of the parent
-            for i in range(1, len(children)):
-                try:
-                    if children[i - 1].order + 1 == children[i].order:
-                        direct_children.append(children[i])
-                except IndexError:
-                    pass
-        else:
-            direct_children = None
-        return direct_children

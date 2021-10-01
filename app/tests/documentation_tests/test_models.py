@@ -65,8 +65,8 @@ def test_properties():
     assert not p1.previous
 
     assert not p1.children
-    assert p2.children == [p2a, p2b]
-    assert p3.children == [p3a]
+    assert p2.children.all() == [p2a, p2b]
+    assert p3.children.all() == [p3a]
 
     assert not p1.parent
     assert not p2.parent
