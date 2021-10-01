@@ -48,6 +48,16 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "voxel_height_mm",
             "voxel_depth_mm",
             "api_url",
+            "patient_id",
+            "patient_name",
+            "patient_birth_date",
+            "patient_age",
+            "patient_sex",
+            "study_date",
+            "study_instance_uid",
+            "series_instance_uid",
+            "study_description",
+            "series_description",
         )
 
 
