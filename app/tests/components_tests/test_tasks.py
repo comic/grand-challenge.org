@@ -24,6 +24,7 @@ def test_retry_initial_options():
         "retries": 1,
     }
 
+
 @pytest.mark.django_db
 def test_retry_initial():
     with capture_on_commit_callbacks() as callbacks:
@@ -39,6 +40,7 @@ def test_retry_initial():
         "foo": "bar",
         "retries": 1,
     }
+
 
 @pytest.mark.django_db
 def test_retry_many():
