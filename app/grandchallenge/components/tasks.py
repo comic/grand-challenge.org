@@ -255,13 +255,14 @@ def _retry(*, task, signature_kwargs, retries):
     """
     Retry a task using the delay queue
 
-    There are several problems with using `self.retry()` in Celery (with SQS):
+    We need to retry a task with a delay/countdown. There are several problems
+    with doing this in Celery (with SQS/Redis).
 
-    - And if a countdown is used the delay features of SQS are not used
+    - If a countdown is used the delay features of SQS are not used
       https://github.com/celery/kombu/issues/1074
     - A countdown that needs to be done on the worker results backlogs
       https://github.com/celery/celery/issues/2541
-    - The clogging can still occur even if the countdown/eta is set to zero
+    - The backlogs can still occur even if the countdown/eta is set to zero
       https://github.com/celery/celery/issues/6929
 
     This method is a workaround for these issues, that creates a new task
