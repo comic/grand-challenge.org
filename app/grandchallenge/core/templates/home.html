@@ -5,7 +5,7 @@
 
 {% block content %}
     <div class="container mb-5 p-0">
-        <div class="carousel" id="carouselIndicators">
+        <div class="carousel" id="carouselIndicators" pause="hover">
             <div class="carousel-inner m-0 px-0">
                 {% for item in news_caroussel_items %}
                     <div class="carousel-item {% if forloop.counter == 1 %}active{% endif %}">
@@ -28,18 +28,18 @@
                     </div>
                 {% endfor %}
             </div>
-            <ol class="carousel-indicators">
+            <ol class="carousel-indicators position-relative">
                 {% for item in news_caroussel_items %}
-                    <li data-target="#carouselIndicators" data-slide-to="{{ forloop.counter0 }}"
+                    <li class="mx-1 mb-sm-0 mt-sm-3 bg-primary position-relative" data-target="#carouselIndicators" data-slide-to="{{ forloop.counter0 }}"
                         {% if forloop.counter == 1 %}class="active"{% endif %}>
                     </li>
                 {% endfor %}
             </ol>
-            <a class="carousel-control-prev mr-3" href="#carouselIndicators" role="button" data-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <a class="carousel-control-prev mr-3 text-dark d-none d-sm-none dg-lg-inline-flex d-md-inline-flex" href="#carouselIndicators" role="button" data-slide="prev">
+                 <i class="fas fa-angle-left fa-2x"></i>
             </a>
-            <a class="carousel-control-next ml-3" href="#carouselIndicators" role="button" data-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <a class="carousel-control-next ml-3 text-dark d-none d-sm-none dg-lg-inline-flex d-md-inline-flex" href="#carouselIndicators" role="button" data-slide="next">
+                <i class="fas fa-angle-right fa-2x"></i>
             </a>
         </div>
     </div>
