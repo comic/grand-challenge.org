@@ -34,8 +34,7 @@ from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 logger = logging.getLogger(__name__)
 
-RETRY_INTERVAL_SECONDS = 60
-RETRY_DURATION_DAYS = 2
+MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -252,16 +251,41 @@ def provision_job(
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"], bind=True
-)
+def _retry(*, task, signature_kwargs, retries):
+    """
+    Retry a task using the delay queue
+
+    There are several problems with using `self.retry()` in Celery (with SQS):
+
+    - And if a countdown is used the delay features of SQS are not used
+      https://github.com/celery/kombu/issues/1074
+    - A countdown that needs to be done on the worker results backlogs
+      https://github.com/celery/celery/issues/2541
+    - The clogging can still occur even if the countdown/eta is set to zero
+      https://github.com/celery/celery/issues/6929
+
+    This method is a workaround for these issues, that creates a new task
+    and places this on a queue which has DelaySeconds set. The downside
+    is that we need to track retries via the kwargs of the task.
+    """
+    if retries < MAX_RETRIES:
+        step = task.signature(**signature_kwargs)
+        queue = step.options.get("queue", task.queue)
+        step.options["queue"] = f"{queue}-delay"
+        step.kwargs["retries"] = retries + 1
+        on_commit(step.apply_async)
+    else:
+        raise MaxRetriesExceededError
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def execute_job(  # noqa: C901
-    self,
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
+    retries: int = 0,
 ):
     """
     Executes the component job, can block with some backends.
@@ -295,12 +319,12 @@ def execute_job(  # noqa: C901
     except RetryStep:
         job.update_status(status=job.PROVISIONED)
         try:
-            self.retry(
-                countdown=RETRY_INTERVAL_SECONDS,
-                max_retries=int(
-                    3600 * 24 * RETRY_DURATION_DAYS / RETRY_INTERVAL_SECONDS
-                ),
+            _retry(
+                task=execute_job,
+                signature_kwargs=job.signature_kwargs,
+                retries=retries,
             )
+            return
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,
@@ -308,7 +332,6 @@ def execute_job(  # noqa: C901
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
-            raise
     except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -353,10 +376,8 @@ def execute_job(  # noqa: C901
             )
 
 
-@shared_task(
-    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"], bind=True
-)
-def handle_event(self, *, event, backend):  # noqa: C901
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Receives events when tasks have stops and determines what to do next.
     In the case of transient failure the job could be scheduled again
@@ -397,12 +418,14 @@ def handle_event(self, *, event, backend):  # noqa: C901
         return
     except RetryStep:
         try:
-            self.retry(
-                countdown=RETRY_INTERVAL_SECONDS,
-                max_retries=int(
-                    3600 * 24 * RETRY_DURATION_DAYS / RETRY_INTERVAL_SECONDS
-                ),
+            _retry(
+                task=handle_event,
+                signature_kwargs={
+                    "kwargs": {"event": event, "backend": backend}
+                },
+                retries=retries,
             )
+            return
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,
@@ -410,7 +433,6 @@ def handle_event(self, *, event, backend):  # noqa: C901
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
-            raise
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,

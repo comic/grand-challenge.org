@@ -821,21 +821,15 @@ class ComponentJob(models.Model):
 
     @property
     def signature_kwargs(self):
-        kwargs = {
+        return {
             "kwargs": {
                 "job_pk": str(self.pk),
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
                 "backend": settings.COMPONENTS_DEFAULT_BACKEND,
             },
-            "options": {},
             "immutable": True,
         }
-
-        if getattr(self.container, "queue_override", None):
-            kwargs["options"].update({"queue": self.container.queue_override})
-
-        return kwargs
 
     def execute(self):
         return provision_job.signature(**self.signature_kwargs).apply_async()
