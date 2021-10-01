@@ -13,7 +13,9 @@ class AdminDocPageForm(ModelForm):
             "display_title",
             "level",
             "content",
+            "parent",
         )
+        ordering = ("order",)
 
 
 class DocPageAdmin(MarkdownxModelAdmin):

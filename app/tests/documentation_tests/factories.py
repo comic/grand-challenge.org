@@ -13,4 +13,3 @@ class DocPageFactory(factory.django.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"page_{n}")
     content = factory.LazyAttribute(lambda t: faker.text(max_nb_chars=200))
-    parent = factory.LazyAttribute(lambda x: DocPageFactory(parent=None))

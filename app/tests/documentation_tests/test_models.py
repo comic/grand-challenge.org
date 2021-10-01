@@ -43,12 +43,12 @@ def test_page_move(move_op, expected):
 
 @pytest.mark.django_db
 def test_properties():
-    p1 = DocPageFactory(level=DocPage.Level.PRIMARY)
-    p2 = DocPageFactory(level=DocPage.Level.PRIMARY)
-    p2a = DocPageFactory(level=DocPage.Level.SECONDARY)
-    p2b = DocPageFactory(level=DocPage.Level.SECONDARY)
-    p3 = DocPageFactory(level=DocPage.Level.PRIMARY)
-    p3a = DocPageFactory(level=DocPage.Level.SECONDARY)
+    p1 = DocPageFactory(level=DocPage.Level.PRIMARY, parent=None)
+    p2 = DocPageFactory(level=DocPage.Level.PRIMARY, parent=None)
+    p2a = DocPageFactory(level=DocPage.Level.SECONDARY, parent=p2)
+    p2b = DocPageFactory(level=DocPage.Level.SECONDARY, parent=p2)
+    p3 = DocPageFactory(level=DocPage.Level.PRIMARY, parent=None)
+    p3a = DocPageFactory(level=DocPage.Level.SECONDARY, parent=p3)
 
     pages = [p1, p2, p2a, p2b, p3, p3a]
     counter = 0
@@ -65,7 +65,7 @@ def test_properties():
     assert not p1.previous
 
     assert not p1.children.all()
-    assert p2.children.all() == [p2a, p2b]
+    assert p2.children.all() == [p2b, p2a]
     assert p3.children.all() == [p3a]
 
     assert not p1.parent
