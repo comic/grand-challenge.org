@@ -66,39 +66,4 @@
             </div>
         </div>
     {% endcache %}
-
-    {% cache 600 blog-posts %}
-        {% if blog_posts %}
-            <div class="container py-3 mt-3">
-                <h3 class="text-center">Latest Blog Posts</h3>
-                {% for blog in blog_posts|slice:":2" %}
-                    <div class="row my-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
-                        <div class="col-lg-6 px-5 py-5">
-                            <a href="{{ blog.get_absolute_url }}">
-                                <img class="w-100 h-100 rounded shadow"
-                                     src="{{ blog.logo.x20.url }}"
-                                     srcset="{{ blog.logo.x10.url }} 1x,
-                                             {{ blog.logo.x15.url }} 1.5x,
-                                             {{ blog.logo.x20.url }} 2x"
-                                     loading="lazy"
-                                     alt="Logo for blog post {{ blog.title }}"/>
-                            </a>
-                        </div>
-                        <div class="col-lg-6 px-5 align-self-center">
-                            <h4>{{ blog.title }}</h4>
-                            <p>
-                                {{ blog.created|date:"j N Y" }}
-                                by
-                                {% for author in blog.authors.all %}{% if not forloop.first %}{% if forloop.last %} and
-                                {% else %}, {% endif %}{% endif %}
-                                    <a href="{% url 'profile-detail' username=author.username %}">{% firstof author.get_full_name author.username %}</a>{% endfor %}
-                            </p>
-                            <p>{{ blog.description }}</p>
-                            <p><a class="btn btn-info" href="{{ blog.get_absolute_url }}">Read More</a></p>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endcache %}
 {% endblock %}

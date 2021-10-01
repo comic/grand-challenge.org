@@ -4,7 +4,6 @@ from django.conf import settings
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.blogs.models import Post
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
 
@@ -62,7 +61,6 @@ def sentry_dsn(*_, **__):
 def footer_links(*_, **__):
     return {
         "policy_pages": Policy.objects.all(),
-        "blog_posts": Post.objects.filter(published=True),
     }
 
 

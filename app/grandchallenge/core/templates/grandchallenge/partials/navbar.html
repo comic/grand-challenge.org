@@ -1,6 +1,6 @@
 {% load url %}
 
-<nav class="navbar navbar-light navbar-top navbar-expand-lg">
+<nav class="navbar navbar-light navbar-top navbar-expand-lg sticky-top shadow bg-white">
     <div class="container">
         <a class="navbar-brand mr-md-2 text-capitalize"
            href="{% url 'home' %}">
@@ -14,18 +14,6 @@
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link {% if "archives:" in request.resolver_match.view_name %}active{% endif %}"
-                       href="{% url 'archives:list' %}">
-                        Archives
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if "reader-studies:" in request.resolver_match.view_name %}active{% endif %}"
-                       href="{% url 'reader-studies:list' %}">
-                        Reader Studies
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link {% if "challenges:" in request.resolver_match.view_name %}active{% endif %}"
                        href="{% url 'challenges:list' %}">
                         Challenges
@@ -37,11 +25,22 @@
                         Algorithms
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if "products:" in request.resolver_match.view_name %}active{% endif %}"
-                       href="{% url 'products:product-list' %}">
-                        Products
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-ellipsis-h"></i>
                     </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="{% url 'blogs:list' %}">Blog</a>
+                        <a class="dropdown-item" href="{% url 'reader-studies:list' %}">Reader Studies</a>
+                        <a class="dropdown-item" href="{% url 'archives:list' %}">Archives</a>
+                        <a class="dropdown-item" href="{% url 'products:product-list' %}">Commercial products</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'about' %}">About us</a>
+                        <a class="dropdown-item" href="{% url 'statistics:detail' %}">Statistics</a>
+                        {% for policy in policy_pages %}
+                            <a class="dropdown-item" href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
+                        {% endfor %}
+                    </div>
                 </li>
             </ul>
             <ul class="navbar-nav">
