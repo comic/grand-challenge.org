@@ -102,8 +102,8 @@ def run():
 
 def _create_flatpages(site):
     page = FlatPage.objects.create(
-        url="/about/",
-        title="About",
+        url="/example-flatpage/",
+        title="Example Flatpage",
         content="<p>You can add flatpages via django admin</p>",
     )
     page.sites.add(site)

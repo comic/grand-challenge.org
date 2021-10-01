@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load url %}
+
+{% block title %}About us - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">About</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h1>Contributors</h1>
+    <p>This website was co-authored by
+        <a href="https://www.diagnijmegen.nl/people/bram-van-ginneken/?name=Bram_van_Ginneken">Bram van Ginneken</a>,
+        <a href="https://www.diagnijmegen.nl/people/sjoerd-kerkstra/?name=Sjoerd_Kerkstra">Sjoerd Kerkstra</a>, and
+        <a href="https://www.jmsmkn.com/">James Meakin</a> and is maintained by the
+        <a href="https://rse.diagnijmegen.nl/">Research Software Engineering Team</a> within the
+        <a href="https://www.diagnijmegen.nl/">Diagnostic Image Analysis Group</a> at
+        Radboud University Medical Center in Nijmegen, The Netherlands.
+    </p>
+    <p>The studies described on this web site have been made possible through a massive investment of time and effort
+        by many members of the medical image analysis research community. Organizing a challenge is complex and very
+        time consuming. The organizers of all challenges are mentioned at the web sites on the All Challenges page. On
+        this site, images from these web sites have been used as illustrations.
+    </p>
+    <p>Clinical collaborators have made it possible to collect, annotate and distribute the data sets used in all these
+        comparative studies. Many clinicians have actively participated in the definition and design of these
+        challenges. They are the users of the algorithms we develop and they are instrumental in pointing algorithm
+        developers to the right problem.
+    </p>
+    <p>Many companies in medical image analysis have supported and funded these events (and actively participated
+        as well). Without this support, it would be impossible to award prizes.
+    </p>
+    <p><a href="http://www.miccai.org/">MICCAI</a>, <a href="https://biomedicalimaging.org/2021/">ISBI</a>, and
+        <a href="https://spie.org/about-spie">SPIE Medical Imaging</a>, amongst others, have hosted challenge events.
+        Leading journals such as <a href="http://www.ieee-tmi.org/">IEEE Transactions on Medical Imaging</a> and
+        <a href="https://www.sciencedirect.com/journal/medical-image-analysis">Medical Image Analysis</a> have
+        welcomed overview papers that described the results of individual challenges.
+    </p>
+    <p>Finally, we'd like to thank all the participants. So many groups from all over the world have mustered the
+        courage to participate and see how their algorithm fares in a direct comparison with others. Their enthusiasm
+        is the most important factor that makes grand challenges in medical image analysis possible.
+    </p>
+{% endblock %}
