@@ -64,7 +64,7 @@ def test_properties():
         assert p.previous == pages[counter]
     assert not p1.previous
 
-    assert not p1.children
+    assert not p1.children.all()
     assert p2.children.all() == [p2a, p2b]
     assert p3.children.all() == [p3a]
 
