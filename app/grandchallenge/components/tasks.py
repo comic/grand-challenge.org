@@ -333,6 +333,7 @@ def execute_job(  # noqa: C901
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
+            raise
     except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -434,6 +435,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
+            raise
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
