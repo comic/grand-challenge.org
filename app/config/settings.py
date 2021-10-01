@@ -345,9 +345,6 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
                 "grandchallenge.core.context_processors.help_forum",
-                "grandchallenge.core.context_processors.latest_challenges",
-                "grandchallenge.core.context_processors.latest_algorithms",
-                "grandchallenge.core.context_processors.latest_news_item",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [

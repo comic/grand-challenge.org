@@ -58,11 +58,8 @@
             </div>
         </div>
     </div>
-    <div class="row equal-height mx-n2">
-        {% for challenge in latest_challenges %}
-            {% include 'challenges/challenge_card.html' %}
-        {% endfor %}
-    </div>
+
+    {% include "grandchallenge/partials/cards.html" with page_obj=latest_challenges %}
 
     <br>
     <div class="row my-3 px-3">
@@ -79,11 +76,8 @@
             </div>
         </div>
     </div>
-    <div class="row equal-height mx-n2">
-        {% for object in latest_algorithms %}
-            {% include 'algorithms/algorithm_card.html' %}
-        {% endfor %}
-    </div>
+
+    {% include "grandchallenge/partials/cards.html" with page_obj=latest_algorithms %}
 
     <div class="container p-0 mt-3">
         <h3 class="text-primary text-center mb-4">Features</h3>

@@ -4,9 +4,6 @@ from django.conf import settings
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.blogs.models import Post
-from grandchallenge.challenges.models import Challenge
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
 
@@ -71,56 +68,4 @@ def help_forum(*_, **__):
     return {
         "DOCUMENTATION_HELP_FORUM_PK": settings.DOCUMENTATION_HELP_FORUM_PK,
         "DOCUMENTATION_HELP_FORUM_SLUG": settings.DOCUMENTATION_HELP_FORUM_SLUG,
-    }
-
-
-def latest_challenges(*_, **__):
-    return {
-        "latest_challenges": Challenge.objects.filter(hidden=False)
-        .order_by("-created")
-        .all()[:4],
-    }
-
-
-def latest_algorithms(*_, **__):
-    return {
-        "latest_algorithms": Algorithm.objects.filter(public=True)
-        .order_by("-created")
-        .all()[:4],
-    }
-
-
-def latest_news_item(*_, **__):
-    latest_news_item = Post.objects.filter(
-        tags__slug=settings.HOMEPAGE_NEWS_BLOG_TAG
-    ).first()
-    latest_ai_for_radiology_post = (
-        Post.objects.filter(published=True, tags__name__contains="Products")
-        .order_by("-created")
-        .first()
-    )
-    latest_gc_blog_post = (
-        Post.objects.filter(published=True)
-        .exclude(tags__slug="products")
-        .order_by("-created")
-        .first()
-    )
-
-    if latest_news_item:
-        news_caroussel_items = [
-            latest_news_item,
-            latest_ai_for_radiology_post,
-            latest_gc_blog_post,
-        ]
-    else:
-        news_caroussel_items = [
-            latest_ai_for_radiology_post,
-            latest_gc_blog_post,
-        ]
-    return {
-        "blog_posts": Post.objects.filter(published=True).exclude(
-            tags__slug="news"
-        ),
-        "news_caroussel_items": news_caroussel_items,
-        "latest_news_item": latest_news_item,
     }
