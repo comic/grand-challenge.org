@@ -122,7 +122,7 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
 )
 
 # Home page news blog tag
-HOMEPAGE_NEWS_BLOG_TAG = os.environ.get("HOMEPAGE_NEWS_BLOG_TAG", "homenews")
+HOMEPAGE_NEWS_BLOG_TAG = os.environ.get("HOMEPAGE_NEWS_BLOG_TAG", "highlight")
 
 ##############################################################################
 #
