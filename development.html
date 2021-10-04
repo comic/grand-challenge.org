@@ -198,8 +198,10 @@ To develop the platform you need to have docker and docker-compose running on yo
 <p><em>Note for Windows Users</em>: we <strong>only</strong> support development using Windows 10 and WSL2.
 Please ensure that the correct backend is enabled in your docker settings, and run all of the following commands in the <code class="docutils literal notranslate"><span class="pre">wsl</span></code> shell.
 At the time of writing, we use <code class="docutils literal notranslate"><span class="pre">Ubuntu</span> <span class="pre">20.04</span></code> from the Microsoft store as the default distro.
-As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within <code class="docutils literal notranslate"><span class="pre">wsl</span></code> itself.
-For the same reason, we currently recommend running PyCharm from wsl rather than from windows (see <a class="reference external" href="https://techcommunity.microsoft.com/t5/windows-dev-appconsult/running-wsl-gui-apps-on-windows-10/ba-p/1493242">Running WSL GUI Apps on Windows 10</a>), but improved support for this should follow from JetBrains in 2021.</p>
+As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within <code class="docutils literal notranslate"><span class="pre">wsl</span></code> itself.</p>
+<p>The docker-compose cycle script below utilizes <a class="reference external" href="https://docs.docker.com/buildx/working-with-buildx/#install">Docker Buildx</a>. Depending on the steps above, buildx should be
+installed alongside docker. If the docker-compose cycle invocation below crashes on buildx, it is recommended to
+(re)install the latest version.</p>
 <ol class="arabic simple" start="2">
 <li><p>Clone the repo</p></li>
 </ol>
