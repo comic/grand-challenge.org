@@ -1,7 +1,46 @@
-from django.views.generic import ListView
+from django.views.generic import DetailView, ListView
 
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.documentation.models import DocPage
 
 
-class DocumentationView(ListView):
+class DocPageList(ListView):
     model = DocPage
+
+
+class DocPageDetail(DetailView):
+    model = DocPage
+
+    def get_context_object_name(self, obj):
+        return "currentdocpage"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        firstdocpage = DocPage.objects.first()
+        top_level_pages = (
+            DocPage.objects.filter(level=1).order_by("order").all()
+        )
+        second_level_pages = (
+            DocPage.objects.filter(level=2).order_by("order").all()
+        )
+        third_level_pages = (
+            DocPage.objects.filter(level=3).order_by("order").all()
+        )
+
+        context.update(
+            {
+                "firstdocpage": firstdocpage,
+                "top_level_pages": top_level_pages,
+                "second_level_pages": second_level_pages,
+                "third_level_pages": third_level_pages,
+                "cleaned_content": clean(self.object.content),
+            }
+        )
+
+        return context
+
+
+class DocumentationHome(DocPageDetail):
+    def get_object(self, queryset=None):
+        page = DocPage.objects.first()
+        return page
