@@ -376,6 +376,7 @@ class AmazonECSExecutor:
             memory=str(self._required_memory_units),
             networkMode="none",
             requiresCompatibilities=["EC2"],
+            taskRoleArn=settings.COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN,
             # TODO set tags
             volumes=[
                 {
