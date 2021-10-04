@@ -14,6 +14,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
@@ -355,7 +356,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         on_delete=models.PROTECT,
         related_name="algorithm_container_images",
     )
-    queue_override = models.CharField(max_length=128, blank=True)
+    queue_override = deprecate_field(
+        models.CharField(max_length=128, blank=True)
+    )
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
