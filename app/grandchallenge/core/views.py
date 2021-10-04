@@ -17,7 +17,6 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from config import settings
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.blogs.models import Post
 from grandchallenge.challenges.models import Challenge
@@ -120,17 +119,13 @@ class HomeTemplate(TemplateView):
             ),
         ]
 
-        latest_news_item = Post.objects.filter(
-            tags__slug=settings.HOMEPAGE_NEWS_BLOG_TAG
-        ).first()
+        latest_news_item = Post.objects.filter(highlight=True).first()
         latest_ai_for_radiology_post = Post.objects.filter(
             published=True, tags__slug="products"
         ).first()
         latest_gc_blog_post = (
             Post.objects.filter(published=True)
-            .exclude(
-                tags__slug__in=["products", settings.HOMEPAGE_NEWS_BLOG_TAG]
-            )
+            .exclude(tags__slug="products", highlight=True)
             .first()
         )
         news_caroussel_items = [
@@ -155,10 +150,14 @@ class HomeTemplate(TemplateView):
                     "A platform for end-to-end development of machine "
                     "learning solutions in biomedical imaging."
                 ),
-                "latest_challenges": Challenge.objects.filter(hidden=False)
+                "highlighted_challenges": Challenge.objects.filter(
+                    hidden=False, highlight=True
+                )
                 .order_by("-created")
                 .all()[:4],
-                "latest_algorithms": Algorithm.objects.filter(public=True)
+                "highlighted_algorithms": Algorithm.objects.filter(
+                    public=True, highlight=True
+                )
                 .order_by("-created")
                 .all()[:4],
                 "news_caroussel_items": news_caroussel_items,

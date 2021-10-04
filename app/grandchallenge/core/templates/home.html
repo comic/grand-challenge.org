@@ -46,40 +46,43 @@
             </div>
         </div>
 
-        <div class="row mb-3 mt-5 pt-3 px-3">
-            <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-2">
-                <i class="fa fa-trophy fa-2x align-middle"></i>
-                <span class="align-middle">&nbsp;&nbsp;LATEST CHALLENGES</span>
-            </div>
-            <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
-                <div class="d-flex justify-content-end">
-                    <a class="btn btn-md btn-primary mr-3"
-                       href="{% url 'challenges:list' %}">Participate in a challenge</a>
-                    <a class="btn btn-md btn-outline-primary"
-                       href="{% url 'challenges:create' %}">Organize your own challenge</a>
+        {% if highlighted_challenges %}
+            <div class="row mb-3 mt-5 pt-3 px-3">
+                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-2">
+                    <i class="fa fa-trophy fa-2x align-middle"></i>
+                    <span class="align-middle">&nbsp;&nbsp;FEATURED CHALLENGES</span>
+                </div>
+                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-md btn-primary mr-3"
+                           href="{% url 'challenges:list' %}">Participate in a challenge</a>
+                        <a class="btn btn-md btn-outline-primary"
+                           href="{% url 'challenges:create' %}">Organize your own challenge</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {% include "grandchallenge/partials/cards.html" with page_obj=latest_challenges %}
+            {% include "grandchallenge/partials/cards.html" with page_obj=highlighted_challenges %}
+        {% endif %}
 
-        <br>
-        <div class="row mb-3 mt-4 px-3">
-            <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-2">
-                <i class="fa fa-code fa-2x align-middle"></i>
-                <span class="align-middle">&nbsp;&nbsp;LATEST ALGORITHMS</span>
-            </div>
-            <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
-                <div class="d-flex justify-content-end">
-                    <a class="btn btn-md btn-primary mr-3"
-                       href="{% url 'algorithms:list' %}">Try out an algorithm</a>
-                    <a class="btn btn-md btn-outline-primary"
-                       href="{% url 'algorithms:create' %}">Host your own algorithm</a>
+        {% if highlighted_algorithms %}
+            <div class="row mb-3 mt-5 px-3">
+                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-2">
+                    <i class="fa fa-code fa-2x align-middle"></i>
+                    <span class="align-middle">&nbsp;&nbsp;FEATURED ALGORITHMS</span>
+                </div>
+                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-md btn-primary mr-3"
+                           href="{% url 'algorithms:list' %}">Try out an algorithm</a>
+                        <a class="btn btn-md btn-outline-primary"
+                           href="{% url 'algorithms:create' %}">Host your own algorithm</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {% include "grandchallenge/partials/cards.html" with page_obj=latest_algorithms %}
+            {% include "grandchallenge/partials/cards.html" with page_obj=highlighted_algorithms %}
+        {% endif %}
 
         <div class="container p-0 mt-5">
             <h3 class="text-primary text-center mb-4">Features</h3>

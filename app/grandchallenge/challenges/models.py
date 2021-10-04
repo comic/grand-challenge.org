@@ -208,6 +208,10 @@ class ChallengeBase(models.Model):
     filter_classes = ArrayField(
         CICharField(max_length=32), default=list, editable=False
     )
+    highlight = models.BooleanField(
+        default=False,
+        help_text="Should this challenge be advertised on the home page?",
+    )
 
     objects = ChallengeManager()
 
