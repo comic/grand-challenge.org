@@ -11,13 +11,13 @@
                 <div class="embed-responsive embed-responsive-1by1">
                         <img class="card-img-top embed-responsive-item"
                              loading="lazy"
-                             {% if object|meta_attr:'model_name' == 'challenge' and object.logo %}
+                             {% if object.logo and 'challenge' in object|meta_attr:'model_name' %}
                                  alt="{{ object.short_name }} logo"
                                  src="{{ object.logo.x20.url }}"
                                  srcset="{{ object.logo.x10.url }} 1x,
                                          {{ object.logo.x15.url }} 1.5x,
                                          {{ object.logo.x20.url }} 2x"
-                             {% elif object|meta_attr:'model_name' == 'challenge' and not object.logo %}
+                             {% elif not object.logo and 'challenge' in object|meta_attr:'model_name' %}
                                  alt="{{ object.short_name }} logo"
                                  src="{% static 'images/3697E1-0.8.png' %}"
                              {% else %}
@@ -31,7 +31,7 @@
                 </div>
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title text-truncate mb-0">
-                        {% if object|meta_attr:'model_name' == 'challenge' %}
+                        {% if 'challenge' in object|meta_attr:'model_name' %}
                             {% firstof object.title object.short_name %}
                         {% else %}
                             {{ object.title }}
@@ -40,7 +40,7 @@
                             <i class="fas fa-lock above-stretched-link" title="{{ object_list.model|meta_attr:'verbose_name'|title }} is private"></i>
                         {% endif %}
                     </h5>
-                    {% if object|meta_attr:'model_name' == 'challenge' %}
+                    {% if 'challenge' in object|meta_attr:'model_name' %}
                         {% include 'challenges/challenge_card_body.html' with challenge=object %}
                     {% else %}
                         <p class="card-text">{{ object.description }}</p>
