@@ -18,7 +18,10 @@ Installation
 Please ensure that the correct backend is enabled in your docker settings, and run all of the following commands in the ``wsl`` shell.
 At the time of writing, we use ``Ubuntu 20.04`` from the Microsoft store as the default distro.
 As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within ``wsl`` itself.
-For the same reason, we currently recommend running PyCharm from wsl rather than from windows (see `Running WSL GUI Apps on Windows 10`_), but improved support for this should follow from JetBrains in 2021.
+
+The docker-compose cycle script below utilizes `Docker Buildx`_. Depending on the steps above, buildx should be
+installed alongside docker. If the docker-compose cycle invocation below crashes on buildx, it is recommended to
+(re)install the latest version.
 
 2. Clone the repo
 
@@ -284,6 +287,7 @@ If you want to run this in a production environment you will need to make severa
 .. _`WSL2`: https://docs.microsoft.com/en-us/windows/wsl/install-win10/
 .. _`Docker Desktop for Windows`: https://docs.docker.com/docker-for-windows/install/
 .. _`Docker Desktop WSL2 Backend`: https://docs.docker.com/docker-for-windows/wsl/
+.. _`Docker Buildx`: https://docs.docker.com/buildx/working-with-buildx/#install
 .. _`RunServerPlus`: https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
 .. _`Running WSL GUI Apps on Windows 10`: https://techcommunity.microsoft.com/t5/windows-dev-appconsult/running-wsl-gui-apps-on-windows-10/ba-p/1493242
 .. _`Example Algorithm Image`: https://hub.docker.com/r/grandchallenge/otsu
