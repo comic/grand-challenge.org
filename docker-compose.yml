@@ -57,6 +57,19 @@ services:
       "
     restart: always
 
+  uploads.localhost:
+    image: minio/minio
+    ports:
+      - "9082:9082"
+    entrypoint: "/bin/sh"
+    command: >-
+      -c "
+      mkdir -p /data/grand-challenge-uploads/
+      && minio --compat server --address :9082 /data
+      "
+    restart: always
+
+
   web:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
@@ -66,6 +79,7 @@ services:
         AWS_SECRET_ACCESS_KEY: minioadmin
         PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected.localhost:9081
         PRIVATE_S3_STORAGE_ENDPOINT_URL: http://minio-private:9000
+        UPLOADS_S3_ENDPOINT_URL: http://uploads.localhost:9082
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'

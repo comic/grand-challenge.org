@@ -178,6 +178,11 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "default_acl": "public-read",
 }
 
+UPLOADS_S3_BUCKET_NAME = os.environ.get(
+    "UPLOADS_S3_BUCKET_NAME", "grand-challenge-uploads"
+)
+UPLOADS_S3_ENDPOINT_URL = os.environ.get("UPLOADS_S3_ENDPOINT_URL")
+
 # Key pair used for signing CloudFront URLS, only used if
 # PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
 CLOUDFRONT_KEY_PAIR_ID = os.environ.get("CLOUDFRONT_KEY_PAIR_ID", "")

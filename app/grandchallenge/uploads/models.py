@@ -1,11 +1,14 @@
 import os
 
+import boto3
+from django.conf import settings
 from django.db import models
 from django.db.models import SET_NULL
 from django.utils.datetime_safe import strftime
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_summernote.models import AbstractAttachment
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
@@ -44,3 +47,101 @@ class SummernoteAttachment(AbstractAttachment):
     file = models.FileField(
         upload_to=summernote_upload_filepath, storage=public_s3_storage
     )
+
+
+class UserUpload(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
+
+    class Meta(UUIDModel.Meta):
+        pass
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self._state.adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_userupload", self.creator, self)
+        assign_perm("change_userupload", self.creator, self)
+
+
+class UserUploadFile(UUIDModel):
+    class StatusChoices(models.IntegerChoices):
+        PENDING = 0, "Pending"
+        INITIALIZED = 1, "Initialized"
+        COMPLETED = 2, "Completed"
+        ABORTED = 3, "Aborted"
+
+    upload = models.ForeignKey(UserUpload, on_delete=models.CASCADE)
+    filename = models.CharField(max_length=128)
+    status = models.PositiveSmallIntegerField(
+        choices=StatusChoices.choices, default=StatusChoices.PENDING
+    )
+    s3_upload_id = models.CharField(max_length=128)
+
+    class Meta(UUIDModel.Meta):
+        pass
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__client = None
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.create_multipart_upload()
+
+        super().save(*args, **kwargs)
+
+        if self._state.adding:
+            self.assign_permissions()
+
+    @property
+    def _client(self):
+        if self.__client is None:
+            self.__client = boto3.client(
+                "s3", endpoint_url=settings.UPLOADS_S3_ENDPOINT_URL
+            )
+        return self.__client
+
+    @property
+    def bucket(self):
+        return settings.UPLOADS_S3_BUCKET_NAME
+
+    @property
+    def key(self):
+        return f"uploads/{self.upload.pk}/{self.pk}"
+
+    def assign_permissions(self):
+        assign_perm("view_useruploadfile", self.upload.creator, self)
+        assign_perm("change_useruploadfile", self.upload.creator, self)
+
+    def create_multipart_upload(self):
+        response = self._client.create_multipart_upload(
+            Bucket=settings.UPLOADS_S3_BUCKET_NAME, Key=self.key,
+        )
+        self.s3_upload_id = response["UploadId"]
+        self.status = self.StatusChoices.INITIALIZED
+
+    def get_presigned_url(self, *, part_number):
+        return self._client.generate_presigned_url(
+            "upload_part",
+            Params={
+                "Bucket": self.bucket,
+                "Key": self.key,
+                "UploadId": self.s3_upload_id,
+                "PartNumber": part_number,
+            },
+        )
+
+    def complete_multipart_upload(self, *, parts):
+        self._client.complete_multipart_upload(
+            Bucket=self.bucket,
+            Key=self.key,
+            UploadId=self.s3_upload_id,
+            MultipartUpload={"Parts": parts},
+        )
+        self.status = self.StatusChoices.COMPLETED
+        self.save()
