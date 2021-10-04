@@ -43,12 +43,12 @@ def test_page_move(move_op, expected):
 
 @pytest.mark.django_db
 def test_properties():
-    p1 = DocPageFactory(level=DocPage.Level.PRIMARY, parent=None)
-    p2 = DocPageFactory(level=DocPage.Level.PRIMARY, parent=None)
-    p2a = DocPageFactory(level=DocPage.Level.SECONDARY, parent=p2)
-    p2b = DocPageFactory(level=DocPage.Level.SECONDARY, parent=p2)
-    p3 = DocPageFactory(level=DocPage.Level.PRIMARY, parent=None)
-    p3a = DocPageFactory(level=DocPage.Level.SECONDARY, parent=p3)
+    p1 = DocPageFactory(parent=None)
+    p2 = DocPageFactory(parent=None)
+    p2a = DocPageFactory(parent=p2)
+    p2b = DocPageFactory(parent=p2)
+    p3 = DocPageFactory(parent=None)
+    p3a = DocPageFactory(parent=p3)
 
     pages = [p1, p2, p2a, p2b, p3, p3a]
     counter = 0
