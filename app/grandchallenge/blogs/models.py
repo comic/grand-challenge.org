@@ -46,6 +46,11 @@ class Post(models.Model):
 
     published = models.BooleanField(default=False)
 
+    highlight = models.BooleanField(
+        default=False,
+        help_text="If selected, this blog post will appear in first position in the news carousel on the home page.",
+    )
+
     history = HistoricalRecords()
 
     class Meta:

@@ -163,6 +163,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         default=False,
         help_text="Do a recursive git pull when a GitHub repo is linked to this algorithm.",
     )
+    highlight = models.BooleanField(
+        default=False,
+        help_text="Should this algorithm be advertised on the home page?",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
