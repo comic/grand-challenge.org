@@ -123,17 +123,14 @@ class HomeTemplate(TemplateView):
         latest_news_item = Post.objects.filter(
             tags__slug=settings.HOMEPAGE_NEWS_BLOG_TAG
         ).first()
-        latest_ai_for_radiology_post = (
-            Post.objects.filter(
-                published=True, tags__name__contains="Products"
-            )
-            .order_by("-created")
-            .first()
-        )
+        latest_ai_for_radiology_post = Post.objects.filter(
+            published=True, tags__slug="products"
+        ).first()
         latest_gc_blog_post = (
             Post.objects.filter(published=True)
-            .exclude(tags__slug="products")
-            .order_by("-created")
+            .exclude(
+                tags__slug__in=["products", settings.HOMEPAGE_NEWS_BLOG_TAG]
+            )
             .first()
         )
         news_caroussel_items = [
