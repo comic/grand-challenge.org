@@ -18,21 +18,13 @@ class DocPageDetail(DetailView):
         context = super().get_context_data(**kwargs)
         firstdocpage = DocPage.objects.first()
         top_level_pages = (
-            DocPage.objects.filter(level=1).order_by("order").all()
-        )
-        second_level_pages = (
-            DocPage.objects.filter(level=2).order_by("order").all()
-        )
-        third_level_pages = (
-            DocPage.objects.filter(level=3).order_by("order").all()
+            DocPage.objects.filter(parent__isnull=True).order_by("order").all()
         )
 
         context.update(
             {
                 "firstdocpage": firstdocpage,
                 "top_level_pages": top_level_pages,
-                "second_level_pages": second_level_pages,
-                "third_level_pages": third_level_pages,
                 "cleaned_content": clean(self.object.content),
             }
         )
