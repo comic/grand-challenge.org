@@ -11,8 +11,8 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'documentation:home' %}">Documentation</a></li>
-        {% if currentdocpage.level > 1 %}
-            {% if currentdocpage.level == 3 %}
+        {% if currentdocpage.parent %}
+            {% if currentdocpage.parent.parent %}
                 <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.parent.slug %}">
                     {% filter title %}
                         {% firstof currentdocpage.parent.parent.display_title currentdocpage.parent.parent.title %}
@@ -42,7 +42,7 @@
                     {% get_grandchildren page as grandchildren %}
                     {% if not page.children.all %}
                         <li class="nav-item mb-1">
-                            <a class="nav-link rounded {% if page == currentdocpage %}active text-white bg-primary{% else %}text-primary{% endif %}"
+                            <a class="nav-link rounded {% if page == currentdocpage %}active text-white bg-dark{% else %}text-primary{% endif %}"
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
                                 {% filter title %}
@@ -51,8 +51,8 @@
                             </a>
                         </li>
                     {% elif page.children.all %}
-                        <li class="nav-item mb-1 has-submenu">
-                            <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in page.children.all or currentdocpage in grandchildren %}active text-white bg-primary{% else %}text-primary{% endif %} "
+                        <li class="nav-item mb-1 has-submenu rounded">
+                            <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in page.children.all or currentdocpage in grandchildren %}active text-white bg-dark{% else %}text-primary{% endif %} "
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
                                 {% filter title %}
@@ -63,7 +63,7 @@
                                     {% for subpage in page.children.all %}
                                         {% if not subpage.children.all %}
                                             <li class="list-group-item border-0 p-0 mb-1">
-                                                <a class="nav-link rounded {% if subpage == currentdocpage  %}active {% endif %} text-primary"
+                                                <a class="nav-link rounded {% if subpage == currentdocpage  %}active {% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
                                                    href="{% url 'documentation:detail' slug=subpage.slug %}">
                                                     {% filter title %}
@@ -73,7 +73,7 @@
                                             </li>
                                         {% else %}
                                             <li class="list-group-item has-submenu border-0 p-0 mb-1">
-                                                <a class="nav-link rounded {% if subpage == currentdocpage or currentdocpage in subpage.children.all %}active{% endif %} text-primary"
+                                                <a class="nav-link rounded {% if subpage == currentdocpage or currentdocpage in subpage.children.all %}active{% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
                                                    href="{% url 'documentation:detail' slug=subpage.slug %}">
                                                     {% filter title %}
@@ -84,7 +84,7 @@
                                             <ul class="submenu-2 rounded {% if currentdocpage == subpage or currentdocpage in subpage.children.all %}collapse show{% else %}collapse hide{% endif %} list-group">
                                                 {% for tertiarypage in subpage.children.all %}
                                                     <li class="list-group-item border-0 p-0 ml-2 mb-1">
-                                                        <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold bg-white{% endif %} text-primary"
+                                                        <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold{% endif %} text-primary bg-light"
                                                            id="{{ tertiarypage.slug }}"
                                                            href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
                                                             {% filter title %}
