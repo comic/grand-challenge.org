@@ -1,7 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
-from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 from simple_history.models import HistoricalRecords
 
@@ -10,23 +9,7 @@ from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
 
-class LevelChoices(models.IntegerChoices):
-    """Documentation page level options"""
-
-    PRIMARY = 1, _("Top level")
-    SECONDARY = 2, _("Second level")
-    TERTIARY = 3, _("Third level")
-
-
-class DocPageLevel:
-    """Documentation page level."""
-
-    DocPageLevelChoices = LevelChoices
-
-
 class DocPage(models.Model):
-
-    Level = DocPageLevel.DocPageLevelChoices
 
     UP = "UP"
     DOWN = "DOWN"
@@ -50,14 +33,6 @@ class DocPage(models.Model):
 
     content = models.TextField()
 
-    level = models.PositiveSmallIntegerField(
-        default=Level.PRIMARY,
-        choices=Level.choices,
-        help_text=(
-            "As which level should this page be displayed in the sidebar?"
-        ),
-    )
-
     order = models.IntegerField(
         editable=False,
         default=1,
@@ -72,7 +47,7 @@ class DocPage(models.Model):
         related_name="children",
     )
 
-    history = HistoricalRecords(excluded_fields=["level", "order"])
+    history = HistoricalRecords(excluded_fields=["order", "parent"])
 
     def __str__(self):
         return self.title

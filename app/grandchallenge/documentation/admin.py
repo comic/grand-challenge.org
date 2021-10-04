@@ -11,7 +11,6 @@ class AdminDocPageForm(ModelForm):
         fields = (
             "title",
             "display_title",
-            "level",
             "content",
             "parent",
         )
@@ -23,10 +22,8 @@ class DocPageAdmin(MarkdownxModelAdmin):
     list_display = (
         "pk",
         "title",
-        "level",
         "order",
     )
-    list_filter = ("level",)
 
 
 admin.site.register(DocPage, DocPageAdmin)
