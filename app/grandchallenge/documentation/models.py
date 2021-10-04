@@ -49,6 +49,9 @@ class DocPage(models.Model):
 
     history = HistoricalRecords(excluded_fields=["order", "parent"])
 
+    class Meta:
+        ordering = ["order"]
+
     def __str__(self):
         return self.title
 
