@@ -20,7 +20,7 @@ def test_user_upload_flow():
     assert upload_file.s3_upload_id != ""
 
     # Get the presigned url
-    presigned_url = upload_file.get_presigned_url(part_number=0)
+    presigned_url = upload_file.generate_presigned_url(part_number=0)
     assert presigned_url != ""
 
     # PUT the file

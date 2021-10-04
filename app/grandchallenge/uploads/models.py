@@ -125,7 +125,7 @@ class UserUploadFile(UUIDModel):
         self.s3_upload_id = response["UploadId"]
         self.status = self.StatusChoices.INITIALIZED
 
-    def get_presigned_url(self, *, part_number):
+    def generate_presigned_url(self, *, part_number):
         return self._client.generate_presigned_url(
             "upload_part",
             Params={

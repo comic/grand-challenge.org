@@ -1,6 +1,7 @@
+from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
-from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.models import UserUpload, UserUploadFile
 
 
 class UserUploadSerializer(ModelSerializer):
@@ -13,8 +14,12 @@ class UserUploadSerializer(ModelSerializer):
 
 
 class UserUploadFileSerializer(ModelSerializer):
+    upload = HyperlinkedRelatedField(
+        read_only=True, view_name="api:upload-detail"
+    )
+
     class Meta:
-        model = UserUpload
+        model = UserUploadFile
         fields = (
             "pk",
             "created",

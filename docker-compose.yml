@@ -97,6 +97,8 @@ services:
         condition: service_started
       minio-public:
         condition: service_started
+      uploads.localhost:
+        condition: service_started
       redis:
         condition: service_started
       registry:
