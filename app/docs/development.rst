@@ -19,20 +19,18 @@ Please ensure that the correct backend is enabled in your docker settings, and r
 At the time of writing, we use ``Ubuntu 20.04`` from the Microsoft store as the default distro.
 As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within ``wsl`` itself.
 
-2. (Optional) Download and install buildx for Docker
-
 The docker-compose cycle script below utilizes `Docker Buildx`_. Depending on the steps above, buildx should be
 installed alongside docker. If the docker-compose cycle invocation below crashes on buildx, it is recommended to
 (re)install the latest version.
 
-3. Clone the repo
+2. Clone the repo
 
 .. code-block:: console
 
     $ git clone https://github.com/comic/grand-challenge.org
     $ cd grand-challenge.org
 
-4. You can then start the development site by invoking
+3. You can then start the development site by invoking
 
 .. code-block:: console
 
