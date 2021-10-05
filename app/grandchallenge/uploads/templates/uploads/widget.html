@@ -1,0 +1,8 @@
+{% load url %}
+<div class="user-upload"
+     data-createUploadUrl="{% url 'api:upload-list' %}"
+     data-createFileUrl="{% url 'api:uploads-file-list' %}"
+     data-inputId="{{ widget.attrs.id }}"
+>
+    {% include "django/forms/widgets/hidden.html" %}
+</div>
