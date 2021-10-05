@@ -67,7 +67,7 @@ class DocPage(models.Model):
                 # Use the default
                 pass
 
-        self.html = clean(self.content)
+        self.content = clean(self.content)
 
         super().save(*args, **kwargs)
 
@@ -104,7 +104,7 @@ class DocPage(models.Model):
         """
         for idx, page in enumerate(pages):
             page.order = idx + 1
-            page.save()
+        DocPage.objects.bulk_update(pages, ["order"])
 
     def get_absolute_url(self):
         url = reverse("documentation:detail", kwargs={"slug": self.slug},)

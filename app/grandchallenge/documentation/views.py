@@ -18,7 +18,10 @@ class DocPageDetail(DetailView):
         context = super().get_context_data(**kwargs)
         firstdocpage = DocPage.objects.first()
         top_level_pages = (
-            DocPage.objects.filter(parent__isnull=True).order_by("order").all()
+            DocPage.objects.filter(parent__isnull=True)
+            .prefetch_related("children__children")
+            .order_by("order")
+            .all()
         )
 
         context.update(
