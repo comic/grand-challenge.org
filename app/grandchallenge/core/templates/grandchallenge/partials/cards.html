@@ -30,7 +30,7 @@
                         >
                 </div>
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title text-truncate mb-0">
+                    <h5 class="card-title {% if 'challenge' in object|meta_attr:'model_name' %}text-truncate{% endif %} mb-0">
                         {% if 'challenge' in object|meta_attr:'model_name' %}
                             {% firstof object.title object.short_name %}
                         {% else %}
