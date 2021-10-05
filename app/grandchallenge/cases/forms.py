@@ -18,7 +18,7 @@ IMAGE_UPLOAD_HELP_TEXT = (
     "The total size of all files uploaded in a single session "
     "cannot exceed 10 GB.<br>"
     "The following file formats are supported: "
-    ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, "
+    ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, .nrrd, "
     ".fda, .fds, .tiff, .png, .jpeg and .jpg.<br>"
     "The following file formats can be uploaded and will be converted to "
     "tif: Aperio (.svs), Hamamatsu (.vms, .vmu, .ndpi), Leica (.scn), "
