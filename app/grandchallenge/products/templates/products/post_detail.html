@@ -14,11 +14,11 @@
 {% endblock %}
 
 {% block meta_social %}
-  <meta name="title" content="{{ object.title }}">
+  <meta name="title" content="{{ object.title }}" />
   <meta property="og:title" content="{{ object.title }}" />
-  <meta property= "og:type" content="website"/>
+  <meta property= "og:type" content="blog" />
   <meta property="og:url" content="{{ object.get_absolute_url }}" />
-  <meta property="og:description" content= "{{ object.description }}"/>
+  <meta property="og:description" content= "{{ object.description }}" />
   <meta property="og:image" content= "{{ object.logo.x20.url }}" />
 {% endblock %}
 
