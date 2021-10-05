@@ -13,6 +13,15 @@
     <li class="breadcrumb-item active">{{ object.title }}</li>
 {% endblock %}
 
+{% block meta_social %}
+  <meta name="title" content="{{ object.title }}">
+  <meta property="og:title" content="{{ object.title }}" />
+  <meta property= "og:type" content="website"/>
+  <meta property="og:url" content="//www.AIforRadiology.com/" />
+  <meta property="og:description" content= "{{ object.description }}"/>
+  <meta property="og:image" content= "{{ object.logo.x20.url }}" />
+{% endblock %}
+
 {% block content %}
     <div class="row mb-5">
         <div class="col-lg-8">
