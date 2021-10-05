@@ -18,6 +18,10 @@ def init_upload_permissions(*_, **__):
         f"{UserUploadFile._meta.app_label}.add_{UserUploadFile._meta.model_name}",
         g,
     )
+    assign_perm(
+        f"{UserUploadFile._meta.app_label}.change_{UserUploadFile._meta.model_name}",
+        g,
+    )
 
 
 class UploadsConfig(AppConfig):

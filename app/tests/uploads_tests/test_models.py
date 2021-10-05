@@ -30,7 +30,6 @@ def test_user_upload_flow():
 
     # Finish the upload
     upload_file.complete_multipart_upload(
-        parts=[{"ETag": response.headers["ETag"], "PartNumber": 0}]
+        parts=[{"e_tag": response.headers["ETag"], "part_number": 0}]
     )
-    upload_file.refresh_from_db()
     assert upload_file.status == UserUploadFile.StatusChoices.COMPLETED

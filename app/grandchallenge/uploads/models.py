@@ -58,9 +58,11 @@ class UserUpload(UUIDModel):
         pass
 
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
         super().save(*args, **kwargs)
 
-        if self._state.adding:
+        if adding:
             self.assign_permissions()
 
     def assign_permissions(self):
@@ -90,12 +92,14 @@ class UserUploadFile(UUIDModel):
         self.__client = None
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
+        adding = self._state.adding
+
+        if adding:
             self.create_multipart_upload()
 
         super().save(*args, **kwargs)
 
-        if self._state.adding:
+        if adding:
             self.assign_permissions()
 
     @property
@@ -141,7 +145,11 @@ class UserUploadFile(UUIDModel):
             Bucket=self.bucket,
             Key=self.key,
             UploadId=self.s3_upload_id,
-            MultipartUpload={"Parts": parts},
+            MultipartUpload={
+                "Parts": [
+                    {"ETag": p["e_tag"], "PartNumber": p["part_number"]}
+                    for p in parts
+                ]
+            },
         )
         self.status = self.StatusChoices.COMPLETED
-        self.save()
