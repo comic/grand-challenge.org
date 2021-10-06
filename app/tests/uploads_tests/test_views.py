@@ -1,6 +1,7 @@
 import pytest
 from requests import put
 
+from grandchallenge.uploads.models import UserUpload
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
@@ -30,29 +31,27 @@ def test_user_upload_flow(client):
     content = b"123"  # slice of file data
     parts = []
 
-    # Get the presigned url
+    # Get the presigned urls
     response = get_view_for_user(
         client=client,
-        viewname="api:upload-generate-presigned-url",
+        viewname="api:upload-generate-presigned-urls",
         reverse_kwargs={"pk": upload_file["pk"]},
         method=client.patch,
-        data={"part_number": part_number},
+        data={"part_numbers": [part_number]},
         content_type="application/json",
         user=u,
     )
     assert response.status_code == 200
-    presigned_url = response.json()["presigned_url"]
-    assert presigned_url != ""
+    presigned_urls = response.json()["presigned_urls"]
+    assert presigned_urls != {}
 
     # PUT the file
-    response = put(presigned_url, data=content)
+    response = put(presigned_urls[str(part_number)], data=content)
     assert response.status_code == 200
     assert response.headers["ETag"] != ""
 
     # Add the part to the list of uploads
-    parts.append(
-        {"e_tag": response.headers["ETag"], "part_number": part_number}
-    )
+    parts.append({"ETag": response.headers["ETag"], "PartNumber": part_number})
 
     # Finish the upload
     response = get_view_for_user(
@@ -68,3 +67,133 @@ def test_user_upload_flow(client):
     upload = response.json()
 
     assert upload["status"] == "Completed"
+
+
+@pytest.mark.django_db
+def test_create_multipart_upload(client):
+    # https://uppy.io/docs/aws-s3-multipart/#createMultipartUpload-file
+    u = UserFactory()
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:upload-list",
+        method=client.post,
+        data={"filename": "foo.bat"},
+        content_type="application/json",
+        user=u,
+    )
+
+    assert response.status_code == 201
+    upload_file = response.json()
+
+    assert upload_file["status"] == "Initialized"
+    assert upload_file["s3_upload_id"] != ""
+    assert upload_file["key"] == f"uploads/{upload_file['pk']}"
+    assert upload_file["filename"] == "foo.bat"
+
+
+@pytest.mark.django_db
+def test_list_parts(client):
+    # https://uppy.io/docs/aws-s3-multipart/#listParts-file-uploadId-key
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+    url = upload.generate_presigned_url(part_number=1)
+    uploaded_part = put(url, data=b"123")
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:upload-list-parts",
+        reverse_kwargs={"pk": upload.pk},
+        content_type="application/json",
+        user=u,
+    )
+
+    assert response.status_code == 200
+
+    assert response.json()["pk"] == str(upload.pk)
+    assert response.json()["s3_upload_id"] == upload.s3_upload_id
+    assert response.json()["key"] == upload.key
+
+    parts = response.json()["parts"]
+    del parts[0]["LastModified"]
+    assert parts == [
+        {"ETag": uploaded_part.headers["ETag"], "PartNumber": 1, "Size": 3}
+    ]
+
+
+@pytest.mark.django_db
+def test_prepare_upload_parts(client):
+    # https://uppy.io/docs/aws-s3-multipart/#prepareUploadParts-file-partData
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:upload-generate-presigned-urls",
+        reverse_kwargs={"pk": upload.pk},
+        method=client.patch,
+        data={"part_numbers": [35, 42, 128]},
+        content_type="application/json",
+        user=u,
+    )
+
+    assert response.status_code == 200
+
+    assert response.json()["pk"] == str(upload.pk)
+    assert response.json()["s3_upload_id"] == upload.s3_upload_id
+    assert response.json()["key"] == upload.key
+
+    presigned_urls = response.json()["presigned_urls"]
+
+    assert set(presigned_urls.keys()) == {"35", "42", "128"}
+
+
+@pytest.mark.django_db
+def test_abort_multipart_upload(client):
+    # https://uppy.io/docs/aws-s3-multipart/#abortMultipartUpload-file-uploadId-key
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:upload-abort-multipart-upload",
+        reverse_kwargs={"pk": upload.pk},
+        method=client.patch,
+        data={},
+        content_type="application/json",
+        user=u,
+    )
+
+    assert response.status_code == 200
+
+    assert response.json()["pk"] == str(upload.pk)
+    assert response.json()["s3_upload_id"] == ""
+    assert response.json()["key"] == upload.key
+    assert response.json()["status"] == "Aborted"
+
+
+@pytest.mark.django_db
+def test_complete_multipart_upload(client):
+    # https://uppy.io/docs/aws-s3-multipart/#completeMultipartUpload-file-uploadId-key-parts
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+    url = upload.generate_presigned_url(part_number=1)
+    uploaded_part = put(url, data=b"123")
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:upload-complete-multipart-upload",
+        reverse_kwargs={"pk": upload.pk},
+        method=client.patch,
+        data={
+            "parts": [{"ETag": uploaded_part.headers["ETag"], "PartNumber": 1}]
+        },
+        content_type="application/json",
+        user=u,
+    )
+    assert response.status_code == 200
+
+    assert response.json()["pk"] == str(upload.pk)
+    assert response.json()["s3_upload_id"] == upload.s3_upload_id
+    assert response.json()["key"] == upload.key
+    assert response.json()["status"] == "Completed"

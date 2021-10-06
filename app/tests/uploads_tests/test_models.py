@@ -28,7 +28,7 @@ def test_user_upload_flow():
 
     # Finish the upload
     upload.complete_multipart_upload(
-        parts=[{"e_tag": response.headers["ETag"], "part_number": 0}]
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 0}]
     )
     assert upload.status == UserUpload.StatusChoices.COMPLETED
 
@@ -52,14 +52,14 @@ def test_generate_presigned_urls():
 
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1, 13, 26])
 
-    assert set(presigned_urls.keys()) == {1, 13, 26}
-    assert presigned_urls[1].startswith(
+    assert set(presigned_urls.keys()) == {"1", "13", "26"}
+    assert presigned_urls["1"].startswith(
         f"{settings.UPLOADS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=1&"
     )
-    assert presigned_urls[13].startswith(
+    assert presigned_urls["13"].startswith(
         f"{settings.UPLOADS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=13&"
     )
-    assert presigned_urls[26].startswith(
+    assert presigned_urls["26"].startswith(
         f"{settings.UPLOADS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=26&"
     )
 
@@ -103,9 +103,9 @@ def test_list_parts_truncation():
     parts = upload.list_parts()
 
     assert len(parts) == 2
-    assert parts[0]["ETag"] == responses[1].headers["ETag"]
+    assert parts[0]["ETag"] == responses["1"].headers["ETag"]
     assert parts[0]["Size"] == 3
     assert parts[0]["PartNumber"] == 1
-    assert parts[1]["ETag"] == responses[2].headers["ETag"]
+    assert parts[1]["ETag"] == responses["2"].headers["ETag"]
     assert parts[1]["Size"] == 3
     assert parts[1]["PartNumber"] == 2

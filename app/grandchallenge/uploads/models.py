@@ -117,7 +117,9 @@ class UserUpload(UUIDModel):
 
     def generate_presigned_urls(self, *, part_numbers):
         return {
-            part_number: self.generate_presigned_url(part_number=part_number)
+            str(part_number): self.generate_presigned_url(
+                part_number=part_number
+            )
             for part_number in part_numbers
         }
 
@@ -164,12 +166,7 @@ class UserUpload(UUIDModel):
             Bucket=self.bucket,
             Key=self.key,
             UploadId=self.s3_upload_id,
-            MultipartUpload={
-                "Parts": [
-                    {"ETag": p["e_tag"], "PartNumber": p["part_number"]}
-                    for p in parts
-                ]
-            },
+            MultipartUpload={"Parts": parts},
         )
         self.status = self.StatusChoices.COMPLETED
 

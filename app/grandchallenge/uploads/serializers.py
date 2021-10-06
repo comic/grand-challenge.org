@@ -1,6 +1,10 @@
+from typing import Dict
+
 from rest_framework.fields import (
     CharField,
+    DateTimeField,
     IntegerField,
+    ListField,
     SerializerMethodField,
 )
 from rest_framework.serializers import ModelSerializer, Serializer
@@ -17,13 +21,27 @@ class UserUploadSerializer(ModelSerializer):
             "pk",
             "created",
             "filename",
+            "key",
+            "s3_upload_id",
             "status",
         )
         read_only_fields = (
             "pk",
             "created",
+            "filename",
+            "key",
+            "s3_upload_id",
             "status",
         )
+
+
+class UserUploadCreateSerializer(UserUploadSerializer):
+    class Meta(UserUploadSerializer.Meta):
+        read_only_fields = [
+            field
+            for field in UserUploadSerializer.Meta.read_only_fields
+            if field != "filename"
+        ]
 
     def validate(self, data):
         if data.get("creator") is None:
@@ -31,19 +49,40 @@ class UserUploadSerializer(ModelSerializer):
         return data
 
 
-class PresignedURLSerializer(Serializer):
-    part_number = IntegerField(min_value=1, max_value=10_000, write_only=True)
-    presigned_url = SerializerMethodField()
+class PartSerializer(Serializer):
+    ETag = CharField()
+    PartNumber = IntegerField(min_value=1, max_value=10_000)
+    LastModified = DateTimeField()
+    Size = IntegerField(min_value=0)
 
-    def get_presigned_url(self, obj: UserUpload) -> str:
-        return obj.generate_presigned_url(
-            part_number=self.validated_data["part_number"]
+
+class UserUploadPartsSerializer(UserUploadSerializer):
+    parts = PartSerializer(source="list_parts", many=True, read_only=True)
+
+    class Meta(UserUploadSerializer.Meta):
+        fields = (
+            *UserUploadSerializer.Meta.fields,
+            "parts",
         )
 
 
-class PartSerializer(Serializer):
-    e_tag = CharField()
-    part_number = IntegerField(min_value=1, max_value=10_000)
+class UserUploadPresignedURLsSerializer(UserUploadSerializer):
+    part_numbers = ListField(
+        child=IntegerField(min_value=1, max_value=10_000), write_only=True
+    )
+    presigned_urls = SerializerMethodField(read_only=True)
+
+    class Meta(UserUploadSerializer.Meta):
+        fields = (
+            *UserUploadSerializer.Meta.fields,
+            "part_numbers",
+            "presigned_urls",
+        )
+
+    def get_presigned_urls(self, obj: UserUpload) -> Dict[int, str]:
+        return obj.generate_presigned_urls(
+            part_numbers=self.validated_data["part_numbers"]
+        )
 
 
 class UserUploadCompleteSerializer(UserUploadSerializer):
@@ -53,10 +92,6 @@ class UserUploadCompleteSerializer(UserUploadSerializer):
         fields = (
             *UserUploadSerializer.Meta.fields,
             "parts",
-        )
-        read_only_fields = (
-            *UserUploadSerializer.Meta.read_only_fields,
-            "filename",
         )
 
     def save(self, **kwargs):
