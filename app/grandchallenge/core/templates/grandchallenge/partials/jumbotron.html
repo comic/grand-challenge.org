@@ -1,5 +1,8 @@
 {% load static %}
 {% load image_filter %}
+{% load round_to %}
+{% load humanize %}
+
 
 {% if jumbotron_title or jumbotron_background_url %}
 <div class="jumbotron background-fill rounded-0 bg-primary mb-0"
@@ -10,6 +13,13 @@
             <div class="col-sm-10 col-md-8 col-lg-6 text-light">
                 <h1>{{ jumbotron_title|title }}</h1>
                 <p class="lead">{{ jumbotron_description }}</p>
+                {% if request.resolver_match.view_name == 'home' %}
+                    <div class="text-light text-center row pt-lg-5 pt-md-5 pt-sm-4">
+                        <div class="col-lg-3 col-md-2 mb-sm-2"><i class="fa fa-users fa-lg mr-2" aria-hidden="true"></i>{{ all_users.count|round_to:1000|intcomma }} &nbsp;users</div>
+                        <div class="col-lg-4 col-md-3 mb-sm-2"><i class="fa fa-trophy fa-lg mr-2" aria-hidden="true"></i>{{ all_challenges.count|intcomma }} &nbsp;challenges</div>
+                        <div class="col-lg-4 col-md-3 mb-sm-2"><i class="fa fa-code fa-lg mr-2" aria-hidden="true"></i>&nbsp;{{ all_algorithms.count|intcomma }} &nbsp;algorithms</div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -493,6 +493,7 @@ LOCAL_APPS = [
     "grandchallenge.github",
     "grandchallenge.codebuild",
     "grandchallenge.timezones",
+    "grandchallenge.documentation",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

@@ -251,7 +251,8 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     )
     auto_jump_center_of_gravity = models.BooleanField(
         default=True,
-        help_text="Jump to center of gravity of first output when viewing algorithm results",
+        help_text="Jump to center of gravity of first output when viewing algorithm "
+        "results or the first overlay segment when viewing a reader study",
     )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
