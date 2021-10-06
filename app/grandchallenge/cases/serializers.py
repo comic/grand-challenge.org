@@ -27,7 +27,7 @@ class ImageFileSerializer(serializers.ModelSerializer):
 
 class HyperlinkedImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
-    modality = ImagingModalitySerializer()
+    modality = ImagingModalitySerializer(allow_null=True, read_only=True)
 
     class Meta:
         model = Image
