@@ -10,7 +10,6 @@ class AdminDocPageForm(ModelForm):
         model = DocPage
         fields = (
             "title",
-            "display_title",
             "content",
             "parent",
         )

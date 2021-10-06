@@ -3,7 +3,7 @@
 
 {% block title %}
     {% filter title %}
-        {% firstof currentdocpage.display_title currentdocpage.title %}
+        {{ currentdocpage.title }}
     {% endfilter %}
     - {{ block.super }}
 {% endblock %}
@@ -14,22 +14,16 @@
         {% if currentdocpage.parent %}
             {% if currentdocpage.parent.parent %}
                 <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.parent.slug %}">
-                    {% filter title %}
-                        {% firstof currentdocpage.parent.parent.display_title currentdocpage.parent.parent.title %}
-                    {% endfilter %}
+                        {{ currentdocpage.parent.parent.title }}
                 </a></li>
             {% endif %}
             <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.slug %}">
-                {% filter title %}
-                    {% firstof currentdocpage.parent.display_title currentdocpage.parent.title %}
-                {% endfilter %}
+                    {{ currentdocpage.parent.title }}
             </a></li>
         {% endif %}
         <li class="breadcrumb-item active"
             aria-current="page">
-            {% filter title %}
-                {% firstof currentdocpage.display_title currentdocpage.title %}
-            {% endfilter %}
+                {{ currentdocpage.title }}
         </li>
     </ol>
 {% endblock %}
@@ -45,9 +39,7 @@
                             <a class="nav-link rounded {% if page == currentdocpage %}active text-white bg-dark{% else %}text-primary{% endif %}"
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
-                                {% filter title %}
-                                    {% firstof page.display_title page.title %}
-                                {% endfilter %}
+                                    {{ page.title }}
                             </a>
                         </li>
                     {% elif page.children.all %}
@@ -55,9 +47,7 @@
                             <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in page.children.all or currentdocpage in grandchildren %}active text-white bg-dark{% else %}text-primary{% endif %} "
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
-                                {% filter title %}
-                                    {% firstof page.display_title page.title %}
-                                {% endfilter %}
+                                    {{ page.title }}
                             </a>
                                 <ul class="submenu rounded {% if currentdocpage == page or currentdocpage in page.children.all or currentdocpage in grandchildren %}collapse show{% else %}collapse hide{% endif %} list-group">
                                     {% for subpage in page.children.all %}
@@ -66,9 +56,7 @@
                                                 <a class="nav-link rounded {% if subpage == currentdocpage  %}active font-weight-bold{% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
                                                    href="{% url 'documentation:detail' slug=subpage.slug %}">
-                                                    {% filter title %}
-                                                        {% firstof subpage.display_title subpage.title %}
-                                                    {% endfilter %}
+                                                        {{ subpage.title }}
                                                 </a>
                                             </li>
                                         {% else %}
@@ -76,9 +64,7 @@
                                                 <a class="nav-link rounded {% if subpage == currentdocpage or currentdocpage in subpage.children.all %}active font-weight-bold{% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
                                                    href="{% url 'documentation:detail' slug=subpage.slug %}">
-                                                    {% filter title %}
-                                                        {% firstof subpage.display_title subpage.title %}
-                                                    {% endfilter %}
+                                                        {{ subpage.title }}
                                                 </a>
                                             </li>
                                             <ul class="submenu-2 rounded {% if currentdocpage == subpage or currentdocpage in subpage.children.all %}collapse show{% else %}collapse hide{% endif %} list-group">
@@ -87,9 +73,7 @@
                                                         <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold{% endif %} text-primary"
                                                            id="{{ tertiarypage.slug }}"
                                                            href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
-                                                            {% filter title %}
-                                                                {% firstof tertiarypage.display_title tertiarypage.title %}
-                                                            {% endfilter %}
+                                                                {{ tertiarypage.title }}
                                                         </a>
                                                     </li>
                                                 {% endfor %}

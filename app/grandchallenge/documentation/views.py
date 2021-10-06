@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView, ListView
 
 from grandchallenge.core.templatetags.bleach import clean
@@ -37,5 +38,4 @@ class DocPageDetail(DetailView):
 
 class DocumentationHome(DocPageDetail):
     def get_object(self, queryset=None):
-        page = DocPage.objects.first()
-        return page
+        return get_object_or_404(DocPage, order=1)

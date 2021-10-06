@@ -21,15 +21,6 @@ class DocPage(models.Model):
 
     title = models.CharField(max_length=1024)
     slug = AutoSlugField(populate_from="title", max_length=1024)
-    display_title = models.CharField(
-        max_length=255,
-        default="",
-        blank=True,
-        help_text=(
-            "On pages and in menu items, use this text. Spaces and special "
-            "chars allowed here. Optional field. If emtpy, title is used"
-        ),
-    )
 
     content = models.TextField()
 
