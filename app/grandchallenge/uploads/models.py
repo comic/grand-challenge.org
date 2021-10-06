@@ -125,14 +125,14 @@ class UserUploadFile(UUIDModel):
         assign_perm("change_useruploadfile", self.upload.creator, self)
 
     def create_multipart_upload(self):
-        if self.status == self.StatusChoices.PENDING:
-            response = self._client.create_multipart_upload(
-                Bucket=settings.UPLOADS_S3_BUCKET_NAME, Key=self.key,
-            )
-            self.s3_upload_id = response["UploadId"]
-            self.status = self.StatusChoices.INITIALIZED
-        else:
+        if self.status != self.StatusChoices.PENDING:
             raise RuntimeError("UserUploadFile is not pending")
+
+        response = self._client.create_multipart_upload(
+            Bucket=settings.UPLOADS_S3_BUCKET_NAME, Key=self.key,
+        )
+        self.s3_upload_id = response["UploadId"]
+        self.status = self.StatusChoices.INITIALIZED
 
     def generate_presigned_urls(self, *, part_numbers):
         return {
@@ -141,63 +141,63 @@ class UserUploadFile(UUIDModel):
         }
 
     def generate_presigned_url(self, *, part_number):
-        if self.status == self.StatusChoices.INITIALIZED:
-            return self._client.generate_presigned_url(
-                "upload_part",
-                Params={
-                    "Bucket": self.bucket,
-                    "Key": self.key,
-                    "UploadId": self.s3_upload_id,
-                    "PartNumber": part_number,
-                },
-            )
-        else:
+        if self.status != self.StatusChoices.INITIALIZED:
             raise RuntimeError("UserUploadFile is not initialized")
+
+        return self._client.generate_presigned_url(
+            "upload_part",
+            Params={
+                "Bucket": self.bucket,
+                "Key": self.key,
+                "UploadId": self.s3_upload_id,
+                "PartNumber": part_number,
+            },
+        )
 
     def list_parts(self, *, part_number_marker=0):
-        if self.status == self.StatusChoices.INITIALIZED:
-            response = self._client.list_parts(
-                Bucket=self.bucket,
-                Key=self.key,
-                UploadId=self.s3_upload_id,
-                MaxParts=self.LIST_MAX_PARTS,
-                PartNumberMarker=part_number_marker,
+        if self.status != self.StatusChoices.INITIALIZED:
+            raise RuntimeError("UserUploadFile is not initialized")
+
+        response = self._client.list_parts(
+            Bucket=self.bucket,
+            Key=self.key,
+            UploadId=self.s3_upload_id,
+            MaxParts=self.LIST_MAX_PARTS,
+            PartNumberMarker=part_number_marker,
+        )
+
+        parts = response["Parts"]
+
+        if response["IsTruncated"]:
+            parts += self.list_parts(
+                part_number_marker=response["NextPartNumberMarker"]
             )
 
-            parts = response["Parts"]
-
-            if response["IsTruncated"]:
-                parts += self.list_parts(
-                    part_number_marker=response["NextPartNumberMarker"]
-                )
-
-            return parts
-        else:
-            raise RuntimeError("UserUploadFile is not initialized")
+        return parts
 
     def complete_multipart_upload(self, *, parts):
-        if self.status == self.StatusChoices.INITIALIZED:
-            self._client.complete_multipart_upload(
-                Bucket=self.bucket,
-                Key=self.key,
-                UploadId=self.s3_upload_id,
-                MultipartUpload={
-                    "Parts": [
-                        {"ETag": p["e_tag"], "PartNumber": p["part_number"]}
-                        for p in parts
-                    ]
-                },
-            )
-            self.status = self.StatusChoices.COMPLETED
-        else:
+        if self.status != self.StatusChoices.INITIALIZED:
             raise RuntimeError("UserUploadFile is not initialized")
 
+        self._client.complete_multipart_upload(
+            Bucket=self.bucket,
+            Key=self.key,
+            UploadId=self.s3_upload_id,
+            MultipartUpload={
+                "Parts": [
+                    {"ETag": p["e_tag"], "PartNumber": p["part_number"]}
+                    for p in parts
+                ]
+            },
+        )
+        self.status = self.StatusChoices.COMPLETED
+
     def abort_multipart_upload(self):
-        if self.status == self.StatusChoices.INITIALIZED:
-            self._client.abort_multipart_upload(
-                Bucket=self.bucket, Key=self.key, UploadId=self.s3_upload_id,
-            )
-            self.s3_upload_id = ""
-            self.status = self.StatusChoices.ABORTED
-        else:
+        if self.status != self.StatusChoices.INITIALIZED:
             raise RuntimeError("UserUploadFile is not initialized")
+
+        self._client.abort_multipart_upload(
+            Bucket=self.bucket, Key=self.key, UploadId=self.s3_upload_id,
+        )
+        self.s3_upload_id = ""
+        self.status = self.StatusChoices.ABORTED
