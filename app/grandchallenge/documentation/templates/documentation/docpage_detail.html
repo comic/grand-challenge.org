@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load docpage_extras %}
+
+{% block title %}
+    {% filter title %}
+        {{ currentdocpage.title }}
+    {% endfilter %}
+    - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'documentation:home' %}">Documentation</a></li>
+        {% if currentdocpage.parent %}
+            {% if currentdocpage.parent.parent %}
+                <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.parent.slug %}">
+                        {{ currentdocpage.parent.parent.title }}
+                </a></li>
+            {% endif %}
+            <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.slug %}">
+                    {{ currentdocpage.parent.title }}
+            </a></li>
+        {% endif %}
+        <li class="breadcrumb-item active"
+            aria-current="page">
+                {{ currentdocpage.title }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    <div class="col-lg-4 col-md-4">
+        <nav class="sidebar documentation p-3 sticky-top">
+            <ul class="nav flex-column" id="documentation_nav_accordion">
+                {% for page in top_level_pages %}
+                    {% get_grandchildren page as grandchildren %}
+                    {% if not page.children.all %}
+                        <li class="nav-item mb-1">
+                            <a class="nav-link rounded {% if page == currentdocpage %}active text-white bg-dark{% else %}text-primary{% endif %}"
+                               id="{{ page.slug }}"
+                               href="{% url 'documentation:detail' slug=page.slug %}">
+                                    {{ page.title }}
+                            </a>
+                        </li>
+                    {% elif page.children.all %}
+                        <li class="nav-item mb-1 has-submenu rounded">
+                            <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in page.children.all or currentdocpage in grandchildren %}active text-white bg-dark{% else %}text-primary{% endif %} "
+                               id="{{ page.slug }}"
+                               href="{% url 'documentation:detail' slug=page.slug %}">
+                                    {{ page.title }}
+                            </a>
+                                <ul class="submenu rounded {% if currentdocpage == page or currentdocpage in page.children.all or currentdocpage in grandchildren %}collapse show{% else %}collapse hide{% endif %} list-group">
+                                    {% for subpage in page.children.all %}
+                                        {% if not subpage.children.all %}
+                                            <li class="list-group-item border-0 p-0 {% if subpage == page.children.first %}mt-1{% endif %} mb-1">
+                                                <a class="nav-link rounded {% if subpage == currentdocpage  %}active font-weight-bold{% endif %} text-primary bg-light"
+                                                   id="{{ subpage.slug }}"
+                                                   href="{% url 'documentation:detail' slug=subpage.slug %}">
+                                                        {{ subpage.title }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="list-group-item has-submenu border-0 p-0 mb-1 {% if subpage == page.children.first %}mt-1{% endif %}">
+                                                <a class="nav-link rounded {% if subpage == currentdocpage or currentdocpage in subpage.children.all %}active font-weight-bold{% endif %} text-primary bg-light"
+                                                   id="{{ subpage.slug }}"
+                                                   href="{% url 'documentation:detail' slug=subpage.slug %}">
+                                                        {{ subpage.title }}
+                                                </a>
+                                            </li>
+                                            <ul class="submenu-2 rounded {% if currentdocpage == subpage or currentdocpage in subpage.children.all %}collapse show{% else %}collapse hide{% endif %} list-group">
+                                                {% for tertiarypage in subpage.children.all %}
+                                                    <li class="list-group-item p-0 mb-1 border">
+                                                        <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold{% endif %} text-primary"
+                                                           id="{{ tertiarypage.slug }}"
+                                                           href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
+                                                                {{ tertiarypage.title }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="mt-4" id=pageContainer>{{ cleaned_content }}</div>
+    <div class="row">
+        <div class="d-inline-block col-6 text-left">
+            {% if currentdocpage.previous %}
+                <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:detail' slug=currentdocpage.previous.slug %}">Previous section</a>
+            {% endif %}
+        </div>
+        <div class="d-inline col-6 text-right">
+            {% if currentdocpage.next %}
+                <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:detail' slug=currentdocpage.next.slug %}">Next section</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
