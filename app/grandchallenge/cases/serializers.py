@@ -15,6 +15,7 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 
 
@@ -26,6 +27,7 @@ class ImageFileSerializer(serializers.ModelSerializer):
 
 class HyperlinkedImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
+    modality = ImagingModalitySerializer()
 
     class Meta:
         model = Image
