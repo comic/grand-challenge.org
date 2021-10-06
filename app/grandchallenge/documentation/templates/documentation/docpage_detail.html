@@ -2,10 +2,7 @@
 {% load docpage_extras %}
 
 {% block title %}
-    {% filter title %}
-        {{ currentdocpage.title }}
-    {% endfilter %}
-    - {{ block.super }}
+    {{ currentdocpage.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
