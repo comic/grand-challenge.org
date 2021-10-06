@@ -1,8 +1,12 @@
 {% load url %}
+
+{% url "api:api-root" as api_root %}
+{{ api_root|json_script:"apiRoot" }}
+
 <div class="user-upload"
-     data-createUploadUrl="{% url 'api:upload-list' %}"
-     data-createFileUrl="{% url 'api:uploads-file-list' %}"
      data-inputId="{{ widget.attrs.id }}"
 >
+    <div id="{{ widget.attrs.id }}-drag-drop"></div>
+
     {% include "django/forms/widgets/hidden.html" %}
 </div>

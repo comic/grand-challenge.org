@@ -5,4 +5,12 @@ class UserUploadWidget(HiddenInput):
     template_name = "uploads/widget.html"
 
     class Media:
-        js = ("js/user_upload.js",)
+        css = {
+            "all": (
+                "https://releases.transloadit.com/uppy/v2.1.1/uppy.min.css",
+            )
+        }
+        js = (
+            "https://releases.transloadit.com/uppy/v2.1.1/uppy.min.js",
+            "js/user_upload.js",
+        )
