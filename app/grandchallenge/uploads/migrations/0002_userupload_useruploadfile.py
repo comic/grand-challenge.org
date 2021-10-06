@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
                         default=0,
                     ),
                 ),
-                ("s3_upload_id", models.CharField(max_length=128)),
+                ("s3_upload_id", models.CharField(max_length=128, blank=True)),
                 (
                     "upload",
                     models.ForeignKey(
