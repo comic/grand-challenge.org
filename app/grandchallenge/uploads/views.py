@@ -6,11 +6,10 @@ from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.uploads.models import UserUpload, UserUploadFile
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.serializers import (
-    FileCompleteSerializer,
     PresignedURLSerializer,
-    UserUploadFileSerializer,
+    UserUploadCompleteSerializer,
     UserUploadSerializer,
 )
 
@@ -23,18 +22,6 @@ class UserUploadViewSet(
 ):
     serializer_class = UserUploadSerializer
     queryset = UserUpload.objects.all()
-    permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (ObjectPermissionsFilter,)
-
-
-class UserUploadFileViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    GenericViewSet,
-):
-    serializer_class = UserUploadFileSerializer
-    queryset = UserUploadFile.objects.all()
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (ObjectPermissionsFilter,)
 
@@ -57,7 +44,9 @@ class UserUploadFileViewSet(
             )
 
     @action(
-        detail=True, methods=["patch"], serializer_class=FileCompleteSerializer
+        detail=True,
+        methods=["patch"],
+        serializer_class=UserUploadCompleteSerializer,
     )
     def complete_multipart_upload(self, request, pk):
         object = self.get_object()

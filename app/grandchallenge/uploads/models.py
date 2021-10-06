@@ -50,27 +50,6 @@ class SummernoteAttachment(AbstractAttachment):
 
 
 class UserUpload(UUIDModel):
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
-
-    class Meta(UUIDModel.Meta):
-        pass
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
-
-    def assign_permissions(self):
-        assign_perm("view_userupload", self.creator, self)
-        assign_perm("change_userupload", self.creator, self)
-
-
-class UserUploadFile(UUIDModel):
     LIST_MAX_PARTS = 1000
 
     class StatusChoices(models.IntegerChoices):
@@ -79,7 +58,9 @@ class UserUploadFile(UUIDModel):
         COMPLETED = 2, "Completed"
         ABORTED = 3, "Aborted"
 
-    upload = models.ForeignKey(UserUpload, on_delete=models.CASCADE)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
     filename = models.CharField(max_length=128)
     status = models.PositiveSmallIntegerField(
         choices=StatusChoices.choices, default=StatusChoices.PENDING
@@ -118,15 +99,15 @@ class UserUploadFile(UUIDModel):
 
     @property
     def key(self):
-        return f"uploads/{self.upload.pk}/{self.pk}"
+        return f"uploads/{self.pk}"
 
     def assign_permissions(self):
-        assign_perm("view_useruploadfile", self.upload.creator, self)
-        assign_perm("change_useruploadfile", self.upload.creator, self)
+        assign_perm("view_userupload", self.creator, self)
+        assign_perm("change_userupload", self.creator, self)
 
     def create_multipart_upload(self):
         if self.status != self.StatusChoices.PENDING:
-            raise RuntimeError("UserUploadFile is not pending")
+            raise RuntimeError("Upload is not pending")
 
         response = self._client.create_multipart_upload(
             Bucket=settings.UPLOADS_S3_BUCKET_NAME, Key=self.key,
@@ -142,7 +123,7 @@ class UserUploadFile(UUIDModel):
 
     def generate_presigned_url(self, *, part_number):
         if self.status != self.StatusChoices.INITIALIZED:
-            raise RuntimeError("UserUploadFile is not initialized")
+            raise RuntimeError("Upload is not initialized")
 
         return self._client.generate_presigned_url(
             "upload_part",
@@ -156,7 +137,7 @@ class UserUploadFile(UUIDModel):
 
     def list_parts(self, *, part_number_marker=0):
         if self.status != self.StatusChoices.INITIALIZED:
-            raise RuntimeError("UserUploadFile is not initialized")
+            raise RuntimeError("Upload is not initialized")
 
         response = self._client.list_parts(
             Bucket=self.bucket,
@@ -177,7 +158,7 @@ class UserUploadFile(UUIDModel):
 
     def complete_multipart_upload(self, *, parts):
         if self.status != self.StatusChoices.INITIALIZED:
-            raise RuntimeError("UserUploadFile is not initialized")
+            raise RuntimeError("Upload is not initialized")
 
         self._client.complete_multipart_upload(
             Bucket=self.bucket,
@@ -194,7 +175,7 @@ class UserUploadFile(UUIDModel):
 
     def abort_multipart_upload(self):
         if self.status != self.StatusChoices.INITIALIZED:
-            raise RuntimeError("UserUploadFile is not initialized")
+            raise RuntimeError("Upload is not initialized")
 
         self._client.abort_multipart_upload(
             Bucket=self.bucket, Key=self.key, UploadId=self.s3_upload_id,

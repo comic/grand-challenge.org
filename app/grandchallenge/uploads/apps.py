@@ -6,7 +6,7 @@ from django.db.models.signals import post_migrate
 def init_upload_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
-    from grandchallenge.uploads.models import UserUpload, UserUploadFile
+    from grandchallenge.uploads.models import UserUpload
 
     g, _ = Group.objects.get_or_create(
         name=settings.REGISTERED_USERS_GROUP_NAME
@@ -15,11 +15,7 @@ def init_upload_permissions(*_, **__):
         f"{UserUpload._meta.app_label}.add_{UserUpload._meta.model_name}", g,
     )
     assign_perm(
-        f"{UserUploadFile._meta.app_label}.add_{UserUploadFile._meta.model_name}",
-        g,
-    )
-    assign_perm(
-        f"{UserUploadFile._meta.app_label}.change_{UserUploadFile._meta.model_name}",
+        f"{UserUpload._meta.app_label}.change_{UserUpload._meta.model_name}",
         g,
     )
 

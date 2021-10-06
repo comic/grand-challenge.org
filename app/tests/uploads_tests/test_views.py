@@ -11,18 +11,12 @@ def test_user_upload_flow(client):
     u = UserFactory()
     filename = "foo.bat"
 
-    response = get_view_for_user(
-        client=client, viewname="api:upload-list", method=client.post, user=u,
-    )
-    assert response.status_code == 201
-    upload = response.json()
-
-    # Create User Upload File
+    # Create User Upload
     response = get_view_for_user(
         client=client,
-        viewname="api:uploads-file-list",
+        viewname="api:upload-list",
         method=client.post,
-        data={"upload": upload["pk"], "filename": filename},
+        data={"filename": filename},
         content_type="application/json",
         user=u,
     )
@@ -39,7 +33,7 @@ def test_user_upload_flow(client):
     # Get the presigned url
     response = get_view_for_user(
         client=client,
-        viewname="api:uploads-file-generate-presigned-url",
+        viewname="api:upload-generate-presigned-url",
         reverse_kwargs={"pk": upload_file["pk"]},
         method=client.patch,
         data={"part_number": part_number},
@@ -63,7 +57,7 @@ def test_user_upload_flow(client):
     # Finish the upload
     response = get_view_for_user(
         client=client,
-        viewname="api:uploads-file-complete-multipart-upload",
+        viewname="api:upload-complete-multipart-upload",
         reverse_kwargs={"pk": upload_file["pk"]},
         method=client.patch,
         data={"parts": parts},

@@ -5,36 +5,17 @@ from rest_framework.fields import (
 )
 from rest_framework.serializers import ModelSerializer, Serializer
 
-from grandchallenge.uploads.models import UserUpload, UserUploadFile
+from grandchallenge.uploads.models import UserUpload
 
 
 class UserUploadSerializer(ModelSerializer):
+    status = CharField(source="get_status_display", read_only=True)
+
     class Meta:
         model = UserUpload
         fields = (
             "pk",
             "created",
-        )
-        read_only_fields = (
-            "pk",
-            "created",
-        )
-
-    def validate(self, data):
-        if data.get("creator") is None:
-            data["creator"] = self.context["request"].user
-        return data
-
-
-class UserUploadFileSerializer(ModelSerializer):
-    status = CharField(source="get_status_display", read_only=True)
-
-    class Meta:
-        model = UserUploadFile
-        fields = (
-            "pk",
-            "created",
-            "upload",
             "filename",
             "status",
         )
@@ -44,12 +25,17 @@ class UserUploadFileSerializer(ModelSerializer):
             "status",
         )
 
+    def validate(self, data):
+        if data.get("creator") is None:
+            data["creator"] = self.context["request"].user
+        return data
+
 
 class PresignedURLSerializer(Serializer):
     part_number = IntegerField(min_value=1, max_value=10_000, write_only=True)
     presigned_url = SerializerMethodField()
 
-    def get_presigned_url(self, obj: UserUploadFile) -> str:
+    def get_presigned_url(self, obj: UserUpload) -> str:
         return obj.generate_presigned_url(
             part_number=self.validated_data["part_number"]
         )
@@ -60,17 +46,16 @@ class PartSerializer(Serializer):
     part_number = IntegerField(min_value=1, max_value=10_000)
 
 
-class FileCompleteSerializer(UserUploadFileSerializer):
+class UserUploadCompleteSerializer(UserUploadSerializer):
     parts = PartSerializer(many=True, write_only=True)
 
-    class Meta(UserUploadFileSerializer.Meta):
+    class Meta(UserUploadSerializer.Meta):
         fields = (
-            *UserUploadFileSerializer.Meta.fields,
+            *UserUploadSerializer.Meta.fields,
             "parts",
         )
         read_only_fields = (
-            *UserUploadFileSerializer.Meta.read_only_fields,
-            "upload",
+            *UserUploadSerializer.Meta.read_only_fields,
             "filename",
         )
 
