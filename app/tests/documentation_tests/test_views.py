@@ -92,3 +92,34 @@ def test_docpage_create_title(client):
     )
     assert response.status_code == 200
     assert "A page with that title already exists" in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_docpage_update(client):
+    u1 = UserFactory()
+    _ = DocPageFactory()
+    p2 = DocPageFactory()
+    assign_perm("documentation.change_docpage", u1)
+
+    assert p2.order == 2
+
+    new_content = "<h1>New content</h1>"
+
+    # change content and order of p2
+    response = get_view_for_user(
+        viewname="documentation:update",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": p2.slug},
+        data={
+            "title": p2.title,
+            "content": new_content,
+            "move": DocPage.FIRST,
+        },
+        user=u1,
+    )
+
+    assert response.status_code == 302
+    p2.refresh_from_db()
+    assert p2.order == 1
+    assert p2.content == new_content
