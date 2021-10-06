@@ -1,5 +1,6 @@
 from typing import Dict
 
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import (
     CharField,
     DateTimeField,
@@ -79,6 +80,11 @@ class UserUploadPresignedURLsSerializer(UserUploadSerializer):
             "presigned_urls",
         )
 
+    def validate(self, data):
+        if "part_numbers" not in data:
+            raise ValidationError("The `part_numbers` field is required")
+        return data
+
     def get_presigned_urls(self, obj: UserUpload) -> Dict[int, str]:
         return obj.generate_presigned_urls(
             part_numbers=self.validated_data["part_numbers"]
@@ -93,6 +99,11 @@ class UserUploadCompleteSerializer(UserUploadSerializer):
             *UserUploadSerializer.Meta.fields,
             "parts",
         )
+
+    def validate(self, data):
+        if "parts" not in data:
+            raise ValidationError("The `parts` field is required")
+        return data
 
     def save(self, **kwargs):
         self.instance.complete_multipart_upload(

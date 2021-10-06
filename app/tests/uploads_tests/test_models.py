@@ -91,6 +91,15 @@ def test_list_parts():
     assert parts[0]["PartNumber"] == 1
 
 
+def test_list_parts_empty():
+    upload = UserUpload()
+    upload.create_multipart_upload()
+
+    parts = upload.list_parts()
+
+    assert parts == []
+
+
 def test_list_parts_truncation():
     upload = UserUpload()
     upload.create_multipart_upload()

@@ -35,7 +35,10 @@ def test_user_upload_flow(client):
     response = get_view_for_user(
         client=client,
         viewname="api:upload-generate-presigned-urls",
-        reverse_kwargs={"pk": upload_file["pk"]},
+        reverse_kwargs={
+            "pk": upload_file["pk"],
+            "s3_upload_id": upload_file["s3_upload_id"],
+        },
         method=client.patch,
         data={"part_numbers": [part_number]},
         content_type="application/json",
@@ -57,7 +60,10 @@ def test_user_upload_flow(client):
     response = get_view_for_user(
         client=client,
         viewname="api:upload-complete-multipart-upload",
-        reverse_kwargs={"pk": upload_file["pk"]},
+        reverse_kwargs={
+            "pk": upload_file["pk"],
+            "s3_upload_id": upload_file["s3_upload_id"],
+        },
         method=client.patch,
         data={"parts": parts},
         content_type="application/json",
@@ -103,7 +109,7 @@ def test_list_parts(client):
     response = get_view_for_user(
         client=client,
         viewname="api:upload-list-parts",
-        reverse_kwargs={"pk": upload.pk},
+        reverse_kwargs={"pk": upload.pk, "s3_upload_id": upload.s3_upload_id},
         content_type="application/json",
         user=u,
     )
@@ -130,7 +136,7 @@ def test_prepare_upload_parts(client):
     response = get_view_for_user(
         client=client,
         viewname="api:upload-generate-presigned-urls",
-        reverse_kwargs={"pk": upload.pk},
+        reverse_kwargs={"pk": upload.pk, "s3_upload_id": upload.s3_upload_id},
         method=client.patch,
         data={"part_numbers": [35, 42, 128]},
         content_type="application/json",
@@ -157,7 +163,7 @@ def test_abort_multipart_upload(client):
     response = get_view_for_user(
         client=client,
         viewname="api:upload-abort-multipart-upload",
-        reverse_kwargs={"pk": upload.pk},
+        reverse_kwargs={"pk": upload.pk, "s3_upload_id": upload.s3_upload_id},
         method=client.patch,
         data={},
         content_type="application/json",
@@ -183,7 +189,7 @@ def test_complete_multipart_upload(client):
     response = get_view_for_user(
         client=client,
         viewname="api:upload-complete-multipart-upload",
-        reverse_kwargs={"pk": upload.pk},
+        reverse_kwargs={"pk": upload.pk, "s3_upload_id": upload.s3_upload_id},
         method=client.patch,
         data={
             "parts": [{"ETag": uploaded_part.headers["ETag"], "PartNumber": 1}]
@@ -197,3 +203,62 @@ def test_complete_multipart_upload(client):
     assert response.json()["s3_upload_id"] == upload.s3_upload_id
     assert response.json()["key"] == upload.key
     assert response.json()["status"] == "Completed"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "action",
+    [
+        "list-parts",
+        "generate-presigned-urls",
+        "abort-multipart-upload",
+        "complete-multipart-upload",
+    ],
+)
+def test_url_pattern(client, action):
+    # On the frontend we construct the URL with
+    # url = `{api_root}{object_key}/{upload_id}/{action}`
+    # Check that this matches
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+
+    url = f"/api/v1/{upload.key}/{upload.s3_upload_id}/{action}/"
+
+    response = get_view_for_user(
+        client=client,
+        url=url,
+        method=client.get if action == "list-parts" else client.patch,
+        data={},
+        content_type="application/json",
+        user=u,
+    )
+    assert response.status_code != 404
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "action",
+    [
+        "list-parts",
+        "generate-presigned-urls",
+        "abort-multipart-upload",
+        "complete-multipart-upload",
+    ],
+)
+def test_upload_id_checks(client, action):
+    # 404 should be returned if the upload id in the url does
+    # not match the one tracked by our object
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+
+    url = f"/api/v1/{upload.key}/1{upload.s3_upload_id}/{action}/"
+
+    response = get_view_for_user(
+        client=client,
+        url=url,
+        method=client.get if action == "list-parts" else client.patch,
+        data={},
+        content_type="application/json",
+        user=u,
+    )
+    assert response.status_code == 404

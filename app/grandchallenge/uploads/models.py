@@ -149,7 +149,7 @@ class UserUpload(UUIDModel):
             PartNumberMarker=part_number_marker,
         )
 
-        parts = response["Parts"]
+        parts = response.get("Parts", [])
 
         if response["IsTruncated"]:
             parts += self.list_parts(
