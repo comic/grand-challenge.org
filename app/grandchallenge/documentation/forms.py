@@ -4,8 +4,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.translation import gettext
-from django_summernote.widgets import SummernoteInplaceWidget
 
+from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.documentation.models import DocPage
 
 
@@ -46,19 +46,7 @@ class DocPageCreateForm(forms.ModelForm):
             "content",
             "parent",
         )
-        widgets = {"content": SummernoteInplaceWidget()}
-        help_texts = {
-            "content": (
-                "The content of your page. <b>Please note</b>: your html will "
-                "be filtered after it has been saved to remove any non-HTML5 "
-                "compliant markup and scripts. The filtering is not reflected "
-                "in the live view so please <b>check the rendering of your "
-                "page after you click save</b>. If you're going to paste from "
-                "another source such as MS Word, please <b>paste without "
-                "formatting</b> using <b>CTRL+SHIFT+V</b> on Windows or "
-                "<b>⇧+⌥+⌘+V</b> on OS X."
-            )
-        }
+        widgets = {"content": MarkdownEditorWidget}
 
 
 class DocPageUpdateForm(DocPageCreateForm):

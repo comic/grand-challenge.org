@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load docpage_extras %}
+{% load bleach %}
 
 {% block title %}
     {{ currentdocpage.title }} - {{ block.super }}
@@ -87,16 +88,18 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row mt-3">
-        <div class="col-6 d-inline-block text-left">
-            <a class="btn btn-md btn-dark" href="{% url 'documentation:list' %}">Page overview</a>
-            <a class="btn btn-md btn-dark" href="{% url 'documentation:create' %}">Add page</a>
+    {% if 'documentation.change_docpage' in perms %}
+        <div class="row mt-3">
+            <div class="col-6 d-inline-block text-left">
+                <a class="btn btn-md btn-dark" href="{% url 'documentation:list' %}">Page overview</a>
+                <a class="btn btn-md btn-dark" href="{% url 'documentation:create' %}">Add page</a>
+            </div>
+            <div class="col-6 d-inline-block text-right">
+                <a class="btn btn-md btn-dark" href="{% url 'documentation:update' slug=currentdocpage.slug %}">Edit current page</a>
+            </div>
         </div>
-        <div class="col-6 d-inline-block text-right">
-            <a class="btn btn-md btn-dark" href="{% url 'documentation:update' slug=currentdocpage.slug %}">Edit current page</a>
-        </div>
-    </div>
-    <div class="mt-4" id=pageContainer>{{ cleaned_content }}</div>
+    {% endif %}
+    <div class="mt-4" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
     <div class="row">
         <div class="d-inline-block col-6 text-left">
             {% if currentdocpage.previous %}

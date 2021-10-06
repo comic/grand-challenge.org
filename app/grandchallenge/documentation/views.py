@@ -3,7 +3,6 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.documentation.forms import (
     DocPageCreateForm,
     DocPageUpdateForm,
@@ -31,12 +30,7 @@ class DocPageDetail(DetailView):
             .all()
         )
 
-        context.update(
-            {
-                "top_level_pages": top_level_pages,
-                "cleaned_content": clean(self.object.content),
-            }
-        )
+        context.update({"top_level_pages": top_level_pages})
 
         return context
 
