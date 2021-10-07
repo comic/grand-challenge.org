@@ -20,21 +20,10 @@ class DocPageCreateForm(forms.ModelForm):
         title = self.cleaned_data["title"]
 
         # 'overview' is already used for the list view
-        if title == "overview":
+        if title.lower() == "overview":
             raise ValidationError(
                 gettext("Overview is not allowed as page title."),
                 code="invalid",
-            )
-
-        queryset = DocPage.objects.filter(title__iexact=title)
-
-        if self.instance is not None:
-            queryset = queryset.exclude(pk=self.instance.pk)
-
-        if queryset.exists():
-            raise ValidationError(
-                gettext("A page with that title already exists."),
-                code="duplicate",
             )
 
         return title

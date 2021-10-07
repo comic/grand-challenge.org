@@ -16,9 +16,11 @@
         <div class="col-6">
             <h2>Documentation Pages</h2>
         </div>
-        <div class="col-6 d-inline-block text-right">
-            <a class="btn btn-md btn-dark mt-2" href="{% url 'documentation:create' %}">Add page</a>
-        </div>
+        {% if 'documentation.change_docpage' in perms %}
+            <div class="col-6 d-inline-block text-right">
+                <a class="btn btn-md btn-dark mt-2" href="{% url 'documentation:create' %}">Add page</a>
+            </div>
+        {% endif %}
     </div>
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="pagesTable" data-reorderable-rows="true">

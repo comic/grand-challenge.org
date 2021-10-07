@@ -4,6 +4,7 @@ from django.db.models import Max
 from django_extensions.db.fields import AutoSlugField
 from simple_history.models import HistoricalRecords
 
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
@@ -56,6 +57,8 @@ class DocPage(models.Model):
             except (ObjectDoesNotExist, TypeError):
                 # Use the default
                 pass
+
+        self.content = clean(self.content)
 
         super().save(*args, **kwargs)
 
