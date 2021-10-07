@@ -17,8 +17,9 @@
 
     <form action="" method="post">
         {% csrf_token %}
-        <p>Are you sure that you want to delete the page "{{ object }}"?
-            <b class="text-danger">WARNING: You are not able to undo this action, once the page is deleted
+        <p>Are you sure that you want to delete the page "{{ object }}"?</p>
+        <p><b class="text-danger">
+                WARNING: You are not able to undo this action, once the page is deleted
                 it is deleted forever.</b>
         </p>
         <input type="submit" value="I understand, delete the page called '{{ object }}'"

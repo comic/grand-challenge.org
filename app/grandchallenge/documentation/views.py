@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404
 from django.views.generic import (
     CreateView,
@@ -85,9 +86,15 @@ class DocPageDelete(
         return reverse("documentation:list",)
 
     def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        request = super().delete(request, *args, **kwargs)
-        self.object.normalize_page_order(
-            DocPage.objects.order_by("order").all()
-        )
-        return request
+        try:
+            messages.success(self.request, self.success_message)
+            request = super().delete(request, *args, **kwargs)
+            self.object.normalize_page_order(
+                DocPage.objects.order_by("order").all()
+            )
+            return request
+        except ProtectedError as e:
+            raise ProtectedError(
+                "You cannot delete a page that has subpages without first deleting all subpages:",
+                e.protected_objects,
+            )
