@@ -244,6 +244,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     show_reset_tool = models.BooleanField(default=True)
     show_overlay_selection_tool = models.BooleanField(default=True)
     show_lut_selection_tool = models.BooleanField(default=True)
+    show_annotation_counter_tool = models.BooleanField(default=True)
 
     enable_contrast_enhancement = models.BooleanField(
         default=False,
