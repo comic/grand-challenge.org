@@ -31,6 +31,7 @@
                 <th data-field="title">Parent</th>
                 {% if 'documentation.change_docpage' in perms %}
                     <th data-field="edit">Edit</th>
+                    <th data-field="edit">Delete</th>
                 {% endif %}
             </tr>
             </thead>
@@ -51,6 +52,9 @@
                     {% if 'documentation.change_docpage' in perms %}
                         <td>
                             <a href="{% url 'documentation:update' slug=page.slug %}"><i class="fa fa-cog text-primary" aria-hidden="true"></i></a>
+                        </td>
+                        <td>
+                            <a href="{% url 'documentation:delete' slug=page.slug %}"><i class="fa fa-trash text-danger" aria-hidden="true"></i></a>
                         </td>
                     {% endif %}
                 </tr>

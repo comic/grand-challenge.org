@@ -1,6 +1,13 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.documentation.forms import (
@@ -8,7 +15,7 @@ from grandchallenge.documentation.forms import (
     DocPageUpdateForm,
 )
 from grandchallenge.documentation.models import DocPage
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class DocPageList(ListView):
@@ -63,3 +70,24 @@ class DocPageCreate(
     permission_required = "documentation.add_docpage"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+
+class DocPageDelete(
+    LoginRequiredMixin, PermissionRequiredMixin, DeleteView,
+):
+    model = DocPage
+    success_message = "Page was successfully deleted"
+    permission_required = "documentation.delete_docpage"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_success_url(self):
+        return reverse("documentation:list",)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        request = super().delete(request, *args, **kwargs)
+        self.object.normalize_page_order(
+            DocPage.objects.order_by("order").all()
+        )
+        return request

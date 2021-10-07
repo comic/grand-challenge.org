@@ -184,3 +184,8 @@ ul.socialaccount_providers > li {
 .carousel-control-next, .carousel-control-prev {
     width: 3rem;
 }
+
+.documentation-sidebar {
+    top:5rem;
+    z-index: 1;
+}

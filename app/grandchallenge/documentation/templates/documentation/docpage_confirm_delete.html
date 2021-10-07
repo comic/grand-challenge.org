@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Documentation - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'documentation:home' %}">Documentation</a></li>
+        <li class="breadcrumb-item active">Page Delete</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Confirm Deletion</h2>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <p>Are you sure that you want to delete the page "{{ object }}"?
+            <b class="text-danger">WARNING: You are not able to undo this action, once the page is deleted
+                it is deleted forever.</b>
+        </p>
+        <input type="submit" value="I understand, delete the page called '{{ object }}'"
+               class="btn btn-danger"/>
+    </form>
+
+{% endblock %}

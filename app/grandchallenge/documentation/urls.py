@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.documentation.views import (
     DocPageCreate,
+    DocPageDelete,
     DocPageDetail,
     DocPageList,
     DocPageUpdate,
@@ -16,4 +17,5 @@ urlpatterns = [
     path("create/", DocPageCreate.as_view(), name="create"),
     path("<slug:slug>/", DocPageDetail.as_view(), name="detail"),
     path("<slug:slug>/update/", DocPageUpdate.as_view(), name="update"),
+    path("<slug:slug>/delete/", DocPageDelete.as_view(), name="delete"),
 ]
