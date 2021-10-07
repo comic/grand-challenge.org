@@ -9,12 +9,23 @@
     });
 
     function initializeWidget(widget) {
-        const inputId = widget.getAttribute("data-inputId");
+        const inputId = widget.getAttribute("data-input-id");
+        const inputName = widget.getAttribute("data-input-name");
+        const multiWidget = widget.getAttribute("data-multiple");
 
-        let uppy = new Uppy.Core().use(Uppy.Dashboard, {
+        let uppy = new Uppy.Core({
+            id: `${window.location.pathname}-${inputId}`,
+            restrictions: {
+                maxNumberOfFiles: multiWidget ? null : 1
+            }
+        })
+
+        uppy.use(Uppy.Dashboard, {
             inline: true,
             target: `#${inputId}-drag-drop`
-        }).use(Uppy.AwsS3Multipart, {
+        })
+
+        uppy.use(Uppy.AwsS3Multipart, {
             getChunkSize: (file) => {
                 return 20 * 1024 * 1024
             },
@@ -25,8 +36,20 @@
             completeMultipartUpload: completeMultipartUpload
         })
 
-        uppy.on('complete', (result) => {
-            console.log('Upload complete! We’ve uploaded these files:', result.successful)
+        uppy.on("complete", (result) => {
+            const uploadedPKs = result.successful.map(i => i.s3Multipart.key.split("/")[1]);
+
+            if (multiWidget === null) {
+                document.getElementById(inputId).value = uploadedPKs[0];
+            } else {
+                for (const uploadedPK of uploadedPKs) {
+                    let input = document.createElement('input');
+                    input.name = inputName;
+                    input.type = "hidden";
+                    input.value = uploadedPK;
+                    widget.appendChild(input);
+                }
+            }
         })
     }
 

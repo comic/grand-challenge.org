@@ -4,9 +4,17 @@
 {{ api_root|json_script:"apiRoot" }}
 
 <div class="user-upload"
-     data-inputId="{{ widget.attrs.id }}"
+     data-input-id="{{ widget.attrs.id }}"
+     data-input-name="{{ widget.name }}"
+     {% if widget.attrs.multiple %}data-multiple=true{% endif %}
 >
     <div id="{{ widget.attrs.id }}-drag-drop"></div>
 
-    {% include "django/forms/widgets/hidden.html" %}
+    {% if widget.subwidgets %}
+        {% spaceless %}{% for widget in widget.subwidgets %}{% include widget.template_name %}
+        {% endfor %}{% endspaceless %}
+    {% elif not widget.attrs.multiple %}
+        <input id="{{ widget.attrs.id }}" type="hidden" name="{{ widget.name }}"{% if widget.value != None %}
+               value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+    {% endif %}
 </div>
