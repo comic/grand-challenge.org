@@ -1,9 +1,7 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
-from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
-from django.utils.translation import gettext
 
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.documentation.models import DocPage
@@ -14,19 +12,6 @@ class DocPageCreateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
-
-    def clean_title(self):
-        """Ensure that page titles are not duplicated."""
-        title = self.cleaned_data["title"]
-
-        # 'overview' is already used for the list view
-        if title.lower() == "overview":
-            raise ValidationError(
-                gettext("Overview is not allowed as page title."),
-                code="invalid",
-            )
-
-        return title
 
     class Meta:
         model = DocPage

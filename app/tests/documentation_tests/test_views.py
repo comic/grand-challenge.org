@@ -64,37 +64,6 @@ def test_docpage_create(client):
 
 
 @pytest.mark.django_db
-def test_docpage_create_title(client):
-    u1 = UserFactory()
-    p = DocPageFactory()
-    assign_perm("documentation.add_docpage", u1)
-
-    title = "overview"
-
-    response = get_view_for_user(
-        viewname="documentation:create",
-        client=client,
-        method=client.post,
-        data={"title": title},
-        user=u1,
-    )
-
-    assert response.status_code == 200
-    assert "Overview is not allowed as page title" in response.rendered_content
-
-    title = p.title
-    response = get_view_for_user(
-        viewname="documentation:create",
-        client=client,
-        method=client.post,
-        data={"title": title},
-        user=u1,
-    )
-    assert response.status_code == 200
-    assert "A page with that title already exists" in response.rendered_content
-
-
-@pytest.mark.django_db
 def test_docpage_update(client):
     u1 = UserFactory()
     _ = DocPageFactory()
