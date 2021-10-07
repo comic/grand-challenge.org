@@ -15,15 +15,17 @@
 
         let uppy = new Uppy.Core({
             id: `${window.location.pathname}-${inputId}`,
-            restrictions: {
-                maxNumberOfFiles: multiWidget ? null : 1
-            }
-        })
+            autoProceed: true
+        });
 
-        uppy.use(Uppy.Dashboard, {
-            inline: true,
+        uppy.use(Uppy.DragDrop, {
             target: `#${inputId}-drag-drop`
-        })
+        });
+
+        uppy.use(Uppy.ProgressBar, {
+            target: `#${inputId}-progress`,
+            hideAfterFinish: false
+        });
 
         uppy.use(Uppy.AwsS3Multipart, {
             getChunkSize: (file) => {
@@ -34,23 +36,27 @@
             prepareUploadParts: prepareUploadParts,
             abortMultipartUpload: abortMultipartUpload,
             completeMultipartUpload: completeMultipartUpload
-        })
+        });
 
-        uppy.on("complete", (result) => {
-            const uploadedPKs = result.successful.map(i => i.s3Multipart.key.split("/")[1]);
+        uppy.on("upload-success", (file, response) => {
+            const uploadedPK = file.s3Multipart.key.split("/")[1];
+            const fileList = document.getElementById(`${inputId}-file-list`);
 
             if (multiWidget === null) {
-                document.getElementById(inputId).value = uploadedPKs[0];
+                fileList.innerHTML = "";
+                document.getElementById(inputId).value = uploadedPK
             } else {
-                for (const uploadedPK of uploadedPKs) {
-                    let input = document.createElement('input');
-                    input.name = inputName;
-                    input.type = "hidden";
-                    input.value = uploadedPK;
-                    widget.appendChild(input);
-                }
+                let input = document.createElement("input");
+                input.name = inputName;
+                input.type = "hidden";
+                input.value = uploadedPK;
+                widget.appendChild(input);
             }
-        })
+
+            let newFile = document.createElement("li");
+            newFile.textContent = `Uploaded: ${file.name}`;
+            fileList.prepend(newFile);
+        });
     }
 
     function getCookie(name) {

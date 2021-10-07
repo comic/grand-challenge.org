@@ -8,13 +8,30 @@
      data-input-name="{{ widget.name }}"
      {% if widget.attrs.multiple %}data-multiple=true{% endif %}
 >
-    <div id="{{ widget.attrs.id }}-drag-drop"></div>
+    <div id="{{ widget.attrs.id }}-drag-drop" class="mb-3"></div>
+
+    <div id="{{ widget.attrs.id }}-progress" class="mb-3"></div>
+
+    <ul id="{{ widget.attrs.id }}-file-list">
+        {% for subwidget in widget.subwidgets %}
+            <li>Uploaded: {{ subwidget.value }}</li>
+        {% empty %}
+            {% if widget.value %}
+                <li>Uploaded: {{ widget.value }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
 
     {% if widget.subwidgets %}
-        {% spaceless %}{% for widget in widget.subwidgets %}{% include widget.template_name %}
-        {% endfor %}{% endspaceless %}
+        {% spaceless %}
+            {% for widget in widget.subwidgets %}{% include widget.template_name %}{% endfor %}
+        {% endspaceless %}
     {% elif not widget.attrs.multiple %}
-        <input id="{{ widget.attrs.id }}" type="hidden" name="{{ widget.name }}"{% if widget.value != None %}
-               value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+        <input id="{{ widget.attrs.id }}"
+                type="hidden"
+                name="{{ widget.name }}"
+                {% if widget.value != None %}value="{{ widget.value|stringformat:'s' }}"{% endif %}
+                {% include "django/forms/widgets/attrs.html" %}
+        >
     {% endif %}
 </div>
