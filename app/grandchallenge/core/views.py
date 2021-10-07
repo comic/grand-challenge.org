@@ -125,7 +125,8 @@ class HomeTemplate(TemplateView):
         ).first()
         latest_gc_blog_post = (
             Post.objects.filter(published=True)
-            .exclude(tags__slug="products", highlight=True)
+            .exclude(tags__slug="products")
+            .exclude(highlight=True)
             .first()
         )
         news_caroussel_items = [
