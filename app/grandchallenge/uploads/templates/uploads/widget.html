@@ -12,12 +12,15 @@
 
     <div id="{{ widget.attrs.id }}-progress" class="mb-3"></div>
 
-    <ul id="{{ widget.attrs.id }}-file-list">
+    Uploaded files:
+    <ul id="{{ widget.attrs.id }}-file-list" class="mb-3">
         {% for subwidget in widget.subwidgets %}
-            <li>Uploaded: {{ subwidget.value }}</li>
+            <li>{{ subwidget.value }}</li>
         {% empty %}
             {% if widget.value %}
-                <li>Uploaded: {{ widget.value }}</li>
+                <li>{{ widget.value }}</li>
+            {% else %}
+                <li>No files uploaded yet</li>
             {% endif %}
         {% endfor %}
     </ul>

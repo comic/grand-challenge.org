@@ -54,7 +54,7 @@
             }
 
             let newFile = document.createElement("li");
-            newFile.textContent = `Uploaded: ${uploadedPK} (${file.name})`;
+            newFile.textContent = `${uploadedPK} (${file.name})`;
             fileList.prepend(newFile);
         });
     }
