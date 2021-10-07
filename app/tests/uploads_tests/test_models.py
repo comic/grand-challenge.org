@@ -1,9 +1,16 @@
+from random import random
+
 import pytest
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from requests import put
 
 from grandchallenge.uploads.models import UserUpload
 from tests.factories import UserFactory
+
+
+def build_random_user():
+    return get_user_model()(pk=random())
 
 
 @pytest.mark.django_db
@@ -34,7 +41,8 @@ def test_user_upload_flow():
 
 
 def test_create_multipart_upload():
-    upload = UserUpload()
+    user = build_random_user()
+    upload = UserUpload(creator=user)
 
     assert upload.s3_upload_id == ""
     assert upload.status == UserUpload.StatusChoices.PENDING
@@ -43,11 +51,11 @@ def test_create_multipart_upload():
 
     assert upload.s3_upload_id != ""
     assert upload.status == UserUpload.StatusChoices.INITIALIZED
-    assert upload.key == f"uploads/{upload.pk}"
+    assert upload.key == f"uploads/{user.pk}/{upload.pk}"
 
 
 def test_generate_presigned_urls():
-    upload = UserUpload()
+    upload = UserUpload(creator=build_random_user())
     upload.create_multipart_upload()
 
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1, 13, 26])
@@ -65,7 +73,7 @@ def test_generate_presigned_urls():
 
 
 def test_abort_multipart_upload():
-    upload = UserUpload()
+    upload = UserUpload(creator=build_random_user())
     upload.create_multipart_upload()
 
     assert upload.status == UserUpload.StatusChoices.INITIALIZED
@@ -78,7 +86,7 @@ def test_abort_multipart_upload():
 
 
 def test_list_parts():
-    upload = UserUpload()
+    upload = UserUpload(creator=build_random_user())
     upload.create_multipart_upload()
     url = upload.generate_presigned_url(part_number=1)
     response = put(url, data=b"123")
@@ -92,7 +100,7 @@ def test_list_parts():
 
 
 def test_list_parts_empty():
-    upload = UserUpload()
+    upload = UserUpload(creator=build_random_user())
     upload.create_multipart_upload()
 
     parts = upload.list_parts()
@@ -101,7 +109,7 @@ def test_list_parts_empty():
 
 
 def test_list_parts_truncation():
-    upload = UserUpload()
+    upload = UserUpload(creator=build_random_user())
     upload.create_multipart_upload()
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1, 2])
     responses = {}

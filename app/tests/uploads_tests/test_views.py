@@ -94,7 +94,7 @@ def test_create_multipart_upload(client):
 
     assert upload_file["status"] == "Initialized"
     assert upload_file["s3_upload_id"] != ""
-    assert upload_file["key"] == f"uploads/{upload_file['pk']}"
+    assert upload_file["key"] == f"uploads/{u.pk}/{upload_file['pk']}"
     assert upload_file["filename"] == "foo.bat"
 
 
@@ -217,12 +217,12 @@ def test_complete_multipart_upload(client):
 )
 def test_url_pattern(client, action):
     # On the frontend we construct the URL with
-    # url = `{api_root}{object_key}/{upload_id}/{action}`
+    # url = `{api_root}/uploads/{upload_pk}/{upload_s3_upload_id}/{action}`
     # Check that this matches
     u = UserFactory()
     upload = UserUpload.objects.create(creator=u)
 
-    url = f"/api/v1/{upload.key}/{upload.s3_upload_id}/{action}/"
+    url = f"/api/v1/uploads/{upload.pk}/{upload.s3_upload_id}/{action}/"
 
     response = get_view_for_user(
         client=client,
@@ -251,7 +251,7 @@ def test_upload_id_checks(client, action):
     u = UserFactory()
     upload = UserUpload.objects.create(creator=u)
 
-    url = f"/api/v1/{upload.key}/1{upload.s3_upload_id}/{action}/"
+    url = f"/api/v1/uploads/{upload.pk}/1{upload.s3_upload_id}/{action}/"
 
     response = get_view_for_user(
         client=client,

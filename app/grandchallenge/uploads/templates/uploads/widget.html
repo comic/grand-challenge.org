@@ -1,7 +1,7 @@
 {% load url %}
 
-{% url "api:api-root" as api_root %}
-{{ api_root|json_script:"apiRoot" }}
+{% url "api:upload-list" as upload_list_view %}
+{{ upload_list_view|json_script:"uploadListView" }}
 
 <div class="user-upload"
      data-input-id="{{ widget.attrs.id }}"

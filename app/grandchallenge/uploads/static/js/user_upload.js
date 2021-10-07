@@ -39,7 +39,7 @@
         });
 
         uppy.on("upload-success", (file, response) => {
-            const uploadedPK = file.s3Multipart.key.split("/")[1];
+            const uploadedPK = file.s3Multipart.key.split("/")[2];
             const fileList = document.getElementById(`${inputId}-file-list`);
 
             if (multiWidget === null) {
@@ -54,7 +54,7 @@
             }
 
             let newFile = document.createElement("li");
-            newFile.textContent = `Uploaded: ${file.name}`;
+            newFile.textContent = `Uploaded: ${uploadedPK} (${file.name})`;
             fileList.prepend(newFile);
         });
     }
@@ -77,7 +77,7 @@
 
     function getPOSTParams() {
         return {
-            apiRoot: JSON.parse(document.getElementById("apiRoot").textContent),
+            uploadListView: JSON.parse(document.getElementById("uploadListView").textContent),
             csrfToken: getCookie("_csrftoken")
         };
     }
@@ -86,7 +86,7 @@
         const postParams = getPOSTParams();
 
         return fetch(
-            `${postParams.apiRoot}uploads/`,
+            postParams.uploadListView,
             {
                 method: "POST",
                 credentials: "include",
@@ -109,9 +109,10 @@
 
     function listParts(file, {uploadId, key}) {
         const postParams = getPOSTParams();
+        const uploadPK = key.split("/")[2];
 
         return fetch(
-            `${postParams.apiRoot}${key}/${uploadId}/list-parts/`,
+            `${postParams.uploadListView}${uploadPK}/${uploadId}/list-parts/`,
             {
                 method: "GET",
                 credentials: "include",
@@ -128,9 +129,10 @@
 
     function prepareUploadParts(file, {uploadId, key, partNumbers}) {
         const postParams = getPOSTParams();
+        const uploadPK = key.split("/")[2];
 
         return fetch(
-            `${postParams.apiRoot}${key}/${uploadId}/generate-presigned-urls/`,
+            `${postParams.uploadListView}${uploadPK}/${uploadId}/generate-presigned-urls/`,
             {
                 method: "PATCH",
                 credentials: "include",
@@ -152,9 +154,10 @@
 
     function abortMultipartUpload(file, {uploadId, key}) {
         const postParams = getPOSTParams();
+        const uploadPK = key.split("/")[2];
 
         return fetch(
-            `${postParams.apiRoot}${key}/${uploadId}/abort-multipart-upload/`,
+            `${postParams.uploadListView}${uploadPK}/${uploadId}/abort-multipart-upload/`,
             {
                 method: "PATCH",
                 credentials: "include",
@@ -168,9 +171,10 @@
 
     function completeMultipartUpload(file, {uploadId, key, parts}) {
         const postParams = getPOSTParams();
+        const uploadPK = key.split("/")[2];
 
         return fetch(
-            `${postParams.apiRoot}${key}/${uploadId}/complete-multipart-upload/`,
+            `${postParams.uploadListView}${uploadPK}/${uploadId}/complete-multipart-upload/`,
             {
                 method: "PATCH",
                 credentials: "include",

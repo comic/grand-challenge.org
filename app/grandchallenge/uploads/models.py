@@ -99,7 +99,7 @@ class UserUpload(UUIDModel):
 
     @property
     def key(self):
-        return f"uploads/{self.pk}"
+        return f"uploads/{self.creator.pk}/{self.pk}"
 
     def assign_permissions(self):
         assign_perm("view_userupload", self.creator, self)
