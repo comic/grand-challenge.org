@@ -16,7 +16,7 @@
         <div class="col-6">
             <h2>Documentation Pages</h2>
         </div>
-        {% if 'documentation.change_docpage' in perms %}
+        {% if 'documentation.add_docpage' in perms %}
             <div class="col-6 d-inline-block text-right">
                 <a class="btn btn-md btn-dark mt-2" href="{% url 'documentation:create' %}">Add page</a>
             </div>
@@ -29,7 +29,9 @@
                 <th data-field="order">Order</th>
                 <th data-field="title">Title</th>
                 <th data-field="title">Parent</th>
-                <th data-field="edit">Edit</th>
+                {% if 'documentation.change_docpage' in perms %}
+                    <th data-field="edit">Edit</th>
+                {% endif %}
             </tr>
             </thead>
             <tbody>
@@ -46,9 +48,11 @@
                     <td>
                         {{ page.parent }}
                     </td>
-                    <td>
-                        <a href="{% url 'documentation:update' slug=page.slug %}"><i class="fa fa-cog text-primary" aria-hidden="true"></i></a>
-                    </td>
+                    {% if 'documentation.change_docpage' in perms %}
+                        <td>
+                            <a href="{% url 'documentation:update' slug=page.slug %}"><i class="fa fa-cog text-primary" aria-hidden="true"></i></a>
+                        </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
             </tbody>
