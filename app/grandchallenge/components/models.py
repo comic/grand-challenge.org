@@ -46,6 +46,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
 
@@ -900,6 +901,13 @@ class ComponentImage(models.Model):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     staged_image_uuid = models.UUIDField(blank=True, null=True, editable=False)
+    user_upload = models.ForeignKey(
+        UserUpload,
+        blank=True,
+        null=True,
+        editable=False,
+        on_delete=models.SET_NULL,
+    )
     image = models.FileField(
         blank=True,
         upload_to=docker_image_path,
