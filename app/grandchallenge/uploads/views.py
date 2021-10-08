@@ -73,6 +73,9 @@ class UserUploadViewSet(
             )
             raise Http404
 
+        if not object.can_upload_more:
+            self.permission_denied(request, message="Upload limit reached")
+
         serializer = self.get_serializer(
             instance=object, data=request.data, partial=True
         )
