@@ -178,7 +178,9 @@ class WorkstationImageCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
+        kwargs.update(
+            {"user": self.request.user, "workstation": self.workstation}
+        )
         return kwargs
 
     @property
@@ -187,15 +189,6 @@ class WorkstationImageCreate(
 
     def get_permission_object(self):
         return self.workstation
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        form.instance.workstation = self.workstation
-
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-        form.instance.staged_image_uuid = uploaded_file.uuid
-
-        return super().form_valid(form)
 
 
 class WorkstationImageDetail(

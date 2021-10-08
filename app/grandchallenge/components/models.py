@@ -902,11 +902,7 @@ class ComponentImage(models.Model):
     )
     staged_image_uuid = models.UUIDField(blank=True, null=True, editable=False)
     user_upload = models.ForeignKey(
-        UserUpload,
-        blank=True,
-        null=True,
-        editable=False,
-        on_delete=models.SET_NULL,
+        UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
     )
     image = models.FileField(
         blank=True,

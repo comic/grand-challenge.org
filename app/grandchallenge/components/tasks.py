@@ -43,7 +43,9 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     instance = model.objects.get(pk=pk)
 
     if not instance.image:
-        if instance.staged_image_uuid:
+        if instance.user_upload:
+            raise NotImplementedError
+        elif instance.staged_image_uuid:
             # Create the image from the staged file
             uploaded_image = StagedAjaxFile(instance.staged_image_uuid)
             with uploaded_image.open() as f:

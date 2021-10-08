@@ -1,14 +1,17 @@
 from crispy_forms.helper import FormHelper
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 from django.forms import (
     ChoiceField,
+    HiddenInput,
+    ModelChoiceField,
     ModelForm,
 )
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.jqfileupload.widgets import uploader
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import (
     Session,
     Workstation,
@@ -22,35 +25,38 @@ class WorkstationForm(SaveFormInitMixin, ModelForm):
         fields = ("title", "logo", "description", "public")
 
 
-class WorkstationImageForm(ModelForm):
-    chunked_upload = uploader.UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False),
-        label="Workstation Image",
-        validators=[
-            ExtensionValidator(
-                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
-            )
-        ],
+class WorkstationImageForm(SaveFormInitMixin, ModelForm):
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(),
+        label="Workstation Container Image",
+        queryset=UserUpload.objects.none(),
+        # TODO set validators
         help_text=(
             ".tar.xz archive of the container image produced from the command "
             "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
+    creator = ModelChoiceField(
+        widget=HiddenInput(), queryset=get_user_model().objects.all(),
+    )
+    workstation = ModelChoiceField(
+        widget=HiddenInput(), queryset=Workstation.objects.none(),
+    )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, user, workstation, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.fields["chunked_upload"].widget.user = user
 
-    def clean_chunked_upload(self):
-        files = self.cleaned_data["chunked_upload"]
-        if (
-            sum([f.size for f in files])
-            > settings.COMPONENTS_MAXIMUM_IMAGE_SIZE
-        ):
-            raise ValidationError("File size limit exceeded")
-        return files
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user, "change_userupload", UserUpload
+        )
+
+        self.fields["creator"].initial = user
+
+        self.fields["workstation"].queryset = Workstation.objects.filter(
+            pk=workstation.pk
+        )
+        self.fields["workstation"].initial = workstation
 
     class Meta:
         model = WorkstationImage
@@ -58,7 +64,9 @@ class WorkstationImageForm(ModelForm):
             "initial_path",
             "http_port",
             "websocket_port",
-            "chunked_upload",
+            "user_upload",
+            "creator",
+            "workstation",
         )
 
 
