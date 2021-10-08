@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
-from django.forms import ModelChoiceField
+from django.forms import HiddenInput, ModelChoiceField
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2Widget
@@ -31,6 +31,8 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 phase_options = ("title",)
 
@@ -137,38 +139,35 @@ class MethodForm(SaveFormInitMixin, forms.ModelForm):
         queryset=None,
         help_text="Which phase is this evaluation container for?",
     )
-    chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
-        label="Evaluation Method Container",
-        validators=[
-            ExtensionValidator(
-                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
-            )
-        ],
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(),
+        label="Evaluation Method Container Image",
+        queryset=UserUpload.objects.none(),
+        # TODO set validators
         help_text=(
             ".tar.xz archive of the container image produced from the command "
             "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
+    creator = ModelChoiceField(
+        widget=HiddenInput(), queryset=get_user_model().objects.all(),
+    )
 
     def __init__(self, *args, user, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["chunked_upload"].widget.user = user
+
         self.fields["phase"].queryset = challenge.phase_set.all()
 
-    def clean_chunked_upload(self):
-        files = self.cleaned_data["chunked_upload"]
-        if (
-            sum([f.size for f in files])
-            > settings.COMPONENTS_MAXIMUM_IMAGE_SIZE
-        ):
-            raise ValidationError("File size limit exceeded")
-        return files
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user, "change_userupload", UserUpload
+        )
+
+        self.fields["creator"].initial = user
 
     class Meta:
         model = Method
-        fields = ["phase", "chunked_upload"]
+        fields = ["phase", "user_upload", "creator"]
 
 
 submission_fields = (

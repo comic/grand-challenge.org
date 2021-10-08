@@ -39,7 +39,6 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.serializers import EvaluationSerializer
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 
@@ -120,14 +119,6 @@ class MethodCreate(
             {"user": self.request.user, "challenge": self.request.challenge}
         )
         return kwargs
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-
-        uploaded_file: StagedAjaxFile = form.cleaned_data["chunked_upload"][0]
-        form.instance.staged_image_uuid = uploaded_file.uuid
-
-        return super().form_valid(form)
 
 
 class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
