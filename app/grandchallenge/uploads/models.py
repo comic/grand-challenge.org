@@ -3,19 +3,18 @@ import os
 import boto3
 from django.conf import settings
 from django.db import models
-from django.db.models import SET_NULL
 from django.utils.datetime_safe import strftime
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_summernote.models import AbstractAttachment
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 
 
 def public_media_filepath(instance, filename):
+    # TODO used in migration, can be deleted
     if instance.challenge:
         subfolder = os.path.join("challenge", str(instance.challenge.pk))
     else:
@@ -23,15 +22,6 @@ def public_media_filepath(instance, filename):
 
     return os.path.join(
         "f", subfolder, str(instance.pk), get_valid_filename(filename)
-    )
-
-
-class PublicMedia(UUIDModel):
-    file = models.FileField(
-        upload_to=public_media_filepath, storage=public_s3_storage
-    )
-    challenge = models.ForeignKey(
-        Challenge, null=True, blank=True, default=None, on_delete=SET_NULL
     )
 
 
