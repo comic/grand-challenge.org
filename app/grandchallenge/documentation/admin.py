@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.forms import ModelForm
 from markdownx.admin import MarkdownxModelAdmin
 
+from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 from grandchallenge.documentation.models import DocPage
 
 
@@ -14,6 +15,9 @@ class AdminDocPageForm(ModelForm):
             "parent",
         )
         ordering = ("order",)
+        widgets = {
+            "content": MarkdownEditorAdminWidget,
+        }
 
 
 class DocPageAdmin(MarkdownxModelAdmin):
