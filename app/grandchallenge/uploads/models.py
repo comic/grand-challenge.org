@@ -115,6 +115,28 @@ class UserUpload(UUIDModel):
         return f"uploads/{self.creator.pk}/"
 
     @property
+    def size(self):
+        if self.status == self.StatusChoices.INITIALIZED:
+            return self.pending_size
+        elif self.status == self.StatusChoices.COMPLETED:
+            return self.completed_size
+        else:
+            return 0
+
+    @property
+    def pending_size(self):
+        return sum(p["Size"] for p in self.list_parts())
+
+    @property
+    def completed_size(self):
+        if self.status != self.StatusChoices.COMPLETED:
+            raise RuntimeError("Upload is not completed")
+
+        return self._client.head_object(Bucket=self.bucket, Key=self.key)[
+            "ContentLength"
+        ]
+
+    @property
     def size_of_creators_completed_uploads(self):
         return sum(u["Size"] for u in self.get_creators_completed_uploads())
 

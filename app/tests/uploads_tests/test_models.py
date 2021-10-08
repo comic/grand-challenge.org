@@ -134,12 +134,12 @@ def test_file_deleted_with_object():
 
     bucket = upload.bucket
     key = upload.key
-    assert upload._client.get_object(Bucket=bucket, Key=key)
+    assert upload._client.head_object(Bucket=bucket, Key=key)
 
     UserUpload.objects.filter(pk=upload.pk).delete()
 
-    with pytest.raises(upload._client.exceptions.NoSuchKey):
-        upload._client.get_object(Bucket=bucket, Key=key)
+    with pytest.raises(upload._client.exceptions.ClientError):
+        upload._client.head_object(Bucket=bucket, Key=key)
 
 
 @pytest.mark.django_db
@@ -186,3 +186,35 @@ def test_size_of_creators_completed_uploads():
         upload.size_of_creators_completed_uploads
         == initial_upload_size + (upload.LIST_MAX_ITEMS + 1) * 3
     )
+
+
+def test_size_incomplete():
+    u = UserFactory.build(pk=42)
+    upload = UserUpload(creator=u)
+    upload.create_multipart_upload()
+    upload.LIST_MAX_ITEMS = 1
+
+    assert upload.size == 0
+
+    parts = [1, 2]
+    presigned_urls = upload.generate_presigned_urls(part_numbers=parts)
+    for part in parts:
+        put(presigned_urls[str(part)], data=b"123")
+
+    assert upload.size == (upload.LIST_MAX_ITEMS + 1) * 3
+
+
+def test_size_complete():
+    u = UserFactory.build(pk=42)
+    upload = UserUpload(creator=u)
+    upload.create_multipart_upload()
+
+    assert upload.size == 0
+
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b"123")
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+
+    assert upload.size == 3
