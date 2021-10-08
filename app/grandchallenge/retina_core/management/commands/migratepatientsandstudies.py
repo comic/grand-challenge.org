@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models.functions import Length
 
 from grandchallenge.cases.models import Image
@@ -46,10 +47,11 @@ def perform_migration():
     print("Validating length of name fields on objects...")
     validate_field_lengths()
     print("Field lengths validated. Starting migration...")
-    images = Image.objects.select_related("study__patient").filter(
-        study__isnull=False
-    )
-    images_changed = iterate_objects(images, migrate_fields)
+    with transaction.atomic():
+        images = Image.objects.select_related("study__patient").filter(
+            study__isnull=False
+        )
+        images_changed = iterate_objects(images, migrate_fields)
     print(f"Done! {images_changed} images changed.")
     return images_changed
 
