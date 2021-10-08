@@ -130,14 +130,14 @@ class HomeTemplate(TemplateView):
             .first()
         )
         news_caroussel_items = [
-            latest_ai_for_radiology_post,
-            latest_gc_blog_post,
+            item
+            for item in [
+                latest_news_item,
+                latest_ai_for_radiology_post,
+                latest_gc_blog_post,
+            ]
+            if item
         ]
-        news_caroussel_items = (
-            [latest_news_item] + news_caroussel_items
-            if latest_news_item
-            else news_caroussel_items
-        )
 
         context.update(
             {
