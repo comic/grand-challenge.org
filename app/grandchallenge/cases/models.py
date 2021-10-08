@@ -27,7 +27,6 @@ from panimg.models import ColorSpace, ImageType
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -281,9 +280,6 @@ class Image(UUIDModel):
     )
 
     name = models.CharField(max_length=4096)
-    study = models.ForeignKey(
-        Study, null=True, blank=True, on_delete=models.SET_NULL,
-    )
     origin = models.ForeignKey(
         to=RawImageUploadSession,
         null=True,

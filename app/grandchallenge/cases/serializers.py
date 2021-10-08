@@ -34,7 +34,6 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
         fields = (
             "pk",
             "name",
-            "study",
             "files",
             "width",
             "height",
