@@ -4,7 +4,7 @@
 {% load humanize %}
 {% load cache %}
 
-{% cache 600 homepage %}
+{#{% cache 600 homepage %}#}
     {% block content %}
         {% if news_caroussel_items %}
             <div class="container mb-5 p-0">
@@ -98,13 +98,7 @@
                 <div class="row align-items-center">
                     {% for highlight in highlights %}
                         <div class="col-lg-6">
-                            <div class="row {% if forloop.counter0|divisibleby:2 %} flex-row-reverse {% endif %} align-items-center">
-                                <div class="col-md-6 my-3">
-                                    <a href="{{ highlight.url }}"><img src="{% static highlight.image %}"
-                                                                       class="img-fluid w-100"
-                                                                       loading="lazy"
-                                                                       alt="{{ highlight.url_title }} Image"></a>
-                                </div>
+                            <div class="row {% if not forloop.counter0|divisibleby:2 %} flex-sm-row-reverse {% endif %} align-items-center">
                                 <div class="col-md-6 my-3">
                                     <a class="text-radboud" href="{{ highlight.url }}"><h4>{{ highlight.title }}</h4></a>
                                     <ul class="pl-3">
@@ -113,6 +107,12 @@
                                         {% endfor %}
                                     </ul>
                                 </div>
+                                <div class="col-md-6 my-3">
+                                    <a href="{{ highlight.url }}"><img src="{% static highlight.image %}"
+                                                                       class="img-fluid w-100"
+                                                                       loading="lazy"
+                                                                       alt="{{ highlight.url_title }} Image"></a>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}
@@ -120,4 +120,4 @@
             </div>
         </div>
     {% endblock %}
-{% endcache %}
+{#{% endcache %}#}
