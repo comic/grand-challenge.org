@@ -1,16 +1,19 @@
 from crispy_forms.helper import FormHelper
-from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
     Form,
+    HiddenInput,
     IntegerField,
+    ModelChoiceField,
     ModelForm,
     ModelMultipleChoiceField,
     TextInput,
 )
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -29,12 +32,11 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.templatetags.bleach import clean
-from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.jqfileupload.widgets import uploader
-from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
@@ -172,15 +174,12 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         return cleaned_data
 
 
-class AlgorithmImageForm(ModelForm):
-    chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False),
-        label="Algorithm Image",
-        validators=[
-            ExtensionValidator(
-                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
-            )
-        ],
+class AlgorithmImageForm(SaveFormInitMixin, ModelForm):
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(),
+        label="Algorithm Container Image",
+        queryset=UserUpload.objects.none(),
+        # TODO set validators
         help_text=(
             ".tar.xz archive of the container image produced from the command "
             "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
@@ -189,32 +188,44 @@ class AlgorithmImageForm(ModelForm):
     )
     requires_memory_gb = IntegerField(
         min_value=1,
-        max_value=24,
+        max_value=30,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
+    creator = ModelChoiceField(
+        widget=HiddenInput(), queryset=get_user_model().objects.all(),
+    )
+    algorithm = ModelChoiceField(
+        widget=HiddenInput(), queryset=Algorithm.objects.none(),
+    )
 
-    def __init__(self, *args, user, **kwargs):
-        algorithm = kwargs.pop("algorithm")
+    def __init__(self, *args, user, algorithm, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.fields["chunked_upload"].widget.user = user
+
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user, "change_userupload", UserUpload
+        )
+
+        self.fields["creator"].initial = user
+
+        self.fields["algorithm"].queryset = Algorithm.objects.filter(
+            pk=algorithm.pk
+        )
+        self.fields["algorithm"].initial = algorithm
+
         self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
         self.fields[
             "requires_memory_gb"
         ].initial = algorithm.image_requires_memory_gb
 
-    def clean_chunked_upload(self):
-        files = self.cleaned_data["chunked_upload"]
-        if (
-            sum([f.size for f in files])
-            > settings.COMPONENTS_MAXIMUM_IMAGE_SIZE
-        ):
-            raise ValidationError("File size limit exceeded")
-        return files
-
     class Meta:
         model = AlgorithmImage
-        fields = ("requires_gpu", "requires_memory_gb", "chunked_upload")
+        fields = (
+            "requires_gpu",
+            "requires_memory_gb",
+            "user_upload",
+            "creator",
+            "algorithm",
+        )
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {
             "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"
@@ -224,7 +235,7 @@ class AlgorithmImageForm(ModelForm):
 class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
     requires_memory_gb = IntegerField(
         min_value=1,
-        max_value=24,
+        max_value=30,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
 

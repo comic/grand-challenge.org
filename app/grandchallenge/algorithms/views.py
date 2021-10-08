@@ -108,7 +108,7 @@ class VerificationRequiredMixin(UserPassesTestMixin):
         if not verified:
             messages.error(
                 self.request,
-                "You need to verify your account before you can do this,"
+                "You need to verify your account before you can do this, "
                 "you can request this from your profile page.",
             )
 
@@ -296,15 +296,6 @@ class AlgorithmImageCreate(
 
     def get_permission_object(self):
         return self.algorithm
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        form.instance.algorithm = self.algorithm
-
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-        form.instance.staged_image_uuid = uploaded_file.uuid
-
-        return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
