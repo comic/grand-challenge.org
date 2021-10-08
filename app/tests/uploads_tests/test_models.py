@@ -126,3 +126,42 @@ def test_list_parts_truncation():
     assert parts[1]["ETag"] == responses["2"].headers["ETag"]
     assert parts[1]["Size"] == 3
     assert parts[1]["PartNumber"] == 2
+
+
+@pytest.mark.django_db
+def test_file_deleted_with_object():
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b"123")
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+
+    bucket = upload.bucket
+    key = upload.key
+    assert upload._client.get_object(Bucket=bucket, Key=key)
+
+    UserUpload.objects.filter(pk=upload.pk).delete()
+
+    with pytest.raises(upload._client.exceptions.NoSuchKey):
+        upload._client.get_object(Bucket=bucket, Key=key)
+
+
+@pytest.mark.django_db
+def test_incomplete_deleted_with_object():
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+
+    bucket = upload.bucket
+    key = upload.key
+    assert "Uploads" in upload._client.list_multipart_uploads(
+        Bucket=bucket, Prefix=key
+    )
+
+    UserUpload.objects.filter(pk=upload.pk).delete()
+
+    assert "Uploads" not in upload._client.list_multipart_uploads(
+        Bucket=bucket, Prefix=key
+    )

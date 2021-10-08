@@ -4,6 +4,8 @@ import boto3
 from django.conf import settings
 from django.db import models
 from django.db.models import SET_NULL
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.datetime_safe import strftime
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
@@ -179,3 +181,24 @@ class UserUpload(UUIDModel):
         )
         self.s3_upload_id = ""
         self.status = self.StatusChoices.ABORTED
+
+    def delete_object(self):
+        if self.status != self.StatusChoices.COMPLETED:
+            raise RuntimeError("Upload is not completed")
+
+        self._client.delete_object(Bucket=self.bucket, Key=self.key)
+        self.status = self.StatusChoices.ABORTED
+
+
+@receiver(post_delete, sender=UserUpload)
+def delete_challenge_groups_hook(*_, instance: UserUpload, using, **__):
+    """
+    Deletes the objects from storage.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
+    """
+    if instance.status == UserUpload.StatusChoices.COMPLETED:
+        instance.delete_object()
+    elif instance.status == UserUpload.StatusChoices.INITIALIZED:
+        instance.abort_multipart_upload()
