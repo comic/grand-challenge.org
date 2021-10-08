@@ -182,6 +182,9 @@ UPLOADS_S3_BUCKET_NAME = os.environ.get(
     "UPLOADS_S3_BUCKET_NAME", "grand-challenge-uploads"
 )
 UPLOADS_S3_ENDPOINT_URL = os.environ.get("UPLOADS_S3_ENDPOINT_URL")
+UPLOADS_S3_USE_ACCELERATE_ENDPOINT = strtobool(
+    os.environ.get("UPLOADS_S3_USE_ACCELERATE_ENDPOINT", "False")
+)
 UPLOADS_MAX_SIZE_UNVERIFIED = int(
     os.environ.get("UPLOADS_MAX_SIZE_UNVERIFIED", 2 * 1024 * 1024 * 1024)
 )

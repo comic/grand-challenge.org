@@ -1,6 +1,7 @@
 import os
 
 import boto3
+from botocore.config import Config
 from django.conf import settings
 from django.db import models
 from django.db.models import SET_NULL
@@ -91,8 +92,15 @@ class UserUpload(UUIDModel):
     @property
     def _client(self):
         if self.__client is None:
+            config = Config(
+                s3={
+                    "use_accelerate_endpoint": settings.UPLOADS_S3_USE_ACCELERATE_ENDPOINT
+                }
+            )
             self.__client = boto3.client(
-                "s3", endpoint_url=settings.UPLOADS_S3_ENDPOINT_URL
+                "s3",
+                config=config,
+                endpoint_url=settings.UPLOADS_S3_ENDPOINT_URL,
             )
         return self.__client
 
