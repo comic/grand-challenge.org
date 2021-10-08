@@ -1,7 +1,6 @@
 from django.contrib import admin
 
 from grandchallenge.patients.models import Patient
-from grandchallenge.studies.admin import StudyInline
 
 
 class PatientInline(admin.StackedInline):
@@ -11,7 +10,6 @@ class PatientInline(admin.StackedInline):
 
 class PatientAdmin(admin.ModelAdmin):
     fieldsets = []
-    inlines = [StudyInline]
     search_fields = ("name",)
 
 
