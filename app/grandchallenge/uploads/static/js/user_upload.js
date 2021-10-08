@@ -144,12 +144,25 @@
                     "part_numbers": partNumbers
                 })
             }
-        ).then(response => response.json()
-        ).then(upload => {
+        ).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw response;
+            }
+        }).then(upload => {
             return {
                 presignedUrls: upload.presigned_urls
             }
-        })
+        }).catch(err => {
+            err.json().then(errorJSON => {
+                let errorMessage = "Could not upload file"
+                if ("detail" in errorJSON) {
+                    errorMessage += `: ${errorJSON.detail}`;
+                }
+                alert(errorMessage);
+            })
+        });
     }
 
     function abortMultipartUpload(file, {uploadId, key}) {
