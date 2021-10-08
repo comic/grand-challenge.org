@@ -182,6 +182,12 @@ UPLOADS_S3_BUCKET_NAME = os.environ.get(
     "UPLOADS_S3_BUCKET_NAME", "grand-challenge-uploads"
 )
 UPLOADS_S3_ENDPOINT_URL = os.environ.get("UPLOADS_S3_ENDPOINT_URL")
+UPLOADS_MAX_SIZE_UNVERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_UNVERIFIED", 2 * 1024 * 1024 * 1024)
+)
+UPLOADS_MAX_SIZE_VERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_VERIFIED", 128 * 1024 * 1024 * 1024)
+)
 
 # Key pair used for signing CloudFront URLS, only used if
 # PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True

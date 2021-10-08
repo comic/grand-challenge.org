@@ -4,6 +4,7 @@ from requests import put
 
 from grandchallenge.uploads.models import UserUpload
 from tests.factories import UserFactory
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -218,3 +219,54 @@ def test_size_complete():
     )
 
     assert upload.size == 3
+
+
+@pytest.mark.django_db
+def test_can_upload_more_unverified(settings):
+    upload = UserUpload.objects.create(creator=UserFactory())
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    put(presigned_urls["1"], data=b"123")
+
+    assert upload.can_upload_more is True
+
+    settings.UPLOADS_MAX_SIZE_UNVERIFIED = 2
+
+    assert upload.can_upload_more is False
+
+
+@pytest.mark.django_db
+def test_can_upload_more_verified(settings):
+    user = UserFactory()
+    upload = UserUpload.objects.create(creator=user)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    put(presigned_urls["1"], data=b"123")
+    settings.UPLOADS_MAX_SIZE_UNVERIFIED = 2
+
+    assert upload.can_upload_more is False
+
+    VerificationFactory(user=user, is_verified=True)
+
+    assert upload.can_upload_more is True
+
+    settings.UPLOADS_MAX_SIZE_VERIFIED = 2
+
+    assert upload.can_upload_more is False
+
+
+@pytest.mark.django_db
+def test_can_upload_more_other_objects(settings):
+    user = UserFactory()
+    new_upload = UserUpload.objects.create(creator=user)
+    settings.UPLOADS_MAX_SIZE_UNVERIFIED = 2
+
+    assert new_upload.can_upload_more is True
+
+    upload = UserUpload.objects.create(creator=user)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b"123")
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+
+    assert upload.can_upload_more is False
+    assert new_upload.can_upload_more is False

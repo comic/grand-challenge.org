@@ -15,6 +15,7 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.verifications.models import Verification
 
 
 def public_media_filepath(instance, filename):
@@ -113,6 +114,24 @@ class UserUpload(UUIDModel):
         # Prefix to objects that the user has uploaded
         # Do not change this
         return f"uploads/{self.creator.pk}/"
+
+    @property
+    def can_upload_more(self):
+        if self.status != self.StatusChoices.INITIALIZED:
+            return False
+
+        creator_is_verified = Verification.objects.filter(
+            user=self.creator, is_verified=True
+        ).exists()
+
+        if creator_is_verified:
+            upload_limit = settings.UPLOADS_MAX_SIZE_VERIFIED
+        else:
+            upload_limit = settings.UPLOADS_MAX_SIZE_UNVERIFIED
+
+        uploaded_size = self.size + self.size_of_creators_completed_uploads
+
+        return uploaded_size < upload_limit
 
     @property
     def size(self):
