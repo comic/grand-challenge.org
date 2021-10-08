@@ -1,11 +1,12 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django_extensions.db.fields import AutoSlugField
 from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.templatetags.bleach import clean
-from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -48,7 +49,7 @@ class DocPage(models.Model):
 
     def save(self, *args, **kwargs):
         # when saving for the first time only, put this page last in order
-        if not self.id:
+        if not self.id and not self.parent:
             # get max value of order for current pages.
             try:
                 self.order = (
@@ -57,36 +58,48 @@ class DocPage(models.Model):
             except (ObjectDoesNotExist, TypeError):
                 # Use the default
                 pass
+        elif not self.id and self.parent:
+            try:
+                self.order = (
+                    DocPage.objects.filter(slug=self.parent.slug)
+                    .get()
+                    .children.last()
+                    .order
+                    + 1
+                )
+            except AttributeError:
+                self.order = (
+                    DocPage.objects.filter(slug=self.parent.slug).get().order
+                    + 1
+                )
 
         self.content = clean(self.content)
-
         super().save(*args, **kwargs)
 
     def move(self, move):
-        if move == self.UP:
-            mm = DocPage.objects.get(order=self.order - 1)
-            mm.order += 1
-            mm.save()
-            self.order -= 1
+        if move:
+            direction = "up" if self.order > move else "down"
+            original_pos = self.order
+            self.order = move
             self.save()
-        elif move == self.DOWN:
-            mm = DocPage.objects.get(order=self.order + 1)
-            mm.order -= 1
-            mm.save()
-            self.order += 1
-            self.save()
-        elif move == self.FIRST:
-            pages = DocPage.objects.all()
-            idx = index(pages, self)
-            pages[idx].order = pages[0].order - 1
-            pages = sorted(pages, key=lambda page: page.order)
-            self.normalize_page_order(pages)
-        elif move == self.LAST:
-            pages = DocPage.objects.all()
-            idx = index(pages, self)
-            pages[idx].order = pages[len(pages) - 1].order + 1
-            pages = sorted(pages, key=lambda page: page.order)
-            self.normalize_page_order(pages)
+            if direction == "up":
+                pages = (
+                    DocPage.objects.exclude(slug=self.slug)
+                    .filter(order__gt=move - 1)
+                    .all()
+                )
+                for page in pages:
+                    page.order += 1
+            else:
+                pages = (
+                    DocPage.objects.exclude(slug=self.slug)
+                    .filter(order__lt=move + 1, order__gt=original_pos)
+                    .all()
+                )
+                for page in pages:
+                    page.order -= 1
+            DocPage.objects.bulk_update(pages, ["order"])
+            self.normalize_page_order(DocPage.objects.all())
 
     @staticmethod
     def normalize_page_order(pages):
@@ -104,7 +117,7 @@ class DocPage(models.Model):
     @property
     def next(self):
         try:
-            next_page = DocPage.objects.filter(order=self.order + 1).get()
+            next_page = DocPage.objects.filter(order__gt=self.order).first()
         except ObjectDoesNotExist:
             next_page = None
         return next_page
@@ -112,7 +125,15 @@ class DocPage(models.Model):
     @property
     def previous(self):
         try:
-            previous_page = DocPage.objects.filter(order=self.order - 1).get()
+            previous_page = DocPage.objects.filter(order__lt=self.order).last()
         except ObjectDoesNotExist:
             previous_page = None
         return previous_page
+
+
+@receiver(post_save, sender=DocPage)
+def update_page_order(sender, instance, created, **_):
+    if created:
+        instance.normalize_page_order(
+            DocPage.objects.order_by("order", "-modified").all()
+        )
