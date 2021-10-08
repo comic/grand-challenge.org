@@ -52,7 +52,7 @@ class SummernoteAttachment(AbstractAttachment):
 
 
 class UserUpload(UUIDModel):
-    LIST_MAX_PARTS = 1000
+    LIST_MAX_ITEMS = 1000
 
     class StatusChoices(models.IntegerChoices):
         PENDING = 0, "Pending"
@@ -101,7 +101,43 @@ class UserUpload(UUIDModel):
 
     @property
     def key(self):
-        return f"uploads/{self.creator.pk}/{self.pk}"
+        # There are several assumptions about the structure of this key
+        # elsewhere in the codebase and in clients code
+        # First for grouping by the user
+        # Second for where the UserUpload pk appears in the key
+        # Change with extreme caution
+        return f"{self.creators_key_prefix}{self.pk}"
+
+    @property
+    def creators_key_prefix(self):
+        # Prefix to objects that the user has uploaded
+        # Do not change this
+        return f"uploads/{self.creator.pk}/"
+
+    @property
+    def size_of_creators_completed_uploads(self):
+        return sum(u["Size"] for u in self.get_creators_completed_uploads())
+
+    def get_creators_completed_uploads(self, continuation_token=None):
+        kwargs = {
+            "Bucket": self.bucket,
+            "Prefix": self.creators_key_prefix,
+            "MaxKeys": self.LIST_MAX_ITEMS,
+        }
+
+        if continuation_token is not None:
+            kwargs["ContinuationToken"] = continuation_token
+
+        response = self._client.list_objects_v2(**kwargs)
+
+        objects = response.get("Contents", [])
+
+        if response["IsTruncated"]:
+            objects += self.get_creators_completed_uploads(
+                continuation_token=response["NextContinuationToken"]
+            )
+
+        return objects
 
     def assign_permissions(self):
         assign_perm("view_userupload", self.creator, self)
@@ -147,7 +183,7 @@ class UserUpload(UUIDModel):
             Bucket=self.bucket,
             Key=self.key,
             UploadId=self.s3_upload_id,
-            MaxParts=self.LIST_MAX_PARTS,
+            MaxParts=self.LIST_MAX_ITEMS,
             PartNumberMarker=part_number_marker,
         )
 
@@ -191,7 +227,7 @@ class UserUpload(UUIDModel):
 
 
 @receiver(post_delete, sender=UserUpload)
-def delete_challenge_groups_hook(*_, instance: UserUpload, using, **__):
+def delete_objects_hook(*_, instance: UserUpload, **__):
     """
     Deletes the objects from storage.
 

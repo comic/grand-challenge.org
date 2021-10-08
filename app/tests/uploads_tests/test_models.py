@@ -1,16 +1,9 @@
-from random import random
-
 import pytest
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from requests import put
 
 from grandchallenge.uploads.models import UserUpload
 from tests.factories import UserFactory
-
-
-def build_random_user():
-    return get_user_model()(pk=random())
 
 
 @pytest.mark.django_db
@@ -41,7 +34,7 @@ def test_user_upload_flow():
 
 
 def test_create_multipart_upload():
-    user = build_random_user()
+    user = UserFactory.build()
     upload = UserUpload(creator=user)
 
     assert upload.s3_upload_id == ""
@@ -55,7 +48,7 @@ def test_create_multipart_upload():
 
 
 def test_generate_presigned_urls():
-    upload = UserUpload(creator=build_random_user())
+    upload = UserUpload(creator=UserFactory.build())
     upload.create_multipart_upload()
 
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1, 13, 26])
@@ -73,7 +66,7 @@ def test_generate_presigned_urls():
 
 
 def test_abort_multipart_upload():
-    upload = UserUpload(creator=build_random_user())
+    upload = UserUpload(creator=UserFactory.build())
     upload.create_multipart_upload()
 
     assert upload.status == UserUpload.StatusChoices.INITIALIZED
@@ -86,7 +79,7 @@ def test_abort_multipart_upload():
 
 
 def test_list_parts():
-    upload = UserUpload(creator=build_random_user())
+    upload = UserUpload(creator=UserFactory.build())
     upload.create_multipart_upload()
     url = upload.generate_presigned_url(part_number=1)
     response = put(url, data=b"123")
@@ -100,7 +93,7 @@ def test_list_parts():
 
 
 def test_list_parts_empty():
-    upload = UserUpload(creator=build_random_user())
+    upload = UserUpload(creator=UserFactory.build())
     upload.create_multipart_upload()
 
     parts = upload.list_parts()
@@ -109,14 +102,14 @@ def test_list_parts_empty():
 
 
 def test_list_parts_truncation():
-    upload = UserUpload(creator=build_random_user())
+    upload = UserUpload(creator=UserFactory.build())
     upload.create_multipart_upload()
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1, 2])
     responses = {}
     for part_number, url in presigned_urls.items():
         responses[part_number] = put(url, data=b"123")
 
-    upload.LIST_MAX_PARTS = 1
+    upload.LIST_MAX_ITEMS = 1
     parts = upload.list_parts()
 
     assert len(parts) == 2
@@ -164,4 +157,32 @@ def test_incomplete_deleted_with_object():
 
     assert "Uploads" not in upload._client.list_multipart_uploads(
         Bucket=bucket, Prefix=key
+    )
+
+
+def test_size_of_creators_completed_uploads():
+    def upload_files_for_user(user, n=1):
+        for _ in range(n):
+            ul = UserUpload(creator=user)
+            ul.create_multipart_upload()
+            presigned_urls = ul.generate_presigned_urls(part_numbers=[1])
+            response = put(presigned_urls["1"], data=b"123")
+            ul.complete_multipart_upload(
+                parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+            )
+
+    u = UserFactory.build(pk=42)
+    upload = UserUpload(creator=u)
+    upload.LIST_MAX_ITEMS = 1
+    initial_upload_size = upload.size_of_creators_completed_uploads
+
+    assert type(initial_upload_size) == int
+
+    upload_files_for_user(user=u, n=upload.LIST_MAX_ITEMS + 1)
+    # another users files should not be considered
+    upload_files_for_user(user=UserFactory.build(pk=u.pk + 1))
+
+    assert (
+        upload.size_of_creators_completed_uploads
+        == initial_upload_size + (upload.LIST_MAX_ITEMS + 1) * 3
     )
