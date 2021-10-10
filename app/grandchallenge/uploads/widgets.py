@@ -8,11 +8,11 @@ class UserUploadWidgetMixin:
     class Media:
         css = {
             "all": (
-                "https://releases.transloadit.com/uppy/v2.1.1/uppy.min.css",
+                "https://releases.transloadit.com/uppy/v2.2.0/uppy.min.css",
             )
         }
         js = (
-            "https://releases.transloadit.com/uppy/v2.1.1/uppy.min.js",
+            "https://releases.transloadit.com/uppy/v2.2.0/uppy.min.js",
             "js/user_upload.js",
         )
 
