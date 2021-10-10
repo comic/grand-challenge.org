@@ -4,7 +4,7 @@
 
 <div class="row equal-height mx-n2">
     {% for object in page_obj %}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
+        <div class="col-12 col-sm-6 col-md-3 col-lg-3 mb-3 px-2">
             <div class="card gc-card">
                 <a class="stretched-link" href="{{ object.get_absolute_url }}"
                    title="View {{ object|meta_attr:'verbose_name'|title }}"></a>

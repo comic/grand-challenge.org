@@ -774,7 +774,6 @@ XRAY_RECORDER = {
     "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
     "PLUGINS": ("ECSPlugin",),
     "AWS_XRAY_TRACING_NAME": SESSION_COOKIE_DOMAIN.lstrip("."),
-    "DYNAMIC_NAMING": f"*{SESSION_COOKIE_DOMAIN}",
 }
 
 ###############################################################################
