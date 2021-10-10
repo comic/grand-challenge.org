@@ -79,7 +79,7 @@ class UserUpload(UUIDModel):
     def _client(self):
         if self.__client is None:
             self.__client = boto3.client(
-                "s3", endpoint_url=settings.UPLOADS_S3_ENDPOINT_URL
+                "s3", endpoint_url=settings.AWS_S3_ENDPOINT_URL
             )
         return self.__client
 

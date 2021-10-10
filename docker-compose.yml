@@ -19,56 +19,17 @@ services:
       retries: 5
     restart: always
 
-  minio-private:
-    # This is for private data, should not be exposed to the public
-    image: minio/minio
-    entrypoint: "/bin/sh"
-    command: >-
-      -c "
-      mkdir -p /data/grand-challenge-private/
-      && minio --compat server /data
-      "
-    restart: always
-
-  minio-protected.localhost:
-    # This is for protected data, should only be exposed via an internal link
-    # in nginx
-    image: minio/minio
-    ports:
-      - "9081:9081"
-    entrypoint: "/bin/sh"
-    command: >-
-      -c "
-      mkdir -p /data/grand-challenge-protected/
-      && minio --compat server --address :9081 /data
-      "
-    restart: always
-
-  minio-public:
-    # This is for public data and is directly exposed to the internet (in dev)
+  minio.localhost:
     image: minio/minio
     ports:
       - "9000:9000"
     entrypoint: "/bin/sh"
     command: >-
       -c "
-      mkdir -p /data/grand-challenge-public/
+      mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/
       && minio --compat server /data
       "
     restart: always
-
-  uploads.localhost:
-    image: minio/minio
-    ports:
-      - "9082:9082"
-    entrypoint: "/bin/sh"
-    command: >-
-      -c "
-      mkdir -p /data/grand-challenge-uploads/
-      && minio --compat server --address :9082 /data
-      "
-    restart: always
-
 
   web:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
@@ -77,9 +38,7 @@ services:
       <<: &minio_development_env
         AWS_ACCESS_KEY_ID: minioadmin
         AWS_SECRET_ACCESS_KEY: minioadmin
-        PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected.localhost:9081
-        PRIVATE_S3_STORAGE_ENDPOINT_URL: http://minio-private:9000
-        UPLOADS_S3_ENDPOINT_URL: http://uploads.localhost:9082
+        AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
@@ -91,13 +50,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio-private:
-        condition: service_started
-      minio-protected.localhost:
-        condition: service_started
-      minio-public:
-        condition: service_started
-      uploads.localhost:
+      minio.localhost:
         condition: service_started
       redis:
         condition: service_started
