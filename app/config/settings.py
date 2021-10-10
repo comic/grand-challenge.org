@@ -275,7 +275,7 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
 # "origin-when-cross-origin" required for jqfileupload for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
-    "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
+    "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin"
 )
 
 PERMISSIONS_POLICY = {
