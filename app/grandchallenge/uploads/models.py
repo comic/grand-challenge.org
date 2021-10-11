@@ -1,8 +1,11 @@
 import os
 
 import boto3
+from botocore.config import Config
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.datetime_safe import strftime
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
@@ -11,6 +14,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.verifications.models import Verification
 
 
 def public_media_filepath(instance, filename):
@@ -40,7 +44,7 @@ class SummernoteAttachment(AbstractAttachment):
 
 
 class UserUpload(UUIDModel):
-    LIST_MAX_PARTS = 1000
+    LIST_MAX_ITEMS = 1000
 
     class StatusChoices(models.IntegerChoices):
         PENDING = 0, "Pending"
@@ -78,8 +82,13 @@ class UserUpload(UUIDModel):
     @property
     def _client(self):
         if self.__client is None:
+            config = Config(
+                s3={
+                    "use_accelerate_endpoint": settings.UPLOADS_S3_USE_ACCELERATE_ENDPOINT
+                }
+            )
             self.__client = boto3.client(
-                "s3", endpoint_url=settings.AWS_S3_ENDPOINT_URL
+                "s3", config=config, endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             )
         return self.__client
 
@@ -89,7 +98,83 @@ class UserUpload(UUIDModel):
 
     @property
     def key(self):
-        return f"uploads/{self.creator.pk}/{self.pk}"
+        # There are several assumptions about the structure of this key
+        # elsewhere in the codebase and in clients code
+        # First for grouping by the user
+        # Second for where the UserUpload pk appears in the key
+        # Change with extreme caution
+        return f"{self.creators_key_prefix}{self.pk}"
+
+    @property
+    def creators_key_prefix(self):
+        # Prefix to objects that the user has uploaded
+        # Do not change this
+        return f"uploads/{self.creator.pk}/"
+
+    @property
+    def can_upload_more(self):
+        if self.status != self.StatusChoices.INITIALIZED:
+            return False
+
+        creator_is_verified = Verification.objects.filter(
+            user=self.creator, is_verified=True
+        ).exists()
+
+        if creator_is_verified:
+            upload_limit = settings.UPLOADS_MAX_SIZE_VERIFIED
+        else:
+            upload_limit = settings.UPLOADS_MAX_SIZE_UNVERIFIED
+
+        uploaded_size = self.size + self.size_of_creators_completed_uploads
+
+        return uploaded_size < upload_limit
+
+    @property
+    def size(self):
+        if self.status == self.StatusChoices.INITIALIZED:
+            return self.pending_size
+        elif self.status == self.StatusChoices.COMPLETED:
+            return self.completed_size
+        else:
+            return 0
+
+    @property
+    def pending_size(self):
+        return sum(p["Size"] for p in self.list_parts())
+
+    @property
+    def completed_size(self):
+        if self.status != self.StatusChoices.COMPLETED:
+            raise RuntimeError("Upload is not completed")
+
+        return self._client.head_object(Bucket=self.bucket, Key=self.key)[
+            "ContentLength"
+        ]
+
+    @property
+    def size_of_creators_completed_uploads(self):
+        return sum(u["Size"] for u in self.get_creators_completed_uploads())
+
+    def get_creators_completed_uploads(self, continuation_token=None):
+        kwargs = {
+            "Bucket": self.bucket,
+            "Prefix": self.creators_key_prefix,
+            "MaxKeys": self.LIST_MAX_ITEMS,
+        }
+
+        if continuation_token is not None:
+            kwargs["ContinuationToken"] = continuation_token
+
+        response = self._client.list_objects_v2(**kwargs)
+
+        objects = response.get("Contents", [])
+
+        if response["IsTruncated"]:
+            objects += self.get_creators_completed_uploads(
+                continuation_token=response["NextContinuationToken"]
+            )
+
+        return objects
 
     def assign_permissions(self):
         assign_perm("view_userupload", self.creator, self)
@@ -135,7 +220,7 @@ class UserUpload(UUIDModel):
             Bucket=self.bucket,
             Key=self.key,
             UploadId=self.s3_upload_id,
-            MaxParts=self.LIST_MAX_PARTS,
+            MaxParts=self.LIST_MAX_ITEMS,
             PartNumberMarker=part_number_marker,
         )
 
@@ -169,3 +254,24 @@ class UserUpload(UUIDModel):
         )
         self.s3_upload_id = ""
         self.status = self.StatusChoices.ABORTED
+
+    def delete_object(self):
+        if self.status != self.StatusChoices.COMPLETED:
+            raise RuntimeError("Upload is not completed")
+
+        self._client.delete_object(Bucket=self.bucket, Key=self.key)
+        self.status = self.StatusChoices.ABORTED
+
+
+@receiver(post_delete, sender=UserUpload)
+def delete_objects_hook(*_, instance: UserUpload, **__):
+    """
+    Deletes the objects from storage.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
+    """
+    if instance.status == UserUpload.StatusChoices.COMPLETED:
+        instance.delete_object()
+    elif instance.status == UserUpload.StatusChoices.INITIALIZED:
+        instance.abort_multipart_upload()

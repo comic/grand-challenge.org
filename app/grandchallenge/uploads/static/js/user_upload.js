@@ -1,7 +1,7 @@
 "use strict";
 
-(function () {
-    document.addEventListener("DOMContentLoaded", function (event) {
+{
+    document.addEventListener("DOMContentLoaded", () => {
         const widgets = document.getElementsByClassName("user-upload");
         for (const widget of widgets) {
             initializeWidget(widget)
@@ -15,27 +15,28 @@
 
         let uppy = new Uppy.Core({
             id: `${window.location.pathname}-${inputId}`,
-            autoProceed: true
+            autoProceed: true,
         });
 
         uppy.use(Uppy.DragDrop, {
-            target: `#${inputId}-drag-drop`
+            target: `#${inputId}-drag-drop`,
         });
 
-        uppy.use(Uppy.ProgressBar, {
+        uppy.use(Uppy.StatusBar, {
             target: `#${inputId}-progress`,
-            hideAfterFinish: false
+            showProgressDetails: true,
+            hideAfterFinish: false,
+            hideCancelButton: true,
+            hidePauseResumeButton: true,
         });
 
         uppy.use(Uppy.AwsS3Multipart, {
-            getChunkSize: (file) => {
-                return 20 * 1024 * 1024
-            },
+            getChunkSize: () => 20 * 1024 * 1024,
             createMultipartUpload: createMultipartUpload,
             listParts: listParts,
             prepareUploadParts: prepareUploadParts,
             abortMultipartUpload: abortMultipartUpload,
-            completeMultipartUpload: completeMultipartUpload
+            completeMultipartUpload: completeMultipartUpload,
         });
 
         uppy.on("upload-success", (file, response) => {
@@ -78,7 +79,7 @@
     function getPOSTParams() {
         return {
             uploadListView: JSON.parse(document.getElementById("uploadListView").textContent),
-            csrfToken: getCookie("_csrftoken")
+            csrfToken: getCookie("_csrftoken"),
         };
     }
 
@@ -92,19 +93,15 @@
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": postParams.csrfToken
+                    "X-CSRFToken": postParams.csrfToken,
                 },
-                body: JSON.stringify({
-                    "filename": file.name
-                })
+                body: JSON.stringify({"filename": file.name})
             }
         ).then(response => response.json()
-        ).then(upload => {
-            return {
-                uploadId: upload.s3_upload_id,
-                key: upload.key
-            }
-        })
+        ).then(upload => ({
+            uploadId: upload.s3_upload_id,
+            key: upload.key,
+        }))
     }
 
     function listParts(file, {uploadId, key}) {
@@ -118,14 +115,14 @@
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": postParams.csrfToken
+                    "X-CSRFToken": postParams.csrfToken,
                 }
             }
         ).then(response => response.json()
-        ).then(upload => {
-            return upload.parts
-        })
+        ).then(upload => upload.parts)
     }
+
+    class FetchError extends Error {}
 
     function prepareUploadParts(file, {uploadId, key, partNumbers}) {
         const postParams = getPOSTParams();
@@ -138,18 +135,33 @@
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": postParams.csrfToken
+                    "X-CSRFToken": postParams.csrfToken,
                 },
                 body: JSON.stringify({
-                    "part_numbers": partNumbers
+                    "part_numbers": partNumbers,
                 })
             }
-        ).then(response => response.json()
-        ).then(upload => {
-            return {
-                presignedUrls: upload.presigned_urls
+        ).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                if (response.status === 403) {
+                    response.json().then(err => window.alert(err.detail));
+                }
+                throw new FetchError(response.status.toString());
             }
-        })
+        }).then(upload => ({presignedUrls: upload.presigned_urls})
+        ).catch(e => {
+            console.error(e);
+            if (e instanceof FetchError || e.name === "TypeError") {
+                // Catches FetchError defined above or TypeError (= network error thrown
+                // by fetch) and makes uppy retry. Will not catch SyntaxError caused by
+                // invalid JSON.
+                const status = e instanceof FetchError ? parseInt(e.message) : 0;
+                return Promise.reject({ source: { status: status } });
+            }
+            throw e;
+        });
     }
 
     function abortMultipartUpload(file, {uploadId, key}) {
@@ -163,7 +175,7 @@
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": postParams.csrfToken
+                    "X-CSRFToken": postParams.csrfToken,
                 },
             }
         )
@@ -180,12 +192,10 @@
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": postParams.csrfToken
+                    "X-CSRFToken": postParams.csrfToken,
                 },
-                body: JSON.stringify({
-                    "parts": parts
-                })
+                body: JSON.stringify({"parts": parts})
             }
         )
     }
-})();
+}

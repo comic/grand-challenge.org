@@ -262,3 +262,24 @@ def test_upload_id_checks(client, action):
         user=u,
     )
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_prepare_upload_parts_limit_reached(client, settings):
+    # https://uppy.io/docs/aws-s3-multipart/#prepareUploadParts-file-partData
+    u = UserFactory()
+    upload = UserUpload.objects.create(creator=u)
+    settings.UPLOADS_MAX_SIZE_UNVERIFIED = 0
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:upload-generate-presigned-urls",
+        reverse_kwargs={"pk": upload.pk, "s3_upload_id": upload.s3_upload_id},
+        method=client.patch,
+        data={"part_numbers": [35, 42, 128]},
+        content_type="application/json",
+        user=u,
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Upload limit reached"

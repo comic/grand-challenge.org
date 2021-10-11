@@ -180,6 +180,15 @@ PUBLIC_S3_STORAGE_KWARGS = {
 UPLOADS_S3_BUCKET_NAME = os.environ.get(
     "UPLOADS_S3_BUCKET_NAME", "grand-challenge-uploads"
 )
+UPLOADS_S3_USE_ACCELERATE_ENDPOINT = strtobool(
+    os.environ.get("UPLOADS_S3_USE_ACCELERATE_ENDPOINT", "False")
+)
+UPLOADS_MAX_SIZE_UNVERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_UNVERIFIED", 2 * 1024 * 1024 * 1024)
+)
+UPLOADS_MAX_SIZE_VERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_VERIFIED", 128 * 1024 * 1024 * 1024)
+)
 
 # Key pair used for signing CloudFront URLS, only used if
 # PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
@@ -262,9 +271,9 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
-# "origin-when-cross-origin" required for jqfileupload for cross domain POSTs
+# "strict-origin-when-cross-origin" required for uploads for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
-    "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
+    "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin"
 )
 
 PERMISSIONS_POLICY = {
