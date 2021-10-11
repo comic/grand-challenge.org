@@ -2,6 +2,7 @@
 
 {% url "api:upload-list" as upload_list_view %}
 {{ upload_list_view|json_script:"uploadListView" }}
+{{ widget.allowed_file_types.value|json_script:widget.allowed_file_types.id }}
 
 <div class="user-upload"
      data-input-id="{{ widget.attrs.id }}"

@@ -10,10 +10,17 @@ from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 class ContainerImageForm(SaveFormInitMixin, ModelForm):
     user_upload = ModelChoiceField(
-        widget=UserUploadSingleWidget(),
+        widget=UserUploadSingleWidget(
+            allowed_file_types=[
+                "application/x-tar",
+                "application/x-gzip",
+                "application/gzip",
+                "application/x-xz",
+                "application/octet-stream",
+            ]
+        ),
         label="Container Image",
         queryset=None,
-        # TODO set validators
         help_text=(
             ".tar.xz archive of the container image produced from the command "
             "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
