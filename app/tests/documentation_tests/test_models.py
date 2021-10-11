@@ -1,6 +1,5 @@
 import pytest
 
-from grandchallenge.documentation.models import DocPage
 from tests.documentation_tests.factories import DocPageFactory
 
 
@@ -15,12 +14,7 @@ def test_last_added_page_last_in_order():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "move_op,expected",
-    [
-        (DocPage.UP, [2, 1, 3, 4]),
-        (DocPage.DOWN, [1, 3, 2, 4]),
-        (DocPage.FIRST, [2, 1, 3, 4]),
-        (DocPage.LAST, [1, 4, 2, 3]),
-    ],
+    [(1, [2, 1, 3, 4]), (3, [1, 3, 2, 4]), (4, [1, 4, 2, 3])],
 )
 def test_page_move(move_op, expected):
     p1, p2, p3, p4 = (
@@ -33,12 +27,41 @@ def test_page_move(move_op, expected):
     assert [p1.order, p2.order, p3.order, p4.order] == [1, 2, 3, 4]
 
     # move second page
-    p2.move(move_op)
+    p2.position(move_op)
 
     for p in [p1, p2, p3, p4]:
         p.refresh_from_db()
 
     assert [p.order for p in [p1, p2, p3, p4]] == expected
+
+
+@pytest.mark.django_db
+def test_child_page_position_on_save():
+    p1 = DocPageFactory(parent=None)
+    p2 = DocPageFactory(parent=None)
+    assert [p1.order, p2.order] == [1, 2]
+
+    # add a child to p1
+    p1a = DocPageFactory(parent=p1)
+    assert p1a.order == 2
+    p2.refresh_from_db()
+    assert p2.order == 3
+
+    # add a child to p1a
+    p1a_sub = DocPageFactory(parent=p1a)
+    assert p1a_sub.order == 3
+    p2.refresh_from_db()
+    assert p2.order == 4
+
+    # add another toplevel page
+    p3 = DocPageFactory()
+    assert [p1.order, p1a.order, p1a_sub.order, p2.order, p3.order] == [
+        1,
+        2,
+        3,
+        4,
+        5,
+    ]
 
 
 @pytest.mark.django_db

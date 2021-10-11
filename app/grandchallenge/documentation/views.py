@@ -51,7 +51,7 @@ class DocPageUpdate(
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        self.object.move(form.cleaned_data["move"])
+        self.object.position(form.cleaned_data["position"])
         return response
 
 

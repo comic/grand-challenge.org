@@ -28,7 +28,7 @@
 
 {% block sidebar %}
     <div class="col-lg-4 col-md-4">
-        <nav class="sidebar documentation p-3 sticky-top">
+        <nav class="documentation-sidebar p-3 sticky-top">
             <ul class="nav flex-column" id="documentation_nav_accordion">
                 {% for page in top_level_pages %}
                     {% get_grandchildren page as grandchildren %}
@@ -91,11 +91,11 @@
     {% if 'documentation.change_docpage' in perms %}
         <div class="row mt-3">
             <div class="col-6 d-inline-block text-left">
-                <a class="btn btn-md btn-dark" href="{% url 'documentation:list' %}">Page overview</a>
-                <a class="btn btn-md btn-dark" href="{% url 'documentation:create' %}">Add page</a>
+                <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:list' %}">Page overview</a>
+                <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:create' %}">Add page</a>
             </div>
             <div class="col-6 d-inline-block text-right">
-                <a class="btn btn-md btn-dark" href="{% url 'documentation:update' slug=currentdocpage.slug %}">Edit current page</a>
+                <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:update' slug=currentdocpage.slug %}">Edit current page</a>
             </div>
         </div>
     {% endif %}
