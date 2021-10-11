@@ -66,6 +66,7 @@ def wait_for_build_completion(*, build_pk, retries=0):
                 signature_kwargs={"kwargs": {"build_pk": build_pk}},
                 retries=retries,
             )
+            return
         else:
             build.refresh_logs()
             build.save()
