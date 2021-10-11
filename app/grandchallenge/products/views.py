@@ -2,7 +2,9 @@ from functools import reduce
 from operator import or_
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
+from django.db.transaction import on_commit
 from django.shortcuts import reverse
 from django.views.generic import CreateView, DetailView, ListView, TemplateView
 from django.views.generic.edit import FormView
@@ -24,7 +26,7 @@ from grandchallenge.products.models import (
     ProjectAirFiles,
     Status,
 )
-from grandchallenge.products.utils import DataImporter
+from grandchallenge.products.tasks import import_product_data
 
 
 class ProductList(ListView):
@@ -238,11 +240,14 @@ class ProjectAirForm(PermissionRequiredMixin, CreateView):
         return reverse("products:project-air")
 
 
-class ImportDataView(PermissionRequiredMixin, FormView):
+class ImportDataView(PermissionRequiredMixin, SuccessMessageMixin, FormView):
     template_name = "products/import_data.html"
     form_class = ImportForm
     permission_required = (
         f"{Product._meta.app_label}.add_{Product._meta.model_name}"
+    )
+    success_message = (
+        "Upload successful, import will now happen asynchronously"
     )
 
     def get_form_kwargs(self):
@@ -254,13 +259,21 @@ class ImportDataView(PermissionRequiredMixin, FormView):
         response = super().form_valid(*args, **kwargs)
         form = self.get_form()
         if form.is_valid():
-            di = DataImporter()
-            with form.cleaned_data["images_zip"][0].open() as images_zip:
-                di.import_data(
-                    product_data=form.cleaned_data["products_file"],
-                    company_data=form.cleaned_data["companies_file"],
-                    images_zip=images_zip,
-                )
+            on_commit(
+                import_product_data.signature(
+                    kwargs={
+                        "product_data_pk": str(
+                            form.cleaned_data["products_file"].pk
+                        ),
+                        "company_data_pk": str(
+                            form.cleaned_data["companies_file"].pk
+                        ),
+                        "images_zip_pk": str(
+                            form.cleaned_data["images_zip"].pk
+                        ),
+                    }
+                ).apply_async
+            )
         return response
 
     def get_success_url(self):
