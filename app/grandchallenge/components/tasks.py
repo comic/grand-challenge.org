@@ -14,7 +14,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import OperationalError
+from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
@@ -44,12 +44,18 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     if not instance.image:
         if instance.user_upload:
-            raise NotImplementedError
+            with transaction.atomic():
+                instance.user_upload.copy_object(to_field=instance.image)
+                instance.user_upload.delete()
+                # Another validation job will be launched to validate this
+                return
         elif instance.staged_image_uuid:
             # Create the image from the staged file
             uploaded_image = StagedAjaxFile(instance.staged_image_uuid)
             with uploaded_image.open() as f:
                 instance.image.save(uploaded_image.name, File(f))
+            # Another validation job will be launched to validate this
+            return
         else:
             # No image to validate
             return

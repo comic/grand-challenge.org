@@ -266,10 +266,12 @@ class UserUpload(UUIDModel):
 
         target_client = to_field.storage.connection.meta.client
         target_bucket = to_field.storage.bucket.name
-        target_key = to_field.field.upload_to(
+        target_key = to_field.field.generate_filename(
             instance=to_field.instance, filename=self.filename
         )
-        target_key = to_field.storage.get_available_name(name=target_key)
+        target_key = to_field.storage.get_available_name(
+            name=target_key, max_length=to_field.field.max_length
+        )
 
         target_client.copy(
             CopySource={"Bucket": self.bucket, "Key": self.key},
