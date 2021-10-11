@@ -3,6 +3,7 @@ from django.conf import settings
 from requests import put
 
 from grandchallenge.uploads.models import UserUpload
+from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.factories import UserFactory
 from tests.verification_tests.factories import VerificationFactory
 
@@ -120,6 +121,32 @@ def test_list_parts_truncation():
     assert parts[1]["ETag"] == responses["2"].headers["ETag"]
     assert parts[1]["Size"] == 3
     assert parts[1]["PartNumber"] == 2
+
+
+@pytest.mark.django_db
+def test_upload_copy():
+    user = UserFactory()
+    upload = UserUpload.objects.create(creator=user, filename="test.tar.gz")
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b"123")
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+    ai = AlgorithmImageFactory(creator=user, image=None)
+
+    assert not ai.image
+
+    upload.copy_object(to_field=ai.image)
+
+    assert (
+        ai.image.name
+        == f"docker/images/algorithms/algorithmimage/{ai.pk}/test.tar.gz"
+    )
+    assert ai.image.storage.exists(name=ai.image.name)
+
+    with ai.image.open() as f:
+        assert f.read() == b"123"
 
 
 @pytest.mark.django_db
