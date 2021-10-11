@@ -19,7 +19,7 @@ from grandchallenge.serving.tasks import create_download
 
 def protected_storage_redirect(*, name):
     # Get the storage with the internal redirect and auth. This will prepend
-    # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
+    # settings.AWS_S3_ENDPOINT_URL to the url
     if not internal_protected_s3_storage.exists(name=name):
         raise Http404("File not found.")
 

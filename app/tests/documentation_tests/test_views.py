@@ -80,11 +80,7 @@ def test_docpage_update(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": p2.slug},
-        data={
-            "title": p2.title,
-            "content": new_content,
-            "move": DocPage.FIRST,
-        },
+        data={"title": p2.title, "content": new_content, "position": 1},
         user=u1,
     )
 

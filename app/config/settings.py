@@ -139,6 +139,7 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
+AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", None)
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_SES_REGION_ENDPOINT = f"email.{AWS_DEFAULT_REGION}.amazonaws.com"
 
@@ -147,14 +148,12 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
-    "endpoint_url": os.environ.get("PRIVATE_S3_STORAGE_ENDPOINT_URL", None),
 }
 
 PROTECTED_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
     ),
-    "endpoint_url": os.environ.get("PROTECTED_S3_STORAGE_ENDPOINT_URL", None),
     # This is the domain where people will be able to go to download data
     # from this bucket. Usually we would use reverse to find this out,
     # but this needs to be defined before the database is populated
@@ -181,7 +180,6 @@ PUBLIC_S3_STORAGE_KWARGS = {
 UPLOADS_S3_BUCKET_NAME = os.environ.get(
     "UPLOADS_S3_BUCKET_NAME", "grand-challenge-uploads"
 )
-UPLOADS_S3_ENDPOINT_URL = os.environ.get("UPLOADS_S3_ENDPOINT_URL")
 UPLOADS_S3_USE_ACCELERATE_ENDPOINT = strtobool(
     os.environ.get("UPLOADS_S3_USE_ACCELERATE_ENDPOINT", "False")
 )
@@ -1166,13 +1164,7 @@ if DEBUG:
 
     LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
 
-    PUBLIC_S3_STORAGE_KWARGS.update(
-        {
-            "custom_domain": f"localhost:9000/{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}",
-            "secure_urls": False,
-            "endpoint_url": "http://minio-public:9000",
-        }
-    )
+    PUBLIC_S3_STORAGE_KWARGS.update({"secure_urls": False})
     DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
     DEMO_ALGORITHM_SHA256 = "sha256:5e81cef3738b7dbffc12c101990eb3b97f17642c09a2e0b64d5b3d4dd144e79b"
 

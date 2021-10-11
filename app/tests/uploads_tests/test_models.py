@@ -56,13 +56,13 @@ def test_generate_presigned_urls():
 
     assert set(presigned_urls.keys()) == {"1", "13", "26"}
     assert presigned_urls["1"].startswith(
-        f"{settings.UPLOADS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=1&"
+        f"{settings.AWS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=1&"
     )
     assert presigned_urls["13"].startswith(
-        f"{settings.UPLOADS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=13&"
+        f"{settings.AWS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=13&"
     )
     assert presigned_urls["26"].startswith(
-        f"{settings.UPLOADS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=26&"
+        f"{settings.AWS_S3_ENDPOINT_URL}/{upload.bucket}/{upload.key}?uploadId={upload.s3_upload_id}&partNumber=26&"
     )
 
 
