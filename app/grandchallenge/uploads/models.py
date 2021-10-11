@@ -4,12 +4,9 @@ import boto3
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
-<<<<<<< HEAD
+from django.db.models.fields.files import FieldFile
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-=======
-from django.db.models.fields.files import FieldFile
->>>>>>> e836305e... Add method to copy objects
 from django.utils.datetime_safe import strftime
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
