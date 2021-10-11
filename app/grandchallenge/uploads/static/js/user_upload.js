@@ -59,8 +59,14 @@
                 widget.appendChild(input);
             }
 
+            let newIcon = document.createElement("i");
+            newIcon.classList.add("fas","fa-check","fa-fw","text-success");
+            newIcon.setAttribute("title", "File Successfully Uploaded");
+
             let newFile = document.createElement("li");
-            newFile.textContent = `${uploadedPK} (${file.name})`;
+            newFile.classList.add("list-group-item");
+            newFile.appendChild(newIcon);
+            newFile.insertAdjacentText( "beforeend",` ${uploadedPK} (${file.name})`);
             fileList.prepend(newFile);
         });
     }
