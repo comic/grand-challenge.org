@@ -122,6 +122,8 @@
         ).then(upload => upload.parts)
     }
 
+    class FetchError extends Error {}
+
     function prepareUploadParts(file, {uploadId, key, partNumbers}) {
         const postParams = getPOSTParams();
         const uploadPK = key.split("/")[2];
@@ -146,10 +148,20 @@
                 if (response.status === 403) {
                     response.json().then(err => window.alert(err.detail));
                 }
-                throw new Error(response.status);
+                throw new FetchError(response.status.toString());
             }
         }).then(upload => ({presignedUrls: upload.presigned_urls})
-        ).catch((e) => Promise.reject({source: {status: parseInt(e.message)}}));
+        ).catch(e => {
+            console.error(e);
+            if (e instanceof FetchError || e.name === "TypeError") {
+                // Catches FetchError defined above or TypeError (= network error thrown
+                // by fetch) and makes uppy retry. Will not catch SyntaxError caused by
+                // invalid JSON.
+                const status = e instanceof FetchError ? parseInt(e.message) : 0;
+                return Promise.reject({ source: { status: status } });
+            }
+            throw e;
+        });
     }
 
     function abortMultipartUpload(file, {uploadId, key}) {
