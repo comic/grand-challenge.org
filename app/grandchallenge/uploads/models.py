@@ -88,9 +88,7 @@ class UserUpload(UUIDModel):
                 }
             )
             self.__client = boto3.client(
-                "s3",
-                config=config,
-                endpoint_url=settings.UPLOADS_S3_ENDPOINT_URL,
+                "s3", config=config, endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             )
         return self.__client
 
