@@ -1,17 +1,14 @@
 from crispy_forms.helper import FormHelper
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.forms import (
     ChoiceField,
     HiddenInput,
     ModelChoiceField,
     ModelForm,
 )
-from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstations.models import (
     Session,
     Workstation,
@@ -25,33 +22,11 @@ class WorkstationForm(SaveFormInitMixin, ModelForm):
         fields = ("title", "logo", "description", "public")
 
 
-class WorkstationImageForm(SaveFormInitMixin, ModelForm):
-    user_upload = ModelChoiceField(
-        widget=UserUploadSingleWidget(),
-        label="Workstation Container Image",
-        queryset=UserUpload.objects.none(),
-        # TODO set validators
-        help_text=(
-            ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
-            "https://docs.docker.com/engine/reference/commandline/save/"
-        ),
-    )
-    creator = ModelChoiceField(
-        widget=HiddenInput(), queryset=get_user_model().objects.all(),
-    )
-    workstation = ModelChoiceField(
-        widget=HiddenInput(), queryset=Workstation.objects.none(),
-    )
+class WorkstationImageForm(ContainerImageForm):
+    workstation = ModelChoiceField(widget=HiddenInput(), queryset=None)
 
-    def __init__(self, *args, user, workstation, **kwargs):
+    def __init__(self, *args, workstation, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user, "change_userupload", UserUpload
-        )
-
-        self.fields["creator"].initial = user
 
         self.fields["workstation"].queryset = Workstation.objects.filter(
             pk=workstation.pk
@@ -64,9 +39,8 @@ class WorkstationImageForm(SaveFormInitMixin, ModelForm):
             "initial_path",
             "http_port",
             "websocket_port",
-            "user_upload",
-            "creator",
             "workstation",
+            *ContainerImageForm.Meta.fields,
         )
 
 

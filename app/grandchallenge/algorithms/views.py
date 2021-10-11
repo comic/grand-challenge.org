@@ -4,15 +4,10 @@ from typing import Dict
 
 import requests
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
-    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
@@ -90,29 +85,13 @@ from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
-
-
-class VerificationRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        try:
-            verified = self.request.user.verification.is_verified
-        except ObjectDoesNotExist:
-            verified = False
-
-        if not verified:
-            messages.error(
-                self.request,
-                "You need to verify your account before you can do this, "
-                "you can request this from your profile page.",
-            )
-
-        return verified
 
 
 class AlgorithmCreate(

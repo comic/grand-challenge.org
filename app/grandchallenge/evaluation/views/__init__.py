@@ -24,6 +24,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
@@ -41,6 +42,7 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.evaluation.serializers import EvaluationSerializer
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
+from grandchallenge.verifications.views import VerificationRequiredMixin
 
 
 class PhaseCreate(
@@ -102,7 +104,11 @@ class PhaseUpdate(
 
 
 class MethodCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = Method
     form_class = MethodForm
@@ -115,9 +121,7 @@ class MethodCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {"user": self.request.user, "challenge": self.request.challenge}
-        )
+        kwargs.update({"challenge": self.request.challenge})
         return kwargs
 
 

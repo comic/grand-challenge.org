@@ -1,5 +1,4 @@
 from crispy_forms.helper import FormHelper
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
@@ -13,7 +12,6 @@ from django.forms import (
 )
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -22,6 +20,7 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
@@ -35,8 +34,6 @@ from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.subdomains.utils import reverse_lazy
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
@@ -174,38 +171,16 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         return cleaned_data
 
 
-class AlgorithmImageForm(SaveFormInitMixin, ModelForm):
-    user_upload = ModelChoiceField(
-        widget=UserUploadSingleWidget(),
-        label="Algorithm Container Image",
-        queryset=UserUpload.objects.none(),
-        # TODO set validators
-        help_text=(
-            ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
-            "https://docs.docker.com/engine/reference/commandline/save/"
-        ),
-    )
+class AlgorithmImageForm(ContainerImageForm):
     requires_memory_gb = IntegerField(
         min_value=1,
         max_value=30,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
-    creator = ModelChoiceField(
-        widget=HiddenInput(), queryset=get_user_model().objects.all(),
-    )
-    algorithm = ModelChoiceField(
-        widget=HiddenInput(), queryset=Algorithm.objects.none(),
-    )
+    algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
 
-    def __init__(self, *args, user, algorithm, **kwargs):
+    def __init__(self, *args, algorithm, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user, "change_userupload", UserUpload
-        )
-
-        self.fields["creator"].initial = user
 
         self.fields["algorithm"].queryset = Algorithm.objects.filter(
             pk=algorithm.pk
@@ -217,14 +192,13 @@ class AlgorithmImageForm(SaveFormInitMixin, ModelForm):
             "requires_memory_gb"
         ].initial = algorithm.image_requires_memory_gb
 
-    class Meta:
+    class Meta(ContainerImageForm.Meta):
         model = AlgorithmImage
         fields = (
             "requires_gpu",
             "requires_memory_gb",
-            "user_upload",
-            "creator",
             "algorithm",
+            *ContainerImageForm.Meta.fields,
         )
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {

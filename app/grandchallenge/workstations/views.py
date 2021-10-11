@@ -27,8 +27,10 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 from ua_parser.user_agent_parser import ParseUserAgent
 
+from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
+from grandchallenge.verifications.views import VerificationRequiredMixin
 from grandchallenge.workstations.forms import (
     SessionForm,
     WorkstationForm,
@@ -162,7 +164,11 @@ class WorkstationUsersUpdate(WorkstationGroupUpdateMixin):
 
 
 class WorkstationImageCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = WorkstationImage
     form_class = WorkstationImageForm
@@ -178,12 +184,10 @@ class WorkstationImageCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {"user": self.request.user, "workstation": self.workstation}
-        )
+        kwargs.update({"workstation": self.workstation})
         return kwargs
 
-    @property
+    @cached_property
     def workstation(self):
         return get_object_or_404(Workstation, slug=self.kwargs["slug"])
 

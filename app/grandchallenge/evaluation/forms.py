@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
-from django.forms import HiddenInput, ModelChoiceField
+from django.forms import ModelChoiceField
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2Widget
@@ -15,6 +15,7 @@ from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
@@ -31,8 +32,6 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 phase_options = ("title",)
 
@@ -134,40 +133,20 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
         }
 
 
-class MethodForm(SaveFormInitMixin, forms.ModelForm):
+class MethodForm(ContainerImageForm):
     phase = ModelChoiceField(
         queryset=None,
         help_text="Which phase is this evaluation container for?",
     )
-    user_upload = ModelChoiceField(
-        widget=UserUploadSingleWidget(),
-        label="Evaluation Method Container Image",
-        queryset=UserUpload.objects.none(),
-        # TODO set validators
-        help_text=(
-            ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
-            "https://docs.docker.com/engine/reference/commandline/save/"
-        ),
-    )
-    creator = ModelChoiceField(
-        widget=HiddenInput(), queryset=get_user_model().objects.all(),
-    )
 
-    def __init__(self, *args, user, challenge, **kwargs):
+    def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["phase"].queryset = challenge.phase_set.all()
 
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user, "change_userupload", UserUpload
-        )
-
-        self.fields["creator"].initial = user
-
     class Meta:
         model = Method
-        fields = ["phase", "user_upload", "creator"]
+        fields = ("phase", *ContainerImageForm.Meta.fields)
 
 
 submission_fields = (
