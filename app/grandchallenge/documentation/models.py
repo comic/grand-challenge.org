@@ -76,16 +76,16 @@ class DocPage(models.Model):
         self.content = clean(self.content)
         super().save(*args, **kwargs)
 
-    def move(self, move):
-        if move:
-            direction = "up" if self.order > move else "down"
+    def position(self, position):
+        if position:
+            direction = "up" if self.order > position else "down"
             original_pos = self.order
-            self.order = move
+            self.order = position
             self.save()
             if direction == "up":
                 pages = (
                     DocPage.objects.exclude(slug=self.slug)
-                    .filter(order__gt=move - 1)
+                    .filter(order__gt=position - 1)
                     .all()
                 )
                 for page in pages:
@@ -93,7 +93,7 @@ class DocPage(models.Model):
             else:
                 pages = (
                     DocPage.objects.exclude(slug=self.slug)
-                    .filter(order__lt=move + 1, order__gt=original_pos)
+                    .filter(order__lt=position + 1, order__gt=original_pos)
                     .all()
                 )
                 for page in pages:

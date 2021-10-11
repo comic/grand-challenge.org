@@ -25,6 +25,6 @@ class DocPageCreateForm(forms.ModelForm):
 class DocPageUpdateForm(DocPageCreateForm):
     """Like the create form but you can also move the page."""
 
-    move = forms.IntegerField()
-    move.label = "Move to index position"
-    move.required = False
+    position = forms.IntegerField()
+    position.label = "Move to index position"
+    position.required = False

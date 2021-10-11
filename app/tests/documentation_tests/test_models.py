@@ -27,7 +27,7 @@ def test_page_move(move_op, expected):
     assert [p1.order, p2.order, p3.order, p4.order] == [1, 2, 3, 4]
 
     # move second page
-    p2.move(move_op)
+    p2.position(move_op)
 
     for p in [p1, p2, p3, p4]:
         p.refresh_from_db()
