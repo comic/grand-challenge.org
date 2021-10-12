@@ -68,6 +68,10 @@ class RawImageUploadSession(UUIDModel):
         choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
 
+    import_result = models.JSONField(
+        blank=True, null=True, default=None, editable=False
+    )
+
     error_message = models.TextField(blank=False, null=True, default=None)
 
     def __str__(self):

@@ -2,7 +2,6 @@ import os
 import tarfile
 import zipfile
 from dataclasses import asdict, dataclass
-from datetime import timedelta
 from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -20,13 +19,11 @@ from typing import (
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
 from django.db.transaction import on_commit
 from django.template.defaultfilters import pluralize
-from django.utils import timezone
 from panimg import convert
 from panimg.models import PanImgResult
 
@@ -54,8 +51,7 @@ def _populate_tmp_dir(tmp_dir, upload_session):
         saf = StagedAjaxFile(duplicate.staged_file_id)
         duplicate.staged_file_id = None
         on_commit(saf.delete)
-        duplicate.consumed = False
-        duplicate.save()
+        duplicate.delete()
 
     populate_provisioning_directory(session_files, tmp_dir)
     extract_files(tmp_dir)
@@ -345,7 +341,6 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     )
 
     _handle_raw_files(
-        input_files=input_files,
         consumed_files=importer_result.consumed_files,
         file_errors=importer_result.file_errors,
         filepath_lookup=filepath_lookup,
@@ -484,34 +479,27 @@ def _store_images(
 
 def _handle_raw_files(
     *,
-    input_files: Set[Path],
     consumed_files: Set[Path],
     filepath_lookup: Dict[str, RawImageFile],
     file_errors: Dict[Path, List[str]],
     upload_session: RawImageUploadSession,
 ):
-    unconsumed_files = input_files - consumed_files
+    upload_session.import_result = {
+        "consumed_files": [
+            filepath_lookup[str(f)].filename for f in consumed_files
+        ],
+        "file_errors": {
+            filepath_lookup[str(k)].filename: v
+            for k, v in file_errors.items()
+            if k not in consumed_files
+        },
+    }
 
-    n_errors = 0
+    if upload_session.import_result["file_errors"]:
+        n_errors = len(upload_session.import_result["file_errors"])
 
-    for filepath in consumed_files:
-        raw_image = filepath_lookup[str(filepath)]
-        raw_image.error = None
-        raw_image.consumed = True
-        raw_image.save()
-
-    for filepath in unconsumed_files:
-        raw_file = filepath_lookup[str(filepath)]
-        error = "\n".join(file_errors[filepath])
-        raw_file.error = (
-            f"File could not be processed by any image builder:\n\n{error}"
-        )
-        n_errors += 1
-        raw_file.save()
-
-    if unconsumed_files:
         upload_session.error_message = (
-            f"{len(unconsumed_files)} file(s) could not be imported"
+            f"{n_errors} file{pluralize(n_errors)} could not be imported"
         )
 
         if upload_session.creator:
@@ -523,27 +511,12 @@ def _handle_raw_files(
 
 
 def _delete_session_files(*, session_files):
-    dicom_group = Group.objects.get(
-        name=settings.DICOM_DATA_CREATORS_GROUP_NAME
-    )
-    users = dicom_group.user_set.values_list("username", flat=True)
     for file in session_files:
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
-
-                if (
-                    not file.consumed
-                    and Path(file.filename).suffix == ".dcm"
-                    and getattr(file.creator, "username", None) in users
-                ):
-                    saf.staged_files.update(
-                        timeout=timezone.now() + timedelta(days=90)
-                    )
-                    continue
-
-                file.staged_file_id = None
                 on_commit(saf.delete)
-            file.save()
         except NotFoundError:
             pass
+
+        file.delete()
