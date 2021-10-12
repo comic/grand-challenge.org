@@ -15,6 +15,7 @@ from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
@@ -132,43 +133,20 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
         }
 
 
-class MethodForm(SaveFormInitMixin, forms.ModelForm):
+class MethodForm(ContainerImageForm):
     phase = ModelChoiceField(
         queryset=None,
         help_text="Which phase is this evaluation container for?",
     )
-    chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
-        label="Evaluation Method Container",
-        validators=[
-            ExtensionValidator(
-                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
-            )
-        ],
-        help_text=(
-            ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
-            "https://docs.docker.com/engine/reference/commandline/save/"
-        ),
-    )
 
-    def __init__(self, *args, user, challenge, **kwargs):
+    def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["chunked_upload"].widget.user = user
-        self.fields["phase"].queryset = challenge.phase_set.all()
 
-    def clean_chunked_upload(self):
-        files = self.cleaned_data["chunked_upload"]
-        if (
-            sum([f.size for f in files])
-            > settings.COMPONENTS_MAXIMUM_IMAGE_SIZE
-        ):
-            raise ValidationError("File size limit exceeded")
-        return files
+        self.fields["phase"].queryset = challenge.phase_set.all()
 
     class Meta:
         model = Method
-        fields = ["phase", "chunked_upload"]
+        fields = ("phase", *ContainerImageForm.Meta.fields)
 
 
 submission_fields = (

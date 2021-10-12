@@ -4,15 +4,10 @@ from typing import Dict
 
 import requests
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
-    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
@@ -90,29 +85,13 @@ from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
-
-
-class VerificationRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        try:
-            verified = self.request.user.verification.is_verified
-        except ObjectDoesNotExist:
-            verified = False
-
-        if not verified:
-            messages.error(
-                self.request,
-                "You need to verify your account before you can do this,"
-                "you can request this from your profile page.",
-            )
-
-        return verified
 
 
 class AlgorithmCreate(
@@ -296,15 +275,6 @@ class AlgorithmImageCreate(
 
     def get_permission_object(self):
         return self.algorithm
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        form.instance.algorithm = self.algorithm
-
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-        form.instance.staged_image_uuid = uploaded_file.uuid
-
-        return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

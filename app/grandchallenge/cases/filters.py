@@ -44,7 +44,6 @@ class ImageFilterSet(FilterSet):
     class Meta:
         model = Image
         fields = (
-            "study",
             "origin",
             "job_input",
             "job_output",
