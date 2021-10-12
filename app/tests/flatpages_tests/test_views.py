@@ -69,7 +69,7 @@ def test_flatpage_update(client):
         client=client,
         method=client.post,
         reverse_kwargs={"pk": f.pk},
-        data={"content": new_content},
+        data={"title": new_title, "content": new_content},
         user=u,
     )
 
@@ -82,12 +82,7 @@ def test_flatpage_update(client):
         client=client,
         method=client.post,
         reverse_kwargs={"pk": f.pk},
-        data={
-            "title": new_title,
-            "content": new_content,
-            "url": f.url,
-            "sites": [site.pk],
-        },
+        data={"title": new_title, "content": new_content},
         user=u,
     )
 

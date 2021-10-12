@@ -3,13 +3,13 @@ from django.contrib.flatpages.models import FlatPage
 from django.views.generic import CreateView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.flatpages.forms import FlatPageForm
+from grandchallenge.flatpages.forms import FlatPageForm, FlatPageUpdateForm
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class FlatPageUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = FlatPage
-    form_class = FlatPageForm
+    form_class = FlatPageUpdateForm
     permission_required = "flatpages.change_flatpage"
     raise_exception = True
     login_url = reverse_lazy("account_login")
