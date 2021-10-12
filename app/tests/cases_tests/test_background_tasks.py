@@ -8,7 +8,6 @@ import SimpleITK
 import pytest
 from actstream.actions import is_following
 from billiard.exceptions import SoftTimeLimitExceeded
-from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from panimg.image_builders.metaio_utils import (
@@ -110,17 +109,18 @@ def test_image_file_creation(settings):
 
     assert Image.objects.filter(origin=session).count() == 5
 
-    for name, db_object in uploaded_images.items():
-        name: str
-        db_object: RawImageFile
+    assert not RawImageFile.objects.exists()
 
-        db_object.refresh_from_db()
-
-        assert db_object.staged_file_id is None
-        if name in invalid_images:
-            assert db_object.error is not None
-        else:
-            assert db_object.error is None
+    assert {*session.import_result["consumed_files"]} == {
+        "valid_tiff.tif",
+        "image10x10x10.mha",
+        "image10x10x10-extra-stuff.mhd",
+        "image10x11x12x13.mhd",
+        "image10x10x10.mhd",
+        "image10x11x12x13.zraw",
+        "image10x10x10.zraw",
+    }
+    assert {*session.import_result["file_errors"]} == {*invalid_images}
 
 
 @pytest.mark.django_db
@@ -161,10 +161,7 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
 
-    raw_image_file = list(uploaded_images.values())[0]
-    raw_image_file: RawImageFile
-    raw_image_file.refresh_from_db()
-    assert raw_image_file.staged_file_id is None
+    assert not RawImageFile.objects.exists()
 
     image = images[0]
     assert image.shape == [13, 12, 11, 10]
@@ -199,9 +196,7 @@ def test_staged_mhd_upload_with_additional_headers(
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
 
-    raw_image_file: RawImageFile = list(uploaded_images.values())[0]
-    raw_image_file.refresh_from_db()
-    assert raw_image_file.staged_file_id is None
+    assert not RawImageFile.objects.exists()
 
     image: Image = images[0]
     tmp_header_filename = tmp_path / "tmp_header.mhd"
@@ -241,17 +236,10 @@ def test_no_convertible_file(settings):
     assert session.status == session.SUCCESS
     assert f"{len(images)} file" in session.error_message
 
-    no_image_image = list(uploaded_images.values())[0]
-    no_image_image.refresh_from_db()
-    assert no_image_image.error is not None
+    assert not RawImageFile.objects.exists()
 
-    lonely_mhd_image = list(uploaded_images.values())[1]
-    lonely_mhd_image.refresh_from_db()
-    assert lonely_mhd_image.error is not None
-
-    sys_file_image = list(uploaded_images.values())[2]
-    sys_file_image.refresh_from_db()
-    assert sys_file_image.error is not None
+    assert session.import_result["consumed_files"] == []
+    assert {*session.import_result["file_errors"]} == {*images}
 
 
 @pytest.mark.django_db
@@ -267,16 +255,17 @@ def test_errors_on_files_with_duplicate_file_names(settings):
         "image10x10x10.mhd",
     ]
     session, uploaded_images = create_raw_upload_image_session(images=images)
-    uploaded_images = RawImageFile.objects.filter(upload_session=session).all()
-    assert len(uploaded_images) == 4
+
+    assert not RawImageFile.objects.exists()
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
     assert session.error_message is None
 
-    for raw_image in uploaded_images:
-        raw_image.refresh_from_db()
-        assert raw_image.error is not None
+    assert session.import_result == {
+        "consumed_files": [],
+        "file_errors": {},
+    }
 
 
 @pytest.mark.django_db
@@ -295,10 +284,7 @@ def test_mhd_file_annotation_creation(settings):
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
 
-    raw_image_file = list(uploaded_images.values())[0]
-    raw_image_file: RawImageFile
-    raw_image_file.refresh_from_db()
-    assert raw_image_file.staged_file_id is None
+    assert not RawImageFile.objects.exists()
 
     image = images[0]
     assert image.shape == [7, 6, 5]
@@ -339,7 +325,6 @@ def test_check_compressed_and_extract(tmpdir, file_name):
     "file_name", ("tar_with_link.tar", "tar_with_sym_link.tar",),
 )
 def test_check_compressed_and_extract_with_symlink(tmpdir, file_name):
-
     file = RESOURCE_PATH / file_name
     tmp_file = shutil.copy(str(file), str(tmpdir))
     tmp_file = Path(tmp_file)
@@ -354,7 +339,6 @@ def test_check_compressed_and_extract_with_symlink(tmpdir, file_name):
 def test_check_compressed_and_extract_with_deep_folder_structure(
     tmpdir, file_name
 ):
-
     file = RESOURCE_PATH / file_name
     tmp_file = shutil.copy(str(file), str(tmpdir))
     tmp_file = Path(tmp_file)
@@ -367,7 +351,8 @@ def test_check_compressed_and_extract_with_deep_folder_structure(
             tmpdir_path,
             # 15 folders deep, each folder (except the last) 255 characters long, repeated numbers 0-9.
             # single png at the deepest folder
-            f"{('1234567890'*26)[:-5]}/" * 14 + f"{('1234567890'*24)}/t.png",
+            f"{('1234567890' * 26)[:-5]}/" * 14
+            + f"{('1234567890' * 24)}/t.png",
         ),
     ]
     actual = []
@@ -445,47 +430,6 @@ def test_build_multiple_zip_files(settings):
 
     session.refresh_from_db()
     assert session.error_message is None
-
-
-@pytest.mark.django_db
-def test_failed_dicom_files_are_retained(settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    # A valid set of dicom images. Files should not be retained
-    images = [f"dicom/{x}.dcm" for x in range(1, 21)]
-    session, _ = create_raw_upload_image_session(images=images)
-    session.refresh_from_db()
-
-    assert Image.objects.count() == 1
-    assert not any(
-        RawImageFile.objects.values_list("staged_file_id", flat=True)
-    )
-    RawImageFile.objects.all().delete()
-
-    # An invalid set of dicom images, but the creator is not in the dedicated
-    # user group. Files should not be retained
-    images = [f"dicom/{x}.dcm" for x in range(1, 22)]
-    session, _ = create_raw_upload_image_session(images=images)
-    session.refresh_from_db()
-
-    assert Image.objects.count() == 1
-    assert not any(
-        RawImageFile.objects.values_list("staged_file_id", flat=True)
-    )
-    RawImageFile.objects.all().delete()
-
-    # An invalid set of dicom images, and the creator is in the dedicated
-    # user group. Files should be retained
-    user = UserFactory()
-    g = Group.objects.get(name=settings.DICOM_DATA_CREATORS_GROUP_NAME)
-    g.user_set.add(user)
-    session, _ = create_raw_upload_image_session(images=images, user=user)
-    session.refresh_from_db()
-
-    assert Image.objects.count() == 1
-    assert all(RawImageFile.objects.values_list("staged_file_id", flat=True))
-    RawImageFile.objects.all().delete()
 
 
 @pytest.mark.django_db

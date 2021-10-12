@@ -1086,9 +1086,6 @@ CELERY_BEAT_SCHEDULE = {
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 
-# The name of the group whose uploaded dicom files will be retained if the image builder fails
-DICOM_DATA_CREATORS_GROUP_NAME = "dicom_creators"
-
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {
     "m",
