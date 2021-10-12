@@ -4,6 +4,7 @@ import boto3
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
+from django.db.models.fields.files import FieldFile
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.datetime_safe import strftime
@@ -254,6 +255,32 @@ class UserUpload(UUIDModel):
         )
         self.s3_upload_id = ""
         self.status = self.StatusChoices.ABORTED
+
+    def copy_object(self, *, to_field, save=True):
+        """Copies the object to a Django file field on a model"""
+        if not isinstance(to_field, FieldFile):
+            raise ValueError("to_field must be a FieldFile")
+
+        target_client = to_field.storage.connection.meta.client
+        target_bucket = to_field.storage.bucket.name
+        target_key = to_field.field.generate_filename(
+            instance=to_field.instance, filename=self.filename
+        )
+        target_key = to_field.storage.get_available_name(
+            name=target_key, max_length=to_field.field.max_length
+        )
+
+        target_client.copy(
+            CopySource={"Bucket": self.bucket, "Key": self.key},
+            Bucket=target_bucket,
+            Key=target_key,
+        )
+
+        to_field.name = target_key
+
+        # Save the object because it has changed, unless save is False
+        if save:
+            to_field.instance.save()
 
     def delete_object(self):
         if self.status != self.StatusChoices.COMPLETED:

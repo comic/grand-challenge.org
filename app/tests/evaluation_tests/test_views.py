@@ -15,6 +15,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -76,6 +77,7 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         e = EvaluationFactory()
         u = UserFactory()
+        VerificationFactory(user=u, is_verified=True)
 
         for view_name, kwargs, permission, obj in [
             (
@@ -224,7 +226,6 @@ class TestViewFilters:
             ("submission-list", e1.submission),
             ("list", e1),
         ]:
-
             response = get_view_for_user(
                 client=client,
                 viewname=f"evaluation:{view_name}",

@@ -12,11 +12,17 @@
         const inputId = widget.getAttribute("data-input-id");
         const inputName = widget.getAttribute("data-input-name");
         const multiWidget = widget.getAttribute("data-multiple");
+        const allowedFileTypes = JSON.parse(document.getElementById(`${inputId}AllowedFileTypes`).textContent);
 
         let uppy = new Uppy.Core({
             id: `${window.location.pathname}-${inputId}`,
             autoProceed: true,
+            restrictions: { allowedFileTypes },
         });
+
+        uppy.on('restriction-failed', (file, error) => {
+            window.alert(`Could not upload ${file.name} (${file.type}): ${error.message}`);
+        })
 
         uppy.use(Uppy.DragDrop, {
             target: `#${inputId}-drag-drop`,
@@ -25,7 +31,6 @@
         uppy.use(Uppy.StatusBar, {
             target: `#${inputId}-progress`,
             showProgressDetails: true,
-            hideAfterFinish: false,
             hideCancelButton: true,
             hidePauseResumeButton: true,
         });
@@ -54,8 +59,14 @@
                 widget.appendChild(input);
             }
 
+            let newIcon = document.createElement("i");
+            newIcon.classList.add("fas","fa-check","fa-fw","text-success");
+            newIcon.setAttribute("title", "File Successfully Uploaded");
+
             let newFile = document.createElement("li");
-            newFile.textContent = `${uploadedPK} (${file.name})`;
+            newFile.classList.add("list-group-item");
+            newFile.appendChild(newIcon);
+            newFile.insertAdjacentText( "beforeend",` ${uploadedPK} (${file.name})`);
             fileList.prepend(newFile);
         });
     }

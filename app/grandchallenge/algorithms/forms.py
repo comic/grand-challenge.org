@@ -1,10 +1,11 @@
 from crispy_forms.helper import FormHelper
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
     Form,
+    HiddenInput,
     IntegerField,
+    ModelChoiceField,
     ModelForm,
     ModelMultipleChoiceField,
     TextInput,
@@ -19,6 +20,7 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
@@ -29,11 +31,8 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.templatetags.bleach import clean
-from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.jqfileupload.widgets import uploader
-from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
@@ -172,49 +171,35 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         return cleaned_data
 
 
-class AlgorithmImageForm(ModelForm):
-    chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False),
-        label="Algorithm Image",
-        validators=[
-            ExtensionValidator(
-                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
-            )
-        ],
-        help_text=(
-            ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
-            "https://docs.docker.com/engine/reference/commandline/save/"
-        ),
-    )
+class AlgorithmImageForm(ContainerImageForm):
     requires_memory_gb = IntegerField(
         min_value=1,
-        max_value=24,
+        max_value=30,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
+    algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
 
-    def __init__(self, *args, user, **kwargs):
-        algorithm = kwargs.pop("algorithm")
+    def __init__(self, *args, algorithm, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.fields["chunked_upload"].widget.user = user
+
+        self.fields["algorithm"].queryset = Algorithm.objects.filter(
+            pk=algorithm.pk
+        )
+        self.fields["algorithm"].initial = algorithm
+
         self.fields["requires_gpu"].initial = algorithm.image_requires_gpu
         self.fields[
             "requires_memory_gb"
         ].initial = algorithm.image_requires_memory_gb
 
-    def clean_chunked_upload(self):
-        files = self.cleaned_data["chunked_upload"]
-        if (
-            sum([f.size for f in files])
-            > settings.COMPONENTS_MAXIMUM_IMAGE_SIZE
-        ):
-            raise ValidationError("File size limit exceeded")
-        return files
-
-    class Meta:
+    class Meta(ContainerImageForm.Meta):
         model = AlgorithmImage
-        fields = ("requires_gpu", "requires_memory_gb", "chunked_upload")
+        fields = (
+            "requires_gpu",
+            "requires_memory_gb",
+            "algorithm",
+            *ContainerImageForm.Meta.fields,
+        )
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {
             "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"
@@ -224,7 +209,7 @@ class AlgorithmImageForm(ModelForm):
 class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
     requires_memory_gb = IntegerField(
         min_value=1,
-        max_value=24,
+        max_value=30,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
 
