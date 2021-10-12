@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class FlatpagesConfig(AppConfig):
     name = "grandchallenge.flatpages"
-    label = "edit-flatpages"
+    label = "grandchallenge.flatpages"
