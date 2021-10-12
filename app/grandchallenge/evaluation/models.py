@@ -35,6 +35,7 @@ from grandchallenge.core.validators import (
 from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
 
@@ -641,6 +642,9 @@ class Submission(UUIDModel):
     )
     staged_predictions_file_uuid = models.UUIDField(
         blank=True, null=True, editable=False
+    )
+    user_upload = models.ForeignKey(
+        UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
     )
     predictions_file = models.FileField(
         upload_to=submission_file_path,

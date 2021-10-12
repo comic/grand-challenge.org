@@ -44,13 +44,19 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
 
     submission = Submission.objects.get(pk=submission_pk)
 
-    if (
-        not submission.predictions_file
-        and submission.staged_predictions_file_uuid
-    ):
-        uploaded_file = StagedAjaxFile(submission.staged_predictions_file_uuid)
-        with uploaded_file.open() as f:
-            submission.predictions_file.save(uploaded_file.name, File(f))
+    if not submission.predictions_file:
+        if submission.user_upload:
+            with transaction.atomic():
+                submission.user_upload.copy_object(
+                    to_field=submission.predictions_file
+                )
+                submission.user_upload.delete()
+        elif submission.staged_predictions_file_uuid:
+            uploaded_file = StagedAjaxFile(
+                submission.staged_predictions_file_uuid
+            )
+            with uploaded_file.open() as f:
+                submission.predictions_file.save(uploaded_file.name, File(f))
 
     # TODO - move this to the form and make it an input here
     method = submission.latest_ready_method

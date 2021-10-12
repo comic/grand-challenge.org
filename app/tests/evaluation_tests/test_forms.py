@@ -21,7 +21,7 @@ class TestSubmissionForm:
         )
 
         assert "algorithm" not in form.fields
-        assert "chunked_upload" in form.fields
+        assert "user_upload" in form.fields
 
     def test_setting_algorithm(self):
         form = SubmissionForm(
@@ -30,7 +30,7 @@ class TestSubmissionForm:
         )
 
         assert "algorithm" in form.fields
-        assert "chunked_upload" not in form.fields
+        assert "user_upload" not in form.fields
 
     def test_no_algorithm_selection(self):
         form = SubmissionForm(
