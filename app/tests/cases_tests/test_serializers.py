@@ -29,7 +29,6 @@ class TestRetinaImageSerializers:
                 "fields": (
                     "pk",
                     "name",
-                    "study",
                     "files",
                     "width",
                     "height",

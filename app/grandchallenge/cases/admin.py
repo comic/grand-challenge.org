@@ -28,13 +28,11 @@ class ImageAdmin(GuardedModelAdmin):
     search_fields = (
         "pk",
         "name",
-        "study__name",
         "modality__modality",
         "color_space",
         "eye_choice",
         "field_of_view",
         "stereoscopic_choice",
-        "study__patient__name",
     )
     list_filter = (
         "modality",
@@ -45,11 +43,6 @@ class ImageAdmin(GuardedModelAdmin):
     )
     inlines = [ImageFileInline]
     readonly_fields = ("origin",)
-
-
-class ImageInline(admin.StackedInline):
-    model = Image
-    extra = 0
 
 
 class MhdOrRawFilter(admin.SimpleListFilter):
