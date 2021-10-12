@@ -83,7 +83,6 @@ def get_zipfile(*, pk):  # noqa C901
             raise
         cmd = [
             "git",
-            "lfs",
             "clone",
             "--branch",
             payload["ref"],
