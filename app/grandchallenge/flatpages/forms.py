@@ -4,15 +4,18 @@ from django.contrib.flatpages.forms import FlatpageForm
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 
-
 from grandchallenge.core.widgets import MarkdownEditorWidget
 
 
 class FlatPageForm(FlatpageForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance:
+        if self.instance.pk:
             self.fields["url"].initial = self.instance.url
+            self.fields["url"].widget.attrs["readonly"] = True
+            self.fields["sites"].initial = Site.objects.get_current()
+            self.fields["sites"].widget.attrs["readonly"] = True
+
         self.fields["sites"].initial = Site.objects.get_current()
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))

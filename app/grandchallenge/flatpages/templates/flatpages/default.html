@@ -18,12 +18,14 @@
         <div class="col-6">
             <h1>{{ flatpage.title }}</h1>
         </div>
-        {% if 'flatpages.change_flatpage' in perms %}
-            <div class="d-inline-block col-6 text-right">
+        <div class="d-inline-block col-6 text-right">
+            {% if 'flatpages.add_flatpage' in perms %}
                 <a class="btn btn-md btn-dark mr-2 mt-2" href="{% url 'flatpages:create' %}">Add flatpage</a>
+            {% endif %}
+            {% if 'flatpages.change_flatpage' in perms %}
                 <a class="btn btn-md btn-dark mt-2" href="{% url 'flatpages:update' pk=flatpage.pk %}">Edit flatpage</a>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     {{ flatpage.content|md2html }}

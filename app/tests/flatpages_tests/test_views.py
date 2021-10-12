@@ -85,7 +85,7 @@ def test_flatpage_update(client):
         data={
             "title": new_title,
             "content": new_content,
-            "url": "/test-flatpage/",
+            "url": f.url,
             "sites": [site.pk],
         },
         user=u,
