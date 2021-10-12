@@ -60,7 +60,7 @@ class UserUpload(UUIDModel):
     status = models.PositiveSmallIntegerField(
         choices=StatusChoices.choices, default=StatusChoices.PENDING
     )
-    s3_upload_id = models.CharField(max_length=128, blank=True)
+    s3_upload_id = models.CharField(max_length=192, blank=True)
 
     class Meta(UUIDModel.Meta):
         pass
