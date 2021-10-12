@@ -44,7 +44,7 @@ class UserUploadViewSet(
         detail=True,
         methods=["get"],
         serializer_class=UserUploadPartsSerializer,
-        url_path="(?P<s3_upload_id>[^/.]+)/list-parts",
+        url_path="(?P<s3_upload_id>[^/]+)/list-parts",
     )
     def list_parts(self, request, pk, s3_upload_id):
         object = self.get_object()
@@ -62,7 +62,7 @@ class UserUploadViewSet(
         detail=True,
         methods=["patch"],
         serializer_class=UserUploadPresignedURLsSerializer,
-        url_path="(?P<s3_upload_id>[^/.]+)/generate-presigned-urls",
+        url_path="(?P<s3_upload_id>[^/]+)/generate-presigned-urls",
     )
     def generate_presigned_urls(self, request, pk, s3_upload_id):
         object = self.get_object()
@@ -91,7 +91,7 @@ class UserUploadViewSet(
         detail=True,
         methods=["patch"],
         serializer_class=UserUploadCompleteSerializer,
-        url_path="(?P<s3_upload_id>[^/.]+)/complete-multipart-upload",
+        url_path="(?P<s3_upload_id>[^/]+)/complete-multipart-upload",
     )
     def complete_multipart_upload(self, request, pk, s3_upload_id):
         object = self.get_object()
@@ -117,7 +117,7 @@ class UserUploadViewSet(
     @action(
         detail=True,
         methods=["patch"],
-        url_path="(?P<s3_upload_id>[^/.]+)/abort-multipart-upload",
+        url_path="(?P<s3_upload_id>[^/]+)/abort-multipart-upload",
     )
     def abort_multipart_upload(self, request, pk, s3_upload_id):
         object = self.get_object()
