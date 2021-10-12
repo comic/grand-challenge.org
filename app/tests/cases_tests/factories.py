@@ -14,7 +14,6 @@ from tests.factories import (
     ImageFileFactory,
     ImagingModalityFactory,
 )
-from tests.studies_tests.factories import StudyFactory
 
 
 class ImageFileFactoryWithMHDFile(ImageFileFactory):
@@ -129,7 +128,6 @@ class ImageFactoryWithoutImageFile(ImageFactory):
         [x[0] for x in Image.STEREOSCOPIC_CHOICES]
     )
     field_of_view = factory.Iterator([x[0] for x in Image.FOV_CHOICES])
-    study = factory.SubFactory(StudyFactory)
     name = factory.Sequence(lambda n: f"RetinaImage {n}")
     modality = factory.SubFactory(ImagingModalityFactory, modality="CF")
     color_space = factory.Iterator([x[0] for x in Image.COLOR_SPACES])

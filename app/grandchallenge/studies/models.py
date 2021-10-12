@@ -1,4 +1,5 @@
 from django.db import models
+from django_deprecate_fields import deprecate_field
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.patients.models import Patient
@@ -7,7 +8,9 @@ from grandchallenge.patients.models import Patient
 class Study(UUIDModel):
     """Middle level datastructure. Child of patient, contains many images."""
 
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    patient = deprecate_field(
+        models.ForeignKey(Patient, on_delete=models.CASCADE)
+    )
 
     datetime = models.DateTimeField(
         blank=True,
@@ -20,6 +23,3 @@ class Study(UUIDModel):
         return "{} <{} {}>".format(
             self.patient, self.__class__.__name__, self.name
         )
-
-    class Meta(UUIDModel.Meta):
-        unique_together = ("patient", "name")

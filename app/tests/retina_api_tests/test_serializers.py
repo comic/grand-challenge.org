@@ -7,14 +7,7 @@ from PIL import Image as PILImage
 from django.conf import settings
 from django.http import Http404
 
-from grandchallenge.retina_api.serializers import (
-    B64ImageSerializer,
-    TreeArchiveSerializer,
-    TreeImageSerializer,
-    TreeObjectSerializer,
-    TreeStudySerializer,
-)
-from tests.archives_tests.factories import ArchiveFactory
+from grandchallenge.retina_api.serializers import B64ImageSerializer
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
     ImageFactoryWithImageFile2DLarge,
@@ -23,8 +16,6 @@ from tests.cases_tests.factories import (
     ImageFactoryWithImageFile3DLarge4Slices,
     ImageFactoryWithoutImageFile,
 )
-from tests.serializer_helpers import do_test_serializer_fields
-from tests.studies_tests.factories import StudyFactory
 
 
 @pytest.mark.django_db
@@ -78,49 +69,3 @@ class TestB64ImageSerializer:
 
         assert decoded_image_pil.size == image_pil.size
         assert max(decoded_image_pil.size) == max_dimension
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "serializer_data",
-    (
-        (
-            {
-                "unique": False,
-                "factory": ArchiveFactory,
-                "serializer": TreeObjectSerializer,
-                "fields": ("id", "name"),
-            },
-            {
-                "unique": False,
-                "factory": StudyFactory,
-                "serializer": TreeStudySerializer,
-                "fields": ("name", "patient"),
-            },
-            {
-                "unique": False,
-                "factory": ArchiveFactory,
-                "serializer": TreeArchiveSerializer,
-                "fields": ("name",),
-            },
-            {
-                "unique": False,
-                "factory": ImageFactoryWithoutImageFile,
-                "serializer": TreeImageSerializer,
-                "fields": (
-                    "id",
-                    "name",
-                    "eye_choice",
-                    "modality",
-                    "study",
-                    "voxel_width_mm",
-                    "voxel_height_mm",
-                    "voxel_depth_mm",
-                ),
-            },
-        )
-    ),
-)
-class TestSerializers:
-    def test_serializer_fields(self, serializer_data):
-        do_test_serializer_fields(serializer_data)

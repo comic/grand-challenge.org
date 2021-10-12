@@ -16,8 +16,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.patients.models import Patient
-from grandchallenge.studies.models import Study
 from grandchallenge.workstations.models import Workstation
 from tests.fixtures import create_uploaded_image
 
@@ -92,7 +90,7 @@ def load_as_bytes_io(fp):
     return bio
 
 
-def create_image_set_for_study(archive, study, nums):
+def create_image_set_for_study(archive, patient, study, nums):
     image_set = {
         "oct16bit": [
             {
@@ -159,7 +157,6 @@ def create_image_set_for_study(archive, study, nums):
         for index, image_dict in enumerate(images):
             image = Image.objects.create(
                 name=f"{name} {index}",
-                study=study,
                 modality=image_dict["modality"],
                 width=image_dict["sitk_image"].GetWidth(),
                 height=image_dict["sitk_image"].GetHeight(),
@@ -178,8 +175,8 @@ def create_image_set_for_study(archive, study, nums):
                 ][0]
                 if name == "enface_rgb"
                 else Image.FOV_EMPTY,
-                patient_id=study.patient.name,
-                study_description=study.name,
+                patient_id=patient,
+                study_description=study,
                 **generate_random_metadata(),
             )
 
@@ -218,12 +215,10 @@ def create_archive_patient_study_structure(user, nums):
     for a in range(nums["archives"]):
         archive = create_archive(f"Archive {a}", user)
         for p in range(nums["patients"]):
-            patient = Patient.objects.get_or_create(name=f"Patient {p}")[0]
+            patient = f"Patient {p}"
             for s in range(nums["studies"]):
-                study = Study.objects.get_or_create(
-                    name=f"Study {s}", patient=patient
-                )[0]
-                create_image_set_for_study(archive, study, nums)
+                study = f"Study {s}"
+                create_image_set_for_study(archive, patient, study, nums)
                 print(
                     f"A={a + 1}/{nums['archives']} P={p + 1}/{nums['patients']} S={s + 1}/{nums['studies']}"
                 )
