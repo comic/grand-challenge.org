@@ -189,3 +189,14 @@ ul.socialaccount_providers > li {
     top:5rem;
     z-index: 1;
 }
+
+pre {
+    margin:0;
+}
+
+p code {
+    background-color: #ecf0f1;
+    border-radius:.25rem;
+    padding:.2rem .4rem;
+    color: black;
+}

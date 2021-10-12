@@ -680,6 +680,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
     "markdown.extensions.sane_lists",
+    "markdown.extensions.codehilite",
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
