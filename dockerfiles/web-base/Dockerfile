@@ -51,7 +51,12 @@ RUN cd /usr/local/lib/python3.8/site-packages \
     && apt-get install -y patchutils \
     && curl https://github.com/celery/kombu/commit/2a704e35856bda908f5f122d1aaabebc6b469b0c.patch | filterdiff -p1 -x "t/*" | patch -p1
 
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+RUN mkdir -p /opt/git-lfs \
+    && cd /opt/git-lfs  \
+    && wget https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-linux-amd64-v3.0.1.tar.gz \
+    && tar -xf git-lfs-linux-amd64-v3.0.1.tar.gz \
+    && bash install.sh \
+    && git-lfs install
 
 ##################
 # TEST CONTAINER #
