@@ -162,6 +162,7 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
                 "application/x-zip-compressed",
                 "application/csv",
                 "application/vnd.ms-excel",
+                "text/csv",
                 "text/plain",
             ]
         ),
