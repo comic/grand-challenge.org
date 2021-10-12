@@ -150,6 +150,7 @@ urlpatterns = [
             "grandchallenge.documentation.urls", namespace="documentation"
         ),
     ),
+    path("flatpages/", include("grandchallenge.gc_flatpages.urls")),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
