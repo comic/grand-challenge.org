@@ -308,6 +308,7 @@ def build_images(*, upload_session_pk):
         upload_session.status = upload_session.FAILURE
         upload_session.save()
     except Exception:
+        _delete_session_files(upload_session=upload_session)
         upload_session.error_message = "An unexpected error occurred"
         upload_session.status = upload_session.FAILURE
         upload_session.save()
@@ -347,7 +348,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         upload_session=upload_session,
     )
 
-    _delete_session_files(session_files=session_files,)
+    _delete_session_files(upload_session=upload_session)
 
 
 @dataclass
@@ -510,8 +511,8 @@ def _handle_raw_files(
             )
 
 
-def _delete_session_files(*, session_files):
-    for file in session_files:
+def _delete_session_files(*, upload_session):
+    for file in upload_session.rawimagefile_set.all():
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
