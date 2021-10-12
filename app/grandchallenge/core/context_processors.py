@@ -69,3 +69,9 @@ def help_forum(*_, **__):
         "DOCUMENTATION_HELP_FORUM_PK": settings.DOCUMENTATION_HELP_FORUM_PK,
         "DOCUMENTATION_HELP_FORUM_SLUG": settings.DOCUMENTATION_HELP_FORUM_SLUG,
     }
+
+
+def about_page(*_, **__):
+    return {
+        "about_page_url": settings.FLATPAGE_ABOUT_URL,
+    }

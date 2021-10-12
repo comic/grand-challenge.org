@@ -121,6 +121,9 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_FORUM_SLUG", "general"
 )
 
+# About Flatpage
+FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
+
 ##############################################################################
 #
 # Storage
@@ -352,6 +355,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
                 "grandchallenge.core.context_processors.help_forum",
+                "grandchallenge.core.context_processors.about_page",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
