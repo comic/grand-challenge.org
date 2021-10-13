@@ -180,6 +180,7 @@
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">QuerySet</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
+<span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelChoiceField</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.module_loading</span> <span class="kn">import</span> <span class="n">import_string</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
@@ -480,7 +481,9 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_default_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span><span class="o">*</span><span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">(),</span> <span class="o">*</span><span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">()}:</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span><span class="o">*</span><span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()}:</span>
+            <span class="k">return</span> <span class="n">ModelChoiceField</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span><span class="o">*</span><span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">()}:</span>
             <span class="k">return</span> <span class="n">UploadedAjaxFileList</span>
         <span class="k">elif</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
@@ -499,9 +502,17 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_file_mimetypes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;text/plain&quot;</span><span class="p">,)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="s2">&quot;application/csv&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;application/vnd.ms-excel&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;text/csv&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;application/zip&quot;</span><span class="p">,)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="s2">&quot;application/zip&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;application/x-zip-compressed&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
