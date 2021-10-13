@@ -99,6 +99,26 @@ def test_create_multipart_upload(client):
 
 
 @pytest.mark.django_db
+def test_create_multipart_upload_bad_filename(client):
+    # https://uppy.io/docs/aws-s3-multipart/#createMultipartUpload-file
+    u = UserFactory()
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:upload-list",
+        method=client.post,
+        data={"filename": "../../foo.bat"},
+        content_type="application/json",
+        user=u,
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "filename": ["../../foo.bat is not a valid filename"]
+    }
+
+
+@pytest.mark.django_db
 def test_list_parts(client):
     # https://uppy.io/docs/aws-s3-multipart/#listParts-file-uploadId-key
     u = UserFactory()
