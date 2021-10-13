@@ -66,7 +66,7 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.codebuild.models import Build
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -436,19 +436,10 @@ class AlgorithmExperimentCreate(
 
     def form_valid(self, form):
         def create_upload(image_files):
-            raw_files = []
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
             )
-            for image_file in image_files:
-                raw_files.append(
-                    RawImageFile(
-                        upload_session=upload_session,
-                        filename=image_file.name,
-                        staged_file_id=image_file.uuid,
-                    )
-                )
-            RawImageFile.objects.bulk_create(list(raw_files))
+            upload_session.user_uploads.set(image_files)
             return upload_session.pk
 
         job = Job.objects.create(

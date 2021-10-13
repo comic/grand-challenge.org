@@ -56,7 +56,6 @@ from grandchallenge.archives.tasks import (
 )
 from grandchallenge.cases.models import (
     Image,
-    RawImageFile,
     RawImageUploadSession,
 )
 from grandchallenge.cases.tasks import build_images
@@ -395,19 +394,10 @@ class ArchiveEditArchiveItem(
 
     def form_valid(self, form):  # noqa: C901
         def create_upload(image_files):
-            raw_files = []
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
             )
-            for image_file in image_files:
-                raw_files.append(
-                    RawImageFile(
-                        upload_session=upload_session,
-                        filename=image_file.name,
-                        staged_file_id=image_file.uuid,
-                    )
-                )
-            RawImageFile.objects.bulk_create(list(raw_files))
+            upload_session.user_uploads.set(image_files)
             return upload_session.pk
 
         upload_pks = {}
