@@ -417,9 +417,10 @@ class ArchiveEditArchiveItem(
                 civ_pks_to_remove.add(civ.pk)
 
             if ci.kind in InterfaceKind.interface_type_image():
-                civ = ComponentInterfaceValue.objects.create(interface=ci)
-                civ_pks_to_add.add(civ.pk)
-                upload_pks[civ.pk] = create_upload(value)
+                if value:
+                    civ = ComponentInterfaceValue.objects.create(interface=ci)
+                    civ_pks_to_add.add(civ.pk)
+                    upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
                 value.copy_object(to_field=civ.file)
