@@ -50,8 +50,12 @@
 
             if (multiWidget === null) {
                 fileList.innerHTML = "";
+
                 document.getElementById(inputId).value = uploadedPK
             } else {
+                let noFilesWarning = document.getElementById(`${inputId}-no-files-warning`);
+                if (noFilesWarning !== null) { noFilesWarning.outerHTML = ""; }
+
                 let input = document.createElement("input");
                 input.name = inputName;
                 input.type = "hidden";

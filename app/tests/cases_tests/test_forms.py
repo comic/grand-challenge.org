@@ -5,10 +5,8 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.cases.models import RawImageUploadSession
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UserFactory
-from tests.jqfileupload_tests.external_test_support import (
-    create_file_from_filepath,
-)
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 
 
@@ -35,11 +33,13 @@ def test_upload_some_images(client: Client, challenge_set, settings):
     assert rs.images.count() == 0
     assert RawImageUploadSession.objects.count() == 0
 
-    file1 = create_file_from_filepath(RESOURCE_PATH / "image10x10x10.mha")
+    user_upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha", creator=user
+    )
 
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
-            data={"files": f"{file1.uuid}"},
+            data={"user_uploads": [user_upload.pk]},
             client=client,
             viewname="reader-studies:add-images",
             user=user,

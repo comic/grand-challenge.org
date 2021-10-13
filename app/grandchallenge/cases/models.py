@@ -30,6 +30,7 @@ from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,10 @@ class RawImageUploadSession(UUIDModel):
         null=True,
         default=None,
         on_delete=models.SET_NULL,
+    )
+
+    user_uploads = models.ManyToManyField(
+        UserUpload, blank=True, related_name="image_upload_sessions",
     )
 
     status = models.PositiveSmallIntegerField(

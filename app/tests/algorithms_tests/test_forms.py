@@ -157,14 +157,23 @@ def test_algorithm_create(client, uploaded_image):
 @pytest.mark.parametrize(
     "slug, content_parts",
     (
-        (None, ['<input type="file"', '<input name="generic-medical-image"']),
+        (
+            None,
+            [
+                '<div class="user-upload"',
+                'data-input-name="generic-medical-image"',
+            ],
+        ),
         (
             "generic-overlay",
-            ['<input type="file"', '<input name="generic-overlay"'],
+            ['<div class="user-upload"', 'data-input-name="generic-overlay"'],
         ),
         (
             "generic-medical-image",
-            ['<input type="file"', '<input name="generic-medical-image"'],
+            [
+                '<div class="user-upload"',
+                'data-input-name="generic-medical-image"',
+            ],
         ),
         ("boolean", ['<input type="checkbox"', 'name="boolean"']),
         ("string", ['<input type="text" name="string"']),
