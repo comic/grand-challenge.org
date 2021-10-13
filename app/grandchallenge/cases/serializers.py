@@ -107,7 +107,7 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if "request" in self.context:
-            user = self.context["view"].request.user
+            user = self.context["request"].user
 
             self.fields["algorithm"].queryset = get_objects_for_user(
                 user,
@@ -166,7 +166,7 @@ class RawImageFileSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if "request" in self.context:
-            user = self.context["view"].request.user
+            user = self.context["request"].user
 
             self.fields["upload_session"].queryset = get_objects_for_user(
                 user,

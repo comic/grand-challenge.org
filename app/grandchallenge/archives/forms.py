@@ -126,10 +126,10 @@ class ArchivePermissionRequestUpdateForm(PermissionRequestUpdateForm):
 
 class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
     reader_study = ModelChoiceField(
-        queryset=ReaderStudy.objects.all(), required=True,
+        queryset=ReaderStudy.objects.none(), required=True,
     )
     images = ModelMultipleChoiceField(
-        queryset=Image.objects.all(),
+        queryset=Image.objects.none(),
         required=True,
         widget=Select2MultipleWidget,
     )
@@ -144,25 +144,11 @@ class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
             "reader_studies.change_readerstudy",
             accept_global_perms=False,
         ).order_by("title")
+
         self.fields["images"].queryset = Image.objects.filter(
             componentinterfacevalue__archive_items__archive=self.archive
         ).distinct()
         self.fields["images"].initial = self.fields["images"].queryset
-
-    def clean_reader_study(self):
-        reader_study = self.cleaned_data["reader_study"]
-        if not self.user.has_perm("change_readerstudy", reader_study):
-            raise ValidationError(
-                "You do not have permission to change this reader study"
-            )
-        return reader_study
-
-    def clean_images(self):
-        images = self.cleaned_data["images"]
-        images = images.filter(
-            componentinterfacevalue__archive_items__archive=self.archive
-        )
-        return images
 
     def clean(self):
         cleaned_data = super().clean()
