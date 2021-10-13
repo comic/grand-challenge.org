@@ -6,14 +6,12 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.core.files import File
 from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
@@ -433,12 +431,11 @@ class ArchiveEditArchiveItem(
                 civ_pks_to_add.add(civ.pk)
                 upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
-                civ = ComponentInterfaceValue(interface=ci)
-                name = get_valid_filename(value[0].name)
-                with value[0].open() as f:
-                    civ.file = File(f, name=name)
+                civ = ComponentInterfaceValue.objects.create(interface=ci)
+                value.copy_object(to_field=civ.file)
                 civ.full_clean()
                 civ.save()
+                value.delete()
                 civ_pks_to_add.add(civ.pk)
             else:
                 civ = ci.create_instance(value=value)

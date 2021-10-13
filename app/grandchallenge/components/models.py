@@ -17,6 +17,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
+from django.forms import ModelChoiceField
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
@@ -317,7 +318,9 @@ class InterfaceKind:
 
     @classmethod
     def get_default_field(cls, *, kind):
-        if kind in {*cls.interface_type_file(), *cls.interface_type_image()}:
+        if kind in {*cls.interface_type_file()}:
+            return ModelChoiceField
+        elif kind in {*cls.interface_type_image()}:
             return UploadedAjaxFileList
         elif kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -336,9 +339,17 @@ class InterfaceKind:
     @classmethod
     def get_file_mimetypes(cls, *, kind):
         if kind == InterfaceKind.InterfaceKindChoices.CSV:
-            return ("text/plain",)
+            return (
+                "application/csv",
+                "application/vnd.ms-excel",
+                "text/csv",
+                "text/plain",
+            )
         elif kind == InterfaceKind.InterfaceKindChoices.ZIP:
-            return ("application/zip",)
+            return (
+                "application/zip",
+                "application/x-zip-compressed",
+            )
         else:
             raise RuntimeError(f"Unknown kind {kind}")
 

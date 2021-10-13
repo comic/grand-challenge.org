@@ -11,14 +11,12 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.core.files import File
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.text import get_valid_filename
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -477,13 +475,11 @@ class AlgorithmExperimentCreate(
                 civs.append(civ)
                 upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
-                # should be a single file
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
-                name = get_valid_filename(value[0].name)
-                with value[0].open() as f:
-                    civ.file = File(f, name=name)
+                value.copy_object(to_field=civ.file)
                 civ.full_clean()
                 civ.save()
+                value.delete()
                 civs.append(civ)
             else:
                 civ = ci.create_instance(value=value)
