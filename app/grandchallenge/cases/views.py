@@ -61,6 +61,7 @@ class RawImageUploadSessionList(
         Column(title="ID", sort_field="pk"),
         Column(title="Created", sort_field="created"),
         Column(title="Status", sort_field="status"),
+        Column(title="Error Message", sort_field="error_message"),
     ]
     default_sort_column = 1
 

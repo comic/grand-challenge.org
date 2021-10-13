@@ -47,6 +47,10 @@
                 </div>
             </div>
 
+            {% block messages %}
+                {% include "grandchallenge/partials/messages.html" %}
+            {% endblock %}
+
             {% block outer_content %}
                 <div class="row">
                     {% block sidebar %}{% endblock %}

@@ -65,6 +65,7 @@ class Build(UUIDModel):
             self.build_log = "Log file not available."
 
     def add_image_to_algorithm(self):
+        # TODO, this would be much faster using S3 copy, can then run on a smaller queue
         with private_s3_storage.open(
             f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz"
         ) as file:

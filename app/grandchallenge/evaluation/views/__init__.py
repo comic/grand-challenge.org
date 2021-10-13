@@ -24,6 +24,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
@@ -39,9 +40,9 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.serializers import EvaluationSerializer
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
+from grandchallenge.verifications.views import VerificationRequiredMixin
 
 
 class PhaseCreate(
@@ -103,7 +104,11 @@ class PhaseUpdate(
 
 
 class MethodCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    UserFormKwargsMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = Method
     form_class = MethodForm
@@ -116,18 +121,8 @@ class MethodCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {"user": self.request.user, "challenge": self.request.challenge}
-        )
+        kwargs.update({"challenge": self.request.challenge})
         return kwargs
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-
-        uploaded_file: StagedAjaxFile = form.cleaned_data["chunked_upload"][0]
-        form.instance.staged_image_uuid = uploaded_file.uuid
-
-        return super().form_valid(form)
 
 
 class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
@@ -192,10 +187,6 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             form.instance.algorithm_image = form.cleaned_data[
                 "algorithm"
             ].latest_ready_image
-        else:
-            # Predictions file submission
-            uploaded_file = form.cleaned_data["chunked_upload"][0]
-            form.instance.staged_predictions_file_uuid = uploaded_file.uuid
 
         return super().form_valid(form)
 

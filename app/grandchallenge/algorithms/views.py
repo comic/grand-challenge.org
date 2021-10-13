@@ -4,26 +4,19 @@ from typing import Dict
 
 import requests
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
-    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
-from django.core.files import File
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.text import get_valid_filename
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -90,29 +83,13 @@ from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
-
-
-class VerificationRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        try:
-            verified = self.request.user.verification.is_verified
-        except ObjectDoesNotExist:
-            verified = False
-
-        if not verified:
-            messages.error(
-                self.request,
-                "You need to verify your account before you can do this,"
-                "you can request this from your profile page.",
-            )
-
-        return verified
 
 
 class AlgorithmCreate(
@@ -296,15 +273,6 @@ class AlgorithmImageCreate(
 
     def get_permission_object(self):
         return self.algorithm
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        form.instance.algorithm = self.algorithm
-
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-        form.instance.staged_image_uuid = uploaded_file.uuid
-
-        return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -507,13 +475,11 @@ class AlgorithmExperimentCreate(
                 civs.append(civ)
                 upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
-                # should be a single file
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
-                name = get_valid_filename(value[0].name)
-                with value[0].open() as f:
-                    civ.file = File(f, name=name)
+                value.copy_object(to_field=civ.file)
                 civ.full_clean()
                 civ.save()
+                value.delete()
                 civs.append(civ)
             else:
                 civ = ci.create_instance(value=value)

@@ -2,6 +2,7 @@
 
 {% url "api:upload-list" as upload_list_view %}
 {{ upload_list_view|json_script:"uploadListView" }}
+{{ widget.allowed_file_types.value|json_script:widget.allowed_file_types.id }}
 
 <div class="user-upload"
      data-input-id="{{ widget.attrs.id }}"
@@ -10,17 +11,22 @@
 >
     <div id="{{ widget.attrs.id }}-drag-drop" class="mb-3"></div>
 
-    <div id="{{ widget.attrs.id }}-progress" class="mb-3"></div>
+    <div id="{{ widget.attrs.id }}-progress"></div>
 
-    Uploaded files:
-    <ul id="{{ widget.attrs.id }}-file-list" class="mb-3">
+    <ul id="{{ widget.attrs.id }}-file-list" class="mb-3 list-group">
         {% for subwidget in widget.subwidgets %}
-            <li>{{ subwidget.value }}</li>
+            <li class="list-group-item">
+                <i class="fas fa-check fa-fw text-success" title="File Successfully Uploaded"></i> {{ subwidget.value }}
+            </li>
         {% empty %}
             {% if widget.value %}
-                <li>{{ widget.value }}</li>
+                <li class="list-group-item">
+                    <i class="fas fa-check fa-fw text-success" title="File Successfully Uploaded"></i> {{ widget.value }}
+                </li>
             {% else %}
-                <li>No files uploaded yet</li>
+                <li class="list-group-item">
+                    <i class="fas fa-exclamation-triangle fa-fw text-warning"></i> No files uploaded yet
+                </li>
             {% endif %}
         {% endfor %}
     </ul>

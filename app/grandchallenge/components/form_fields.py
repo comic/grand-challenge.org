@@ -1,17 +1,16 @@
 from typing import Dict
 
 from django import forms
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
-from grandchallenge.core.validators import (
-    ExtensionValidator,
-    JSONValidator,
-    MimeTypeValidator,
-)
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.jqfileupload.widgets import uploader
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 file_upload_text = (
     "The total size of all files uploaded in a single session "
@@ -50,15 +49,12 @@ class InterfaceFormField:
             )
             extra_help = IMAGE_UPLOAD_HELP_TEXT
         elif kind in InterfaceKind.interface_type_file():
-            kwargs["widget"] = uploader.AjaxUploadWidget(
-                multifile=False, auto_commit=False
+            kwargs["widget"] = UserUploadSingleWidget(
+                allowed_file_types=InterfaceKind.get_file_mimetypes(kind=kind)
             )
-            kwargs["validators"] = [
-                ExtensionValidator(allowed_extensions=(f".{kind.lower()}",)),
-                MimeTypeValidator(
-                    allowed_types=InterfaceKind.get_file_mimetypes(kind=kind)
-                ),
-            ]
+            kwargs["queryset"] = get_objects_for_user(
+                user, "change_userupload", UserUpload
+            ).filter(status=UserUpload.StatusChoices.COMPLETED)
             extra_help = f"{file_upload_text} .{kind.lower()}"
         elif kind in InterfaceKind.interface_type_json():
             default_schema = {

@@ -17,6 +17,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
+from django.forms import ModelChoiceField
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
@@ -46,6 +47,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
 
@@ -316,7 +318,9 @@ class InterfaceKind:
 
     @classmethod
     def get_default_field(cls, *, kind):
-        if kind in {*cls.interface_type_file(), *cls.interface_type_image()}:
+        if kind in {*cls.interface_type_file()}:
+            return ModelChoiceField
+        elif kind in {*cls.interface_type_image()}:
             return UploadedAjaxFileList
         elif kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -335,9 +339,17 @@ class InterfaceKind:
     @classmethod
     def get_file_mimetypes(cls, *, kind):
         if kind == InterfaceKind.InterfaceKindChoices.CSV:
-            return ("text/plain",)
+            return (
+                "application/csv",
+                "application/vnd.ms-excel",
+                "text/csv",
+                "text/plain",
+            )
         elif kind == InterfaceKind.InterfaceKindChoices.ZIP:
-            return ("application/zip",)
+            return (
+                "application/zip",
+                "application/x-zip-compressed",
+            )
         else:
             raise RuntimeError(f"Unknown kind {kind}")
 
@@ -900,6 +912,9 @@ class ComponentImage(models.Model):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     staged_image_uuid = models.UUIDField(blank=True, null=True, editable=False)
+    user_upload = models.ForeignKey(
+        UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
+    )
     image = models.FileField(
         blank=True,
         upload_to=docker_image_path,

@@ -121,6 +121,9 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_FORUM_SLUG", "general"
 )
 
+# About Flatpage
+FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
+
 ##############################################################################
 #
 # Storage
@@ -179,6 +182,15 @@ PUBLIC_S3_STORAGE_KWARGS = {
 
 UPLOADS_S3_BUCKET_NAME = os.environ.get(
     "UPLOADS_S3_BUCKET_NAME", "grand-challenge-uploads"
+)
+UPLOADS_S3_USE_ACCELERATE_ENDPOINT = strtobool(
+    os.environ.get("UPLOADS_S3_USE_ACCELERATE_ENDPOINT", "False")
+)
+UPLOADS_MAX_SIZE_UNVERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_UNVERIFIED", 2 * 1024 * 1024 * 1024)
+)
+UPLOADS_MAX_SIZE_VERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_VERIFIED", 128 * 1024 * 1024 * 1024)
 )
 
 # Key pair used for signing CloudFront URLS, only used if
@@ -262,9 +274,9 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
-# "origin-when-cross-origin" required for jqfileupload for cross domain POSTs
+# "strict-origin-when-cross-origin" required for uploads for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
-    "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
+    "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin"
 )
 
 PERMISSIONS_POLICY = {
@@ -343,6 +355,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
                 "grandchallenge.core.context_processors.help_forum",
+                "grandchallenge.core.context_processors.about_page",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
@@ -492,6 +505,7 @@ LOCAL_APPS = [
     "grandchallenge.codebuild",
     "grandchallenge.timezones",
     "grandchallenge.documentation",
+    "grandchallenge.flatpages",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -670,6 +684,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
     "markdown.extensions.sane_lists",
+    "markdown.extensions.codehilite",
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
@@ -1071,9 +1086,6 @@ CELERY_BEAT_SCHEDULE = {
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
-
-# The name of the group whose uploaded dicom files will be retained if the image builder fails
-DICOM_DATA_CREATORS_GROUP_NAME = "dicom_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {

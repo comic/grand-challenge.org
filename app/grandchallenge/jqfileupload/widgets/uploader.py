@@ -243,6 +243,11 @@ class StagedAjaxFile:
         return self.__uuid
 
     @property
+    def filename(self):
+        # For API compatability with UserUpload
+        return self.name
+
+    @property
     def name(self):
         """
         Returns the name specified by the client for the uploaded file (might
@@ -308,6 +313,14 @@ class StagedAjaxFile:
             yield f
         finally:
             f.close()
+
+    def download_fileobj(self, fileobj):
+        with self.open() as src_file:
+            while True:
+                chunk = src_file.read(8192)
+                if not chunk:
+                    break
+                fileobj.write(chunk)
 
     def delete(self):
         query = self._raise_if_missing()

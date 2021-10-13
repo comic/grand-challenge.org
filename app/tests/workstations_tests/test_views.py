@@ -7,12 +7,13 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
     SessionFactory,
-    StagedFileFactory,
     UserFactory,
     WorkstationFactory,
     WorkstationImageFactory,
 )
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.fixture
@@ -127,12 +128,15 @@ def test_workstation_update_view(client):
 @pytest.mark.django_db
 def test_workstationimage_create(client):
     u2 = UserFactory()
+    VerificationFactory(user=u2, is_verified=True)
     w1 = WorkstationFactory()
     w2 = WorkstationFactory()
 
     w2.add_editor(user=u2)
 
-    staged_file = StagedFileFactory(file__filename="example.tar.gz")
+    user_upload = UserUploadFactory(filename="test_image.tar.gz", creator=u2)
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
 
     assert w1.workstationimage_set.count() == 0
     assert w2.workstationimage_set.count() == 0
@@ -144,7 +148,9 @@ def test_workstationimage_create(client):
         reverse_kwargs={"slug": w2.slug},
         user=u2,
         data={
-            "chunked_upload": staged_file.file_id,
+            "user_upload": user_upload.pk,
+            "creator": u2.pk,
+            "workstation": w2.pk,
             "initial_path": "a",
             "websocket_port": 1337,
             "http_port": 1234,
@@ -163,7 +169,7 @@ def test_workstationimage_create(client):
     assert w2_images[0].creator == u2
     assert w2_images[0].websocket_port == 1337
     assert w2_images[0].http_port == 1234
-    assert w2_images[0].staged_image_uuid == staged_file.file_id
+    assert w2_images[0].user_upload == user_upload
     assert w2_images[0].initial_path == "a"
 
 
