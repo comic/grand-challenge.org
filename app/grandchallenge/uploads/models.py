@@ -256,6 +256,14 @@ class UserUpload(UUIDModel):
         self.s3_upload_id = ""
         self.status = self.StatusChoices.ABORTED
 
+    def download_fileobj(self, fileobj):
+        if self.status != self.StatusChoices.COMPLETED:
+            raise RuntimeError("Upload is not completed")
+
+        return self._client.download_fileobj(
+            Bucket=self.bucket, Key=self.key, Fileobj=fileobj
+        )
+
     def copy_object(self, *, to_field, save=True):
         """Copies the object to a Django file field on a model"""
         if not isinstance(to_field, FieldFile):
