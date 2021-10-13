@@ -1,3 +1,4 @@
+from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
@@ -82,16 +83,16 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
 class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
     algorithm = SlugRelatedField(
-        slug_field="slug", queryset=Algorithm.objects.all(), required=False
+        slug_field="slug", queryset=Algorithm.objects.none(), required=False
     )
     archive = SlugRelatedField(
-        slug_field="slug", queryset=Archive.objects.all(), required=False
+        slug_field="slug", queryset=Archive.objects.none(), required=False
     )
     reader_study = SlugRelatedField(
-        slug_field="slug", queryset=ReaderStudy.objects.all(), required=False
+        slug_field="slug", queryset=ReaderStudy.objects.none(), required=False
     )
     answer = PrimaryKeyRelatedField(
-        queryset=Answer.objects.all(), required=False
+        queryset=Answer.objects.none(), required=False
     )
 
     class Meta(RawImageUploadSessionSerializer.Meta):
@@ -102,6 +103,33 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
             "reader_study",
             "answer",
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["view"].request.user
+
+            self.fields["algorithm"].queryset = get_objects_for_user(
+                user,
+                "algorithms.execute_algorithm",
+                accept_global_perms=False,
+            )
+
+            self.fields["archive"].queryset = get_objects_for_user(
+                user, "archives.upload_archive", accept_global_perms=False,
+            )
+
+            self.fields["reader_study"].queryset = get_objects_for_user(
+                user,
+                "reader_studies.change_readerstudy",
+                accept_global_perms=False,
+            )
+
+            self.fields["answer"].queryset = get_objects_for_user(
+                user,
+                "reader_studies.change_answer",
+                accept_global_perms=False,
+            )
 
     def validate(self, attrs):
         if (
@@ -117,69 +145,34 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
         return attrs
 
     def validate_algorithm(self, value):
-        user = self.context.get("request").user
-
-        if not user.has_perm("execute_algorithm", value):
-            raise ValidationError(
-                "User does not have permission to execute this algorithm"
-            )
-
         if not value.latest_ready_image:
             raise ValidationError("This algorithm is not ready to be used")
-
-        return value
-
-    def validate_archive(self, value):
-        user = self.context.get("request").user
-
-        if not user.has_perm("upload_archive", value):
-            raise ValidationError(
-                "User does not have permission to upload to this archive"
-            )
-
-        return value
-
-    def validate_reader_study(self, value):
-        user = self.context.get("request").user
-
-        if not user.has_perm("change_readerstudy", value):
-            raise ValidationError(
-                "User does not have permission to upload to this reader study"
-            )
-
         return value
 
     def validate_answer(self, value):
-        user = self.context.get("request").user
-
-        if not user.has_perm("change_answer", value):
-            raise ValidationError(
-                "User does not have permission to add an image to this answer"
-            )
-
         if not value.question.is_image_type:
             raise ValidationError(
                 "This question does not accept image type answers."
             )
-
         return value
 
 
 class RawImageFileSerializer(serializers.ModelSerializer):
     upload_session = HyperlinkedRelatedField(
-        queryset=RawImageUploadSession.objects.all(),
+        queryset=RawImageUploadSession.objects.none(),
         view_name="api:upload-session-detail",
     )
 
-    def validate_upload_session(self, value):
-        user = self.context.get("request").user
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["view"].request.user
 
-        if not user.has_perm("change_rawimageuploadsession", value):
-            raise ValidationError(
-                "User does not have permission to change this raw image upload session"
+            self.fields["upload_session"].queryset = get_objects_for_user(
+                user,
+                "cases.change_rawimageuploadsession",
+                accept_global_perms=False,
             )
-
-        return value
 
     class Meta:
         model = RawImageFile

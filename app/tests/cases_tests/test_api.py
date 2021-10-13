@@ -428,7 +428,7 @@ def test_archive_upload_session_create(client, obj, factory):
     errors = response.json()
 
     assert response.status_code == 400
-    assert "User does not have permission" in errors[obj][0]
+    assert "does not exist" in errors[obj][0]
 
     # Assign permissions
     o.add_editor(u)
