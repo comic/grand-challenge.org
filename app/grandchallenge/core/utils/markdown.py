@@ -23,6 +23,9 @@ class BS4Treeprocessor(Treeprocessor):
             elif el.tag == "thead":
                 el.set("class", "thead-light")
 
+            elif el.tag == "code":
+                el.set("class", "codehilite")
+
 
 class LinkBlankTargetExtension(Extension):
     def extendMarkdown(self, md):  # noqa: N802

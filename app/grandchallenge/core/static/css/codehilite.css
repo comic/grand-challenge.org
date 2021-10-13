@@ -1,5 +1,5 @@
 .codehilite .hll { background-color: #ffffcc }
-.codehilite  { background-color: #ecf0f1; border-radius:.25rem; padding:.6rem .75rem;}
+.codehilite  { background-color: #ecf0f1; border-radius:.25rem; padding:.6rem .75rem; color:#000000;}
 .codehilite .c { color: #408080; font-style: italic } /* Comment */
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
@@ -67,3 +67,5 @@
 .codehilite .vi { color: #19177C } /* Name.Variable.Instance */
 .codehilite .vm { color: #19177C } /* Name.Variable.Magic */
 .codehilite .il { color: #666666 } /* Literal.Number.Integer.Long */
+code.codehilite { padding: .2rem .4rem; }
+.codehilite pre { margin:0; }
