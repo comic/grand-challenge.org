@@ -185,11 +185,11 @@ class AddCasesForm(UploadRawImagesForm):
         )
     )
 
-    def save(self, commit=True):
+    def save(self, *args, **kwargs):
         self._linked_task.kwargs.update(
             {"interface_pk": self.cleaned_data["interface"].pk}
         )
-        return super().save(commit=commit)
+        return super().save(*args, **kwargs)
 
 
 class ArchiveItemForm(SaveFormInitMixin, Form):
