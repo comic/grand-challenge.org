@@ -202,7 +202,6 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.organizations.models</span> <span class="kn">import</span> <span class="n">Organization</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.publications.models</span> <span class="kn">import</span> <span class="n">Publication</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.workstations.models</span> <span class="kn">import</span> <span class="n">Workstation</span>
 
 <span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">A reader study enables you to have a set of readers answer a set of questions</span>
@@ -585,11 +584,11 @@
             <span class="n">remove_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">reg_and_anon</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">assign_workstation_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">perm</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="n">Workstation</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">perm</span> <span class="o">=</span> <span class="s2">&quot;workstations.view_workstation&quot;</span>
 
         <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">):</span>
             <span class="n">workstations</span> <span class="o">=</span> <span class="n">get_objects_for_group</span><span class="p">(</span>
-                <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="n">perms</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span> <span class="n">klass</span><span class="o">=</span><span class="n">Workstation</span>
+                <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="n">perms</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span> <span class="n">accept_global_perms</span><span class="o">=</span><span class="kc">False</span>
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="p">(</span>
