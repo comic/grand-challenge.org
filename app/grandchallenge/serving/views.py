@@ -101,7 +101,9 @@ def serve_component_interface_value(
         raise Http404("No ComponentInterfaceValue found.")
 
     if (
-        get_objects_for_user(user=user, perms="algorithms.view_job")
+        get_objects_for_user(
+            user=user, perms="algorithms.view_job", accept_global_perms=False
+        )
         .filter(
             Q(outputs__pk=component_interface_value_pk)
             | Q(inputs__pk=component_interface_value_pk)

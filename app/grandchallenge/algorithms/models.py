@@ -265,11 +265,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     def assign_workstation_permissions(self):
         """Allow the editors and users group to view the workstation."""
-        perm = f"view_{Workstation._meta.model_name}"
+        perm = "workstations.view_workstation"
 
         for group in [self.users_group, self.editors_group]:
             workstations = get_objects_for_group(
-                group=group, perms=perm, klass=Workstation
+                group=group, perms=perm, accept_global_perms=False
             )
 
             if (

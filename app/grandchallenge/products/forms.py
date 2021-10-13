@@ -25,7 +25,7 @@ class ImportForm(SaveFormInitMixin, forms.Form):
         super().__init__(*args, **kwargs)
 
         qs = get_objects_for_user(
-            user, "change_userupload", UserUpload
+            user, "uploads.change_userupload", accept_global_perms=False
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
         for field in ["products_file", "companies_file", "images_zip"]:

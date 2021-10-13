@@ -3,8 +3,6 @@ from crispy_forms.layout import Submit
 from django.forms import ModelForm
 from guardian.shortcuts import get_objects_for_user
 
-from grandchallenge.workstations.models import Workstation
-
 
 class SaveFormInitMixin:
     def __init__(self, *args, **kwargs):
@@ -17,9 +15,7 @@ class WorkstationUserFilterMixin:
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["workstation"].queryset = get_objects_for_user(
-            user,
-            f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}",
-            Workstation,
+            user, "workstations.view_workstation", accept_global_perms=False,
         )
 
 

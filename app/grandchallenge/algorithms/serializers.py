@@ -1,6 +1,6 @@
 from typing import Optional
 
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -109,24 +109,33 @@ class HyperlinkedJobSerializer(JobSerializer):
 
 class JobPostSerializer(JobSerializer):
     algorithm = HyperlinkedRelatedField(
-        queryset=Algorithm.objects.all(),
+        queryset=Algorithm.objects.none(),
         view_name="api:algorithm-detail",
         write_only=True,
     )
-    inputs = ComponentInterfaceValuePostSerializer(many=True)
 
     class Meta:
         model = Job
         fields = ["pk", "algorithm", "inputs", "status"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["inputs"] = ComponentInterfaceValuePostSerializer(
+            many=True, context=self.context
+        )
+
+        if "request" in self.context:
+            user = self.context["request"].user
+
+            self.fields["algorithm"].queryset = get_objects_for_user(
+                user,
+                "algorithms.execute_algorithm",
+                accept_global_perms=False,
+            )
+
     def validate(self, data):
         alg = data.pop("algorithm")
-        user = self.context.get("user")
-
-        if not user.has_perm("execute_algorithm", alg):
-            raise serializers.ValidationError(
-                f"User does not have permission to use algorithm {alg}"
-            )
+        user = self.context["request"].user
 
         if not alg.latest_ready_image:
             raise serializers.ValidationError(
