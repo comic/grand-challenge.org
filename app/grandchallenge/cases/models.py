@@ -1,6 +1,5 @@
 import logging
 import os
-from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Mapping, Union
@@ -22,7 +21,7 @@ from panimg.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
-from panimg.models import ColorSpace, ImageType
+from panimg.models import ColorSpace, ImageType, PatientSex
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
@@ -268,11 +267,6 @@ class Image(UUIDModel):
         (FOV_UNKNOWN, "Unknown"),
         (FOV_EMPTY, "Not applicable"),
     )
-
-    class PatientSex(str, Enum):  # TODO: import from panimg
-        MALE = "M"
-        FEMALE = "F"
-        OTHER = "O"
 
     PATIENT_SEX_MALE = PatientSex.MALE.value
     PATIENT_SEX_FEMALE = PatientSex.FEMALE.value
