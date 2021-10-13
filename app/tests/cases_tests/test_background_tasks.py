@@ -8,7 +8,6 @@ import SimpleITK
 import pytest
 from actstream.actions import is_following
 from billiard.exceptions import SoftTimeLimitExceeded
-from django.core.exceptions import ValidationError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from panimg.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
@@ -257,15 +256,10 @@ def test_errors_on_files_with_duplicate_file_names(settings):
     session, uploaded_images = create_raw_upload_image_session(images=images)
 
     assert not RawImageFile.objects.exists()
-
     session.refresh_from_db()
-    assert session.status == session.SUCCESS
-    assert session.error_message is None
-
-    assert session.import_result == {
-        "consumed_files": [],
-        "file_errors": {},
-    }
+    assert session.status == session.FAILURE
+    assert session.error_message == "Duplicate files uploaded"
+    assert session.import_result is None
 
 
 @pytest.mark.django_db
@@ -295,22 +289,22 @@ def test_mhd_file_annotation_creation(settings):
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
 
 
-@pytest.mark.parametrize("file_name", ("test.zip", "test.tar"))
-def test_check_compressed_and_extract(tmpdir, file_name):
+def test_check_compressed_and_extract(tmpdir):
+    file_name = "test.zip"
     file = RESOURCE_PATH / file_name
     tmp_file = shutil.copy(str(file), str(tmpdir))
     tmp_file = Path(tmp_file)
     assert tmpdir.listdir() == [tmp_file]
 
     tmpdir_path = Path(tmpdir)
-    check_compressed_and_extract(tmp_file, tmpdir_path)
+    check_compressed_and_extract(src_path=tmp_file, checked_paths=set())
 
     expected = [
-        os.path.join(tmpdir_path, "folder-0/file-0.txt"),
-        os.path.join(tmpdir_path, "folder-0/folder-1/file-1.txt"),
-        os.path.join(tmpdir_path, "folder-0/folder-1/folder-2/file-2.txt"),
+        os.path.join(tmpdir_path, file_name, "file-0.txt"),
+        os.path.join(tmpdir_path, file_name, "folder-1/file-1.txt"),
+        os.path.join(tmpdir_path, file_name, "folder-1/folder-2/file-2.txt"),
         os.path.join(
-            tmpdir_path, "folder-0/folder-1/folder-2/folder-3/file-3.txt"
+            tmpdir_path, file_name, "folder-1/folder-2/folder-3.zip/file-3.txt"
         ),
     ]
     actual = []
@@ -322,62 +316,25 @@ def test_check_compressed_and_extract(tmpdir, file_name):
 
 
 @pytest.mark.parametrize(
-    "file_name", ("tar_with_link.tar", "tar_with_sym_link.tar",),
+    "file_name,double_zipped",
+    (("same_name.zip", False), ("same_name_zipped.zip", True)),
 )
-def test_check_compressed_and_extract_with_symlink(tmpdir, file_name):
-    file = RESOURCE_PATH / file_name
-    tmp_file = shutil.copy(str(file), str(tmpdir))
-    tmp_file = Path(tmp_file)
-    assert tmpdir.listdir() == [tmp_file]
-
-    tmpdir_path = Path(tmpdir)
-    with pytest.raises(ValidationError):
-        check_compressed_and_extract(tmp_file, tmpdir_path)
-
-
-@pytest.mark.parametrize("file_name", ("deep_folder.tar",))
-def test_check_compressed_and_extract_with_deep_folder_structure(
-    tmpdir, file_name
+def test_check_compressed_and_extract_same_name(
+    tmpdir, file_name, double_zipped
 ):
     file = RESOURCE_PATH / file_name
     tmp_file = shutil.copy(str(file), str(tmpdir))
     tmp_file = Path(tmp_file)
     assert tmpdir.listdir() == [tmp_file]
-
     tmpdir_path = Path(tmpdir)
-    check_compressed_and_extract(tmp_file, tmpdir_path)
-    expected = [
-        os.path.join(
-            tmpdir_path,
-            # 15 folders deep, each folder (except the last) 255 characters long, repeated numbers 0-9.
-            # single png at the deepest folder
-            f"{('1234567890' * 26)[:-5]}/" * 14
-            + f"{('1234567890' * 24)}/t.png",
-        ),
-    ]
-    actual = []
-    for root, _, files in os.walk(tmpdir_path):
-        for file in files:
-            actual.append(os.path.join(root, file))
-    actual = sorted(actual)
-    assert actual == expected
-
-
-@pytest.mark.parametrize(
-    "file_name", ("same_name.zip", "same_name_zipped.zip")
-)
-def test_check_compressed_and_extract_same_name(tmpdir, file_name):
-    file = RESOURCE_PATH / file_name
-    tmp_file = shutil.copy(str(file), str(tmpdir))
-    tmp_file = Path(tmp_file)
-    assert tmpdir.listdir() == [tmp_file]
-    file_basename, _ = os.path.splitext(file_name)
-    tmpdir_path = Path(tmpdir)
-    check_compressed_and_extract(tmp_file, tmpdir_path)
+    check_compressed_and_extract(src_path=tmp_file, checked_paths=set())
     expected = sorted(
         [
             os.path.join(
-                tmpdir_path, file_basename, str(x), "1", "test_grayscale.png",
+                tmpdir_path,
+                file_name,
+                f"{x}.zip" if double_zipped else f"{x}/1",
+                "test_grayscale.png",
             )
             for x in range(1, 11)
         ]
@@ -401,35 +358,23 @@ def test_build_zip_file(settings):
     session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
-    assert session.error_message is None
+    assert session.status == session.SUCCESS
+    assert len(session.import_result["consumed_files"]) == 4
+    # No tar support
+    assert {*session.import_result["file_errors"].keys()} == {
+        "valid.zip/dicom.tar"
+    }
+
     images = session.image_set.all()
-    assert images.count() == 4
+    assert images.count() == 3
     # image10x10x10.mha image10x10x10.[mhd,zraw]
     assert (
         len([x for x in images if x.shape_without_color == [10, 10, 10]]) == 2
-    )
-    # dicom.tar
-    assert (
-        len([x for x in images if x.shape_without_color == [19, 4, 2, 3]]) == 1
     )
     # valid_tiff.tiff
     assert (
         len([x for x in images if x.shape_without_color == [1, 205, 205]]) == 1
     )
-
-
-@pytest.mark.django_db
-def test_build_multiple_zip_files(settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    # valid.zip contains a tarred version of the dicom folder,
-    # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
-    images = ["valid.zip", "deep_folder.tar"]
-    session, uploaded_images = create_raw_upload_image_session(images=images)
-
-    session.refresh_from_db()
-    assert session.error_message is None
 
 
 @pytest.mark.django_db
