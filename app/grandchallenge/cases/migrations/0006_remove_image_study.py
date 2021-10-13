@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("cases", "0004_auto_20210929_1055"),
+        ("cases", "0005_rawimageuploadsession_import_result"),
     ]
 
     operations = [

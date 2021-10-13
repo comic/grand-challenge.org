@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("cases", "0005_remove_image_study"),
+        ("cases", "0006_remove_image_study"),
         ("studies", "0002_auto_20211012_0942"),
     ]
 
