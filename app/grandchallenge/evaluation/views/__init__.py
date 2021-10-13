@@ -187,10 +187,6 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             form.instance.algorithm_image = form.cleaned_data[
                 "algorithm"
             ].latest_ready_image
-        else:
-            # Predictions file submission
-            uploaded_file = form.cleaned_data["chunked_upload"][0]
-            form.instance.staged_predictions_file_uuid = uploaded_file.uuid
 
         return super().form_valid(form)
 

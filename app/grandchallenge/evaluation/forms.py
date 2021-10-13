@@ -3,7 +3,6 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
@@ -18,10 +17,6 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.validators import (
-    ExtensionValidator,
-    MimeTypeValidator,
-)
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
@@ -29,9 +24,9 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from grandchallenge.jqfileupload.widgets import uploader
-from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 phase_options = ("title",)
 
@@ -155,18 +150,24 @@ submission_fields = (
     "comment",
     "supplementary_file",
     "supplementary_url",
-    "chunked_upload",
+    "user_upload",
 )
 
 
-class SubmissionForm(forms.ModelForm):
-    chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
+class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(
+            allowed_file_types=[
+                "application/zip",
+                "application/x-zip-compressed",
+                "application/csv",
+                "application/vnd.ms-excel",
+                "text/csv",
+                "text/plain",
+            ]
+        ),
         label="Predictions File",
-        validators=[
-            MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
-            ExtensionValidator(allowed_extensions=(".zip", ".csv")),
-        ],
+        queryset=None,
     )
     algorithm = ModelChoiceField(
         queryset=None,
@@ -229,7 +230,7 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["supplementary_url"]
 
         if self._phase.submission_kind == self._phase.SubmissionKind.ALGORITHM:
-            del self.fields["chunked_upload"]
+            del self.fields["user_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
                 user, "algorithms.change_algorithm", Algorithm,
@@ -240,21 +241,9 @@ class SubmissionForm(forms.ModelForm):
         else:
             del self.fields["algorithm"]
 
-            self.fields["chunked_upload"].widget.user = user
-
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-
-    def clean_chunked_upload(self):
-        chunked_upload = self.cleaned_data["chunked_upload"]
-
-        if (
-            sum([f.size for f in chunked_upload])
-            > settings.PREDICTIONS_FILE_MAX_BYTES
-        ):
-            raise ValidationError("Predictions file is too large.")
-
-        return chunked_upload
+            self.fields["user_upload"].queryset = get_objects_for_user(
+                user, "change_userupload", UserUpload
+            ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
