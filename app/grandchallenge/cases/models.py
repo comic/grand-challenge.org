@@ -17,7 +17,6 @@ from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
-from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.image_builders.metaio_utils import (
     load_sitk_image,
@@ -28,7 +27,6 @@ from panimg.models import ColorSpace, ImageType
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -282,11 +280,6 @@ class Image(UUIDModel):
     )
 
     name = models.CharField(max_length=4096)
-    study = deprecate_field(
-        models.ForeignKey(
-            Study, null=True, blank=True, on_delete=models.SET_NULL,
-        )
-    )
     origin = models.ForeignKey(
         to=RawImageUploadSession,
         null=True,
