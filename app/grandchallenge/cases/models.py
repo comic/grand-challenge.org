@@ -1,6 +1,5 @@
 import logging
 import os
-from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Mapping, Union
@@ -17,18 +16,16 @@ from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
-from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
-from panimg.models import ColorSpace, ImageType
+from panimg.models import ColorSpace, ImageType, PatientSex
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 
@@ -276,11 +273,6 @@ class Image(UUIDModel):
         (FOV_EMPTY, "Not applicable"),
     )
 
-    class PatientSex(str, Enum):  # TODO: import from panimg
-        MALE = "M"
-        FEMALE = "F"
-        OTHER = "O"
-
     PATIENT_SEX_MALE = PatientSex.MALE.value
     PATIENT_SEX_FEMALE = PatientSex.FEMALE.value
     PATIENT_SEX_OTHER = PatientSex.OTHER.value
@@ -291,11 +283,6 @@ class Image(UUIDModel):
     )
 
     name = models.CharField(max_length=4096)
-    study = deprecate_field(
-        models.ForeignKey(
-            Study, null=True, blank=True, on_delete=models.SET_NULL,
-        )
-    )
     origin = models.ForeignKey(
         to=RawImageUploadSession,
         null=True,
