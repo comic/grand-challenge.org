@@ -94,7 +94,7 @@ def test_invalid_upload_sessions(client):
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm": None},
+        data={},
         content_type="application/json",
     )
     assert response.status_code == 201
@@ -449,8 +449,15 @@ def test_archive_upload_session_create(client, obj, factory):
 
 
 @pytest.mark.django_db
-def test_session_with_user_upload(client):
+@pytest.mark.parametrize(
+    "obj,factory",
+    (("archive", ArchiveFactory), ("reader_study", ReaderStudyFactory)),
+)
+def test_session_with_user_upload(client, obj, factory):
     user = UserFactory()
+    o = factory()
+    o.add_editor(user=user)
+
     upload = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
@@ -462,7 +469,7 @@ def test_session_with_user_upload(client):
         client=client,
         method=client.post,
         content_type="application/json",
-        data={"uploads": [upload.api_url]},
+        data={"uploads": [upload.api_url], obj: o.slug},
         HTTP_X_FORWARDED_PROTO="https",
     )
 
@@ -470,3 +477,32 @@ def test_session_with_user_upload(client):
     upload_session = response.json()
 
     assert upload_session["uploads"] == [upload.api_url]
+
+
+@pytest.mark.django_db
+def test_session_with_user_duplicate_upload(client):
+    user = UserFactory()
+
+    upload1 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    upload2 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=user,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={"uploads": [upload1.api_url, upload2.api_url]},
+        HTTP_X_FORWARDED_PROTO="https",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "non_field_errors": ["Filenames must be unique"]
+    }
