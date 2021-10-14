@@ -23,6 +23,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image, ImageFile
@@ -910,7 +911,9 @@ class ComponentImage(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    staged_image_uuid = models.UUIDField(blank=True, null=True, editable=False)
+    staged_image_uuid = deprecate_field(
+        models.UUIDField(blank=True, null=True, editable=False)
+    )
     user_upload = models.ForeignKey(
         UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
     )
