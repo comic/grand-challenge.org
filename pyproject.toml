@@ -99,6 +99,7 @@ aws-xray-sdk = "*"
 django-deprecate-fields = "*"
 django-add-default-value = "*"
 django-ses = "*"
+Pygments = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
