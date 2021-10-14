@@ -26,6 +26,7 @@ class UserUploadSerializer(ModelSerializer):
             "key",
             "s3_upload_id",
             "status",
+            "api_url",
         )
         read_only_fields = (
             "pk",
@@ -34,6 +35,7 @@ class UserUploadSerializer(ModelSerializer):
             "key",
             "s3_upload_id",
             "status",
+            "api_url",
         )
 
 

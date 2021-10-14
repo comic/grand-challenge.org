@@ -18,6 +18,7 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.uploads.models import UserUpload
 
 
 class ImageFileSerializer(serializers.ModelSerializer):
@@ -78,7 +79,27 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "error_message",
             "image_set",
             "api_url",
+            "user_uploads",
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["request"].user
+
+            # Can't find a good way to set the dynamically queryset
+            # for a field that gets used on POST, so create it here
+            self.fields["uploads"] = HyperlinkedRelatedField(
+                source="user_uploads",
+                many=True,
+                queryset=get_objects_for_user(
+                    user,
+                    "uploads.change_userupload",
+                    accept_global_perms=False,
+                ).filter(status=UserUpload.StatusChoices.COMPLETED),
+                view_name="api:upload-detail",
+                required=False,  # TODO WHEN_US_API_DEPRECATED set required=True
+            )
 
 
 class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):

@@ -16,6 +16,7 @@ from tests.cases_tests.factories import (
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, StagedFileFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 
 
@@ -445,3 +446,27 @@ def test_archive_upload_session_create(client, obj, factory):
 
     assert response.status_code == 200
     assert response.json() == "Image processing job queued."
+
+
+@pytest.mark.django_db
+def test_session_with_user_upload(client):
+    user = UserFactory()
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=user,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={"uploads": [upload.api_url]},
+        HTTP_X_FORWARDED_PROTO="https",
+    )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+
+    assert upload_session["uploads"] == [upload.api_url]
