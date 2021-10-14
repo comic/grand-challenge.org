@@ -4,12 +4,12 @@
 {% load static %}
 
 {% block title %}
-    {{ flatpage.title }} - {{ block.super }}
+    {% if flatpage %}{{ flatpage.title }}{% else %}Flatpages{% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item active"><a href="{{ flatpage.url }}">{{ flatpage.title }}</a></li>
+        <li class="breadcrumb-item active">{% if flatpage %}<a href="{{ flatpage.url }}">{{ flatpage.title }}</a>{% else %}Flatpages{% endif %}</li>
         <li class="breadcrumb-item active">{% if flatpage %}Update{% else %}Create Flatpage{% endif %}</li>
     </ol>
 {% endblock %}
