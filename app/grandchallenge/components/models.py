@@ -17,12 +17,13 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
-from django.forms import ModelChoiceField
+from django.forms import ModelChoiceField, ModelMultipleChoiceField
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image, ImageFile
@@ -46,7 +47,6 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
@@ -321,7 +321,7 @@ class InterfaceKind:
         if kind in {*cls.interface_type_file()}:
             return ModelChoiceField
         elif kind in {*cls.interface_type_image()}:
-            return UploadedAjaxFileList
+            return ModelMultipleChoiceField
         elif kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.CHOICE,
@@ -911,7 +911,9 @@ class ComponentImage(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    staged_image_uuid = models.UUIDField(blank=True, null=True, editable=False)
+    staged_image_uuid = deprecate_field(
+        models.UUIDField(blank=True, null=True, editable=False)
+    )
     user_upload = models.ForeignKey(
         UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
     )

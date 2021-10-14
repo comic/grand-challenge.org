@@ -1,3 +1,4 @@
+from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import SlugRelatedField
@@ -47,7 +48,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
     """
 
     image = serializers.HyperlinkedRelatedField(
-        queryset=Image.objects.all(),
+        queryset=Image.objects.none(),
         view_name="api:image-detail",
         required=False,
     )
@@ -55,7 +56,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         slug_field="slug", queryset=ComponentInterface.objects.all()
     )
     upload_session = serializers.HyperlinkedRelatedField(
-        queryset=RawImageUploadSession.objects.all(),
+        queryset=RawImageUploadSession.objects.none(),
         view_name="api:upload-session-detail",
         required=False,
         write_only=True,
@@ -71,6 +72,21 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             "pk",
             "upload_session",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["request"].user
+
+            self.fields["image"].queryset = get_objects_for_user(
+                user, "cases.view_image", accept_global_perms=False,
+            )
+
+            self.fields["upload_session"].queryset = get_objects_for_user(
+                user,
+                "cases.change_rawimageuploadsession",
+                accept_global_perms=False,
+            ).filter(status=RawImageUploadSession.PENDING)
 
     def validate(self, attrs):
         interface = attrs["interface"]
@@ -97,29 +113,6 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             instance.full_clean()
 
         return attrs
-
-    def validate_upload_session(self, value):
-        user = self.context.get("user")
-
-        if not user.has_perm("view_rawimageuploadsession", value):
-            raise serializers.ValidationError(
-                f"User does not have permission to use {value}"
-            )
-
-        if value.status is not RawImageUploadSession.PENDING:
-            raise serializers.ValidationError(
-                f"{value} is not ready to be used"
-            )
-        return value
-
-    def validate_image(self, value):
-        user = self.context.get("user")
-
-        if not user.has_perm("view_image", value):
-            raise serializers.ValidationError(
-                f"User does not have permission to use {value}"
-            )
-        return value
 
 
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):

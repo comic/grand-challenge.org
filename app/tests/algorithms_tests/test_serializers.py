@@ -43,7 +43,7 @@ def test_algorithm_title_on_job_serializer(rf):
             False,
             ("TestInterface 1",),
             ("testinterface-1",),
-            "User does not have permission to use algorithm algorithm1",
+            "Invalid hyperlink - Object does not exist",
         ),
         (
             "algorithm1",
@@ -125,9 +125,9 @@ def test_algorithm_job_post_serializer_validations(
     }
 
     # test
-    serializer = JobPostSerializer(
-        data=job, context={"request": rf.get("/foo"), "user": user}
-    )
+    request = rf.get("/foo")
+    request.user = user
+    serializer = JobPostSerializer(data=job, context={"request": request})
 
     # verify
     assert serializer.is_valid() == (error_message is None)
@@ -182,9 +182,9 @@ def test_algorithm_job_post_serializer_create(rf):
     )
 
     # test
-    serializer = JobPostSerializer(
-        data=job, context={"request": rf.get("/foo"), "user": user}
-    )
+    request = rf.get("/foo")
+    request.user = user
+    serializer = JobPostSerializer(data=job, context={"request": request})
 
     # verify
     assert serializer.is_valid()

@@ -50,6 +50,8 @@ def _populate_tmp_dir(tmp_dir, upload_session):
     raw_image_files = upload_session.rawimagefile_set.all()
     session_files = [StagedAjaxFile(f.staged_file_id) for f in raw_image_files]
 
+    session_files += [*upload_session.user_uploads.all()]
+
     populate_provisioning_directory(session_files, tmp_dir)
     extract_files(source_path=tmp_dir)
 
@@ -362,3 +364,5 @@ def _delete_session_files(*, upload_session):
             pass
 
         file.delete()
+
+    upload_session.user_uploads.all().delete()

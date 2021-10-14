@@ -24,7 +24,7 @@
                     <i class="fas fa-check fa-fw text-success" title="File Successfully Uploaded"></i> {{ widget.value }}
                 </li>
             {% else %}
-                <li class="list-group-item">
+                <li id="{{ widget.attrs.id }}-no-files-warning" class="list-group-item">
                     <i class="fas fa-exclamation-triangle fa-fw text-warning"></i> No files uploaded yet
                 </li>
             {% endif %}

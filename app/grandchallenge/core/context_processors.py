@@ -51,10 +51,11 @@ def debug(*_, **__):
     }
 
 
-def sentry_dsn(*_, **__):
+def sentry_dsn(request):
     return {
         "SENTRY_DSN": settings.SENTRY_DSN,
-        "SENTRY_ENABLE_JS_REPORTING": settings.SENTRY_ENABLE_JS_REPORTING,
+        "SENTRY_ENABLE_JS_REPORTING": request.path.endswith("/create/")
+        and settings.SENTRY_ENABLE_JS_REPORTING,
     }
 
 

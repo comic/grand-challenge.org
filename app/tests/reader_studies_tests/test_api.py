@@ -1155,10 +1155,7 @@ def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
     )
 
     assert response.status_code == 400
-    assert (
-        b"User does not have permission to add an image to this answer"
-        in response.rendered_content
-    )
+    assert b"object does not exist" in response.rendered_content
 
 
 @pytest.mark.django_db

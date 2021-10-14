@@ -233,15 +233,17 @@ def test_civ_post_image_permission_validation(kind, rf):
     civ = {"interface": interface.slug, "image": image.api_url}
 
     # test
+    request = rf.get("/foo")
+    request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": rf.get("/foo"), "user": user}
+        data=civ, context={"request": request}
     )
 
     # verify
     assert not serializer.is_valid()
     assert (
-        f"User does not have permission to use {image}"
-        in serializer.errors["image"]
+        "Invalid hyperlink - Object does not exist"
+        in serializer.errors["image"][0]
     )
 
 
@@ -256,15 +258,17 @@ def test_civ_post_upload_permission_validation(kind, rf):
     civ = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
+    request = rf.get("/foo")
+    request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": rf.get("/foo"), "user": user}
+        data=civ, context={"request": request}
     )
 
     # verify
     assert not serializer.is_valid()
     assert (
-        f"User does not have permission to use {upload}"
-        in serializer.errors["upload_session"]
+        "Invalid hyperlink - Object does not exist"
+        in serializer.errors["upload_session"][0]
     )
 
 
@@ -281,15 +285,17 @@ def test_civ_post_image_not_ready_validation(kind, rf):
     civ = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
+    request = rf.get("/foo")
+    request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": rf.get("/foo"), "user": user}
+        data=civ, context={"request": request}
     )
 
     # verify
     assert not serializer.is_valid()
     assert (
-        f"{upload} is not ready to be used"
-        in serializer.errors["upload_session"]
+        "Invalid hyperlink - Object does not exist"
+        in serializer.errors["upload_session"][0]
     )
 
 
@@ -306,8 +312,10 @@ def test_civ_post_image_valid(kind, rf):
     civ = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
+    request = rf.get("/foo")
+    request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": rf.get("/foo"), "user": user}
+        data=civ, context={"request": request}
     )
 
     # verify
