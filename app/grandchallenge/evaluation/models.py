@@ -14,7 +14,6 @@ from django.db import models
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.text import get_valid_filename
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -640,9 +639,6 @@ class Submission(UUIDModel):
     phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.SET_NULL
-    )
-    staged_predictions_file_uuid = deprecate_field(
-        models.UUIDField(blank=True, null=True, editable=False)
     )
     user_upload = models.ForeignKey(
         UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
