@@ -160,8 +160,8 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
         instance = super().create(validated_data=validated_data)
 
-        if instance.user_uploads.exists():
-            # TODO WHEN_US_API_DEPRECATED remove this clause
+        if instance.user_uploads.exists() and set_targets:
+            # TODO WHEN_US_API_DEPRECATED instance.user_uploads.exists() will always be True
             process_images(instance=instance, targets=set_targets)
 
         return instance
@@ -175,15 +175,19 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
         # TODO WHEN_US_API_DEPRECATED simplify this
         method = self.context["request"].method
-        request_needs_target = method == "PATCH" or (
-            method == "POST" and len(attrs.get("user_uploads", [])) > 0
-        )
+        request_needs_target = bool(method == "PATCH")
         num_targets = sum(f in attrs for f in self.targets)
 
-        if request_needs_target and num_targets != 1:
-            raise ValidationError(
-                "1 of algorithm, archive, answer or reader study must be set"
-            )
+        if request_needs_target:
+            if num_targets != 1:
+                raise ValidationError(
+                    "One of algorithm, archive, answer or reader study must be set"
+                )
+        else:
+            if num_targets > 1:
+                raise ValidationError(
+                    "Only one of algorithm, archive, answer or reader study can be set"
+                )
 
         return attrs
 
