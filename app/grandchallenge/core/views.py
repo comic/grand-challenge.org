@@ -119,7 +119,9 @@ class HomeTemplate(TemplateView):
             ),
         ]
 
-        latest_news_item = Post.objects.filter(highlight=True).first()
+        latest_news_item = Post.objects.filter(
+            published=True, highlight=True
+        ).first()
         latest_ai_for_radiology_post = Post.objects.filter(
             published=True, tags__slug="products"
         ).first()

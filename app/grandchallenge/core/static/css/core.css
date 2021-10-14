@@ -189,3 +189,11 @@ ul.socialaccount_providers > li {
     top:5rem;
     z-index: 1;
 }
+
+.text-truncate-container p {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
