@@ -105,11 +105,11 @@ def test_invalid_upload_sessions(client):
         user=user,
         client=client,
         method=client.patch,
-        data={"algorithm": None},
+        data={"archive": None},
         content_type="application/json",
     )
     assert response.status_code == 400
-    assert response.json() == {"algorithm": ["This field may not be null."]}
+    assert response.json() == {"archive": ["This field may not be null."]}
 
 
 @pytest.mark.django_db
@@ -136,7 +136,7 @@ def test_empty_data_upload_sessions(client):
     assert response.status_code == 400
     assert response.json() == {
         "non_field_errors": [
-            "One of algorithm, archive, answer or reader study must be set"
+            "One of archive, answer or reader study must be set"
         ]
     }
 
@@ -327,8 +327,8 @@ def test_process_images_api_view(client, settings):
     user = UserFactory()
     us = RawImageUploadSessionFactory(creator=user)
 
-    algorithm_image = AlgorithmImageFactory(ready=True)
-    algorithm_image.algorithm.add_user(user)
+    archive = ArchiveFactory()
+    archive.add_uploader(user)
 
     f = StagedFileFactory(
         file__from_path=Path(__file__).parent
@@ -345,7 +345,7 @@ def test_process_images_api_view(client, settings):
             user=user,
             client=client,
             method=client.patch,
-            data={"algorithm": algorithm_image.algorithm.slug},
+            data={"archive": archive.slug},
             content_type="application/json",
         )
 

@@ -9,8 +9,6 @@ from rest_framework.relations import (
     SlugRelatedField,
 )
 
-from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.archives.models import Archive
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import (
@@ -77,9 +75,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         read_only=True, many=True, view_name="api:image-detail"
     )
     status = CharField(source="get_status_display", read_only=True)
-    algorithm = SlugRelatedField(
-        slug_field="slug", queryset=Algorithm.objects.none(), required=False
-    )
     archive = SlugRelatedField(
         slug_field="slug", queryset=Archive.objects.none(), required=False
     )
@@ -100,7 +95,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "image_set",
             "api_url",
             "user_uploads",
-            "algorithm",
             "archive",
             "reader_study",
             "answer",
@@ -125,12 +119,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 required=False,  # TODO WHEN_US_API_DEPRECATED set required=True
             )
 
-            self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                "algorithms.execute_algorithm",
-                accept_global_perms=False,
-            )
-
             self.fields["archive"].queryset = get_objects_for_user(
                 user, "archives.upload_archive", accept_global_perms=False,
             )
@@ -149,7 +137,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
     @property
     def targets(self):
-        return ["algorithm", "archive", "reader_study", "answer"]
+        return ["archive", "reader_study", "answer"]
 
     def create(self, validated_data):
         set_targets = {
@@ -181,20 +169,15 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         if request_needs_target:
             if num_targets != 1:
                 raise ValidationError(
-                    "One of algorithm, archive, answer or reader study must be set"
+                    "One of archive, answer or reader study must be set"
                 )
         else:
             if num_targets > 1:
                 raise ValidationError(
-                    "Only one of algorithm, archive, answer or reader study can be set"
+                    "Only one of archive, answer or reader study can be set"
                 )
 
         return attrs
-
-    def validate_algorithm(self, value):
-        if not value.latest_ready_image:
-            raise ValidationError("This algorithm is not ready to be used")
-        return value
 
     def validate_answer(self, value):
         if not value.question.is_image_type:
@@ -238,16 +221,7 @@ def _validate_staged_files(*, staged_files):
 
 
 def _get_linked_task(*, targets):
-    if "algorithm" in targets:
-        return create_algorithm_jobs_for_session.signature(
-            kwargs={
-                "algorithm_image_pk": targets[
-                    "algorithm"
-                ].latest_ready_image.pk
-            },
-            immutable=True,
-        )
-    elif "archive" in targets:
+    if "archive" in targets:
         return add_images_to_archive.signature(
             kwargs={"archive_pk": targets["archive"].pk}, immutable=True,
         )
