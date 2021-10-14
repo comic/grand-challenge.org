@@ -8,7 +8,7 @@
     {% block content %}
         {% if news_caroussel_items %}
             <div class="container mb-5 p-0">
-                <div class="carousel" id="carouselIndicators" data-ride="carousel" data-interval="5000">
+                <div class="carousel slide" id="carouselIndicators" data-ride="carousel" data-interval="5000">
                     <div class="carousel-inner m-0 px-0">
                         {% for item in news_caroussel_items %}
                             <div class="carousel-item {% if forloop.counter == 1 %}active{% endif %}">
@@ -36,9 +36,8 @@
                     </div>
                     <ol class="carousel-indicators position-relative">
                         {% for item in news_caroussel_items %}
-                            <li class="mx-1 mb-sm-0 mt-sm-3 bg-primary position-relative" data-target="#carouselIndicators"
-                                data-slide-to="{{ forloop.counter0 }}"
-                                {% if forloop.counter == 1 %}class="active"{% endif %}>
+                            <li class="mx-1 mb-sm-0 mt-sm-3 bg-primary position-relative {% if forloop.counter == 1 %}active{% endif %}" data-target="#carouselIndicators"
+                                data-slide-to="{{ forloop.counter0 }}">
                             </li>
                         {% endfor %}
                     </ol>
