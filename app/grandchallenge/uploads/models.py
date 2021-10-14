@@ -68,6 +68,7 @@ class UserUpload(UUIDModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__client = None
+        self.__accelerated_client = None
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -81,17 +82,27 @@ class UserUpload(UUIDModel):
             self.assign_permissions()
 
     @property
+    def _client_kwargs(self):
+        return {"endpoint_url": settings.AWS_S3_ENDPOINT_URL}
+
+    @property
     def _client(self):
         if self.__client is None:
+            self.__client = boto3.client("s3", **self._client_kwargs)
+        return self.__client
+
+    @property
+    def _accelerated_client(self):
+        if self.__accelerated_client is None:
             config = Config(
                 s3={
                     "use_accelerate_endpoint": settings.UPLOADS_S3_USE_ACCELERATE_ENDPOINT
                 }
             )
-            self.__client = boto3.client(
-                "s3", config=config, endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+            self.__accelerated_client = boto3.client(
+                "s3", **self._client_kwargs, config=config,
             )
-        return self.__client
+        return self.__accelerated_client
 
     @property
     def bucket(self):
@@ -203,7 +214,7 @@ class UserUpload(UUIDModel):
         if self.status != self.StatusChoices.INITIALIZED:
             raise RuntimeError("Upload is not initialized")
 
-        return self._client.generate_presigned_url(
+        return self._accelerated_client.generate_presigned_url(
             "upload_part",
             Params={
                 "Bucket": self.bucket,
