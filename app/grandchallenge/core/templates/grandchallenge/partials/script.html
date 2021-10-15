@@ -7,3 +7,45 @@
 <script type="text/javascript"
         src="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.js"
         crossorigin="anonymous"></script>
+
+{% if request.resolver_match.view_name == 'home' %}
+    <script type="text/javascript">
+        // Enable scroll reveal
+        ScrollReveal({ distance: '50px', origin: 'bottom' })
+        ScrollReveal().reveal('.scroll-reveal');
+        ScrollReveal().reveal('.scroll-reveal-left', { origin: 'left' });
+        ScrollReveal().reveal('.scroll-reveal-right', { origin: 'right' });
+
+
+        // Enable counter animation
+        const easOutCubic = t => (--t)*t*t+1;
+        const animateNumber = (el, endVal, startVal=0, duration=1000) => {
+            /**
+             * Counts from `startVal` to `endVal` in `duration` ms and sets the value
+             * on innerHtml of `el`.
+             */
+            let startTime = null;
+            const step = (currentTime) => {
+                if (!startTime) {
+                      startTime = currentTime;
+                }
+                const progress = Math.min((currentTime  - startTime) / duration, 1);
+                const stepValue = (endVal - startVal) * easOutCubic(progress) + startVal;
+                el.innerHTML = Math.floor(stepValue).toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    window.cancelAnimationFrame(window.requestAnimationFrame(step));
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+        const initCounter = el => animateNumber(el, Number(el.dataset.endValue));
+
+        document.onreadystatechange = function () {
+            if (document.readyState === 'interactive') {
+                [...document.getElementsByClassName('animate-counter')].forEach(initCounter);
+            }
+        }
+    </script>
+{% endif %}
