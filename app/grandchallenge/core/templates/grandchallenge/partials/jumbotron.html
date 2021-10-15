@@ -15,13 +15,60 @@
                 <p class="lead">{{ jumbotron_description }}</p>
                 {% if request.resolver_match.view_name == 'home' %}
                     <div class="text-light text-center row pt-lg-5 pt-md-5 pt-sm-4">
-                        <div class="col-lg-4 col-sm-3 mb-2"><i class="fa fa-users fa-lg mr-2" aria-hidden="true"></i>{{ all_users.count|round_to:1000|intcomma }} &nbsp;users</div>
-                        <div class="col-lg-4 col-sm-3 mb-2"><i class="fa fa-trophy fa-lg mr-2" aria-hidden="true"></i>{{ all_challenges.count|intcomma }} &nbsp;challenges</div>
-                        <div class="col-lg-4 col-sm-3 mb-2"><i class="fa fa-code fa-lg mr-2" aria-hidden="true"></i>{{ all_algorithms.count|intcomma }} &nbsp;algorithms</div>
+                        <div class="col-lg-4 col-sm-3 mb-2">
+                            <i class="fa fa-users fa-lg mr-2" aria-hidden="true"></i>
+                            <span class="animate-counter" data-end-value="{{ all_users.count|round_to:1000 }}">0</span>&nbsp;users
+                        </div>
+                        <div class="col-lg-4 col-sm-3 mb-2">
+                            <i class="fa fa-trophy fa-lg mr-2" aria-hidden="true"></i>
+                            <span class="animate-counter" data-end-value="{{ all_challenges.count }}">0</span>&nbsp;challenges
+                        </div>
+                        <div class="col-lg-4 col-sm-3 mb-2">
+                            <i class="fa fa-code fa-lg mr-2" aria-hidden="true"></i>
+                            <span class="animate-counter" data-end-value="{{ all_algorithms.count }}">0</span>&nbsp;algorithms
+                        </div>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endif %}
+{% if request.resolver_match.view_name == 'home' %}
+
+    {% block script %}
+        <script type="text/javascript">
+            const easOutCubic = t => (--t)*t*t+1;
+
+            const animateNumber = (el, endVal, startVal=0, duration=1000) => {
+                /**
+                 * Counts from `startVal` to `endVal` in `duration` ms and sets the value
+                 * on innerHtml of `el`.
+                 */
+                let startTime = null;
+                const step = (currentTime) => {
+                    if (!startTime) {
+                          startTime = currentTime;
+                    }
+                    const progress = Math.min((currentTime  - startTime) / duration, 1);
+                    const stepValue = (endVal - startVal) * easOutCubic(progress) + startVal;
+                    el.innerHTML = Math.floor(stepValue).toLocaleString();
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        window.cancelAnimationFrame(window.requestAnimationFrame(step));
+                    }
+                };
+                window.requestAnimationFrame(step);
+            }
+
+            const initCounter = el => animateNumber(el, Number(el.dataset.endValue));
+
+            document.onreadystatechange = function () {
+                if (document.readyState === 'interactive') {
+                    [...document.getElementsByClassName('animate-counter')].forEach(initCounter);
+                }
+            }
+        </script>
+    {% endblock %}
 {% endif %}
