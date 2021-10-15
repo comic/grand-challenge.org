@@ -15,6 +15,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 
 
@@ -187,6 +188,10 @@ class UserUpload(UUIDModel):
             )
 
         return objects
+
+    @property
+    def api_url(self):
+        return reverse("api:upload-detail", kwargs={"pk": self.pk})
 
     def assign_permissions(self):
         assign_perm("view_userupload", self.creator, self)
