@@ -197,3 +197,9 @@ ul.socialaccount_providers > li {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+@media only screen and (max-width: 560px) {
+  .text-truncate-container {
+    height: 11rem;
+  }
+}
