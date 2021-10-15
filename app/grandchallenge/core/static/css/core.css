@@ -203,3 +203,7 @@ ul.socialaccount_providers > li {
     height: 11rem;
   }
 }
+
+.box-shadow {
+    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .1);
+}

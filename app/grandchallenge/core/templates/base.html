@@ -77,7 +77,7 @@
                 {% block topbar2 %}{% endblock %}
                 <div class="row">
                     {% block sidebar %}{% endblock %}
-                    <div class="col overflow-auto">
+                    <div class="col {% if request.resolver_match.view_name != 'home' %}overflow-auto{% endif %}">
                         {% block content %}{% endblock %}
                     </div>
                 </div>
