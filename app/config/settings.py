@@ -5,7 +5,6 @@ from distutils.util import strtobool as strtobool_i
 from itertools import product
 
 import sentry_sdk
-from corsheaders.defaults import default_headers
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.urls import reverse
@@ -822,12 +821,6 @@ VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
     rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
     rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}.static.observableusercontent.com$",
-]
-CORS_ALLOW_HEADERS = [
-    *default_headers,
-    "content-range",
-    "content-disposition",
-    "content-description",
 ]
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api
