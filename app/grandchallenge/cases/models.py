@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Mapping, Optional, Tuple, Union
+from typing import List, Mapping, Union
 
 from actstream.actions import follow
 from actstream.models import Follow
@@ -417,7 +417,7 @@ class Image(UUIDModel):
                 spacing = [1] * int(mh_header["NDims"])
         return spacing
 
-    def get_metaimage_files(self) -> Tuple["ImageFile", Optional["ImageFile"]]:
+    def get_metaimage_files(self):
         """
         Return ImageFile object for the related MHA file or MHD and RAW files.
 
