@@ -28,3 +28,8 @@
 {# Needs to be inline for some forms (summernote) #}
 <script type="text/javascript"
         src="{% static "vendor/js/jquery.min.js" %}"></script>
+
+{% if request.resolver_match.view_name == 'home' %}
+    {# scrollReveal.js is used on homepage, needs to be included in head to prevent flickering #}
+    <script src="https://unpkg.com/scrollreveal@4.0.9/dist/scrollreveal.min.js" integrity="sha384-/Mm/FNRz5xZHO/GuuAUw93l4PLUyI1RfkXnlY65kdR+jBmgt/ih19KrCNqVI9gKS" crossorigin="anonymous"></script>
+{% endif %}

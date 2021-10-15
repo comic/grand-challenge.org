@@ -18,6 +18,11 @@ p {
     background-size: cover;
 }
 
+/* hide scroll-reveal elements to prevent flickering */
+html.sr .scroll-reveal, html.sr .scroll-reveal-left, html.sr .scroll-reveal-right {
+    visibility: hidden;
+}
+
 /* fix modal display with overflow-y: scroll on html */
 .modal, .modal-open {
     padding-right: 0 !important;
