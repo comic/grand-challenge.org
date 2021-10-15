@@ -1050,6 +1050,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
         "schedule": timedelta(hours=1),
     },
+    "delete_old_user_uploads": {
+        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
+        "schedule": timedelta(hours=1),
+    },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",
         "schedule": timedelta(days=1),
