@@ -1,4 +1,10 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.postgres.search import (
+    SearchHeadline,
+    SearchQuery,
+    SearchRank,
+    SearchVector,
+)
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
@@ -30,7 +36,29 @@ class DocPageDetail(DetailView):
             .all()
         )
 
-        context.update({"top_level_pages": top_level_pages})
+        qs = DocPage.objects.all()
+        keywords = self.request.GET.get("query")
+
+        if keywords:
+            query = SearchQuery(keywords)
+            vector = SearchVector("title", "content")
+            headline = SearchHeadline("content", query)
+            qs = (
+                qs.annotate(headline=headline)
+                .annotate(rank=SearchRank(vector, query))
+                .filter(rank__gt=0)
+                .order_by("-rank")
+            )
+        else:
+            qs = None
+
+        context.update(
+            {
+                "top_level_pages": top_level_pages,
+                "search_results": qs,
+                "query": keywords,
+            }
+        )
 
         return context
 
