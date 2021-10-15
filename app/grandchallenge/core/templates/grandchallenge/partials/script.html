@@ -1,18 +1,9 @@
 {% load static %}
 
-{# jquery ui must be before bootstrap, but is required by blueimp-file-upload #}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
-        integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
-
 {# Bootstrap first, requires jquery from head_script #}
 <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
 
 {# DataTables with colvis #}
 <script type="text/javascript"
         src="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.js"
-        crossorigin="anonymous"></script>
-
-{# File uploads #}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.31.0/js/jquery.fileupload.min.js"
-        integrity="sha256-rFUfBX6nxajRE557glMx+ybBdfL9NXf8woMA1M1Tw0w="
         crossorigin="anonymous"></script>
