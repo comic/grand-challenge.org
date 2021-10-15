@@ -417,6 +417,44 @@ class Image(UUIDModel):
                 spacing = [1] * int(mh_header["NDims"])
         return spacing
 
+    def get_metaimage_files(self):
+        """
+        Return ImageFile object for the related MHA file or MHD and RAW files.
+
+        Returns
+        -------
+            Tuple of MHA/MHD ImageFile and optionally RAW ImageFile
+
+        Raises
+        ------
+        FileNotFoundError
+            Raised when Image has no related mhd/mha ImageFile or actual file
+            cannot be found on storage
+        """
+        image_data_file = None
+        try:
+            header_file = self.files.get(
+                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mha"
+            )
+        except ObjectDoesNotExist:
+            try:
+                # Fallback to files that are still stored as mhd/(z)raw
+                header_file = self.files.get(
+                    image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mhd"
+                )
+                image_data_file = self.files.get(
+                    image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith="raw"
+                )
+            except ObjectDoesNotExist:
+                raise FileNotFoundError(
+                    f"No mhd or mha file found for image {self.name} (pk: {self.pk})"
+                )
+
+        if not header_file.file.storage.exists(name=header_file.file.name):
+            raise FileNotFoundError(f"No file found for {header_file.file}")
+
+        return header_file, image_data_file
+
     def get_mh_header(self) -> Mapping[str, Union[str, None]]:
         """
         Return header from mhd/mha file as key value pairs
@@ -432,22 +470,7 @@ class Image(UUIDModel):
             cannot be found on storage
         """
 
-        mh_file = None
-        try:
-            mh_file = self.files.get(
-                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mha"
-            )
-        except ObjectDoesNotExist:
-            # Fallback to files that are still stored as mhd/(z)raw
-            mh_file = self.files.get(
-                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mhd"
-            )
-
-        if mh_file is None or not mh_file.file.storage.exists(
-            name=mh_file.file.name
-        ):
-            raise FileNotFoundError(f"No file found for {mh_file.file}")
-
+        mh_file, _ = self.get_metaimage_files()
         return parse_mh_header(mh_file.file)
 
     def get_sitk_image(self):
@@ -462,22 +485,7 @@ class Image(UUIDModel):
         -------
             A SimpleITK image
         """
-        # self.files should contain 1 .mhd file
-
-        try:
-            mhd_file = self.files.get(
-                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mha"
-            )
-            files = [mhd_file]
-        except ObjectDoesNotExist:
-            # Fallback to files that are still stored as mhd/(z)raw
-            mhd_file = self.files.get(
-                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mhd"
-            )
-            raw_file = self.files.get(
-                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith="raw"
-            )
-            files = [mhd_file, raw_file]
+        files = [i for i in self.get_metaimage_files() if i is not None]
 
         file_size = 0
         for file in files:
@@ -504,7 +512,7 @@ class Image(UUIDModel):
                         outfile.write(buffer)
 
             try:
-                hdr_path = Path(tempdirname) / Path(mhd_file.file.name).name
+                hdr_path = Path(tempdirname) / Path(files[0].file.name).name
                 sitk_image = load_sitk_image(mhd_file=hdr_path)
             except RuntimeError as e:
                 logging.error(

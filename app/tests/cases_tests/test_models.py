@@ -4,7 +4,7 @@ from pathlib import Path
 import factory
 import pytest
 from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
 from tests.cases_tests.factories import (
@@ -52,13 +52,13 @@ class TestGetSitkImage:
     def test_no_mhd_object(self):
         image = ImageFactoryWithImageFile()
         image.files.get(file__endswith=".mhd").delete()
-        with pytest.raises(ObjectDoesNotExist):
+        with pytest.raises(FileNotFoundError):
             image.get_sitk_image()
 
     def test_no_raw_object(self):
         image = ImageFactoryWithImageFile()
         image.files.get(file__endswith=".zraw").delete()
-        with pytest.raises(ObjectDoesNotExist):
+        with pytest.raises(FileNotFoundError):
             image.get_sitk_image()
 
     def test_file_not_found_mhd(self):
