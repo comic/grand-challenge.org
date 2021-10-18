@@ -88,12 +88,13 @@
 {% endblock %}
 
 {% block content %}
-    {% if 'documentation.change_docpage' in perms %}
         <div class="row mt-3">
             <div class="col-12 col-sm-6 col-md-7 d-inline-block text-left">
-                <a class="btn btn-md btn-outline-dark d-inline-flex mb-1" href="{% url 'documentation:list' %}">Page overview</a>
-                <a class="btn btn-md btn-outline-dark d-inline-flex mb-1" href="{% url 'documentation:create' %}">Add</a>
-                <a class="btn btn-md btn-outline-dark mb-1" href="{% url 'documentation:update' slug=currentdocpage.slug %}">Edit</a>
+                {% if 'documentation.change_docpage' in perms %}
+                    <a class="btn btn-md btn-outline-dark d-inline-flex mb-1" href="{% url 'documentation:list' %}">Page overview</a>
+                    <a class="btn btn-md btn-outline-dark d-inline-flex mb-1" href="{% url 'documentation:create' %}">Add</a>
+                    <a class="btn btn-md btn-outline-dark mb-1" href="{% url 'documentation:update' slug=currentdocpage.slug %}">Edit</a>
+                {% endif %}
             </div>
             <div class="col-12 col-sm-6 col-md-5 justify-content-start justify-content-sm-end form-inline">
                 <form>
@@ -101,13 +102,14 @@
                 </form>
             </div>
         </div>
-    {% endif %}
     {% if search_results != None %}
         <div class="mt-4" id=pageContainer>
             {% if search_results %}
                 {% for result in search_results %}
-                    <a href="{% url 'documentation:detail' slug=result.slug %}"><h5>{{ result.title }}</h5></a>
-                    <div class="mb-3">{{ result.headline|safe }}</div>
+                    <div class="card rounded border-light my-1">
+                        <a href="{% url 'documentation:detail' slug=result.slug %}"><h5 class="pl-3 pt-3">{{ result.title }}</h5></a>
+                        <div class="mb-3 pl-3">{{ result.headline|safe }}</div>
+                    </div>
                 {% endfor %}
             {% else %}
                 <div>There are no matches for <b>{{ query }}</b>.</div>
