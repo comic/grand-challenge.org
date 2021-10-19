@@ -4,7 +4,9 @@ from django.contrib.postgres.search import (
     SearchQuery,
     SearchRank,
     SearchVector,
+    TrigramSimilarity,
 )
+from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
@@ -46,8 +48,13 @@ class DocPageDetail(DetailView):
             qs = (
                 qs.annotate(headline=headline)
                 .annotate(rank=SearchRank(vector, query))
-                .filter(rank__gt=0)
-                .order_by("-rank")
+                .annotate(
+                    similarity=TrigramSimilarity("title", keywords)
+                    + TrigramSimilarity("content", keywords)
+                )
+                .annotate(combined_score=(F("similarity") + F("rank")) / 2)
+                .filter(Q(rank__gt=0.001) | Q(similarity__gt=0.1))
+                .order_by("-combined_score")
             )
         else:
             qs = None

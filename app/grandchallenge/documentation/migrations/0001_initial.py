@@ -4,6 +4,7 @@ import django.db.models.deletion
 import django_extensions.db.fields
 import simple_history.models
 from django.conf import settings
+from django.contrib.postgres.operations import TrigramExtension
 from django.db import migrations, models
 
 
@@ -16,6 +17,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        TrigramExtension(),
         migrations.CreateModel(
             name="HistoricalDocPage",
             fields=[
