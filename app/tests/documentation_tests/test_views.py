@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import MultipleObjectsReturned
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.documentation.models import DocPage
@@ -88,3 +89,55 @@ def test_docpage_update(client):
     p2.refresh_from_db()
     assert p2.order == 1
     assert p2.content == new_content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "query, target_pages",
+    [
+        ("algorithm", [0]),
+        ("algoritm", [0]),
+        ("alg", [0]),
+        ("study", [1]),
+        ("content", [0, 1]),
+    ],
+)
+def test_search(client, query, target_pages):
+    u1 = UserFactory()
+    p1 = DocPageFactory(
+        title="algorithms", content="some content about algorithms"
+    )
+    p2 = DocPageFactory(
+        title="reader studies", content="some content about reader studies"
+    )
+    pages = [p1, p2]
+
+    matching_pages = []
+    if len(target_pages) > 1:
+        for _ in target_pages:
+            matching_pages.append(pages.pop(0))
+    else:
+        matching_pages = pages.pop(target_pages[0])
+
+    non_matching_pages = pages
+
+    assign_perm("documentation.change_docpage", u1)
+
+    response = get_view_for_user(
+        viewname="documentation:home",
+        client=client,
+        data={"query": query},
+        user=u1,
+    )
+
+    try:
+        assert response.context_data["search_results"].get() == matching_pages
+    except MultipleObjectsReturned:
+        for match in response.context_data["search_results"].all():
+            assert match in matching_pages
+
+    if non_matching_pages:
+        assert (
+            response.context_data["search_results"].get()
+            not in non_matching_pages
+        )
