@@ -13,15 +13,13 @@
                         {% for item in news_caroussel_items %}
                             <div class="carousel-item {% if forloop.counter == 1 %}active{% endif %}">
                                 <div class="d-sm-flex d-xs-inline justify-content-center align-items-center">
-                                    <div class="col-12 col-lg-2 col-md-3 col-sm-6 p-0 my-3">
-                                        <div class="embed-responsive embed-responsive-1by1 gc-card">
-                                             <a href="{{ item.get_absolute_url }}"><img class="card gc-card embed-responsive-item"
-                                                 src="{{ item.logo.x20.url }}"
-                                                 srcset="{{ item.logo.x10.url }} 1x,
-                                                         {{ item.logo.x15.url }} 1.5x,
-                                                         {{ item.logo.x20.url }} 2x"
-                                                 alt="{{ item.title }}" loading="lazy"></a>
-                                        </div>
+                                    <div class="col-12 col-lg-2 col-md-3 col-sm-6 p-0 my-3 d-inline-block carousel-img-container w-100">
+                                        <a href="{{ item.get_absolute_url }}"><img class="card gc-card carousel-img m-auto h-100 mw-100"
+                                             src="{{ item.logo.x20.url }}"
+                                             srcset="{{ item.logo.x10.url }} 1x,
+                                                     {{ item.logo.x15.url }} 1.5x,
+                                                      {{ item.logo.x20.url }} 2x"
+                                             alt="{{ item.title }}" loading="lazy"></a>
                                     </div>
                                     <div class="col-12 col-lg-8 col-md-7 col-sm-6 text-primary text-truncate-container">
                                         <a class="stretched-link text-decoration-none text-primary"

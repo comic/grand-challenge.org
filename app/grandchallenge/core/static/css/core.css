@@ -198,8 +198,27 @@ ul.socialaccount_providers > li {
     text-overflow: ellipsis;
 }
 
-@media only screen and (max-width: 560px) {
+@media only screen and (max-width: 580px) {
   .text-truncate-container {
-    height: 11rem;
+      height: 11rem;
   }
+  .carousel-img-container {
+      height: 15rem;
+  }
+}
+
+@media only screen and (min-width: 580px) and (max-width: 1200px) {
+    .carousel-img-container {
+        height: 10rem;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+    .carousel-img-container {
+        height: 12rem;
+    }
+}
+
+.carousel-img {
+    object-fit: cover;
 }
