@@ -340,6 +340,11 @@ class Challenge(ChallengeBase):
     cached_latest_result = models.DateTimeField(
         editable=False, blank=True, null=True
     )
+    contact_email = models.EmailField(
+        blank=True,
+        null=True,
+        help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

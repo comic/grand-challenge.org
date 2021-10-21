@@ -18,5 +18,5 @@
 <p>
     For any queries related to
     <a href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a>
-    please <a href="mailto:{{ challenge.creator.email|random_encode }}">contact us</a>.
+    please <a href="mailto:{{ challenge.contact_email|random_encode }}">contact us</a>.
 </p>

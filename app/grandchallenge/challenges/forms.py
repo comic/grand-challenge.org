@@ -16,6 +16,7 @@ class ChallengeCreateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
+        self.fields["contact_email"].required = True
 
     class Meta:
         model = Challenge
@@ -24,6 +25,7 @@ class ChallengeCreateForm(forms.ModelForm):
             "description",
             "require_participant_review",
             "use_evaluation",
+            "contact_email",
         ]
 
 
@@ -62,6 +64,7 @@ class ChallengeUpdateForm(forms.ModelForm):
                     *common_information_items,
                     "display_forum_link",
                     "disclaimer",
+                    "contact_email",
                 ),
                 Tab("Images", "banner", *common_images_items),
                 Tab("Event", *event_items),
@@ -70,6 +73,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             ),
             ButtonHolder(Submit("save", "Save")),
         )
+        self.fields["contact_email"].required = True
 
     class Meta:
         model = Challenge
@@ -77,6 +81,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             *common_information_items,
             "display_forum_link",
             "disclaimer",
+            "contact_email",
             "banner",
             *common_images_items,
             *event_items,
