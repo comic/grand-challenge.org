@@ -1249,7 +1249,7 @@ test = ["hypothesis (>=3.58)", "pytest (>=6.0)", "pytest-xdist"]
 
 [[package]]
 name = "panimg"
-version = "0.5.1"
+version = "0.5.2"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
@@ -1374,7 +1374,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "pyjwt"
-version = "2.2.0"
+version = "2.3.0"
 description = "JSON Web Token implementation in Python"
 category = "main"
 optional = false
@@ -2274,7 +2274,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c9cd7e38031b7a4646b0c87635e6f5e0338d877c39184e86f89293d5bbec9a2f"
+content-hash = "b6fc2b999f85c69805df01400a136868383b66d691da16b2f8bc804ce2213e1c"
 
 [metadata.files]
 alabaster = [
@@ -2941,8 +2941,8 @@ pandas = [
     {file = "pandas-1.3.1.tar.gz", hash = "sha256:341935a594db24f3ff07d1b34d1d231786aa9adfa84b76eab10bf42907c8aed3"},
 ]
 panimg = [
-    {file = "panimg-0.5.1-py3-none-any.whl", hash = "sha256:8cfaae8d188a73364d134566083f1a97b784192d44e6dacdb53ccb37c48a1319"},
-    {file = "panimg-0.5.1.tar.gz", hash = "sha256:43f7c441b4b8c519c11944e24222ca3bb6cefa0f9478ee506ea818b1e55ab321"},
+    {file = "panimg-0.5.2-py3-none-any.whl", hash = "sha256:106096a333f56c6e962bdda712d33bda3cf8c26947dbda0977f422269dca0765"},
+    {file = "panimg-0.5.2.tar.gz", hash = "sha256:65899e8b726a6f543d7f30603de9498df3cc6ae75806f62012d130997e06021f"},
 ]
 pillow = [
     {file = "Pillow-8.3.1-1-cp36-cp36m-win_amd64.whl", hash = "sha256:fd7eef578f5b2200d066db1b50c4aa66410786201669fb76d5238b007918fb24"},
@@ -3068,8 +3068,8 @@ pygments = [
     {file = "Pygments-2.10.0.tar.gz", hash = "sha256:f398865f7eb6874156579fdf36bc840a03cab64d1cde9e93d68f46a425ec52c6"},
 ]
 pyjwt = [
-    {file = "PyJWT-2.2.0-py3-none-any.whl", hash = "sha256:b0ed5824c8ecc5362e540c65dc6247567db130c4226670bf7699aec92fb4dae1"},
-    {file = "PyJWT-2.2.0.tar.gz", hash = "sha256:a0b9a3b4e5ca5517cac9f1a6e9cd30bf1aa80be74fcdf4e28eded582ecfcfbae"},
+    {file = "PyJWT-2.3.0-py3-none-any.whl", hash = "sha256:e0c4bb8d9f0af0c7f5b1ec4c5036309617d03d56932877f2f7a0beeb5318322f"},
+    {file = "PyJWT-2.3.0.tar.gz", hash = "sha256:b888b4d56f06f6dcd777210c334e69c737be74755d3e5e9ee3fe67dc18a0ee41"},
 ]
 pylibjpeg = [
     {file = "pylibjpeg-1.3.0-py3-none-any.whl", hash = "sha256:0436dfbe1141e9ef360b9e94546d95352257f96eabdcdab638fde31c0f816e18"},
