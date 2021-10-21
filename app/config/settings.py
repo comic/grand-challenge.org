@@ -1140,12 +1140,15 @@ MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 # The maximum size of all the files in an upload session in bytes
 UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
 
-# The maximum size of predictions files
-PREDICTIONS_FILE_MAX_BYTES = 3_221_223_823  # 3 GB
-
 # Some forms have a lot of data, such as a reader study update view
 # that can contain reports about the medical images
 DATA_UPLOAD_MAX_MEMORY_SIZE = 16_777_216  # 16 mb
+
+# Some forms have a lot of fields, such as uploads of images
+# with many slices
+DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
+    os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", "2048")
+)
 
 # Default maximum width or height for thumbnails in retina workstation
 RETINA_DEFAULT_THUMBNAIL_SIZE = 128
