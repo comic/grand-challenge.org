@@ -12,11 +12,12 @@ from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class ChallengeCreateForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, creator, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
         self.fields["contact_email"].required = True
+        self.fields["contact_email"].initial = creator.email
 
     class Meta:
         model = Challenge

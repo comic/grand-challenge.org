@@ -499,14 +499,6 @@ class Challenge(ChallengeBase):
             challenge=self,
             permission_level=Page.ALL,
         )
-        Page.objects.create(
-            title="Contact",
-            html=render_to_string(
-                "pages/defaults/contact.html", {"challenge": self}
-            ),
-            challenge=self,
-            permission_level=Page.REGISTERED_ONLY,
-        )
 
     def create_default_phases(self):
         self.phase_set.create(challenge=self)

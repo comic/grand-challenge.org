@@ -334,6 +334,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
         data = {
             "short_name": short_name,
             "description": description,
+            "contact_email": user.email,
             "logo": create_uploaded_image(),
             "banner": create_uploaded_image(),
             "prefix": "form",
