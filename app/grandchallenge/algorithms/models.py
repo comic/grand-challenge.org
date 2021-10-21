@@ -6,6 +6,7 @@ from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Min, Q, Sum
@@ -332,6 +333,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
+
+    def get_associated_challenges(self):
+        return cache.get(f"algorithm_{self.pk}")
 
 
 @receiver(post_delete, sender=Algorithm)

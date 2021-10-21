@@ -1,5 +1,6 @@
 from celery import chain, chord, group, shared_task
 from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
@@ -443,3 +444,12 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
                 target=algorithm,
                 description=experiment_url,
             )
+
+
+@shared_task
+def update_associated_challenges():
+    for algorithm in Algorithm.objects.all():
+        challenge_list = []
+        for submission in algorithm.latest_ready_image.submission_set.all():
+            challenge_list.append(submission.phase.challenge)
+        cache.set(f"algorithm_{algorithm.pk}", set(challenge_list))

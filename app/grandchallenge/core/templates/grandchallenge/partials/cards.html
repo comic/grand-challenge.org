@@ -37,10 +37,12 @@
                             {{ object.title }}
                         {% endif %}
                         {% if not object.public %}
-                            <i class="fas fa-lock above-stretched-link" title="{{ object_list.model|meta_attr:'verbose_name'|title }} is private"></i>
+                            <i class="fas fa-lock fa-sm above-stretched-link mx-1" title="{{ object_list.model|meta_attr:'verbose_name'|title }} is private"></i>
                         {% endif %}
                     </h5>
-                    {% if 'challenge' in object|meta_attr:'model_name' %}
+                    {% if 'algorithm' in object|meta_attr:'model_name' %}
+                        {% include 'algorithms/algorithm_card_body.html' with algorithm=object %}
+                    {% elif 'challenge' in object|meta_attr:'model_name' %}
                         {% include 'challenges/challenge_card_body.html' with challenge=object %}
                     {% else %}
                         <p class="card-text">{{ object.description }}</p>
