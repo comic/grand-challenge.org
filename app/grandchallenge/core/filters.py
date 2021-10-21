@@ -3,9 +3,15 @@ from operator import or_
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from django.core.validators import EMPTY_VALUES
 from django.db.models import Q
 from django.forms import Form
-from django_filters import CharFilter, FilterSet, ModelMultipleChoiceFilter
+from django_filters import (
+    BooleanFilter,
+    CharFilter,
+    FilterSet,
+    ModelMultipleChoiceFilter,
+)
 from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
@@ -97,3 +103,15 @@ class FilterMixin:
             }
         )
         return context
+
+
+class EmptyStringFilter(BooleanFilter):
+    # https://django-filter.readthedocs.io/en/latest/guide/tips.html#solution-2-empty-string-filter
+    def filter(self, qs, value):
+        if value in EMPTY_VALUES:
+            return qs
+
+        exclude = self.exclude ^ (value is False)
+        method = qs.exclude if exclude else qs.filter
+
+        return method(**{self.field_name: ""})

@@ -4,6 +4,7 @@ from django_select2.forms import Select2MultipleWidget
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
+from grandchallenge.core.filters import EmptyStringFilter
 from grandchallenge.reader_studies.models import ReaderStudy
 
 
@@ -39,6 +40,10 @@ class ImageFilterSet(FilterSet):
         help_text="Filter images that belong to a reader study",
         field_name="readerstudies__pk",
         to_field_name="pk",
+    )
+    patient_id__isempty = EmptyStringFilter(field_name="patient_id")
+    study_description__isempty = EmptyStringFilter(
+        field_name="study_description"
     )
 
     class Meta:
