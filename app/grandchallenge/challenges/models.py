@@ -340,6 +340,11 @@ class Challenge(ChallengeBase):
     cached_latest_result = models.DateTimeField(
         editable=False, blank=True, null=True
     )
+    contact_email = models.EmailField(
+        blank=True,
+        default="",
+        help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -493,14 +498,6 @@ class Challenge(ChallengeBase):
             ),
             challenge=self,
             permission_level=Page.ALL,
-        )
-        Page.objects.create(
-            title="Contact",
-            html=render_to_string(
-                "pages/defaults/contact.html", {"challenge": self}
-            ),
-            challenge=self,
-            permission_level=Page.REGISTERED_ONLY,
         )
 
     def create_default_phases(self):
