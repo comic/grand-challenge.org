@@ -2,6 +2,7 @@
 {% load url %}
 {% load user_profile_link from profiles %}
 {% load meta_attr %}
+{% load static %}
 
 
 {% block title %}
@@ -24,40 +25,11 @@
 
     {% include "grandchallenge/partials/pagination.html"  %}
 
-    <div class="modal fade" id="algorithmInfoModal" tabindex="-1" role="dialog"
-         aria-labelledby="algorithmInfoModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"></h5>
-                    <button type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p class="modal-algorithm-description"></p>
-                    <p class="text-right"><a href="" class="modal-algorithm-url">Go to
-                        this algorithm</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include "grandchallenge/partials/cards_info_modal.html" %}
 
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
-
-    <script type="text/javascript">
-        $('#algorithmInfoModal').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            var modal = $(this);
-            modal.find('.modal-title').text(button.data('title'));
-            modal.find('.modal-algorithm-description').text(button.data('description'));
-            modal.find('.modal-algorithm-url').attr('href', button.data('absolute-url'));
-            modal.find('.modal-algorithm-url').text(button.data('absolute-url'));
-        })
-    </script>
+    <script src="{% static "js/cards_info_modal.js" %}"></script>
 {% endblock %}
