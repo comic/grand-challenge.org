@@ -74,7 +74,6 @@ class ChallengeUpdateForm(forms.ModelForm):
             ),
             ButtonHolder(Submit("save", "Save")),
         )
-        self.fields["contact_email"].required = True
 
     class Meta:
         model = Challenge
@@ -116,6 +115,11 @@ class ChallengeUpdateForm(forms.ModelForm):
 
         if not cleaned_data["hidden"] and not cleaned_data.get("logo"):
             raise ValidationError("A logo is required for public challenges")
+
+        if not cleaned_data["hidden"] and not cleaned_data.get(
+            "contact_email"
+        ):
+            raise ValidationError("A contact email is required")
 
         return cleaned_data
 
