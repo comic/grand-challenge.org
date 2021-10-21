@@ -342,7 +342,7 @@ class Challenge(ChallengeBase):
     )
     contact_email = models.EmailField(
         blank=True,
-        null=True,
+        default="",
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
     )
 
