@@ -5,7 +5,7 @@
 <div class="my-2">
     {% if algorithm.description %}
         <a href="#InfoModal"
-           class="badge badge-info above-stretched-link mr-1"
+           class="badge badge-info above-stretched-link p-1 mr-1"
            data-toggle="modal"
            data-target="#InfoModal"
            data-title="{{ algorithm.title }}"
@@ -17,11 +17,14 @@
     {% endif %}
 
     {% if object.repo_name %}
-        <a href="https://github.com/{{algorithm.repo_name}}" class="mr-1 above-stretched-link"> <i class="fab fa-github fa-fw"></i></a>
+        <a href="https://github.com/{{algorithm.repo_name}}"
+           class="badge badge-info above-stretched-link p-1 mr-1">
+            <i class="fab fa-github fa-fw"></i>
+        </a>
     {% endif %}
 
     {% for publication in algorithm.publications.all %}
-        <a class="badge badge-info above-stretched-link mr-1"
+        <a class="badge badge-info above-stretched-link p-1 mr-1"
            href="{{ publication.url }}"
            title="{{ publication.title }}">
             <i class="fas fa-file fa-fw"></i>&nbsp;Article

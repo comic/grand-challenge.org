@@ -335,7 +335,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.remove(self.users_group)
 
     def get_associated_challenges(self):
-        return cache.get(f"algorithm_{self.pk}")
+        return cache.get(self.slug)
 
 
 @receiver(post_delete, sender=Algorithm)

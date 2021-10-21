@@ -448,8 +448,10 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
 
 @shared_task
 def update_associated_challenges():
+    from grandchallenge.challenges.models import Challenge
+
     for algorithm in Algorithm.objects.all():
-        challenge_list = []
-        for submission in algorithm.latest_ready_image.submission_set.all():
-            challenge_list.append(submission.phase.challenge)
-        cache.set(f"algorithm_{algorithm.pk}", set(challenge_list))
+        challenge_list = Challenge.objects.filter(
+            phase__submission__algorithm_image__algorithm=algorithm
+        ).distinct()
+        cache.set(algorithm.slug, challenge_list)
