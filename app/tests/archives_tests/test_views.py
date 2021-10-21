@@ -4,9 +4,14 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.subdomains.utils import reverse
 from tests.archives_tests.factories import (
     ArchiveFactory,
+    ArchiveItemFactory,
     ArchivePermissionRequestFactory,
 )
-from tests.factories import UserFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -101,3 +106,76 @@ class TestObjectPermissionRequiredViews:
 
             for obj in objs:
                 remove_perm(permission, u, obj)
+
+
+@pytest.mark.django_db
+class TestArchiveViewSetPatients:
+    @staticmethod
+    def _create_archive_with_user():
+        a = ArchiveFactory()
+        u = UserFactory()
+        a.add_user(u)
+        return a, u
+
+    @staticmethod
+    def _add_image_to_archive(image, archive):
+        interface = ComponentInterfaceFactory()
+        civ = ComponentInterfaceValueFactory(interface=interface, image=image)
+        item = ArchiveItemFactory(archive=archive)
+        item.values.set([civ])
+
+    def test_no_access_archive(self, client):
+        a, u = self._create_archive_with_user()
+        a.remove_user(u)
+        response = get_view_for_user(
+            client=client,
+            viewname="api:archive-patients",
+            reverse_kwargs={"pk": a.pk},
+            user=u,
+        )
+        assert response.status_code == 404
+
+    def test_empty_archive(self, client):
+        a, u = self._create_archive_with_user()
+        response = get_view_for_user(
+            client=client,
+            viewname="api:archive-patients",
+            reverse_kwargs={"pk": a.pk},
+            user=u,
+        )
+        assert response.status_code == 200
+        assert len(response.data) == 0
+
+    def test_archive_no_patients(self, client):
+        a, u = self._create_archive_with_user()
+        for _ in range(3):
+            self._add_image_to_archive(ImageFactory(), a)
+
+        response = get_view_for_user(
+            client=client,
+            viewname="api:archive-patients",
+            reverse_kwargs={"pk": a.pk},
+            user=u,
+        )
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0] == ""
+
+    def test_archive_some_patients(self, client):
+        a, u = self._create_archive_with_user()
+        for _ in range(3):
+            self._add_image_to_archive(ImageFactory(), a)
+        patients = []
+        for i in range(3):
+            p_id = f"Patient {i}"
+            patients.append(p_id)
+            self._add_image_to_archive(ImageFactory(patient_id=p_id), a)
+
+        response = get_view_for_user(
+            client=client,
+            viewname="api:archive-patients",
+            reverse_kwargs={"pk": a.pk},
+            user=u,
+        )
+        assert response.status_code == 200
+        assert set(response.data) == set(patients + [""])

@@ -26,7 +26,9 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -681,3 +683,16 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+
+    @action(detail=True)
+    def patients(self, request, pk=None):
+        archive = self.get_object()
+        patients = (
+            Image.objects.filter(
+                componentinterfacevalue__archive_items__archive=archive
+            )
+            .order_by("patient_id")
+            .values_list("patient_id", flat=True)
+            .distinct("patient_id")
+        )
+        return Response(patients)
