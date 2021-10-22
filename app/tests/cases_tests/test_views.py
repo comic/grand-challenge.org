@@ -126,89 +126,33 @@ class TestVTKImageDetail:
         assert get_status_code(image) == 200
 
 
+P = "patient_id__isempty"
+S = "study_description__isempty"
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "factory_kwargs,data_non_filtered,data_filtered",
     (
         (
             {},
-            (
-                {},
-                {"patient_id__isempty": True},
-                {"study_description__isempty": True},
-                {
-                    "patient_id__isempty": True,
-                    "study_description__isempty": True,
-                },
-            ),
-            (
-                {"patient_id__isempty": False},
-                {"study_description__isempty": False},
-                {
-                    "patient_id__isempty": False,
-                    "study_description__isempty": False,
-                },
-            ),
+            ({}, {P: True}, {S: True}, {P: True, S: True}),
+            ({P: False}, {S: False}, {P: False, S: False}),
         ),
         (
             {"patient_id": "test"},
-            (
-                {},
-                {"patient_id__isempty": False},
-                {"study_description__isempty": True},
-                {
-                    "patient_id__isempty": False,
-                    "study_description__isempty": True,
-                },
-            ),
-            (
-                {"patient_id__isempty": True},
-                {"study_description__isempty": False},
-                {
-                    "patient_id__isempty": True,
-                    "study_description__isempty": False,
-                },
-            ),
+            ({}, {P: False}, {S: True}, {P: False, S: True}),
+            ({P: True}, {S: False}, {P: True, S: False}),
         ),
         (
             {"study_description": "test"},
-            (
-                {},
-                {"patient_id__isempty": True},
-                {"study_description__isempty": False},
-                {
-                    "patient_id__isempty": True,
-                    "study_description__isempty": False,
-                },
-            ),
-            (
-                {"patient_id__isempty": False},
-                {"study_description__isempty": True},
-                {
-                    "patient_id__isempty": False,
-                    "study_description__isempty": True,
-                },
-            ),
+            ({}, {P: True}, {S: False}, {P: True, S: False}),
+            ({P: False}, {S: True}, {P: False, S: True}),
         ),
         (
             {"study_description": "test", "patient_id": "test"},
-            (
-                {},
-                {"patient_id__isempty": False},
-                {"study_description__isempty": False},
-                {
-                    "patient_id__isempty": False,
-                    "study_description__isempty": False,
-                },
-            ),
-            (
-                {"patient_id__isempty": True},
-                {"study_description__isempty": True},
-                {
-                    "patient_id__isempty": True,
-                    "study_description__isempty": True,
-                },
-            ),
+            ({}, {P: False}, {S: False}, {P: False, S: False}),
+            ({P: True}, {S: True}, {P: True, S: True}),
         ),
     ),
 )
@@ -218,17 +162,14 @@ def test_imageviewset_empty_fields_filtering(
     image = ImageFactory(**factory_kwargs)
     u = UserFactory()
     assign_perm("view_image", u, image)
+    view_kwargs = {"client": client, "viewname": "api:image-list", "user": u}
     for data in data_non_filtered:
-        response = get_view_for_user(
-            client=client, viewname="api:image-list", user=u, data=data,
-        )
-        response.status = 200
+        response = get_view_for_user(**view_kwargs, data=data)
+        assert response.status_code == 200
         assert len(response.data["results"]) == 1
         assert response.data["results"][0]["pk"] == str(image.pk)
 
     for data in data_filtered:
-        response = get_view_for_user(
-            client=client, viewname="api:image-list", user=u, data=data,
-        )
-        response.status = 200
+        response = get_view_for_user(**view_kwargs, data=data)
+        assert response.status_code == 200
         assert len(response.data["results"]) == 0
