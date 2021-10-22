@@ -893,7 +893,7 @@ class AnswerViewSet(
     queryset = (
         Answer.objects.all()
         .select_related("creator", "question__reader_study")
-        .prefetch_related("civs")
+        .prefetch_related("civs", "civs__image")
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
