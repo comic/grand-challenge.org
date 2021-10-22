@@ -8,6 +8,7 @@ from tests.factories import (
     WorkstationFactory,
     WorkstationImageFactory,
 )
+from tests.verification_tests.factories import VerificationFactory
 
 
 class WorkstationSet(NamedTuple):
@@ -27,6 +28,10 @@ def workstation_set():
     ws = WorkstationFactory()
     wsi = WorkstationImageFactory(workstation=ws)
     e, u, u1 = UserFactory(), UserFactory(), UserFactory()
+
+    for user in [e, u, u1]:
+        VerificationFactory(user=user, is_verified=True)
+
     wss = WorkstationSet(workstation=ws, editor=e, user=u, user1=u1, image=wsi)
     wss.workstation.add_editor(user=e)
     wss.workstation.add_user(user=u)

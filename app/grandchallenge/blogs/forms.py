@@ -32,6 +32,7 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
             "logo",
             "authors",
             "tags",
+            "highlight",
         )
         widgets = {
             "tags": Select2MultipleWidget,

@@ -19,7 +19,7 @@ from grandchallenge.serving.tasks import create_download
 
 def protected_storage_redirect(*, name):
     # Get the storage with the internal redirect and auth. This will prepend
-    # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
+    # settings.AWS_S3_ENDPOINT_URL to the url
     if not internal_protected_s3_storage.exists(name=name):
         raise Http404("File not found.")
 
@@ -101,7 +101,9 @@ def serve_component_interface_value(
         raise Http404("No ComponentInterfaceValue found.")
 
     if (
-        get_objects_for_user(user=user, perms="algorithms.view_job")
+        get_objects_for_user(
+            user=user, perms="algorithms.view_job", accept_global_perms=False
+        )
         .filter(
             Q(outputs__pk=component_interface_value_pk)
             | Q(inputs__pk=component_interface_value_pk)

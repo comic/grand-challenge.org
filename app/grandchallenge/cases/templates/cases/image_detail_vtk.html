@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VTK.js Image Detail</title>
+    <style>
+        body {
+            margin: 0;
+        }
+        .viewer {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="itk" class="viewer" data-url="{{ mh_url }}" data-is2d="{{ is_2d }}"></div>
+    <script
+        src="https://unpkg.com/itk-vtk-viewer@11.11.2/dist/itkVtkViewerCDN.js"
+        integrity="sha384-LTeflmm51FBGPPQClZZuYQKlisKD6AINeDUXFQxyoY0UsU/acHZnhG99cV4bjIvX"
+        crossorigin="anonymous"
+    ></script>
+    <script>
+        const el = document.getElementById('itk');
+        const files = [el.dataset.url];
+        const use2D = el.dataset.is2d === "True";
+        itkVtkViewer.createViewerFromUrl(el, { files, use2D }).then(viewer => {
+            viewer.setBackgroundColor([0, 0, 0]);
+            viewer.setUICollapsed(true);
+            viewer.setUnits('mm');
+            viewer.setRotateEnabled(false);
+
+            if (viewer.renderWindow && viewer.renderWindow.render) {
+                viewer.renderWindow.render()
+            }
+        });
+    </script>
+</body>
+</html>

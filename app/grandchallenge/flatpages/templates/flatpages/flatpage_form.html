@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy from crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+    {% if flatpage %}{{ flatpage.title }}{% else %}Flatpages{% endif %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">{% if flatpage %}<a href="{{ flatpage.url }}">{{ flatpage.title }}</a>{% else %}Flatpages{% endif %}</li>
+        <li class="breadcrumb-item active">{% if flatpage %}Update{% else %}Create Flatpage{% endif %}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>{% if flatpage %}Update{% else %}Create{% endif %} Flatpage</h2>
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

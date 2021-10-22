@@ -1,8 +1,8 @@
 import pytest
+from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.utils import get_anonymous_user
 
-from config import settings
 from grandchallenge.publications.models import Publication
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load crispy from crispy_forms_tags %}
+{% load static %}
+{% load url %}
+
+{% block title %}
+    Documentation - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'documentation:home' %}">Documentation</a></li>
+        {% if object %}
+            {% if object.parent %}
+                {% if object.parent.parent %}
+                    <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=object.parent.parent.slug %}">
+                            {{ object.parent.parent.title }}
+                    </a></li>
+                {% endif %}
+                <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=object.parent.slug %}">
+                        {{ object.parent.title }}
+                </a></li>
+            {% endif %}
+            <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=object.slug %}">
+                {{ object.title }}
+            </a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">{% if object %}Update{% else %}Create Page{% endif %}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>{% if object %}Update{% else %}Create{% endif %} Page</h2>
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

@@ -18,6 +18,7 @@ from guardian.mixins import (
 )
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.blogs.models import Post
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -118,6 +119,28 @@ class HomeTemplate(TemplateView):
             ),
         ]
 
+        latest_news_item = Post.objects.filter(
+            published=True, highlight=True
+        ).first()
+        latest_ai_for_radiology_post = Post.objects.filter(
+            published=True, tags__slug="products"
+        ).first()
+        latest_gc_blog_post = (
+            Post.objects.filter(published=True)
+            .exclude(tags__slug="products")
+            .exclude(highlight=True)
+            .first()
+        )
+        news_caroussel_items = [
+            item
+            for item in [
+                latest_news_item,
+                latest_ai_for_radiology_post,
+                latest_gc_blog_post,
+            ]
+            if item
+        ]
+
         context.update(
             {
                 "all_users": get_user_model().objects.all(),
@@ -130,6 +153,18 @@ class HomeTemplate(TemplateView):
                     "A platform for end-to-end development of machine "
                     "learning solutions in biomedical imaging."
                 ),
+                "highlighted_challenges": Challenge.objects.filter(
+                    hidden=False, highlight=True
+                )
+                .order_by("-created")
+                .all()[:4],
+                "highlighted_algorithms": Algorithm.objects.filter(
+                    public=True, highlight=True
+                )
+                .order_by("-created")
+                .all()[:4],
+                "news_caroussel_items": news_caroussel_items,
+                "latest_news_item": latest_news_item,
             }
         )
         return context

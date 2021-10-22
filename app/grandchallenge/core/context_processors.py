@@ -4,7 +4,6 @@ from django.conf import settings
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.blogs.models import Post
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
 
@@ -52,17 +51,17 @@ def debug(*_, **__):
     }
 
 
-def sentry_dsn(*_, **__):
+def sentry_dsn(request):
     return {
         "SENTRY_DSN": settings.SENTRY_DSN,
-        "SENTRY_ENABLE_JS_REPORTING": settings.SENTRY_ENABLE_JS_REPORTING,
+        "SENTRY_ENABLE_JS_REPORTING": request.path.endswith("/create/")
+        and settings.SENTRY_ENABLE_JS_REPORTING,
     }
 
 
 def footer_links(*_, **__):
     return {
         "policy_pages": Policy.objects.all(),
-        "blog_posts": Post.objects.filter(published=True),
     }
 
 
@@ -70,4 +69,10 @@ def help_forum(*_, **__):
     return {
         "DOCUMENTATION_HELP_FORUM_PK": settings.DOCUMENTATION_HELP_FORUM_PK,
         "DOCUMENTATION_HELP_FORUM_SLUG": settings.DOCUMENTATION_HELP_FORUM_SLUG,
+    }
+
+
+def about_page(*_, **__):
+    return {
+        "about_page_url": settings.FLATPAGE_ABOUT_URL,
     }

@@ -1,12 +1,11 @@
-import shutil
 import tempfile
 import zipfile
 from pathlib import Path
 
 import pandas as pd
 from django.core.files.images import ImageFile
+from django.db import transaction
 from django.utils.text import slugify
-
 
 from grandchallenge.products.models import (
     Company,
@@ -14,7 +13,6 @@ from grandchallenge.products.models import (
     ProductImage,
     Status,
 )
-
 
 STATUS_MAPPING = {
     "Certified": Status.CERTIFIED,
@@ -43,31 +41,53 @@ class DataImporter:
         df = df.fillna(value="")
         return df
 
-    def import_data(self, *, product_data, company_data, images_zip=None):
-        df_c = self._read_data(company_data)
-        df_p = self._read_data(product_data)
-        tmpdir = None
+    def import_data(self, *, product_data, company_data, images_zip):
+        with tempfile.TemporaryDirectory() as input_dir:
+            input_dir = Path(input_dir)
 
-        # Delete all existing entries and recreate them
-        Company.objects.all().delete()
-        Product.objects.all().delete()
-        ProductImage.objects.all().delete()
+            product_path = input_dir / "product_data.xlsx"
+            companies_path = input_dir / "company_data.xlsx"
+            images_path = input_dir / "images.zip"
 
-        if images_zip:
-            tmpdir = tempfile.mkdtemp()
-            with zipfile.ZipFile(images_zip) as zipf:
-                zipf.extractall(tmpdir)
-            self.images_path = Path(tmpdir)
+            with open(product_path, "wb") as f:
+                product_data.download_fileobj(f)
 
-        for _, c_row in df_c.iterrows():
-            c = self._create_company(c_row)
-            df_filter = df_p.loc[df_p["Company name"] == c_row["Company name"]]
-            for _, p_row in df_filter.iterrows():
-                product = self._create_product(p_row, c)
-                self._create_product_images(product, p_row)
+            with open(companies_path, "wb") as f:
+                company_data.download_fileobj(f)
 
-        if tmpdir:
-            shutil.rmtree(tmpdir)
+            with open(images_path, "wb") as f:
+                images_zip.download_fileobj(f)
+
+            df_c = self._read_data(companies_path)
+            df_p = self._read_data(product_path)
+
+            extracted_images = input_dir / "images"
+            extracted_images.mkdir()
+
+            with zipfile.ZipFile(images_path) as zipf:
+                zipf.extractall(extracted_images)
+
+            self.images_path = extracted_images
+
+            with transaction.atomic():
+                # Delete all existing entries and recreate them
+                Company.objects.all().delete()
+                Product.objects.all().delete()
+                ProductImage.objects.all().delete()
+
+                for _, c_row in df_c.iterrows():
+                    c = self._create_company(c_row)
+                    df_filter = df_p.loc[
+                        df_p["Company name"] == c_row["Company name"]
+                    ]
+                    for _, p_row in df_filter.iterrows():
+                        product = self._create_product(p_row, c)
+                        self._create_product_images(product, p_row)
+
+                # Remove the file uploads
+                product_data.delete()
+                company_data.delete()
+                images_zip.delete()
 
     def _split(self, string, max_char):
         if len(string) > max_char:

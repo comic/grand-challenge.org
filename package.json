@@ -5,13 +5,11 @@
     "@fortawesome/fontawesome-free": "^5.7.2",
     "@github/markdown-toolbar-element": "1.2.0",
     "jquery": "3.5.1",
-    "jquery-ui": "^1.12.1",
     "popper.js": "^1.14.3",
     "bootstrap": "^4.3.1",
     "bootswatch": "^4.4.1",
     "datatables.net-bs4": "^1.10.18",
     "datatables.net-buttons-bs4": "^1.5.4",
-    "blueimp-file-upload": "^9.31.0",
     "mathjax": "^2.7.5"
   },
   "devDependencies": {

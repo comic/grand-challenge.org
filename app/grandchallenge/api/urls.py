@@ -41,6 +41,7 @@ from grandchallenge.retina_api.views import (
     TextAnnotationViewSet,
 )
 from grandchallenge.timezones.views import TimezoneAPIView
+from grandchallenge.uploads.views import UserUploadViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
@@ -157,6 +158,9 @@ router.register(
 
 # Follows (Subscriptions)
 router.register(r"subscriptions", FollowViewSet, basename="follow")
+
+# Uploads
+router.register(r"uploads", UserUploadViewSet, basename="upload")
 
 # Workstations
 router.register(

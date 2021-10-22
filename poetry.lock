@@ -703,6 +703,24 @@ django-appconf = ">=0.6.0"
 test = ["pytest", "pytest-cov", "pytest-django", "selenium"]
 
 [[package]]
+name = "django-ses"
+version = "2.3.0"
+description = "A Django email backend for Amazon's Simple Email Service"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+boto3 = ">=1.0.0"
+django = ">=2.2"
+future = ">=0.16.0"
+pytz = ">=2016.10"
+
+[package.extras]
+bounce = ["requests (<3)", "m2crypto"]
+events = ["requests (<3)", "m2crypto"]
+
+[[package]]
 name = "django-simple-history"
 version = "3.0.0"
 description = "Store model history and view/revert changes from admin site."
@@ -1231,7 +1249,7 @@ test = ["hypothesis (>=3.58)", "pytest (>=6.0)", "pytest-xdist"]
 
 [[package]]
 name = "panimg"
-version = "0.4.1"
+version = "0.5.2"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
@@ -1348,26 +1366,26 @@ python-versions = ">=3.6.1"
 
 [[package]]
 name = "pygments"
-version = "2.9.0"
+version = "2.10.0"
 description = "Pygments is a syntax highlighting package written in Python."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5"
 
 [[package]]
 name = "pyjwt"
-version = "2.1.0"
+version = "2.3.0"
 description = "JSON Web Token implementation in Python"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-cryptography = {version = ">=3.3.1,<4.0.0", optional = true, markers = "extra == \"crypto\""}
+cryptography = {version = ">=3.3.1", optional = true, markers = "extra == \"crypto\""}
 
 [package.extras]
-crypto = ["cryptography (>=3.3.1,<4.0.0)"]
-dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1,<4.0.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
+crypto = ["cryptography (>=3.3.1)"]
+dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
 docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
 tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
 
@@ -2210,7 +2228,7 @@ python-versions = ">=3.6.1"
 
 [[package]]
 name = "werkzeug"
-version = "2.0.1"
+version = "2.0.2"
 description = "The comprehensive WSGI web application library."
 category = "dev"
 optional = false
@@ -2256,7 +2274,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "214954b85a6f9e017887637a0ffff09fa8eedda1c87ce2311f3dca9eb84326e9"
+content-hash = "b6fc2b999f85c69805df01400a136868383b66d691da16b2f8bc804ce2213e1c"
 
 [metadata.files]
 alabaster = [
@@ -2608,6 +2626,10 @@ django-select2 = [
     {file = "django-select2-7.7.1.tar.gz", hash = "sha256:dd091342e99436818b3fa98783ae6c24fb2a0cbc37ebd3faa0aef68422b6e416"},
     {file = "django_select2-7.7.1-py2.py3-none-any.whl", hash = "sha256:8c54984bb931d842eab6a46d1b427c6883e5f5347529cda27dcd942fb37d87b9"},
 ]
+django-ses = [
+    {file = "django-ses-2.3.0.tar.gz", hash = "sha256:fab6fc0140505498c91ed2efa6167328d812bbbb6f6b9207f4e002fea0aad017"},
+    {file = "django_ses-2.3.0-py2.py3-none-any.whl", hash = "sha256:2e027f1370b738f301c87a655a4551fc6819729bbdae5caf0fd18ef2df3bc804"},
+]
 django-simple-history = [
     {file = "django-simple-history-3.0.0.tar.gz", hash = "sha256:66fe76c560054be393c52b1799661e104fbe372918d37d151e5d41c676158118"},
     {file = "django_simple_history-3.0.0-py2.py3-none-any.whl", hash = "sha256:a312adfe8fbec4c450b08e641b11249a8a589a7e7d1ba2404764b8b5bed53552"},
@@ -2919,8 +2941,8 @@ pandas = [
     {file = "pandas-1.3.1.tar.gz", hash = "sha256:341935a594db24f3ff07d1b34d1d231786aa9adfa84b76eab10bf42907c8aed3"},
 ]
 panimg = [
-    {file = "panimg-0.4.1-py3-none-any.whl", hash = "sha256:5919a163aec1282a1b985eda97733544585e71a2fe06e71c4dbfa06993432e0d"},
-    {file = "panimg-0.4.1.tar.gz", hash = "sha256:2e29df9743c3359c10d8c5cd15c65394dd292e5f785e88a58a1a0df03b953e93"},
+    {file = "panimg-0.5.2-py3-none-any.whl", hash = "sha256:106096a333f56c6e962bdda712d33bda3cf8c26947dbda0977f422269dca0765"},
+    {file = "panimg-0.5.2.tar.gz", hash = "sha256:65899e8b726a6f543d7f30603de9498df3cc6ae75806f62012d130997e06021f"},
 ]
 pillow = [
     {file = "Pillow-8.3.1-1-cp36-cp36m-win_amd64.whl", hash = "sha256:fd7eef578f5b2200d066db1b50c4aa66410786201669fb76d5238b007918fb24"},
@@ -3042,12 +3064,12 @@ pydicom = [
     {file = "pydicom-2.2.1.tar.gz", hash = "sha256:1eb8a59e18c4d264cd045a24e142eea0c864acca8c321c6c8166ed7b3c9502da"},
 ]
 pygments = [
-    {file = "Pygments-2.9.0-py3-none-any.whl", hash = "sha256:d66e804411278594d764fc69ec36ec13d9ae9147193a1740cd34d272ca383b8e"},
-    {file = "Pygments-2.9.0.tar.gz", hash = "sha256:a18f47b506a429f6f4b9df81bb02beab9ca21d0a5fee38ed15aef65f0545519f"},
+    {file = "Pygments-2.10.0-py3-none-any.whl", hash = "sha256:b8e67fe6af78f492b3c4b3e2970c0624cbf08beb1e493b2c99b9fa1b67a20380"},
+    {file = "Pygments-2.10.0.tar.gz", hash = "sha256:f398865f7eb6874156579fdf36bc840a03cab64d1cde9e93d68f46a425ec52c6"},
 ]
 pyjwt = [
-    {file = "PyJWT-2.1.0-py3-none-any.whl", hash = "sha256:934d73fbba91b0483d3857d1aff50e96b2a892384ee2c17417ed3203f173fca1"},
-    {file = "PyJWT-2.1.0.tar.gz", hash = "sha256:fba44e7898bbca160a2b2b501f492824fc8382485d3a6f11ba5d0c1937ce6130"},
+    {file = "PyJWT-2.3.0-py3-none-any.whl", hash = "sha256:e0c4bb8d9f0af0c7f5b1ec4c5036309617d03d56932877f2f7a0beeb5318322f"},
+    {file = "PyJWT-2.3.0.tar.gz", hash = "sha256:b888b4d56f06f6dcd777210c334e69c737be74755d3e5e9ee3fe67dc18a0ee41"},
 ]
 pylibjpeg = [
     {file = "pylibjpeg-1.3.0-py3-none-any.whl", hash = "sha256:0436dfbe1141e9ef360b9e94546d95352257f96eabdcdab638fde31c0f816e18"},
@@ -3619,8 +3641,8 @@ websockets = [
     {file = "websockets-9.1.tar.gz", hash = "sha256:276d2339ebf0df4f45df453923ebd2270b87900eda5dfd4a6b0cfa15f82111c3"},
 ]
 werkzeug = [
-    {file = "Werkzeug-2.0.1-py3-none-any.whl", hash = "sha256:6c1ec500dcdba0baa27600f6a22f6333d8b662d22027ff9f6202e3367413caa8"},
-    {file = "Werkzeug-2.0.1.tar.gz", hash = "sha256:1de1db30d010ff1af14a009224ec49ab2329ad2cde454c8a708130642d579c42"},
+    {file = "Werkzeug-2.0.2-py3-none-any.whl", hash = "sha256:63d3dc1cf60e7b7e35e97fa9861f7397283b75d765afcaefd993d6046899de8f"},
+    {file = "Werkzeug-2.0.2.tar.gz", hash = "sha256:aa2bb6fc8dee8d6c504c0ac1e7f5f7dc5810a9903e793b6f715a9f015bdadb9a"},
 ]
 whitenoise = [
     {file = "whitenoise-5.3.0-py2.py3-none-any.whl", hash = "sha256:d963ef25639d1417e8a247be36e6aedd8c7c6f0a08adcb5a89146980a96b577c"},

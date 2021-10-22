@@ -162,6 +162,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         default=False,
         help_text="Do a recursive git pull when a GitHub repo is linked to this algorithm.",
     )
+    highlight = models.BooleanField(
+        default=False,
+        help_text="Should this algorithm be advertised on the home page?",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
@@ -260,11 +264,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     def assign_workstation_permissions(self):
         """Allow the editors and users group to view the workstation."""
-        perm = f"view_{Workstation._meta.model_name}"
+        perm = "workstations.view_workstation"
 
         for group in [self.users_group, self.editors_group]:
             workstations = get_objects_for_group(
-                group=group, perms=perm, klass=Workstation
+                group=group, perms=perm, accept_global_perms=False
             )
 
             if (
@@ -355,7 +359,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         on_delete=models.PROTECT,
         related_name="algorithm_container_images",
     )
-    queue_override = models.CharField(max_length=128, blank=True)
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")

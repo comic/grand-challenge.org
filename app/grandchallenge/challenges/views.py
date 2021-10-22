@@ -39,6 +39,11 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         form.instance.creator = self.request.user
         return super().form_valid(form)
 
+    def get_form_kwargs(self, *args, **kwargs):
+        form_kwargs = super().get_form_kwargs(*args, **kwargs)
+        form_kwargs.update({"creator": self.request.user})
+        return form_kwargs
+
 
 class ChallengeList(TemplateView):
     paginate_by = 40

@@ -1,22 +1,13 @@
-import hashlib
 import uuid
 from contextlib import contextmanager
 from io import BufferedIOBase
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms.widgets import Widget
-from django.http.request import HttpRequest
 from django.utils import timezone
 
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.utils import IntervalMap
-
-
-def generate_upload_path_hash(request: HttpRequest) -> str:
-    hasher = hashlib.sha256()
-    hasher.update(request.get_full_path().encode())
-    return hasher.hexdigest()
 
 
 def cleanup_stale_files():
@@ -33,57 +24,6 @@ def cleanup_stale_files():
 
 class NotFoundError(FileNotFoundError):
     pass
-
-
-class AjaxUploadWidget(Widget):
-    """
-    A widget that implements asynchronous file uploads for forms. It creates
-    a list of database ids and adds them to the form using AJAX requests.
-
-    To use this widget, a website must fulfill certain requirements:
-     - The following JavaScript libraries must be loaded:
-       - jQuery (3.2.1)
-       - jQuery-ui (1.12.1)
-       - blueimp-file-upload (9.19.1)
-     - The website must render the media associated with the widget
-     - Add cleanup service call to cleanup_stale_files in a background worker
-    """
-
-    class Media:
-        css = {"all": ("jqfileupload/css/upload_widget_button.css",)}
-        js = ("jqfileupload/js/upload_widget.js",)
-
-    def __init__(
-        self, *args, multifile=True, auto_commit=True, user=None, **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-
-        self.user = user
-        self.__multifile = bool(multifile)
-        self.__auto_commit = bool(auto_commit)
-
-    @property
-    def template_name(self):
-        if self.__multifile:
-            return "widgets/multi_uploader.html"
-        else:
-            return "widgets/single_uploader.html"
-
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-
-        if self.user is None:
-            raise RuntimeError("The user must be set on the upload widget!")
-
-        context.update(
-            {
-                "user": self.user,
-                "multi_upload": "true" if self.__multifile else "false",
-                "auto_commit": "true" if self.__auto_commit else "false",
-            }
-        )
-
-        return context
 
 
 class OpenedStagedAjaxFile(BufferedIOBase):
@@ -243,6 +183,11 @@ class StagedAjaxFile:
         return self.__uuid
 
     @property
+    def filename(self):
+        # For API compatability with UserUpload
+        return self.name
+
+    @property
     def name(self):
         """
         Returns the name specified by the client for the uploaded file (might
@@ -308,6 +253,14 @@ class StagedAjaxFile:
             yield f
         finally:
             f.close()
+
+    def download_fileobj(self, fileobj):
+        with self.open() as src_file:
+            while True:
+                chunk = src_file.read(8192)
+                if not chunk:
+                    break
+                fileobj.write(chunk)
 
     def delete(self):
         query = self._raise_if_missing()

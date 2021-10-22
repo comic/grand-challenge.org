@@ -44,11 +44,20 @@ class ImageFilterSet(FilterSet):
     class Meta:
         model = Image
         fields = (
-            "study",
             "origin",
             "job_input",
             "job_output",
             "archive",
             "reader_study",
             "name",
+            "patient_id",
+            "patient_name",
+            "patient_birth_date",
+            "patient_age",
+            "patient_sex",
+            "study_date",
+            "study_instance_uid",
+            "series_instance_uid",
+            "study_description",
+            "series_description",
         )

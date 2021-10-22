@@ -52,7 +52,7 @@ def get_repo_url(payload):
 
 
 @shared_task()
-def get_zipfile(*, pk):
+def get_zipfile(*, pk):  # noqa C901
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
     )
@@ -71,6 +71,16 @@ def get_zipfile(*, pk):
     except Algorithm.DoesNotExist:
         recurse_submodules = False
     with tempfile.TemporaryDirectory() as tmpdirname:
+        # Run git lfs install here, doing it in the dockerfile does not seem
+        # to work
+        try:
+            process = subprocess.check_output(
+                ["git", "lfs", "install"], stderr=subprocess.STDOUT
+            )
+        except subprocess.CalledProcessError as err:
+            ghwm.error = str(err)
+            ghwm.save()
+            raise
         cmd = [
             "git",
             "clone",

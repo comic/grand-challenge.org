@@ -16,6 +16,7 @@ from tests.cases_tests.factories import (
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, StagedFileFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 
 
@@ -93,7 +94,7 @@ def test_invalid_upload_sessions(client):
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm": None},
+        data={},
         content_type="application/json",
     )
     assert response.status_code == 201
@@ -104,11 +105,11 @@ def test_invalid_upload_sessions(client):
         user=user,
         client=client,
         method=client.patch,
-        data={"algorithm": None},
+        data={"archive": None},
         content_type="application/json",
     )
     assert response.status_code == 400
-    assert response.json() == {"algorithm": ["This field may not be null."]}
+    assert response.json() == {"archive": ["This field may not be null."]}
 
 
 @pytest.mark.django_db
@@ -135,7 +136,7 @@ def test_empty_data_upload_sessions(client):
     assert response.status_code == 400
     assert response.json() == {
         "non_field_errors": [
-            "1 of algorithm, archive, answer or reader study must be set"
+            "One of archive, answer or reader study must be set"
         ]
     }
 
@@ -326,8 +327,8 @@ def test_process_images_api_view(client, settings):
     user = UserFactory()
     us = RawImageUploadSessionFactory(creator=user)
 
-    algorithm_image = AlgorithmImageFactory(ready=True)
-    algorithm_image.algorithm.add_user(user)
+    archive = ArchiveFactory()
+    archive.add_uploader(user)
 
     f = StagedFileFactory(
         file__from_path=Path(__file__).parent
@@ -344,7 +345,7 @@ def test_process_images_api_view(client, settings):
             user=user,
             client=client,
             method=client.patch,
-            data={"algorithm": algorithm_image.algorithm.slug},
+            data={"archive": archive.slug},
             content_type="application/json",
         )
 
@@ -428,7 +429,7 @@ def test_archive_upload_session_create(client, obj, factory):
     errors = response.json()
 
     assert response.status_code == 400
-    assert "User does not have permission" in errors[obj][0]
+    assert "does not exist" in errors[obj][0]
 
     # Assign permissions
     o.add_editor(u)
@@ -445,3 +446,63 @@ def test_archive_upload_session_create(client, obj, factory):
 
     assert response.status_code == 200
     assert response.json() == "Image processing job queued."
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "obj,factory",
+    (("archive", ArchiveFactory), ("reader_study", ReaderStudyFactory)),
+)
+def test_session_with_user_upload(client, obj, factory):
+    user = UserFactory()
+    o = factory()
+    o.add_editor(user=user)
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=user,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={"uploads": [upload.api_url], obj: o.slug},
+        HTTP_X_FORWARDED_PROTO="https",
+    )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+
+    assert upload_session["uploads"] == [upload.api_url]
+
+
+@pytest.mark.django_db
+def test_session_with_user_duplicate_upload(client):
+    user = UserFactory()
+
+    upload1 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    upload2 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=user,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={"uploads": [upload1.api_url, upload2.api_url]},
+        HTTP_X_FORWARDED_PROTO="https",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "non_field_errors": ["Filenames must be unique"]
+    }

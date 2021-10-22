@@ -1,4 +1,7 @@
+import datetime
+
 import factory
+from factory import fuzzy
 
 from grandchallenge.cases.models import (
     Image,
@@ -11,7 +14,6 @@ from tests.factories import (
     ImageFileFactory,
     ImagingModalityFactory,
 )
-from tests.studies_tests.factories import StudyFactory
 
 
 class ImageFileFactoryWithMHDFile(ImageFileFactory):
@@ -126,10 +128,21 @@ class ImageFactoryWithoutImageFile(ImageFactory):
         [x[0] for x in Image.STEREOSCOPIC_CHOICES]
     )
     field_of_view = factory.Iterator([x[0] for x in Image.FOV_CHOICES])
-    study = factory.SubFactory(StudyFactory)
     name = factory.Sequence(lambda n: f"RetinaImage {n}")
     modality = factory.SubFactory(ImagingModalityFactory, modality="CF")
     color_space = factory.Iterator([x[0] for x in Image.COLOR_SPACES])
+    patient_id = factory.Sequence(lambda n: f"Patient {n}")
+    patient_name = fuzzy.FuzzyText(prefix="Patient")
+    patient_birth_date = fuzzy.FuzzyDate(datetime.date(1970, 1, 1))
+    patient_age = fuzzy.FuzzyText(length=4)
+    patient_sex = factory.Iterator(
+        [x[0] for x in Image.PATIENT_SEX_CHOICES] + [""]
+    )
+    study_date = fuzzy.FuzzyDate(datetime.date(1970, 1, 1))
+    study_instance_uid = fuzzy.FuzzyText(length=64)
+    series_instance_uid = fuzzy.FuzzyText(length=64)
+    study_description = factory.Sequence(lambda n: f"Study {n}")
+    series_description = factory.Sequence(lambda n: f"Series {n}")
 
 
 class ImageFactoryWithImageFile(ImageFactoryWithoutImageFile):

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Documentation - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'documentation:home' %}">Documentation</a></li>
+        <li class="breadcrumb-item active">Page Overview</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-4">
+        <div class="col-6">
+            <h2>Documentation Pages</h2>
+        </div>
+        {% if 'documentation.add_docpage' in perms %}
+            <div class="col-6 d-inline-block text-right">
+                <a class="btn btn-md btn-dark mt-2" href="{% url 'documentation:create' %}">Add page</a>
+            </div>
+        {% endif %}
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm" id="pagesTable" data-reorderable-rows="true">
+            <thead class="thead-light">
+            <tr>
+                <th data-field="order">Order</th>
+                <th data-field="title">Title</th>
+                <th data-field="title">Parent</th>
+                {% if 'documentation.change_docpage' in perms %}
+                    <th data-field="edit">Edit</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for page in object_list %}
+                <tr>
+                    <td>
+                        {{ page.order }}
+                    </td>
+                    <td>
+                        <a href="{% url 'documentation:detail' slug=page.slug %}">
+                            {{ page.title }}
+                        </a>
+                    </td>
+                    <td>
+                        {{ page.parent }}
+                    </td>
+                    {% if 'documentation.change_docpage' in perms %}
+                        <td>
+                            <a href="{% url 'documentation:update' slug=page.slug %}"><i class="fa fa-cog text-primary" aria-hidden="true"></i></a>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+{% endblock %}

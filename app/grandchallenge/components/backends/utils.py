@@ -43,7 +43,7 @@ def safe_extract(*, src: File, dest: Path):
     if not dest.exists():
         raise RuntimeError("The destination must exist")
 
-    with src.open() as f:
+    with src.open("rb") as f:
         with zipfile.ZipFile(f) as zf:
             members = _filter_members(zf.infolist())
 

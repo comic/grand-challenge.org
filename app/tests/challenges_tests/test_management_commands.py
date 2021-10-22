@@ -47,7 +47,7 @@ def test_copy_challenge():
         )
 
     assert Challenge.objects.count() == 1
-    assert Page.objects.count() == 5
+    assert Page.objects.count() == 4
 
     with pytest.raises(CommandError):
         call_command("copy_challenge", "foo", "fOo")
@@ -58,11 +58,11 @@ def test_copy_challenge():
     call_command("copy_challenge", "foo", "bar")
 
     assert Challenge.objects.count() == 2
-    assert Page.objects.count() == 10
+    assert Page.objects.count() == 8
 
     dest = Challenge.objects.get(short_name="bar")
 
-    for page in dest.page_set.exclude(title="Contact").exclude(title="foo"):
+    for page in dest.page_set.exclude(title="foo"):
         assert page.html == (
             '<p><a href="https://bar.foo.bar/test">test1</a>'
             '<a href="https://bar.foo.bar/test">test2</a>'

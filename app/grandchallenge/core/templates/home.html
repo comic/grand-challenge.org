@@ -3,102 +3,118 @@
 {% load static %}
 {% load humanize %}
 {% load cache %}
-{% load round_to %}
 
-{% block content %}
-    {% for highlight in highlights %}
-        <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
-            <div class="col-lg-6 py-5">
-                <img src="{% static highlight.image %}"
-                     class="w-100 rounded shadow"
-                     loading="lazy"
-                     alt="{{ highlight.url_title }} Image">
+{% cache 600 homepage %}
+    {% block content %}
+        {% if news_caroussel_items %}
+            <div class="container mb-5 p-0">
+                <div class="carousel slide" id="carouselIndicators" data-ride="carousel" data-interval="5000">
+                    <div class="carousel-inner m-0 px-0">
+                        {% for item in news_caroussel_items %}
+                            <div class="carousel-item {% if forloop.counter == 1 %}active{% endif %}">
+                                <div class="d-md-flex d-xs-inline justify-content-center align-items-center">
+                                    <div class="col-12 col-md-3 p-0 my-3 d-inline-block carousel-img-container w-100">
+                                        <a href="{{ item.get_absolute_url }}"><img class="card gc-card carousel-img m-auto h-100 mw-100 border-0"
+                                             src="{{ item.logo.x20.url }}"
+                                             srcset="{{ item.logo.x10.url }} 1x,
+                                                     {{ item.logo.x15.url }} 1.5x,
+                                                      {{ item.logo.x20.url }} 2x"
+                                             alt="{{ item.title }}" loading="lazy"></a>
+                                    </div>
+                                    <div class="col-12 col-md-7 text-primary text-truncate-container">
+                                        <a class="stretched-link text-decoration-none text-primary"
+                                           href="{{ item.get_absolute_url }}">
+                                            <h4 class="p-3">{{ item.title }}</h4>
+                                            <p class="pl-3 text-left">{{ item.description }}</p>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <ol class="carousel-indicators position-relative">
+                        {% for item in news_caroussel_items %}
+                            <li class="mx-1 mb-sm-0 mt-sm-3 bg-primary position-relative {% if forloop.counter == 1 %}active{% endif %}" data-target="#carouselIndicators"
+                                data-slide-to="{{ forloop.counter0 }}">
+                            </li>
+                        {% endfor %}
+                    </ol>
+                    <a class="carousel-control-prev mr-3 text-dark d-none d-sm-none d-md-inline-flex" href="#carouselIndicators"
+                       role="button" data-slide="prev">
+                        <i class="fas fa-angle-left fa-2x"></i>
+                    </a>
+                    <a class="carousel-control-next ml-3 text-dark d-none d-sm-none d-md-inline-flex" href="#carouselIndicators"
+                       role="button" data-slide="next">
+                        <i class="fas fa-angle-right fa-2x"></i>
+                    </a>
+                </div>
             </div>
-            <div class="col-lg-6 px-5 align-self-center">
-                <h3>{{ highlight.title }}</h3>
-                <ul>
-                    {% for point in highlight.bullet_points %}
-                        <li class="my-1">{{ point }}</li>
-                    {% endfor %}
-                </ul>
-                <p>{{ highlight.description }}</p>
-                <p><a class="btn btn-info" href="{{ highlight.url }}">View {{ highlight.url_title }}</a></p>
-            </div>
-        </div>
-    {% endfor %}
+        {% endif %}
 
-{% endblock %}
-
-{% block post_content %}
-
-    {% cache 600 home-statistics %}
-        <div class="container-fluid bg-primary">
-            <div class="container py-4">
-                <div class="row align-items-center text-light">
-                    <div class="col-sm-6 col-md-3 card bg-primary border-0">
-                        <div class="card-body text-center">
-                            <h4 class="card-title">Users</h4>
-                            <h4 class="card-text">{{ all_users.count|round_to:1000|intcomma }}</h4>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-md-3 card bg-primary border-0">
-                        <div class="card-body text-center">
-                            <h4 class="card-title">Challenges</h4>
-                            <h4 class="card-text">{{ all_challenges.count|intcomma }}</h4>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-md-3 card bg-primary border-0">
-                        <div class="card-body text-center">
-                            <h4 class="card-title">Algorithms</h4>
-                            <h4 class="card-text">{{ all_algorithms.count|intcomma }}</h4>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-md-3 card bg-primary border-0">
-                        <div class="card-body text-center">
-                            <p class="card-text">
-                                <a class="btn btn-info" href="{% url 'statistics:detail' %}">
-                                    <i class="fas fa-chart-line"></i>&nbsp;More Statistics
-                                </a>
-                            </p>
-                        </div>
+        {% if highlighted_challenges %}
+            <div class="row mb-3 mt-5 pt-3 px-3">
+                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-3">
+                    <i class="fa fa-trophy fa-2x align-middle"></i>
+                    <span class="align-middle">&nbsp;&nbsp;FEATURED CHALLENGES</span>
+                </div>
+                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-md btn-primary mr-3"
+                           href="{% url 'challenges:list' %}">Participate in a challenge</a>
+                        <a class="btn btn-md btn-outline-primary"
+                           href="{% url 'challenges:create' %}">Organize your own challenge</a>
                     </div>
                 </div>
             </div>
-        </div>
-    {% endcache %}
 
-    {% cache 600 blog-posts %}
-        {% if blog_posts %}
-            <div class="container py-3 mt-3">
-                <h3 class="text-center">Latest Blog Posts</h3>
-                {% for blog in blog_posts|slice:":2" %}
-                    <div class="row my-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
-                        <div class="col-lg-6 px-5 py-5">
-                            <a href="{{ blog.get_absolute_url }}">
-                                <img class="w-100 h-100 rounded shadow"
-                                     src="{{ blog.logo.x20.url }}"
-                                     srcset="{{ blog.logo.x10.url }} 1x,
-                                             {{ blog.logo.x15.url }} 1.5x,
-                                             {{ blog.logo.x20.url }} 2x"
-                                     loading="lazy"
-                                     alt="Logo for blog post {{ blog.title }}"/>
-                            </a>
-                        </div>
-                        <div class="col-lg-6 px-5 align-self-center">
-                            <h4>{{ blog.title }}</h4>
-                            <p>
-                                {{ blog.created|date:"j N Y" }}
-                                by
-                                {% for author in blog.authors.all %}{% if not forloop.first %}{% if forloop.last %} and
-                                {% else %}, {% endif %}{% endif %}
-                                    <a href="{% url 'profile-detail' username=author.username %}">{% firstof author.get_full_name author.username %}</a>{% endfor %}
-                            </p>
-                            <p>{{ blog.description }}</p>
-                            <p><a class="btn btn-info" href="{{ blog.get_absolute_url }}">Read More</a></p>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
+            {% include "grandchallenge/partials/cards.html" with page_obj=highlighted_challenges %}
         {% endif %}
-    {% endcache %}
-{% endblock %}
+
+        {% if highlighted_algorithms %}
+            <div class="row mb-3 mt-5 px-3">
+                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-3">
+                    <i class="fa fa-code fa-2x align-middle"></i>
+                    <span class="align-middle">&nbsp;&nbsp;FEATURED ALGORITHMS</span>
+                </div>
+                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-md btn-primary mr-3"
+                           href="{% url 'algorithms:list' %}">Try out an algorithm</a>
+                        <a class="btn btn-md btn-outline-primary"
+                           href="{% url 'algorithms:create' %}">Host your own algorithm</a>
+                    </div>
+                </div>
+            </div>
+
+            {% include "grandchallenge/partials/cards.html" with page_obj=highlighted_algorithms %}
+        {% endif %}
+
+        <div class="container p-0 mt-5">
+            <h3 class="text-primary text-center mb-4">Features</h3>
+            <div class="container p-0">
+                <div class="row align-items-center">
+                    {% for highlight in highlights %}
+                        <div class="col-lg-6">
+                            <div class="row {% if not forloop.counter0|divisibleby:2 %} flex-sm-row-reverse {% endif %} align-items-center">
+                                <div class="col-md-6 my-3">
+                                    <a class="text-radboud" href="{{ highlight.url }}"><h4>{{ highlight.title }}</h4></a>
+                                    <ul class="pl-3">
+                                        {% for point in highlight.bullet_points %}
+                                            <li class="my-1">{{ point }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6 my-3">
+                                    <a href="{{ highlight.url }}"><img src="{% static highlight.image %}"
+                                                                       class="img-fluid w-100"
+                                                                       loading="lazy"
+                                                                       alt="{{ highlight.url_title }} Image"></a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+{% endcache %}

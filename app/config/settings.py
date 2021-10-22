@@ -3,10 +3,8 @@ import re
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 from itertools import product
-from urllib.parse import quote
 
 import sentry_sdk
-from corsheaders.defaults import default_headers
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.urls import reverse
@@ -78,11 +76,7 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "25"))
-EMAIL_USE_TLS = strtobool(os.environ.get("EMAIL_USE_TLS", "False"))
+CELERY_EMAIL_BACKEND = "django_ses.SESBackend"
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "webmaster@localhost"
 )
@@ -126,6 +120,9 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_FORUM_SLUG", "general"
 )
 
+# About Flatpage
+FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
+
 ##############################################################################
 #
 # Storage
@@ -144,25 +141,21 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
+AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", None)
+AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
+AWS_SES_REGION_ENDPOINT = f"email.{AWS_DEFAULT_REGION}.amazonaws.com"
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PRIVATE_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
-    "endpoint_url": os.environ.get("PRIVATE_S3_STORAGE_ENDPOINT_URL", None),
 }
 
 PROTECTED_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
     ),
-    "endpoint_url": os.environ.get("PROTECTED_S3_STORAGE_ENDPOINT_URL", None),
     # This is the domain where people will be able to go to download data
     # from this bucket. Usually we would use reverse to find this out,
     # but this needs to be defined before the database is populated
@@ -178,8 +171,6 @@ PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
 )
 
 PUBLIC_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
@@ -187,6 +178,19 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "querystring_auth": False,
     "default_acl": "public-read",
 }
+
+UPLOADS_S3_BUCKET_NAME = os.environ.get(
+    "UPLOADS_S3_BUCKET_NAME", "grand-challenge-uploads"
+)
+UPLOADS_S3_USE_ACCELERATE_ENDPOINT = strtobool(
+    os.environ.get("UPLOADS_S3_USE_ACCELERATE_ENDPOINT", "False")
+)
+UPLOADS_MAX_SIZE_UNVERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_UNVERIFIED", 2 * 1024 * 1024 * 1024)
+)
+UPLOADS_MAX_SIZE_VERIFIED = int(
+    os.environ.get("UPLOADS_MAX_SIZE_VERIFIED", 128 * 1024 * 1024 * 1024)
+)
 
 # Key pair used for signing CloudFront URLS, only used if
 # PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
@@ -269,9 +273,9 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
-# "origin-when-cross-origin" required for jqfileupload for cross domain POSTs
+# "strict-origin-when-cross-origin" required for uploads for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
-    "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
+    "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin"
 )
 
 PERMISSIONS_POLICY = {
@@ -350,6 +354,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
                 "grandchallenge.core.context_processors.help_forum",
+                "grandchallenge.core.context_processors.about_page",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
@@ -498,6 +503,8 @@ LOCAL_APPS = [
     "grandchallenge.github",
     "grandchallenge.codebuild",
     "grandchallenge.timezones",
+    "grandchallenge.documentation",
+    "grandchallenge.flatpages",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -676,6 +683,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
     "markdown.extensions.sane_lists",
+    "markdown.extensions.codehilite",
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
@@ -769,7 +777,6 @@ XRAY_RECORDER = {
     "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
     "PLUGINS": ("ECSPlugin",),
     "AWS_XRAY_TRACING_NAME": SESSION_COOKIE_DOMAIN.lstrip("."),
-    "DYNAMIC_NAMING": f"*{SESSION_COOKIE_DOMAIN}",
 }
 
 ###############################################################################
@@ -814,12 +821,6 @@ VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
     rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
     rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}.static.observableusercontent.com$",
-]
-CORS_ALLOW_HEADERS = [
-    *default_headers,
-    "content-range",
-    "content-disposition",
-    "content-description",
 ]
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api
@@ -866,9 +867,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
 
 if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
-    celery_access_key = quote(os.environ.get("BROKER_AWS_ACCESS_KEY"), safe="")
-    celery_secret_key = quote(os.environ.get("BROKER_AWS_SECRET_KEY"), safe="")
-    CELERY_BROKER_URL = f"sqs://{celery_access_key}:{celery_secret_key}@"
+    CELERY_BROKER_URL = "sqs://"
 
     CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
     CELERY_BROKER_USE_SSL = True
@@ -878,7 +877,9 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
             "queue_name_prefix": os.environ.get(
                 "CELERY_BROKER_QUEUE_NAME_PREFIX", "gclocalhost-"
             ),
-            "region": os.environ.get("CELERY_BROKER_REGION", "eu-central-1"),
+            "region": os.environ.get(
+                "CELERY_BROKER_REGION", AWS_DEFAULT_REGION
+            ),
             "polling_interval": int(
                 os.environ.get("CELERY_BROKER_POLLING_INTERVAL", "1")
             ),
@@ -916,13 +917,16 @@ COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME = os.environ.get(
     "COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME", ""
 )
 COMPONENTS_AMAZON_ECS_LOGS_REGION = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_LOGS_REGION", "eu-central-1"
+    "COMPONENTS_AMAZON_ECS_LOGS_REGION", AWS_DEFAULT_REGION
 )
 COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN = os.environ.get(
     "COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN", ""
 )
 COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN = os.environ.get(
     "COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN", ""
+)
+COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN = os.environ.get(
+    "COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN", ""
 )
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
@@ -996,7 +1000,7 @@ WORKSTATIONS_SESSION_DURATION_LIMIT = int(
 )
 # Which regions are available for workstations to run in
 WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
-    "WORKSTATIONS_ACTIVE_REGIONS", "eu-central-1"
+    "WORKSTATIONS_ACTIVE_REGIONS", AWS_DEFAULT_REGION
 ).split(",")
 WORKSTATIONS_RENDERING_SUBDOMAINS = {
     # Possible AWS regions
@@ -1046,6 +1050,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
         "schedule": timedelta(hours=1),
     },
+    "delete_old_user_uploads": {
+        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
+        "schedule": timedelta(hours=1),
+    },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",
         "schedule": timedelta(days=1),
@@ -1075,9 +1083,6 @@ CELERY_BEAT_SCHEDULE = {
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
-
-# The name of the group whose uploaded dicom files will be retained if the image builder fails
-DICOM_DATA_CREATORS_GROUP_NAME = "dicom_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {
@@ -1116,9 +1121,6 @@ GITHUB_PRIVATE_KEY_BASE64 = os.environ.get("GITHUB_PRIVATE_KEY_BASE64", "")
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
-CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
-CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
-CODEBUILD_REGION = os.environ.get("CODEBUILD_REGION", "")
 
 OPEN_SOURCE_LICENSES = [
     "Apache License 2.0",
@@ -1138,12 +1140,15 @@ MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 # The maximum size of all the files in an upload session in bytes
 UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
 
-# The maximum size of predictions files
-PREDICTIONS_FILE_MAX_BYTES = 3_221_223_823  # 3 GB
-
 # Some forms have a lot of data, such as a reader study update view
 # that can contain reports about the medical images
 DATA_UPLOAD_MAX_MEMORY_SIZE = 16_777_216  # 16 mb
+
+# Some forms have a lot of fields, such as uploads of images
+# with many slices
+DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
+    os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", "2048")
+)
 
 # Default maximum width or height for thumbnails in retina workstation
 RETINA_DEFAULT_THUMBNAIL_SIZE = 128
@@ -1162,15 +1167,11 @@ if DEBUG:
 
     LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
 
-    PUBLIC_S3_STORAGE_KWARGS.update(
-        {
-            "custom_domain": f"localhost:9000/{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}",
-            "secure_urls": False,
-            "endpoint_url": "http://minio-public:9000",
-        }
-    )
+    PUBLIC_S3_STORAGE_KWARGS.update({"secure_urls": False})
     DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
     DEMO_ALGORITHM_SHA256 = "sha256:5e81cef3738b7dbffc12c101990eb3b97f17642c09a2e0b64d5b3d4dd144e79b"
+
+    del CELERY_BEAT_SCHEDULE["push_metrics_to_cloudwatch"]
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)

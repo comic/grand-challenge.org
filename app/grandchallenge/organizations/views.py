@@ -7,15 +7,11 @@ from guardian.mixins import (
 )
 from guardian.shortcuts import get_objects_for_user
 
-from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.archives.models import Archive
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.groups.forms import EditorsForm, MembersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.organizations.forms import OrganizationForm
 from grandchallenge.organizations.models import Organization
-from grandchallenge.reader_studies.models import ReaderStudy
 
 
 class OrganizationList(ListView):
@@ -69,21 +65,27 @@ class OrganizationDetail(DetailView):
     def _organization_objects(self):
         algorithms = (
             get_objects_for_user(
-                user=self.request.user, perms="view_algorithm", klass=Algorithm
+                user=self.request.user,
+                perms="algorithms.view_algorithm",
+                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
         )
         archives = (
             get_objects_for_user(
-                user=self.request.user, perms="view_archive", klass=Archive
+                user=self.request.user,
+                perms="archives.view_archive",
+                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
         )
         challenges = (
             get_objects_for_user(
-                user=self.request.user, perms="view_challenge", klass=Challenge
+                user=self.request.user,
+                perms="challenges.view_challenge",
+                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -91,8 +93,8 @@ class OrganizationDetail(DetailView):
         external_challenges = (
             get_objects_for_user(
                 user=self.request.user,
-                perms="view_externalchallenge",
-                klass=ExternalChallenge,
+                perms="challenges.view_externalchallenge",
+                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -100,8 +102,8 @@ class OrganizationDetail(DetailView):
         reader_studies = (
             get_objects_for_user(
                 user=self.request.user,
-                perms="view_readerstudy",
-                klass=ReaderStudy,
+                perms="reader_studies.view_readerstudy",
+                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()

@@ -39,18 +39,13 @@ class Build(UUIDModel):
     build_log = models.TextField(blank=True)
 
     BuildStatusChoices = BuildStatusChoices
-    _client = None
+    __client = None
 
     @property
     def client(self):
-        if self._client is None:
-            self._client = boto3.client(
-                "codebuild",
-                aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
-                aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
-                region_name=settings.CODEBUILD_REGION,
-            )
-        return self._client
+        if self.__client is None:
+            self.__client = boto3.client("codebuild")
+        return self.__client
 
     @property
     def build_number(self):
@@ -61,12 +56,16 @@ class Build(UUIDModel):
         self.status = build_statuses["builds"][0]["buildStatus"]
 
     def refresh_logs(self):
-        with private_s3_storage.open(
-            f"codebuild/logs/{self.build_number}.gz"
-        ) as file:
-            self.build_log = gzip.open(file).read().decode("utf-8")
+        try:
+            with private_s3_storage.open(
+                f"codebuild/logs/{self.build_number}.gz"
+            ) as file:
+                self.build_log = gzip.open(file).read().decode("utf-8")
+        except FileNotFoundError:
+            self.build_log = "Log file not available."
 
     def add_image_to_algorithm(self):
+        # TODO, this would be much faster using S3 copy, can then run on a smaller queue
         with private_s3_storage.open(
             f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz"
         ) as file:
