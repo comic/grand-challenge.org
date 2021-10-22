@@ -8,8 +8,9 @@ from django.core.exceptions import (
 )
 from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -696,3 +697,21 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
             .distinct("patient_id")
         )
         return Response(patients)
+
+    @action(detail=True)
+    def studies(self, request, pk=None):
+        try:
+            patient_id = self.request.query_params["patient_id"]
+        except MultiValueDictKeyError:
+            raise Http404
+        archive = self.get_object()
+        studies = (
+            Image.objects.filter(
+                componentinterfacevalue__archive_items__archive=archive,
+                patient_id=patient_id,
+            )
+            .order_by("study_description")
+            .values_list("study_description", flat=True)
+            .distinct("study_description")
+        )
+        return Response(studies)

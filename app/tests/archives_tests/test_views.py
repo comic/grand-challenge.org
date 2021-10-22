@@ -179,3 +179,86 @@ class TestArchiveViewSetPatients:
         )
         assert response.status_code == 200
         assert set(response.data) == set(patients + [""])
+
+
+@pytest.mark.django_db
+class TestArchiveViewSetStudies:
+    def _create_archive_with_user_and_image(self, patient_id="Test patient"):
+        a = ArchiveFactory()
+        u = UserFactory()
+        i = ImageFactory(patient_id=patient_id)
+        self._add_image_to_archive(i, a)
+        a.add_user(u)
+        return a, u, i
+
+    @staticmethod
+    def _add_image_to_archive(image, archive):
+        interface = ComponentInterfaceFactory()
+        civ = ComponentInterfaceValueFactory(interface=interface, image=image)
+        item = ArchiveItemFactory(archive=archive)
+        item.values.set([civ])
+
+    @staticmethod
+    def _get_url(archive_pk):
+        return reverse("api:archive-studies", kwargs={"pk": archive_pk})
+
+    def test_no_access_archive(self, client):
+        p_id = "patient_id"
+        a, u, i = self._create_archive_with_user_and_image(p_id)
+        a.remove_user(u)
+        response = get_view_for_user(
+            client=client,
+            url=self._get_url(a.pk, p_id),
+            user=u,
+            data={"patient_id": p_id},
+        )
+        assert response.status_code == 404
+
+    def test_single_empty_study(self, client):
+        p_id = "patient_id"
+        a, u, i = self._create_archive_with_user_and_image(p_id)
+        response = get_view_for_user(
+            client=client,
+            url=self._get_url(a.pk, p_id),
+            user=u,
+            data={"patient_id": p_id},
+        )
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0] == ""
+
+    def test_multiple_empty_studies_distinct(self, client):
+        p_id = "patient_id"
+        a, u, i = self._create_archive_with_user_and_image(p_id)
+        for _ in range(3):
+            self._add_image_to_archive(ImageFactory(patient_id=p_id), a)
+
+        response = get_view_for_user(
+            client=client,
+            url=self._get_url(a.pk, p_id),
+            user=u,
+            data={"patient_id": p_id},
+        )
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0] == ""
+
+    def test_archive_some_patients(self, client):
+        p_id = "patient_id"
+        a, u, i = self._create_archive_with_user_and_image(p_id)
+        studies = []
+        for i in range(3):
+            s_id = f"Study {i}"
+            studies.append(s_id)
+            self._add_image_to_archive(
+                ImageFactory(patient_id=p_id, study_description=s_id), a
+            )
+
+        response = get_view_for_user(
+            client=client,
+            url=self._get_url(a.pk, p_id),
+            user=u,
+            data={"patient_id": p_id},
+        )
+        assert response.status_code == 200
+        assert set(response.data) == set(studies + [""])
