@@ -1,6 +1,7 @@
 {% load static %}
 {% load url %}
 {% load humanize %}
+{% load dict_lookup %}
 
 <div class="my-2">
     {% if algorithm.description %}
@@ -31,12 +32,12 @@
         </a>
     {% endfor %}
 
-    {% for challenge in algorithm.get_associated_challenges %}
+    {% get_dict_values challenges_for_algorithms algorithm.pk as challenges %}
+    {% for challenge in challenges %}
         <a class="badge badge-info above-stretched-link p-1 mr-1"
            href="{{ challenge.get_absolute_url }}"
            title="This algorithm was submitted to this challenge.">
             <i class="fas fa-trophy fa-fw mr-1"></i> {{ challenge.short_name }}
         </a>
     {% endfor %}
-
 </div>

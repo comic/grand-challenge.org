@@ -6,6 +6,7 @@ import requests
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.cache import cache
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
     PermissionDenied,
@@ -131,6 +132,9 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
                         "to make your own algorithm available here."
                     ),
                     random_encode("mailto:support@grand-challenge.org"),
+                ),
+                "challenges_for_algorithms": cache.get(
+                    "challenges_for_algorithms"
                 ),
             }
         )
