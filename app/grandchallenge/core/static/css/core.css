@@ -200,16 +200,25 @@ ul.socialaccount_providers > li {
 
 @media only screen and (max-width: 580px) {
   .text-truncate-container {
-      height: 11rem;
+      height: 12rem;
+  }
+  .text-truncate-container p{
+      -webkit-line-clamp: 3;
   }
   .carousel-img-container {
       height: 15rem;
   }
 }
 
-@media only screen and (min-width: 580px) and (max-width: 1200px) {
+@media only screen and (min-width: 768px) and (max-width: 1200px) {
     .carousel-img-container {
         height: 10rem;
+    }
+    .text-truncate-container {
+      height: 10rem;
+    }
+    .text-truncate-container p {
+        -webkit-line-clamp: 3;
     }
 }
 
