@@ -7,7 +7,7 @@ from tests.cases_tests.factories import (
     ImageFactoryWithoutImageFile,
     RawImageUploadSessionFactory,
 )
-from tests.factories import ImageFileFactory, UserFactory
+from tests.factories import ImageFactory, ImageFileFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -124,3 +124,111 @@ class TestVTKImageDetail:
 
         image = ImageFactoryWithImageFile(color_space=Image.COLOR_SPACE_GRAY)
         assert get_status_code(image) == 200
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "factory_kwargs,data_non_filtered,data_filtered",
+    (
+        (
+            {},
+            (
+                {},
+                {"patient_id__isempty": True},
+                {"study_description__isempty": True},
+                {
+                    "patient_id__isempty": True,
+                    "study_description__isempty": True,
+                },
+            ),
+            (
+                {"patient_id__isempty": False},
+                {"study_description__isempty": False},
+                {
+                    "patient_id__isempty": False,
+                    "study_description__isempty": False,
+                },
+            ),
+        ),
+        (
+            {"patient_id": "test"},
+            (
+                {},
+                {"patient_id__isempty": False},
+                {"study_description__isempty": True},
+                {
+                    "patient_id__isempty": False,
+                    "study_description__isempty": True,
+                },
+            ),
+            (
+                {"patient_id__isempty": True},
+                {"study_description__isempty": False},
+                {
+                    "patient_id__isempty": True,
+                    "study_description__isempty": False,
+                },
+            ),
+        ),
+        (
+            {"study_description": "test"},
+            (
+                {},
+                {"patient_id__isempty": True},
+                {"study_description__isempty": False},
+                {
+                    "patient_id__isempty": True,
+                    "study_description__isempty": False,
+                },
+            ),
+            (
+                {"patient_id__isempty": False},
+                {"study_description__isempty": True},
+                {
+                    "patient_id__isempty": False,
+                    "study_description__isempty": True,
+                },
+            ),
+        ),
+        (
+            {"study_description": "test", "patient_id": "test"},
+            (
+                {},
+                {"patient_id__isempty": False},
+                {"study_description__isempty": False},
+                {
+                    "patient_id__isempty": False,
+                    "study_description__isempty": False,
+                },
+            ),
+            (
+                {"patient_id__isempty": True},
+                {"study_description__isempty": True},
+                {
+                    "patient_id__isempty": True,
+                    "study_description__isempty": True,
+                },
+            ),
+        ),
+    ),
+)
+def test_imageviewset_empty_fields_filtering(
+    client, factory_kwargs, data_non_filtered, data_filtered
+):
+    image = ImageFactory(**factory_kwargs)
+    u = UserFactory()
+    assign_perm("view_image", u, image)
+    for data in data_non_filtered:
+        response = get_view_for_user(
+            client=client, viewname="api:image-list", user=u, data=data,
+        )
+        response.status = 200
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["pk"] == str(image.pk)
+
+    for data in data_filtered:
+        response = get_view_for_user(
+            client=client, viewname="api:image-list", user=u, data=data,
+        )
+        response.status = 200
+        assert len(response.data["results"]) == 0
