@@ -286,7 +286,7 @@ PERMISSIONS_POLICY = {
     "display-capture": [],
     "document-domain": [],
     "encrypted-media": [],
-    "fullscreen": [],
+    "fullscreen": ["self"],
     "geolocation": [],
     "gyroscope": [],
     "interest-cohort": [],
