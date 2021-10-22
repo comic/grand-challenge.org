@@ -433,6 +433,13 @@ class ComponentInterface(models.Model):
         )
 
     def create_instance(self, *, image=None, value=None):
+        if (
+            image is not None
+            and ComponentInterfaceValue.objects.filter(
+                image=image, interface=self
+            ).exists()
+        ):
+            return
         civ = ComponentInterfaceValue.objects.create(interface=self)
 
         if image:

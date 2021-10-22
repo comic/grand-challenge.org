@@ -157,9 +157,9 @@ def create_algorithm_jobs_for_session(
     with transaction.atomic():
         civ_sets = [
             {
-                ComponentInterfaceValue.objects.create(
+                ComponentInterfaceValue.objects.get_or_create(
                     interface=default_input_interface, image=image
-                )
+                )[0]
             }
             for image in session.image_set.all()
         ]

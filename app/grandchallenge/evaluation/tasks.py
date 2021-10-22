@@ -100,11 +100,16 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
             )
             return
 
-        civ = ComponentInterfaceValue(
-            interface=interface, file=submission.predictions_file
-        )
-        civ.full_clean()
-        civ.save()
+        try:
+            civ = ComponentInterfaceValue.objects.get(
+                interface=interface, file=submission.predictions_file
+            )
+        except ComponentInterfaceValue.DoesNotExist:
+            civ = ComponentInterfaceValue(
+                interface=interface, file=submission.predictions_file
+            )
+            civ.full_clean()
+            civ.save()
 
         evaluation.inputs.set([civ])
         on_commit(evaluation.execute)
