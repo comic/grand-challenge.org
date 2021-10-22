@@ -208,7 +208,7 @@ class TestArchiveViewSetStudies:
         a.remove_user(u)
         response = get_view_for_user(
             client=client,
-            url=self._get_url(a.pk, p_id),
+            url=self._get_url(a.pk),
             user=u,
             data={"patient_id": p_id},
         )
@@ -219,7 +219,7 @@ class TestArchiveViewSetStudies:
         a, u, i = self._create_archive_with_user_and_image(p_id)
         response = get_view_for_user(
             client=client,
-            url=self._get_url(a.pk, p_id),
+            url=self._get_url(a.pk),
             user=u,
             data={"patient_id": p_id},
         )
@@ -235,7 +235,7 @@ class TestArchiveViewSetStudies:
 
         response = get_view_for_user(
             client=client,
-            url=self._get_url(a.pk, p_id),
+            url=self._get_url(a.pk),
             user=u,
             data={"patient_id": p_id},
         )
@@ -256,7 +256,7 @@ class TestArchiveViewSetStudies:
 
         response = get_view_for_user(
             client=client,
-            url=self._get_url(a.pk, p_id),
+            url=self._get_url(a.pk),
             user=u,
             data={"patient_id": p_id},
         )
