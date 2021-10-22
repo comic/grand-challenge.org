@@ -5,4 +5,7 @@ register = template.Library()
 
 @register.simple_tag
 def get_dict_values(dictionary, key):
-    return dictionary.get(key)
+    try:
+        return dictionary.get(key)
+    except AttributeError:
+        return None
