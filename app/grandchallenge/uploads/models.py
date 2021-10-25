@@ -45,6 +45,19 @@ class SummernoteAttachment(AbstractAttachment):
     )
 
 
+_S3_CLIENT_KWARGS = {"endpoint_url": settings.AWS_S3_ENDPOINT_URL}
+_UPLOADS_CLIENT = boto3.client("s3", **_S3_CLIENT_KWARGS)
+_ACCELERATED_UPLOADS_CLIENT = boto3.client(
+    "s3",
+    **_S3_CLIENT_KWARGS,
+    config=Config(
+        s3={
+            "use_accelerate_endpoint": settings.UPLOADS_S3_USE_ACCELERATE_ENDPOINT
+        }
+    ),
+)
+
+
 class UserUpload(UUIDModel):
     LIST_MAX_ITEMS = 1000
 
@@ -66,11 +79,6 @@ class UserUpload(UUIDModel):
     class Meta(UUIDModel.Meta):
         pass
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__client = None
-        self.__accelerated_client = None
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -83,27 +91,12 @@ class UserUpload(UUIDModel):
             self.assign_permissions()
 
     @property
-    def _client_kwargs(self):
-        return {"endpoint_url": settings.AWS_S3_ENDPOINT_URL}
-
-    @property
     def _client(self):
-        if self.__client is None:
-            self.__client = boto3.client("s3", **self._client_kwargs)
-        return self.__client
+        return _UPLOADS_CLIENT
 
     @property
     def _accelerated_client(self):
-        if self.__accelerated_client is None:
-            config = Config(
-                s3={
-                    "use_accelerate_endpoint": settings.UPLOADS_S3_USE_ACCELERATE_ENDPOINT
-                }
-            )
-            self.__accelerated_client = boto3.client(
-                "s3", **self._client_kwargs, config=config,
-            )
-        return self.__accelerated_client
+        return _ACCELERATED_UPLOADS_CLIENT
 
     @property
     def bucket(self):
