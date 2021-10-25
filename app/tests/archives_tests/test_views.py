@@ -4,9 +4,14 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.subdomains.utils import reverse
 from tests.archives_tests.factories import (
     ArchiveFactory,
+    ArchiveItemFactory,
     ArchivePermissionRequestFactory,
 )
-from tests.factories import UserFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -101,3 +106,109 @@ class TestObjectPermissionRequiredViews:
 
             for obj in objs:
                 remove_perm(permission, u, obj)
+
+
+def add_image_to_archive(image, archive):
+    interface = ComponentInterfaceFactory()
+    civ = ComponentInterfaceValueFactory(interface=interface, image=image)
+    item = ArchiveItemFactory(archive=archive)
+    item.values.set([civ])
+
+
+def create_archive_with_user_and_image(patient_id=""):
+    a = ArchiveFactory()
+    u = UserFactory()
+    i = ImageFactory(patient_id=patient_id)
+    add_image_to_archive(i, a)
+    a.add_user(u)
+    return a, u, i
+
+
+@pytest.mark.django_db
+class TestArchiveViewSetPatients:
+    @staticmethod
+    def get_view(client, user, archive_pk):
+        return get_view_for_user(
+            client=client,
+            viewname="api:archive-patients",
+            reverse_kwargs={"pk": archive_pk},
+            user=user,
+        )
+
+    def test_no_access_archive(self, client):
+        a, u, i = create_archive_with_user_and_image()
+        a.remove_user(u)
+        response = self.get_view(client, u, a.pk)
+        assert response.status_code == 404
+
+    def test_empty_archive(self, client):
+        a, u, i = create_archive_with_user_and_image()
+        a.items.all().delete()
+        response = self.get_view(client, u, a.pk)
+        assert response.status_code == 200
+        assert len(response.data) == 0
+
+    def test_archive_no_patients(self, client):
+        a, u, i = create_archive_with_user_and_image()
+        [add_image_to_archive(ImageFactory(), a) for _ in range(3)]
+        response = self.get_view(client, u, a.pk)
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0] == ""
+
+    def test_archive_some_patients(self, client):
+        a, u, i = create_archive_with_user_and_image()
+        patients = [f"Patient {i}" for i in range(3)]
+        [add_image_to_archive(ImageFactory(patient_id=p), a) for p in patients]
+        response = self.get_view(client, u, a.pk)
+        assert response.status_code == 200
+        assert set(response.data) == set(patients + [""])
+
+
+@pytest.mark.django_db
+class TestArchiveViewSetStudies:
+    @staticmethod
+    def get_view(client, user, archive_pk, patient_id):
+        return get_view_for_user(
+            client=client,
+            viewname="api:archive-studies",
+            user=user,
+            reverse_kwargs={"pk": archive_pk},
+            data={"patient_id": patient_id},
+        )
+
+    def test_no_access_archive(self, client):
+        p_id = "patient_id"
+        a, u, i = create_archive_with_user_and_image(p_id)
+        a.remove_user(u)
+        response = self.get_view(client, u, a.pk, p_id)
+        assert response.status_code == 404
+
+    def test_single_empty_study(self, client):
+        p_id = "patient_id"
+        a, u, i = create_archive_with_user_and_image(p_id)
+        response = self.get_view(client, u, a.pk, p_id)
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0] == ""
+
+    def test_multiple_empty_studies_distinct(self, client):
+        p_id = "patient_id"
+        a, u, i = create_archive_with_user_and_image(p_id)
+        for _ in range(3):
+            add_image_to_archive(ImageFactory(patient_id=p_id), a)
+        response = self.get_view(client, u, a.pk, p_id)
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0] == ""
+
+    def test_study_some_patients(self, client):
+        p_id = "patient_id"
+        a, u, i = create_archive_with_user_and_image(p_id)
+        studies = [f"Study {i}" for i in range(3)]
+        for s in studies:
+            i = ImageFactory(patient_id=p_id, study_description=s)
+            add_image_to_archive(i, a)
+        response = self.get_view(client, u, a.pk, p_id)
+        assert response.status_code == 200
+        assert set(response.data) == set(studies + [""])

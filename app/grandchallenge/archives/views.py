@@ -8,8 +8,9 @@ from django.core.exceptions import (
 )
 from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -26,7 +27,9 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -681,3 +684,34 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+
+    @action(detail=True)
+    def patients(self, request, pk=None):
+        archive = self.get_object()
+        patients = (
+            Image.objects.filter(
+                componentinterfacevalue__archive_items__archive=archive
+            )
+            .order_by("patient_id")
+            .values_list("patient_id", flat=True)
+            .distinct("patient_id")
+        )
+        return Response(patients)
+
+    @action(detail=True)
+    def studies(self, request, pk=None):
+        try:
+            patient_id = self.request.query_params["patient_id"]
+        except MultiValueDictKeyError:
+            raise Http404
+        archive = self.get_object()
+        studies = (
+            Image.objects.filter(
+                componentinterfacevalue__archive_items__archive=archive,
+                patient_id=patient_id,
+            )
+            .order_by("study_description")
+            .values_list("study_description", flat=True)
+            .distinct("study_description")
+        )
+        return Response(studies)
