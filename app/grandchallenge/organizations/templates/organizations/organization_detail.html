@@ -65,8 +65,10 @@
                 <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-link"></i>&nbsp;Website</dt>
                 <dd class="col-sm-9 mt-2"><a href="{{ object.website }}">{{ object.website }}</a></dd>
 
-                <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-users"></i>&nbsp;Editors</dt>
-                <dd class="col-sm-9 mt-2">{% for editor in object.editors_group.user_set.all %}<p>{{ editor|user_profile_link }}</p>{% endfor %}</dd>
+                {% if object.editors_group.user_set.all %}
+                    <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-users"></i>&nbsp;Editors</dt>
+                    <dd class="col-sm-9 mt-2">{% for editor in object.editors_group.user_set.all %}<p>{{ editor|user_profile_link }}</p>{% endfor %}</dd>
+                {% endif %}
 
             </dl>
 
