@@ -207,12 +207,12 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 # Caching
 #
 ##############################################################################
-REDIS_HOSTNAME = os.environ.get("REDIS_HOSTNAME", "redis")
+REDIS_ENDPOINT = os.environ.get("REDIS_ENDPOINT", "redis://redis:6379")
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOSTNAME}:6379/1",
+        "LOCATION": f"{REDIS_ENDPOINT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     },
     "machina_attachments": {
@@ -886,9 +886,7 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
         }
     )
 else:
-    CELERY_BROKER_URL = os.environ.get(
-        "BROKER_URL", f"redis://{REDIS_HOSTNAME}:6379/0"
-    )
+    CELERY_BROKER_URL = os.environ.get("BROKER_URL", f"{REDIS_ENDPOINT}/1")
 
 # Keep results of sent emails
 CELERY_EMAIL_CHUNK_SIZE = 1
