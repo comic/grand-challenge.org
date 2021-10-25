@@ -156,11 +156,13 @@ class HomeTemplate(TemplateView):
                 "highlighted_challenges": Challenge.objects.filter(
                     hidden=False, highlight=True
                 )
+                .prefetch_related("phase_set", "publications")
                 .order_by("-created")
                 .all()[:4],
                 "highlighted_algorithms": Algorithm.objects.filter(
                     public=True, highlight=True
                 )
+                .prefetch_related("publications",)
                 .order_by("-created")
                 .all()[:4],
                 "news_caroussel_items": news_caroussel_items,

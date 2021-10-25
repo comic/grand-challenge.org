@@ -117,6 +117,14 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     filter_class = AlgorithmFilter
     paginate_by = 40
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("publications",)
+            .order_by("-created")
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
