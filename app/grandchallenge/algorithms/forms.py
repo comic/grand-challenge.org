@@ -168,6 +168,14 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 "set of inputs you have selected."
             )
 
+        if (
+            cleaned_data["repo_name"]
+            and "github.com" in cleaned_data["repo_name"]
+        ):
+            raise ValidationError(
+                "Please only provide the repository name, not the full url. E.g. 'comic/grand-challenge.org/'"
+            )
+
         return cleaned_data
 
 
