@@ -2,6 +2,7 @@ import copy
 import json
 
 import pytest
+from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
@@ -27,6 +28,7 @@ from grandchallenge.retina_api.views import (
     PathologyAnnotationViewSet,
     PolygonAnnotationSetViewSet,
     QualityAnnotationViewSet,
+    RetinaImageViewSet,
     RetinaPathologyAnnotationViewSet,
     SinglePolygonViewSet,
     TextAnnotationViewSet,
@@ -42,6 +44,7 @@ from tests.annotations_tests.factories import (
     OctRetinaImagePathologyAnnotationFactory,
     PolygonAnnotationSetFactory,
     RetinaImagePathologyAnnotationFactory,
+    SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
 from tests.cases_tests.factories import ImageFactory
@@ -1650,3 +1653,66 @@ class TestPolygonAnnotationSetViewSetWithImageFilter:
             polygonset3
         ).data
         assert response.data == [serialized_data]
+
+
+@pytest.mark.django_db
+class TestRetinaImageViewSetNumQueries:
+    @staticmethod
+    def perform_request(rf, user):
+        url = reverse("api:retina-images-list")
+        request = rf.get(url)
+        force_authenticate(request, user=user)
+        view = RetinaImageViewSet.as_view(actions={"get": "list"})
+        return view(request)
+
+    def test_no_landmarks(self, rf, django_assert_max_num_queries):
+        u = UserFactory()
+        i = ImageFactory()
+        assign_perm("view_image", u, i)
+        with django_assert_max_num_queries(6):
+            response = self.perform_request(rf, u)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 1
+        assert len(response.data["results"][0]["landmark_annotations"]) == 0
+
+    def test_one_landmark(self, rf, django_assert_max_num_queries):
+        u = UserFactory()
+        i1 = ImageFactory()
+        i2 = ImageFactory()
+        assign_perm("view_image", u, i1)
+        assign_perm("view_image", u, i2)
+        las = LandmarkAnnotationSetFactory(grader=u)
+        SingleLandmarkAnnotationFactory(annotation_set=las, image=i1)
+        SingleLandmarkAnnotationFactory(annotation_set=las, image=i2)
+        with django_assert_max_num_queries(9):
+            response = self.perform_request(rf, u)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 2
+        assert len(response.data["results"][0]["landmark_annotations"]) == 1
+        assert len(response.data["results"][1]["landmark_annotations"]) == 1
+
+    def test_multiple_landmarks(self, rf, django_assert_max_num_queries):
+        u = UserFactory()
+        for _ in range(4):
+            img = ImageFactory()
+            assign_perm("view_image", u, img)
+            las = LandmarkAnnotationSetFactory(grader=u)
+            SingleLandmarkAnnotationFactory(annotation_set=las, image=img)
+            SingleLandmarkAnnotationFactory(annotation_set=las)
+        with django_assert_max_num_queries(9):
+            response = self.perform_request(rf, u)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 4
+
+    def test_multiple_landmarks_24(self, rf, django_assert_max_num_queries):
+        u = UserFactory()
+        for _ in range(24):
+            img = ImageFactory()
+            assign_perm("view_image", u, img)
+            las = LandmarkAnnotationSetFactory(grader=u)
+            SingleLandmarkAnnotationFactory(annotation_set=las, image=img)
+            SingleLandmarkAnnotationFactory(annotation_set=las)
+        with django_assert_max_num_queries(9):
+            response = self.perform_request(rf, u)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 24
