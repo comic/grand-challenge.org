@@ -106,6 +106,10 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.MULTIPLE_POINTS, False, False),
         (InterfaceKindChoices.POLYGON, False, False),
         (InterfaceKindChoices.MULTIPLE_POLYGONS, False, False),
+        (InterfaceKindChoices.THUMBNAIL, True, False),
+        (InterfaceKindChoices.SQREG, True, False),
+        (InterfaceKindChoices.PDF, True, False),
+        (InterfaceKindChoices.CHART, False, False),
     ),
 )
 def test_save_in_object_store(kind, object_store_required, is_image):
@@ -167,20 +171,25 @@ def test_no_uuid_validation():
 )
 def test_relative_path_file_ending(kind):
     if kind in InterfaceKind.interface_type_json():
-        good_suffix = "json"
+        good_suffixes = ["json"]
+    elif kind == InterfaceKind.InterfaceKindChoices.SQREG:
+        good_suffixes = ["sqreg"]
+    elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL:
+        good_suffixes = ["jpg", "png", "jpeg"]
     else:
-        good_suffix = kind.lower()
+        good_suffixes = [kind.lower()]
 
-    i = ComponentInterfaceFactory(
-        kind=kind,
-        relative_path=f"foo/bar.{good_suffix}",
-        store_in_database=kind in InterfaceKind.interface_type_json(),
-    )
-    i.full_clean()
-
-    i.relative_path = "foo/bar"
-    with pytest.raises(ValidationError):
+    for suffix in good_suffixes:
+        i = ComponentInterfaceFactory(
+            kind=kind,
+            relative_path=f"foo/bar.{suffix}",
+            store_in_database=kind in InterfaceKind.interface_type_json(),
+        )
         i.full_clean()
+
+        i.relative_path = "foo/bar"
+        with pytest.raises(ValidationError):
+            i.full_clean()
 
 
 @pytest.mark.django_db
@@ -364,6 +373,64 @@ def test_invalid_schema_raises_error():
         (InterfaceKindChoices.ANY, [], nullcontext()),
         (InterfaceKindChoices.ANY, None, nullcontext()),
         (InterfaceKindChoices.ANY, {}, nullcontext()),
+        (
+            InterfaceKindChoices.CHART,
+            {
+                "description": "A simple bar chart with embedded data.",
+                "data": {
+                    "values": [
+                        {"a": "A", "b": 28},
+                        {"a": "B", "b": 55},
+                        {"a": "C", "b": 43},
+                        {"a": "D", "b": 91},
+                        {"a": "E", "b": 81},
+                        {"a": "F", "b": 53},
+                        {"a": "G", "b": 19},
+                        {"a": "H", "b": 87},
+                        {"a": "I", "b": 52},
+                    ]
+                },
+                "mark": "bar",
+                "encoding": {
+                    "x": {
+                        "field": "a",
+                        "type": "nominal",
+                        "axis": {"labelAngle": 0},
+                    },
+                    "y": {"field": "b", "type": "quantitative"},
+                },
+            },
+            nullcontext(),
+        ),
+        (
+            InterfaceKindChoices.CHART,
+            {
+                "description": "A simple bar chart with embedded data.",
+                "wrong-property-name": {
+                    "values": [
+                        {"a": "A", "b": 28},
+                        {"a": "B", "b": 55},
+                        {"a": "C", "b": 43},
+                        {"a": "D", "b": 91},
+                        {"a": "E", "b": 81},
+                        {"a": "F", "b": 53},
+                        {"a": "G", "b": 19},
+                        {"a": "H", "b": 87},
+                        {"a": "I", "b": 52},
+                    ]
+                },
+                "mark": "bar",
+                "encoding": {
+                    "x": {
+                        "field": "a",
+                        "type": "nominal",
+                        "axis": {"labelAngle": 0},
+                    },
+                    "y": {"field": "b", "type": "quantitative"},
+                },
+            },
+            pytest.raises(ValidationError),
+        ),
     ),
 )
 def test_default_validation(kind, value, expectation, use_file):

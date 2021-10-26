@@ -61,6 +61,7 @@ class InterfaceKindChoices(models.TextChoices):
     FLOAT = "FLT", _("Float")
     BOOL = "BOOL", _("Bool")
     ANY = "JSON", _("Anything")
+    CHART = "CHRT", _("Chart")
 
     # Annotation Types
     TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
@@ -83,6 +84,11 @@ class InterfaceKindChoices(models.TextChoices):
     IMAGE = "IMG", _("Image")
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
+
+    # File types
+    PDF = "PDF", _("PDF file")
+    SQREG = "SQRG", _("SQREG file")
+    THUMBNAIL = "TIMG", _("Thumbnail")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -119,6 +125,7 @@ class InterfaceKind:
         * Multiple polygons
         * Choice (string)
         * Multiple choice (array of strings)
+        * Chart
 
         Example json for 2D bounding box annotation
 
@@ -270,6 +277,26 @@ class InterfaceKind:
                 "version": { "major": 1, "minor": 0 }
             }
 
+        Example json for Chart
+
+        .. code-block:: json
+
+            {
+                "description": "A simple bar chart with embedded data.",
+                "data": {
+                    "values": [
+                        {"a": "A", "b": 28}, {"a": "B", "b": 55}, {"a": "C", "b": 43},
+                        {"a": "D", "b": 91}, {"a": "E", "b": 81}, {"a": "F", "b": 53},
+                        {"a": "G", "b": 19}, {"a": "H", "b": 87}, {"a": "I", "b": 52}
+                    ]
+                },
+                "mark": "bar",
+                "encoding": {
+                    "x": {"field": "a", "type": "nominal", "axis": {"labelAngle": 0}},
+                    "y": {"field": "b", "type": "quantitative"}
+                }
+            }
+
         """
         return (
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -287,6 +314,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.CHOICE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
             InterfaceKind.InterfaceKindChoices.ANY,
+            InterfaceKind.InterfaceKindChoices.CHART,
         )
 
     @staticmethod
@@ -309,10 +337,16 @@ class InterfaceKind:
 
         * CSV file
         * ZIP file
+        * PDF file
+        * SQREG file
+        * Thumbnail
         """
         return (
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.ZIP,
+            InterfaceKind.InterfaceKindChoices.PDF,
+            InterfaceKind.InterfaceKindChoices.SQREG,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL,
         )
 
     @classmethod
@@ -349,6 +383,15 @@ class InterfaceKind:
                 "application/zip",
                 "application/x-zip-compressed",
             )
+        elif kind == InterfaceKind.InterfaceKindChoices.PDF:
+            return ("application/pdf",)
+        elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL:
+            return (
+                "image/png",
+                "image/jpeg",
+            )
+        elif kind == InterfaceKind.InterfaceKindChoices.SQREG:
+            return ("application/vnd.sqlite3",)
         else:
             raise RuntimeError(f"Unknown kind {kind}")
 
@@ -436,7 +479,7 @@ class ComponentInterface(models.Model):
 
     @property
     def save_in_object_store(self):
-        # CSV and ZIP should always be saved to S3, others are optional
+        # CSV, ZIP, PDF, SQREG and Thumbnail should always be saved to S3, others are optional
         return (
             self.is_image_kind
             or self.kind in InterfaceKind.interface_type_file()
@@ -466,14 +509,33 @@ class ComponentInterface(models.Model):
         self._clean_store_in_database()
         self._clean_relative_path()
 
-    def _clean_relative_path(self):
+    def _clean_relative_path(self):  # noqa: C901
         if self.kind in InterfaceKind.interface_type_json():
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
         elif self.kind in InterfaceKind.interface_type_file():
-            if not self.relative_path.endswith(f".{self.kind.lower()}"):
+            raise_exception = False
+            if (
+                self.kind == InterfaceKind.InterfaceKindChoices.SQREG
+                and not self.relative_path.endswith(".sqreg")
+            ):
+                file_extension = ".sqreg"
+                raise_exception = True
+            elif (
+                self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL
+                and not self.relative_path.endswith((".jpg", ".jpeg", ".png"))
+            ):
+                file_extension = ".jpg, .jpeg or .png"
+                raise_exception = True
+            elif self.kind not in [
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL,
+                InterfaceKind.InterfaceKindChoices.SQREG,
+            ] and not self.relative_path.endswith(f".{self.kind.lower()}"):
+                file_extension = f".{self.kind.lower()}"
+                raise_exception = True
+            if raise_exception:
                 raise ValidationError(
-                    f"Relative path should end with .{self.kind.lower()}"
+                    f"Relative path should end with {file_extension}"
                 )
 
         if self.kind in InterfaceKind.interface_type_image():
@@ -541,13 +603,28 @@ class ComponentInterfaceValue(models.Model):
         upload_to=component_interface_value_path,
         storage=protected_s3_storage,
         validators=[
-            ExtensionValidator(allowed_extensions=(".json", ".zip", ".csv")),
+            ExtensionValidator(
+                allowed_extensions=(
+                    ".json",
+                    ".zip",
+                    ".csv",
+                    ".png",
+                    ".jpg",
+                    ".jpeg",
+                    ".pdf",
+                    ".sqreg",
+                )
+            ),
             MimeTypeValidator(
                 allowed_types=(
                     "application/json",
                     "application/zip",
                     "text/plain",
                     "application/csv",
+                    "application/pdf",
+                    "image/png",
+                    "image/jpeg",
+                    "application/vnd.sqlite3",
                 )
             ),
         ],

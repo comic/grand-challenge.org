@@ -53,6 +53,10 @@
                         {% if interface.is_image_kind %}
                             <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.mha</code> or
                             <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.tif</code>
+                        {% elif interface.kind == 'TIMG' %}
+                            <code>/output/image.jpg</code> or
+                            <code>/output/image.jpeg</code> or
+                            <code>/output/image.png</code>
                         {% else %}
                             <code>/output/{{ interface.relative_path }}</code>
                         {% endif %}
