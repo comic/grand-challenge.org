@@ -1,3 +1,5 @@
+import re
+
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
@@ -167,6 +169,17 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 "'Use Flexible Inputs' must also be selected when using the "
                 "set of inputs you have selected."
             )
+
+        if cleaned_data["repo_name"]:
+            pattern = re.compile("^([^/]+/[^/]+)$")
+            if "github.com" in cleaned_data["repo_name"]:
+                raise ValidationError(
+                    "Please only provide the repository name, not the full url. E.g. 'comic/grand-challenge.org'"
+                )
+            if not pattern.match(cleaned_data["repo_name"]):
+                raise ValidationError(
+                    "Please make sure you provide the repository name in the format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
+                )
 
         return cleaned_data
 
