@@ -34,6 +34,7 @@ from grandchallenge.annotations.serializers import (
     SinglePolygonAnnotationSerializer,
 )
 from grandchallenge.cases.models import Image
+from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.retina_api.filters import (
     RetinaAnnotationFilter,
     RetinaChildAnnotationFilter,
@@ -42,6 +43,7 @@ from grandchallenge.retina_api.mixins import RetinaAPIPermission
 from grandchallenge.retina_api.serializers import (
     B64ImageSerializer,
     ImageLevelAnnotationsForImageSerializer,
+    RetinaImageSerializer,
 )
 
 
@@ -212,3 +214,15 @@ class BooleanClassificationAnnotationViewSet(viewsets.ModelViewSet):
     pagination_class = None
     filterset_fields = ("image",)
     queryset = BooleanClassificationAnnotation.objects.all()
+
+
+class RetinaImageViewSet(ImageViewSet):
+    serializer_class = RetinaImageSerializer
+    queryset = (
+        Image.objects.all()
+        .prefetch_related(
+            "files",
+            "singlelandmarkannotation_set__annotation_set__singlelandmarkannotation_set__image",
+        )
+        .select_related("modality")
+    )

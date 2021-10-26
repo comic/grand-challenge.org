@@ -36,6 +36,7 @@ from grandchallenge.retina_api.views import (
     PathologyAnnotationViewSet,
     PolygonAnnotationSetViewSet,
     QualityAnnotationViewSet,
+    RetinaImageViewSet,
     RetinaPathologyAnnotationViewSet,
     SinglePolygonViewSet,
     TextAnnotationViewSet,
@@ -154,6 +155,9 @@ router.register(
     r"retina/etdrs-grid-annotation",
     ETDRSGridAnnotationViewSet,
     basename="retina-etdrs-grid-annotation",
+)
+router.register(
+    r"retina/images", RetinaImageViewSet, basename="retina-images",
 )
 
 # Follows (Subscriptions)
