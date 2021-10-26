@@ -39,6 +39,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "show_reset_tool",
             "show_overlay_selection_tool",
             "show_lut_selection_tool",
+            "show_annotation_counter_tool",
             "enable_contrast_enhancement",
             "auto_jump_center_of_gravity",
         )
