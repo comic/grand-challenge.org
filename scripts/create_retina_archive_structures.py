@@ -9,6 +9,7 @@ import SimpleITK as Sitk
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from config import settings
 from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
@@ -254,27 +255,49 @@ def create_landmark_annotations(user, images):
     return annotations
 
 
+def generate_images_and_annotations(
+    user, nums, archive, patient, study, indentation="      "
+):
+    images = create_image_set_for_study(archive, patient, study, nums)
+    print(f"{indentation}Created {len(images)} images.")
+    annotations = create_landmark_annotations(user, images)
+    print(f"{indentation}Created {len(annotations)} landmark annotations.")
+
+
 def create_archive_patient_study_structure(user, nums):
     for a in range(nums["archives"]):
-        archive = create_archive(f"Archive {a}", user)
-        print(f"Archive: {archive.name}")
+        archive = create_archive(f"Archive {a + 1}", user)
+        print(archive.name)
         for p in range(nums["patients"]):
-            patient = f"Patient {p}"
-            print(f"  Patient: {patient}")
+            patient = f"Patient {p + 1}"
+            print(f"  {patient}")
             for s in range(nums["studies"]):
-                study = f"Study {s}"
-                print(f"    Study: {study}")
-                images = create_image_set_for_study(
-                    archive, patient, study, nums
+                study = f"Study {s + 1}"
+                print(f"    {study}")
+                generate_images_and_annotations(
+                    user, nums, archive, patient, study
                 )
-                print(f"      Created {len(images)} images.")
-                annotations = create_landmark_annotations(user, images)
-                print(
-                    f"      Created {len(annotations)} landmark annotations."
-                )
+            generate_images_and_annotations(
+                user, nums, archive, patient, "", "    "
+            )
+        generate_images_and_annotations(user, nums, archive, "", "", "  ")
+
+
+def remove_old_objects():
+    LandmarkAnnotationSet.objects.all().delete()
+    ArchiveItem.objects.all().delete()
+    ComponentInterfaceValue.objects.all().delete()
+    Image.objects.all().delete()
+    Archive.objects.all().delete()
 
 
 def run():
+    if not settings.DEBUG:
+        raise RuntimeError(
+            "Skipping this command, server is not in DEBUG mode."
+        )
+    remove_old_objects()
+
     user = get_user_model().objects.get(username="retina")
     create_archive_patient_study_structure(
         user,
