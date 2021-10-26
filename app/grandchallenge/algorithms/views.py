@@ -6,6 +6,7 @@ import requests
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.cache import cache
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
     PermissionDenied,
@@ -116,6 +117,14 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     filter_class = AlgorithmFilter
     paginate_by = 40
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("publications",)
+            .order_by("-created")
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
@@ -131,6 +140,9 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
                         "to make your own algorithm available here."
                     ),
                     random_encode("mailto:support@grand-challenge.org"),
+                ),
+                "challenges_for_algorithms": cache.get(
+                    "challenges_for_algorithms"
                 ),
             }
         )

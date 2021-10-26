@@ -2,6 +2,7 @@
 {% load url %}
 {% load user_profile_link from profiles %}
 {% load meta_attr %}
+{% load static %}
 
 
 {% block title %}
@@ -24,4 +25,11 @@
 
     {% include "grandchallenge/partials/pagination.html"  %}
 
+    {% include "grandchallenge/partials/cards_info_modal.html" %}
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script src="{% static "js/cards_info_modal.js" %}"></script>
 {% endblock %}
