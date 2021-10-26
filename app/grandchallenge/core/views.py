@@ -119,7 +119,9 @@ class HomeTemplate(TemplateView):
             ),
         ]
 
-        latest_news_item = Post.objects.filter(highlight=True).first()
+        latest_news_item = Post.objects.filter(
+            published=True, highlight=True
+        ).first()
         latest_ai_for_radiology_post = Post.objects.filter(
             published=True, tags__slug="products"
         ).first()
@@ -130,14 +132,14 @@ class HomeTemplate(TemplateView):
             .first()
         )
         news_caroussel_items = [
-            latest_ai_for_radiology_post,
-            latest_gc_blog_post,
+            item
+            for item in [
+                latest_news_item,
+                latest_ai_for_radiology_post,
+                latest_gc_blog_post,
+            ]
+            if item
         ]
-        news_caroussel_items = (
-            [latest_news_item] + news_caroussel_items
-            if latest_news_item
-            else news_caroussel_items
-        )
 
         context.update(
             {
@@ -154,11 +156,13 @@ class HomeTemplate(TemplateView):
                 "highlighted_challenges": Challenge.objects.filter(
                     hidden=False, highlight=True
                 )
+                .prefetch_related("phase_set", "publications")
                 .order_by("-created")
                 .all()[:4],
                 "highlighted_algorithms": Algorithm.objects.filter(
                     public=True, highlight=True
                 )
+                .prefetch_related("publications",)
                 .order_by("-created")
                 .all()[:4],
                 "news_caroussel_items": news_caroussel_items,
@@ -237,7 +241,3 @@ class PermissionRequestUpdate(
             f"{self.redirect_namespace}:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
-
-
-class AboutTemplate(TemplateView):
-    template_name = "about.html"

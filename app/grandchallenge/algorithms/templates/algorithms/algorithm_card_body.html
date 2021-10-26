@@ -1,0 +1,43 @@
+{% load static %}
+{% load url %}
+{% load humanize %}
+{% load dict_lookup %}
+
+<div class="my-2">
+    {% if algorithm.description %}
+        <a href="#InfoModal"
+           class="badge badge-info above-stretched-link p-1 mr-1"
+           data-toggle="modal"
+           data-target="#InfoModal"
+           data-title="{{ algorithm.title }}"
+           data-description="{{ algorithm.description }}"
+           data-absolute-url="{{ algorithm.get_absolute_url }}"
+           title="Algorithm Info">
+            <i class="fas fa-info-circle fa-fw"></i>
+        </a>
+    {% endif %}
+
+    {% if object.repo_name %}
+        <a href="https://github.com/{{algorithm.repo_name}}"
+           class="badge badge-info above-stretched-link p-1 mr-1">
+            <i class="fab fa-github fa-fw"></i>
+        </a>
+    {% endif %}
+
+    {% for publication in algorithm.publications.all %}
+        <a class="badge badge-info above-stretched-link p-1 mr-1"
+           href="{{ publication.url }}"
+           title="{{ publication.title }}">
+            <i class="fas fa-file fa-fw"></i>&nbsp;Article
+        </a>
+    {% endfor %}
+
+    {% get_dict_values challenges_for_algorithms algorithm.pk as challenges %}
+    {% for challenge in challenges %}
+        <a class="badge badge-info above-stretched-link p-1 mr-1"
+           href="{{ challenge.get_absolute_url }}"
+           title="This algorithm was submitted to this challenge.">
+            <i class="fas fa-trophy fa-fw mr-1"></i> {{ challenge.short_name }}
+        </a>
+    {% endfor %}
+</div>

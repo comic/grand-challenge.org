@@ -46,9 +46,9 @@ def test_group_deletion_reverse(group):
 
 
 @pytest.mark.django_db
-def test_default_pages_are_created():
+def test_default_page_is_created():
     c = ChallengeFactory()
-    assert c.page_set.count() == 2
+    assert c.page_set.count() == 1
 
 
 @pytest.mark.django_db

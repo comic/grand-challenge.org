@@ -4,6 +4,7 @@
 {% load guardian_tags %}
 {% load meta_attr %}
 {% load evaluation_extras %}
+{% load user_profile_link from profiles %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -58,11 +59,17 @@
             {{ object.detail_page_markdown|md2html }}
 
             <dl class="row">
-                <dt class="col-sm-3"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;Location</dt>
-                <dd class="col-sm-9">{{ object.location.name }}</dd>
+                <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;Location</dt>
+                <dd class="col-sm-9 mt-2">{{ object.location.name }}</dd>
 
-                <dt class="col-sm-3"><i class="fa fa-fw fa-link"></i>&nbsp;Website</dt>
-                <dd class="col-sm-9"><a href="{{ object.website }}">{{ object.website }}</a></dd>
+                <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-link"></i>&nbsp;Website</dt>
+                <dd class="col-sm-9 mt-2"><a href="{{ object.website }}">{{ object.website }}</a></dd>
+
+                {% if object.editors_group.user_set.all %}
+                    <dt class="col-sm-3 mt-2"><i class="fa fa-fw fa-users"></i>&nbsp;Editors</dt>
+                    <dd class="col-sm-9 mt-2">{% for editor in object.editors_group.user_set.all %}<p>{{ editor|user_profile_link }}</p>{% endfor %}</dd>
+                {% endif %}
+
             </dl>
 
             <h3>Activity Overview</h3>

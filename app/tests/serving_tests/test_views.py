@@ -75,7 +75,7 @@ def test_image_response(client, settings, cloudfront, tmpdir):
         assert "Expires" in redirect
     else:
         assert redirect.startswith(
-            f"{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}/"
+            f"{settings.AWS_S3_ENDPOINT_URL}/"
             f"{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
         )
 

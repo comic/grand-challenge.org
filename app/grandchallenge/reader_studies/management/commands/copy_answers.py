@@ -7,29 +7,43 @@ from grandchallenge.reader_studies.models import Answer, ReaderStudy
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument("username", type=str)
         parser.add_argument("reader_study_slug", type=str)
+        parser.add_argument("src_username", type=str)
+        parser.add_argument("--dest-user", type=str, required=False)
 
     def handle(self, *args, **options):
-        creator = get_user_model().objects.get(username=options["username"])
+        src_user = get_user_model().objects.get(
+            username=options["src_username"]
+        )
         reader_study = ReaderStudy.objects.get(
             slug=options["reader_study_slug"]
         )
 
         dest_users = [
-            *reader_study.editors_group.user_set.exclude(pk=creator.pk),
-            *reader_study.readers_group.user_set.exclude(pk=creator.pk),
+            *reader_study.editors_group.user_set.exclude(pk=src_user.pk),
+            *reader_study.readers_group.user_set.exclude(pk=src_user.pk),
         ]
 
-        all_answers = Answer.objects.filter(
-            question__reader_study=reader_study
-        )
-        creators_answers = all_answers.filter(creator=creator)
+        if options["dest_user"] is not None:
+            dest_users = [
+                u for u in dest_users if u.username == options["dest_user"]
+            ]
 
-        if all_answers.count() != creators_answers.count():
+        if not dest_users:
+            raise ValueError("No users to copy to")
+
+        existing_user_answers = Answer.objects.filter(
+            question__reader_study=reader_study, creator__in=dest_users
+        )
+
+        if existing_user_answers.exists():
             raise RuntimeError(
-                "Other users have created answers for this study"
+                "These users have created answers for this study"
             )
+
+        creators_answers = Answer.objects.filter(
+            question__reader_study=reader_study, creator=src_user
+        )
 
         if not creators_answers.exists():
             raise ValueError("No answers to copy")
@@ -42,7 +56,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             f"Copy {creators_answers.count()} answers for "
-            f"{reader_study.title} from {creator.username} to "
+            f"{reader_study.title} from {src_user.username} to "
             f"{oxford_comma(u.username for u in dest_users)}."
         )
         go = input("To continue enter 'yes': ")

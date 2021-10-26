@@ -3,7 +3,6 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
@@ -14,13 +13,9 @@ from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.validators import (
-    ExtensionValidator,
-    MimeTypeValidator,
-)
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
@@ -28,9 +23,9 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from grandchallenge.jqfileupload.widgets import uploader
-from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 phase_options = ("title",)
 
@@ -132,43 +127,20 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
         }
 
 
-class MethodForm(SaveFormInitMixin, forms.ModelForm):
+class MethodForm(ContainerImageForm):
     phase = ModelChoiceField(
         queryset=None,
         help_text="Which phase is this evaluation container for?",
     )
-    chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
-        label="Evaluation Method Container",
-        validators=[
-            ExtensionValidator(
-                allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
-            )
-        ],
-        help_text=(
-            ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
-            "https://docs.docker.com/engine/reference/commandline/save/"
-        ),
-    )
 
-    def __init__(self, *args, user, challenge, **kwargs):
+    def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["chunked_upload"].widget.user = user
-        self.fields["phase"].queryset = challenge.phase_set.all()
 
-    def clean_chunked_upload(self):
-        files = self.cleaned_data["chunked_upload"]
-        if (
-            sum([f.size for f in files])
-            > settings.COMPONENTS_MAXIMUM_IMAGE_SIZE
-        ):
-            raise ValidationError("File size limit exceeded")
-        return files
+        self.fields["phase"].queryset = challenge.phase_set.all()
 
     class Meta:
         model = Method
-        fields = ["phase", "chunked_upload"]
+        fields = ("phase", *ContainerImageForm.Meta.fields)
 
 
 submission_fields = (
@@ -177,18 +149,24 @@ submission_fields = (
     "comment",
     "supplementary_file",
     "supplementary_url",
-    "chunked_upload",
+    "user_upload",
 )
 
 
-class SubmissionForm(forms.ModelForm):
-    chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
+class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget(
+            allowed_file_types=[
+                "application/zip",
+                "application/x-zip-compressed",
+                "application/csv",
+                "application/vnd.ms-excel",
+                "text/csv",
+                "text/plain",
+            ]
+        ),
         label="Predictions File",
-        validators=[
-            MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
-            ExtensionValidator(allowed_extensions=(".zip", ".csv")),
-        ],
+        queryset=None,
     )
     algorithm = ModelChoiceField(
         queryset=None,
@@ -251,10 +229,10 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["supplementary_url"]
 
         if self._phase.submission_kind == self._phase.SubmissionKind.ALGORITHM:
-            del self.fields["chunked_upload"]
+            del self.fields["user_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user, "algorithms.change_algorithm", Algorithm,
+                user, "algorithms.change_algorithm", accept_global_perms=False
             ).order_by("title")
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
@@ -262,21 +240,9 @@ class SubmissionForm(forms.ModelForm):
         else:
             del self.fields["algorithm"]
 
-            self.fields["chunked_upload"].widget.user = user
-
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-
-    def clean_chunked_upload(self):
-        chunked_upload = self.cleaned_data["chunked_upload"]
-
-        if (
-            sum([f.size for f in chunked_upload])
-            > settings.PREDICTIONS_FILE_MAX_BYTES
-        ):
-            raise ValidationError("Predictions file is too large.")
-
-        return chunked_upload
+            self.fields["user_upload"].queryset = get_objects_for_user(
+                user, "uploads.change_userupload", accept_global_perms=False
+            ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]

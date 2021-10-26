@@ -1,7 +1,13 @@
 import pytest
 
 from grandchallenge.cases.serializers import HyperlinkedImageSerializer
+from grandchallenge.retina_api.serializers import RetinaImageSerializer
+from tests.annotations_tests.factories import (
+    LandmarkAnnotationSetFactory,
+    SingleLandmarkAnnotationFactory,
+)
 from tests.cases_tests.factories import ImageFactoryWithImageFile
+from tests.factories import ImageFactory, UserFactory
 from tests.serializer_helpers import (
     check_if_valid,
     do_test_serializer_fields,
@@ -13,8 +19,38 @@ from tests.serializer_helpers import (
 class TestRetinaImageSerializers:
     def test_image_serializer_valid(self):
         assert check_if_valid(
-            ImageFactoryWithImageFile(), HyperlinkedImageSerializer
+            ImageFactoryWithImageFile(), RetinaImageSerializer
         )
+
+    def test_landmarks_empty(self):
+        i1 = ImageFactory()
+        landmarks = RetinaImageSerializer(i1).data["landmark_annotations"]
+        assert len(landmarks) == 0
+
+    def test_landmarks_single(self):
+        u = UserFactory()
+        i1 = ImageFactory()
+        i2 = ImageFactory()
+        las = LandmarkAnnotationSetFactory(grader=u)
+        SingleLandmarkAnnotationFactory(annotation_set=las, image=i1)
+        SingleLandmarkAnnotationFactory(annotation_set=las, image=i2)
+        landmarks = RetinaImageSerializer(i1).data["landmark_annotations"]
+        assert len(landmarks) == 1
+        assert landmarks == [i2.pk]
+
+    def test_landmarks_multiple(self):
+        u = UserFactory()
+        i1 = ImageFactory()
+        img_pks = set()
+        for _ in range(4):
+            img = ImageFactory()
+            las = LandmarkAnnotationSetFactory(grader=u)
+            SingleLandmarkAnnotationFactory(annotation_set=las, image=img)
+            SingleLandmarkAnnotationFactory(annotation_set=las, image=i1)
+            img_pks.add(img.pk)
+        landmarks = RetinaImageSerializer(i1).data["landmark_annotations"]
+        assert len(landmarks) == 4
+        assert set(landmarks) == img_pks
 
 
 @pytest.mark.django_db
@@ -29,7 +65,6 @@ class TestRetinaImageSerializers:
                 "fields": (
                     "pk",
                     "name",
-                    "study",
                     "files",
                     "width",
                     "height",

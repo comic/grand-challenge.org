@@ -55,25 +55,25 @@
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm">
             <tbody>
-            {% for raw_file in object.rawimagefile_set.all %}
+            {% for file, errors in object.import_result.file_errors.items %}
                 <tr>
-                    <td>{{ raw_file.filename }}</td>
+                    <td><i class="fa fa-exclamation-triangle text-danger" title="File could not be imported"></i></td>
+                    <td>{{ file }}</td>
                     <td>
-                        {% if object.status == object.SUCCESS %}
-                            {% if raw_file.error %}
-                                {{ raw_file.error|linebreaks }}
-
-                                {% if object.archive %}
-                                    <p>
-                                        The uploaded file has been retained, the sites administrators will investigate
-                                        why the conversion was unsuccessful.
-                                    </p>
-                                {% endif %}
-                            {% else %}
-                                succeeded
-                            {% endif %}
-                        {% endif %}
+                        We could not import this file using any image builder,
+                        the error for each image builder is:
+                        <ul>
+                            {% for error in errors %}
+                                <li>{{ error }}</li>{% endfor %}
+                        </ul>
                     </td>
+                </tr>
+            {% endfor %}
+            {% for file in object.import_result.consumed_files %}
+                <tr>
+                    <td><i class="fa fa-check text-success" title="File was imported"></i></td>
+                    <td>{{ file }}</td>
+                    <td>Imported successfully</td>
                 </tr>
             {% endfor %}
             </tbody>

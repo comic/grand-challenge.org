@@ -9,6 +9,11 @@ import SimpleITK as Sitk
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from config import settings
+from grandchallenge.annotations.models import (
+    LandmarkAnnotationSet,
+    SingleLandmarkAnnotation,
+)
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.models import (
@@ -16,8 +21,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.patients.models import Patient
-from grandchallenge.studies.models import Study
 from grandchallenge.workstations.models import Workstation
 from tests.fixtures import create_uploaded_image
 
@@ -77,6 +80,16 @@ def generate_random_metadata():
     }
 
 
+def generate_landmarks(img):
+    def rand_x():
+        return random.randint(0, img.width)
+
+    def rand_y():
+        return random.randint(0, img.height)
+
+    return [[rand_x(), rand_y()], [rand_x(), rand_y()], [rand_x(), rand_y()]]
+
+
 def load_as_bytes_io(fp):
     """
     Load file in filepath (fp) to BytesIO object
@@ -92,7 +105,7 @@ def load_as_bytes_io(fp):
     return bio
 
 
-def create_image_set_for_study(archive, study, nums):
+def create_image_set_for_study(archive, patient, study, nums):
     image_set = {
         "oct16bit": [
             {
@@ -155,11 +168,22 @@ def create_image_set_for_study(archive, study, nums):
             for _ in range(nums["enface_grey"])
         ],
     }
+    created_images = []
     for name, images in image_set.items():
         for index, image_dict in enumerate(images):
+            fields = {
+                "name": f"{name} {index}",
+                "patient_id": patient,
+                "study_description": study,
+            }
+            if Image.objects.filter(
+                **fields,
+                componentinterfacevalue__archive_items__archive=archive,
+            ).exists():
+                continue
+
             image = Image.objects.create(
-                name=f"{name} {index}",
-                study=study,
+                **fields,
                 modality=image_dict["modality"],
                 width=image_dict["sitk_image"].GetWidth(),
                 height=image_dict["sitk_image"].GetHeight(),
@@ -178,10 +202,9 @@ def create_image_set_for_study(archive, study, nums):
                 ][0]
                 if name == "enface_rgb"
                 else Image.FOV_EMPTY,
-                patient_id=study.patient.name,
-                study_description=study.name,
                 **generate_random_metadata(),
             )
+            created_images.append(image)
 
             mha_bio = None
             with tempfile.TemporaryDirectory() as dirname:
@@ -213,23 +236,68 @@ def create_image_set_for_study(archive, study, nums):
             item = ArchiveItem.objects.create(archive=archive)
             item.values.set([civ])
 
+    return created_images
+
+
+def create_landmark_annotations(user, images):
+    images_2d = [i for i in images if i.depth in (1, None, 0)]
+    annotations = []
+    for i in range(len(images_2d) - 1):
+        las = LandmarkAnnotationSet.objects.create(grader=user)
+        for img_i in range(2):
+            img = images_2d[img_i + i]
+            SingleLandmarkAnnotation.objects.create(
+                annotation_set=las,
+                image=img,
+                landmarks=generate_landmarks(img),
+            )
+        annotations.append(las)
+    return annotations
+
+
+def generate_images_and_annotations(
+    user, nums, archive, patient, study, indentation="      "
+):
+    images = create_image_set_for_study(archive, patient, study, nums)
+    print(f"{indentation}Created {len(images)} images.")
+    annotations = create_landmark_annotations(user, images)
+    print(f"{indentation}Created {len(annotations)} landmark annotations.")
+
 
 def create_archive_patient_study_structure(user, nums):
     for a in range(nums["archives"]):
-        archive = create_archive(f"Archive {a}", user)
+        archive = create_archive(f"Archive {a + 1}", user)
+        print(archive.name)
         for p in range(nums["patients"]):
-            patient = Patient.objects.get_or_create(name=f"Patient {p}")[0]
+            patient = f"Patient {p + 1}"
+            print(f"  {patient}")
             for s in range(nums["studies"]):
-                study = Study.objects.get_or_create(
-                    name=f"Study {s}", patient=patient
-                )[0]
-                create_image_set_for_study(archive, study, nums)
-                print(
-                    f"A={a + 1}/{nums['archives']} P={p + 1}/{nums['patients']} S={s + 1}/{nums['studies']}"
+                study = f"Study {s + 1}"
+                print(f"    {study}")
+                generate_images_and_annotations(
+                    user, nums, archive, patient, study
                 )
+            generate_images_and_annotations(
+                user, nums, archive, patient, "", "    "
+            )
+        generate_images_and_annotations(user, nums, archive, "", "", "  ")
+
+
+def remove_old_objects():
+    LandmarkAnnotationSet.objects.all().delete()
+    ArchiveItem.objects.all().delete()
+    ComponentInterfaceValue.objects.all().delete()
+    Image.objects.all().delete()
+    Archive.objects.all().delete()
 
 
 def run():
+    if not settings.DEBUG:
+        raise RuntimeError(
+            "Skipping this command, server is not in DEBUG mode."
+        )
+    remove_old_objects()
+
     user = get_user_model().objects.get(username="retina")
     create_archive_patient_study_structure(
         user,
@@ -239,7 +307,7 @@ def run():
             "studies": 3,
             "oct8bit": 2,
             "oct16bit": 2,
-            "enface_rgb": 5,
-            "enface_grey": 5,
+            "enface_rgb": 3,
+            "enface_grey": 3,
         },
     )

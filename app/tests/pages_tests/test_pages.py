@@ -211,7 +211,7 @@ def test_page_move(
     pages = [*two_challenge_sets.challenge_set_1.challenge.page_set.all()]
     c2_pages = [*two_challenge_sets.challenge_set_2.challenge.page_set.all()]
 
-    for i in range(2):
+    for i in range(3):
         pages.append(
             PageFactory(challenge=two_challenge_sets.challenge_set_1.challenge)
         )
@@ -219,7 +219,7 @@ def test_page_move(
         c2_pages.append(
             PageFactory(
                 challenge=two_challenge_sets.challenge_set_2.challenge,
-                title=pages[i + 2].title,
+                title=pages[i + 1].title,
             )
         )
 

@@ -184,3 +184,50 @@ ul.socialaccount_providers > li {
 .carousel-control-next, .carousel-control-prev {
     width: 3rem;
 }
+
+.documentation-sidebar {
+    top:5rem;
+    z-index: 1;
+}
+
+.text-truncate-container p {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media only screen and (max-width: 580px) {
+  .text-truncate-container {
+      height: 12rem;
+  }
+  .text-truncate-container p{
+      -webkit-line-clamp: 3;
+  }
+  .carousel-img-container {
+      height: 15rem;
+  }
+}
+
+@media only screen and (min-width: 768px) and (max-width: 1200px) {
+    .carousel-img-container {
+        height: 10rem;
+    }
+    .text-truncate-container {
+      height: 10rem;
+    }
+    .text-truncate-container p {
+        -webkit-line-clamp: 3;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+    .carousel-img-container {
+        height: 12rem;
+    }
+}
+
+.carousel-img {
+    object-fit: cover;
+}

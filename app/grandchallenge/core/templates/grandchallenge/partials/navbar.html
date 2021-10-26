@@ -1,4 +1,5 @@
 {% load url %}
+{% load flatpages %}
 
 <nav class="navbar navbar-light navbar-top navbar-expand-lg sticky-top shadow bg-white">
     <div class="container">
@@ -35,7 +36,8 @@
                         <a class="dropdown-item" href="{% url 'archives:list' %}">Archives</a>
                         <a class="dropdown-item" href="{% url 'products:product-list' %}">Commercial products</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{% url 'about' %}">About us</a>
+                        {% get_flatpages about_page_url as about_page %}
+                        <a class="dropdown-item" href="{{ request.scheme }}://{{ request.site.domain }}{{ about_page_url }}">{{ about_page.first.title }}</a>
                         <a class="dropdown-item" href="{% url 'statistics:detail' %}">Statistics</a>
                         {% for policy in policy_pages %}
                             <a class="dropdown-item" href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>

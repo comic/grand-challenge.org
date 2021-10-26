@@ -20,7 +20,8 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.factories import StagedFileFactory, UserFactory
+from tests.factories import UserFactory
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
@@ -126,7 +127,12 @@ def test_algorithm_image_create_detail(client):
     algorithm = AlgorithmFactory()
     algorithm.add_editor(user)
 
-    algorithm_image = StagedFileFactory(file__filename="test_image.tar.gz")
+    algorithm_image = UserUploadFactory(
+        filename="test_image.tar.gz", creator=user
+    )
+    algorithm_image.status = algorithm_image.StatusChoices.COMPLETED
+    algorithm_image.save()
+
     response = get_view_for_user(
         client=client,
         viewname="algorithms:image-create",
@@ -144,8 +150,10 @@ def test_algorithm_image_create_detail(client):
         reverse_kwargs={"slug": algorithm.slug},
         user=user,
         data={
-            "chunked_upload": algorithm_image.file_id,
+            "user_upload": algorithm_image.pk,
             "requires_memory_gb": 24,
+            "creator": user.pk,
+            "algorithm": algorithm.pk,
         },
     )
     assert response.status_code == 302

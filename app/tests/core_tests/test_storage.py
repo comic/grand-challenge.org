@@ -50,10 +50,7 @@ def test_s3_configs_differ():
         protected_s3_storage,
     )
 
-    for attr in ["bucket_name", "endpoint_url"]:
-        assert getattr(private_s3_storage, attr) != getattr(
-            protected_s3_storage, attr
-        )
+    assert private_s3_storage.bucket_name != protected_s3_storage.bucket_name
 
 
 def test_custom_domain():
@@ -62,7 +59,7 @@ def test_custom_domain():
     url = storage.url(name="foo")
 
     assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] in url
-    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["endpoint_url"] not in url
+    assert dj_settings.AWS_S3_ENDPOINT_URL not in url
     assert "AWSAccessKeyId" not in url
 
     # Turning off the custom domain should get us the internal endpoint url
@@ -71,7 +68,7 @@ def test_custom_domain():
     url = storage1.url(name="foo")
 
     assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] not in url
-    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["endpoint_url"] in url
+    assert dj_settings.AWS_S3_ENDPOINT_URL in url
     assert "AWSAccessKeyId" in url
 
 

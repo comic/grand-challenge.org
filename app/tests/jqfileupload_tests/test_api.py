@@ -16,20 +16,6 @@ from tests.jqfileupload_tests.utils import (
 )
 
 
-def test_cors_headers_are_set(settings):
-    """
-    These CORS headers must be set to allow cross domain uploads, see
-    https://github.com/blueimp/jQuery-File-Upload/wiki/Cross-domain-uploads
-    """
-    required_headers = {
-        "content-type",
-        "content-range",
-        "content-disposition",
-        "content-description",
-    }
-    assert required_headers.issubset({*settings.CORS_ALLOW_HEADERS})
-
-
 @pytest.mark.django_db
 def test_single_chunk_api(client):
     filename = "test.bin"

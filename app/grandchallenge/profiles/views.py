@@ -16,15 +16,13 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.models import Algorithm, Job
-from grandchallenge.archives.models import Archive
+from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
 from grandchallenge.profiles.forms import UserProfileForm
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.profiles.serializers import UserProfileSerializer
-from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -70,9 +68,8 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
         archives = (
             get_objects_for_user(
                 user=self.request.user,
-                perms="view_archive",
-                klass=Archive,
-                use_groups=True,
+                perms="archives.view_archive",
+                accept_global_perms=False,
             )
             .filter(
                 Q(editors_group__in=profile_groups)
@@ -84,9 +81,8 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
         reader_studies = (
             get_objects_for_user(
                 user=self.request.user,
-                perms="view_readerstudy",
-                klass=ReaderStudy,
-                use_groups=True,
+                perms="reader_studies.view_readerstudy",
+                accept_global_perms=False,
             )
             .filter(
                 Q(editors_group__in=profile_groups)
@@ -102,9 +98,8 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
         algorithms = (
             get_objects_for_user(
                 user=self.request.user,
-                perms="view_algorithm",
-                klass=Algorithm,
-                use_groups=True,
+                perms="algorithms.view_algorithm",
+                accept_global_perms=False,
             )
             .filter(
                 Q(editors_group__in=profile_groups)

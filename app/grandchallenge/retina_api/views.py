@@ -1,15 +1,12 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as drf_filters
-from guardian.shortcuts import get_objects_for_user
-from rest_framework import mixins, status, viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_guardian import filters
 
 from grandchallenge.annotations.models import (
@@ -36,9 +33,8 @@ from grandchallenge.annotations.serializers import (
     RetinaImagePathologyAnnotationSerializer,
     SinglePolygonAnnotationSerializer,
 )
-from grandchallenge.archives.models import Archive
-from grandchallenge.cases.models import Image, ImageFile
-from grandchallenge.patients.models import Patient
+from grandchallenge.cases.models import Image
+from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.retina_api.filters import (
     RetinaAnnotationFilter,
     RetinaChildAnnotationFilter,
@@ -47,10 +43,8 @@ from grandchallenge.retina_api.mixins import RetinaAPIPermission
 from grandchallenge.retina_api.serializers import (
     B64ImageSerializer,
     ImageLevelAnnotationsForImageSerializer,
-    TreeImageSerializer,
-    TreeObjectSerializer,
+    RetinaImageSerializer,
 )
-from grandchallenge.studies.models import Study
 
 
 class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
@@ -64,70 +58,6 @@ class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
     pagination_class = None
     filterset_fields = ("image",)
     queryset = ETDRSGridAnnotation.objects.all()
-
-
-class ArchiveAPIView(APIView):
-    permission_classes = (RetinaAPIPermission,)
-    pagination_class = None
-
-    def get(self, request, pk=None):
-        image_prefetch_related = ("modality", "study__patient")
-        objects = []
-        images = []
-        if pk is None:
-            objects = get_objects_for_user(
-                request.user, "archives.view_archive"
-            )
-        else:
-            if Archive.objects.filter(pk=pk).exists():
-                if (
-                    get_objects_for_user(request.user, "archives.view_archive")
-                    .filter(pk=pk)
-                    .exists()
-                ):
-                    objects = Patient.objects.filter(
-                        study__image__componentinterfacevalue__archive_items__archive__pk=pk
-                    ).distinct()
-                    images = (
-                        Image.objects.filter(
-                            componentinterfacevalue__archive_items__archive__pk=pk,
-                            study=None,
-                            files__image_type=ImageFile.IMAGE_TYPE_MHD,
-                        )
-                        .prefetch_related(*image_prefetch_related)
-                        .distinct()
-                    )
-            elif Patient.objects.filter(pk=pk).exists():
-                objects = Study.objects.filter(
-                    patient__pk=pk,
-                    image__componentinterfacevalue__archive_items__archive__in=get_objects_for_user(
-                        request.user, "archives.view_archive"
-                    ),
-                ).distinct()
-
-            elif Study.objects.filter(pk=pk).exists():
-                images = (
-                    Image.objects.filter(
-                        study__pk=pk,
-                        componentinterfacevalue__archive_items__archive__in=get_objects_for_user(
-                            request.user, "archives.view_archive"
-                        ),
-                        files__image_type=ImageFile.IMAGE_TYPE_MHD,
-                    )
-                    .prefetch_related(*image_prefetch_related)
-                    .distinct()
-                )
-            else:
-                return HttpResponse(status=status.HTTP_404_NOT_FOUND)
-
-        objects_serialized = TreeObjectSerializer(objects, many=True).data
-        images_serialized = TreeImageSerializer(images, many=True).data
-
-        response = {
-            "directories": sorted(objects_serialized, key=lambda x: x["name"]),
-            "images": sorted(images_serialized, key=lambda x: x["name"]),
-        }
-        return Response(response)
 
 
 class B64ThumbnailAPIView(RetrieveAPIView):
@@ -284,3 +214,15 @@ class BooleanClassificationAnnotationViewSet(viewsets.ModelViewSet):
     pagination_class = None
     filterset_fields = ("image",)
     queryset = BooleanClassificationAnnotation.objects.all()
+
+
+class RetinaImageViewSet(ImageViewSet):
+    serializer_class = RetinaImageSerializer
+    queryset = (
+        Image.objects.all()
+        .prefetch_related(
+            "files",
+            "singlelandmarkannotation_set__annotation_set__singlelandmarkannotation_set__image",
+        )
+        .select_related("modality")
+    )

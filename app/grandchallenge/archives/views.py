@@ -6,14 +6,13 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.core.files import File
 from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
@@ -28,7 +27,9 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -58,7 +59,6 @@ from grandchallenge.archives.tasks import (
 )
 from grandchallenge.cases.models import (
     Image,
-    RawImageFile,
     RawImageUploadSession,
 )
 from grandchallenge.cases.tasks import build_images
@@ -397,19 +397,10 @@ class ArchiveEditArchiveItem(
 
     def form_valid(self, form):  # noqa: C901
         def create_upload(image_files):
-            raw_files = []
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
             )
-            for image_file in image_files:
-                raw_files.append(
-                    RawImageFile(
-                        upload_session=upload_session,
-                        filename=image_file.name,
-                        staged_file_id=image_file.uuid,
-                    )
-                )
-            RawImageFile.objects.bulk_create(list(raw_files))
+            upload_session.user_uploads.set(image_files)
             return upload_session.pk
 
         upload_pks = {}
@@ -429,16 +420,16 @@ class ArchiveEditArchiveItem(
                 civ_pks_to_remove.add(civ.pk)
 
             if ci.kind in InterfaceKind.interface_type_image():
-                civ = ComponentInterfaceValue.objects.create(interface=ci)
-                civ_pks_to_add.add(civ.pk)
-                upload_pks[civ.pk] = create_upload(value)
+                if value:
+                    civ = ComponentInterfaceValue.objects.create(interface=ci)
+                    civ_pks_to_add.add(civ.pk)
+                    upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
-                civ = ComponentInterfaceValue(interface=ci)
-                name = get_valid_filename(value[0].name)
-                with value[0].open() as f:
-                    civ.file = File(f, name=name)
+                civ = ComponentInterfaceValue.objects.create(interface=ci)
+                value.copy_object(to_field=civ.file)
                 civ.full_clean()
                 civ.save()
+                value.delete()
                 civ_pks_to_add.add(civ.pk)
             else:
                 civ = ci.create_instance(value=value)
@@ -693,3 +684,34 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+
+    @action(detail=True)
+    def patients(self, request, pk=None):
+        archive = self.get_object()
+        patients = (
+            Image.objects.filter(
+                componentinterfacevalue__archive_items__archive=archive
+            )
+            .order_by("patient_id")
+            .values_list("patient_id", flat=True)
+            .distinct("patient_id")
+        )
+        return Response(patients)
+
+    @action(detail=True)
+    def studies(self, request, pk=None):
+        try:
+            patient_id = self.request.query_params["patient_id"]
+        except MultiValueDictKeyError:
+            raise Http404
+        archive = self.get_object()
+        studies = (
+            Image.objects.filter(
+                componentinterfacevalue__archive_items__archive=archive,
+                patient_id=patient_id,
+            )
+            .order_by("study_description")
+            .values_list("study_description", flat=True)
+            .distinct("study_description")
+        )
+        return Response(studies)

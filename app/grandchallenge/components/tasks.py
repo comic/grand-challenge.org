@@ -13,8 +13,7 @@ from celery.exceptions import MaxRetriesExceededError
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files import File
-from django.db import OperationalError
+from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
@@ -30,7 +29,6 @@ from grandchallenge.components.backends.exceptions import (
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +41,12 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     instance = model.objects.get(pk=pk)
 
     if not instance.image:
-        if instance.staged_image_uuid:
-            # Create the image from the staged file
-            uploaded_image = StagedAjaxFile(instance.staged_image_uuid)
-            with uploaded_image.open() as f:
-                instance.image.save(uploaded_image.name, File(f))
+        if instance.user_upload:
+            with transaction.atomic():
+                instance.user_upload.copy_object(to_field=instance.image)
+                instance.user_upload.delete()
+                # Another validation job will be launched to validate this
+                return
         else:
             # No image to validate
             return

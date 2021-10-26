@@ -12,10 +12,12 @@ from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class ChallengeCreateForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, creator, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
+        self.fields["contact_email"].required = True
+        self.fields["contact_email"].initial = creator.email
 
     class Meta:
         model = Challenge
@@ -24,6 +26,7 @@ class ChallengeCreateForm(forms.ModelForm):
             "description",
             "require_participant_review",
             "use_evaluation",
+            "contact_email",
         ]
 
 
@@ -62,6 +65,7 @@ class ChallengeUpdateForm(forms.ModelForm):
                     *common_information_items,
                     "display_forum_link",
                     "disclaimer",
+                    "contact_email",
                 ),
                 Tab("Images", "banner", *common_images_items),
                 Tab("Event", *event_items),
@@ -77,6 +81,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             *common_information_items,
             "display_forum_link",
             "disclaimer",
+            "contact_email",
             "banner",
             *common_images_items,
             *event_items,
@@ -110,6 +115,11 @@ class ChallengeUpdateForm(forms.ModelForm):
 
         if not cleaned_data["hidden"] and not cleaned_data.get("logo"):
             raise ValidationError("A logo is required for public challenges")
+
+        if not cleaned_data["hidden"] and not cleaned_data.get(
+            "contact_email"
+        ):
+            raise ValidationError("A contact email is required")
 
         return cleaned_data
 

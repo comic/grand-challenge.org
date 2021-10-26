@@ -11,7 +11,6 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from guardian.shortcuts import get_objects_for_user
 
-from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image
@@ -41,7 +40,9 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         self.fields["algorithms"].queryset = (
             self.instance.algorithms.all()
             | get_objects_for_user(
-                kwargs["user"], "execute_algorithm", Algorithm
+                kwargs["user"],
+                "algorithms.execute_algorithm",
+                accept_global_perms=False,
             )
         ).distinct()
 
@@ -125,10 +126,10 @@ class ArchivePermissionRequestUpdateForm(PermissionRequestUpdateForm):
 
 class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
     reader_study = ModelChoiceField(
-        queryset=ReaderStudy.objects.all(), required=True,
+        queryset=ReaderStudy.objects.none(), required=True,
     )
     images = ModelMultipleChoiceField(
-        queryset=Image.objects.all(),
+        queryset=Image.objects.none(),
         required=True,
         widget=Select2MultipleWidget,
     )
@@ -140,28 +141,14 @@ class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
 
         self.fields["reader_study"].queryset = get_objects_for_user(
             self.user,
-            f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
-            ReaderStudy,
+            "reader_studies.change_readerstudy",
+            accept_global_perms=False,
         ).order_by("title")
+
         self.fields["images"].queryset = Image.objects.filter(
             componentinterfacevalue__archive_items__archive=self.archive
         ).distinct()
         self.fields["images"].initial = self.fields["images"].queryset
-
-    def clean_reader_study(self):
-        reader_study = self.cleaned_data["reader_study"]
-        if not self.user.has_perm("change_readerstudy", reader_study):
-            raise ValidationError(
-                "You do not have permission to change this reader study"
-            )
-        return reader_study
-
-    def clean_images(self):
-        images = self.cleaned_data["images"]
-        images = images.filter(
-            componentinterfacevalue__archive_items__archive=self.archive
-        )
-        return images
 
     def clean(self):
         cleaned_data = super().clean()
@@ -185,11 +172,11 @@ class AddCasesForm(UploadRawImagesForm):
         )
     )
 
-    def save(self, commit=True):
+    def save(self, *args, **kwargs):
         self._linked_task.kwargs.update(
             {"interface_pk": self.cleaned_data["interface"].pk}
         )
-        return super().save(commit=commit)
+        return super().save(*args, **kwargs)
 
 
 class ArchiveItemForm(SaveFormInitMixin, Form):

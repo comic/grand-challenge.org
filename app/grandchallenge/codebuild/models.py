@@ -56,12 +56,16 @@ class Build(UUIDModel):
         self.status = build_statuses["builds"][0]["buildStatus"]
 
     def refresh_logs(self):
-        with private_s3_storage.open(
-            f"codebuild/logs/{self.build_number}.gz"
-        ) as file:
-            self.build_log = gzip.open(file).read().decode("utf-8")
+        try:
+            with private_s3_storage.open(
+                f"codebuild/logs/{self.build_number}.gz"
+            ) as file:
+                self.build_log = gzip.open(file).read().decode("utf-8")
+        except FileNotFoundError:
+            self.build_log = "Log file not available."
 
     def add_image_to_algorithm(self):
+        # TODO, this would be much faster using S3 copy, can then run on a smaller queue
         with private_s3_storage.open(
             f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz"
         ) as file:

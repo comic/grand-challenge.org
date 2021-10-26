@@ -4,6 +4,7 @@ from grandchallenge.cases.views import (
     OSDImageDetail,
     RawImageUploadSessionDetail,
     RawImageUploadSessionList,
+    VTKImageDetail,
 )
 
 app_name = "cases"
@@ -23,5 +24,10 @@ urlpatterns = [
         "images/<uuid:pk>/osd/",
         OSDImageDetail.as_view(),
         name="osd-image-detail",
+    ),
+    path(
+        "images/<uuid:pk>/vtk/",
+        VTKImageDetail.as_view(),
+        name="vtk-image-detail",
     ),
 ]

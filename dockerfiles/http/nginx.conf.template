@@ -152,10 +152,6 @@ http {
 
     server_name .${SERVER_NAME};
 
-    location ~* ^/all_challenges/?$ {
-      return 301 $scheme://${SERVER_NAME}/challenges/;
-    }
-
     location =/ping {
       # Used for determining if a workstation rendering region is active
 

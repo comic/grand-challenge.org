@@ -6,10 +6,8 @@ from PIL import Image as PILImage
 from django.http import Http404
 from rest_framework import serializers
 
-from grandchallenge.archives.models import Archive
-from grandchallenge.modalities.serializers import ImagingModalitySerializer
-from grandchallenge.patients.serializers import PatientSerializer
-from grandchallenge.studies.models import Study
+from grandchallenge.cases.models import Image
+from grandchallenge.cases.serializers import HyperlinkedImageSerializer
 
 
 class B64ImageSerializer(serializers.Serializer):
@@ -60,34 +58,6 @@ class B64ImageSerializer(serializers.Serializer):
         return base64.b64encode(buffer.getvalue())
 
 
-class TreeObjectSerializer(serializers.Serializer):
-    id = serializers.UUIDField()
-    name = serializers.CharField()
-
-
-class TreeStudySerializer(serializers.ModelSerializer):
-    patient = PatientSerializer()
-
-    class Meta:
-        model = Study
-        fields = ("name", "patient")
-
-
-class TreeArchiveSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Archive
-        fields = ("name",)
-
-
-class TreeImageSerializer(TreeObjectSerializer):
-    eye_choice = serializers.CharField()
-    modality = ImagingModalitySerializer()
-    study = TreeStudySerializer(required=False)
-    voxel_width_mm = serializers.FloatField()
-    voxel_height_mm = serializers.FloatField()
-    voxel_depth_mm = serializers.FloatField()
-
-
 class ImageLevelAnnotationsForImageSerializer(serializers.Serializer):
     quality = serializers.UUIDField(allow_null=True, read_only=True)
     pathology = serializers.UUIDField(allow_null=True, read_only=True)
@@ -96,3 +66,22 @@ class ImageLevelAnnotationsForImageSerializer(serializers.Serializer):
         allow_null=True, read_only=True
     )
     text = serializers.UUIDField(allow_null=True, read_only=True)
+
+
+class RetinaImageSerializer(HyperlinkedImageSerializer):
+    landmark_annotations = serializers.SerializerMethodField(read_only=True)
+
+    def get_landmark_annotations(self, obj):
+        return [
+            sla2.image.pk
+            for sla1 in obj.singlelandmarkannotation_set.all()
+            for sla2 in sla1.annotation_set.singlelandmarkannotation_set.all()
+            if sla1.image.pk != sla2.image.pk
+        ]
+
+    class Meta:
+        model = Image
+        fields = (
+            *HyperlinkedImageSerializer.Meta.fields,
+            "landmark_annotations",
+        )

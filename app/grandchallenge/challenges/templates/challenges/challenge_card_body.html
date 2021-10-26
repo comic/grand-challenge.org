@@ -4,10 +4,10 @@
 
 <div class="mb-2">
     {% if challenge.description %}
-        <a href="#challengeInfoModal"
+        <a href="#InfoModal"
            class="badge badge-info above-stretched-link"
            data-toggle="modal"
-           data-target="#challengeInfoModal"
+           data-target="#InfoModal"
            data-title="{% firstof challenge.title challenge.short_name %}"
            data-description="{{ challenge.description }}"
            data-absolute-url="{{ challenge.get_absolute_url }}"

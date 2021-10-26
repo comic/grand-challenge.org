@@ -39,7 +39,6 @@ from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.models import Workstation
 
 __doc__ = """
 A reader study enables you to have a set of readers answer a set of questions
@@ -422,11 +421,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
 
     def assign_workstation_permissions(self):
-        perm = f"view_{Workstation._meta.model_name}"
+        perm = "workstations.view_workstation"
 
         for group in (self.editors_group, self.readers_group):
             workstations = get_objects_for_group(
-                group=group, perms=perm, klass=Workstation
+                group=group, perms=perm, accept_global_perms=False
             )
 
             if (

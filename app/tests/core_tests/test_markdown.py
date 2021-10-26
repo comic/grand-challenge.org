@@ -10,6 +10,11 @@ Markdown | Less | Pretty
 --- | --- | ---
 *Still* | `renders` | **nicely**
 1 | 2 | 3
+
+```python
+ def test_function():
+    pass
+```
 """
 
 EXPECTED_HTML = """<p><img alt="" class="img-fluid" src="whatever.png" /></p>
@@ -27,7 +32,7 @@ EXPECTED_HTML = """<p><img alt="" class="img-fluid" src="whatever.png" /></p>
 <tbody>
 <tr>
 <td><em>Still</em></td>
-<td><code>renders</code></td>
+<td><code class="codehilite">renders</code></td>
 <td><strong>nicely</strong></td>
 </tr>
 <tr>
@@ -36,7 +41,10 @@ EXPECTED_HTML = """<p><img alt="" class="img-fluid" src="whatever.png" /></p>
 <td>3</td>
 </tr>
 </tbody>
-</table>"""
+</table>
+<div class="codehilite"><pre><span></span><code> <span class="k">def</span> <span class="nf">test_function</span><span class="p">():</span>
+    <span class="k">pass</span>
+</code></pre></div>"""
 
 
 def test_markdown_rendering():

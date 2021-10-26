@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.views.generic import DetailView
@@ -22,8 +21,6 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
-from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.models import (
     Image,
@@ -34,16 +31,11 @@ from grandchallenge.cases.models import (
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageFileSerializer,
-    RawImageUploadSessionPatchSerializer,
     RawImageUploadSessionSerializer,
+    process_images,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.jqfileupload.models import StagedFile
-from grandchallenge.reader_studies.tasks import (
-    add_image_to_answer,
-    add_images_to_reader_study,
-)
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
@@ -61,6 +53,7 @@ class RawImageUploadSessionList(
         Column(title="ID", sort_field="pk"),
         Column(title="Created", sort_field="created"),
         Column(title="Status", sort_field="status"),
+        Column(title="Error Message", sort_field="error_message"),
     ]
     default_sort_column = 1
 
@@ -124,110 +117,68 @@ class RawImageUploadSessionViewSet(
     ).all()
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
-
-    def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
-
-    def get_serializer_class(self):
-        if self.request.method == "PATCH":
-            return RawImageUploadSessionPatchSerializer
-        else:
-            return RawImageUploadSessionSerializer
-
-    def validate_staged_files(self, *, staged_files):
-        file_ids = [f.staged_file_id for f in staged_files]
-
-        if any(f_id is None for f_id in file_ids):
-            raise ValidationError("File has not been staged")
-
-        chunks = StagedFile.objects.filter(file_id__in=file_ids)
-
-        if len({c.client_filename for c in chunks}) != len(staged_files):
-            raise ValidationError("Filenames must be unique")
-
-        if (
-            sum([f.end_byte - f.start_byte for f in chunks])
-            > settings.UPLOAD_SESSION_MAX_BYTES
-        ):
-            raise ValidationError(
-                "Total size of all files exceeds the upload limit"
-            )
+    serializer_class = RawImageUploadSessionSerializer
 
     @action(detail=True, methods=["patch"])
     def process_images(self, request, pk=None):
-        upload_session: RawImageUploadSession = self.get_object()
-
+        # TODO WHEN_US_API_DEPRECATED remove this method
+        upload_session = self.get_object()
         serializer = self.get_serializer(
             upload_session, data=request.data, partial=True
         )
 
         if serializer.is_valid():
             try:
-                self.validate_staged_files(
-                    staged_files=upload_session.rawimagefile_set.all()
-                )
-            except ValidationError as e:
-                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
-
-            if (
-                upload_session.status == upload_session.PENDING
-                and not upload_session.rawimagefile_set.filter(
-                    consumed=True
-                ).exists()
-            ):
-                upload_session.process_images(
-                    linked_task=self.get_linked_task(
-                        validated_data=serializer.validated_data
-                    )
+                process_images(
+                    instance=serializer.instance,
+                    targets=serializer.validated_data,
                 )
                 return Response(
                     "Image processing job queued.", status=status.HTTP_200_OK
                 )
-            else:
-                return Response(
-                    "Image processing job could not be queued.",
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            except ValidationError as e:
+                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
-
-    def get_linked_task(self, *, validated_data):
-        if "algorithm" in validated_data:
-            return create_algorithm_jobs_for_session.signature(
-                kwargs={
-                    "algorithm_image_pk": validated_data[
-                        "algorithm"
-                    ].latest_ready_image.pk
-                },
-                immutable=True,
-            )
-        elif "archive" in validated_data:
-            return add_images_to_archive.signature(
-                kwargs={"archive_pk": validated_data["archive"].pk},
-                immutable=True,
-            )
-        elif "reader_study" in validated_data:
-            return add_images_to_reader_study.signature(
-                kwargs={"reader_study_pk": validated_data["reader_study"].pk},
-                immutable=True,
-            )
-        elif "answer" in validated_data:
-            return add_image_to_answer.signature(
-                kwargs={"answer_pk": validated_data["answer"].pk},
-                immutable=True,
-            )
-        else:
-            raise RuntimeError(
-                "Algorithm image, archive or reader study must be set"
             )
 
 
 class RawImageFileViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
+    # TODO WHEN_US_API_DEPRECATED remove this view set
     serializer_class = RawImageFileSerializer
     queryset = RawImageFile.objects.all()
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
+
+
+class VTKImageDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = Image
+    permission_required = (
+        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
+    )
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    template_name = "cases/image_detail_vtk.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.object.color_space != Image.COLOR_SPACE_GRAY:
+            # vtk.js viewer fails to load color images
+            raise Http404
+        try:
+            mh_file, _ = self.object.get_metaimage_files()
+        except FileNotFoundError as e:
+            raise Http404 from e
+
+        context.update(
+            {
+                "mh_url": mh_file.file.url,
+                "is_2d": self.object.depth in (None, 1),
+            }
+        )
+        return context

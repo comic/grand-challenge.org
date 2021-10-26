@@ -11,12 +11,6 @@
                 <div class="col-sm-6 col-md-4 p-3">
                     <h6>Grand Challenge</h6>
                     <ul class="list-unstyled">
-                        <li class="my-1">
-                            <a class="text-muted"
-                               href="{% url 'about' %}">
-                                About us
-                            </a>
-                        </li>
                         {% for page in flatpages %}
                             <li class="my-1">
                                 {# Manual construction of url is used here due to flatpage redirect errors #}
@@ -68,13 +62,6 @@
                                href="https://comic.github.io/grand-challenge.org/"
                                title="Read the developer documentation">
                                 Developer Documentation
-                            </a>
-                        </li>
-                        <li class="my-1">
-                            <a class="text-muted"
-                               href="https://www.mevis.fraunhofer.de/"
-                               title="Fraunhofer Institute for Digital Medicine MEVIS">
-                                mevis.fraunhofer.de
                             </a>
                         </li>
                     </ul>

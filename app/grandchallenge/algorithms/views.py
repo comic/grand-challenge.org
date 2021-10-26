@@ -4,26 +4,20 @@ from typing import Dict
 
 import requests
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.cache import cache
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
-    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
-from django.core.files import File
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.text import get_valid_filename
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -73,7 +67,7 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.codebuild.models import Build
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -90,29 +84,13 @@ from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
-
-
-class VerificationRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        try:
-            verified = self.request.user.verification.is_verified
-        except ObjectDoesNotExist:
-            verified = False
-
-        if not verified:
-            messages.error(
-                self.request,
-                "You need to verify your account before you can do this,"
-                "you can request this from your profile page.",
-            )
-
-        return verified
 
 
 class AlgorithmCreate(
@@ -139,6 +117,14 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     filter_class = AlgorithmFilter
     paginate_by = 40
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("publications",)
+            .order_by("-created")
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
@@ -154,6 +140,9 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
                         "to make your own algorithm available here."
                     ),
                     random_encode("mailto:support@grand-challenge.org"),
+                ),
+                "challenges_for_algorithms": cache.get(
+                    "challenges_for_algorithms"
                 ),
             }
         )
@@ -296,15 +285,6 @@ class AlgorithmImageCreate(
 
     def get_permission_object(self):
         return self.algorithm
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        form.instance.algorithm = self.algorithm
-
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-        form.instance.staged_image_uuid = uploaded_file.uuid
-
-        return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -468,19 +448,10 @@ class AlgorithmExperimentCreate(
 
     def form_valid(self, form):
         def create_upload(image_files):
-            raw_files = []
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
             )
-            for image_file in image_files:
-                raw_files.append(
-                    RawImageFile(
-                        upload_session=upload_session,
-                        filename=image_file.name,
-                        staged_file_id=image_file.uuid,
-                    )
-                )
-            RawImageFile.objects.bulk_create(list(raw_files))
+            upload_session.user_uploads.set(image_files)
             return upload_session.pk
 
         job = Job.objects.create(
@@ -502,18 +473,17 @@ class AlgorithmExperimentCreate(
         for slug, value in form.cleaned_data.items():
             ci = interfaces[slug]
             if ci.kind in InterfaceKind.interface_type_image():
-                # create civ without image, image will be added when import completes
-                civ = ComponentInterfaceValue.objects.create(interface=ci)
-                civs.append(civ)
-                upload_pks[civ.pk] = create_upload(value)
+                if value:
+                    # create civ without image, image will be added when import completes
+                    civ = ComponentInterfaceValue.objects.create(interface=ci)
+                    civs.append(civ)
+                    upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
-                # should be a single file
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
-                name = get_valid_filename(value[0].name)
-                with value[0].open() as f:
-                    civ.file = File(f, name=name)
+                value.copy_object(to_field=civ.file)
                 civ.full_clean()
                 civ.save()
+                value.delete()
                 civs.append(civ)
             else:
                 civ = ci.create_instance(value=value)
@@ -691,12 +661,6 @@ class JobViewSet(
             return JobPostSerializer
         else:
             return HyperlinkedJobSerializer
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        user = context["request"].user
-        context.update({"user": user})
-        return context
 
 
 class AlgorithmPermissionRequestCreate(
