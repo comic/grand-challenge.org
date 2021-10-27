@@ -106,7 +106,8 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.MULTIPLE_POINTS, False, False),
         (InterfaceKindChoices.POLYGON, False, False),
         (InterfaceKindChoices.MULTIPLE_POLYGONS, False, False),
-        (InterfaceKindChoices.THUMBNAIL, True, False),
+        (InterfaceKindChoices.THUMBNAIL_JPG, True, False),
+        (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
         (InterfaceKindChoices.SQREG, True, False),
         (InterfaceKindChoices.PDF, True, False),
         (InterfaceKindChoices.CHART, False, False),
@@ -171,9 +172,9 @@ def test_no_uuid_validation():
 )
 def test_relative_path_file_ending(kind):
     if kind in InterfaceKind.interface_type_json():
-        good_suffix = ["json"]
+        good_suffix = "json"
     else:
-        good_suffix = [kind.lower()]
+        good_suffix = kind.lower()
 
     i = ComponentInterfaceFactory(
         kind=kind,

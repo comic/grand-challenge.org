@@ -511,7 +511,7 @@ class ComponentInterface(models.Model):
         self._clean_store_in_database()
         self._clean_relative_path()
 
-    def _clean_relative_path(self):  # noqa: C901
+    def _clean_relative_path(self):
         if self.kind in InterfaceKind.interface_type_json():
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
