@@ -338,7 +338,7 @@ INTERFACE_VALUE_SCHEMA = {
         "MPOL": ANSWER_TYPE_SCHEMA["definitions"]["MPOL"],
         "CHOI": {"type": "string"},
         "MCHO": {"type": "array", "items": {"type": "string"}},
-        "CHRT": VEGA_LITE_SCHEMA,
+        "CHART": VEGA_LITE_SCHEMA,
         # Support types
         "version-object": ANSWER_TYPE_SCHEMA["definitions"]["version-object"],
         "2D-bounding-box-object": ANSWER_TYPE_SCHEMA["definitions"][
@@ -364,6 +364,6 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
-        {"$ref": "#/definitions/CHRT"},
+        {"$ref": "#/definitions/CHART"},
     ],
 }
