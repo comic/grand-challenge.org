@@ -160,12 +160,9 @@ class ProductDetail(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        all_images = self.object.images.all()
-        images = all_images.order_by("img__name")
-
-        # images = self.object.productimage_set.order_by(
-        #     "name"
-        # )
+        images = sorted(
+            list(self.object.images.all()), key=lambda x: x.img.name
+        )
 
         context.update({"images": images})
         return context
