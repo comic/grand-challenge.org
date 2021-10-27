@@ -224,6 +224,7 @@
     <span class="n">FLOAT</span> <span class="o">=</span> <span class="s2">&quot;FLT&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Float&quot;</span><span class="p">)</span>
     <span class="n">BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Bool&quot;</span><span class="p">)</span>
     <span class="n">ANY</span> <span class="o">=</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Anything&quot;</span><span class="p">)</span>
+    <span class="n">CHART</span> <span class="o">=</span> <span class="s2">&quot;CHART&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Chart&quot;</span><span class="p">)</span>
 
     <span class="c1"># Annotation Types</span>
     <span class="n">TWO_D_BOUNDING_BOX</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;2D bounding box&quot;</span><span class="p">)</span>
@@ -246,6 +247,12 @@
     <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;IMG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Image&quot;</span><span class="p">)</span>
     <span class="n">SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;SEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Segmentation&quot;</span><span class="p">)</span>
     <span class="n">HEAT_MAP</span> <span class="o">=</span> <span class="s2">&quot;HMAP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Heat Map&quot;</span><span class="p">)</span>
+
+    <span class="c1"># File types</span>
+    <span class="n">PDF</span> <span class="o">=</span> <span class="s2">&quot;PDF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;PDF file&quot;</span><span class="p">)</span>
+    <span class="n">SQREG</span> <span class="o">=</span> <span class="s2">&quot;SQREG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;SQREG file&quot;</span><span class="p">)</span>
+    <span class="n">THUMBNAIL_JPG</span> <span class="o">=</span> <span class="s2">&quot;JPEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Thumbnail jpg&quot;</span><span class="p">)</span>
+    <span class="n">THUMBNAIL_PNG</span> <span class="o">=</span> <span class="s2">&quot;PNG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Thumbnail png&quot;</span><span class="p">)</span>
 
     <span class="c1"># Legacy support</span>
     <span class="n">CSV</span> <span class="o">=</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;CSV file&quot;</span><span class="p">)</span>
@@ -282,6 +289,7 @@
 <span class="sd">        * Multiple polygons</span>
 <span class="sd">        * Choice (string)</span>
 <span class="sd">        * Multiple choice (array of strings)</span>
+<span class="sd">        * Chart</span>
 
 <span class="sd">        Example json for 2D bounding box annotation</span>
 
@@ -433,6 +441,26 @@
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
+<span class="sd">        Example json for Chart</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;description&quot;: &quot;A simple bar chart with embedded data.&quot;,</span>
+<span class="sd">                &quot;data&quot;: {</span>
+<span class="sd">                    &quot;values&quot;: [</span>
+<span class="sd">                        {&quot;a&quot;: &quot;A&quot;, &quot;b&quot;: 28}, {&quot;a&quot;: &quot;B&quot;, &quot;b&quot;: 55}, {&quot;a&quot;: &quot;C&quot;, &quot;b&quot;: 43},</span>
+<span class="sd">                        {&quot;a&quot;: &quot;D&quot;, &quot;b&quot;: 91}, {&quot;a&quot;: &quot;E&quot;, &quot;b&quot;: 81}, {&quot;a&quot;: &quot;F&quot;, &quot;b&quot;: 53},</span>
+<span class="sd">                        {&quot;a&quot;: &quot;G&quot;, &quot;b&quot;: 19}, {&quot;a&quot;: &quot;H&quot;, &quot;b&quot;: 87}, {&quot;a&quot;: &quot;I&quot;, &quot;b&quot;: 52}</span>
+<span class="sd">                    ]</span>
+<span class="sd">                },</span>
+<span class="sd">                &quot;mark&quot;: &quot;bar&quot;,</span>
+<span class="sd">                &quot;encoding&quot;: {</span>
+<span class="sd">                    &quot;x&quot;: {&quot;field&quot;: &quot;a&quot;, &quot;type&quot;: &quot;nominal&quot;, &quot;axis&quot;: {&quot;labelAngle&quot;: 0}},</span>
+<span class="sd">                    &quot;y&quot;: {&quot;field&quot;: &quot;b&quot;, &quot;type&quot;: &quot;quantitative&quot;}</span>
+<span class="sd">                }</span>
+<span class="sd">            }</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
@@ -450,6 +478,7 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANY</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_image"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>    <span class="nd">@staticmethod</span>
@@ -472,10 +501,18 @@
 
 <span class="sd">        * CSV file</span>
 <span class="sd">        * ZIP file</span>
+<span class="sd">        * PDF file</span>
+<span class="sd">        * SQREG file</span>
+<span class="sd">        * Thumbnail JPG</span>
+<span class="sd">        * Thumbnail PNG</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SQREG</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
         <span class="p">)</span></div>
 
     <span class="nd">@classmethod</span>
@@ -512,6 +549,14 @@
                 <span class="s2">&quot;application/zip&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;application/x-zip-compressed&quot;</span><span class="p">,</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PDF</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;application/pdf&quot;</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;image/jpeg&quot;</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;image/png&quot;</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SQREG</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;application/vnd.sqlite3&quot;</span><span class="p">,)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
@@ -546,7 +591,7 @@
     <span class="p">)</span>
     <span class="n">kind</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">Kind</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;What is the type of this interface? Used to validate interface &quot;</span>
@@ -599,7 +644,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">save_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># CSV and ZIP should always be saved to S3, others are optional</span>
+        <span class="c1"># CSV, ZIP, PDF, SQREG and Thumbnail should always be saved to S3, others are optional</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span>
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span>
@@ -633,11 +678,12 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Relative path should end with .json&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">():</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Relative path should end with .</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Relative path should end with .</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;images/&quot;</span><span class="p">):</span>
@@ -704,13 +750,28 @@
         <span class="n">upload_to</span><span class="o">=</span><span class="n">component_interface_value_path</span><span class="p">,</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">protected_s3_storage</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">ExtensionValidator</span><span class="p">(</span><span class="n">allowed_extensions</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">,</span> <span class="s2">&quot;.zip&quot;</span><span class="p">,</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)),</span>
+            <span class="n">ExtensionValidator</span><span class="p">(</span>
+                <span class="n">allowed_extensions</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;.json&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.zip&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.csv&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.png&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.jpg&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.jpeg&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.pdf&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.sqreg&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
             <span class="n">MimeTypeValidator</span><span class="p">(</span>
                 <span class="n">allowed_types</span><span class="o">=</span><span class="p">(</span>
                     <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;application/zip&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;application/csv&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;application/pdf&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;image/png&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;application/vnd.sqlite3&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">),</span>
         <span class="p">],</span>
