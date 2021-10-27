@@ -315,6 +315,11 @@ ANSWER_TYPE_SCHEMA = {
     ],
 }
 
+VEGA_LITE_SCHEMA = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "$ref": "https://vega.github.io/schema/vega-lite/v5.json",
+}
+
 INTERFACE_VALUE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
@@ -333,6 +338,7 @@ INTERFACE_VALUE_SCHEMA = {
         "MPOL": ANSWER_TYPE_SCHEMA["definitions"]["MPOL"],
         "CHOI": {"type": "string"},
         "MCHO": {"type": "array", "items": {"type": "string"}},
+        "CHART": VEGA_LITE_SCHEMA,
         # Support types
         "version-object": ANSWER_TYPE_SCHEMA["definitions"]["version-object"],
         "2D-bounding-box-object": ANSWER_TYPE_SCHEMA["definitions"][
@@ -358,5 +364,6 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
+        {"$ref": "#/definitions/CHART"},
     ],
 }
