@@ -4,12 +4,12 @@
   {% else %}
     <div id="product_img_carousel" class="carousel slide" data-ride="carousel" data-interval="false">
       <ol class="carousel-indicators">
-        {% for image in product.images.all %}
+        {% for image in images %}
           <li data-target="#product_img_carousel" data-slide-to={{ forloop.counter0 }} {% if forloop.counter0 == 0%}class="active"{% endif %}></li>
         {% endfor %}
       </ol>
       <div class="carousel-inner">
-        {% for image in product.images.all %}
+        {% for image in images %}
           <div class="carousel-item {% if forloop.counter0 == 0 %}active{% endif %}">
             <img class="d-block w-100" src={{ image.img.url }}>
           </div>
