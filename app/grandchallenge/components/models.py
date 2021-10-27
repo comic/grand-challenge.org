@@ -61,7 +61,7 @@ class InterfaceKindChoices(models.TextChoices):
     FLOAT = "FLT", _("Float")
     BOOL = "BOOL", _("Bool")
     ANY = "JSON", _("Anything")
-    CHART = "CHRT", _("Chart")
+    CHART = "CHART", _("Chart")
 
     # Annotation Types
     TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
@@ -87,8 +87,9 @@ class InterfaceKindChoices(models.TextChoices):
 
     # File types
     PDF = "PDF", _("PDF file")
-    SQREG = "SQRG", _("SQREG file")
-    THUMBNAIL = "TIMG", _("Thumbnail")
+    SQREG = "SQREG", _("SQREG file")
+    THUMBNAIL_JPG = "JPEG", _("Thumbnail jpg")
+    THUMBNAIL_PNG = "PNG", _("Thumbnail png")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -339,14 +340,16 @@ class InterfaceKind:
         * ZIP file
         * PDF file
         * SQREG file
-        * Thumbnail
+        * Thumbnail JPG
+        * Thumbnail PNG
         """
         return (
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.ZIP,
             InterfaceKind.InterfaceKindChoices.PDF,
             InterfaceKind.InterfaceKindChoices.SQREG,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
         )
 
     @classmethod
@@ -385,11 +388,10 @@ class InterfaceKind:
             )
         elif kind == InterfaceKind.InterfaceKindChoices.PDF:
             return ("application/pdf",)
-        elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL:
-            return (
-                "image/png",
-                "image/jpeg",
-            )
+        elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG:
+            return ("image/jpeg",)
+        elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG:
+            return ("image/png",)
         elif kind == InterfaceKind.InterfaceKindChoices.SQREG:
             return ("application/vnd.sqlite3",)
         else:
@@ -426,7 +428,7 @@ class ComponentInterface(models.Model):
     )
     kind = models.CharField(
         blank=False,
-        max_length=4,
+        max_length=5,
         choices=Kind.choices,
         help_text=(
             "What is the type of this interface? Used to validate interface "
@@ -513,30 +515,12 @@ class ComponentInterface(models.Model):
         if self.kind in InterfaceKind.interface_type_json():
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
-        elif self.kind in InterfaceKind.interface_type_file():
-            raise_exception = False
-            if (
-                self.kind == InterfaceKind.InterfaceKindChoices.SQREG
-                and not self.relative_path.endswith(".sqreg")
-            ):
-                file_extension = ".sqreg"
-                raise_exception = True
-            elif (
-                self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL
-                and not self.relative_path.endswith((".jpg", ".jpeg", ".png"))
-            ):
-                file_extension = ".jpg, .jpeg or .png"
-                raise_exception = True
-            elif self.kind not in [
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL,
-                InterfaceKind.InterfaceKindChoices.SQREG,
-            ] and not self.relative_path.endswith(f".{self.kind.lower()}"):
-                file_extension = f".{self.kind.lower()}"
-                raise_exception = True
-            if raise_exception:
-                raise ValidationError(
-                    f"Relative path should end with {file_extension}"
-                )
+        elif self.kind in InterfaceKind.interface_type_file() and not self.relative_path.endswith(
+            f".{self.kind.lower()}"
+        ):
+            raise ValidationError(
+                f"Relative path should end with .{self.kind.lower()}"
+            )
 
         if self.kind in InterfaceKind.interface_type_image():
             if not self.relative_path.startswith("images/"):

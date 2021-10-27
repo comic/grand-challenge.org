@@ -171,25 +171,20 @@ def test_no_uuid_validation():
 )
 def test_relative_path_file_ending(kind):
     if kind in InterfaceKind.interface_type_json():
-        good_suffixes = ["json"]
-    elif kind == InterfaceKind.InterfaceKindChoices.SQREG:
-        good_suffixes = ["sqreg"]
-    elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL:
-        good_suffixes = ["jpg", "png", "jpeg"]
+        good_suffix = ["json"]
     else:
-        good_suffixes = [kind.lower()]
+        good_suffix = [kind.lower()]
 
-    for suffix in good_suffixes:
-        i = ComponentInterfaceFactory(
-            kind=kind,
-            relative_path=f"foo/bar.{suffix}",
-            store_in_database=kind in InterfaceKind.interface_type_json(),
-        )
+    i = ComponentInterfaceFactory(
+        kind=kind,
+        relative_path=f"foo/bar.{good_suffix}",
+        store_in_database=kind in InterfaceKind.interface_type_json(),
+    )
+    i.full_clean()
+
+    i.relative_path = "foo/bar"
+    with pytest.raises(ValidationError):
         i.full_clean()
-
-        i.relative_path = "foo/bar"
-        with pytest.raises(ValidationError):
-            i.full_clean()
 
 
 @pytest.mark.django_db
