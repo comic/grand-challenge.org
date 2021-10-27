@@ -1,6 +1,7 @@
 import re
 
 from crispy_forms.helper import FormHelper
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
@@ -12,6 +13,7 @@ from django.forms import (
     ModelMultipleChoiceField,
     TextInput,
 )
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
@@ -138,6 +140,20 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "organizations": Select2MultipleWidget,
         }
         help_texts = {
+            "repo_name": format_html(
+                (
+                    "The full name of the repository to use as a source to build "
+                    "your algorithm images, in the form {{owner}}/{{repo}}. "
+                    "Please note that this is an optional field. Only fill "
+                    "out this field in case the "
+                    '<a href="{}" target="_blank">Grand Challenge GitHub app</a> '
+                    "has been installed for your repository. "
+                    "We strongly encourage users to use the 'Link GitHub repo' "
+                    "button under the 'Containers' menu item to link a repo "
+                    "instead of manually altering this field."
+                ),
+                settings.GITHUB_APP_INSTALL_URL,
+            ),
             "workstation_config": format_lazy(
                 (
                     "The workstation configuration to use for this algorithm. "
