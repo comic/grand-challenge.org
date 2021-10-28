@@ -35,7 +35,7 @@
         {% with challenge.phase_set.first as phase %}
             <a class="badge badge-info above-stretched-link"
                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}"
-               title="{{ challenge.cached_num_results }} result{{ challenge.cached_num_results|pluralize }}, latest {{ challenge.cached_latest_result|naturaltime }}">
+               title="{{ challenge.cached_num_results }} submission{{ challenge.cached_num_results|pluralize }}, latest {{ challenge.cached_latest_result|naturaltime }}">
                 <i class="fas fa-trophy fa-fw"></i>
                 {{ challenge.cached_num_results|intcomma }}
             </a>
