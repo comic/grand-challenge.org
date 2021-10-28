@@ -39,9 +39,9 @@ services:
         AWS_ACCESS_KEY_ID: minioadmin
         AWS_SECRET_ACCESS_KEY: minioadmin
         AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
+      SESSION_COOKIE_DOMAIN: '.grand-challenge.umcn.nl'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
-      DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
@@ -75,7 +75,7 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest
     environment:
       APP_SERVER_HOST: 'web'
-      SERVER_NAME: gc.localhost
+      SERVER_NAME: grand-challenge.umcn.nl
       SENDFILE_STATUS: 'off'
       WORKSTATION_PROXY_HOSTNAME: 'workstation-proxy'
       WORKSTATION_PROXY_HTTP_PORT: '8000'
@@ -108,7 +108,6 @@ services:
       <<: *minio_development_env
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
-      DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
       WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
       WORKBENCH_API_URL: "${WORKBENCH_API_URL-}"
@@ -139,7 +138,6 @@ services:
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
-      DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
     command: "celery -A config worker -l info -c 1 -Q acks-late-2xlarge,acks-late-micro-short"
@@ -170,7 +168,6 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
-      DEBUG: 'true'
     restart: always
     command: >-
         bash -c "
