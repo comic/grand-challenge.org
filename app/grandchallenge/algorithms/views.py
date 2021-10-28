@@ -611,10 +611,35 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
         viewers_form = ViewersForm()
         viewers_form.fields["action"].initial = ViewersForm.REMOVE
 
+        pdfs = []
+        thumbnails = []
+        charts = []
+        charts_data = []
+        for output in self.object.outputs.all():
+            if (
+                output.interface.kind
+                == InterfaceKind.InterfaceKindChoices.CHART
+            ):
+                charts.append(output)
+                charts_data.append(output.value)
+            elif (
+                output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF
+            ):
+                pdfs.append(output)
+            elif output.interface.kind in [
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            ]:
+                thumbnails.append(output)
+
         context.update(
             {
                 "viewers_form": viewers_form,
                 "job_perms": get_perms(self.request.user, self.object),
+                "charts": charts,
+                "charts_data": charts_data,
+                "pdfs": pdfs,
+                "thumbnails": thumbnails,
             }
         )
 
