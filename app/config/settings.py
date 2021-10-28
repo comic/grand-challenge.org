@@ -76,7 +76,9 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
-CELERY_EMAIL_BACKEND = "django_ses.SESBackend"
+CELERY_EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "webmaster@localhost"
 )
@@ -1164,8 +1166,6 @@ RETINA_ADMINS_GROUP_NAME = "retina_admins"
 ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
     # Allow localhost in development
     CORS_ORIGIN_REGEX_WHITELIST += [r"^http://localhost:8888$"]
 
