@@ -13,7 +13,7 @@ from grandchallenge.subdomains.utils import reverse
 def update_challenge_results_cache():
     challenges = Challenge.objects.all()
     evaluation_info = (
-        Evaluation.objects.filter(published=True)
+        Evaluation.objects.filter(published=True, rank__gt=0)
         .values("submission__phase__challenge_id")
         .annotate(
             cached_num_results=Count("submission__phase__challenge_id"),
