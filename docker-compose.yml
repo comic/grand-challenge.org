@@ -40,6 +40,7 @@ services:
         AWS_SECRET_ACCESS_KEY: minioadmin
         AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
       SESSION_COOKIE_DOMAIN: '.grand-challenge.umcn.nl'
+      GRAND_CHALLENGE_LOG_LEVEL: 'DEBUG'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       PYTHONDONTWRITEBYTECODE: 1
