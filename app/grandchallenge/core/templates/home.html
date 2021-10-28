@@ -116,5 +116,12 @@
                 </div>
             </div>
         </div>
+
+        {% include "grandchallenge/partials/cards_info_modal.html" %}
     {% endblock %}
 {% endcache %}
+
+{% block script %}
+    {{ block.super }}
+    <script src="{% static "js/cards_info_modal.js" %}"></script>
+{% endblock %}
