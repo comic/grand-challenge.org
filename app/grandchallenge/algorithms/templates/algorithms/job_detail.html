@@ -1,9 +1,12 @@
-    {% extends "base.html" %}
+{% extends "base.html" %}
 {% load naturaldelta %}
 {% load remove_whitespace %}
 {% load profiles %}
 {% load pathlib %}
 {% load workstations %}
+{% load static %}
+{% load evaluation_extras %}
+{% load bleach %}
 
 {% block title %}
     Algorithm Result - {{ block.super }}
@@ -57,6 +60,28 @@
             <h2>Algorithm Result</h2>
 
             {{ object.rendered_result_text }}
+
+            {% for chart in charts %}
+                <h3>{{ chart.interface.title }}</h3>
+                <div class="w-100" id="resultsChart_{{ forloop.counter0 }}"></div>
+            {% endfor %}
+
+            {% for thumbnail in thumbnails %}
+                <h3>{{ thumbnail.interface.title }}</h3>
+                <div class="row">
+                    <img class="m-3"
+                         src="{{ thumbnail.file.url }}"
+                         alt="{{ thumbnail.file.name }}" loading="lazy">
+                </div>
+            {% endfor %}
+
+            {% for pdf in pdfs %}
+                <h3>{{ pdf.interface.title }}</h3>
+                <div><a class="btn btn-primary mb-3"
+                   href="{{ pdf.file.url }}">
+                        <i class="fa fa-download"></i>&nbsp;Download PDF
+                </a></div>
+            {% endfor %}
 
             {% if object.status == object.SUCCESS %}
                 <a class="btn btn-primary mb-3"
@@ -316,4 +341,19 @@
             modal.find('.modal-title').text(button.data('title'));
         })
     </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"
+            integrity="sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-lite/5.1.0/vega-lite.min.js"
+            integrity="sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"
+            integrity="sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    {{ charts_data|json_script:"allCharts" }}
+
+    <script type="module" src="{% static "algorithms/js/render_resultschart.js" %}"></script>
+
 {% endblock %}
