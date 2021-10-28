@@ -45,7 +45,9 @@ services:
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
-    command: python manage.py runserver_plus 0.0.0.0:8000 --nopin
+    command: >-
+      bash -c "python manage.py collectstatic --noinput
+      && gunicorn -t 60 -w 4 --max-requests 2000 --max-requests-jitter 100 -b 0.0.0.0 -k config.uvicorn.UvicornWorker config.asgi:application"
     restart: always
     depends_on:
       postgres:
