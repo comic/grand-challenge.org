@@ -148,6 +148,12 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
         instance = super().create(validated_data=validated_data)
 
+        if "answer" in set_targets:
+            # Link the answer to this upload session for image assignment later
+            answer = set_targets["answer"]
+            answer.answer = {"upload_session_pk": str(instance.pk)}
+            answer.save()
+
         if instance.user_uploads.exists() and set_targets:
             # TODO WHEN_US_API_DEPRECATED instance.user_uploads.exists() will always be True
             process_images(instance=instance, targets=set_targets)
@@ -184,6 +190,16 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             raise ValidationError(
                 "This question does not accept image type answers."
             )
+
+        # TODO WHEN_US_API_DEPRECATED always check answer is not None
+        if (
+            self.context["request"].method != "PATCH"
+            and value.answer is not None
+        ):
+            raise ValidationError(
+                "This answer already has an image assignment pending"
+            )
+
         return value
 
 
