@@ -190,6 +190,12 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             raise ValidationError(
                 "This question does not accept image type answers."
             )
+
+        if value.answer is not None:
+            raise ValidationError(
+                "This answer already has an image assignment pending"
+            )
+
         return value
 
 

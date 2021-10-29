@@ -1128,6 +1128,23 @@ def test_assign_answer_image_new_api(client, settings, answer_type):
 
     question = QuestionFactory(reader_study=rs, answer_type=answer_type)
 
+    # First post/patch the answer (ReaderStudyAnswersAPI in gcapi)
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=reader,
+        client=client,
+        method=client.post,
+        data={
+            "answer": None,  # Answer must be None to image assignment
+            "images": [im.api_url],
+            "question": question.api_url,
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+    answer = Answer.objects.get(pk=response.json()["pk"])
+
+    # Next upload the image to the answer (upload_cases in gcapi)
     upload = create_upload_from_file(
         file_path=Path(__file__).parent.parent
         / "cases_tests"
@@ -1135,23 +1152,6 @@ def test_assign_answer_image_new_api(client, settings, answer_type):
         / "image10x10x10.mha",
         creator=reader,
     )
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-list",
-        user=reader,
-        client=client,
-        method=client.post,
-        data={
-            "answer": None,
-            "images": [im.api_url],
-            "question": question.api_url,
-        },
-        content_type="application/json",
-    )
-    assert response.status_code == 201
-
-    answer = Answer.objects.get(pk=response.json()["pk"])
-
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
@@ -1163,6 +1163,7 @@ def test_assign_answer_image_new_api(client, settings, answer_type):
         )
     assert response.status_code == 201
 
+    # Validate
     answer.refresh_from_db()
     image = RawImageUploadSession.objects.get(
         pk=response.json()["pk"]
