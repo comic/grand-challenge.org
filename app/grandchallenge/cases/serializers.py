@@ -191,7 +191,11 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 "This question does not accept image type answers."
             )
 
-        if value.answer is not None:
+        # TODO WHEN_US_API_DEPRECATED always check answer is not None
+        if (
+            self.context["request"].method != "PATCH"
+            and value.answer is not None
+        ):
             raise ValidationError(
                 "This answer already has an image assignment pending"
             )
