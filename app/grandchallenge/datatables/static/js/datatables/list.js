@@ -6,6 +6,13 @@ $(document).ready(function () {
         lengthChange: false,
         pageLength: 25,
         serverSide: true,
+        columnDefs: [
+            {
+                targets: 'nonSortable',
+                searchable: false,
+                orderable: false,
+            },
+        ],
         ajax: {
             url: "",
             dataSrc: function ( json ) {

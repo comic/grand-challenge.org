@@ -547,15 +547,6 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         "inputs__image__files__file",
         "comment",
     ]
-    columns = [
-        Column(title="Details", sort_field="pk"),
-        Column(title="Created", sort_field="created"),
-        Column(title="Creator", sort_field="creator__username"),
-        Column(title="Result", sort_field="inputs__image__name"),
-        Column(title="Comment", sort_field="comment"),
-        Column(title="Visibility", sort_field="public"),
-        Column(title="Viewer", sort_field="inputs__image__files__file"),
-    ]
     default_sort_column = 1
 
     @cached_property
@@ -581,8 +572,27 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
+        context.update({"algorithm": self.algorithm, "columns": self.columns})
         return context
+
+    @cached_property
+    def columns(self):
+        columns = [
+            Column(title="Details", sort_field="pk"),
+            Column(title="Created", sort_field="created"),
+            Column(title="Creator", sort_field="creator__username"),
+            Column(title="Result", sort_field="inputs__image__name"),
+            Column(title="Comment", sort_field="comment"),
+            Column(title="Visibility", sort_field="public"),
+            Column(title="Viewer", sort_field="inputs__image__files__file"),
+        ]
+
+        if "PDF" in self.algorithm.outputs.values_list("kind", flat=True):
+            columns.append(
+                Column(title="PDF", sort_field="", classes=("nonSortable",)),
+            )
+
+        return columns
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):

@@ -25,6 +25,7 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    InterfaceKind,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -578,6 +579,14 @@ class Job(UUIDModel, ComponentJob):
             immutable=True,
         )
         on_commit(run_job.apply_async)
+
+    @cached_property
+    def pdf_outputs(self):
+        pdfs = []
+        for output in self.outputs.all():
+            if output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF:
+                pdfs.append(output)
+        return pdfs
 
 
 @receiver(post_delete, sender=Job)
