@@ -71,3 +71,14 @@
         <i class="fa fa-eye"></i> Open Result in Viewer
     </a>
 {% endif %}
+<split></split>
+
+{% if object.pdf_outputs %}
+    {% for pdf in object.pdf_outputs %}
+        <a class="badge badge-primary mr-1"
+           title="Download {{ pdf.interface.title }}"
+           href="{{ pdf.file.url }}">
+            <i class="fa fa-download"></i>
+        </a>
+    {% endfor %}
+{% endif %}
