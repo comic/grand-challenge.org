@@ -482,7 +482,6 @@ LOCAL_APPS = [
     "grandchallenge.studies",
     "grandchallenge.registrations",
     "grandchallenge.annotations",
-    "grandchallenge.retina_core",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
     "grandchallenge.workspaces",
