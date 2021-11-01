@@ -10,17 +10,9 @@ from django.core.files import File
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile3D,
     ImageFactoryWithImageFile4D,
     ImageFileFactoryWithMHDFile,
-    ImageFileFactoryWithMHDFile123Spacing,
-    ImageFileFactoryWithMHDFile2D12Spacing,
-    ImageFileFactoryWithMHDFile2DNoSpacing,
-    ImageFileFactoryWithMHDFile2DNoSpacingWith12Size,
-    ImageFileFactoryWithMHDFileNoSpacing,
-    ImageFileFactoryWithMHDFileNoSpacingWith123Size,
     ImageFileFactoryWithRAWFile,
-    ImageFileFactoryWithRAWFile2D,
 )
 from tests.cases_tests.utils import get_sitk_image
 from tests.factories import ImageFileFactory
@@ -118,89 +110,6 @@ class TestGetSitkImage:
             sitk_image.GetPixelIDTypeAsString()
             == "vector of 8-bit unsigned integer"
         )
-
-
-@pytest.mark.django_db
-class TestImageSpacing:
-    @pytest.mark.parametrize(
-        "factory,files,spacing",
-        (
-            (ImageFactoryWithImageFile, None, [1.0, 1.0]),
-            (
-                ImageFactoryWithImageFile,
-                [
-                    ImageFileFactoryWithMHDFile2D12Spacing,
-                    ImageFileFactoryWithRAWFile2D,
-                ],
-                [1.0, 2.0],
-            ),
-            (
-                ImageFactoryWithImageFile,
-                [
-                    ImageFileFactoryWithMHDFile2DNoSpacing,
-                    ImageFileFactoryWithRAWFile2D,
-                ],
-                [1.0, 1.0],
-            ),
-            (
-                ImageFactoryWithImageFile,
-                [
-                    ImageFileFactoryWithMHDFile2DNoSpacingWith12Size,
-                    ImageFileFactoryWithRAWFile2D,
-                ],
-                [1.0, 1.0],
-            ),
-            (ImageFactoryWithImageFile3D, None, [1.0, 1.0, 1.0]),
-            (
-                ImageFactoryWithImageFile3D,
-                [
-                    ImageFileFactoryWithMHDFile123Spacing,
-                    ImageFileFactoryWithRAWFile,
-                ],
-                [1.0, 2.0, 3.0],
-            ),
-            (
-                ImageFactoryWithImageFile3D,
-                [
-                    ImageFileFactoryWithMHDFileNoSpacing,
-                    ImageFileFactoryWithRAWFile,
-                ],
-                [1.0, 1.0, 1.0],
-            ),
-            (
-                ImageFactoryWithImageFile3D,
-                [
-                    ImageFileFactoryWithMHDFileNoSpacingWith123Size,
-                    ImageFileFactoryWithRAWFile,
-                ],
-                [1.0, 2.0, 3.0],
-            ),
-        ),
-    )
-    def test_spacing_equals_itk_spacing(self, factory, files, spacing):
-        kwargs = {}
-        if files is not None:
-            kwargs["files"] = [f() for f in files]
-        image = factory(**kwargs)
-        sitk_image = get_sitk_image(image=image)
-        assert tuple(reversed(sitk_image.GetSpacing())) == tuple(image.spacing)
-
-    @pytest.mark.parametrize(
-        "factory,spacing",
-        (
-            (ImageFactoryWithImageFile, [1.0, 2.0]),
-            (ImageFactoryWithImageFile3D, [1.0, 2.0, 3.0]),
-        ),
-    )
-    def test_spacing_equals_expected_spacing(self, factory, spacing):
-        voxel_kwargs = {
-            "voxel_width_mm": spacing[-1],
-            "voxel_height_mm": spacing[-2],
-        }
-        if len(spacing) == 3:
-            voxel_kwargs["voxel_depth_mm"] = spacing[0]
-        image = factory(**voxel_kwargs)
-        assert image.spacing == spacing
 
 
 @pytest.mark.django_db

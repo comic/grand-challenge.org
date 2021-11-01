@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Mapping, Union
+from typing import List
 
 from actstream.actions import follow
 from actstream.models import Follow
@@ -16,7 +16,6 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-from panimg.image_builders.metaio_utils import parse_mh_header
 from panimg.models import ColorSpace, ImageType, PatientSex
 
 from grandchallenge.core.models import UUIDModel
@@ -383,36 +382,6 @@ class Image(UUIDModel):
             result.append(color_components)
         return result
 
-    @property
-    def spacing(self) -> List[float]:
-        """
-        Return the voxel spacing (or size if spacing is nonexistent) of the image.
-
-        Returns
-        -------
-            The voxel spacing in mm in NumPy ordering [(z), y, x]
-            Defaults to [(1), 1, 1]
-        """
-        spacing = [
-            self.voxel_depth_mm,
-            self.voxel_height_mm,
-            self.voxel_width_mm,
-        ]
-        if spacing[0] is None:
-            spacing = spacing[-2:]
-        if None in spacing:
-            mh_header = self.get_mh_header()
-            spacing_str = mh_header.get(
-                "ElementSpacing", mh_header.get("ElementSize")
-            )
-            if spacing_str is not None:
-                spacing = list(
-                    reversed([float(x) for x in spacing_str.split(" ")])
-                )
-            else:
-                spacing = [1] * int(mh_header["NDims"])
-        return spacing
-
     def get_metaimage_files(self):
         """
         Return ImageFile object for the related MHA file or MHD and RAW files.
@@ -450,24 +419,6 @@ class Image(UUIDModel):
             raise FileNotFoundError(f"No file found for {header_file.file}")
 
         return header_file, image_data_file
-
-    def get_mh_header(self) -> Mapping[str, Union[str, None]]:
-        """
-        Return header from mhd/mha file as key value pairs
-
-        Returns
-        -------
-            MetaIO headers as key value pairs.
-
-        Raises
-        ------
-        FileNotFoundError
-            Raised when Image has no related mhd/mha ImageFile or actual file
-            cannot be found on storage
-        """
-
-        mh_file, _ = self.get_metaimage_files()
-        return parse_mh_header(mh_file.file)
 
     def update_viewer_groups_permissions(self, *, exclude_jobs=None):
         """
