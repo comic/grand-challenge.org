@@ -581,12 +581,20 @@ class Job(UUIDModel, ComponentJob):
         on_commit(run_job.apply_async)
 
     @cached_property
-    def pdf_outputs(self):
-        pdfs = []
+    def special_outputs(self):
+        outputs = {
+            "CHART": [],
+            "PDF": [],
+        }
         for output in self.outputs.all():
+            if (
+                output.interface.kind
+                == InterfaceKind.InterfaceKindChoices.CHART
+            ):
+                outputs["CHART"].append(output)
             if output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF:
-                pdfs.append(output)
-        return pdfs
+                outputs["PDF"].append(output)
+        return outputs
 
 
 @receiver(post_delete, sender=Job)
