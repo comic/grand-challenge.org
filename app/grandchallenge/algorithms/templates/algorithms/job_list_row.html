@@ -73,12 +73,26 @@
 {% endif %}
 <split></split>
 
-{% if object.pdf_outputs %}
-    {% for pdf in object.pdf_outputs %}
+{% if 'PDF' in output_interface_kinds %}
+    {% for pdf in object.special_outputs.PDF %}
         <a class="badge badge-primary mr-1"
            title="Download {{ pdf.interface.title }}"
            href="{{ pdf.file.url }}">
             <i class="fa fa-download"></i>
         </a>
     {% endfor %}
+    <split></split>
+{% endif %}
+
+
+{% if 'CHART' in output_interface_kinds %}
+    {% for chart in object.special_outputs.CHART %}
+        <a class="badge badge-primary mr-1"
+           title="Inspect {{ chart.interface.title }}"
+           target="_blank"
+           href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}">
+            <i class="fas fa-chart-bar"></i>
+        </a>
+    {% endfor %}
+    <split></split>
 {% endif %}

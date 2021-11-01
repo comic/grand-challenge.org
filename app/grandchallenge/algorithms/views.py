@@ -572,7 +572,13 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm, "columns": self.columns})
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "columns": self.columns,
+                "output_interface_kinds": self.output_interface_kinds,
+            }
+        )
         return context
 
     @cached_property
@@ -587,12 +593,21 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             Column(title="Viewer", sort_field="inputs__image__files__file"),
         ]
 
-        if "PDF" in self.algorithm.outputs.values_list("kind", flat=True):
+        if "PDF" in self.output_interface_kinds:
             columns.append(
                 Column(title="PDF", sort_field="", classes=("nonSortable",)),
             )
 
+        if "CHART" in self.output_interface_kinds:
+            columns.append(
+                Column(title="Chart", sort_field="", classes=("nonSortable",)),
+            )
+
         return columns
+
+    @cached_property
+    def output_interface_kinds(self):
+        return self.algorithm.outputs.values_list("kind", flat=True)
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):
