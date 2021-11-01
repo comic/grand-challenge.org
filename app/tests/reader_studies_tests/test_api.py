@@ -1076,58 +1076,6 @@ def test_assign_answer_image(client, settings, answer_type):
 
     question = QuestionFactory(reader_study=rs, answer_type=answer_type)
 
-    us = RawImageUploadSessionFactory(creator=reader)
-
-    answer = AnswerFactory(
-        creator=reader,
-        question=question,
-        answer={"upload_session_pk": str(us.pk)},
-    )
-
-    f = StagedFileFactory(
-        file__from_path=Path(__file__).parent.parent
-        / "cases_tests"
-        / "resources"
-        / "image10x10x10.mha"
-    )
-    RawImageFileFactory(upload_session=us, staged_file_id=f.file_id)
-
-    with capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="api:upload-session-process-images",
-            reverse_kwargs={"pk": us.pk},
-            user=reader,
-            client=client,
-            method=client.patch,
-            data={"answer": str(answer.pk)},
-            content_type="application/json",
-        )
-
-    assert response.status_code == 200
-
-    answer.refresh_from_db()
-    image = us.image_set.first()
-
-    assert answer.answer_image == image
-    assert reader.has_perm("view_image", image)
-    assert editor.has_perm("view_image", image)
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("answer_type", ("PIMG", "MPIM", "MASK"))
-def test_assign_answer_image_new_api(client, settings, answer_type):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-    rs = ReaderStudyFactory()
-    im = ImageFactory()
-    editor, reader = UserFactory(), UserFactory()
-
-    rs.images.add(im)
-    rs.add_editor(editor)
-    rs.add_reader(reader)
-
-    question = QuestionFactory(reader_study=rs, answer_type=answer_type)
-
     # First post/patch the answer (ReaderStudyAnswersAPI in gcapi)
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
