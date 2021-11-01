@@ -2,8 +2,6 @@ import uuid
 from contextlib import contextmanager
 from io import BufferedIOBase
 
-from django import forms
-from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from grandchallenge.jqfileupload.models import StagedFile
@@ -267,29 +265,3 @@ class StagedAjaxFile:
         for chunk in query:
             chunk.file.delete()
         query.delete()
-
-
-class UploadedAjaxFileList(forms.Field):
-    def to_python(self, value):
-        if value is None or value == "None":
-            return
-        allowed_characters = "0123456789abcdefABCDEF-,"
-        if any(c for c in value if c not in allowed_characters):
-            raise ValidationError("UUID list includes invalid characters")
-
-        split_items = value.split(",")
-        uuids = []
-        for s in split_items:
-            try:
-                uuids.append(uuid.UUID(s))
-            except ValueError:
-                raise ValidationError(
-                    "Not a valid UUID: %(string)s", {"string": s}
-                )
-
-        return [StagedAjaxFile(uid) for uid in uuids]
-
-    def prepare_value(self, value):
-        # convert value to be stuffed into the html, this must be
-        # implemented if we want to pre-populate upload forms
-        return None

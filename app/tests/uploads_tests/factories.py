@@ -18,6 +18,14 @@ def create_upload_from_file(*, file_path, creator):
     return upload
 
 
+def create_completed_upload(*, user):
+    upload = UserUploadFactory(creator=user)
+    upload.status = UserUpload.StatusChoices.COMPLETED
+    upload.save()
+
+    return upload
+
+
 class UserUploadFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = UserUpload
