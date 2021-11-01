@@ -7,11 +7,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.reader_studies.models import Answer, Question
-from tests.cases_tests.factories import (
-    RawImageFileFactory,
-    RawImageUploadSessionFactory,
-)
-from tests.factories import ImageFactory, StagedFileFactory, UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
@@ -19,7 +15,10 @@ from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies
-from tests.uploads_tests.factories import create_upload_from_file
+from tests.uploads_tests.factories import (
+    create_completed_upload,
+    create_upload_from_file,
+)
 from tests.utils import get_view_for_user
 
 
@@ -1138,35 +1137,22 @@ def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
 
     question = QuestionFactory(reader_study=rs, answer_type=answer_type)
 
-    us1 = RawImageUploadSessionFactory(creator=reader)
-    us2 = RawImageUploadSessionFactory(creator=editor)
-
-    answer1 = AnswerFactory(
-        creator=reader,
-        question=question,
-        answer={"upload_session_pk": str(us1.pk)},
-    )
-
-    f = StagedFileFactory(
-        file__from_path=Path(__file__).parent.parent
-        / "cases_tests"
-        / "resources"
-        / "image10x10x10.mha"
-    )
-    RawImageFileFactory(upload_session=us1, staged_file_id=f.file_id)
+    answer1 = AnswerFactory(creator=reader, question=question, answer=None,)
 
     response = get_view_for_user(
-        viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": us2.pk},
+        viewname="api:upload-session-list",
         user=editor,
         client=client,
-        method=client.patch,
-        data={"answer": str(answer1.pk)},
+        method=client.post,
+        data={
+            "answer": str(answer1.pk),
+            "uploads": [create_completed_upload(user=editor).api_url],
+        },
         content_type="application/json",
     )
 
     assert response.status_code == 400
-    assert b"object does not exist" in response.rendered_content
+    assert "object does not exist" in response.json()["answer"][0]
 
 
 @pytest.mark.django_db
@@ -1185,29 +1171,17 @@ def test_question_accepts_image_type_answers(client, settings):
         reader_study=rs, answer_type=Question.AnswerType.BOOL
     )
 
-    us = RawImageUploadSessionFactory(creator=reader)
-
-    answer = AnswerFactory(
-        creator=reader,
-        question=question,
-        answer={"upload_session_pk": str(us.pk)},
-    )
-
-    f = StagedFileFactory(
-        file__from_path=Path(__file__).parent.parent
-        / "cases_tests"
-        / "resources"
-        / "image10x10x10.mha"
-    )
-    RawImageFileFactory(upload_session=us, staged_file_id=f.file_id)
+    answer = AnswerFactory(creator=reader, question=question, answer=None,)
 
     response = get_view_for_user(
-        viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": us.pk},
+        viewname="api:upload-session-list",
         user=reader,
         client=client,
-        method=client.patch,
-        data={"answer": str(answer.pk)},
+        method=client.post,
+        data={
+            "answer": str(answer.pk),
+            "uploads": [create_completed_upload(user=reader).api_url],
+        },
         content_type="application/json",
     )
 
