@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import List, Mapping, Union
 
 from actstream.actions import follow
@@ -17,10 +16,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-from panimg.image_builders.metaio_utils import (
-    load_sitk_image,
-    parse_mh_header,
-)
+from panimg.image_builders.metaio_utils import parse_mh_header
 from panimg.models import ColorSpace, ImageType, PatientSex
 
 from grandchallenge.core.models import UUIDModel
@@ -472,55 +468,6 @@ class Image(UUIDModel):
 
         mh_file, _ = self.get_metaimage_files()
         return parse_mh_header(mh_file.file)
-
-    def get_sitk_image(self):
-        """
-        Return the image that belongs to this model as an SimpleITK image.
-
-        Requires that exactly one MHD/RAW file pair is associated with the model.
-        Otherwise it wil raise a MultipleObjectsReturned or ObjectDoesNotExist
-        exception.
-
-        Returns
-        -------
-            A SimpleITK image
-        """
-        files = [i for i in self.get_metaimage_files() if i is not None]
-
-        file_size = 0
-        for file in files:
-            if not file.file.storage.exists(name=file.file.name):
-                raise FileNotFoundError(f"No file found for {file.file}")
-
-            # Add up file sizes of mhd and raw file to get total file size
-            file_size += file.file.size
-
-        # Check file size to guard for out of memory error
-        if file_size > settings.MAX_SITK_FILE_SIZE:
-            raise OSError(
-                f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})"
-            )
-
-        with TemporaryDirectory() as tempdirname:
-            for file in files:
-                with file.file.open("rb") as infile, open(
-                    Path(tempdirname) / Path(file.file.name).name, "wb"
-                ) as outfile:
-                    buffer = True
-                    while buffer:
-                        buffer = infile.read(1024)
-                        outfile.write(buffer)
-
-            try:
-                hdr_path = Path(tempdirname) / Path(files[0].file.name).name
-                sitk_image = load_sitk_image(mhd_file=hdr_path)
-            except RuntimeError as e:
-                logging.error(
-                    f"Failed to load SimpleITK image with error: {e}"
-                )
-                raise
-
-        return sitk_image
 
     def update_viewer_groups_permissions(self, *, exclude_jobs=None):
         """

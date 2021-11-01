@@ -28,6 +28,7 @@ from grandchallenge.cases.tasks import (
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.notifications.models import Notification
 from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.utils import get_sitk_image
 from tests.factories import UploadSessionFactory, UserFactory
 from tests.jqfileupload_tests.external_test_support import (
     create_file_from_filepath,
@@ -167,7 +168,7 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     assert image.shape_without_color == [13, 12, 11, 10]
     assert image.color_space == Image.COLOR_SPACE_GRAY
 
-    sitk_image = image.get_sitk_image()
+    sitk_image = get_sitk_image(image=image)
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
 
 
@@ -208,7 +209,7 @@ def test_staged_mhd_upload_with_additional_headers(
     for key in headers.keys():
         assert (key in ADDITIONAL_HEADERS) or (key in EXPECTED_HEADERS)
 
-    sitk_image: SimpleITK.Image = image.get_sitk_image()
+    sitk_image: SimpleITK.Image = get_sitk_image(image=image)
     for key in ADDITIONAL_HEADERS:
         assert key in sitk_image.GetMetaDataKeys()
         if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
@@ -285,7 +286,7 @@ def test_mhd_file_annotation_creation(settings):
     assert image.shape_without_color == [7, 6, 5]
     assert image.color_space == Image.COLOR_SPACE_GRAY
 
-    sitk_image = image.get_sitk_image()
+    sitk_image = get_sitk_image(image=image)
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
 
 
