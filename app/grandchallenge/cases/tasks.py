@@ -11,7 +11,6 @@ from typing import (
     Optional,
     Sequence,
     Set,
-    Union,
 )
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
@@ -20,7 +19,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
-from django.db.transaction import on_commit
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from panimg import convert
@@ -34,10 +32,6 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.components.backends.utils import safe_extract
-from grandchallenge.jqfileupload.widgets.uploader import (
-    NotFoundError,
-    StagedAjaxFile,
-)
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
 
@@ -47,18 +41,14 @@ class DuplicateFilesException(ValueError):
 
 
 def _populate_tmp_dir(tmp_dir, upload_session):
-    raw_image_files = upload_session.rawimagefile_set.all()
-    session_files = [StagedAjaxFile(f.staged_file_id) for f in raw_image_files]
-
-    session_files += [*upload_session.user_uploads.all()]
+    session_files = [*upload_session.user_uploads.all()]
 
     populate_provisioning_directory(session_files, tmp_dir)
     extract_files(source_path=tmp_dir)
 
 
 def populate_provisioning_directory(
-    input_files: Sequence[Union[StagedAjaxFile, UserUpload]],
-    provisioning_dir: Path,
+    input_files: Sequence[UserUpload], provisioning_dir: Path,
 ):
     """
     Provisions provisioning_dir with the files associated using the given
@@ -355,14 +345,4 @@ def _handle_raw_files(
 
 
 def _delete_session_files(*, upload_session):
-    for file in upload_session.rawimagefile_set.all():
-        try:
-            if file.staged_file_id:
-                saf = StagedAjaxFile(file.staged_file_id)
-                on_commit(saf.delete)
-        except NotFoundError:
-            pass
-
-        file.delete()
-
     upload_session.user_uploads.all().delete()

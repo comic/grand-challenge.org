@@ -25,55 +25,35 @@ from grandchallenge.cases.tasks import (
     build_images,
     check_compressed_and_extract,
 )
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.notifications.models import Notification
+from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.utils import get_sitk_image
 from tests.factories import UploadSessionFactory, UserFactory
-from tests.jqfileupload_tests.external_test_support import (
-    create_file_from_filepath,
-)
+from tests.uploads_tests.factories import create_upload_from_file
 
 
 def create_raw_upload_image_session(
     *, images: List[str], delete_file=False, user=None, linked_task=None,
-) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
+) -> Tuple[RawImageUploadSession, Dict[str, UserUpload]]:
     creator = user or UserFactory(email="test@example.com")
-    upload_session = RawImageUploadSession(creator=creator)
+    upload_session = RawImageUploadSession.objects.create(creator=creator)
 
     uploaded_images = {}
     for image in images:
-        staged_file = create_file_from_filepath(RESOURCE_PATH / image)
-        image = RawImageFile.objects.create(
-            upload_session=upload_session,
-            filename=staged_file.name,
-            staged_file_id=staged_file.uuid,
+        upload = create_upload_from_file(
+            file_path=RESOURCE_PATH / image, creator=creator
         )
-        uploaded_images[staged_file.name] = image
+        uploaded_images[upload.filename] = upload
+        upload_session.user_uploads.add(upload)
 
     if delete_file:
-        StagedAjaxFile(
-            uploaded_images["image10x10x10.zraw"].staged_file_id
-        ).delete()
-
-    upload_session.save()
+        uploaded_images["image10x10x10.zraw"].delete()
 
     with capture_on_commit_callbacks(execute=True):
         upload_session.process_images(linked_task=linked_task)
 
     return upload_session, uploaded_images
-
-
-@pytest.mark.django_db
-def test_file_session_creation():
-    images = ["image10x10x10.zraw"]
-    _, uploaded_images = create_raw_upload_image_session(images=images)
-
-    assert len(uploaded_images) == 1
-    assert uploaded_images[images[0]].staged_file_id is not None
-
-    a_file = StagedAjaxFile(uploaded_images[images[0]].staged_file_id)
-    assert a_file.exists
 
 
 @pytest.mark.django_db
@@ -135,7 +115,6 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     )
 
     session.refresh_from_db()
-    assert session.status == session.FAILURE
     assert session.error_message is not None
 
 
