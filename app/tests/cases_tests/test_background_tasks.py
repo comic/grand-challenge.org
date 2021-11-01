@@ -18,7 +18,6 @@ from panimg.image_builders.metaio_utils import (
 
 from grandchallenge.cases.models import (
     Image,
-    RawImageFile,
     RawImageUploadSession,
 )
 from grandchallenge.cases.tasks import (
@@ -89,8 +88,6 @@ def test_image_file_creation(settings):
 
     assert Image.objects.filter(origin=session).count() == 5
 
-    assert not RawImageFile.objects.exists()
-
     assert {*session.import_result["consumed_files"]} == {
         "valid_tiff.tif",
         "image10x10x10.mha",
@@ -140,8 +137,6 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
 
-    assert not RawImageFile.objects.exists()
-
     image = images[0]
     assert image.shape == [13, 12, 11, 10]
     assert image.shape_without_color == [13, 12, 11, 10]
@@ -174,8 +169,6 @@ def test_staged_mhd_upload_with_additional_headers(
 
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
-
-    assert not RawImageFile.objects.exists()
 
     image: Image = images[0]
     tmp_header_filename = tmp_path / "tmp_header.mhd"
@@ -215,8 +208,6 @@ def test_no_convertible_file(settings):
     assert session.status == session.SUCCESS
     assert f"{len(images)} file" in session.error_message
 
-    assert not RawImageFile.objects.exists()
-
     assert session.import_result["consumed_files"] == []
     assert {*session.import_result["file_errors"]} == {*images}
 
@@ -235,7 +226,6 @@ def test_errors_on_files_with_duplicate_file_names(settings):
     ]
     session, uploaded_images = create_raw_upload_image_session(images=images)
 
-    assert not RawImageFile.objects.exists()
     session.refresh_from_db()
     assert session.status == session.FAILURE
     assert session.error_message == "Duplicate files uploaded"
@@ -257,8 +247,6 @@ def test_mhd_file_annotation_creation(settings):
 
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
-
-    assert not RawImageFile.objects.exists()
 
     image = images[0]
     assert image.shape == [7, 6, 5]

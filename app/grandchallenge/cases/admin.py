@@ -4,7 +4,6 @@ from guardian.admin import GuardedModelAdmin
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
-    RawImageFile,
     RawImageUploadSession,
 )
 
@@ -78,13 +77,6 @@ class RawImageUploadSessionAdmin(GuardedModelAdmin):
     )
 
 
-class RawImageFileAdmin(GuardedModelAdmin):
-    list_display = ("filename", "upload_session")
-    readonly_fields = ("upload_session",)
-    search_fields = ("upload_session__pk", "filename")
-
-
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageFile, ImageFileAdmin)
 admin.site.register(RawImageUploadSession, RawImageUploadSessionAdmin)
-admin.site.register(RawImageFile, RawImageFileAdmin)

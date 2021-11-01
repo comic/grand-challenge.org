@@ -153,48 +153,6 @@ def delete_session_follows(*_, instance: RawImageUploadSession, **__):
     Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()
 
 
-class RawImageFile(UUIDModel):
-    """
-    A raw image file is a file that has been uploaded by a user but was not
-    preprocessed to create a standardized image representation.
-    """
-
-    upload_session = models.ForeignKey(
-        RawImageUploadSession, blank=False, on_delete=models.CASCADE
-    )
-
-    # Copy in case staged_file_id is set to None
-    filename = models.CharField(max_length=4096, blank=False)
-
-    staged_file_id = models.UUIDField(blank=True, null=True)
-
-    error = models.TextField(blank=False, null=True, default=None)
-
-    consumed = models.BooleanField(default=False)
-
-    @property
-    def creator(self):
-        return self.upload_session.creator
-
-    @property
-    def api_url(self):
-        return reverse(
-            "api:upload-session-file-detail", kwargs={"pk": self.pk}
-        )
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding and self.upload_session.creator:
-            assign_perm(
-                f"view_{self._meta.model_name}",
-                self.upload_session.creator,
-                self,
-            )
-
-
 def image_file_path(instance, filename):
     return (
         f"{settings.IMAGE_FILES_SUBDIRECTORY}/"

@@ -28,7 +28,6 @@ from grandchallenge.cases.models import (
     FolderUpload,
     Image,
     ImageFile,
-    RawImageFile,
     RawImageUploadSession,
 )
 from grandchallenge.components.backends.utils import safe_extract
@@ -103,18 +102,10 @@ def build_images(*, upload_session_pk):
     :class:`RawImageUploadSession` to indicate if it is running or has finished
     computing.
 
-    The task also updates the consumed field of the associated
-    :class:`RawImageFile` to indicate whether it has been processed or not.
-
     Results are stored in:
     - `RawImageUploadSession.error_message` if a general error occurred during
         processing.
-    - The `RawImageFile.error` field of associated `RawImageFile` objects,
-        in case files could not be processed.
-
-    The operation of building images will delete associated `StagedAjaxFile`s
-    of analyzed images in order to free up space on the server (only done if the
-    function does not error out).
+    - The `RawImageUploadSession.import_result` for file-by-file states.
 
     Parameters
     ----------
@@ -124,14 +115,8 @@ def build_images(*, upload_session_pk):
     session_queryset = RawImageUploadSession.objects.filter(
         pk=upload_session_pk
     ).select_for_update(nowait=True)
-    files_queryset = RawImageFile.objects.filter(
-        upload_session_id=upload_session_pk
-    ).select_for_update(nowait=True)
 
     with transaction.atomic():
-        if files_queryset.filter(consumed=True).exists():
-            raise RuntimeError("Session has consumed files.")
-
         upload_session = session_queryset.get()
         upload_session.status = upload_session.STARTED
         upload_session.save()
@@ -139,7 +124,6 @@ def build_images(*, upload_session_pk):
     try:
         with transaction.atomic():
             # Acquire locks
-            _ = files_queryset.all()
             upload_session = session_queryset.get()
 
             with TemporaryDirectory() as tmp_dir:

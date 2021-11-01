@@ -105,9 +105,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
 class RawImageUploadSessionViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
-    queryset = RawImageUploadSession.objects.prefetch_related(
-        "rawimagefile_set"
-    ).all()
+    queryset = RawImageUploadSession.objects.all()
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
     serializer_class = RawImageUploadSessionSerializer
