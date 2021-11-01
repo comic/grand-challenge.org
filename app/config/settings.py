@@ -131,7 +131,6 @@ FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 DEFAULT_FILE_STORAGE = "grandchallenge.core.storage.PublicS3Storage"
 
 # Subdirectories on root for various files
-JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 COMPONENTS_FILES_SUBDIRECTORY = "components"
@@ -248,7 +247,7 @@ SESSION_COOKIE_DOMAIN = os.environ.get(
 # We're always running behind a proxy so set these to true
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-# Trust all subdomains for CSRF, used for jqfileupload. Changed the name
+# Trust all subdomains for CSRF, used for user uploads. Changed the name
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
@@ -467,7 +466,6 @@ LOCAL_APPS = [
     "grandchallenge.challenges",
     "grandchallenge.core",
     "grandchallenge.evaluation",
-    "grandchallenge.jqfileupload",
     "grandchallenge.pages",
     "grandchallenge.participants",
     "grandchallenge.profiles",
@@ -1096,7 +1094,6 @@ DISALLOWED_CHALLENGE_NAMES = {
     "cache",
     "challenge",
     "challenges",
-    JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,
 }
