@@ -5,7 +5,6 @@ from factory import fuzzy
 
 from grandchallenge.cases.models import (
     Image,
-    RawImageFile,
     RawImageUploadSession,
 )
 from tests.cases_tests import RESOURCE_PATH
@@ -213,10 +212,3 @@ class ImageFactoryWithImageFile3DLarge4Slices(ImageFactoryWithImageFile3D):
 class RawImageUploadSessionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RawImageUploadSession
-
-
-class RawImageFileFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = RawImageFile
-
-    upload_session = factory.SubFactory(RawImageUploadSessionFactory)

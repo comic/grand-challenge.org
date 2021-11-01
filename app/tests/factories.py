@@ -1,19 +1,15 @@
 import hashlib
-from datetime import timedelta
-from uuid import uuid4
 
 import factory
 import factory.fuzzy
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.utils import timezone
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
 )
-from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -134,18 +130,6 @@ class ImagingModalityFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("modality",)
 
     modality = factory.sequence(lambda n: f"Modality {n}")
-
-
-class StagedFileFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = StagedFile
-
-    file_id = factory.LazyFunction(uuid4)
-    file = factory.django.FileField()
-    timeout = factory.LazyFunction(lambda: timezone.now() + timedelta(hours=1))
-    start_byte = 0
-    end_byte = factory.LazyAttribute(lambda s: s.file.size)
-    client_filename = factory.LazyAttribute(lambda s: s.file.name)
 
 
 class WorkstationConfigFactory(factory.django.DjangoModelFactory):
