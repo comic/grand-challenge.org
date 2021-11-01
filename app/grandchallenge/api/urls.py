@@ -11,12 +11,10 @@ from grandchallenge.algorithms.views import (
 from grandchallenge.archives.views import ArchiveViewSet
 from grandchallenge.cases.views import (
     ImageViewSet,
-    RawImageFileViewSet,
     RawImageUploadSessionViewSet,
 )
 from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.github.views import github_webhook
-from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.notifications.views import (
     FollowViewSet,
     NotificationViewSet,
@@ -63,18 +61,10 @@ router.register(r"archives", ArchiveViewSet, basename="archive")
 # Cases
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(
-    r"cases/upload-sessions/files",
-    RawImageFileViewSet,
-    basename="upload-session-file",
-)
-router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
     basename="upload-session",
 )
-
-# Chunked uploads
-router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
 # Evaluations
 router.register(

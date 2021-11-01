@@ -7,16 +7,12 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -25,14 +21,11 @@ from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
-    RawImageFile,
     RawImageUploadSession,
 )
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
-    RawImageFileSerializer,
     RawImageUploadSessionSerializer,
-    process_images,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -118,40 +111,6 @@ class RawImageUploadSessionViewSet(
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
     serializer_class = RawImageUploadSessionSerializer
-
-    @action(detail=True, methods=["patch"])
-    def process_images(self, request, pk=None):
-        # TODO WHEN_US_API_DEPRECATED remove this method
-        upload_session = self.get_object()
-        serializer = self.get_serializer(
-            upload_session, data=request.data, partial=True
-        )
-
-        if serializer.is_valid():
-            try:
-                process_images(
-                    instance=serializer.instance,
-                    targets=serializer.validated_data,
-                )
-                return Response(
-                    "Image processing job queued.", status=status.HTTP_200_OK
-                )
-            except ValidationError as e:
-                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-class RawImageFileViewSet(
-    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
-):
-    # TODO WHEN_US_API_DEPRECATED remove this view set
-    serializer_class = RawImageFileSerializer
-    queryset = RawImageFile.objects.all()
-    permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
 
 
 class VTKImageDetail(
