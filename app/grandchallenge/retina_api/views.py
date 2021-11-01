@@ -1,12 +1,8 @@
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as drf_filters
 from rest_framework import mixins, viewsets
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import RetrieveAPIView
-from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.response import Response
 from rest_framework_guardian import filters
 
 from grandchallenge.annotations.models import (
@@ -41,7 +37,6 @@ from grandchallenge.retina_api.filters import (
 )
 from grandchallenge.retina_api.mixins import RetinaAPIPermission
 from grandchallenge.retina_api.serializers import (
-    B64ImageSerializer,
     ImageLevelAnnotationsForImageSerializer,
     RetinaImageSerializer,
 )
@@ -58,21 +53,6 @@ class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
     pagination_class = None
     filterset_fields = ("image",)
     queryset = ETDRSGridAnnotation.objects.all()
-
-
-class B64ThumbnailAPIView(RetrieveAPIView):
-    permission_classes = (DjangoObjectPermissions, RetinaAPIPermission)
-    filters = (filters.ObjectPermissionsFilter,)
-    queryset = Image.objects.all()
-    serializer_class = B64ImageSerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        width = kwargs.get("width", settings.RETINA_DEFAULT_THUMBNAIL_SIZE)
-        height = kwargs.get("height", settings.RETINA_DEFAULT_THUMBNAIL_SIZE)
-        serializer_context = {"width": width, "height": height}
-        serializer = B64ImageSerializer(instance, context=serializer_context)
-        return Response(serializer.data)
 
 
 class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
