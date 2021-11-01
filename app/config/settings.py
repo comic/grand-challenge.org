@@ -1152,9 +1152,6 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
     os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", "2048")
 )
 
-# Default maximum width or height for thumbnails in retina workstation
-RETINA_DEFAULT_THUMBNAIL_SIZE = 128
-
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
