@@ -522,15 +522,6 @@ class Image(UUIDModel):
 
         return sitk_image
 
-    def permit_viewing_by_retina_users(self):
-        """Set object level view permissions for retina_graders and retina_admins."""
-        for group_name in (
-            settings.RETINA_GRADERS_GROUP_NAME,
-            settings.RETINA_ADMINS_GROUP_NAME,
-        ):
-            group = Group.objects.get(name=group_name)
-            assign_perm("view_image", group, self)
-
     def update_viewer_groups_permissions(self, *, exclude_jobs=None):
         """
         Update the permissions for the algorithm jobs viewers groups to
