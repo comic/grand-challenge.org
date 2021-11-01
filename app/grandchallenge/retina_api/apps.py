@@ -10,8 +10,8 @@ def init_retina_groups(*_, **__):
     Group.objects.get_or_create(name=settings.RETINA_GRADERS_GROUP_NAME)
 
 
-class RetinaCoreConfig(AppConfig):
-    name = "grandchallenge.retina_core"
+class RetinaAPIConfig(AppConfig):
+    name = "grandchallenge.retina_api"
 
     def ready(self):
         post_migrate.connect(init_retina_groups)

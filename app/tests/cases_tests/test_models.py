@@ -10,18 +10,11 @@ from django.core.files import File
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile3D,
     ImageFactoryWithImageFile4D,
     ImageFileFactoryWithMHDFile,
-    ImageFileFactoryWithMHDFile123Spacing,
-    ImageFileFactoryWithMHDFile2D12Spacing,
-    ImageFileFactoryWithMHDFile2DNoSpacing,
-    ImageFileFactoryWithMHDFile2DNoSpacingWith12Size,
-    ImageFileFactoryWithMHDFileNoSpacing,
-    ImageFileFactoryWithMHDFileNoSpacingWith123Size,
     ImageFileFactoryWithRAWFile,
-    ImageFileFactoryWithRAWFile2D,
 )
+from tests.cases_tests.utils import get_sitk_image
 from tests.factories import ImageFileFactory
 
 
@@ -42,38 +35,38 @@ class TestGetSitkImage:
             files=(extra_mhd, extra_raw, extra_mhd_file, extra_raw_file)
         )
         with pytest.raises(MultipleObjectsReturned):
-            image.get_sitk_image()
+            get_sitk_image(image=image)
 
     def test_4d_mhd_object(self):
         image = ImageFactoryWithImageFile4D()
-        img = image.get_sitk_image()
+        img = get_sitk_image(image=image)
         assert img.GetDimension() == 4
 
     def test_no_mhd_object(self):
         image = ImageFactoryWithImageFile()
         image.files.get(file__endswith=".mhd").delete()
         with pytest.raises(FileNotFoundError):
-            image.get_sitk_image()
+            get_sitk_image(image=image)
 
     def test_no_raw_object(self):
         image = ImageFactoryWithImageFile()
         image.files.get(file__endswith=".zraw").delete()
         with pytest.raises(FileNotFoundError):
-            image.get_sitk_image()
+            get_sitk_image(image=image)
 
     def test_file_not_found_mhd(self):
         image = ImageFactoryWithImageFile()
         imagefile = image.files.get(file__endswith=".mhd")
         imagefile.file.storage.delete(imagefile.file.name)
         with pytest.raises(FileNotFoundError):
-            image.get_sitk_image()
+            get_sitk_image(image=image)
 
     def test_file_not_found_raw(self):
         image = ImageFactoryWithImageFile()
         imagefile = image.files.get(file__endswith=".zraw")
         imagefile.file.storage.delete(imagefile.file.name)
         with pytest.raises(FileNotFoundError):
-            image.get_sitk_image()
+            get_sitk_image(image=image)
 
     def test_file_too_large_throws_error(self, tmpdir):
         image = ImageFactoryWithImageFile()
@@ -99,14 +92,14 @@ class TestGetSitkImage:
 
         # Try to open and catch expected exception
         with pytest.raises(IOError) as exec_info:
-            image.get_sitk_image()
+            get_sitk_image(image=image)
         assert "File exceeds maximum file size." in str(
             exec_info.value.args[0]
         )
 
     def test_correct_dimensions(self):
         image = ImageFactoryWithImageFile()
-        sitk_image = image.get_sitk_image()
+        sitk_image = get_sitk_image(image=image)
         assert sitk_image.GetDimension() == 2
         assert sitk_image.GetSize() == (3, 4)
         assert sitk_image.GetOrigin() == (0.0, 0.0)
@@ -117,89 +110,6 @@ class TestGetSitkImage:
             sitk_image.GetPixelIDTypeAsString()
             == "vector of 8-bit unsigned integer"
         )
-
-
-@pytest.mark.django_db
-class TestImageSpacing:
-    @pytest.mark.parametrize(
-        "factory,files,spacing",
-        (
-            (ImageFactoryWithImageFile, None, [1.0, 1.0]),
-            (
-                ImageFactoryWithImageFile,
-                [
-                    ImageFileFactoryWithMHDFile2D12Spacing,
-                    ImageFileFactoryWithRAWFile2D,
-                ],
-                [1.0, 2.0],
-            ),
-            (
-                ImageFactoryWithImageFile,
-                [
-                    ImageFileFactoryWithMHDFile2DNoSpacing,
-                    ImageFileFactoryWithRAWFile2D,
-                ],
-                [1.0, 1.0],
-            ),
-            (
-                ImageFactoryWithImageFile,
-                [
-                    ImageFileFactoryWithMHDFile2DNoSpacingWith12Size,
-                    ImageFileFactoryWithRAWFile2D,
-                ],
-                [1.0, 1.0],
-            ),
-            (ImageFactoryWithImageFile3D, None, [1.0, 1.0, 1.0]),
-            (
-                ImageFactoryWithImageFile3D,
-                [
-                    ImageFileFactoryWithMHDFile123Spacing,
-                    ImageFileFactoryWithRAWFile,
-                ],
-                [1.0, 2.0, 3.0],
-            ),
-            (
-                ImageFactoryWithImageFile3D,
-                [
-                    ImageFileFactoryWithMHDFileNoSpacing,
-                    ImageFileFactoryWithRAWFile,
-                ],
-                [1.0, 1.0, 1.0],
-            ),
-            (
-                ImageFactoryWithImageFile3D,
-                [
-                    ImageFileFactoryWithMHDFileNoSpacingWith123Size,
-                    ImageFileFactoryWithRAWFile,
-                ],
-                [1.0, 2.0, 3.0],
-            ),
-        ),
-    )
-    def test_spacing_equals_itk_spacing(self, factory, files, spacing):
-        kwargs = {}
-        if files is not None:
-            kwargs["files"] = [f() for f in files]
-        image = factory(**kwargs)
-        sitk_image = image.get_sitk_image()
-        assert tuple(reversed(sitk_image.GetSpacing())) == tuple(image.spacing)
-
-    @pytest.mark.parametrize(
-        "factory,spacing",
-        (
-            (ImageFactoryWithImageFile, [1.0, 2.0]),
-            (ImageFactoryWithImageFile3D, [1.0, 2.0, 3.0]),
-        ),
-    )
-    def test_spacing_equals_expected_spacing(self, factory, spacing):
-        voxel_kwargs = {
-            "voxel_width_mm": spacing[-1],
-            "voxel_height_mm": spacing[-2],
-        }
-        if len(spacing) == 3:
-            voxel_kwargs["voxel_depth_mm"] = spacing[0]
-        image = factory(**voxel_kwargs)
-        assert image.spacing == spacing
 
 
 @pytest.mark.django_db

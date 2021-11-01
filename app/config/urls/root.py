@@ -116,10 +116,6 @@ urlpatterns = [
     ),
     path("summernote/", include("django_summernote.urls")),
     path(
-        "retina/",
-        include("grandchallenge.retina_core.urls", namespace="retina"),
-    ),
-    path(
         "aiforradiology/",
         include("grandchallenge.products.urls", namespace="products"),
     ),

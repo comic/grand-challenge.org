@@ -1,8 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import List, Mapping, Union
+from typing import List
 
 from actstream.actions import follow
 from actstream.models import Follow
@@ -17,10 +16,6 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-from panimg.image_builders.metaio_utils import (
-    load_sitk_image,
-    parse_mh_header,
-)
 from panimg.models import ColorSpace, ImageType, PatientSex
 
 from grandchallenge.core.models import UUIDModel
@@ -387,36 +382,6 @@ class Image(UUIDModel):
             result.append(color_components)
         return result
 
-    @property
-    def spacing(self) -> List[float]:
-        """
-        Return the voxel spacing (or size if spacing is nonexistent) of the image.
-
-        Returns
-        -------
-            The voxel spacing in mm in NumPy ordering [(z), y, x]
-            Defaults to [(1), 1, 1]
-        """
-        spacing = [
-            self.voxel_depth_mm,
-            self.voxel_height_mm,
-            self.voxel_width_mm,
-        ]
-        if spacing[0] is None:
-            spacing = spacing[-2:]
-        if None in spacing:
-            mh_header = self.get_mh_header()
-            spacing_str = mh_header.get(
-                "ElementSpacing", mh_header.get("ElementSize")
-            )
-            if spacing_str is not None:
-                spacing = list(
-                    reversed([float(x) for x in spacing_str.split(" ")])
-                )
-            else:
-                spacing = [1] * int(mh_header["NDims"])
-        return spacing
-
     def get_metaimage_files(self):
         """
         Return ImageFile object for the related MHA file or MHD and RAW files.
@@ -454,82 +419,6 @@ class Image(UUIDModel):
             raise FileNotFoundError(f"No file found for {header_file.file}")
 
         return header_file, image_data_file
-
-    def get_mh_header(self) -> Mapping[str, Union[str, None]]:
-        """
-        Return header from mhd/mha file as key value pairs
-
-        Returns
-        -------
-            MetaIO headers as key value pairs.
-
-        Raises
-        ------
-        FileNotFoundError
-            Raised when Image has no related mhd/mha ImageFile or actual file
-            cannot be found on storage
-        """
-
-        mh_file, _ = self.get_metaimage_files()
-        return parse_mh_header(mh_file.file)
-
-    def get_sitk_image(self):
-        """
-        Return the image that belongs to this model as an SimpleITK image.
-
-        Requires that exactly one MHD/RAW file pair is associated with the model.
-        Otherwise it wil raise a MultipleObjectsReturned or ObjectDoesNotExist
-        exception.
-
-        Returns
-        -------
-            A SimpleITK image
-        """
-        files = [i for i in self.get_metaimage_files() if i is not None]
-
-        file_size = 0
-        for file in files:
-            if not file.file.storage.exists(name=file.file.name):
-                raise FileNotFoundError(f"No file found for {file.file}")
-
-            # Add up file sizes of mhd and raw file to get total file size
-            file_size += file.file.size
-
-        # Check file size to guard for out of memory error
-        if file_size > settings.MAX_SITK_FILE_SIZE:
-            raise OSError(
-                f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})"
-            )
-
-        with TemporaryDirectory() as tempdirname:
-            for file in files:
-                with file.file.open("rb") as infile, open(
-                    Path(tempdirname) / Path(file.file.name).name, "wb"
-                ) as outfile:
-                    buffer = True
-                    while buffer:
-                        buffer = infile.read(1024)
-                        outfile.write(buffer)
-
-            try:
-                hdr_path = Path(tempdirname) / Path(files[0].file.name).name
-                sitk_image = load_sitk_image(mhd_file=hdr_path)
-            except RuntimeError as e:
-                logging.error(
-                    f"Failed to load SimpleITK image with error: {e}"
-                )
-                raise
-
-        return sitk_image
-
-    def permit_viewing_by_retina_users(self):
-        """Set object level view permissions for retina_graders and retina_admins."""
-        for group_name in (
-            settings.RETINA_GRADERS_GROUP_NAME,
-            settings.RETINA_ADMINS_GROUP_NAME,
-        ):
-            group = Group.objects.get(name=group_name)
-            assign_perm("view_image", group, self)
 
     def update_viewer_groups_permissions(self, *, exclude_jobs=None):
         """

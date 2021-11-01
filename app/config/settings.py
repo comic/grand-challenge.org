@@ -482,7 +482,6 @@ LOCAL_APPS = [
     "grandchallenge.studies",
     "grandchallenge.registrations",
     "grandchallenge.annotations",
-    "grandchallenge.retina_core",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
     "grandchallenge.workspaces",
@@ -1151,9 +1150,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 16_777_216  # 16 mb
 DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
     os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", "2048")
 )
-
-# Default maximum width or height for thumbnails in retina workstation
-RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
