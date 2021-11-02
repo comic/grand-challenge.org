@@ -25,12 +25,14 @@
         })
 
         uppy.use(Uppy.DragDrop, {
+            id: `${inputId}-DragDrop`,
             target: `#${inputId}-drag-drop`,
         });
 
         uppy.use(Uppy.StatusBar, {
+            id: `${inputId}-StatusBar`,
             target: `#${inputId}-progress`,
-            showProgressDetails: true,
+            showProgressDetails: false,
             hideCancelButton: true,
             hidePauseResumeButton: true,
         });
