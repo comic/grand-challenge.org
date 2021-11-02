@@ -49,6 +49,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmRepoForm,
+    AlgorithmUpdateForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -215,7 +216,7 @@ class AlgorithmUpdate(
     UpdateView,
 ):
     model = Algorithm
-    form_class = AlgorithmForm
+    form_class = AlgorithmUpdateForm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 

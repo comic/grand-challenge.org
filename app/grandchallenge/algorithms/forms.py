@@ -114,7 +114,6 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "social_image",
             "public",
             "use_flexible_inputs",
-            "repo_name",
             "inputs",
             "outputs",
             "workstation",
@@ -198,6 +197,11 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 )
 
         return cleaned_data
+
+
+class AlgorithmUpdateForm(AlgorithmForm):
+    class Meta(AlgorithmForm.Meta):
+        fields = AlgorithmForm.Meta.fields + ("repo_name",)
 
 
 class AlgorithmImageForm(ContainerImageForm):
