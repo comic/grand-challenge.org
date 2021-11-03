@@ -255,7 +255,7 @@
                         </a>
                     {% else %}
                         <a class="btn btn-success"
-                           href="{{ github_app_install_url }}">
+                           href={% url "algorithms:add-repo" slug=object.slug %}>
                             <i class="fa fa-code-branch"></i> Link GitHub Repo
                         </a>
                     {% endif %}

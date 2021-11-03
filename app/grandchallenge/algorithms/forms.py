@@ -69,7 +69,34 @@ NON_ALGORITHM_INTERFACES = [
 ]
 
 
-class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
+class RepoNameValidationMixin:
+    def clean_repo_name(self):
+        repo_name = self.cleaned_data.get("repo_name")
+        if (
+            Algorithm.objects.exclude(pk=self.instance.pk)
+            .filter(repo_name=repo_name)
+            .exists()
+        ):
+            raise ValidationError(
+                "This repository is already linked to another algorithm."
+            )
+        pattern = re.compile("^([^/]+/[^/]+)$")
+        if "github.com" in repo_name:
+            raise ValidationError(
+                "Please only provide the repository name, not the full url. E.g. 'comic/grand-challenge.org'"
+            )
+        if not pattern.match(repo_name):
+            raise ValidationError(
+                "Please make sure you provide the repository name in the format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
+            )
+
+
+class AlgorithmForm(
+    RepoNameValidationMixin,
+    WorkstationUserFilterMixin,
+    SaveFormInitMixin,
+    ModelForm,
+):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
             slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
@@ -114,7 +141,6 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "social_image",
             "public",
             "use_flexible_inputs",
-            "repo_name",
             "inputs",
             "outputs",
             "workstation",
@@ -186,18 +212,12 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 "set of inputs you have selected."
             )
 
-        if cleaned_data["repo_name"]:
-            pattern = re.compile("^([^/]+/[^/]+)$")
-            if "github.com" in cleaned_data["repo_name"]:
-                raise ValidationError(
-                    "Please only provide the repository name, not the full url. E.g. 'comic/grand-challenge.org'"
-                )
-            if not pattern.match(cleaned_data["repo_name"]):
-                raise ValidationError(
-                    "Please make sure you provide the repository name in the format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
-                )
-
         return cleaned_data
+
+
+class AlgorithmUpdateForm(AlgorithmForm):
+    class Meta(AlgorithmForm.Meta):
+        fields = AlgorithmForm.Meta.fields + ("repo_name",)
 
 
 class AlgorithmImageForm(ContainerImageForm):
@@ -289,7 +309,7 @@ class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
         model = AlgorithmPermissionRequest
 
 
-class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
+class AlgorithmRepoForm(RepoNameValidationMixin, SaveFormInitMixin, ModelForm):
     repo_name = ChoiceField()
 
     def __init__(self, *args, **kwargs):

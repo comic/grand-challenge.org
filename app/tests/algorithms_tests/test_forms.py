@@ -154,6 +154,39 @@ def test_algorithm_create(client, uploaded_image):
 
 
 @pytest.mark.django_db
+def test_algorithm_update_contains_repo_name(client, uploaded_image):
+    # The algorithm creator should automatically get added to the editors group
+    creator = get_algorithm_creator()
+    VerificationFactory(user=creator, is_verified=True)
+
+    response = get_view_for_user(
+        viewname="algorithms:create",
+        client=client,
+        method=client.get,
+        follow=True,
+        user=creator,
+    )
+
+    assert response.status_code == 200
+    assert "repo_name" not in response.rendered_content
+
+    alg = AlgorithmFactory()
+    alg.add_editor(user=creator)
+
+    response = get_view_for_user(
+        viewname="algorithms:update",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": alg.slug},
+        follow=True,
+        user=creator,
+    )
+
+    assert response.status_code == 200
+    assert "repo_name" in response.rendered_content
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "slug, content_parts",
     (
