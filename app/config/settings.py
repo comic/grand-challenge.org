@@ -1101,8 +1101,18 @@ DISALLOWED_CHALLENGE_NAMES = {
 # Disallow registration from certain domains
 DISALLOWED_EMAIL_DOMAINS = {
     "qq.com",
-    "gm.uit.edu.vn",
-    "wust.edu.cn",
+    "aol.com",
+    "usa.com",
+    "yahoo.com",
+    "yahoo.co.uk",
+    "yahoo.it",
+    "seznam.cz",
+    "web.de",
+    "gmx.de",
+    "mail.com",
+    "mail.ru",
+    "verizon.net",
+    "comcast.net",
     *blocklist,
 }
 
