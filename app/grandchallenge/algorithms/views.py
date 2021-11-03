@@ -653,13 +653,11 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
             "viewers__user_set__user_profile",
             "viewers__user_set__verification",
             "viewer_groups",
-            "algorithm_image__algorithm__outputs",
         )
         .select_related(
             "creator__user_profile",
             "creator__verification",
             "algorithm_image__algorithm__workstation",
-            "algorithm_image__algorithm__outputs",
         )
     )
 

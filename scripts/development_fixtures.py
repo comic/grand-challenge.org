@@ -572,6 +572,54 @@ def _update_algorithm_interfaces_and_add_result(
     )
     algorithms_job.outputs.add(civ3)
 
+    # add one more job with only the detailed pdf output
+    algorithms_job2 = Job(
+        creator=users["algorithm"],
+        algorithm_image=algorithm_image,
+        status=Evaluation.SUCCESS,
+    )
+    algorithms_job2.save()
+    algorithms_job2.inputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(
+                slug="generic-medical-image"
+            ),
+            image=cases_image,
+        )
+    )
+    algorithms_job2.outputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(slug="results-json-file"),
+            value=result,
+        )
+    )
+    civ = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="detection-results"),
+    )
+    civ.file.save(
+        "detection_results.json",
+        ContentFile(
+            bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
+        ),
+    )
+    civ = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="detection-results"),
+    )
+    civ.file.save(
+        "detection_results.json",
+        ContentFile(
+            bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
+        ),
+    )
+    algorithms_job2.outputs.add(civ)
+    civ3 = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="detailed-summary"),
+    )
+    civ3.file.save(
+        "detailed-summary.pdf", ContentFile(b"detailed-summary,\npdf,\n")
+    )
+    algorithms_job2.outputs.add(civ3)
+
 
 def _create_workstation(users):
     w = Workstation.objects.create(
