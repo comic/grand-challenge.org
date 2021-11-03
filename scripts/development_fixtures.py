@@ -456,6 +456,11 @@ def _create_algorithm_demo(users):
     for res, det in zip(results, detections):
         _create_job_result(users, algorithm_image, cases_image, res, det)
 
+    # add new interfaces and one extra job with CIVs for those new interfaces
+    _update_algorithm_interfaces_and_add_result(
+        users, algorithm, algorithm_image, cases_image, res, det
+    )
+
 
 def _create_job_result(users, algorithm_image, cases_image, result, detection):
     algorithms_job = Job(
@@ -489,6 +494,83 @@ def _create_job_result(users, algorithm_image, cases_image, result, detection):
     )
 
     algorithms_job.outputs.add(civ)
+
+
+def _update_algorithm_interfaces_and_add_result(
+    users, algorithm, algorithm_image, cases_image, result, detection
+):
+    algorithms_job = Job(
+        creator=users["algorithm"],
+        algorithm_image=algorithm_image,
+        status=Evaluation.SUCCESS,
+    )
+    algorithms_job.save()
+    algorithms_job.inputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(
+                slug="generic-medical-image"
+            ),
+            image=cases_image,
+        )
+    )
+    algorithms_job.outputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(slug="results-json-file"),
+            value=result,
+        )
+    )
+    civ = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="detection-results"),
+    )
+    civ.file.save(
+        "detection_results.json",
+        ContentFile(
+            bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
+        ),
+    )
+    civ = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="detection-results"),
+    )
+    civ.file.save(
+        "detection_results.json",
+        ContentFile(
+            bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
+        ),
+    )
+    algorithms_job.outputs.add(civ)
+
+    # Add new interfaces and CIVs
+    summary_pdf = ComponentInterface(
+        store_in_database=False,
+        relative_path="summary.pdf",
+        slug="summary",
+        title="Summary",
+        kind=ComponentInterface.Kind.PDF,
+    )
+    summary_pdf.save()
+    detailed_summary = ComponentInterface(
+        store_in_database=False,
+        relative_path="detail-summary.pdf",
+        slug="detailed_summary",
+        title="Detailed Summary",
+        kind=ComponentInterface.Kind.PDF,
+    )
+    detailed_summary.save()
+    algorithm.outputs.add(summary_pdf)
+    algorithm.outputs.add(detailed_summary)
+
+    civ2 = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="summary"),
+    )
+    civ2.file.save("summary.pdf", ContentFile(b"summary,\npdf,\n"))
+    algorithms_job.outputs.add(civ2)
+    civ3 = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="detailed-summary"),
+    )
+    civ3.file.save(
+        "detailed-summary.pdf", ContentFile(b"detailed-summary,\npdf,\n")
+    )
+    algorithms_job.outputs.add(civ3)
 
 
 def _create_workstation(users):
