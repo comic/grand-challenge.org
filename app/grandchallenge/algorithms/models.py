@@ -592,11 +592,13 @@ class Job(UUIDModel, ComponentJob):
                 for title in outputs["CHART"]:
                     if title == output.interface.title:
                         outputs["CHART"][f"{title}"] = output
-            if output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF:
+            elif (
+                output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF
+            ):
                 for title in outputs["PDF"]:
                     if title == output.interface.title:
                         outputs["PDF"][f"{title}"] = output
-            if output.interface.kind in (
+            elif output.interface.kind in (
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
             ):
@@ -616,9 +618,9 @@ class Job(UUIDModel, ComponentJob):
         for kind, title in self.output_interfaces.values_list("kind", "title"):
             if kind == "CHART":
                 outputs["CHART"][f"{title}"] = ""
-            if kind == "PDF":
+            elif kind == "PDF":
                 outputs["PDF"][f"{title}"] = ""
-            if kind in ("JPEG", "PNG"):
+            elif kind in ("JPEG", "PNG"):
                 outputs["TIMG"][f"{title}"] = ""
 
         return outputs

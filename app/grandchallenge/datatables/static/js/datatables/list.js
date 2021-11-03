@@ -1,7 +1,7 @@
 const defaultSortColumn = JSON.parse(document.getElementById("defaultSortColumn").textContent)
 
 $(document).ready(function () {
-    table = $('#ajaxDataTable').DataTable({
+    $('#ajaxDataTable').DataTable({
         order: [[defaultSortColumn, "desc"]],
         lengthChange: false,
         pageLength: 25,
