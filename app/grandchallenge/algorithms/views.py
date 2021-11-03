@@ -576,7 +576,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             {
                 "algorithm": self.algorithm,
                 "columns": self.columns,
-                "output_interface_kinds": self.output_interface_kinds,
+                "outputs_list_display": self.outputs_list_display,
             }
         )
         return context
@@ -593,52 +593,38 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             Column(title="Viewer", sort_field="inputs__image__files__file"),
         ]
 
-        for interface in [
-            i
-            for subset in self.output_interface_kinds.values()
-            for i in subset
-        ]:
-            columns.append(
-                Column(
-                    title=interface["title"],
-                    sort_field="",
-                    classes=("nonSortable",),
-                ),
-            )
+        for grouped_interfaces in self.outputs_list_display.values():
+            for interface in grouped_interfaces:
+                columns.append(
+                    Column(
+                        title=interface.title,
+                        sort_field="",
+                        classes=("nonSortable",),
+                    ),
+                )
 
         return columns
 
     @cached_property
-    def output_interface_kinds(self):
-        output_interfaces = self.algorithm.outputs.filter(
-            kind__in=[
-                InterfaceKind.InterfaceKindChoices.CHART,
-                InterfaceKind.InterfaceKindChoices.PDF,
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-            ]
-        ).values("kind", "slug", "title")
-
-        kinds = {
+    def outputs_list_display(self):
+        grouped_interfaces = {
             "CHART": [],
             "PDF": [],
             "TIMG": [],
         }
 
-        for interface in output_interfaces:
-            if interface["kind"] == InterfaceKind.InterfaceKindChoices.CHART:
-                kinds["CHART"].append(interface)
-            elif interface["kind"] == InterfaceKind.InterfaceKindChoices.PDF:
-                kinds["PDF"].append(interface)
-            elif interface["kind"] in {
+        for interface in self.algorithm.outputs.all():
+            if interface.kind == InterfaceKind.InterfaceKindChoices.CHART:
+                grouped_interfaces["CHART"].append(interface)
+            elif interface.kind == InterfaceKind.InterfaceKindChoices.PDF:
+                grouped_interfaces["PDF"].append(interface)
+            elif interface.kind in {
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             }:
-                kinds["TIMG"].append(interface)
-            else:
-                raise RuntimeError(f"Unknown interface type: {interface=}")
+                grouped_interfaces["TIMG"].append(interface)
 
-        return kinds
+        return grouped_interfaces
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):

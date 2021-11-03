@@ -74,8 +74,8 @@
 {% endif %}
 <split></split>
 
-{% for interface in output_interface_kinds.TIMG %}
-    {% get_dict_values object.special_outputs interface.slug as image %}
+{% for interface in outputs_list_display.TIMG %}
+    {% get_dict_values object.slug_to_output interface.slug as image %}
     {% if image %}
         <a target="_blank" href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}" title="Open in detail view">
             <img class="m-1 thumbnail"
@@ -89,8 +89,8 @@
     {% endif %}
 {% endfor %}
 
-{% for interface in output_interface_kinds.CHART %}
-    {% get_dict_values object.special_outputs interface.slug as chart %}
+{% for interface in outputs_list_display.CHART %}
+    {% get_dict_values object.slug_to_output interface.slug as chart %}
     {% if chart %}
         <a class="badge badge-primary mr-1"
            title="Inspect {{ chart.interface.title }}"
@@ -104,8 +104,8 @@
     {% endif %}
 {% endfor %}
 
-{% for interface in output_interface_kinds.PDF %}
-    {% get_dict_values object.special_outputs interface.slug as pdf %}
+{% for interface in outputs_list_display.PDF %}
+    {% get_dict_values object.slug_to_output interface.slug as pdf %}
     {% if pdf %}
         <a class="badge badge-primary mr-1"
            title="Download {{ pdf.interface.title }}"
