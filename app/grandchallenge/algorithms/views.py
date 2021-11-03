@@ -12,7 +12,6 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -594,51 +593,52 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             Column(title="Viewer", sort_field="inputs__image__files__file"),
         ]
 
-        if (
-            "PNG" in self.output_interface_kinds
-            or "JPEG" in self.output_interface_kinds
-        ):
-            for thumbnail in self.algorithm.outputs.filter(
-                Q(kind=InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG)
-                | Q(kind=InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG)
-            ).all():
-                columns.append(
-                    Column(
-                        title=f"{thumbnail.title}",
-                        sort_field="",
-                        classes=("nonSortable",),
-                    ),
-                )
-
-        if "CHART" in self.output_interface_kinds:
-            for chart in self.algorithm.outputs.filter(
-                kind=InterfaceKind.InterfaceKindChoices.CHART
-            ).all():
-                columns.append(
-                    Column(
-                        title=f"{chart.title}",
-                        sort_field="",
-                        classes=("nonSortable",),
-                    ),
-                )
-
-        if "PDF" in self.output_interface_kinds:
-            for pdf in self.algorithm.outputs.filter(
-                kind=InterfaceKind.InterfaceKindChoices.PDF
-            ).all():
-                columns.append(
-                    Column(
-                        title=f"{pdf.title}",
-                        sort_field="",
-                        classes=("nonSortable",),
-                    ),
-                )
+        for interface in [
+            i
+            for subset in self.output_interface_kinds.values()
+            for i in subset
+        ]:
+            columns.append(
+                Column(
+                    title=interface["title"],
+                    sort_field="",
+                    classes=("nonSortable",),
+                ),
+            )
 
         return columns
 
     @cached_property
     def output_interface_kinds(self):
-        return self.algorithm.outputs.values_list("kind", flat=True)
+        output_interfaces = self.algorithm.outputs.filter(
+            kind__in=[
+                InterfaceKind.InterfaceKindChoices.CHART,
+                InterfaceKind.InterfaceKindChoices.PDF,
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+            ]
+        ).values("kind", "slug", "title")
+
+        kinds = {
+            "CHART": [],
+            "PDF": [],
+            "TIMG": [],
+        }
+
+        for interface in output_interfaces:
+            if interface["kind"] == InterfaceKind.InterfaceKindChoices.CHART:
+                kinds["CHART"].append(interface)
+            elif interface["kind"] == InterfaceKind.InterfaceKindChoices.PDF:
+                kinds["PDF"].append(interface)
+            elif interface["kind"] in {
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            }:
+                kinds["TIMG"].append(interface)
+            else:
+                raise RuntimeError(f"Unknown interface type: {interface=}")
+
+        return kinds
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):

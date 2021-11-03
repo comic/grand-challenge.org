@@ -582,46 +582,16 @@ class Job(UUIDModel, ComponentJob):
 
     @cached_property
     def special_outputs(self):  # noqa: C901
-        outputs = self.output_interface_dictionary
+        outputs = {}
 
         for output in self.outputs.all():
-            if (
-                output.interface.kind
-                == InterfaceKind.InterfaceKindChoices.CHART
-            ):
-                for title in outputs["CHART"]:
-                    if title == output.interface.title:
-                        outputs["CHART"][f"{title}"] = output
-            elif (
-                output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF
-            ):
-                for title in outputs["PDF"]:
-                    if title == output.interface.title:
-                        outputs["PDF"][f"{title}"] = output
-            elif output.interface.kind in (
+            if output.interface.kind in {
+                InterfaceKind.InterfaceKindChoices.CHART,
+                InterfaceKind.InterfaceKindChoices.PDF,
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-            ):
-                for title in outputs["TIMG"]:
-                    if title == output.interface.title:
-                        outputs["TIMG"][f"{title}"] = output
-
-        return outputs
-
-    @cached_property
-    def output_interface_dictionary(self):
-        outputs = {
-            "CHART": {},
-            "PDF": {},
-            "TIMG": {},
-        }
-        for kind, title in self.output_interfaces.values_list("kind", "title"):
-            if kind == "CHART":
-                outputs["CHART"][f"{title}"] = ""
-            elif kind == "PDF":
-                outputs["PDF"][f"{title}"] = ""
-            elif kind in ("JPEG", "PNG"):
-                outputs["TIMG"][f"{title}"] = ""
+            }:
+                outputs[str(output.interface.slug)] = output
 
         return outputs
 
