@@ -198,7 +198,6 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         context.update(
             {
                 "pending_permission_requests": pending_permission_requests,
-                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}",
                 "builds": Build.objects.filter(
                     algorithm_image__algorithm=self.object
                 ),
@@ -807,6 +806,15 @@ class AlgorithmAddRepo(
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}"
+            }
+        )
+        return context
+
     def get_form_kwargs(self):
         """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
@@ -827,7 +835,6 @@ class AlgorithmAddRepo(
             headers=headers,
             timeout=5,
         ).json()
-
         repos = []
         for installation in installations.get("installations", []):
             response = requests.get(
