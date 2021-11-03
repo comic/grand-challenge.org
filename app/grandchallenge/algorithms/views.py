@@ -12,6 +12,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -593,15 +594,45 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             Column(title="Viewer", sort_field="inputs__image__files__file"),
         ]
 
-        if "PDF" in self.output_interface_kinds:
-            columns.append(
-                Column(title="PDF", sort_field="", classes=("nonSortable",)),
-            )
+        if (
+            "PNG" in self.output_interface_kinds
+            or "JPEG" in self.output_interface_kinds
+        ):
+            for thumbnail in self.algorithm.outputs.filter(
+                Q(kind=InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG)
+                | Q(kind=InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG)
+            ).all():
+                columns.append(
+                    Column(
+                        title=f"{thumbnail.title}",
+                        sort_field="",
+                        classes=("nonSortable",),
+                    ),
+                )
 
         if "CHART" in self.output_interface_kinds:
-            columns.append(
-                Column(title="Chart", sort_field="", classes=("nonSortable",)),
-            )
+            for chart in self.algorithm.outputs.filter(
+                kind=InterfaceKind.InterfaceKindChoices.CHART
+            ).all():
+                columns.append(
+                    Column(
+                        title=f"{chart.title}",
+                        sort_field="",
+                        classes=("nonSortable",),
+                    ),
+                )
+
+        if "PDF" in self.output_interface_kinds:
+            for pdf in self.algorithm.outputs.filter(
+                kind=InterfaceKind.InterfaceKindChoices.PDF
+            ).all():
+                columns.append(
+                    Column(
+                        title=f"{pdf.title}",
+                        sort_field="",
+                        classes=("nonSortable",),
+                    ),
+                )
 
         return columns
 
@@ -622,11 +653,13 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
             "viewers__user_set__user_profile",
             "viewers__user_set__verification",
             "viewer_groups",
+            "algorithm_image__algorithm__outputs",
         )
         .select_related(
             "creator__user_profile",
             "creator__verification",
             "algorithm_image__algorithm__workstation",
+            "algorithm_image__algorithm__outputs",
         )
     )
 

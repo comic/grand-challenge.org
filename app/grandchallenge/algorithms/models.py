@@ -581,19 +581,46 @@ class Job(UUIDModel, ComponentJob):
         on_commit(run_job.apply_async)
 
     @cached_property
-    def special_outputs(self):
-        outputs = {
-            "CHART": [],
-            "PDF": [],
-        }
+    def special_outputs(self):  # noqa: C901
+        outputs = self.output_interface_dictionary
+
         for output in self.outputs.all():
             if (
                 output.interface.kind
                 == InterfaceKind.InterfaceKindChoices.CHART
             ):
-                outputs["CHART"].append(output)
+                for title in outputs["CHART"]:
+                    if title == output.interface.title:
+                        outputs["CHART"][f"{title}"] = output
             if output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF:
-                outputs["PDF"].append(output)
+                for title in outputs["PDF"]:
+                    if title == output.interface.title:
+                        outputs["PDF"][f"{title}"] = output
+            if output.interface.kind in (
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+            ):
+                for title in outputs["TIMG"]:
+                    if title == output.interface.title:
+                        outputs["TIMG"][f"{title}"] = output
+
+        return outputs
+
+    @cached_property
+    def output_interface_dictionary(self):
+        outputs = {
+            "CHART": {},
+            "PDF": {},
+            "TIMG": {},
+        }
+        for kind, title in self.output_interfaces.values_list("kind", "title"):
+            if kind == "CHART":
+                outputs["CHART"][f"{title}"] = ""
+            if kind == "PDF":
+                outputs["PDF"][f"{title}"] = ""
+            if kind in ("JPEG", "PNG"):
+                outputs["TIMG"][f"{title}"] = ""
+
         return outputs
 
 
