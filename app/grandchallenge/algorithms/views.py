@@ -12,6 +12,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -555,6 +556,19 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+
+        def get_annotation(key):
+            return {
+                key.slug: Subquery(
+                    ComponentInterfaceValue.objects.filter(
+                        interface=key, algorithms_jobs_as_output=OuterRef("pk")
+                    ).values_list("value", flat=True)
+                )
+            }
+
+        for interface in self.outputs_list_display["JSON"]:
+            queryset = queryset.annotate(**get_annotation(interface))
+
         return (
             queryset.filter(algorithm_image__algorithm=self.algorithm)
             .prefetch_related(
@@ -595,34 +609,59 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
         for grouped_interfaces in self.outputs_list_display.values():
             for interface in grouped_interfaces:
-                columns.append(
-                    Column(
-                        title=interface.title,
-                        sort_field="",
-                        classes=("nonSortable",),
-                    ),
-                )
+                if interface.kind in (
+                    InterfaceKind.InterfaceKindChoices.STRING,
+                    InterfaceKind.InterfaceKindChoices.INTEGER,
+                    InterfaceKind.InterfaceKindChoices.FLOAT,
+                    InterfaceKind.InterfaceKindChoices.BOOL,
+                ):
+                    columns.append(
+                        Column(
+                            title=interface.title, sort_field=interface.slug,
+                        ),
+                    )
+                else:
+                    columns.append(
+                        Column(
+                            title=interface.title,
+                            sort_field="",
+                            classes=("nonSortable",),
+                        ),
+                    )
 
         return columns
 
     @cached_property
     def outputs_list_display(self):
         grouped_interfaces = {
-            "CHART": [],
-            "PDF": [],
+            "JSON": [],
             "TIMG": [],
+            "CHART": [],
+            "FILE": [],
         }
 
         for interface in self.algorithm.outputs.all():
             if interface.kind == InterfaceKind.InterfaceKindChoices.CHART:
                 grouped_interfaces["CHART"].append(interface)
-            elif interface.kind == InterfaceKind.InterfaceKindChoices.PDF:
-                grouped_interfaces["PDF"].append(interface)
+            elif interface.kind in (
+                InterfaceKind.InterfaceKindChoices.PDF,
+                InterfaceKind.InterfaceKindChoices.CSV,
+                InterfaceKind.InterfaceKindChoices.ZIP,
+                InterfaceKind.InterfaceKindChoices.SQREG,
+            ):
+                grouped_interfaces["FILE"].append(interface)
             elif interface.kind in {
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             }:
                 grouped_interfaces["TIMG"].append(interface)
+            elif interface.kind in {
+                InterfaceKind.InterfaceKindChoices.STRING,
+                InterfaceKind.InterfaceKindChoices.INTEGER,
+                InterfaceKind.InterfaceKindChoices.FLOAT,
+                InterfaceKind.InterfaceKindChoices.BOOL,
+            }:
+                grouped_interfaces["JSON"].append(interface)
 
         return grouped_interfaces
 
