@@ -607,14 +607,9 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             Column(title="Viewer", sort_field="inputs__image__files__file"),
         ]
 
-        for grouped_interfaces in self.outputs_list_display.values():
+        for key, grouped_interfaces in self.outputs_list_display.items():
             for interface in grouped_interfaces:
-                if interface.kind in (
-                    InterfaceKind.InterfaceKindChoices.STRING,
-                    InterfaceKind.InterfaceKindChoices.INTEGER,
-                    InterfaceKind.InterfaceKindChoices.FLOAT,
-                    InterfaceKind.InterfaceKindChoices.BOOL,
-                ):
+                if key == "JSON":
                     columns.append(
                         Column(
                             title=interface.title, sort_field=interface.slug,
