@@ -58,6 +58,24 @@
             <h2>Algorithm Result</h2>
 
             {{ object.rendered_result_text }}
+            <br>
+            <table class="table table-borderless table-hover table-sm">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Interface</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for object in json %}
+                        <tr>
+                            <td>{{ object.interface.title }}</td>
+                            <td>{{ object.value }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
 
             {% for chart in charts %}
                 <h3>{{ chart.interface.title }}</h3>
@@ -73,11 +91,11 @@
                 </div>
             {% endfor %}
 
-            {% for pdf in pdfs %}
-                <h3>{{ pdf.interface.title }}</h3>
+            {% for file in files %}
+                <h3>{{ file.interface.title }}</h3>
                 <div><a class="btn btn-primary mb-3"
-                   href="{{ pdf.file.url }}">
-                        <i class="fa fa-download"></i>&nbsp;Download PDF
+                   href="{{ file.file.url }}">
+                        <i class="fa fa-download"></i>&nbsp;Download {{ file.interface.kind }}
                 </a></div>
             {% endfor %}
 
