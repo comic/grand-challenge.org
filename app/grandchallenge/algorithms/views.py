@@ -557,20 +557,18 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        def get_annotation(key):
-            return {
-                key.slug: Subquery(
-                    ComponentInterfaceValue.objects.filter(
-                        interface=key, algorithms_jobs_as_output=OuterRef("pk")
-                    ).values_list("value", flat=True)
-                )
-            }
-
+        interface_values = {}
         for interface in self.outputs_list_display["JSON"]:
-            queryset = queryset.annotate(**get_annotation(interface))
+            interface_values[interface.slug] = Subquery(
+                ComponentInterfaceValue.objects.filter(
+                    interface=interface,
+                    algorithms_jobs_as_output=OuterRef("pk"),
+                ).values_list("value", flat=True)
+            )
 
         return (
             queryset.filter(algorithm_image__algorithm=self.algorithm)
+            .annotate(**interface_values)
             .prefetch_related(
                 "outputs__image__files",
                 "outputs__interface",

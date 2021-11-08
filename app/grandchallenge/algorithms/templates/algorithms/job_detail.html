@@ -59,23 +59,25 @@
 
             {{ object.rendered_result_text }}
             <br>
-            <table class="table table-borderless table-hover table-sm">
-                <thead class="thead-light">
-                    <tr>
-                        <th>Interface</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for object in json %}
+            {% if json %}
+                <table class="table table-borderless table-hover table-sm">
+                    <thead class="thead-light">
                         <tr>
-                            <td>{{ object.interface.title }}</td>
-                            <td>{{ object.value }}</td>
+                            <th>Interface</th>
+                            <th>Value</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <br>
+                    </thead>
+                    <tbody>
+                        {% for object in json %}
+                            <tr>
+                                <td>{{ object.interface.title }}</td>
+                                <td>{{ object.value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <br>
+            {% endif %}
 
             {% for chart in charts %}
                 <h3>{{ chart.interface.title }}</h3>
