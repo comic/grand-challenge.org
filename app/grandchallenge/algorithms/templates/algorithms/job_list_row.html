@@ -5,6 +5,7 @@
 {% load pathlib %}
 {% load humanize %}
 {% load remove_whitespace %}
+{% load dict_lookup %}
 
 <a class="badge badge-primary"
    href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
@@ -73,26 +74,56 @@
 {% endif %}
 <split></split>
 
-{% if 'PDF' in output_interface_kinds %}
-    {% for pdf in object.special_outputs.PDF %}
-        <a class="badge badge-primary mr-1"
-           title="Download {{ pdf.interface.title }}"
-           href="{{ pdf.file.url }}">
-            <i class="fa fa-download"></i>
+{% for interface in outputs_list_display.JSON %}
+    {% get_dict_values object.slug_to_output interface.slug as json %}
+    {% if json %}
+        {{ json.value }}
+        <split></split>
+    {% else %}
+        <split></split>
+    {% endif %}
+{% endfor %}
+
+{% for interface in outputs_list_display.TIMG %}
+    {% get_dict_values object.slug_to_output interface.slug as image %}
+    {% if image %}
+        <a target="_blank" href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}" title="Open in detail view">
+            <img class="m-1 thumbnail"
+                 src="{{ image.file.url }}"
+                 alt="{{ image.file.name }}"
+                 loading="lazy">
         </a>
-    {% endfor %}
-    <split></split>
-{% endif %}
+        <split></split>
+    {% else %}
+        <split></split>
+    {% endif %}
+{% endfor %}
 
-
-{% if 'CHART' in output_interface_kinds %}
-    {% for chart in object.special_outputs.CHART %}
+{% for interface in outputs_list_display.CHART %}
+    {% get_dict_values object.slug_to_output interface.slug as chart %}
+    {% if chart %}
         <a class="badge badge-primary mr-1"
            title="Inspect {{ chart.interface.title }}"
            target="_blank"
            href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}">
             <i class="fas fa-chart-bar"></i>
         </a>
-    {% endfor %}
-    <split></split>
-{% endif %}
+        <split></split>
+    {% else %}
+        <split></split>
+    {% endif %}
+{% endfor %}
+
+{% for interface in outputs_list_display.FILE %}
+    {% get_dict_values object.slug_to_output interface.slug as file %}
+    {% if file %}
+        <a class="badge badge-primary mr-1"
+           title="Download {{ file.interface.title }} ({{ file.interface.kind }})"
+           href="{{ file.file.url }}">
+            <i class="fa fa-download"></i>
+        </a>
+        <split></split>
+    {% else %}
+        <split></split>
+    {% endif %}
+{% endfor %}

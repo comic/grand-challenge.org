@@ -12,6 +12,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -555,8 +556,19 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+
+        interface_values = {}
+        for interface in self.outputs_list_display["JSON"]:
+            interface_values[interface.slug] = Subquery(
+                ComponentInterfaceValue.objects.filter(
+                    interface=interface,
+                    algorithms_jobs_as_output=OuterRef("pk"),
+                ).values_list("value", flat=True)
+            )
+
         return (
             queryset.filter(algorithm_image__algorithm=self.algorithm)
+            .annotate(**interface_values)
             .prefetch_related(
                 "outputs__image__files",
                 "outputs__interface",
@@ -576,7 +588,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             {
                 "algorithm": self.algorithm,
                 "columns": self.columns,
-                "output_interface_kinds": self.output_interface_kinds,
+                "outputs_list_display": self.outputs_list_display,
             }
         )
         return context
@@ -593,21 +605,58 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             Column(title="Viewer", sort_field="inputs__image__files__file"),
         ]
 
-        if "PDF" in self.output_interface_kinds:
-            columns.append(
-                Column(title="PDF", sort_field="", classes=("nonSortable",)),
-            )
-
-        if "CHART" in self.output_interface_kinds:
-            columns.append(
-                Column(title="Chart", sort_field="", classes=("nonSortable",)),
-            )
+        for key, grouped_interfaces in self.outputs_list_display.items():
+            for interface in grouped_interfaces:
+                if key == "JSON":
+                    columns.append(
+                        Column(
+                            title=interface.title, sort_field=interface.slug,
+                        ),
+                    )
+                else:
+                    columns.append(
+                        Column(
+                            title=interface.title,
+                            sort_field="",
+                            classes=("nonSortable",),
+                        ),
+                    )
 
         return columns
 
     @cached_property
-    def output_interface_kinds(self):
-        return self.algorithm.outputs.values_list("kind", flat=True)
+    def outputs_list_display(self):
+        grouped_interfaces = {
+            "JSON": [],
+            "TIMG": [],
+            "CHART": [],
+            "FILE": [],
+        }
+
+        for interface in self.algorithm.outputs.all():
+            if interface.kind == InterfaceKind.InterfaceKindChoices.CHART:
+                grouped_interfaces["CHART"].append(interface)
+            elif interface.kind in (
+                InterfaceKind.InterfaceKindChoices.PDF,
+                InterfaceKind.InterfaceKindChoices.CSV,
+                InterfaceKind.InterfaceKindChoices.ZIP,
+                InterfaceKind.InterfaceKindChoices.SQREG,
+            ):
+                grouped_interfaces["FILE"].append(interface)
+            elif interface.kind in {
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            }:
+                grouped_interfaces["TIMG"].append(interface)
+            elif interface.kind in {
+                InterfaceKind.InterfaceKindChoices.STRING,
+                InterfaceKind.InterfaceKindChoices.INTEGER,
+                InterfaceKind.InterfaceKindChoices.FLOAT,
+                InterfaceKind.InterfaceKindChoices.BOOL,
+            }:
+                grouped_interfaces["JSON"].append(interface)
+
+        return grouped_interfaces
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):
@@ -636,10 +685,11 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
         viewers_form = ViewersForm()
         viewers_form.fields["action"].initial = ViewersForm.REMOVE
 
-        pdfs = []
+        files = []
         thumbnails = []
         charts = []
         charts_data = []
+        json = []
         for output in self.object.outputs.all():
             if (
                 output.interface.kind
@@ -647,15 +697,25 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
             ):
                 charts.append(output)
                 charts_data.append(output.value)
-            elif (
-                output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF
-            ):
-                pdfs.append(output)
+            elif output.interface.kind in [
+                InterfaceKind.InterfaceKindChoices.PDF,
+                InterfaceKind.InterfaceKindChoices.CSV,
+                InterfaceKind.InterfaceKindChoices.ZIP,
+                InterfaceKind.InterfaceKindChoices.SQREG,
+            ]:
+                files.append(output)
             elif output.interface.kind in [
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
                 InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             ]:
                 thumbnails.append(output)
+            elif output.interface.kind in [
+                InterfaceKind.InterfaceKindChoices.BOOL,
+                InterfaceKind.InterfaceKindChoices.FLOAT,
+                InterfaceKind.InterfaceKindChoices.INTEGER,
+                InterfaceKind.InterfaceKindChoices.STRING,
+            ]:
+                json.append(output)
 
         context.update(
             {
@@ -663,8 +723,9 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
                 "job_perms": get_perms(self.request.user, self.object),
                 "charts": charts,
                 "charts_data": charts_data,
-                "pdfs": pdfs,
+                "files": files,
                 "thumbnails": thumbnails,
+                "json": json,
             }
         )
 

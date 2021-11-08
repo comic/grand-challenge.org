@@ -25,7 +25,6 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
-    InterfaceKind,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -581,19 +580,12 @@ class Job(UUIDModel, ComponentJob):
         on_commit(run_job.apply_async)
 
     @cached_property
-    def special_outputs(self):
-        outputs = {
-            "CHART": [],
-            "PDF": [],
-        }
+    def slug_to_output(self):
+        outputs = {}
+
         for output in self.outputs.all():
-            if (
-                output.interface.kind
-                == InterfaceKind.InterfaceKindChoices.CHART
-            ):
-                outputs["CHART"].append(output)
-            if output.interface.kind == InterfaceKind.InterfaceKindChoices.PDF:
-                outputs["PDF"].append(output)
+            outputs[output.interface.slug] = output
+
         return outputs
 
 
