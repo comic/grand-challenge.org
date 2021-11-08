@@ -234,6 +234,5 @@ ul.socialaccount_providers > li {
 
 .thumbnail {
     max-height:90px;
-    height:auto;
-    width:auto;
+    max-width:90px;
 }

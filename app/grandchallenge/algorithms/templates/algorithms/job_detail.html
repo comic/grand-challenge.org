@@ -63,7 +63,7 @@
                 <table class="table table-borderless table-hover table-sm">
                     <thead class="thead-light">
                         <tr>
-                            <th>Interface</th>
+                            <th>Metric</th>
                             <th>Value</th>
                         </tr>
                     </thead>
@@ -71,7 +71,11 @@
                         {% for object in json %}
                             <tr>
                                 <td>{{ object.interface.title }}</td>
-                                <td>{{ object.value }}</td>
+                                {% if object.interface.kind == 'STR' %}
+                                    <td>{{ object.value|slice:"1:-1" }} </td>
+                                {% else %}
+                                    <td>{{ object.value }}</td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>
