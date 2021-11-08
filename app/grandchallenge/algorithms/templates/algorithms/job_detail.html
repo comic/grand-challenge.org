@@ -76,16 +76,15 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                <br>
             {% endif %}
 
             {% for chart in charts %}
-                <h3>{{ chart.interface.title }}</h3>
+                <h3 class="mt-3">{{ chart.interface.title }}</h3>
                 <div class="w-100" id="resultsChart_{{ forloop.counter0 }}"></div>
             {% endfor %}
 
             {% for thumbnail in thumbnails %}
-                <h3>{{ thumbnail.interface.title }}</h3>
+                <h3 class="mt-3">{{ thumbnail.interface.title }}</h3>
                 <div class="row">
                     <img class="m-3" height="400"
                          src="{{ thumbnail.file.url }}"
@@ -94,7 +93,7 @@
             {% endfor %}
 
             {% for file in files %}
-                <h3>{{ file.interface.title }}</h3>
+                <h3 class="mt-3">{{ file.interface.title }}</h3>
                 <div><a class="btn btn-primary mb-3"
                    href="{{ file.file.url }}">
                         <i class="fa fa-download"></i>&nbsp;Download {{ file.interface.kind }}
@@ -102,7 +101,7 @@
             {% endfor %}
 
             {% if object.status == object.SUCCESS %}
-                <a class="btn btn-primary mb-3"
+                <a class="btn btn-primary my-3"
                    href="{% url 'workstations:workstation-session-create' slug=object.algorithm_image.algorithm.workstation.slug %}?{% workstation_query algorithm_job=object config=object.algorithm_image.algorithm.workstation_config %}">
                     <i class="fa fa-eye"></i> Open Result in Viewer
                 </a>
