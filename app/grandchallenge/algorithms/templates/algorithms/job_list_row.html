@@ -77,7 +77,11 @@
 {% for interface in outputs_list_display.JSON %}
     {% get_dict_values object.slug_to_output interface.slug as json %}
     {% if json %}
-        {{ json.value }}
+        {% if json.interface.kind == 'STR' %}
+            <td>{{ json.value|slice:"1:-1" }} </td>
+        {% else %}
+            <td>{{ json.value }}</td>
+        {% endif %}
         <split></split>
     {% else %}
         <split></split>
