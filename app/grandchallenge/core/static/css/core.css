@@ -198,7 +198,7 @@ ul.socialaccount_providers > li {
     text-overflow: ellipsis;
 }
 
-@media only screen and (max-width: 580px) {
+@media only screen and (max-width: 768px) {
   .text-truncate-container {
       height: 12rem;
   }
@@ -235,4 +235,8 @@ ul.socialaccount_providers > li {
 .thumbnail {
     max-height:90px;
     max-width:90px;
+}
+
+.box-shadow {
+    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .1);
 }
