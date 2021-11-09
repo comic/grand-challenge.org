@@ -13,6 +13,8 @@ class TestObjectPermissionRequiredViews:
         p = PhaseFactory()
         w = WorkspaceFactory(phase=p)
         u = UserFactory()
+        u.user_profile.receive_newsletter = True
+        u.user_profile.save()
 
         for view_name, kwargs, permission, obj, redirect in [
             (
@@ -62,6 +64,8 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_list_views(self, client):
         w = WorkspaceFactory()
         u = UserFactory()
+        u.user_profile.receive_newsletter = True
+        u.user_profile.save()
 
         for view_name, kwargs, permission, objs in [
             (
