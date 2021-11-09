@@ -72,6 +72,10 @@ NON_ALGORITHM_INTERFACES = [
 class RepoNameValidationMixin:
     def clean_repo_name(self):
         repo_name = self.cleaned_data.get("repo_name")
+
+        if repo_name == "":
+            return
+
         if (
             Algorithm.objects.exclude(pk=self.instance.pk)
             .filter(repo_name=repo_name)
@@ -80,6 +84,7 @@ class RepoNameValidationMixin:
             raise ValidationError(
                 "This repository is already linked to another algorithm."
             )
+
         pattern = re.compile("^([^/]+/[^/]+)$")
         if "github.com" in repo_name:
             raise ValidationError(
