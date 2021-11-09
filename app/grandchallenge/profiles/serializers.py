@@ -20,4 +20,5 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "department",
             "location",
             "website",
+            "receive_newsletter",
         )

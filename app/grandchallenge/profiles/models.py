@@ -50,6 +50,12 @@ class UserProfile(models.Model):
         default=None, null=True, editable=False
     )
 
+    receive_newsletter = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Would you like to be put on our mailing list and receive newsletters about Grand Challenge updates?",
+    )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -61,6 +67,7 @@ class UserProfile(models.Model):
     def assign_permissions(self):
         if self.user != get_anonymous_user():
             assign_perm("change_userprofile", self.user, self)
+            assign_perm("view_userprofile", self.user, self)
 
     def get_absolute_url(self):
         return reverse(

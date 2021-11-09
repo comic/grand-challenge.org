@@ -1,0 +1,27 @@
+{% load static %}
+
+<script>
+    {% if user.is_authenticated and user.user_profile.receive_newsletter == None  %}
+        $(document).ready(function () {
+            $('#newsletterModal').modal('show');
+            $('#submit').on('click', function (event) {
+                var ele = document.getElementsByName('mailingListPreference');
+                for (i = 0; i < ele.length; i++) {
+                    if (ele[i].checked)
+                        var data = ele[i].value;
+                }
+                event.preventDefault();
+                $.ajax({
+                    url: "{% url 'api:profiles-user-detail' pk=user.pk %}",
+                    type: 'PATCH',
+                    data: JSON.stringify({receive_newsletter: JSON.parse(data)}),
+                    contentType: 'application/json',
+                    accept: 'application/json',
+                    success: function () {
+                        $('#newsletterModal').modal('hide');
+                    }
+                });
+            });
+        });
+    {% endif %}
+</script>

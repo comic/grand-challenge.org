@@ -44,6 +44,8 @@
 {% block body %}
     {# Block used by django-machina #}
 
+    {% include "grandchallenge/partials/newsletter_signup_modal.html" %}
+
     {% block navbar %}
         {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
     {% endblock %}
@@ -102,7 +104,15 @@
 {% endblock %}
 
 {% block script %}
+    <script>
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
+    </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
     {% include "grandchallenge/partials/script.html" %}
+    {% include "grandchallenge/partials/newsletter_modal_script.html" %}
     {% include "timezones/partials/detect_timezone.html" %}
 {% endblock %}
 

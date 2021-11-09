@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import CheckboxInput
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -27,7 +28,11 @@ class UserProfileForm(forms.ModelForm):
             "website",
             "display_organizations",
             "receive_notification_emails",
+            "receive_newsletter",
         )
+        widgets = {
+            "receive_newsletter": CheckboxInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,6 +45,7 @@ class UserProfileForm(forms.ModelForm):
             self.fields["last_name"].initial = self.instance.user.last_name
 
         self.fields["country"].label = "Location"
+        self.fields["receive_newsletter"].initial = True
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
@@ -78,4 +84,7 @@ class SignupForm(UserProfileForm):
         user_profile.department = self.cleaned_data["department"]
         user_profile.country = self.cleaned_data["country"]
         user_profile.website = self.cleaned_data["website"]
+        user_profile.receive_newsletter = self.cleaned_data[
+            "receive_newsletter"
+        ]
         user_profile.save()
