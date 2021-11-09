@@ -17,7 +17,7 @@
         let uppy = new Uppy.Core({
             id: `${window.location.pathname}-${inputId}`,
             autoProceed: true,
-            restrictions: { allowedFileTypes },
+            restrictions: { maxNumberOfFiles: 100, allowedFileTypes },
         });
 
         uppy.on('restriction-failed', (file, error) => {
