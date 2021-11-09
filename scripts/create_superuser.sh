@@ -11,9 +11,11 @@ fi
 user_id=$(id -u)
 create_su_shell="from django.contrib.auth import get_user_model
 from allauth.account.models import EmailAddress
+from grandchallenge.verifications.models import Verification
 get_user_model().objects.filter(username='$su_username').delete()
 su = get_user_model().objects.create_superuser('$su_username', '$su_username@example.com', '$su_username')
 EmailAddress.objects.filter(email=su.email).delete()
-EmailAddress.objects.create(user=su, email=su.email, verified=True, primary=True)"
+EmailAddress.objects.create(user=su, email=su.email, verified=True, primary=True)
+Verification.objects.create(user=su, is_verified=True)"
 echo "$create_su_shell" | docker-compose run -u "$user_id" --rm web python manage.py shell
 echo "Created superuser with username and password: $su_username"
