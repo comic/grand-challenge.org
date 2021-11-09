@@ -77,6 +77,8 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         e = EvaluationFactory()
         u = UserFactory()
+        u.user_profile.receive_newsletter = True
+        u.user_profile.save()
         VerificationFactory(user=u, is_verified=True)
 
         for view_name, kwargs, permission, obj in [
@@ -150,7 +152,8 @@ class TestObjectPermissionRequiredViews:
 
     def test_permission_filtered_views(self, client):
         u = UserFactory()
-
+        u.user_profile.receive_newsletter = True
+        u.user_profile.save()
         p = PhaseFactory()
         m = MethodFactory(phase=p)
         s = SubmissionFactory(phase=p, creator=u)
@@ -206,6 +209,8 @@ class TestViewFilters:
         c1, c2 = ChallengeFactory.create_batch(2, hidden=False)
 
         u = UserFactory()
+        u.user_profile.receive_newsletter = True
+        u.user_profile.save()
 
         e1 = EvaluationFactory(
             method__phase__challenge=c1,

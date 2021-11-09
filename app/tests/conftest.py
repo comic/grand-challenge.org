@@ -95,6 +95,10 @@ def generate_challenge_set():
     challenge.add_participant(participant1)
     non_participant = UserFactory()
 
+    for user in [creator, admin, participant, participant1, non_participant]:
+        user.user_profile.receive_newsletter = True
+        user.user_profile.save()
+
     return ChallengeSet(
         challenge=challenge,
         creator=creator,
@@ -131,12 +135,18 @@ def two_challenge_sets():
     challenge_set_1 = generate_challenge_set()
     challenge_set_2 = generate_challenge_set()
     admin12 = UserFactory()
+    admin12.user_profile.receive_newsletter = True
+    admin12.user_profile.save()
     challenge_set_1.challenge.add_admin(admin12)
     challenge_set_2.challenge.add_admin(admin12)
     participant12 = UserFactory()
+    participant12.user_profile.receive_newsletter = True
+    participant12.user_profile.save()
     challenge_set_1.challenge.add_participant(participant12)
     challenge_set_2.challenge.add_participant(participant12)
     admin1participant2 = UserFactory()
+    admin1participant2.user_profile.receive_newsletter = True
+    admin1participant2.user_profile.save()
     challenge_set_1.challenge.add_admin(admin1participant2)
     challenge_set_2.challenge.add_participant(admin1participant2)
     return two_challenge_sets(

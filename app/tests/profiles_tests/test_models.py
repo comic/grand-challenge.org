@@ -78,4 +78,4 @@ def test_submit_email_preference(client):
         content_type="application/json",
         user=u2,
     )
-    assert response.status_code == 403
+    assert response.status_code == 404
