@@ -73,27 +73,31 @@ class RepoNameValidationMixin:
     def clean_repo_name(self):
         repo_name = self.cleaned_data.get("repo_name")
 
-        if repo_name == "":
-            return
+        if repo_name != "":
+            pattern = re.compile("^([^/]+/[^/]+)$")
 
-        if (
-            Algorithm.objects.exclude(pk=self.instance.pk)
-            .filter(repo_name=repo_name)
-            .exists()
-        ):
-            raise ValidationError(
-                "This repository is already linked to another algorithm."
-            )
+            if "github.com" in repo_name:
+                raise ValidationError(
+                    "Please only provide the repository name, not the full "
+                    "url. E.g. 'comic/grand-challenge.org'"
+                )
 
-        pattern = re.compile("^([^/]+/[^/]+)$")
-        if "github.com" in repo_name:
-            raise ValidationError(
-                "Please only provide the repository name, not the full url. E.g. 'comic/grand-challenge.org'"
-            )
-        if not pattern.match(repo_name):
-            raise ValidationError(
-                "Please make sure you provide the repository name in the format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
-            )
+            if not pattern.match(repo_name):
+                raise ValidationError(
+                    "Please make sure you provide the repository name in the "
+                    "format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
+                )
+
+            if (
+                Algorithm.objects.exclude(pk=self.instance.pk)
+                .filter(repo_name=repo_name)
+                .exists()
+            ):
+                raise ValidationError(
+                    "This repository is already linked to another algorithm"
+                )
+
+        return repo_name
 
 
 class AlgorithmForm(
