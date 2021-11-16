@@ -464,7 +464,7 @@ class InterfaceKind:
         elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG:
             return ("image/png",)
         elif kind == InterfaceKind.InterfaceKindChoices.SQREG:
-            return ("application/vnd.sqlite3",)
+            return ("application/octet-stream",)
         else:
             raise RuntimeError(f"Unknown kind {kind}")
 
@@ -679,7 +679,7 @@ class ComponentInterfaceValue(models.Model):
                     "application/pdf",
                     "image/png",
                     "image/jpeg",
-                    "application/vnd.sqlite3",
+                    "application/octet-stream",
                 )
             ),
         ],
