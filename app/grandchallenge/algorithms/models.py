@@ -166,6 +166,40 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         default=False,
         help_text="Should this algorithm be advertised on the home page?",
     )
+    contact_email = models.EmailField(
+        blank=True,
+        help_text="This email will be listed as the contact email for the algorithm and will be visible to all users of Grand Challenge.",
+    )
+    display_editors = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Should the editors of this algorithm be listed on the information page?",
+    )
+    summary = models.TextField(
+        blank=True,
+        help_text="Briefly describe your algorithm and how it was developed.",
+    )
+    mechanism = models.TextField(
+        blank=True,
+        help_text="Provide a short technical description of your algorithm.",
+    )
+    validation_and_performance = models.TextField(
+        blank=True,
+        help_text="If you have performance metrics about your algorithm, you can report them here.",
+    )
+    uses_and_directions = models.TextField(
+        blank=True,
+        default="This algorithm was developed for research purposes only.",
+        help_text="Describe what your algorithm can be used for, but also what it should not be used for.",
+    )
+    warnings = models.TextField(
+        blank=True,
+        help_text="Describe potential risks and inappropriate settings for using the algorithm.",
+    )
+    common_error_messages = models.TextField(
+        blank=True,
+        help_text="Describe common error messages a user might encounter when trying out your algorithm and provide solutions for them.",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

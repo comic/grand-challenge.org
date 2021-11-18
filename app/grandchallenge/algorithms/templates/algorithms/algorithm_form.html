@@ -25,3 +25,17 @@
     {% crispy form %}
 
 {% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script>
+        if (document.getElementById("id_display_editors").value == ''){
+            document.getElementById("id_display_editors").classList.add('is-invalid');
+            const alert = document.createElement('span');
+            alert.id = "error_1_id_display_editors";
+            alert.className = "invalid-feedback"
+            alert.innerHTML = "<strong>This field is required.</strong>";
+            document.getElementById("div_id_display_editors").children[1].insertBefore(alert, document.getElementById("hint_id_display_editors"));
+        }
+    </script>
+{% endblock %}

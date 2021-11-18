@@ -1,6 +1,8 @@
 import re
 
+from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Field, Layout, Submit
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
@@ -11,11 +13,13 @@ from django.forms import (
     ModelChoiceField,
     ModelForm,
     ModelMultipleChoiceField,
+    Select,
     TextInput,
 )
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
+from prompt_toolkit import HTML
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -38,6 +42,10 @@ from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.subdomains.utils import reverse_lazy
+
+
+class ModelFactsTextField(Field):
+    template = "algorithms/model_facts_field.html"
 
 
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
@@ -162,6 +170,14 @@ class AlgorithmForm(
             "image_requires_gpu",
             "image_requires_memory_gb",
             "recurse_submodules",
+            "contact_email",
+            "display_editors",
+            "summary",
+            "mechanism",
+            "uses_and_directions",
+            "validation_and_performance",
+            "warnings",
+            "common_error_messages",
         )
         widgets = {
             "description": TextInput,
@@ -173,6 +189,15 @@ class AlgorithmForm(
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
+            "summary": MarkdownEditorWidget,
+            "mechanism": MarkdownEditorWidget,
+            "uses_and_directions": MarkdownEditorWidget,
+            "validation_and_performance": MarkdownEditorWidget,
+            "warnings": MarkdownEditorWidget,
+            "common_error_messages": MarkdownEditorWidget,
+            "display_editors": Select(
+                choices=(("", "-----"), (True, "Yes"), (False, "No"))
+            ),
         }
         help_texts = {
             "repo_name": format_html(
@@ -205,10 +230,108 @@ class AlgorithmForm(
                 ),
                 reverse_lazy("publications:create"),
             ),
+            "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
+            "detail_page_markdown": "<span class='text-danger'><i class='fa fa-exclamation-triangle'></i> This field will be deprecated. Please use the fields in the 'Algorithm description' tab to describe your algorithm instead.</span>",
+            "validation_and_performance": "If you have performance metrics about your algorithm, you can report them here. We recommend doing this in a table. <br>"
+            'Use a <a href = "https://www.tablesgenerator.com/markdown_tables"> markdown table generator</a>, or the following example to create your table:<br><br>'
+            "| | Metric 1 | Metric 2 |<br>"
+            "| --------- | --------- | -------- |<br>"
+            "| group 1 | 60% | 0.58 |<br>"
+            "| group 2 | 71% | 0.72 |<br>",
+            "mechanism": "Provide a short technical description of your algorithm. Think about the following aspects: <br>"
+            "- Target population: What clinical population does your algorithm target? <br>"
+            "- Algorithm description: Please provide a brief description of the methods of your algorithm.<br>"
+            "- Inputs and Outputs: The inputs and outputs your algorithm accepts and produces are automatically listed on the information page. <br>&nbsp;&nbsp;&nbsp;"
+            "Use this space here to provide additional details about them, if you wish.",
+            "common_error_messages": "Describe common error messages a user might encounter when trying out your algorithm and provide solutions for them. <br>"
+            "You might want to consider listing them in a table like this:<br><br>"
+            "| Error message | Solution | <br>"
+            "| --------- | ----------- | <br>"
+            "| error 1 | solution 1| <br>",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.attrs = {"novalidate": "novalidate"}
+        self.helper.layout = Layout(
+            TabHolder(
+                Tab(
+                    "Algorithm settings",
+                    "title",
+                    "description",
+                    "contact_email",
+                    "display_editors",
+                    "public",
+                    "organizations",
+                    "publications",
+                    "modalities",
+                    "structures",
+                    "logo",
+                    "social_image",
+                    "workstation",
+                    "workstation_config",
+                    "use_flexible_inputs",
+                    "inputs",
+                    "outputs",
+                    "credits_per_job",
+                    "image_requires_gpu",
+                    "image_requires_memory_gb",
+                    ModelFactsTextField("detail_page_markdown"),
+                    "additional_terms_markdown",
+                    "job_create_page_markdown",
+                    "result_template",
+                    "recurse_submodules",
+                ),
+                Tab(
+                    "Algorithm description",
+                    HTML(
+                        """
+                        <p>To make your algorithm accessible to other users, we ask you to provide some background information on how your algorithm works.
+                        Please refer to our <a href="https://grand-challenge.org/documentation/documenting-your-algorithm-for-users/">documentation</a> for examples for each of the sections below.
+                        Once filled in, the background information will appear in the 'Information' section on your algorithm page.
+                        It will be shown exactly as you style it here in the markdown editor, so make sure to check the preview before saving your changes.</p>
+                    """
+                    ),
+                    ModelFactsTextField("summary"),
+                    ModelFactsTextField("mechanism"),
+                    ModelFactsTextField("validation_and_performance"),
+                    ModelFactsTextField("uses_and_directions"),
+                    ModelFactsTextField("warnings"),
+                    ModelFactsTextField("common_error_messages"),
+                ),
+            ),
+            ButtonHolder(Submit("save", "Save")),
+        )
+
+        self.fields["contact_email"].required = True
+        self.fields["display_editors"].required = True
 
     def clean(self):
         cleaned_data = super().clean()
+
+        if not cleaned_data.get("title"):
+            raise ValidationError("A title is required")
+        if not cleaned_data.get("contact_email"):
+            raise ValidationError("A contact email is required")
+        if cleaned_data.get("display_editors") is None:
+            raise ValidationError(
+                "Indicate whether you want the editors to be listed on the Information page of this algorithm."
+            )
+        if not cleaned_data.get("logo"):
+            raise ValidationError(
+                "Please upload a square logo for your algorithm."
+            )
+        if not cleaned_data.get("workstation"):
+            raise ValidationError("Please choose a workstation.")
+        if not cleaned_data.get("inputs"):
+            raise ValidationError(
+                "Please choose the inputs for your algorithm."
+            )
+        if not cleaned_data.get("outputs"):
+            raise ValidationError(
+                "Please choose the outputs for your algorithm."
+            )
 
         inputs = {inpt.slug for inpt in cleaned_data["inputs"]}
 
@@ -227,6 +350,10 @@ class AlgorithmForm(
 class AlgorithmUpdateForm(AlgorithmForm):
     class Meta(AlgorithmForm.Meta):
         fields = AlgorithmForm.Meta.fields + ("repo_name",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout[0][0].append("repo_name")
 
 
 class AlgorithmImageForm(ContainerImageForm):

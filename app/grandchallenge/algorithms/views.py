@@ -156,7 +156,9 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.view_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
-        "algorithm_container_images__build__webhook_message"
+        "algorithm_container_images__build__webhook_message",
+        "algorithm_container_images__creator",
+        "editors_group__user_set",
     )
 
     def on_permission_check_fail(self, request, response, obj=None):
