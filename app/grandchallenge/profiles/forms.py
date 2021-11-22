@@ -55,7 +55,7 @@ class UserProfileForm(forms.ModelForm):
         cleaned_data = super().clean()
         url = cleaned_data.get("website")
 
-        if not url.startswith("https"):
+        if not url.startswith("https://"):
             raise ValidationError("Your url needs to start with https://")
 
 

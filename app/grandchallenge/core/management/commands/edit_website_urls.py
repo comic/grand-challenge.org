@@ -10,7 +10,7 @@ class Command(BaseCommand):
         users_with_website = UserProfile.objects.exclude(website="")
         count = 0
         for user in users_with_website:
-            if user.website and not user.website.startswith("https"):
+            if user.website and not user.website.startswith("https://"):
                 user.website = "https://" + re.sub(
                     r"http://", "", user.website
                 )
