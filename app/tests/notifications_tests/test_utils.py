@@ -5,11 +5,12 @@ from django.conf import settings
 from django.db import connection, reset_queries
 from machina.apps.forum.models import Forum
 
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
 )
-from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import UserFactory
 from tests.notifications_tests.factories import (
     ForumFactory,
@@ -20,11 +21,22 @@ from tests.notifications_tests.factories import (
 @pytest.mark.django_db
 def test_notification_list_view_num_queries(client, django_assert_num_queries):
     user1 = UserFactory()
+    phase = PhaseFactory()
+    eval = EvaluationFactory(
+        submission__phase=phase, status=Evaluation.FAILURE
+    )
+
+    # delete all prior notifications for easier testing below
+    Notification.objects.all().delete()
+
+    # create notification
     _ = NotificationFactory(
         user=user1,
-        message="requested access to",
-        target=AlgorithmFactory(),
-        type=Notification.Type.ACCESS_REQUEST,
+        type=Notification.Type.EVALUATION_STATUS,
+        actor=eval.submission.creator,
+        message="failed",
+        action_object=eval,
+        target=phase,
     )
 
     notifications = Notification.objects.select_related(
@@ -42,8 +54,6 @@ def test_notification_list_view_num_queries(client, django_assert_num_queries):
             "user",
         ).all()
     )
-    # double check that there is an action target for the test below to be meaningful
-    assert notifications[0].target
 
     try:
         settings.DEBUG = True
@@ -55,6 +65,14 @@ def test_notification_list_view_num_queries(client, django_assert_num_queries):
         notifications_with_prefetched_fks[0].target
         # when gfks have been prefetched, accessing the action target
         # no longer requires any db calls
+        assert len(connection.queries) == 0
+        # related objects of the generic foreign keys have also been prefetched
+        notifications[0].action_object.submission.phase.challenge
+        assert len(connection.queries) == 5
+        reset_queries()
+        notifications_with_prefetched_fks[
+            0
+        ].action_object.submission.phase.challenge
         assert len(connection.queries) == 0
     finally:
         settings.DEBUG = False

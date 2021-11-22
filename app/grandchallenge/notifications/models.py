@@ -209,7 +209,7 @@ class Notification(UUIDModel):
                 format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.get_absolute_url(),
-                    self.action_object,
+                    self.action_object.subject,
                 ),
                 format_html(
                     '<a href="{}">{}</a>',
@@ -221,14 +221,23 @@ class Notification(UUIDModel):
         elif (
             self.type
             == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
-            or self.type
+        ):
+            return format_html(
+                "{} {} {} {}.",
+                user_profile_link(self.actor),
+                self.message,
+                format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target.subject,
+                ),
+                naturaltime(self.created),
+            )
+        elif (
+            self.type
             == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
         ):
-            if (
-                self.type
-                == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
-                and self.target_content_type.model == "challenge"
-            ):
+            if self.target_content_type.model == "challenge":
                 notification_addition = format_html(
                     '<span class="text-truncate font-italic text-muted align-middle '
                     'mx-2">| Accept or decline <a href="{}"> here </a>.</span>',
