@@ -434,10 +434,9 @@ class AmazonECSExecutor:
             if "exitCode" in c
         }
 
-        if (
-            stop_code == "TaskFailedToStart"
-            and container_exit_codes.get(self._main_container_name) == 0
-        ):
+        if stop_code == "TaskFailedToStart" and container_exit_codes.get(
+            self._main_container_name
+        ) in {0, 1}:
             # Sometimes the entire task fails to start, but the main
             # container ran before the sidecar(s) could start
             pass
