@@ -75,7 +75,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         help_texts = {
             "workstation_config": format_lazy(
                 (
-                    "The workstation configuration to use for this archive. "
+                    "The viewer configuration to use for this archive. "
                     "If a suitable configuration does not exist you can "
                     '<a href="{}">create a new one</a>.'
                 ),
@@ -89,6 +89,10 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 ),
                 reverse_lazy("publications:create"),
             ),
+        }
+        labels = {
+            "workstation": "Viewer",
+            "workstation_config": "Viewer Configuration",
         }
 
 
