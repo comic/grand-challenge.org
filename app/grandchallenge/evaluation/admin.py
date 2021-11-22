@@ -1,7 +1,11 @@
 from django.contrib import admin
-from django.db.transaction import on_commit
 
-from grandchallenge.components.admin import ComponentImageAdmin
+from grandchallenge.components.admin import (
+    ComponentImageAdmin,
+    cancel_jobs,
+    deprovision_jobs,
+    requeue_jobs,
+)
 from grandchallenge.evaluation.models import (
     Evaluation,
     Method,
@@ -32,16 +36,6 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
 
 
-def requeue_evaluations(modeladmin, request, queryset):
-    queryset.update(status=Evaluation.RETRY)
-    for evaluation in queryset:
-        on_commit(evaluation.execute)
-
-
-requeue_evaluations.short_description = "Requeue selected evaluations"
-requeue_evaluations.allowed_permissions = ("change",)
-
-
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "submission", "status", "error_message")
@@ -69,7 +63,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "task_on_success",
         "task_on_failure",
     )
-    actions = (requeue_evaluations,)
+    actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
 
 
 admin.site.register(Phase, PhaseAdmin)
