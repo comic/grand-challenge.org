@@ -70,8 +70,8 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
     public = models.BooleanField(
         default=False,
         help_text=(
-            "If True, all logged in users can use this workstation, "
-            "otherwise, only the users group can use this workstation."
+            "If True, all logged in users can use this viewer, "
+            "otherwise, only the users group can use this viewer."
         ),
     )
 
