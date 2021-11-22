@@ -249,7 +249,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "institution": "test",
             "department": "test",
             "country": "NL",
-            "website": "http://www.example.com",
+            "website": "https://www.example.com",
             "accept_terms": True,
         }
         data.update(overwrite_data)  # overwrite any key in default if in data

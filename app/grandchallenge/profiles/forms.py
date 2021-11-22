@@ -51,12 +51,13 @@ class UserProfileForm(forms.ModelForm):
 
         return instance
 
-    def clean(self):
-        cleaned_data = super().clean()
-        url = cleaned_data.get("website")
+    def clean_website(self):
+        url = self.cleaned_data["website"]
 
-        if not url.startswith("https://"):
+        if url and not url.startswith("https://"):
             raise ValidationError("Your url needs to start with https://")
+
+        return url
 
 
 class SignupForm(UserProfileForm):
