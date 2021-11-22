@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-        {{ object|yesno:"Update,Create"}} Algorithm - {{ block.super }}
+        {{ object|yesno:"Update,Create"}} Algorithm {% if request.resolver_match.view_name == 'algorithms:update' %} Settings {% elif request.resolver_match.view_name == 'algorithms:description-update' %} Description {% endif %}- {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -20,22 +20,8 @@
 
 {% block content %}
 
-    <h2>{{ object|yesno:"Update,Create" }} Algorithm</h2>
+    <h2>{{ object|yesno:"Update,Create" }} Algorithm{% if request.resolver_match.view_name == 'algorithms:update' %} Settings {% elif request.resolver_match.view_name == 'algorithms:description-update' %} Description {% endif %}</h2>
 
     {% crispy form %}
 
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    <script>
-        if (document.getElementById("id_display_editors").value == ''){
-            document.getElementById("id_display_editors").classList.add('is-invalid');
-            const alert = document.createElement('span');
-            alert.id = "error_1_id_display_editors";
-            alert.className = "invalid-feedback"
-            alert.innerHTML = "<strong>This field is required.</strong>";
-            document.getElementById("div_id_display_editors").children[1].insertBefore(alert, document.getElementById("hint_id_display_editors"));
-        }
-    </script>
 {% endblock %}

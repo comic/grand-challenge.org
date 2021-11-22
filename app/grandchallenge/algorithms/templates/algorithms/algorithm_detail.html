@@ -103,8 +103,8 @@
     {% if 'change_algorithm' in algorithm_perms and not object.display_editors and not object.contact_email %}
         <div class="alert alert-warning" role="alert">
             Please update your algorithm settings. Grand Challenge now requires a <u>contact email address</u> for all algorithms.<br>
-            Please also indicate whether you want the algorithm editors to be displayed on the Information page and
-            take note of the new <u>Algorithm description</u> tab.
+            You will also need to indicate whether you want the algorithm editors to be displayed on the Information page.
+            Please also take note of the new <u>Algorithm description</u> form, accessible through the 'Update description' button.
         </div>
     {% endif %}
 
@@ -116,9 +116,13 @@
                 <h2 class="col-9 p-0">{{ object.title }}</h2>
                 {% if 'change_algorithm' in algorithm_perms %}
                     <span class="col-3 p-0 text-right my-auto">
-                        <a class="btn btn-primary"
+                        <a class="btn btn-primary btn-block mb-1"
                            href="{% url 'algorithms:update' slug=object.slug %}">
                             <i class="fa fa-cog"></i> Update Settings
+                        </a>
+                        <a class="btn btn-primary btn-block"
+                           href="{% url 'algorithms:description-update' slug=object.slug %}">
+                            <i class="fa fa-edit"></i> Update Description
                         </a>
                     </span>
                 {% endif %}

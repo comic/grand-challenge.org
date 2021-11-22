@@ -44,6 +44,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
+    AlgorithmDescriptionForm,
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
@@ -219,6 +220,18 @@ class AlgorithmUpdate(
 ):
     model = Algorithm
     form_class = AlgorithmUpdateForm
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+
+
+class AlgorithmDescriptionUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    VerificationRequiredMixin,
+    UpdateView,
+):
+    model = Algorithm
+    form_class = AlgorithmDescriptionForm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
