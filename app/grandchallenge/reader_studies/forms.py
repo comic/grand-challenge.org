@@ -53,15 +53,15 @@ READER_STUDY_HELP_TEXTS = {
     "social_image": "An image for this reader study which is displayed when posting the reader study link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
     "description": "Describe what this reader study is for.",
     "workstation": (
-        "Which workstation should be used for this reader study? "
-        "Note that in order to add a workstation you must be a member "
-        "of that workstations users group. "
-        "If you do not see the workstation that you want to use, "
-        "please contact the admin for that workstation."
+        "Which viewer should be used for this reader study? "
+        "Note that in order to add a viewer you must be a member "
+        "of that viewers users group. "
+        "If you do not see the viewer that you want to use, "
+        "please contact the admin for that viewer."
     ),
     "workstation_config": format_lazy(
         (
-            "The workstation configuration to use for this reader study. "
+            "The viewer configuration to use for this reader study. "
             "If a suitable configuration does not exist you can "
             '<a href="{}">create a new one</a>.'
         ),
@@ -111,6 +111,10 @@ class ReaderStudyCreateForm(
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
+        }
+        labels = {
+            "workstation": "Viewer",
+            "workstation_config": "Viewer Configuration",
         }
 
     def clean(self):
