@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -49,6 +50,14 @@ class UserProfileForm(forms.ModelForm):
         instance.user.save()
 
         return instance
+
+    def clean_website(self):
+        url = self.cleaned_data["website"]
+
+        if url and not url.startswith("https://"):
+            raise ValidationError("Your url needs to start with https://")
+
+        return url
 
 
 class SignupForm(UserProfileForm):
