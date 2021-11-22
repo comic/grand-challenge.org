@@ -76,11 +76,39 @@ def prefetch_generic_foreign_key_objects(queryset):
     gfks = _queryset_foreign_keys(queryset)
     gfks_data = _content_type_to_content_mapping_for_gfks(queryset, gfks)
     for content_type, object_pks in gfks_data.items():
-        gfk_models = prefetch_generic_foreign_key_objects(
-            content_type.model_class()
-            .objects.filter(pk__in=object_pks)
-            .select_related()
-        )
+        if (
+            content_type.model == "submission"
+            and content_type.app_label == "evaluation"
+        ):
+            gfk_models = prefetch_generic_foreign_key_objects(
+                content_type.model_class()
+                .objects.filter(pk__in=object_pks)
+                .select_related("phase__challenge", "creator__verification")
+            )
+        elif (
+            content_type.model == "evaluation"
+            and content_type.app_label == "evaluation"
+        ):
+            gfk_models = prefetch_generic_foreign_key_objects(
+                content_type.model_class()
+                .objects.filter(pk__in=object_pks)
+                .select_related(
+                    "submission__phase__challenge",
+                    "submission__creator__verification",
+                )
+            )
+        elif content_type.model == "user" and content_type.app_label == "auth":
+            gfk_models = prefetch_generic_foreign_key_objects(
+                content_type.model_class()
+                .objects.filter(pk__in=object_pks)
+                .select_related("user_profile", "verification")
+            )
+        else:
+            gfk_models = prefetch_generic_foreign_key_objects(
+                content_type.model_class()
+                .objects.filter(pk__in=object_pks)
+                .select_related()
+            )
         for gfk_model in gfk_models:
             for data in _queryset_gfk_content_generator(queryset, gfks):
                 if data.content_type != content_type:
