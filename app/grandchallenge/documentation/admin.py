@@ -11,6 +11,7 @@ class AdminDocPageForm(ModelForm):
         model = DocPage
         fields = (
             "title",
+            "slug",
             "content",
             "parent",
         )
