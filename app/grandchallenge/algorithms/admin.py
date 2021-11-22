@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.db.models import Count
-from django.db.transaction import on_commit
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.models import (
@@ -9,8 +8,12 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.components.admin import ComponentImageAdmin
-from grandchallenge.components.tasks import deprovision_job
+from grandchallenge.components.admin import (
+    ComponentImageAdmin,
+    cancel_jobs,
+    deprovision_jobs,
+    requeue_jobs,
+)
 
 
 class AlgorithmAdmin(GuardedModelAdmin):
@@ -36,40 +39,6 @@ class AlgorithmAdmin(GuardedModelAdmin):
             container_count=Count("algorithm_container_images")
         )
         return queryset
-
-
-def requeue_jobs(modeladmin, request, queryset):
-    """
-    Retries the selected jobs.
-
-    Note that any linked task will not be executed.
-    """
-    queryset.update(status=Job.RETRY)
-    for job in queryset:
-        on_commit(job.execute)
-
-
-requeue_jobs.short_description = "Requeue selected jobs"
-requeue_jobs.allowed_permissions = ("change",)
-
-
-def cancel_jobs(modeladmin, request, queryset):
-    queryset.filter(
-        status__in=[Job.PENDING, Job.PROVISIONED, Job.EXECUTING, Job.RETRY]
-    ).update(status=Job.CANCELLED)
-
-
-cancel_jobs.short_description = "Cancel selected jobs"
-cancel_jobs.allowed_permissions = ("change",)
-
-
-def deprovision_jobs(modeladmin, request, queryset):
-    for job in queryset:
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
-
-
-deprovision_jobs.short_description = "Deprovision jobs"
-deprovision_jobs.allowed_permissions = ("change",)
 
 
 class JobAdmin(GuardedModelAdmin):
