@@ -44,6 +44,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
+    AlgorithmDescriptionForm,
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
@@ -156,7 +157,9 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.view_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
-        "algorithm_container_images__build__webhook_message"
+        "algorithm_container_images__build__webhook_message",
+        "algorithm_container_images__creator",
+        "editors_group__user_set",
     )
 
     def on_permission_check_fail(self, request, response, obj=None):
@@ -217,6 +220,18 @@ class AlgorithmUpdate(
 ):
     model = Algorithm
     form_class = AlgorithmUpdateForm
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+
+
+class AlgorithmDescriptionUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    VerificationRequiredMixin,
+    UpdateView,
+):
+    model = Algorithm
+    form_class = AlgorithmDescriptionForm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 

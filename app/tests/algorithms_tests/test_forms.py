@@ -130,6 +130,8 @@ def test_algorithm_create(client, uploaded_image):
                 "image_requires_memory_gb": 4,
                 "inputs": [ci.pk],
                 "outputs": [ci.pk],
+                "contact_email": creator.email,
+                "display_editors": True,
             },
             follow=True,
             user=creator,

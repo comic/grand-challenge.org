@@ -99,25 +99,122 @@
 
 {% block content %}
     {% get_obj_perms request.user for object as "algorithm_perms" %}
+
+    {% if 'change_algorithm' in algorithm_perms and not object.display_editors and not object.contact_email %}
+        <div class="alert alert-warning" role="alert">
+            Please update your algorithm settings. Grand Challenge now requires a <u>contact email address</u> for all algorithms.<br>
+            You will also need to indicate whether you want the algorithm editors to be displayed on the Information page.
+            Please also take note of the new <u>Algorithm description</u> form, accessible through the 'Update description' button.
+        </div>
+    {% endif %}
+
     <div class="tab-content" id="v-pills-tabContent">
         <div class="tab-pane fade show" id="information" role="tabpanel"
              aria-labelledby="v-pills-information-tab">
 
-            <h2>{{ object.title }}</h2>
-            {% comment %}
-            {# TODO: Some public algorithms must be anonymous, do not include author names by default #}
-            <h5>
-                By
-                {% for user in object.editors_group.user_set.all %}
-                    <a href="{% url 'profile-detail' username=user.username %}">
-                        {# @formatter:off #}
-                        {% firstof user.get_full_name user.username %}</a>{% if forloop.revcounter0 > 1 %},{% elif forloop.revcounter0 == 1 %} and {% else %}.{% endif %}
-                        {# @formatter:on #}
-                {% endfor %}
-            </h5>
-            {% endcomment %}
+            <div class="row col-12 m-0 p-0">
+                <h2 class="col-9 p-0">{{ object.title }}</h2>
+                {% if 'change_algorithm' in algorithm_perms %}
+                    <span class="col-3 p-0 text-right my-auto">
+                        <a class="btn btn-primary btn-block mb-1"
+                           href="{% url 'algorithms:update' slug=object.slug %}">
+                            <i class="fa fa-cog"></i> Update Settings
+                        </a>
+                        <a class="btn btn-primary btn-block"
+                           href="{% url 'algorithms:description-update' slug=object.slug %}">
+                            <i class="fa fa-edit"></i> Update Description
+                        </a>
+                    </span>
+                {% endif %}
+            </div>
+            <hr>
 
             {{ object.detail_page_markdown|md2html }}
+
+            <h3 class="mb-3">About</h3>
+            {% if object.display_editors %}
+                <div class="row mb-2">
+                    <div class="col-3 font-weight-bold">Creator{{ object.editors_group.user_set.all|pluralize }}:</div>
+                    <div class="col-9">
+                        {% for user in object.editors_group.user_set.all %}
+                            <p class="m-0">{{ user|user_profile_link }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            {% if object.contact_email %}
+                <div class="row mb-2">
+                    <div class="col-3 font-weight-bold">Contact email:</div>
+                    <div class="col-9"><a href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a></div>
+                </div>
+            {% endif %}
+            {% if object.latest_ready_image %}
+                <div class="row mb-2">
+                    <div class="col-3 font-weight-bold">Last updated:</div>
+                    <div class="col-9">{{ object.latest_ready_image.created }}</div>
+                </div>
+            {% endif %}
+            {% if object.publications.all %}
+                <div class="row mb-2">
+                    <div class="col-3 font-weight-bold">Associated publication{{ object.publications.all|pluralize }}:
+                    </div>
+                    <div class="col-9">
+                        {% for publication in object.publications.all %}
+                            <a class="btn btn-outline-primary btn-sm p-1 mr-1" href="{{ publication.url }}"
+                               title="{{ publication.title }}">
+                                <i class="fas fa-file fa-fw"></i> Article
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            <div class="row mb-2">
+                <div class="col-3 font-weight-bold">Inputs:</div>
+                <div class="col-9">
+                    <ul class="pl-3">
+                        {% for input in object.inputs.all %}
+                            <li>{{ input.title }}&nbsp;{% if input.description %}
+                                <span class="text-muted"> ({{ input.description }})</span>{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-3 font-weight-bold">Outputs:</div>
+                <div class="col-9">
+                    <ul class="pl-3">
+                        {% for output in object.outputs.all %}
+                            <li>{{ output.title }}&nbsp;{% if output.description %}
+                                <span class="text-muted"> ({{ output.description }})</span>{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            {% if object.summary %}
+                <h3 class="mt-5 mb-3">Summary</h3>
+                {{ object.summary|md2html }}
+            {% endif %}
+            {% if object.mechanism %}
+                <h3 class="mt-5 mb-3">Mechanism</h3>
+                {{ object.mechanism|md2html }}
+            {% endif %}
+            {% if object.validation_and_performance %}
+                <h3 class="mt-5 mb-3">Validation and Performance</h3>
+                {{ object.validation_and_performance|md2html }}
+            {% endif %}
+            {% if object.uses_and_directions %}
+                <h3 class="mt-5 mb-3">Uses and Directions</h3>
+                {{ object.uses_and_directions|md2html }}
+            {% endif %}
+            {% if object.warnings %}
+                <h3 class="mt-5 mb-3">Warnings</h3>
+                {{ object.warnings|md2html }}
+            {% endif %}
+            {% if object.common_error_messages %}
+                <h3 class="mt-5 mb-3">Common Error Messages</h3>
+                {{ object.common_error_messages|md2html }}
+            {% endif %}
 
             {% if "change_algorithm" in algorithm_perms %}
                 <hr>
