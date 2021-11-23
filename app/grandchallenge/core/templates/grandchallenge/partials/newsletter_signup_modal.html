@@ -11,7 +11,7 @@
                 </div>
                 <div class="modal-body">
                     <p>Would you like to receive emails about announcements and updates on Grand Challenge?</p>
-                    <form action="{% url 'newsletter-sign-up' username=request.user.username %}?next={{ request.path }}" method="post">
+                    <form action="{% url 'newsletter-sign-up' username=request.user.username %}?next={{ request.build_absolute_uri }}" method="post">
                         {% csrf_token %}
                         {% crispy newletter_signup_form %}
                     </form>
