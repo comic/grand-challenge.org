@@ -186,6 +186,9 @@ class NewsletterSignUp(
         )
         return super().form_valid(form)
 
+    def get_success_url(self):
+        return self.request.GET.get("next")
+
 
 class UserProfileViewSet(GenericViewSet):
     serializer_class = UserProfileSerializer

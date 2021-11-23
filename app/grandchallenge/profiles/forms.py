@@ -106,11 +106,7 @@ class NewsletterSignupForm(SaveFormInitMixin, forms.ModelForm):
         fields = ("receive_newsletter",)
         widgets = {
             "receive_newsletter": Select(
-                choices=(
-                    ("", "-----"),
-                    (True, "Yes, sign me up!"),
-                    (False, "No, thanks."),
-                )
+                choices=((True, "Yes, sign me up!"), (False, "No, thanks."),)
             ),
         }
 
