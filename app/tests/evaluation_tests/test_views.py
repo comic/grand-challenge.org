@@ -77,6 +77,8 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         e = EvaluationFactory()
         u = UserFactory()
+        u.user_profile.receive_newsletter = True
+        u.user_profile.save()
         VerificationFactory(user=u, is_verified=True)
 
         for view_name, kwargs, permission, obj in [
