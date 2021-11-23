@@ -36,8 +36,6 @@ def test_registration_request_create_post(client, two_challenge_sets):
 @pytest.mark.django_db
 def test_duplicate_registration_denied(client, two_challenge_sets):
     user = UserFactory()
-    user.user_profile.receive_newsletter = True
-    user.user_profile.save()
     assert not RegistrationRequest.objects.filter(
         user=user, challenge=two_challenge_sets.challenge_set_1.challenge
     ).exists()

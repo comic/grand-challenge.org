@@ -107,9 +107,6 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
         tests += ((two_workstation_sets.ws1.user1, 403),)
 
     for test in tests:
-        if test[0] and test[0].user_profile.receive_newsletter is None:
-            test[0].user_profile.receive_newsletter = True
-            test[0].user_profile.save()
         response = get_view_for_user(
             viewname=viewname,
             client=client,
@@ -195,9 +192,6 @@ def test_session_proxy_permissions(client, two_workstation_sets):
     )
 
     for test in tests:
-        if test[0] and test[0].user_profile.receive_newsletter is None:
-            test[0].user_profile.receive_newsletter = True
-            test[0].user_profile.save()
         response = get_view_for_user(
             viewname="session-proxy",
             client=client,

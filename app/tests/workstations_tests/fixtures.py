@@ -31,8 +31,6 @@ def workstation_set():
 
     for user in [e, u, u1]:
         VerificationFactory(user=user, is_verified=True)
-        u.user_profile.receive_newsletter = True
-        u.user_profile.save()
 
     wss = WorkstationSet(workstation=ws, editor=e, user=u, user1=u1, image=wsi)
     wss.workstation.add_editor(user=e)

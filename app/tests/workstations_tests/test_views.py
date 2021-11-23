@@ -19,8 +19,6 @@ from tests.verification_tests.factories import VerificationFactory
 @pytest.fixture
 def workstation_creator():
     u = UserFactory()
-    u.user_profile.receive_newsletter = True
-    u.user_profile.save()
     g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
     g.user_set.add(u)
     return u
@@ -71,8 +69,6 @@ def test_workstation_create_detail(
 def test_workstation_list_view(client):
     w1, w2 = WorkstationFactory(), WorkstationFactory()
     user = UserFactory()
-    user.user_profile.receive_newsletter = True
-    user.user_profile.save()
     response = get_view_for_user(
         viewname="workstations:list", client=client, user=user
     )
@@ -179,8 +175,6 @@ def test_workstationimage_create(client):
 @pytest.mark.django_db
 def test_workstationimage_detail(client):
     user = UserFactory()
-    user.user_profile.receive_newsletter = True
-    user.user_profile.save()
     ws = WorkstationFactory()
     wsi1, wsi2 = (
         WorkstationImageFactory(workstation=ws),
@@ -269,8 +263,6 @@ def test_session_create(client):
 @pytest.mark.django_db
 def test_session_redirect(client):
     user = UserFactory()
-    user.user_profile.receive_newsletter = True
-    user.user_profile.save()
     wsi = WorkstationImageFactory(
         workstation__title=settings.DEFAULT_WORKSTATION_SLUG, ready=True
     )
@@ -295,8 +287,6 @@ def test_session_redirect(client):
 @pytest.mark.django_db
 def test_session_detail(client):
     s1, s2 = SessionFactory(), SessionFactory()
-    s1.creator.user_profile.receive_newsletter = True
-    s1.creator.user_profile.save()
     response = get_view_for_user(
         client=client,
         viewname="session-detail",
@@ -316,9 +306,6 @@ def test_session_detail(client):
 @pytest.mark.django_db
 def test_workstation_proxy(client):
     u1, u2 = UserFactory(), UserFactory()
-    for user in [u1, u2]:
-        user.user_profile.receive_newsletter = True
-        user.user_profile.save()
     session = SessionFactory(creator=u1)
 
     url = reverse(

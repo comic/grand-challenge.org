@@ -1,4 +1,5 @@
 {% load crispy_forms_tags %}
+{% load url %}
 
 {% if request.user.is_authenticated and request.user.user_profile.receive_newsletter == None  %}
     <div class="modal fade" tabindex="-1" role="dialog" id="newsletterModal"

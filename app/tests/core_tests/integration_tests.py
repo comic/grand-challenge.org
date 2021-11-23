@@ -491,13 +491,9 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         a challenge.
         """
         user = self._create_user({"username": "user2", "email": "ab@cd.com"})
-        user.user_profile.receive_newsletter = True
-        user.user_profile.save()
         testproject = self._create_challenge_in_admin(user, "user1project")
         testpage1 = create_page(testproject, "testpage1")
         create_page(testproject, "testpage2")
-        self.root.user_profile.receive_newsletter = True
-        self.root.user_profile.save()
         self._test_page_can_be_viewed(user, testpage1)
         self._test_page_can_be_viewed(self.root, testpage1)
 
