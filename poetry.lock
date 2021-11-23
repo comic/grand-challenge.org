@@ -6,7 +6,6 @@ category = "dev"
 optional = false
 python-versions = "*"
 
-
 [[package]]
 name = "amqp"
 version = "5.0.6"
@@ -836,7 +835,7 @@ djangorestframework = "*"
 
 [[package]]
 name = "docker"
-version = "5.0.0"
+version = "5.0.3"
 description = "A Python library for the Docker Engine API."
 category = "main"
 optional = false
@@ -2666,8 +2665,8 @@ djangorestframework-guardian = [
     {file = "djangorestframework_guardian-0.3.0-py2.py3-none-any.whl", hash = "sha256:3bd3dd6ea58e1bceca5048faf6f8b1a93bb5dcff30ba5eb91b9a0e190a48a0c7"},
 ]
 docker = [
-    {file = "docker-5.0.0-py2.py3-none-any.whl", hash = "sha256:fc961d622160e8021c10d1bcabc388c57d55fb1f917175afbe24af442e6879bd"},
-    {file = "docker-5.0.0.tar.gz", hash = "sha256:3e8bc47534e0ca9331d72c32f2881bb13b93ded0bcdeab3c833fb7cf61c0a9a5"},
+    {file = "docker-5.0.3-py2.py3-none-any.whl", hash = "sha256:7a79bb439e3df59d0a72621775d600bc8bc8b422d285824cb37103eab91d1ce0"},
+    {file = "docker-5.0.3.tar.gz", hash = "sha256:d916a26b62970e7c2f554110ed6af04c7ccff8e9f81ad17d0d40c75637e227fb"},
 ]
 docutils = [
     {file = "docutils-0.16-py2.py3-none-any.whl", hash = "sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af"},
