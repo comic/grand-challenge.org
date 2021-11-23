@@ -6,6 +6,7 @@ from guardian.utils import get_anonymous_user
 
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
+from grandchallenge.profiles.forms import NewsletterSignupForm
 
 logger = logging.getLogger(__name__)
 
@@ -75,4 +76,10 @@ def help_forum(*_, **__):
 def about_page(*_, **__):
     return {
         "about_page_url": settings.FLATPAGE_ABOUT_URL,
+    }
+
+
+def newsletter_signup(*_, **__):
+    return {
+        "newletter_signup_form": NewsletterSignupForm,
     }

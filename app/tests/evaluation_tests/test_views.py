@@ -150,7 +150,6 @@ class TestObjectPermissionRequiredViews:
 
     def test_permission_filtered_views(self, client):
         u = UserFactory()
-
         p = PhaseFactory()
         m = MethodFactory(phase=p)
         s = SubmissionFactory(phase=p, creator=u)
@@ -206,7 +205,6 @@ class TestViewFilters:
         c1, c2 = ChallengeFactory.create_batch(2, hidden=False)
 
         u = UserFactory()
-
         e1 = EvaluationFactory(
             method__phase__challenge=c1,
             submission__phase__challenge=c1,
