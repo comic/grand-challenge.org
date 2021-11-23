@@ -354,6 +354,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.footer_links",
                 "grandchallenge.core.context_processors.help_forum",
                 "grandchallenge.core.context_processors.about_page",
+                "grandchallenge.core.context_processors.newsletter_signup",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [

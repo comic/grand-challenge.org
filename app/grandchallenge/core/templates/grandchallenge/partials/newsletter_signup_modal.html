@@ -1,0 +1,21 @@
+{% load crispy_forms_tags %}
+
+{% if request.user.is_authenticated and request.user.user_profile.receive_newsletter == None  %}
+    <div class="modal fade" tabindex="-1" role="dialog" id="newsletterModal"
+         aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sign up for the Grand Challenge Newsletter!</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Would you like to receive emails about announcements and updates on Grand Challenge?</p>
+                    <form action="{% url 'newsletter-sign-up' username=request.user.username %}" method="post">
+                        {% csrf_token %}
+                        {% crispy newletter_signup_form %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
