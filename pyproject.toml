@@ -117,4 +117,4 @@ sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
 sphinxcontrib-django = "*"
-django-capture-on-commit-callbacks = "<1.7.0"  # Backport from Django 3.2, can be removed. 1.7.0 has an API change that needs to be fixed
+django-capture-on-commit-callbacks = "*"  # Backport from Django 4.0, can be removed
