@@ -42,7 +42,6 @@ $(document).ready(function () {
         autoWidth: false,
         dom: getDataTablesDOMTemplate(),
         buttons: getDataTablesButtons(),
-        scrollX: true
     });
 
     if (allowMetricsToggling === true) {
@@ -214,7 +213,6 @@ function getDataTablesButtons() {
                         dt.columns('.toggleable').visible(true);
                         $(node).addClass('metrics-hidden');
                         $(node).text('Hide additional metrics');
-                        setTimeout($('#ajaxDataTable').DataTable().columns.adjust, 300);
                     }
                 }
             },
