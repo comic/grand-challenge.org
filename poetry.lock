@@ -379,19 +379,19 @@ dev = ["check-manifest"]
 
 [[package]]
 name = "django"
-version = "3.1.13"
+version = "3.2.9"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-asgiref = ">=3.2.10,<4"
+asgiref = ">=3.3.2,<4"
 pytz = "*"
 sqlparse = ">=0.2.2"
 
 [package.extras]
-argon2 = ["argon2-cffi (>=16.1.0)"]
+argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
@@ -2346,7 +2346,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "926b6b2eb3535d43eb14fb7fcdee0f775d0ca0a62fa0b8de8a334eaa77110aeb"
+content-hash = "6aa1abf08475a62c31ff9f50f0328642cef66b3aff34264f462906a9c7658cf8"
 
 [metadata.files]
 alabaster = [
@@ -2602,8 +2602,8 @@ disposable-email-domains = [
     {file = "disposable_email_domains-0.0.66-py2.py3-none-any.whl", hash = "sha256:7a31510182de3f38a09d6101561ca608b0433f118a8a2ea9ed3821f22269c3db"},
 ]
 django = [
-    {file = "Django-3.1.13-py3-none-any.whl", hash = "sha256:a6e0d1ff11095b7394c079ade7094c73b2dc3df4a7a373c9b58ed73b77a97feb"},
-    {file = "Django-3.1.13.tar.gz", hash = "sha256:9f8be75646f62204320b195062b1d696ba28aa3d45ee72fb7c888ffaebc5bdb2"},
+    {file = "Django-3.2.9-py3-none-any.whl", hash = "sha256:e22c9266da3eec7827737cde57694d7db801fedac938d252bf27377cec06ed1b"},
+    {file = "Django-3.2.9.tar.gz", hash = "sha256:51284300f1522ffcdb07ccbdf676a307c6678659e1284f0618e5a774127a6a08"},
 ]
 django-activity-stream = [
     {file = "django-activity-stream-0.10.0.tar.gz", hash = "sha256:2cec600bb5a543dd402747afeeec237e9848993385049adfedc16ec97a6d86f2"},

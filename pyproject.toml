@@ -39,7 +39,7 @@ celery = {extras = ["redis", "sqs"], version = "!=5.0.6,<5.1"}
 # Also pin kombu for Celery 5.1 due to https://github.com/celery/kombu/issues/1358
 # When upgrading kombu to 5.1 remove SQS patch in base container
 kombu = "<5.1"
-django = "<3.2"
+django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
 djangorestframework = "*"
