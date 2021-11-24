@@ -36,6 +36,7 @@ class NotificationAdmin(ModelAdmin):
         "target_content_type",
         "action_object_content_type",
     )
+    search_fields = ("user__username",)
 
 
 admin.site.unregister(Follow)
