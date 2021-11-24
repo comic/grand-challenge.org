@@ -447,7 +447,7 @@ tags = ["django-taggit"]
 
 [[package]]
 name = "django-capture-on-commit-callbacks"
-version = "1.5.0"
+version = "1.6.0"
 description = "Capture and make assertions on transaction.on_commit() callbacks."
 category = "dev"
 optional = false
@@ -2292,7 +2292,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "b6fc2b999f85c69805df01400a136868383b66d691da16b2f8bc804ce2213e1c"
+content-hash = "86d29fd476d1b142350548461d43af9b1ddc9e537a39afe869c3d5ab441b642f"
 
 [metadata.files]
 alabaster = [
@@ -2561,8 +2561,8 @@ django-autocomplete-light = [
     {file = "django-autocomplete-light-3.8.2.tar.gz", hash = "sha256:25f0ea71b59a8f1f97a8a564e33e429570b0ea77c5eac81f7beb283073b4ba90"},
 ]
 django-capture-on-commit-callbacks = [
-    {file = "django-capture-on-commit-callbacks-1.5.0.tar.gz", hash = "sha256:1cec8fb62a9bcc1acdf82d56fb4b6c9780d03243b7e76fb49ffc7cfc1bbba24b"},
-    {file = "django_capture_on_commit_callbacks-1.5.0-py3-none-any.whl", hash = "sha256:694bbbc68d4128537dbcc8302596edd88e6ed10aa5805721cc622764dac64d4e"},
+    {file = "django-capture-on-commit-callbacks-1.6.0.tar.gz", hash = "sha256:dee1acb82a1f6ac82a48cf785e70c67d14aa8e9cedf823a613ace57d84371aa9"},
+    {file = "django_capture_on_commit_callbacks-1.6.0-py3-none-any.whl", hash = "sha256:a7d9b7d43c3f36da8ad9974e0b897ebb105f18e7bc5bf18f1c65465e7c328ea7"},
 ]
 django-celery-beat = [
     {file = "django-celery-beat-2.2.1.tar.gz", hash = "sha256:97ae5eb309541551bdb07bf60cc57cadacf42a74287560ced2d2c06298620234"},
