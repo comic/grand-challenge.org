@@ -1,4 +1,5 @@
 from datetime import timedelta
+from itertools import chain
 
 import pytest
 from django.test import TestCase, override_settings
@@ -49,8 +50,12 @@ class TestSubmission(TestCase):
             phase=self.method.phase, algorithm_image=self.algorithm_image,
         )
 
-        with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks() as callbacks:
             create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+
+        # Execute the callbacks non-recursively
+        for c in callbacks:
+            c()
 
         assert Job.objects.count() == 2
         assert [
@@ -64,9 +69,15 @@ class TestSubmission(TestCase):
             phase=self.method.phase, algorithm_image=self.algorithm_image,
         )
 
-        with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=False) as callbacks1:
             create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+
+        with capture_on_commit_callbacks(execute=False) as callbacks2:
             create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+
+        # Execute the callbacks non-recursively
+        for c in chain(callbacks1, callbacks2):
+            c()
 
         assert Job.objects.count() == 2
 
