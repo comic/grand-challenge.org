@@ -249,6 +249,12 @@
                 <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">%</span> <span class="n">rhs</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cast</span><span class="p">()</span> <span class="o">%</span> <span class="n">rhs</span>
 
+        <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cast</span><span class="p">()</span> <span class="o">+</span> <span class="n">other</span>
+
+        <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">other</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cast</span><span class="p">()</span>
+
         <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
             <span class="c1"># Instances of this class are effectively immutable. It&#39;s just a</span>
             <span class="c1"># collection of functions. So we don&#39;t need to do anything</span>
