@@ -1,28 +1,46 @@
 {% load static %}
+{% load url %}
 
 <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
-  <div class="container">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="logo">
-          <a class="navbar-brand mr-md-2 text-capitalize"
-             href="{% url 'products:product-list' %}">
-              <img src="{% static 'products/images/banner2.png' %}" alt="Logo">
-          </a>
-        </div>
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#collapsibleNavbar">
-            <div class="navbar-toggler-icon"></div>
-        </button>
-      </div>
 
-      <div class="collapse navbar-collapse" id="collapsibleNavbar">
+  <div class="container">
+    <div class="d-flex justify-content-between">
+      <div class="logo">
+        <a class="navbar-brand mr-md-2 text-capitalize"
+          href="{% url 'products:product-list' %}">
+            <img src="{% static 'products/images/banner2.png' %}" alt="Logo">
+        </a>
+      </div>
+      <button class="navbar-toggler" type="button" data-toggle="collapse"
+              data-target="#collapsibleNavbar">
+          <div class="navbar-toggler-icon"></div>
+      </button>
+
+      <div class="collapse navbar-collapse justify-content-end" id="collapsibleNavbar">
         <ul class="navbar-nav mr-auto">
           {% for item in items %}
-            <li class="nav-item">
-              <a href="{% url 'products:'|add:item.url %}" class="nav-link mr-4 {% if item.active %}text-radboud{% endif %}">{{ item.title }}</a>
-            </li>
+              <li class="nav-item">
+                <a href="{% url 'products:'|add:item.url %}" class="nav-link mr-4 {% if item.active %}text-radboud{% endif %}">{{ item.title }}</a>
+              </li>
           {% endfor %}
+
+          <li class="nav-item dropdown">
+              <a class="nav-link mr-4 {% if about_active %}text-radboud{% endif %}" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  About <i class="fas fa-angle-down"></i>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                {% for about in abouts %}
+                  <a class="dropdown-item" href="{% url 'products:'|add:about.url %}">{{ about.title }}</a>
+                {% endfor %}
+              </div>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'products:'|add:contact.url %}" class="nav-link mr-4 {% if contact.active %}text-radboud{% endif %}">{{ contact.title }}</a>
+          </li>
+
         </ul>
+      </div>
     </div>
   </div>
 </nav>
