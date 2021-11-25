@@ -121,12 +121,22 @@ class FollowList(
     paginate_by = 50
 
     def get_queryset(self, *args, **kwargs):
-        return prefetch_generic_foreign_key_objects(
+        return (
             super()
             .get_queryset()
             .select_related("user", "content_type")
             .order_by("content_type")
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Prefetch the object list here as at this point it has been paginated
+        # which saves prefetching the related objects for all notifications
+        context["object_list"] = prefetch_generic_foreign_key_objects(
+            context["object_list"]
+        )
+        return context
 
 
 class FollowDelete(
