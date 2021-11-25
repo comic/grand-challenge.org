@@ -35,6 +35,39 @@ class ProductList(ListView):
     queryset = Product.objects.filter(ce_status=Status.CERTIFIED).order_by(
         "-ce_under", "-verified", "-ce_verified", "product_name"
     )
+    subspecialities = [
+        "All",
+        "Abdomen",
+        "Breast",
+        "Cardiac",
+        "Chest",
+        "MSK",
+        "Neuro",
+        "Other",
+    ]
+
+    modalities = [
+        "All",
+        "X-ray",
+        "CT",
+        "MR",
+        "Ultrasound",
+        "Mammography",
+        "PET",
+        "Other",
+    ]
+
+    ce_classes = [
+        "All",
+        "Class I",
+        "Class IIa",
+        "Class IIb",
+        "Class III",
+    ]
+
+    ce_mdd_mdr = ["All", "MDR", "MDD"]
+
+    fda_classes = ["All", "Class I", "Class II", "Class III", "No FDA"]
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("company")
@@ -67,11 +100,18 @@ class ProductList(ListView):
             )
             queryset = queryset.filter(q)
 
-        if subspeciality_query and subspeciality_query != "All":
+        if subspeciality_query and subspeciality_query == "Other":
+            queryset = queryset.filter(
+                ~Q(subspeciality__in=self.subspecialities)
+            )
+        elif subspeciality_query and subspeciality_query != "All":
             queryset = queryset.filter(
                 Q(subspeciality__icontains=subspeciality_query)
             )
-        if modality_query and modality_query != "All":
+
+        if modality_query and modality_query == "Other":
+            queryset = queryset.filter(~Q(modality__in=self.modalities))
+        elif modality_query and modality_query != "All":
             queryset = queryset.filter(Q(modality__icontains=modality_query))
 
         if ce_under_query and ce_under_query != "All":
@@ -99,48 +139,15 @@ class ProductList(ListView):
         ce_class_query = self.request.GET.get("ce_class", "All")
         fda_class_query = self.request.GET.get("fda_class", "All")
         search_query = self.request.GET.get("search", "")
-        subspecialities = [
-            "All",
-            "Abdomen",
-            "Breast",
-            "Cardiac",
-            "Chest",
-            "MSK",
-            "Neuro",
-            "Other",
-        ]
-
-        modalities = [
-            "All",
-            "X-ray",
-            "CT",
-            "MR",
-            "Ultrasound",
-            "Mammography",
-            "PET",
-            "Other",
-        ]
-
-        ce_classes = [
-            "All",
-            "Class I",
-            "Class IIa",
-            "Class IIb",
-            "Class III",
-        ]
-
-        ce_mdd_mdr = ["All", "MDR", "MDD"]
-
-        fda_classes = ["All", "Class I", "Class II", "Class III", "No FDA"]
 
         context.update(
             {
                 "q_search": search_query,
-                "subspecialities": subspecialities,
-                "modalities": modalities,
-                "ce_mdd_mdr": ce_mdd_mdr,
-                "ce_classes": ce_classes,
-                "fda_classes": fda_classes,
+                "subspecialities": self.subspecialities,
+                "modalities": self.modalities,
+                "ce_mdd_mdr": self.ce_mdd_mdr,
+                "ce_classes": self.ce_classes,
+                "fda_classes": self.fda_classes,
                 "selected_subspeciality": subspeciality_query,
                 "selected_modality": modality_query,
                 "selected_ce_under": ce_under_query,
