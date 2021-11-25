@@ -112,6 +112,9 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
+# Use AutoField for backwards compatibility
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 # General forum
 DOCUMENTATION_HELP_FORUM_PK = os.environ.get(
     "DOCUMENTATION_HELP_FORUM_PK", "1"
