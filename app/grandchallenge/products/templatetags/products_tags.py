@@ -27,28 +27,39 @@ def navbar(context):
                 "active": url in ["blogs-list", "blogs-detail"],
                 "title": "Blogs",
             },
-        ],
-        "contact": {
-            "url": "contact",
-            "active": url == "contact",
-            "title": "Contact",
-        },
-        "abouts": [
-            {"url": "about", "active": url == "about", "title": "About"},
-            {"url": "about-faq", "active": url == "about-faq", "title": "FAQ"},
             {
-                "url": "about-add-product",
-                "active": url == "about-add-product",
-                "title": "Add your product",
+                "title": "About",
+                "active": url
+                in ["project-air", "about", "about-faq", "about-add-product"],
+                "subitems": [
+                    {
+                        "url": "about",
+                        "active": url == "about",
+                        "title": "About",
+                    },
+                    {
+                        "url": "about-faq",
+                        "active": url == "about-faq",
+                        "title": "FAQ",
+                    },
+                    {
+                        "url": "about-add-product",
+                        "active": url == "about-add-product",
+                        "title": "Add your product",
+                    },
+                    {
+                        "url": "project-air",
+                        "active": url == "project-air",
+                        "title": "Project AIR",
+                    },
+                ],
             },
             {
-                "url": "project-air",
-                "active": url == "project-air",
-                "title": "Project AIR",
+                "url": "contact",
+                "active": url == "contact",
+                "title": "Contact",
             },
         ],
-        "about_active": url
-        in ["project-air", "about", "about-faq", "about-add-product"],
     }
 
 

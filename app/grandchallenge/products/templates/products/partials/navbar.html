@@ -19,26 +19,23 @@
       <div class="collapse navbar-collapse justify-content-end" id="collapsibleNavbar">
         <ul class="navbar-nav mr-auto">
           {% for item in items %}
+            {% if item.subitems %}
+              <li class="nav-item dropdown">
+                <a class="nav-link mr-4 {% if item.active %}text-radboud{% endif %}" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                   {{item.title}} <i class="fas fa-angle-down"></i>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                  {% for subitem in item.subitems %}
+                    <a class="dropdown-item" href="{% url 'products:'|add:subitem.url %}">{{ subitem.title }}</a>
+                  {% endfor %}
+                </div>
+              </li>
+            {% else %}
               <li class="nav-item">
                 <a href="{% url 'products:'|add:item.url %}" class="nav-link mr-4 {% if item.active %}text-radboud{% endif %}">{{ item.title }}</a>
               </li>
+            {% endif %}
           {% endfor %}
-
-          <li class="nav-item dropdown">
-              <a class="nav-link mr-4 {% if about_active %}text-radboud{% endif %}" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  About <i class="fas fa-angle-down"></i>
-              </a>
-              <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                {% for about in abouts %}
-                  <a class="dropdown-item" href="{% url 'products:'|add:about.url %}">{{ about.title }}</a>
-                {% endfor %}
-              </div>
-          </li>
-
-          <li class="nav-item">
-            <a href="{% url 'products:'|add:contact.url %}" class="nav-link mr-4 {% if contact.active %}text-radboud{% endif %}">{{ contact.title }}</a>
-          </li>
-
         </ul>
       </div>
     </div>
