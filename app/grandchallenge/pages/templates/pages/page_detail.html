@@ -67,17 +67,15 @@
 
         <div id=pageContainer>{{ cleaned_html }}</div>
 
-        {% if not currentpage.is_error_page %}
-            {% if currentpage.pk %}
-                {% if "change_challenge" in challenge_perms %}
-                    <br>
-                    <a class="btn btn-primary"
-                       href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}"
-                       title="Edit this page"
-                    >
-                        <i class="fas fa-edit"></i>
-                    </a>
-                {% endif %}
+        {% if currentpage.pk %}
+            {% if "change_challenge" in challenge_perms %}
+                <br>
+                <a class="btn btn-primary"
+                   href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}"
+                   title="Edit this page"
+                >
+                    <i class="fas fa-edit"></i>
+                </a>
             {% endif %}
         {% endif %}
     </div>
