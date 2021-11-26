@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q
+from django.http import Http404
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -14,7 +15,7 @@ from guardian.mixins import (
 )
 
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
-from grandchallenge.pages.models import ErrorPage, Page
+from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
@@ -94,11 +95,7 @@ class ChallengeHome(PageDetail):
         page = self.request.challenge.page_set.first()
 
         if page is None:
-            page = ErrorPage(
-                challenge=self.request.challenge,
-                title="No Pages Found",
-                html="No pages found for this site. Please log in and add some pages.",
-            )
+            raise Http404("No pages found for this challenge")
 
         return page
 

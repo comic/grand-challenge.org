@@ -218,19 +218,3 @@ class Page(models.Model):
         unique_together = (("challenge", "title"),)
         # when getting a list of these objects this ordering is used
         ordering = ["challenge", "order"]
-
-
-class ErrorPage(Page):
-    """
-    Just the same as a Page, just that it does not display an edit button as
-    admin
-    """
-
-    is_error_page = True
-
-    def can_be_viewed_by(self, user):
-        """Allow all users to view ErrorPages."""
-        return True
-
-    class Meta:
-        abstract = True  # error pages should only be generated on the fly
