@@ -1107,7 +1107,6 @@ DISALLOWED_EMAIL_DOMAINS = {
     "qq.com",
     "aol.com",
     "usa.com",
-    "gmail.com",
     "yahoo.com",
     "yahoo.co.uk",
     "yahoo.it",

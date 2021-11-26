@@ -66,6 +66,16 @@ class UserProfileForm(forms.ModelForm):
 
         return url
 
+    def clean(self):
+        first_name = self.cleaned_data["first_name"]
+        last_name = self.cleaned_data["last_name"]
+
+        c = slice(-2, None)
+        if first_name[c] == first_name[c].upper() == last_name[c]:
+            # Hack around a scripts creating
+            # accounts with names fooAB barAB etc.
+            raise ValidationError("Account details invalid")
+
 
 class SignupForm(UserProfileForm):
     accept_terms = forms.BooleanField(required=True)
