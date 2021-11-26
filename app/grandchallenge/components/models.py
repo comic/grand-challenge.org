@@ -453,10 +453,7 @@ class InterfaceKind:
                 "text/plain",
             )
         elif kind == InterfaceKind.InterfaceKindChoices.ZIP:
-            return (
-                "application/zip",
-                "application/x-zip-compressed",
-            )
+            return ("application/zip", "application/x-zip-compressed")
         elif kind == InterfaceKind.InterfaceKindChoices.PDF:
             return ("application/pdf",)
         elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG:
@@ -464,7 +461,11 @@ class InterfaceKind:
         elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG:
             return ("image/png",)
         elif kind == InterfaceKind.InterfaceKindChoices.SQREG:
-            return ("application/octet-stream",)
+            return (
+                "application/octet-stream",
+                "application/x-sqlite3",
+                "application/vnd.sqlite3",
+            )
         else:
             raise RuntimeError(f"Unknown kind {kind}")
 
@@ -680,6 +681,8 @@ class ComponentInterfaceValue(models.Model):
                     "image/png",
                     "image/jpeg",
                     "application/octet-stream",
+                    "application/x-sqlite3",
+                    "application/vnd.sqlite3",
                 )
             ),
         ],
@@ -1043,7 +1046,7 @@ class ComponentImage(models.Model):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     user_upload = models.ForeignKey(
-        UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
+        UserUpload, blank=True, null=True, on_delete=models.SET_NULL
     )
     image = models.FileField(
         blank=True,
