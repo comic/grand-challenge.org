@@ -287,6 +287,7 @@ class AlgorithmDescriptionForm(ModelForm):
     class Meta:
         model = Algorithm
         fields = (
+            "image_on_information_page",
             "summary",
             "mechanism",
             "uses_and_directions",
@@ -335,6 +336,7 @@ class AlgorithmDescriptionForm(ModelForm):
                     It will be shown exactly as you style it here in the markdown editor, so make sure to check the preview before saving your changes.</p>
                 """
                 ),
+                ModelFactsTextField("image_on_information_page"),
                 ModelFactsTextField("summary"),
                 ModelFactsTextField("mechanism"),
                 ModelFactsTextField("validation_and_performance"),
