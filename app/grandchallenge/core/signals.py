@@ -87,6 +87,32 @@ def process_permission_request_update(sender, instance, *_, **__):
             )
 
 
+@receiver(post_save, sender=AlgorithmPermissionRequest)
+@receiver(post_save, sender=ReaderStudyPermissionRequest)
+@receiver(post_save, sender=ArchivePermissionRequest)
+@receiver(post_save, sender=RegistrationRequest)
+def remove_permission_request_notifications(sender, *, instance, created, **_):
+    if not created and instance.status != instance.PENDING:
+        # remove notifications of access requests that have been approved or rejected
+        target = instance.base_object
+        ct_target = ContentType.objects.filter(
+            app_label=target._meta.app_label, model=target._meta.model_name
+        ).get()
+
+        actor = instance.user
+        ct_actor = ContentType.objects.filter(
+            app_label=actor._meta.app_label, model=actor._meta.model_name
+        ).get()
+
+        Notification.objects.filter(
+            type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
+            target_object_id=target.pk,
+            target_content_type=ct_target,
+            actor_object_id=actor.pk,
+            actor_content_type=ct_actor,
+        ).delete()
+
+
 @receiver(m2m_changed, sender=Group.user_set.through)
 def update_editor_follows(  # noqa: C901
     instance, action, reverse, model, pk_set, **_

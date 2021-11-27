@@ -18,6 +18,10 @@ class RegistrationRequest(RequestBase):
     )
 
     @property
+    def base_object(self):
+        return self.challenge
+
+    @property
     def object_name(self):
         return self.challenge.short_name
 
