@@ -130,7 +130,6 @@ def test_participation_request_notification_flow(client):
         user=ch.creator
     )
 
-    Notification.objects.all().delete()
     # accept permission request
     _ = get_view_for_user(
         client=client,
@@ -145,7 +144,8 @@ def test_participation_request_notification_flow(client):
     reg2.refresh_from_db()
     assert reg2.status == "ACPT"
     assert Notification.objects.count() == 1
-    # upon request acceptance, the user gets notified
+    # upon request acceptance, the user gets notified and the notification for the admin
+    # is removed automatically
     assert Notification.objects.first().user == user2
     assert "was approved" in Notification.objects.first().print_notification(
         user=user2
