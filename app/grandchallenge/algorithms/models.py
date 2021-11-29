@@ -14,7 +14,6 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
@@ -48,14 +47,6 @@ DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
-
-
-class AlgorithmImageChoices(models.TextChoices):
-    """Notification type choices."""
-
-    NO_IMG = "NO_IMG", _("Do not show an image")
-    LOGO = "LOGO", _("Use logo")
-    SOCIAL_IMAGE = "SOCIAL_IMG", _("Use social image")
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
@@ -208,14 +199,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     common_error_messages = models.TextField(
         blank=True,
         help_text="Describe common error messages a user might encounter when trying out your algorithm and provide solutions for them.",
-    )
-    image_on_information_page = models.CharField(
-        max_length=20,
-        choices=AlgorithmImageChoices.choices,
-        default=AlgorithmImageChoices.NO_IMG,
-        help_text=(
-            "Which image would you like to display on the information page, if any?"
-        ),
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):

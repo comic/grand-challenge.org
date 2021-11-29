@@ -128,10 +128,8 @@
                 {% endif %}
             </div>
             <hr>
-            {% if object.image_on_information_page == 'LOGO' %}
+            {% if object.logo %}
                 <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
-            {% elif object.image_on_information_page == 'SOCIAL_IMG' %}
-                <img class="w-100" loading="lazy" src="{{ object.social_image.url }}" alt="Social image for {{ object.title }}">
             {% endif %}
             <h3 class="my-3">About</h3>
             {% if object.display_editors %}
@@ -163,7 +161,7 @@
                     <div class="col-9">
                         {% for publication in object.publications.all %}
                             <div class="row px-3">
-                                <div class="col-1 px-0 my-auto text-center align-middle"><a class="btn btn-outline-primary btn-sm btn-block mb-1 mr-1" href="{{ publication.url }}"
+                                <div class="col-1 px-0 my-auto text-center align-middle"><a class="btn btn-outline-primary p-1 btn-sm btn-block mb-1 mr-1" href="{{ publication.url }}"
                                    title="{{ publication.title }}">
                                     <i class="fa fa-link"></i>
                                 </a></div>
@@ -176,7 +174,7 @@
             <div class="row mb-2">
                 <div class="col-3 font-weight-bold">Inputs:</div>
                 <div class="col-9">
-                    <ul class="pl-3 pb-0">
+                    <ul class="pl-3 pb-0 mb-0">
                         {% for input in object.inputs.all %}
                             <li>{{ input.title }}&nbsp;{% if input.description %}
                                 <span class="text-muted"> ({{ input.description }})</span>{% endif %}</li>
@@ -187,7 +185,7 @@
             <div class="row mb-2">
                 <div class="col-3 font-weight-bold">Outputs:</div>
                 <div class="col-9">
-                    <ul class="pl-3 pb-0">
+                    <ul class="pl-3 pb-0 mb-0">
                         {% for output in object.outputs.all %}
                             <li>{{ output.title }}&nbsp;{% if output.description %}
                                 <span class="text-muted"> ({{ output.description }})</span>{% endif %}</li>
