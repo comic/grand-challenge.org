@@ -246,10 +246,12 @@ def test_permission_request_notifications_flow(
     pr.refresh_from_db()
     assert pr.status == request_model.ACCEPTED
 
-    # check that status update results in notification for follower of request object
-    assert Notification.objects.all()[1].user == user
+    # check that status update results in notification for follower of request object,
+    # and removal of the notification for the editor
+    assert Notification.objects.count() == 1
+    assert Notification.objects.all()[0].user == user
     assert f"Your registration request for {base_obj_str} was accepted" in Notification.objects.all()[
-        1
+        0
     ].print_notification(
         user=user
     )
@@ -265,9 +267,10 @@ def test_permission_request_notifications_flow(
 
     pr.refresh_from_db()
     assert pr.status == request_model.REJECTED
-    assert Notification.objects.all()[2].user == user
+    assert Notification.objects.count() == 2
+    assert Notification.objects.all()[1].user == user
     assert f"Your registration request for {base_obj_str} was rejected" in Notification.objects.all()[
-        2
+        1
     ].print_notification(
         user=user
     )
