@@ -15,7 +15,9 @@ app_name = "challenges"
 urlpatterns = [
     path("", ChallengeList.as_view(), name="list"),
     path(
-        "all-challenges", CombinedChallengeList.as_view(), name="combined-list"
+        "all-challenges/",
+        CombinedChallengeList.as_view(),
+        name="combined-list",
     ),
     path("my-challenges/", UsersChallengeList.as_view(), name="users-list"),
     path("create/", ChallengeCreate.as_view(), name="create"),
