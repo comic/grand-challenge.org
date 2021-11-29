@@ -47,6 +47,7 @@ from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.workstation_configs.models import WorkstationConfig
 
 
 class ModelFactsTextField(Field):
@@ -116,7 +117,7 @@ class RepoNameValidationMixin:
 
 
 class AlgorithmForm(
-    RepoNameValidationMixin, WorkstationUserFilterMixin, ModelForm,
+    RepoNameValidationMixin, WorkstationUserFilterMixin, ModelForm
 ):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
@@ -266,6 +267,9 @@ class AlgorithmForm(
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
+        self.fields[
+            "workstation_config"
+        ].queryset = WorkstationConfig.objects.order_by("title")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -353,6 +357,9 @@ class AlgorithmUpdateForm(AlgorithmForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout[0].append("repo_name")
+        self.fields[
+            "workstation_config"
+        ].queryset = WorkstationConfig.objects.order_by("title")
 
 
 class AlgorithmImageForm(ContainerImageForm):

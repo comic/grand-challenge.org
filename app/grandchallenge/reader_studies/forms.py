@@ -46,6 +46,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.workstation_configs.models import WorkstationConfig
 
 READER_STUDY_HELP_TEXTS = {
     "title": "The title of this reader study.",
@@ -85,6 +86,12 @@ READER_STUDY_HELP_TEXTS = {
 class ReaderStudyCreateForm(
     WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm
 ):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[
+            "workstation_config"
+        ].queryset = WorkstationConfig.objects.order_by("title")
+
     class Meta:
         model = ReaderStudy
         fields = (
@@ -130,6 +137,12 @@ class ReaderStudyCreateForm(
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[
+            "workstation_config"
+        ].queryset = WorkstationConfig.objects.order_by("title")
+
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",

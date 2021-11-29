@@ -30,6 +30,7 @@ from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.workstation_configs.models import WorkstationConfig
 
 
 class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
@@ -45,6 +46,9 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 accept_global_perms=False,
             )
         ).distinct()
+        self.fields[
+            "workstation_config"
+        ].queryset = WorkstationConfig.objects.order_by("title")
 
     class Meta:
         model = Archive
