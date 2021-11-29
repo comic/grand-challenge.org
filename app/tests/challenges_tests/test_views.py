@@ -11,7 +11,9 @@ def test_external_challenge_buttons(client):
     create_url = reverse("challenges:external-create")
     list_url = reverse("challenges:external-list")
 
-    response = get_view_for_user(client=client, viewname="challenges:list")
+    response = get_view_for_user(
+        client=client, viewname="challenges:combined-list"
+    )
 
     assert create_url not in response.rendered_content
     assert list_url not in response.rendered_content
@@ -19,7 +21,7 @@ def test_external_challenge_buttons(client):
     user = UserFactory()
 
     response = get_view_for_user(
-        client=client, viewname="challenges:list", user=user
+        client=client, viewname="challenges:combined-list", user=user
     )
 
     assert create_url not in response.rendered_content
@@ -28,7 +30,7 @@ def test_external_challenge_buttons(client):
     assign_perm("challenges.change_externalchallenge", user)
 
     response = get_view_for_user(
-        client=client, viewname="challenges:list", user=user
+        client=client, viewname="challenges:combined-list", user=user
     )
 
     assert create_url in response.rendered_content

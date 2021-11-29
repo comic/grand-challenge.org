@@ -11,7 +11,6 @@ from django.views.generic import (
 )
 from guardian.mixins import (
     LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
@@ -47,11 +46,8 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return form_kwargs
 
 
-class ChallengeList(FilterMixin, PermissionListMixin, ListView):
+class ChallengeList(FilterMixin, ListView):
     model = Challenge
-    permission_required = (
-        f"{model._meta.app_label}.view_{model._meta.model_name}"
-    )
     ordering = "-created"
     filter_class = ChallengeFilter
     paginate_by = 40
@@ -60,6 +56,7 @@ class ChallengeList(FilterMixin, PermissionListMixin, ListView):
         return (
             super()
             .get_queryset()
+            .filter(hidden=False)
             .prefetch_related("phase_set", "publications")
             .order_by("-created")
         )
