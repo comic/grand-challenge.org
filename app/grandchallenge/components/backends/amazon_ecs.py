@@ -347,6 +347,7 @@ class AmazonECSExecutor:
                         "initProcessEnabled": True,
                         "maxSwap": 0,
                         "swappiness": 0,
+                        "sharedMemorySize": settings.COMPONENTS_SHARED_MEMORY_SIZE,
                     },
                     "logConfiguration": {
                         "logDriver": "fluentd",

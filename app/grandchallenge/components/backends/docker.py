@@ -92,6 +92,7 @@ class DockerConnection:
             "mem_limit": f"{self._memory_limit}g",
             # Set to the same as mem_limit to avoid using swap
             "memswap_limit": f"{self._memory_limit}g",
+            "shm_size": f"{settings.COMPONENTS_SHARED_MEMORY_SIZE}m",
             "cpu_period": settings.COMPONENTS_CPU_PERIOD,
             "cpu_quota": settings.COMPONENTS_CPU_QUOTA,
             "cpu_shares": settings.COMPONENTS_CPU_SHARES,
