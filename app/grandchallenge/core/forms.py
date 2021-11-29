@@ -16,7 +16,7 @@ class WorkstationUserFilterMixin:
         super().__init__(*args, **kwargs)
         self.fields["workstation"].queryset = get_objects_for_user(
             user, "workstations.view_workstation", accept_global_perms=False,
-        )
+        ).order_by("title")
 
 
 class UserFormKwargsMixin:

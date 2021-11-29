@@ -257,7 +257,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
-        ordering = ("created", "creator")
+        ordering = ("title",)
 
     def __str__(self):
         return f"{self.title} (created by {self.creator})"

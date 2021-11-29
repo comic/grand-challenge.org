@@ -97,7 +97,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     additional_terms_markdown = models.TextField(
         blank=True,
         help_text=(
-            "By using this algortihm, users agree to the site wide "
+            "By using this algorithm, users agree to the site wide "
             "terms of service. If your algorithm has any additional "
             "terms of usage, define them here."
         ),
