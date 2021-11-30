@@ -1,46 +1,26 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 {% load url %}
-{% load humanize %}
-{% load meta_attr %}
-{% load update_search_params %}
+{% load static %}
 
-{% block title %}Challenges - {{ block.super }}{% endblock %}
+
+{% block title %}
+    Challenges - {{ block.super }}
+{% endblock %}
 
 {% block content %}
-    {% if perms.challenges.change_externalchallenge %}
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'challenges:external-create' %}"
-               title="Add an External Challenge">
-                <i class="fas fa-plus"></i> Add a new external challenge
-            </a>
-            <a class="btn btn-primary"
-               href="{% url 'challenges:external-list' %}"
-               title="Edit External Challenges">
-                <i class="fas fa-edit"></i> Edit external challenges
-            </a>
-        </p>
-    {% endif %}
+    <p class="text-right">
+        <a class="btn btn-primary"
+           href="{% url 'challenges:combined-list' %}"
+           title="All challenges">
+            <i class="fas fa-list mr-1"></i> View all challenges
+        </a>
+    </p>
 
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 
     {% include "grandchallenge/partials/cards.html" with page_obj=page_obj %}
 
-    <div class="d-flex justify-content-end">
-        <ul class="pagination">
-            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                <a class="page-link" href="?{% update_search_params page=previous_page %}">Previous</a>
-            </li>
-
-            <li class="page-item disabled"><span class="page-link">Page {{ current_page }} of {{ num_pages }}</span>
-            </li>
-
-            <li class="page-item {% if current_page == num_pages %}disabled{% endif %}">
-                <a class="page-link" href="?{% update_search_params page=next_page %}">Next</a>
-            </li>
-        </ul>
-    </div>
+    {% include "grandchallenge/partials/pagination.html" %}
 
     {% include "grandchallenge/partials/cards_info_modal.html" %}
 
