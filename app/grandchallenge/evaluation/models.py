@@ -582,6 +582,10 @@ class Phase(UUIDModel):
             .exists()
         )
 
+    @property
+    def open_for_submissions(self):
+        return self.submission_limit != 0
+
 
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""

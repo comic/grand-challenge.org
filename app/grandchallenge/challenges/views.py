@@ -51,15 +51,9 @@ class ChallengeList(FilterMixin, ListView):
     ordering = "-created"
     filter_class = ChallengeFilter
     paginate_by = 40
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(hidden=False)
-            .prefetch_related("phase_set", "publications")
-            .order_by("-created")
-        )
+    queryset = Challenge.objects.filter(hidden=False).prefetch_related(
+        "phase_set", "publications"
+    )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
