@@ -23,16 +23,37 @@ def navbar(context):
                 "title": "Companies",
             },
             {
-                "url": "project-air",
-                "active": url == "project-air",
-                "title": "Project AIR",
-            },
-            {
                 "url": "blogs-list",
-                "active": url == "blogs-list",
+                "active": url in ["blogs-list", "blogs-detail"],
                 "title": "Blogs",
             },
-            {"url": "about", "active": url == "about", "title": "About"},
+            {
+                "title": "About",
+                "active": url
+                in ["project-air", "about", "about-faq", "about-add-product"],
+                "subitems": [
+                    {
+                        "url": "about",
+                        "active": url == "about",
+                        "title": "About",
+                    },
+                    {
+                        "url": "about-faq",
+                        "active": url == "about-faq",
+                        "title": "FAQ",
+                    },
+                    {
+                        "url": "about-add-product",
+                        "active": url == "about-add-product",
+                        "title": "Add your product",
+                    },
+                    {
+                        "url": "project-air",
+                        "active": url == "project-air",
+                        "title": "Project AIR",
+                    },
+                ],
+            },
             {
                 "url": "contact",
                 "active": url == "contact",

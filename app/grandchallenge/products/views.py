@@ -230,6 +230,14 @@ class AboutPage(TemplateView):
     template_name = "products/about.html"
 
 
+class AboutAddProductPage(TemplateView):
+    template_name = "products/about_adding_products.html"
+
+
+class FaqPage(TemplateView):
+    template_name = "products/about_faq.html"
+
+
 class ContactPage(TemplateView):
     template_name = "products/contact.html"
 

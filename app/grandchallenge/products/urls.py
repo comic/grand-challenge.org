@@ -1,10 +1,12 @@
 from django.urls import path
 
 from grandchallenge.products.views import (
+    AboutAddProductPage,
     AboutPage,
     CompanyDetail,
     CompanyList,
     ContactPage,
+    FaqPage,
     ImportDataView,
     ProductDetail,
     ProductList,
@@ -22,6 +24,12 @@ urlpatterns = [
     path("", ProductList.as_view(), name="product-list"),
     path("companies/", CompanyList.as_view(), name="company-list"),
     path("about/", AboutPage.as_view(), name="about"),
+    path("about/faq", FaqPage.as_view(), name="about-faq"),
+    path(
+        "about/add-product",
+        AboutAddProductPage.as_view(),
+        name="about-add-product",
+    ),
     path("contact/", ContactPage.as_view(), name="contact"),
     path("project-air/", ProjectAirPage.as_view(), name="project-air"),
     path("product/<slug>/", ProductDetail.as_view(), name="product-detail"),
