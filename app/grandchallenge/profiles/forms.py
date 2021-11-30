@@ -67,8 +67,8 @@ class UserProfileForm(forms.ModelForm):
         return url
 
     def clean(self):
-        first_name = self.cleaned_data["first_name"]
-        last_name = self.cleaned_data["last_name"]
+        first_name = self.cleaned_data.get("first_name", "")
+        last_name = self.cleaned_data.get("last_name", "")
 
         c = slice(-2, None)
         if first_name[c] == first_name[c].upper() == last_name[c]:
