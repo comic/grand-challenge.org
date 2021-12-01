@@ -221,14 +221,17 @@ def test_archive_item_form(client, settings):
         viewname="archives:item-edit",
         client=client,
         method=client.get,
-        reverse_kwargs={"slug": archive.slug, "id": ai.pk},
+        reverse_kwargs={
+            "archive_slug": archive.slug,
+            "pk": ai.pk,
+            "interface_slug": ci.slug,
+        },
         follow=True,
         user=editor,
     )
     assert response.status_code == 200
 
-    for _ci in ComponentInterface.objects.all():
-        assert _ci.slug in response.rendered_content
+    assert ci.slug in response.rendered_content
 
     assert f'id="id_{ci.slug}" checked' in response.rendered_content
 
@@ -250,7 +253,11 @@ def test_archive_item_form(client, settings):
                 viewname="archives:item-edit",
                 client=client,
                 method=client.post,
-                reverse_kwargs={"slug": archive.slug, "id": ai.pk},
+                reverse_kwargs={
+                    "archive_slug": archive.slug,
+                    "pk": ai.pk,
+                    "interface_slug": ci.slug,
+                },
                 data={ci.slug: False},
                 follow=True,
                 user=editor,
@@ -270,7 +277,11 @@ def test_archive_item_form(client, settings):
                 viewname="archives:item-edit",
                 client=client,
                 method=client.post,
-                reverse_kwargs={"slug": archive.slug, "id": ai.pk},
+                reverse_kwargs={
+                    "archive_slug": archive.slug,
+                    "pk": ai.pk,
+                    "interface_slug": ci.slug,
+                },
                 data={ci.slug: True},
                 follow=True,
                 user=editor,
