@@ -556,6 +556,12 @@ class Challenge(ChallengeBase):
         user.groups.remove(self.admins_group)
         unfollow(user=user, obj=self.forum, send_action=False)
 
+    @property
+    def accepting_submissions(self):
+        return True in (
+            phase.open_for_submissions for phase in self.phase_set.all()
+        )
+
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"
         verbose_name_plural = "challenges"

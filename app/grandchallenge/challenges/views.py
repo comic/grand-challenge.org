@@ -14,7 +14,10 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.challenges.filters import ChallengeFilter
+from grandchallenge.challenges.filters import (
+    ChallengeFilter,
+    InternalChallengeFilter,
+)
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
     ChallengeUpdateForm,
@@ -49,17 +52,11 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
 class ChallengeList(FilterMixin, ListView):
     model = Challenge
     ordering = "-created"
-    filter_class = ChallengeFilter
+    filter_class = InternalChallengeFilter
     paginate_by = 40
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(hidden=False)
-            .prefetch_related("phase_set", "publications")
-            .order_by("-created")
-        )
+    queryset = Challenge.objects.filter(hidden=False).prefetch_related(
+        "phase_set", "publications"
+    )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
