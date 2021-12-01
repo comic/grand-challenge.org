@@ -189,12 +189,7 @@ class AddCasesForm(UploadRawImagesForm):
 
 class ArchiveItemForm(SaveFormInitMixin, Form):
     def __init__(
-        self,
-        *args,
-        user=None,
-        archive_item=None,
-        interface=None,
-        **kwargs,
+        self, *args, user=None, archive_item=None, interface=None, **kwargs,
     ):
         super().__init__(*args, **kwargs)
 

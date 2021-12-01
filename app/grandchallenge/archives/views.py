@@ -385,7 +385,9 @@ class ArchiveEditArchiveItem(
 
     @cached_property
     def interface(self):
-        return get_object_or_404(ComponentInterface, slug=self.kwargs["interface_slug"])
+        return get_object_or_404(
+            ComponentInterface, slug=self.kwargs["interface_slug"]
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -469,9 +471,7 @@ class ArchiveEditArchiveItem(
         on_commit(tasks.apply_async)
 
         return HttpResponseRedirect(
-            reverse(
-                "archives:items-list", kwargs={"slug": self.archive.slug},
-            )
+            reverse("archives:items-list", kwargs={"slug": self.archive.slug},)
         )
 
 
@@ -506,7 +506,14 @@ class ArchiveItemsList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive, "interfaces": ComponentInterface.objects.all().order_by("title")})
+        context.update(
+            {
+                "archive": self.archive,
+                "interfaces": ComponentInterface.objects.all().order_by(
+                    "title"
+                ),
+            }
+        )
         return context
 
     def render_row(self, *, object_, page_context):
