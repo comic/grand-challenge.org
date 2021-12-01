@@ -9,7 +9,6 @@ from grandchallenge.archives.models import (
     ArchivePermissionRequest,
 )
 from grandchallenge.components.models import (
-    ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
 )
