@@ -17,9 +17,11 @@
 </ul>
 <split></split>
 
-<a href="{% url 'archives:item-edit' archive_slug=object.archive.slug pk=object.pk interface_slug='TODO' %}">
-    <span class="badge badge-primary">
-        <i class="fa fa-plus"></i> Add Value to Item
-    </span>
-</a>
+<select class="form-control" onchange="location = this.value;">
+    {% for interface in interfaces %}
+        {% if interface not in object_interfaces %}
+            <option value="{% url 'archives:item-edit' archive_slug=object.archive.slug pk=object.pk interface_slug=interface.slug %}">Add {{ interface.title }}</option>
+        {% endif %}
+    {% endfor %}
+</select>
 <split></split>

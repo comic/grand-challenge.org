@@ -506,8 +506,14 @@ class ArchiveItemsList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
+        context.update({"archive": self.archive, "interfaces": ComponentInterface.objects.all().order_by("title")})
         return context
+
+    def render_row(self, *, object_, page_context):
+        page_context["object_interfaces"] = [
+            v.interface for v in object_.values.all()
+        ]
+        return super().render_row(object_=object_, page_context=page_context)
 
     def get_queryset(self):
         qs = super().get_queryset()
