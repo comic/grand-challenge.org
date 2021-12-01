@@ -653,7 +653,11 @@
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">open_for_submissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">!=</span> <span class="mi">0</span></div>
 
 
 <span class="k">class</span> <span class="nc">Method</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
