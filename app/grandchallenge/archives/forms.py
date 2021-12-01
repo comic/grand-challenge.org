@@ -189,7 +189,7 @@ class AddCasesForm(UploadRawImagesForm):
 
 class ArchiveItemForm(SaveFormInitMixin, Form):
     def __init__(
-        self, *args, archive=None, user=None, archive_item=None, **kwargs
+        self, *args, user=None, archive_item=None, interface=None, **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
@@ -200,15 +200,18 @@ class ArchiveItemForm(SaveFormInitMixin, Form):
         else:
             values = ComponentInterfaceValue.objects.none()
 
-        for inp in ComponentInterface.objects.all():
-            initial = values.filter(interface=inp).first()
-            if initial:
-                initial = initial.value
-            self.fields[inp.slug] = InterfaceFormField(
-                kind=inp.kind,
-                schema=inp.schema,
-                initial=initial or inp.default_value,
-                required=False,
-                user=user,
-                help_text=clean(inp.description) if inp.description else "",
-            ).field
+        initial = values.filter(interface=interface).first()
+
+        if initial:
+            initial = initial.value
+
+        self.fields[interface.slug] = InterfaceFormField(
+            kind=interface.kind,
+            schema=interface.schema,
+            initial=initial or interface.default_value,
+            required=False,
+            user=user,
+            help_text=clean(interface.description)
+            if interface.description
+            else "",
+        ).field
