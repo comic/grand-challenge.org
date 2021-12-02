@@ -216,7 +216,7 @@ class AlgorithmForm(
             ),
             "publications": format_lazy(
                 (
-                    "The publications associated with this reader study. "
+                    "The publications associated with this algorithm. "
                     'If your publication is missing click <a href="{}">here</a> to add it '
                     "and then refresh this page."
                 ),
