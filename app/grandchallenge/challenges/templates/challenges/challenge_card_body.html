@@ -4,7 +4,7 @@
 
 <div>
     {% if challenge.is_self_hosted %}
-        <span class="badge {% if challenge.accepting_submissions.status %}badge-success{% elif not challenge.accepting_submissions.status and 'Opening' in challenge.accepting_submissions.detail %} badge-warning {% else %} badge-danger {% endif %}mt-2 above-stretched-link text-wrap" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.accepting_submissions.detail }}</span><br>
+        <span class="badge {% if challenge.accepting_submissions.status %}badge-success {% elif not challenge.accepting_submissions.status and 'Opening' in challenge.accepting_submissions.detail %} badge-warning {% else %} badge-danger {% endif %}mt-2 above-stretched-link text-wrap" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.accepting_submissions.detail }}</span><br>
     {% endif %}
     {% if challenge.description %}
         <a href="#InfoModal"
