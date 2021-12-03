@@ -2,7 +2,12 @@
 {% load url %}
 {% load humanize %}
 
-<div class="mb-2">
+<div>
+    {% if challenge.accepting_submissions %}
+        <span class="badge badge-success mt-2 above-stretched-link" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> Accepting submissions</span><br>
+    {% elif challenge.is_self_hosted and not challenge.accepting_submissions %}
+        <span class="badge badge-danger mt-2 above-stretched-link" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> Not accepting submissions</span><br>
+    {% endif %}
     {% if challenge.description %}
         <a href="#InfoModal"
            class="badge badge-info above-stretched-link"

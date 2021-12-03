@@ -128,10 +128,10 @@
                 {% endif %}
             </div>
             <hr>
-
-            {{ object.detail_page_markdown|md2html }}
-
-            <h3 class="mb-3">About</h3>
+            {% if object.logo %}
+                <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
+            {% endif %}
+            <h3 class="my-3">About</h3>
             {% if object.display_editors %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Creator{{ object.editors_group.user_set.all|pluralize }}:</div>
@@ -160,10 +160,13 @@
                     </div>
                     <div class="col-9">
                         {% for publication in object.publications.all %}
-                            <a class="btn btn-outline-primary btn-sm p-1 mr-1" href="{{ publication.url }}"
-                               title="{{ publication.title }}">
-                                <i class="fas fa-file fa-fw"></i> Article
-                            </a>
+                            <div class="row px-3">
+                                <div class="col-1 px-0 my-auto text-center align-middle"><a class="btn btn-outline-primary p-1 btn-sm btn-block mb-1 mr-1" href="{{ publication.url }}" target="_blank"
+                                   title="{{ publication.title }}">
+                                    <i class="fa fa-link"></i>
+                                </a></div>
+                                <div class="col-11 mb-2">{{ publication.citation|clean }}</div>
+                            </div>
                         {% endfor %}
                     </div>
                 </div>
@@ -171,7 +174,7 @@
             <div class="row mb-2">
                 <div class="col-3 font-weight-bold">Inputs:</div>
                 <div class="col-9">
-                    <ul class="pl-3">
+                    <ul class="pl-3 pb-0 mb-0">
                         {% for input in object.inputs.all %}
                             <li>{{ input.title }}&nbsp;{% if input.description %}
                                 <span class="text-muted"> ({{ input.description }})</span>{% endif %}</li>
@@ -182,7 +185,7 @@
             <div class="row mb-2">
                 <div class="col-3 font-weight-bold">Outputs:</div>
                 <div class="col-9">
-                    <ul class="pl-3">
+                    <ul class="pl-3 pb-0 mb-0">
                         {% for output in object.outputs.all %}
                             <li>{{ output.title }}&nbsp;{% if output.description %}
                                 <span class="text-muted"> ({{ output.description }})</span>{% endif %}</li>
@@ -190,6 +193,8 @@
                     </ul>
                 </div>
             </div>
+
+            {{ object.detail_page_markdown|md2html }}
 
             {% if object.summary %}
                 <h3 class="mt-5 mb-3">Summary</h3>

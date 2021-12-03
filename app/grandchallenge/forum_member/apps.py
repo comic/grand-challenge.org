@@ -5,3 +5,4 @@ from machina.apps.forum_member.apps import (
 
 class ForumMemberAppConfig(BaseForumMemberAppConfig):
     name = "grandchallenge.forum_member"
+    default = True

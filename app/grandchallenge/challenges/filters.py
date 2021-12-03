@@ -1,4 +1,4 @@
-from django_filters import ModelMultipleChoiceFilter
+from django_filters import ChoiceFilter, ModelMultipleChoiceFilter
 from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.challenges.models import (
@@ -7,6 +7,12 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
 from grandchallenge.task_categories.models import TaskType
+
+
+STATUS_CHOICES = (
+    (True, "Accepting submissions"),
+    (False, "Not accepting submissions"),
+)
 
 
 class ChallengeFilter(TitleDescriptionModalityStructureFilter):
@@ -34,3 +40,19 @@ class ChallengeFilter(TitleDescriptionModalityStructureFilter):
             "short_name",
             "event_name",
         )
+
+
+class InternalChallengeFilter(ChallengeFilter):
+    status = ChoiceFilter(
+        choices=STATUS_CHOICES,
+        method="filter_by_status",
+        label="Challenge status",
+    )
+
+    def filter_by_status(self, queryset, name, value):
+        ids = [
+            challenge.id
+            for challenge in queryset
+            if challenge.accepting_submissions == eval(value)
+        ]
+        return queryset.filter(pk__in=ids)

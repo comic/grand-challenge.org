@@ -42,7 +42,6 @@ $(document).ready(function () {
         autoWidth: false,
         dom: getDataTablesDOMTemplate(),
         buttons: getDataTablesButtons(),
-        scrollX: true
     });
 
     if (allowMetricsToggling === true) {

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
@@ -20,7 +21,7 @@ from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
-from grandchallenge.profiles.forms import UserProfileForm
+from grandchallenge.profiles.forms import NewsletterSignupForm, UserProfileForm
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.profiles.serializers import UserProfileSerializer
 from grandchallenge.subdomains.utils import reverse
@@ -163,6 +164,30 @@ class UserProfileUpdate(
     context_object_name = "profile"
     permission_required = "change_userprofile"
     raise_exception = True
+
+
+class NewsletterSignUp(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UserProfileObjectMixin,
+    UpdateView,
+):
+    model = UserProfile
+    form_class = NewsletterSignupForm
+    context_object_name = "profile"
+    permission_required = "change_userprofile"
+    raise_exception = True
+
+    def form_valid(self, form):
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            "Newsletter preference successfully saved.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.request.GET.get("next")
 
 
 class UserProfileViewSet(GenericViewSet):

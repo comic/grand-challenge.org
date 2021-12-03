@@ -2,6 +2,7 @@ from django.urls import path, re_path
 
 from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.profiles.views import (
+    NewsletterSignUp,
     UserProfileDetail,
     UserProfileUpdate,
     profile,
@@ -23,5 +24,10 @@ urlpatterns = [
         r"^(?P<username>[\@\.\+\w-]+)/edit/$",
         UserProfileUpdate.as_view(),
         name="profile-update",
+    ),
+    re_path(
+        r"^(?P<username>[\@\.\+\w-]+)/newsletter-sign-up/$",
+        NewsletterSignUp.as_view(),
+        name="newsletter-sign-up",
     ),
 ]

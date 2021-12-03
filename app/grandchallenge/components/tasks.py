@@ -213,11 +213,7 @@ def get_model_instance(*, pk, app_label, model_name):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def provision_job(
-    *,
-    job_pk: uuid.UUID,
-    job_app_label: str,
-    job_model_name: str,
-    backend: str,
+    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -237,12 +233,10 @@ def provision_job(
             input_prefixes=job.input_prefixes,
         )
     except ComponentException as e:
-        job.update_status(
-            status=job.FAILURE, error_message=str(e),
-        )
+        job.update_status(status=job.FAILURE, error_message=str(e))
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="Could not provision resources",
+            status=job.FAILURE, error_message="Could not provision resources"
         )
         raise
     else:
@@ -464,11 +458,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def parse_job_outputs(
-    *,
-    job_pk: uuid.UUID,
-    job_app_label: str,
-    job_model_name: str,
-    backend: str,
+    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -486,13 +476,11 @@ def parse_job_outputs(
             output_interfaces=job.output_interfaces.all()
         )
     except ComponentException as e:
-        job.update_status(
-            status=job.FAILURE, error_message=str(e),
-        )
+        job.update_status(status=job.FAILURE, error_message=str(e))
         raise PriorStepFailed("Could not parse outputs")
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="Could not parse outputs",
+            status=job.FAILURE, error_message="Could not parse outputs"
         )
         raise
     else:
@@ -502,11 +490,7 @@ def parse_job_outputs(
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def deprovision_job(
-    *,
-    job_pk: uuid.UUID,
-    job_app_label: str,
-    job_model_name: str,
-    backend: str,
+    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name

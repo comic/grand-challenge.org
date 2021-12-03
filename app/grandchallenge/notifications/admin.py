@@ -16,6 +16,7 @@ class FollowAdmin(ModelAdmin):
         "started",
     )
     raw_id_fields = ("user", "content_type")
+    list_select_related = ("user", "content_type")
 
 
 class NotificationAdmin(ModelAdmin):
@@ -32,6 +33,13 @@ class NotificationAdmin(ModelAdmin):
     )
     list_filter = ("type", "read")
     raw_id_fields = (
+        "actor_content_type",
+        "target_content_type",
+        "action_object_content_type",
+    )
+    search_fields = ("user__username",)
+    list_select_related = (
+        "user",
         "actor_content_type",
         "target_content_type",
         "action_object_content_type",

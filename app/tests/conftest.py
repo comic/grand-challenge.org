@@ -139,6 +139,7 @@ def two_challenge_sets():
     admin1participant2 = UserFactory()
     challenge_set_1.challenge.add_admin(admin1participant2)
     challenge_set_2.challenge.add_participant(admin1participant2)
+
     return two_challenge_sets(
         challenge_set_1,
         challenge_set_2,

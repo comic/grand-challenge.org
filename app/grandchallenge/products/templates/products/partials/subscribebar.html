@@ -2,9 +2,9 @@
 
 <script>
   $(window).on('load',function(){
-  if (!localStorage.getItem('shown-alert')){
+  if (!sessionStorage.getItem('shown-alert')){
     $('#subscribeAlert').show();
-    localStorage.setItem('shown-alert', 'true');
+    sessionStorage.setItem('shown-alert', 'true');
   }
 });
 </script>

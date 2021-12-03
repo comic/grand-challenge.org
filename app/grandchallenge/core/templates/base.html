@@ -44,6 +44,8 @@
 {% block body %}
     {# Block used by django-machina #}
 
+    {% include "grandchallenge/partials/newsletter_signup_modal.html" %}
+
     {% block navbar %}
         {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
     {% endblock %}
@@ -104,7 +106,13 @@
 {% block script %}
     {% include "grandchallenge/partials/script.html" %}
     {% include "timezones/partials/detect_timezone.html" %}
+    <script>
+        {% if request.user.is_authenticated and request.user.user_profile.receive_newsletter == None  %}
+            $(document).ready(function () {
+                $('#newsletterModal').modal('show');
+            });
+        {% endif %}
+    </script>
 {% endblock %}
-
 </body>
 </html>

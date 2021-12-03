@@ -5,14 +5,23 @@
 
 <ul class="list-unstyled mb-0">
     {% for civ in object.values.all %}
-        <li>{{ civ.interface.title }}: {{ civ.title }}</li>
+        <li>
+            {{ civ.interface.title }}: {{ civ.title }}
+            <a href="{% url 'archives:item-edit' archive_slug=object.archive.slug pk=object.pk interface_slug=civ.interface.slug %}">
+                <span class="badge badge-primary">
+                    <i class="fa fa-edit"></i> Edit
+                </span>
+            </a>
+        </li>
     {% endfor %}
 </ul>
 <split></split>
 
-<a href="{% url 'archives:item-edit' slug=object.archive.slug id=object.pk %}">
-    <span class="badge badge-primary">
-        <i class="fa fa-edit"></i> Edit
-    </span>
-</a>
+<select class="form-control" onchange="location = this.value;">
+    {% for interface in interfaces %}
+        {% if interface not in object_interfaces %}
+            <option value="{% url 'archives:item-edit' archive_slug=object.archive.slug pk=object.pk interface_slug=interface.slug %}">Add {{ interface.title }}</option>
+        {% endif %}
+    {% endfor %}
+</select>
 <split></split>

@@ -614,10 +614,10 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
             Column(title="Details", sort_field="pk"),
             Column(title="Created", sort_field="created"),
             Column(title="Creator", sort_field="creator__username"),
-            Column(title="Result", sort_field="inputs__image__name"),
+            Column(title="Result", sort_field="status"),
             Column(title="Comment", sort_field="comment"),
             Column(title="Visibility", sort_field="public"),
-            Column(title="Viewer", sort_field="inputs__image__files__file"),
+            Column(title="Viewer", sort_field="status"),
         ]
 
         for key, grouped_interfaces in self.outputs_list_display.items():

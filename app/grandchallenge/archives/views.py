@@ -377,16 +377,22 @@ class ArchiveEditArchiveItem(
 
     @cached_property
     def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+        return get_object_or_404(Archive, slug=self.kwargs["archive_slug"])
 
     @cached_property
     def archive_item(self):
-        return get_object_or_404(ArchiveItem, pk=self.kwargs["id"])
+        return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
+
+    @cached_property
+    def interface(self):
+        return get_object_or_404(
+            ComponentInterface, slug=self.kwargs["interface_slug"]
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
-            {"archive": self.archive, "archive_item": self.archive_item}
+            {"archive_item": self.archive_item, "interface": self.interface}
         )
         return kwargs
 
@@ -465,9 +471,7 @@ class ArchiveEditArchiveItem(
         on_commit(tasks.apply_async)
 
         return HttpResponseRedirect(
-            reverse(
-                "archives:items-list", kwargs={"slug": self.kwargs["slug"]},
-            )
+            reverse("archives:items-list", kwargs={"slug": self.archive.slug},)
         )
 
 
@@ -490,7 +494,7 @@ class ArchiveItemsList(
     ]
     columns = [
         Column(title="Values", sort_field="created"),
-        Column(title="Edit", sort_field="pk"),
+        Column(title="Add", sort_field="pk"),
     ]
 
     @cached_property
@@ -502,8 +506,21 @@ class ArchiveItemsList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
+        context.update(
+            {
+                "archive": self.archive,
+                "interfaces": ComponentInterface.objects.all().order_by(
+                    "title"
+                ),
+            }
+        )
         return context
+
+    def render_row(self, *, object_, page_context):
+        page_context["object_interfaces"] = [
+            v.interface for v in object_.values.all()
+        ]
+        return super().render_row(object_=object_, page_context=page_context)
 
     def get_queryset(self):
         qs = super().get_queryset()

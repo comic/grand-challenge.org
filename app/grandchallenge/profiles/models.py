@@ -49,6 +49,11 @@ class UserProfile(models.Model):
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False
     )
+    receive_newsletter = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Would you like to be put on our mailing list and receive newsletters about Grand Challenge updates?",
+    )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

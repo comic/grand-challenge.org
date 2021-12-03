@@ -63,7 +63,7 @@ urlpatterns = [
         name="cases-create",
     ),
     path(
-        "<slug>/items/<id>/edit",
+        "<slug:archive_slug>/items/<uuid:pk>/edit/<slug:interface_slug>/",
         ArchiveEditArchiveItem.as_view(),
         name="item-edit",
     ),

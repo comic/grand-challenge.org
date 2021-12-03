@@ -69,7 +69,6 @@ def test_workstation_create_detail(
 def test_workstation_list_view(client):
     w1, w2 = WorkstationFactory(), WorkstationFactory()
     user = UserFactory()
-
     response = get_view_for_user(
         viewname="workstations:list", client=client, user=user
     )
@@ -288,7 +287,6 @@ def test_session_redirect(client):
 @pytest.mark.django_db
 def test_session_detail(client):
     s1, s2 = SessionFactory(), SessionFactory()
-
     response = get_view_for_user(
         client=client,
         viewname="session-detail",

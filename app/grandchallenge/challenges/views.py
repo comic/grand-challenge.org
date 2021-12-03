@@ -14,7 +14,10 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.challenges.filters import ChallengeFilter
+from grandchallenge.challenges.filters import (
+    ChallengeFilter,
+    InternalChallengeFilter,
+)
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
     ChallengeUpdateForm,
@@ -24,6 +27,7 @@ from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
 )
+from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
@@ -45,9 +49,38 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return form_kwargs
 
 
-class ChallengeList(TemplateView):
+class ChallengeList(FilterMixin, ListView):
+    model = Challenge
+    ordering = "-created"
+    filter_class = InternalChallengeFilter
     paginate_by = 40
-    template_name = "challenges/challenge_list.html"
+    queryset = Challenge.objects.filter(hidden=False).prefetch_related(
+        "phase_set", "publications"
+    )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context.update(
+            {
+                "jumbotron_title": "Challenges",
+                "jumbotron_description": format_html(
+                    (
+                        "Here is an overview over the medical image analysis"
+                        " challenges that have been hosted on Grand Challenge."
+                        "<br>Please <a href='{}'>contact us</a> if you would like "
+                        "to host your own challenge."
+                    ),
+                    random_encode("mailto:support@grand-challenge.org"),
+                ),
+            }
+        )
+        return context
+
+
+class CombinedChallengeList(TemplateView):
+    paginate_by = 40
+    template_name = "challenges/combined_challenge_list.html"
 
     @property
     def _current_page(self):
