@@ -140,6 +140,7 @@ services:
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
+      CASES_POST_PROCESSORS: ''
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
     command: "celery -A config worker -l info -c 1 -Q acks-late-2xlarge,acks-late-micro-short"
