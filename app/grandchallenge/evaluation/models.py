@@ -531,36 +531,45 @@ class Phase(UUIDModel):
         """
         now = timezone.now()
 
-        filter_kwargs = {"creator": user}
-
-        if self.submission_limit_period is not None:
-            filter_kwargs.update(
-                {"created__gte": now - self.submission_limit_period_timedelta}
-            )
-
-        evals_in_period = (
-            self.submission_set.filter(**filter_kwargs)
-            .exclude(evaluation__status=Evaluation.FAILURE)
-            .distinct()
-            .order_by("-created")
-        )
-
-        remaining_submissions = max(
-            0, self.submission_limit - evals_in_period.count()
-        )
-
-        if remaining_submissions:
-            next_sub_at = now
-        elif (
-            self.submission_limit == 0 or self.submission_limit_period is None
-        ):
-            # User is never going to be able to submit again
+        if not self.open_for_submissions:
+            remaining_submissions = 0
             next_sub_at = None
+
         else:
-            next_sub_at = (
-                evals_in_period[self.submission_limit - 1].created
-                + self.submission_limit_period_timedelta
+            filter_kwargs = {"creator": user}
+
+            if self.submission_limit_period is not None:
+                filter_kwargs.update(
+                    {
+                        "created__gte": now
+                        - self.submission_limit_period_timedelta
+                    }
+                )
+
+            evals_in_period = (
+                self.submission_set.filter(**filter_kwargs)
+                .exclude(evaluation__status=Evaluation.FAILURE)
+                .distinct()
+                .order_by("-created")
             )
+
+            remaining_submissions = max(
+                0, self.submission_limit - evals_in_period.count()
+            )
+
+            if remaining_submissions:
+                next_sub_at = now
+            elif (
+                self.submission_limit == 0
+                or self.submission_limit_period is None
+            ):
+                # User is never going to be able to submit again
+                next_sub_at = None
+            else:
+                next_sub_at = (
+                    evals_in_period[self.submission_limit - 1].created
+                    + self.submission_limit_period_timedelta
+                )
 
         return {
             "remaining_submissions": remaining_submissions,
@@ -583,8 +592,48 @@ class Phase(UUIDModel):
         )
 
     @property
+    def submission_period_open(self):
+        now = timezone.now()
+        if self.submissions_open and self.submissions_close:
+            submission_period_open = (
+                now > self.submissions_open and now < self.submissions_close
+            )
+        elif self.submissions_open:
+            submission_period_open = now > self.submissions_open
+        elif self.submissions_close:
+            submission_period_open = now < self.submissions_close
+        else:
+            submission_period_open = True
+        return submission_period_open
+
+    @property
     def open_for_submissions(self):
-        return self.submission_limit != 0
+        if self.submission_limit == 0:
+            return False
+        elif not self.submission_period_open:
+            return False
+        else:
+            return True
+
+    @property
+    def submission_status_string(self):
+        now = timezone.now()
+        if self.open_for_submissions:
+            if self.submissions_close:
+                return f'Accepting submissions for {self.title} until {self.submissions_close.strftime("%b %d %Y")}'
+            else:
+                return f"Accepting submissions for {self.title}"
+        else:
+            if self.submissions_open and now < self.submissions_open:
+                return f'Opening submissions for {self.title} on {self.submissions_open.strftime("%b %d %Y")}'
+            elif self.submissions_close and now > self.submissions_close:
+                return f"{self.title} completed"
+            else:
+                return "Not accepting submissions"
+
+    @property
+    def inconsistent_submission_information(self):
+        return self.submission_limit == 0 and self.submission_period_open
 
 
 class Method(UUIDModel, ComponentImage):

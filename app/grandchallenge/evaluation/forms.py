@@ -30,6 +30,8 @@ from grandchallenge.uploads.widgets import UserUploadSingleWidget
 phase_options = ("title",)
 
 submission_options = (
+    "submissions_open",
+    "submissions_close",
     "submission_page_html",
     "creator_must_be_verified",
     "submission_limit",
@@ -124,7 +126,27 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
             "extra_results_columns": JSONEditorWidget(
                 schema=EXTRA_RESULT_COLUMNS_SCHEMA
             ),
+            "submissions_open": forms.DateInput(
+                format=("%Y-%m-%d"), attrs={"type": "date"}
+            ),
+            "submissions_close": forms.DateInput(
+                format=("%Y-%m-%d"), attrs={"type": "date"}
+            ),
         }
+
+    def clean(self):
+        submissions_open = self.cleaned_data["submissions_open"]
+        submissions_close = self.cleaned_data["submissions_close"]
+
+        if (
+            submissions_open
+            and submissions_close
+            and not submissions_close > submissions_open
+        ):
+            raise ValidationError(
+                "The submissions close date needs to be after "
+                "the submissions open date."
+            )
 
 
 class MethodForm(ContainerImageForm):

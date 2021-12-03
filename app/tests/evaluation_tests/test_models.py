@@ -4,6 +4,7 @@ from itertools import chain
 import pytest
 from django.test import TestCase, override_settings
 from django.utils import timezone
+from django.utils.timezone import now
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
@@ -168,3 +169,90 @@ class TestPhaseLimits:
             assert i["next_submission_at"] is not None
         else:
             assert i["next_submission_at"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "submission_limit,submissions_open,submissions_close,open_for_submissions,expected_status",
+    [
+        (0, None, None, False, "Not accepting submissions",),
+        (
+            0,
+            now() - timedelta(days=1),
+            None,
+            False,
+            "Not accepting submissions",
+        ),
+        (
+            0,
+            now() - timedelta(days=10),
+            now() - timedelta(days=1),
+            False,
+            "completed",
+        ),
+        (
+            0,
+            now() - timedelta(days=10),
+            now() + timedelta(days=1),
+            False,
+            "Not accepting submissions",
+        ),
+        (0, now() + timedelta(days=10), None, False, "Opening submissions",),
+        (
+            0,
+            now() + timedelta(days=10),
+            now() + timedelta(days=15),
+            False,
+            "Opening submissions",
+        ),
+        (0, None, now() - timedelta(days=15), False, "completed",),
+        (
+            0,
+            None,
+            now() + timedelta(days=15),
+            False,
+            "Not accepting submissions",
+        ),
+        (10, None, None, True, "Accepting submissions",),
+        (10, now() - timedelta(days=1), None, True, "Accepting submissions",),
+        (
+            10,
+            now() - timedelta(days=10),
+            now() - timedelta(days=1),
+            False,
+            "completed",
+        ),
+        (
+            10,
+            now() - timedelta(days=10),
+            now() + timedelta(days=1),
+            True,
+            "Accepting submissions",
+        ),
+        (10, now() + timedelta(days=10), None, False, "Opening submissions",),
+        (
+            10,
+            now() + timedelta(days=10),
+            now() + timedelta(days=15),
+            False,
+            "Opening submissions",
+        ),
+        (10, None, now() - timedelta(days=15), False, "completed",),
+        (10, None, now() + timedelta(days=15), True, "Accepting submissions",),
+    ],
+)
+def test_open_for_submission(
+    submission_limit,
+    submissions_open,
+    submissions_close,
+    open_for_submissions,
+    expected_status,
+):
+    phase = PhaseFactory()
+    phase.submission_limit = submission_limit
+    phase.submissions_open = submissions_open
+    phase.submissions_close = submissions_close
+    phase.save()
+
+    assert phase.open_for_submissions == open_for_submissions
+    assert expected_status in phase.submission_status_string

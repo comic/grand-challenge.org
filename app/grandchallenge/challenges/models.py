@@ -15,6 +15,7 @@ from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
@@ -558,9 +559,67 @@ class Challenge(ChallengeBase):
 
     @property
     def accepting_submissions(self):
-        return True in (
-            phase.open_for_submissions for phase in self.phase_set.all()
-        )
+        phase_details = {
+            phase: phase.open_for_submissions for phase in self.phase_set.all()
+        }
+        now = timezone.now()
+        if True in phase_details.values():
+            status = True
+            if sum(phase_details.values()) > 1:
+                # if there are multiple open phases it is unclear which
+                # status to print, so stay vague
+                detail = ["Accepting submissions"]
+            else:
+                detail = [
+                    phase.submission_status_string
+                    for phase, bool in phase_details.items()
+                    if bool
+                ]
+        else:
+            status_strings = [
+                phase.submission_status_string
+                for phase in phase_details.keys()
+            ]
+            completed_phases = [
+                string for string in status_strings if "completed" in string
+            ]
+            status = False
+
+            if len(completed_phases) == len(status_strings):
+                detail = ["Challenge completed"]
+            else:
+                # if no or only some phases have been completed,
+                # print the status of the not-completed phase
+                # with the earliest start date
+                phase_start_date = min(
+                    [
+                        phase.submissions_open
+                        for phase in self.phase_set.all()
+                        if phase.submissions_open
+                        and now < phase.submissions_open
+                        and "completed" not in phase.submission_status_string
+                    ],
+                    default=None,
+                )
+
+                if phase_start_date:
+                    phase = (
+                        self.phase_set.filter(
+                            submissions_open=phase_start_date
+                        )
+                        .order_by("-created")
+                        .all()
+                    )
+                    # there might be multiple (not completed) phases
+                    # with the same start date
+                    detail = [phase[0].submission_status_string]
+                else:
+                    detail = ["Not accepting submissions"]
+
+        return {
+            "status": status,
+            "detail": detail[0],
+        }
 
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"
