@@ -21,6 +21,7 @@ from django.core.files import File
 from django.db import OperationalError, transaction
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
+from django.utils.module_loading import import_string
 from panimg import convert
 from panimg.models import PanImgResult
 
@@ -33,6 +34,10 @@ from grandchallenge.cases.models import (
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
+
+POST_PROCESSORS = [
+    import_string(p) for p in settings.CASES_POST_PROCESSORS if p
+]
 
 
 class DuplicateFilesException(ValueError):
@@ -206,6 +211,7 @@ def import_images(
             input_directory=input_directory,
             output_directory=output_directory,
             builders=builders,
+            post_processors=POST_PROCESSORS,
             recurse_subdirectories=recurse_subdirectories,
         )
 

@@ -1,7 +1,9 @@
 import pytest
 from celery import shared_task
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
+from grandchallenge.cases.tasks import POST_PROCESSORS
 from tests.factories import UploadSessionFactory
 
 
@@ -23,3 +25,6 @@ def test_linked_task_called_with_session_pk(settings):
         session.process_images(linked_task=local_linked_task.signature())
 
     assert called == {"upload_session_pk": session.pk}
+
+def test_post_processors_setting():
+    assert POST_PROCESSORS == DEFAULT_POST_PROCESSORS
