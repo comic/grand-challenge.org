@@ -26,5 +26,6 @@ def test_linked_task_called_with_session_pk(settings):
 
     assert called == {"upload_session_pk": session.pk}
 
+
 def test_post_processors_setting():
     assert POST_PROCESSORS == DEFAULT_POST_PROCESSORS
