@@ -562,16 +562,20 @@ class AmazonECSExecutor:
                 f"File {interface.relative_path} was not produced"
             )
 
-        try:
+        if interface.interface_type_file():
             with open(output_file, "rb") as f:
-                result = json.loads(
-                    f.read().decode("utf-8"),
-                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+                result = f.read().decode("utf-8")
+        else:
+            try:
+                with open(output_file, "rb") as f:
+                    result = json.loads(
+                        f.read().decode("utf-8"),
+                        parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+                    )
+            except JSONDecodeError:
+                raise ComponentException(
+                    f"The file produced at {interface.relative_path} is not valid json"
                 )
-        except JSONDecodeError:
-            raise ComponentException(
-                f"The file produced at {interface.relative_path} is not valid json"
-            )
 
         try:
             civ = interface.create_instance(value=result)
