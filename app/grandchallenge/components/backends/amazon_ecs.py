@@ -566,8 +566,7 @@ class AmazonECSExecutor:
 
         try:
             with open(output_file, "rb") as f:
-                container = File(f)
-                civ = interface.create_instance(fileobj=container)
+                civ = interface.create_instance(fileobj=f)
         except ValidationError:
             raise ComponentException(
                 f"The file produced at {interface.relative_path} is not valid"

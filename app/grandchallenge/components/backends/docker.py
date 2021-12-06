@@ -516,13 +516,12 @@ class DockerExecutor(DockerConnection):
                 temp_file = Path(safe_join(tmpdir, interface.relative_path))
                 get_file(container=reader, src=output_file, dest=temp_file)
                 with open(temp_file, "rb") as f:
-                    container = File(f)
-                    civ = interface.create_instance(fileobj=container)
+                    civ = interface.create_instance(fileobj=f)
         except NotFound:
-            raise ComponentException(f"File {container} was not produced")
+            raise ComponentException(f"File {output_file} was not produced")
         except ValidationError:
             raise ComponentException(
-                f"The file produced at {container} is not valid"
+                f"The file produced at {output_file} is not valid"
             )
 
         return civ

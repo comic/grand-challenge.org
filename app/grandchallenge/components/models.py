@@ -570,7 +570,8 @@ class ComponentInterface(models.Model):
         if image:
             civ.image = image
         elif fileobj:
-            civ.file = fileobj
+            container = File(fileobj)
+            civ.file.save(self.relative_path, container)
         elif self.save_in_object_store:
             civ.file = ContentFile(
                 json.dumps(value).encode("utf-8"),
