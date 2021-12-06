@@ -115,6 +115,8 @@ class AmazonECSExecutor:
             for interface in output_interfaces:
                 if interface.is_image_kind:
                     res = self._create_images_result(interface=interface)
+                elif interface.is_json_kind:
+                    res = self._create_json_result(interface=interface)
                 else:
                     res = self._create_file_result(interface=interface)
 
@@ -562,20 +564,41 @@ class AmazonECSExecutor:
                 f"File {interface.relative_path} was not produced"
             )
 
-        if interface.interface_type_file():
+        try:
             with open(output_file, "rb") as f:
-                result = f.read().decode("utf-8")
-        else:
-            try:
-                with open(output_file, "rb") as f:
-                    result = json.loads(
-                        f.read().decode("utf-8"),
-                        parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-                    )
-            except JSONDecodeError:
-                raise ComponentException(
-                    f"The file produced at {interface.relative_path} is not valid json"
+                container = File(f)
+                civ = interface.create_instance(fileobj=container)
+        except ValidationError:
+            raise ComponentException(
+                f"The file produced at {interface.relative_path} is not valid"
+            )
+
+        return civ
+
+    def _create_json_result(self, *, interface):
+        output_file = Path(
+            safe_join(self._output_directory, interface.relative_path)
+        )
+
+        if (
+            output_file.is_symlink()
+            or not output_file.is_file()
+            or not output_file.exists()
+        ):
+            raise ComponentException(
+                f"File {interface.relative_path} was not produced"
+            )
+
+        try:
+            with open(output_file, "rb") as f:
+                result = json.loads(
+                    f.read().decode("utf-8"),
+                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
                 )
+        except JSONDecodeError:
+            raise ComponentException(
+                f"The file produced at {interface.relative_path} is not valid json"
+            )
 
         try:
             civ = interface.create_instance(value=result)

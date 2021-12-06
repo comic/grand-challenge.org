@@ -542,6 +542,10 @@ class ComponentInterface(models.Model):
         return self.kind in InterfaceKind.interface_type_image()
 
     @property
+    def is_json_kind(self):
+        return self.kind in InterfaceKind.interface_type_json()
+
+    @property
     def super_kind(self):
         if self.save_in_object_store:
             if self.is_image_kind:
@@ -560,11 +564,13 @@ class ComponentInterface(models.Model):
             or not self.store_in_database
         )
 
-    def create_instance(self, *, image=None, value=None):
+    def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
 
         if image:
             civ.image = image
+        elif fileobj:
+            civ.file = fileobj
         elif self.save_in_object_store:
             civ.file = ContentFile(
                 json.dumps(value).encode("utf-8"),

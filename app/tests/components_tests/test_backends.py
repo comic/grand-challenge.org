@@ -162,8 +162,8 @@ def test_provision(tmp_path, settings):
     }
 
     # Exclude the CIV reading as this is unsupported
-    outputs = executor.get_outputs(output_interfaces=interfaces[:2])
-    assert len(outputs) == 2
+    outputs = executor.get_outputs(output_interfaces=interfaces)
+    assert len(outputs) == 3
 
     executor.deprovision()
 
