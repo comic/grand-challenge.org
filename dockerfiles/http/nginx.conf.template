@@ -97,6 +97,10 @@ http {
     server ${APP_SERVER_HOST}:8000;
   }
 
+  upstream data_store {
+    server ${DATA_STORE_HOSTNAME}:${DATA_STORE_PORT};
+  }
+
   upstream workstations_http {
     server ${WORKSTATION_PROXY_HOSTNAME}:${WORKSTATION_PROXY_HTTP_PORT};
   }
@@ -225,7 +229,7 @@ http {
       proxy_set_header Connection "";
       chunked_transfer_encoding off;
 
-      proxy_pass http://minio.localhost:9000;
+      proxy_pass http://data_store;
     }
 
     location / {
