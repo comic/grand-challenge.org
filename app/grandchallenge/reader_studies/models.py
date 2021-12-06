@@ -1150,6 +1150,9 @@ class Answer(UUIDModel):
     ``ReaderStudy``.
     """
 
+    # TODO do this for all UUID models
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
     creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
@@ -1182,7 +1185,7 @@ class Answer(UUIDModel):
     ]
 
     class Meta:
-        ordering = ("creator", "created")
+        ordering = ("created",)
 
     def __str__(self):
         return f"{self.question.question_text} {self.answer} ({self.creator})"
