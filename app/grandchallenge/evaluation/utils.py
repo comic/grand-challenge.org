@@ -1,3 +1,4 @@
+import enum
 from collections import OrderedDict
 from typing import Callable, Dict, Iterable, List, NamedTuple, Tuple
 
@@ -145,3 +146,10 @@ def _scores_to_ranks(
         ranks[pk] = current_rank
 
     return ranks
+
+
+class StatusChoices(enum.Enum):
+    CLOSED = ("CLOSED",)
+    OPEN = ("OPEN",)
+    OPENING_SOON = ("OPEN_SOON",)
+    COMPLETED = ("COMPLETED",)

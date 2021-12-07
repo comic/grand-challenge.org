@@ -47,8 +47,12 @@
                     {% else %}
                         in total
                     {% endif %}
-                    to this phase.
-                    You can change the submission limit and period in
+                    {% if phase.submissions_open and phase.submissions_close %}between {{ phase.submissions_open }} and {{ phase.submissions_close }}
+                    {% elif phase.submissions_open and not phase.submissions_close %} from {{ phase.submissions_open }} onwards
+                    {% elif not phase.submissions_open and  phase.submissions_close %} until {{ phase.submissions_close }}
+                    {% endif %}
+                    to this phase.</p>
+                    <p>You can change the submission limit and period and the submission start and end dates in
                     <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
                         Phase Settings</a>.
                 </p>
@@ -63,6 +67,11 @@
                     if you would like to create a submission on the behalf of one of the participants of this challenge.
                 </p>
             </div>
+            {% if phase.inconsistent_submission_information %}
+                <div class="alert alert-warning pb-1" role="alert">
+                        <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The submission limit for this phase is 0, but the start and end dates indicate that this phase should be open to submissions now. The submission limit needs to be above 0 for participants to submit to this phase.</p>
+                </div>
+            {% endif %}
 
         {% endif %}
 
@@ -80,7 +89,7 @@
                 to see their status.
             </div>
 
-        {% elif phase.submission_limit == 0 %}
+        {% elif not phase.open_for_submissions %}
 
             <div class="alert alert-danger" role="alert">
                 Submissions are closed for this phase.

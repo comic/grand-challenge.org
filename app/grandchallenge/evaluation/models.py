@@ -33,6 +33,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
+from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -342,7 +343,7 @@ class Phase(UUIDModel):
         ),
         validators=[MinValueValidator(limit_value=1)],
     )
-    submissions_open = models.DateTimeField(
+    submissions_open_at = models.DateTimeField(
         null=True,
         blank=True,
         help_text=(
@@ -350,7 +351,7 @@ class Phase(UUIDModel):
             "this phase before this time."
         ),
     )
-    submissions_close = models.DateTimeField(
+    submissions_close_at = models.DateTimeField(
         null=True,
         blank=True,
         help_text=(
@@ -424,7 +425,7 @@ class Phase(UUIDModel):
             ("challenge", "title"),
             ("challenge", "slug"),
         )
-        ordering = ("challenge", "submissions_open", "created")
+        ordering = ("challenge", "submissions_open_at", "created")
         permissions = (
             ("create_phase_submission", "Create Phase Submission"),
             ("create_phase_workspace", "Create Phase Workspace"),
@@ -531,36 +532,45 @@ class Phase(UUIDModel):
         """
         now = timezone.now()
 
-        filter_kwargs = {"creator": user}
-
-        if self.submission_limit_period is not None:
-            filter_kwargs.update(
-                {"created__gte": now - self.submission_limit_period_timedelta}
-            )
-
-        evals_in_period = (
-            self.submission_set.filter(**filter_kwargs)
-            .exclude(evaluation__status=Evaluation.FAILURE)
-            .distinct()
-            .order_by("-created")
-        )
-
-        remaining_submissions = max(
-            0, self.submission_limit - evals_in_period.count()
-        )
-
-        if remaining_submissions:
-            next_sub_at = now
-        elif (
-            self.submission_limit == 0 or self.submission_limit_period is None
-        ):
-            # User is never going to be able to submit again
+        if not self.open_for_submissions:
+            remaining_submissions = 0
             next_sub_at = None
+
         else:
-            next_sub_at = (
-                evals_in_period[self.submission_limit - 1].created
-                + self.submission_limit_period_timedelta
+            filter_kwargs = {"creator": user}
+
+            if self.submission_limit_period is not None:
+                filter_kwargs.update(
+                    {
+                        "created__gte": now
+                        - self.submission_limit_period_timedelta
+                    }
+                )
+
+            evals_in_period = (
+                self.submission_set.filter(**filter_kwargs)
+                .exclude(evaluation__status=Evaluation.FAILURE)
+                .distinct()
+                .order_by("-created")
             )
+
+            remaining_submissions = max(
+                0, self.submission_limit - evals_in_period.count()
+            )
+
+            if remaining_submissions:
+                next_sub_at = now
+            elif (
+                self.submission_limit == 0
+                or self.submission_limit_period is None
+            ):
+                # User is never going to be able to submit again
+                next_sub_at = None
+            else:
+                next_sub_at = (
+                    evals_in_period[self.submission_limit - 1].created
+                    + self.submission_limit_period_timedelta
+                )
 
         return {
             "remaining_submissions": remaining_submissions,
@@ -583,8 +593,51 @@ class Phase(UUIDModel):
         )
 
     @property
+    def submission_period_is_open_now(self):
+        now = timezone.now()
+        upper_bound = self.submissions_close_at or now + timedelta(days=1)
+        lower_bound = self.submissions_open_at or now - timedelta(days=1)
+        return lower_bound < now < upper_bound
+
+    @property
     def open_for_submissions(self):
-        return self.submission_limit != 0
+        return self.submission_period_is_open_now and self.submission_limit > 0
+
+    @property
+    def status(self):
+        now = timezone.now()
+        if self.open_for_submissions:
+            return StatusChoices.OPEN
+        else:
+            if self.submissions_open_at and now < self.submissions_open_at:
+                return StatusChoices.OPENING_SOON
+            elif self.submissions_close_at and now > self.submissions_close_at:
+                return StatusChoices.COMPLETED
+            else:
+                return StatusChoices.CLOSED
+
+    @property
+    def submission_status_string(self):
+        if self.status == StatusChoices.OPEN and self.submissions_close_at:
+            return f'Accepting submissions for {self.title} until {self.submissions_close_at.strftime("%b %d %Y at %H:%M")}'
+        elif (
+            self.status == StatusChoices.OPEN and not self.submissions_close_at
+        ):
+            return f"Accepting submissions for {self.title}"
+        elif self.status == StatusChoices.OPENING_SOON:
+            return f'Opening submissions for {self.title} on {self.submissions_open_at.strftime("%b %d %Y at %H:%M")}'
+        elif self.status == StatusChoices.COMPLETED:
+            return f"{self.title} completed"
+        elif self.status == StatusChoices.CLOSED:
+            return "Not accepting submissions"
+        else:
+            raise NotImplementedError(f"{self.status} not implemented")
+
+    @property
+    def inconsistent_submission_information(self):
+        return (
+            self.submission_limit == 0 and self.submission_period_is_open_now
+        )
 
 
 class Method(UUIDModel, ComponentImage):

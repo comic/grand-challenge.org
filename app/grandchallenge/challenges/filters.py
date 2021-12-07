@@ -6,12 +6,15 @@ from grandchallenge.challenges.models import (
     ChallengeSeries,
 )
 from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
+from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.task_categories.models import TaskType
 
 
 STATUS_CHOICES = (
-    (True, "Accepting submissions"),
-    (False, "Not accepting submissions"),
+    (StatusChoices.OPEN, "Accepting submissions now"),
+    (StatusChoices.OPENING_SOON, "Opening submissions soon"),
+    (StatusChoices.CLOSED, "Not accepting submissions"),
+    (StatusChoices.COMPLETED, "Completed"),
 )
 
 
@@ -53,6 +56,6 @@ class InternalChallengeFilter(ChallengeFilter):
         ids = [
             challenge.id
             for challenge in queryset
-            if challenge.accepting_submissions == eval(value)
+            if str(challenge.status) == value
         ]
         return queryset.filter(pk__in=ids)

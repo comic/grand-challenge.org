@@ -3,10 +3,8 @@
 {% load humanize %}
 
 <div>
-    {% if challenge.accepting_submissions %}
-        <span class="badge badge-success mt-2 above-stretched-link" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> Accepting submissions</span><br>
-    {% elif challenge.is_self_hosted and not challenge.accepting_submissions %}
-        <span class="badge badge-danger mt-2 above-stretched-link" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> Not accepting submissions</span><br>
+    {% if challenge.is_self_hosted %}
+        <span class="badge {% if challenge.status.name == 'OPEN' %}badge-success {% elif challenge.status.name == 'OPENING_SOON' %} badge-warning {% else %} badge-danger {% endif %}mt-2 above-stretched-link text-wrap" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.status_badge_string }}</span><br>
     {% endif %}
     {% if challenge.description %}
         <a href="#InfoModal"

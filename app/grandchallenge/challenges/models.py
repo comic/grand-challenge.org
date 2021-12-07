@@ -39,6 +39,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
+from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -557,10 +558,53 @@ class Challenge(ChallengeBase):
         unfollow(user=user, obj=self.forum, send_action=False)
 
     @property
-    def accepting_submissions(self):
-        return True in (
-            phase.open_for_submissions for phase in self.phase_set.all()
-        )
+    def status(self):
+        phase_status = {phase.status for phase in self.phase_set.all()}
+        if StatusChoices.OPEN in phase_status:
+            status = StatusChoices.OPEN
+        elif {StatusChoices.COMPLETED} == phase_status:
+            status = StatusChoices.COMPLETED
+        elif StatusChoices.OPENING_SOON in phase_status:
+            status = StatusChoices.OPENING_SOON
+        else:
+            status = StatusChoices.CLOSED
+        return status
+
+    @property
+    def status_badge_string(self):
+        if self.status == StatusChoices.OPEN:
+            detail = [
+                phase.submission_status_string
+                for phase in self.phase_set.all()
+                if phase.status == StatusChoices.OPEN
+            ]
+            if len(detail) > 1:
+                # if there are multiple open phases it is unclear which
+                # status to print, so stay vague
+                detail = ["Accepting submissions"]
+        elif self.status == StatusChoices.COMPLETED:
+            detail = ["Challenge completed"]
+        elif self.status == StatusChoices.CLOSED:
+            detail = ["Not accepting submissions"]
+        elif self.status == StatusChoices.OPENING_SOON:
+            start_date = min(
+                [
+                    phase.submissions_open_at
+                    for phase in self.phase_set.all()
+                    if phase.status == StatusChoices.OPENING_SOON
+                ],
+                default=None,
+            )
+            phase = (
+                self.phase_set.filter(submissions_open_at=start_date)
+                .order_by("-created")
+                .first()
+            )
+            detail = [phase.submission_status_string]
+        else:
+            raise NotImplementedError(f"{self.status} not handled")
+
+        return detail[0]
 
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"

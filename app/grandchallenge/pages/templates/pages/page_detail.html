@@ -65,6 +65,13 @@
             </div>
         {% endif %}
 
+        {% if "change_challenge" in challenge_perms and not challenge.contact_email %}
+            <div class="alert alert-warning" role="alert">
+                Please update your challenge settings. Grand Challenge now requires a <u>contact email address</u> for all challenges.<br>
+                Please also note that you can now define start and end dates for each phase in the respective phase settings.
+            </div>
+        {% endif %}
+
         <div id=pageContainer>{{ cleaned_html }}</div>
 
         {% if currentpage.pk %}
