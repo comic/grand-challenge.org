@@ -115,6 +115,8 @@ class AmazonECSExecutor:
             for interface in output_interfaces:
                 if interface.is_image_kind:
                     res = self._create_images_result(interface=interface)
+                elif interface.is_json_kind:
+                    res = self._create_json_result(interface=interface)
                 else:
                     res = self._create_file_result(interface=interface)
 
@@ -549,6 +551,30 @@ class AmazonECSExecutor:
         return civ
 
     def _create_file_result(self, *, interface):
+        output_file = Path(
+            safe_join(self._output_directory, interface.relative_path)
+        )
+
+        if (
+            output_file.is_symlink()
+            or not output_file.is_file()
+            or not output_file.exists()
+        ):
+            raise ComponentException(
+                f"File {interface.relative_path} was not produced"
+            )
+
+        try:
+            with open(output_file, "rb") as f:
+                civ = interface.create_instance(fileobj=f)
+        except ValidationError:
+            raise ComponentException(
+                f"The file produced at {interface.relative_path} is not valid"
+            )
+
+        return civ
+
+    def _create_json_result(self, *, interface):
         output_file = Path(
             safe_join(self._output_directory, interface.relative_path)
         )

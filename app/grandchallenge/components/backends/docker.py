@@ -422,6 +422,10 @@ class DockerExecutor(DockerConnection):
                         res = self._create_images_result(
                             interface=interface, reader=reader
                         )
+                    elif interface.is_json_kind:
+                        res = self._create_json_result(
+                            interface=interface, reader=reader
+                        )
                     else:
                         res = self._create_file_result(
                             interface=interface, reader=reader
@@ -476,7 +480,7 @@ class DockerExecutor(DockerConnection):
 
         return civ
 
-    def _create_file_result(self, *, interface, reader):
+    def _create_json_result(self, *, interface, reader):
         output_file = Path(safe_join("/output/", interface.relative_path))
 
         try:
@@ -498,6 +502,23 @@ class DockerExecutor(DockerConnection):
 
         try:
             civ = interface.create_instance(value=result)
+        except ValidationError:
+            raise ComponentException(
+                f"The file produced at {output_file} is not valid"
+            )
+
+        return civ
+
+    def _create_file_result(self, *, interface, reader):
+        output_file = Path(safe_join("/output/", interface.relative_path))
+        try:
+            with TemporaryDirectory() as tmpdir:
+                temp_file = Path(safe_join(tmpdir, interface.relative_path))
+                get_file(container=reader, src=output_file, dest=temp_file)
+                with open(temp_file, "rb") as f:
+                    civ = interface.create_instance(fileobj=f)
+        except NotFound:
+            raise ComponentException(f"File {output_file} was not produced")
         except ValidationError:
             raise ComponentException(
                 f"The file produced at {output_file} is not valid"
