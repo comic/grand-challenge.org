@@ -106,6 +106,7 @@
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="n">calculate_ranks</span><span class="p">,</span> <span class="n">create_evaluation</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="n">StatusChoices</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
@@ -415,7 +416,7 @@
         <span class="p">),</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MinValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
     <span class="p">)</span>
-    <span class="n">submissions_open</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
+    <span class="n">submissions_open_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
@@ -423,7 +424,7 @@
             <span class="s2">&quot;this phase before this time.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">submissions_close</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
+    <span class="n">submissions_close_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
@@ -497,7 +498,7 @@
             <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;submissions_open&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;submissions_open_at&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
         <span class="n">permissions</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">(</span><span class="s2">&quot;create_phase_submission&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Submission&quot;</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;create_phase_workspace&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Workspace&quot;</span><span class="p">),</span>
@@ -604,36 +605,45 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 
-        <span class="n">filter_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;creator&quot;</span><span class="p">:</span> <span class="n">user</span><span class="p">}</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">filter_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                <span class="p">{</span><span class="s2">&quot;created__gte&quot;</span><span class="p">:</span> <span class="n">now</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period_timedelta</span><span class="p">}</span>
-            <span class="p">)</span>
-
-        <span class="n">evals_in_period</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">filter_kwargs</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">evaluation__status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-created&quot;</span><span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="n">remaining_submissions</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
-            <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="n">evals_in_period</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">remaining_submissions</span><span class="p">:</span>
-            <span class="n">next_sub_at</span> <span class="o">=</span> <span class="n">now</span>
-        <span class="k">elif</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="p">):</span>
-            <span class="c1"># User is never going to be able to submit again</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_for_submissions</span><span class="p">:</span>
+            <span class="n">remaining_submissions</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">next_sub_at</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">next_sub_at</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">evals_in_period</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span>
-                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period_timedelta</span>
+            <span class="n">filter_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;creator&quot;</span><span class="p">:</span> <span class="n">user</span><span class="p">}</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">filter_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;created__gte&quot;</span><span class="p">:</span> <span class="n">now</span>
+                        <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period_timedelta</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+
+            <span class="n">evals_in_period</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">filter_kwargs</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">evaluation__status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-created&quot;</span><span class="p">)</span>
             <span class="p">)</span>
+
+            <span class="n">remaining_submissions</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="n">evals_in_period</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">remaining_submissions</span><span class="p">:</span>
+                <span class="n">next_sub_at</span> <span class="o">=</span> <span class="n">now</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="c1"># User is never going to be able to submit again</span>
+                <span class="n">next_sub_at</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">next_sub_at</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">evals_in_period</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span>
+                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period_timedelta</span>
+                <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;remaining_submissions&quot;</span><span class="p">:</span> <span class="n">remaining_submissions</span><span class="p">,</span>
@@ -656,8 +666,51 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">submission_period_is_open_now</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">upper_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span> <span class="ow">or</span> <span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">lower_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span> <span class="ow">or</span> <span class="n">now</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lower_bound</span> <span class="o">&lt;</span> <span class="n">now</span> <span class="o">&lt;</span> <span class="n">upper_bound</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">open_for_submissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">!=</span> <span class="mi">0</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_for_submissions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">OPEN</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span> <span class="ow">and</span> <span class="n">now</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">OPENING_SOON</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span> <span class="ow">and</span> <span class="n">now</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">CLOSED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">submission_status_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">OPEN</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;Accepting submissions for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s1"> until </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%b </span><span class="si">%d</span><span class="s2"> %Y at %H:%M&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">OPEN</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_close_at</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Accepting submissions for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">OPENING_SOON</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;Opening submissions for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s1"> on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submissions_open_at</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%b </span><span class="si">%d</span><span class="s2"> %Y at %H:%M&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> completed&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">StatusChoices</span><span class="o">.</span><span class="n">CLOSED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Not accepting submissions&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> not implemented&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inconsistent_submission_information</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
+        <span class="p">)</span></div>
 
 
 <span class="k">class</span> <span class="nc">Method</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
