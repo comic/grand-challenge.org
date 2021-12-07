@@ -45,7 +45,8 @@ services:
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
-    command: python manage.py runserver_plus 0.0.0.0:8000 --nopin
+    command: >-
+      python manage.py runserver_plus 0.0.0.0:8000 --nopin
     restart: always
     depends_on:
       postgres:
@@ -75,13 +76,15 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest
     environment:
       APP_SERVER_HOST: 'web'
-      SERVER_NAME: gc.localhost
+      SERVER_NAME: 'gc.localhost'
       SENDFILE_STATUS: 'off'
       WORKSTATION_PROXY_HOSTNAME: 'workstation-proxy'
       WORKSTATION_PROXY_HTTP_PORT: '8000'
       WORKSTATION_PROXY_WEBSOCKET_PORT: '8001'
+      DATA_STORE_HOSTNAME: 'minio.localhost'
+      DATA_STORE_PORT: '9000'
     command: >-
-        bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS $$WORKSTATION_PROXY_HOSTNAME $$WORKSTATION_PROXY_HTTP_PORT $$WORKSTATION_PROXY_WEBSOCKET_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+        bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS $$DATA_STORE_HOSTNAME $$DATA_STORE_PORT $$WORKSTATION_PROXY_HOSTNAME $$WORKSTATION_PROXY_HTTP_PORT $$WORKSTATION_PROXY_WEBSOCKET_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
         && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/privkey.pem -out /etc/ssl/certs/fullchain.pem -days 365 -nodes -subj '/CN=$$SERVER_NAME'
         && nginx -g 'daemon off;'"
     restart: always

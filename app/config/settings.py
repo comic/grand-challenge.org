@@ -76,7 +76,9 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
-CELERY_EMAIL_BACKEND = "django_ses.SESBackend"
+CELERY_EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "webmaster@localhost"
 )
@@ -1032,10 +1034,6 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 WORKSTATIONS_GRACE_MINUTES = 5
 
 CELERY_BEAT_SCHEDULE = {
-    "push_metrics_to_cloudwatch": {
-        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
-        "schedule": timedelta(seconds=15),
-    },
     "ping_google": {
         "task": "grandchallenge.core.tasks.ping_google",
         "schedule": timedelta(days=1),
@@ -1082,6 +1080,12 @@ CELERY_BEAT_SCHEDULE = {
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },
 }
+
+if strtobool(os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")):
+    CELERY_BEAT_SCHEDULE["push_metrics_to_cloudwatch"] = {
+        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
+        "schedule": timedelta(seconds=15),
+    }
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
@@ -1145,6 +1149,11 @@ OPEN_SOURCE_LICENSES = [
     "The Unlicense",
 ]
 
+# Set the post processors to use for the image imports
+CASES_POST_PROCESSORS = os.environ.get(
+    "CASES_POST_PROCESSORS", "panimg.post_processors.tiff_to_dzi"
+).split(",")
+
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
@@ -1168,8 +1177,6 @@ RETINA_ADMINS_GROUP_NAME = "retina_admins"
 ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
     # Allow localhost in development
     CORS_ORIGIN_REGEX_WHITELIST += [r"^http://localhost:8888$"]
 
@@ -1178,8 +1185,6 @@ if DEBUG:
     PUBLIC_S3_STORAGE_KWARGS.update({"secure_urls": False})
     DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
     DEMO_ALGORITHM_SHA256 = "sha256:5e81cef3738b7dbffc12c101990eb3b97f17642c09a2e0b64d5b3d4dd144e79b"
-
-    del CELERY_BEAT_SCHEDULE["push_metrics_to_cloudwatch"]
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
