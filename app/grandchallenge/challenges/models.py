@@ -586,7 +586,7 @@ class Challenge(ChallengeBase):
             detail = ["Challenge completed"]
         elif self.status == StatusChoices.CLOSED:
             detail = ["Not accepting submissions"]
-        else:
+        elif self.status == StatusChoices.OPENING_SOON:
             start_date = min(
                 [
                     phase.submissions_open_at
@@ -601,6 +601,8 @@ class Challenge(ChallengeBase):
                 .first()
             )
             detail = [phase.submission_status_string]
+        else:
+            raise NotImplementedError(f"{self.status} not handled")
 
         return detail[0]
 

@@ -56,6 +56,6 @@ class InternalChallengeFilter(ChallengeFilter):
         ids = [
             challenge.id
             for challenge in queryset
-            if challenge.status.__str__() == value
+            if str(challenge.status) == value
         ]
         return queryset.filter(pk__in=ids)

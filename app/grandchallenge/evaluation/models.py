@@ -630,6 +630,8 @@ class Phase(UUIDModel):
             return f"{self.title} completed"
         elif self.status == StatusChoices.CLOSED:
             return "Not accepting submissions"
+        else:
+            raise NotImplementedError(f"{self.status} not implemented")
 
     @property
     def inconsistent_submission_information(self):
