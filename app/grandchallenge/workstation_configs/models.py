@@ -246,10 +246,17 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     show_lut_selection_tool = models.BooleanField(default=True)
     show_annotation_counter_tool = models.BooleanField(default=True)
 
+    link_images = models.BooleanField(
+        default=True,
+        help_text="Linked images share tool interactions and display properties, "
+        "it is possible to manually (un)link them during viewing",
+    )
+
     enable_contrast_enhancement = models.BooleanField(
         default=False,
         verbose_name="Enable contrast enhancement preprocessing (fundus)",
     )
+
     auto_jump_center_of_gravity = models.BooleanField(
         default=True,
         help_text="Jump to center of gravity of first output when viewing algorithm "
