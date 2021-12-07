@@ -250,8 +250,8 @@ def test_open_for_submission(
 ):
     phase = PhaseFactory()
     phase.submission_limit = submission_limit
-    phase.submissions_open = submissions_open
-    phase.submissions_close = submissions_close
+    phase.submissions_open_at = submissions_open
+    phase.submissions_close_at = submissions_close
     phase.save()
 
     assert phase.open_for_submissions == open_for_submissions

@@ -302,11 +302,11 @@ def test_challenge_card_status(
     u = UserFactory()
 
     phase1.submission_limit = phase1_submission_limit
-    phase1.submissions_open = phase1_submissions_open
-    phase1.submissions_close = phase1_submissions_close
+    phase1.submissions_open_at = phase1_submissions_open
+    phase1.submissions_close_at = phase1_submissions_close
     phase2.submission_limit = phase2_submission_limit
-    phase2.submissions_open = phase2_submissions_open
-    phase2.submissions_close = phase2_submissions_close
+    phase2.submissions_open_at = phase2_submissions_open
+    phase2.submissions_close_at = phase2_submissions_close
     phase1.save()
     phase2.save()
 

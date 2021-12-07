@@ -33,6 +33,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
+from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -342,7 +343,7 @@ class Phase(UUIDModel):
         ),
         validators=[MinValueValidator(limit_value=1)],
     )
-    submissions_open = models.DateTimeField(
+    submissions_open_at = models.DateTimeField(
         null=True,
         blank=True,
         help_text=(
@@ -350,7 +351,7 @@ class Phase(UUIDModel):
             "this phase before this time."
         ),
     )
-    submissions_close = models.DateTimeField(
+    submissions_close_at = models.DateTimeField(
         null=True,
         blank=True,
         help_text=(
@@ -424,7 +425,7 @@ class Phase(UUIDModel):
             ("challenge", "title"),
             ("challenge", "slug"),
         )
-        ordering = ("challenge", "submissions_open", "created")
+        ordering = ("challenge", "submissions_open_at", "created")
         permissions = (
             ("create_phase_submission", "Create Phase Submission"),
             ("create_phase_workspace", "Create Phase Workspace"),
@@ -592,48 +593,49 @@ class Phase(UUIDModel):
         )
 
     @property
-    def submission_period_open(self):
+    def submission_period_is_open_now(self):
         now = timezone.now()
-        if self.submissions_open and self.submissions_close:
-            submission_period_open = (
-                now > self.submissions_open and now < self.submissions_close
-            )
-        elif self.submissions_open:
-            submission_period_open = now > self.submissions_open
-        elif self.submissions_close:
-            submission_period_open = now < self.submissions_close
-        else:
-            submission_period_open = True
-        return submission_period_open
+        upper_bound = self.submissions_close_at or now + timedelta(days=1)
+        lower_bound = self.submissions_open_at or now - timedelta(days=1)
+        return lower_bound < now < upper_bound
 
     @property
     def open_for_submissions(self):
-        if self.submission_limit == 0:
-            return False
-        elif not self.submission_period_open:
-            return False
+        return self.submission_period_is_open_now and self.submission_limit > 0
+
+    @property
+    def status(self):
+        now = timezone.now()
+        if self.open_for_submissions:
+            return StatusChoices.OPEN
         else:
-            return True
+            if self.submissions_open_at and now < self.submissions_open_at:
+                return StatusChoices.OPENING_SOON
+            elif self.submissions_close_at and now > self.submissions_close_at:
+                return StatusChoices.COMPLETED
+            else:
+                return StatusChoices.CLOSED
 
     @property
     def submission_status_string(self):
-        now = timezone.now()
-        if self.open_for_submissions:
-            if self.submissions_close:
-                return f'Accepting submissions for {self.title} until {self.submissions_close.strftime("%b %d %Y")}'
-            else:
-                return f"Accepting submissions for {self.title}"
-        else:
-            if self.submissions_open and now < self.submissions_open:
-                return f'Opening submissions for {self.title} on {self.submissions_open.strftime("%b %d %Y")}'
-            elif self.submissions_close and now > self.submissions_close:
-                return f"{self.title} completed"
-            else:
-                return "Not accepting submissions"
+        if self.status == StatusChoices.OPEN and self.submissions_close_at:
+            return f'Accepting submissions for {self.title} until {self.submissions_close_at.strftime("%b %d %Y at %H:%M")}'
+        elif (
+            self.status == StatusChoices.OPEN and not self.submissions_close_at
+        ):
+            return f"Accepting submissions for {self.title}"
+        elif self.status == StatusChoices.OPENING_SOON:
+            return f'Opening submissions for {self.title} on {self.submissions_open_at.strftime("%b %d %Y at %H:%M")}'
+        elif self.status == StatusChoices.COMPLETED:
+            return f"{self.title} completed"
+        elif self.status == StatusChoices.CLOSED:
+            return "Not accepting submissions"
 
     @property
     def inconsistent_submission_information(self):
-        return self.submission_limit == 0 and self.submission_period_open
+        return (
+            self.submission_limit == 0 and self.submission_period_is_open_now
+        )
 
 
 class Method(UUIDModel, ComponentImage):

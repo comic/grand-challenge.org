@@ -30,8 +30,8 @@ from grandchallenge.uploads.widgets import UserUploadSingleWidget
 phase_options = ("title",)
 
 submission_options = (
-    "submissions_open",
-    "submissions_close",
+    "submissions_open_at",
+    "submissions_close_at",
     "submission_page_html",
     "creator_must_be_verified",
     "submission_limit",
@@ -126,22 +126,22 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
             "extra_results_columns": JSONEditorWidget(
                 schema=EXTRA_RESULT_COLUMNS_SCHEMA
             ),
-            "submissions_open": forms.DateInput(
-                format=("%Y-%m-%d"), attrs={"type": "date"}
+            "submissions_open_at": forms.DateTimeInput(
+                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
             ),
-            "submissions_close": forms.DateInput(
-                format=("%Y-%m-%d"), attrs={"type": "date"}
+            "submissions_close_at": forms.DateTimeInput(
+                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
             ),
         }
 
     def clean(self):
-        submissions_open = self.cleaned_data["submissions_open"]
-        submissions_close = self.cleaned_data["submissions_close"]
+        submissions_open_at = self.cleaned_data["submissions_open_at"]
+        submissions_close_at = self.cleaned_data["submissions_close_at"]
 
         if (
-            submissions_open
-            and submissions_close
-            and not submissions_close > submissions_open
+            submissions_open_at
+            and submissions_close_at
+            and submissions_close_at < submissions_open_at
         ):
             raise ValidationError(
                 "The submissions close date needs to be after "
