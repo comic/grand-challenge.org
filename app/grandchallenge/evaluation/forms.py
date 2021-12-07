@@ -270,7 +270,8 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             )
 
         if Submission.objects.filter(
-            algorithm_image=algorithm.latest_ready_image, phase=self._phase,
+            algorithm_image__image_sha256=algorithm.latest_ready_image.image_sha256,
+            phase=self._phase,
         ).exists():
             raise ValidationError(
                 "A submission for this algorithm container image "
