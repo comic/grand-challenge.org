@@ -18,7 +18,6 @@ class ChallengeCreateForm(forms.ModelForm):
         self.helper.layout.append(Submit("save", "Save"))
         self.fields["contact_email"].required = True
         self.fields["contact_email"].initial = creator.email
-        self.fields["use_evaluation"].initial = True
 
     class Meta:
         model = Challenge
@@ -26,10 +25,8 @@ class ChallengeCreateForm(forms.ModelForm):
             "short_name",
             "description",
             "require_participant_review",
-            "use_evaluation",
             "contact_email",
         ]
-        widgets = {"use_evaluation": forms.HiddenInput()}
 
 
 common_information_items = (
