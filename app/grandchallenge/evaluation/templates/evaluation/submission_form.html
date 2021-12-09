@@ -47,9 +47,9 @@
                     {% else %}
                         in total
                     {% endif %}
-                    {% if phase.submissions_open and phase.submissions_close %}between {{ phase.submissions_open }} and {{ phase.submissions_close }}
-                    {% elif phase.submissions_open and not phase.submissions_close %} from {{ phase.submissions_open }} onwards
-                    {% elif not phase.submissions_open and  phase.submissions_close %} until {{ phase.submissions_close }}
+                    {% if phase.submissions_open_at and phase.submissions_close_at %}between {{ phase.submissions_open_at }} and {{ phase.submissions_close_at }}
+                    {% elif phase.submissions_open_at and not phase.submissions_close_at %} from {{ phase.submissions_open_at }} onwards
+                    {% elif not phase.submissions_open_at and  phase.submissions_close_at %} until {{ phase.submissions_close_at }}
                     {% endif %}
                     to this phase.</p>
                     <p>You can change the submission limit and period and the submission start and end dates in
