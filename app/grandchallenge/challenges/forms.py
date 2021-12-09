@@ -18,6 +18,7 @@ class ChallengeCreateForm(forms.ModelForm):
         self.helper.layout.append(Submit("save", "Save"))
         self.fields["contact_email"].required = True
         self.fields["contact_email"].initial = creator.email
+        self.fields["use_evaluation"].initial = True
 
     class Meta:
         model = Challenge
@@ -28,6 +29,7 @@ class ChallengeCreateForm(forms.ModelForm):
             "use_evaluation",
             "contact_email",
         ]
+        widgets = {"use_evaluation": forms.HiddenInput()}
 
 
 common_information_items = (
@@ -70,7 +72,7 @@ class ChallengeUpdateForm(forms.ModelForm):
                 Tab("Images", "banner", *common_images_items),
                 Tab("Event", *event_items),
                 Tab("Registration", *registration_items),
-                Tab("Automated Evaluation", "use_evaluation", "use_teams"),
+                Tab("Teams", "use_teams"),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -86,7 +88,6 @@ class ChallengeUpdateForm(forms.ModelForm):
             *common_images_items,
             *event_items,
             *registration_items,
-            "use_evaluation",
             "use_teams",
         ]
         widgets = {
