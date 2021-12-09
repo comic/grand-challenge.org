@@ -150,6 +150,10 @@
             {% endif %}
             {% if object.latest_ready_image %}
                 <div class="row mb-2">
+                    <div class="col-3 font-weight-bold">Version:</div>
+                    <div class="col-9">{{ object.latest_ready_image.pk }}</div>
+                </div>
+                <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Last updated:</div>
                     <div class="col-9">{{ object.latest_ready_image.created }}</div>
                 </div>
