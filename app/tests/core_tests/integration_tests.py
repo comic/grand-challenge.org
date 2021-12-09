@@ -10,6 +10,7 @@ from django.test import TestCase
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.models import Verification
 from tests.factories import (
     PageFactory,
     RegistrationRequestFactory,
@@ -350,6 +351,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
         self, user, short_name, description="test project"
     ):
         """Create a challenge object as if created through django admin interface."""
+        Verification.objects.create(user=user, is_verified=True)
         response = self._try_create_challenge(user, short_name, description)
         errors = self._find_errors_in_page(response)
         if errors:

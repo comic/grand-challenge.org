@@ -25,7 +25,6 @@ class ChallengeCreateForm(forms.ModelForm):
             "short_name",
             "description",
             "require_participant_review",
-            "use_evaluation",
             "contact_email",
         ]
 
@@ -70,7 +69,7 @@ class ChallengeUpdateForm(forms.ModelForm):
                 Tab("Images", "banner", *common_images_items),
                 Tab("Event", *event_items),
                 Tab("Registration", *registration_items),
-                Tab("Automated Evaluation", "use_evaluation", "use_teams"),
+                Tab("Teams", "use_teams"),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -86,7 +85,6 @@ class ChallengeUpdateForm(forms.ModelForm):
             *common_images_items,
             *event_items,
             *registration_items,
-            "use_evaluation",
             "use_teams",
         ]
         widgets = {

@@ -2,6 +2,7 @@ import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.models import Verification
 from tests.factories import ExternalChallengeFactory, UserFactory
 from tests.utils import (
     get_view_for_user,
@@ -11,13 +12,27 @@ from tests.utils import (
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view", ["challenges:create", "challenges:users-list"]
-)
+@pytest.mark.parametrize("view", ["challenges:users-list"])
 def test_challenge_logged_in_permissions(view, client, challenge_set):
     validate_logged_in_view(
         url=reverse(view), challenge_set=challenge_set, client=client
     )
+
+
+@pytest.mark.django_db
+def test_create_challenge_only_when_verified(client):
+    user = UserFactory()
+    assert not Verification.objects.filter(user=user)
+
+    response = get_view_for_user(
+        client=client, viewname="challenges:create", user=user,
+    )
+    assert response.status_code == 403
+    Verification.objects.create(user=user, is_verified=True)
+    response = get_view_for_user(
+        client=client, viewname="challenges:create", user=user,
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

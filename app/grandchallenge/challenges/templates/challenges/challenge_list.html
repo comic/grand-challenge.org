@@ -8,13 +8,18 @@
 {% endblock %}
 
 {% block content %}
-    <p class="text-right">
+    <div class="d-flex justify-content-between mb-3">
+        <a class="btn btn-primary"
+           href="{% url 'challenges:create' %}"
+           title="Add a new challenge">
+            <i class="fas fa-plus mr-1"></i> Add a new challenge
+        </a>
         <a class="btn btn-primary"
            href="{% url 'challenges:combined-list' %}"
            title="All challenges">
             <i class="fas fa-list mr-1"></i> View all challenges
         </a>
-    </p>
+    </div>
 
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 

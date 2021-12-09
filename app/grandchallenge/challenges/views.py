@@ -32,9 +32,15 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.verifications.views import VerificationRequiredMixin
 
 
-class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class ChallengeCreate(
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
     model = Challenge
     form_class = ChallengeCreateForm
     success_message = "Challenge successfully created"
