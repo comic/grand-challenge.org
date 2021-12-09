@@ -174,6 +174,12 @@
                 <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
+        <tr>
+            <td class="font-weight-bold">Start with images linked</td>
+            <td>
+                <i class="fas {% if object.link_images %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
     </table>
 
     {% if "change_workstationconfig" in config_perms %}

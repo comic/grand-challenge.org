@@ -42,7 +42,9 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "show_annotation_counter_tool",
             "enable_contrast_enhancement",
             "auto_jump_center_of_gravity",
+            "link_images",
         )
+
         widgets = {
             "overlay_segments": JSONEditorWidget(
                 schema=OVERLAY_SEGMENTS_SCHEMA
