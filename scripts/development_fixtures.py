@@ -127,8 +127,9 @@ def _create_users(usernames):
             primary=True,
         )
 
-        if username == "demo" or username == "algorithm":
-            Verification.objects.create(user=users[username], is_verified=True)
+        Verification.objects.create(user=users[username], is_verified=True)
+        users[username].user_profile.receive_newsletter = True
+        users[username].user_profile.save()
 
     return users
 
