@@ -45,6 +45,7 @@ from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.task_categories.models import TaskType
+from grandchallenge.verifications.models import Verification
 from grandchallenge.workstations.models import Workstation
 from tests.fixtures import create_uploaded_image
 
@@ -125,6 +126,10 @@ def _create_users(usernames):
             verified=True,
             primary=True,
         )
+
+        Verification.objects.create(user=users[username], is_verified=True)
+        users[username].user_profile.receive_newsletter = True
+        users[username].user_profile.save()
 
     return users
 
