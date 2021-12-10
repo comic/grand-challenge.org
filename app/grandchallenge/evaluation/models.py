@@ -323,7 +323,7 @@ class Phase(UUIDModel):
         help_text=("Show a link to the supplementary url on the results page"),
     )
     submission_limit = models.PositiveIntegerField(
-        default=10,
+        default=0,
         help_text=(
             "The limit on the number of times that a user can make a "
             "submission over the submission limit period. "
@@ -639,6 +639,15 @@ class Phase(UUIDModel):
             self.submission_limit == 0 and self.submission_period_is_open_now
         )
 
+    @property
+    def latest_ready_method(self):
+        if self.method_set.all():
+            return (
+                self.method_set.filter(ready=True).order_by("-created").first()
+            )
+        else:
+            return None
+
 
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
@@ -755,14 +764,6 @@ class Submission(UUIDModel):
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
         assign_perm("view_submission", self.creator, self)
-
-    @property
-    def latest_ready_method(self):
-        return (
-            Method.objects.filter(phase=self.phase, ready=True)
-            .order_by("-created")
-            .first()
-        )
 
     def get_absolute_url(self):
         return reverse(

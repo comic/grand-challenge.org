@@ -148,6 +148,15 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
                 "the submissions open date."
             )
 
+    def clean_submission_limit(self):
+        submission_limit = self.cleaned_data["submission_limit"]
+        if submission_limit > 0 and not self.instance.latest_ready_method:
+            raise ValidationError(
+                "You need to first add a valid method for this phase before you "
+                "can change the submission limit to above 0."
+            )
+        return submission_limit
+
 
 class MethodForm(ContainerImageForm):
     phase = ModelChoiceField(

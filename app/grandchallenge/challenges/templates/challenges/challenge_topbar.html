@@ -27,7 +27,7 @@
                         </li>
                     {% endif %}
 
-                    {% if challenge.use_evaluation %}
+                    {% if challenge.phase_set.all %}
                         {% if challenge.use_teams %}
                             {% if "change_challenge" in challenge_perms or user_is_participant %}
                                 <li class="nav-item">

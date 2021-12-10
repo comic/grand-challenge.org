@@ -82,7 +82,9 @@ class TestSubmissionForm:
         ai = AlgorithmImageFactory(ready=True, algorithm=alg)
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 
-        p = PhaseFactory(submission_kind=Phase.SubmissionKind.ALGORITHM)
+        p = PhaseFactory(
+            submission_kind=Phase.SubmissionKind.ALGORITHM, submission_limit=10
+        )
 
         form = SubmissionForm(
             user=user,
@@ -117,10 +119,11 @@ class TestSubmissionForm:
 
         form = SubmissionForm(
             user=user,
-            phase=PhaseFactory(creator_must_be_verified=True),
+            phase=PhaseFactory(
+                creator_must_be_verified=True, submission_limit=10
+            ),
             data={"creator": user},
         )
-
         assert bool("creator" in form.errors) is not is_verified
 
 

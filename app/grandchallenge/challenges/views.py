@@ -177,7 +177,6 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
         Column(title="Created", sort_field="created"),
         Column(title="Admins", sort_field="created"),
         Column(title="Description", sort_field="description"),
-        Column(title="Automated Evaluation", sort_field="use_evaluation"),
     ]
     default_sort_column = 1
 

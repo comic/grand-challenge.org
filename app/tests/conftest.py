@@ -159,8 +159,6 @@ def challenge_set_with_evaluation(challenge_set):
     eval_challenge_set = namedtuple(
         "eval_challenge_set", ["challenge_set", "method"]
     )
-    challenge_set.challenge.use_evaluation = True
-    challenge_set.challenge.save()
 
     phase = challenge_set.challenge.phase_set.get()
 

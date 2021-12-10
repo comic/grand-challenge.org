@@ -19,7 +19,6 @@ class Command(BaseCommand):
         "require_participant_review",
         "use_registration_page",
         "registration_page_text",
-        "use_evaluation",
         "logo",
         "banner",
         "use_teams",
