@@ -639,6 +639,13 @@ class Phase(UUIDModel):
             self.submission_limit == 0 and self.submission_period_is_open_now
         )
 
+    @property
+    def latest_ready_method(self):
+        if self.method_set.all():
+            return self.method_set.last().ready
+        else:
+            return None
+
 
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
