@@ -272,6 +272,8 @@ class TestViewFilters:
 @pytest.mark.django_db
 def test_submission_time_limit(client, two_challenge_sets):
     phase = two_challenge_sets.challenge_set_1.challenge.phase_set.get()
+    phase.submission_limit = 10
+    phase.save()
 
     SubmissionFactory(
         phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
