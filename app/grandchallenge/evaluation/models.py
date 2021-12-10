@@ -642,7 +642,9 @@ class Phase(UUIDModel):
     @property
     def latest_ready_method(self):
         if self.method_set.all():
-            return self.method_set.last().ready
+            return (
+                self.method_set.filter(ready=True).order_by("-created").first()
+            )
         else:
             return None
 
@@ -762,14 +764,6 @@ class Submission(UUIDModel):
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
         assign_perm("view_submission", self.creator, self)
-
-    @property
-    def latest_ready_method(self):
-        return (
-            Method.objects.filter(phase=self.phase, ready=True)
-            .order_by("-created")
-            .first()
-        )
 
     def get_absolute_url(self):
         return reverse(
