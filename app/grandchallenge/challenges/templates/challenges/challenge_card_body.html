@@ -34,7 +34,7 @@
                                         </span>
     {% endif %}
 
-    {% if challenge.use_evaluation and challenge.cached_num_results %}
+    {% if challenge.cached_num_results %}
         {% with challenge.phase_set.first as phase %}
             <a class="badge badge-info above-stretched-link"
                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}"

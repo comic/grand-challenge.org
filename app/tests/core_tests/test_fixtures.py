@@ -60,7 +60,7 @@ def test_two_challenge_sets_fixture(two_challenge_sets):
 
 @pytest.mark.django_db
 def test_eval_challenge_set_fixture(eval_challenge_set):
-    assert eval_challenge_set.challenge_set.challenge.use_evaluation
+    assert eval_challenge_set.challenge_set.challenge.phase_set.count() > 0
     assert (
         eval_challenge_set.challenge_set.challenge
         == eval_challenge_set.method.phase.challenge

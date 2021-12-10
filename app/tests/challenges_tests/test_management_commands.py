@@ -27,7 +27,7 @@ def test_copy_challenge():
     site = Site.objects.get_current()
     site.domain = "foo.bar"
     site.save()
-    src = ChallengeFactory(short_name="foo", use_evaluation=True)
+    src = ChallengeFactory(short_name="foo")
     # toggle a boolean field
     phase = src.phase_set.get()
     phase.show_supplementary_url = not phase.show_supplementary_url

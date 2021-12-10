@@ -323,7 +323,7 @@ class Phase(UUIDModel):
         help_text=("Show a link to the supplementary url on the results page"),
     )
     submission_limit = models.PositiveIntegerField(
-        default=10,
+        default=0,
         help_text=(
             "The limit on the number of times that a user can make a "
             "submission over the submission limit period. "

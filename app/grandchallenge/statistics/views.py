@@ -136,9 +136,6 @@ class StatisticsDetail(TemplateView):
                 .order_by("-created")
                 .first()
             ),
-            "using_auto_eval": (
-                Challenge.objects.filter(use_evaluation=True).count()
-            ),
             "public_algorithms": (
                 Algorithm.objects.filter(public=True).count()
             ),
