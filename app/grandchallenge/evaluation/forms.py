@@ -91,13 +91,44 @@ class PhaseTitleMixin:
         return title
 
 
-class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
+class SubmissionDateValidationMixin:
+    def clean(self):
+        submissions_open_at = self.cleaned_data["submissions_open_at"]
+        submissions_close_at = self.cleaned_data["submissions_close_at"]
+
+        if (
+            submissions_open_at
+            and submissions_close_at
+            and submissions_close_at < submissions_open_at
+        ):
+            raise ValidationError(
+                "The submissions close date needs to be after "
+                "the submissions open date."
+            )
+
+
+class PhaseCreateForm(
+    PhaseTitleMixin,
+    SubmissionDateValidationMixin,
+    SaveFormInitMixin,
+    forms.ModelForm,
+):
     class Meta:
         model = Phase
-        fields = ("title",)
+        fields = ("title", "submissions_open_at", "submissions_close_at")
+        widgets = {
+            "submissions_open_at": forms.DateTimeInput(
+                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
+            ),
+            "submissions_close_at": forms.DateTimeInput(
+                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
+            ),
+        }
 
 
-class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
+class PhaseUpdateForm(
+    PhaseTitleMixin, SubmissionDateValidationMixin, forms.ModelForm
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -133,20 +164,6 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
                 format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
             ),
         }
-
-    def clean(self):
-        submissions_open_at = self.cleaned_data["submissions_open_at"]
-        submissions_close_at = self.cleaned_data["submissions_close_at"]
-
-        if (
-            submissions_open_at
-            and submissions_close_at
-            and submissions_close_at < submissions_open_at
-        ):
-            raise ValidationError(
-                "The submissions close date needs to be after "
-                "the submissions open date."
-            )
 
     def clean_submission_limit(self):
         submission_limit = self.cleaned_data["submission_limit"]
