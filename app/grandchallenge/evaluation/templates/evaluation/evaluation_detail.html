@@ -2,6 +2,7 @@
 {% load url %}
 {% load profiles %}
 {% load evaluation_extras %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -195,5 +196,65 @@
                 {% endfor %}
             </dl>
         {% endif %}
+        <br>
+        {% if json %}
+            <table class="table table-borderless table-hover table-sm">
+                <thead class="thead-light">
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for object in json %}
+                    <tr>
+                        <td>{{ object.interface.title }}</td>
+                        {% if object.interface.kind == 'STR' %}
+                            <td>{{ object.value|slice:"1:-1" }} </td>
+                        {% else %}
+                            <td>{{ object.value }}</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {% for chart in charts %}
+            <h3 class="mt-3">{{ chart.interface.title }}</h3>
+            <div class="w-100" id="resultsChart_{{ forloop.counter0 }}"></div>
+        {% endfor %}
+
+        {% for thumbnail in thumbnails %}
+            <h3 class="mt-3">{{ thumbnail.interface.title }}</h3>
+            <div class="row">
+                <img class="m-3" height="400"
+                     src="{{ thumbnail.file.url }}"
+                     alt="{{ thumbnail.file.name }}" loading="lazy">
+            </div>
+        {% endfor %}
+
+        {% for file in files %}
+            <h3 class="mt-3">{{ file.interface.title }}</h3>
+            <div><a class="btn btn-primary mb-3"
+                    href="{{ file.file.url }}">
+                <i class="fa fa-download"></i>&nbsp;Download {{ file.interface.kind }}
+            </a></div>
+        {% endfor %}
     {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"
+            integrity="sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-lite/5.1.0/vega-lite.min.js"
+            integrity="sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"
+            integrity="sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    {{ charts_data|json_script:"allCharts" }}
+    <script type="module" src="{% static "algorithms/js/render_resultschart.js" %}"></script>
 {% endblock %}
