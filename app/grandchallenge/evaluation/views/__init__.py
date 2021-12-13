@@ -24,6 +24,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
@@ -320,7 +321,48 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         except ObjectDoesNotExist:
             metrics = None
 
-        context.update({"metrics": metrics})
+        files = []
+        thumbnails = []
+        charts = []
+        charts_data = []
+        json = []
+        for output in self.object.outputs.all():
+            if (
+                output.interface.kind
+                == InterfaceKind.InterfaceKindChoices.CHART
+            ):
+                charts.append(output)
+                charts_data.append(output.value)
+            elif output.interface.kind in [
+                InterfaceKind.InterfaceKindChoices.PDF,
+                InterfaceKind.InterfaceKindChoices.CSV,
+                InterfaceKind.InterfaceKindChoices.ZIP,
+                InterfaceKind.InterfaceKindChoices.SQREG,
+            ]:
+                files.append(output)
+            elif output.interface.kind in [
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+                InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
+            ]:
+                thumbnails.append(output)
+            elif output.interface.kind in [
+                InterfaceKind.InterfaceKindChoices.BOOL,
+                InterfaceKind.InterfaceKindChoices.FLOAT,
+                InterfaceKind.InterfaceKindChoices.INTEGER,
+                InterfaceKind.InterfaceKindChoices.STRING,
+            ]:
+                json.append(output)
+
+        context.update(
+            {
+                "metrics": metrics,
+                "charts": charts,
+                "charts_data": charts_data,
+                "files": files,
+                "thumbnails": thumbnails,
+                "json": json,
+            }
+        )
 
         return context
 
