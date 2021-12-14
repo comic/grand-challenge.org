@@ -11,6 +11,12 @@ from grandchallenge.challenges.models import (
 class ChallengeAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     autocomplete_fields = ("publications",)
+    ordering = ("-created",)
+    list_display = (
+        "short_name",
+        "created",
+    )
+    search_fields = ("short_name",)
 
 
 class ExternalChallengeAdmin(ModelAdmin):
