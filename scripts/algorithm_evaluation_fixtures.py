@@ -13,9 +13,9 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.evaluation.models import Method
 from grandchallenge.workstations.models import Workstation
-from tests.fixtures import create_uploaded_image
 
 
 def run():

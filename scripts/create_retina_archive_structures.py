@@ -20,9 +20,9 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.workstations.models import Workstation
-from tests.fixtures import create_uploaded_image
 
 TEMP_SAVE_LOCATION = "tmp.mha"
 
