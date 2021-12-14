@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms
 
-from grandchallenge.workstations.models import Session
+from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 
@@ -128,6 +128,9 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
 def test_workstation_redirect_permissions(
     client, two_workstation_sets, viewname
 ):
+    # Make ws1 the default
+    Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG).delete()
+
     two_workstation_sets.ws1.workstation.slug = (
         settings.DEFAULT_WORKSTATION_SLUG
     )
