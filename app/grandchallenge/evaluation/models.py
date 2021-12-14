@@ -455,6 +455,34 @@ class Phase(UUIDModel):
             lambda: calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
         )
 
+    def clean(self):
+        super().clean()
+
+        if (
+            self.submission_kind == self.SubmissionKind.ALGORITHM
+            and not self.creator_must_be_verified
+        ):
+            raise ValidationError(
+                "For phases that take an algorithm as submission input, "
+                "the creator_must_be_verified box needs to be checked."
+            )
+
+        if self.submission_limit > 0 and not self.latest_ready_method:
+            raise ValidationError(
+                "You need to first add a valid method for this phase before you "
+                "can change the submission limit to above 0."
+            )
+
+        if (
+            self.submissions_open_at
+            and self.submissions_close_at
+            and self.submissions_close_at < self.submissions_open_at
+        ):
+            raise ValidationError(
+                "The submissions close date needs to be after "
+                "the submissions open date."
+            )
+
     def set_default_interfaces(self):
         self.inputs.set(
             [ComponentInterface.objects.get(slug="predictions-csv-file")]

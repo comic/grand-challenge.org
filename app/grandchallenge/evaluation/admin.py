@@ -17,7 +17,7 @@ from grandchallenge.evaluation.models import (
 class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
     list_display = ("pk", "challenge", "title", "slug", "modified")
-    search_fields = ("pk",)
+    search_fields = ("pk", "title", "challenge__short_name")
 
 
 class SubmissionAdmin(admin.ModelAdmin):
