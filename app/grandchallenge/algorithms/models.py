@@ -14,6 +14,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
@@ -154,7 +155,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         editable=False,
         help_text="The average duration of successful jobs.",
     )
-    use_flexible_inputs = models.BooleanField(default=True)
+    use_flexible_inputs = deprecate_field(models.BooleanField(default=True))
     repo_name = models.CharField(blank=True, max_length=512)
     image_requires_gpu = models.BooleanField(default=True)
     image_requires_memory_gb = models.PositiveIntegerField(default=15)
@@ -221,6 +222,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     @property
     def api_url(self):
         return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
+
+    @property
+    def supports_batch_upload(self):
+        inputs = {inpt.slug for inpt in self.inputs.all()}
+        return inputs == {"generic-medical-image"}
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

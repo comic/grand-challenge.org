@@ -60,14 +60,14 @@ urlpatterns = [
         name="image-update",
     ),
     path(
-        "<slug>/experiments/create/",
+        "<slug>/experiments/create/batch/",
         AlgorithmExecutionSessionCreate.as_view(),
-        name="execution-session-create",
+        name="execution-session-create-batch",
     ),
     path(
-        "<slug>/experiments/create/flex/",
+        "<slug>/experiments/create/",
         AlgorithmExperimentCreate.as_view(),
-        name="execution-session-create-new",
+        name="execution-session-create",
     ),
     path(
         "<slug>/experiments/<uuid:pk>/",

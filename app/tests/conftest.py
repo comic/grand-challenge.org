@@ -13,6 +13,7 @@ from django.contrib.sites.models import Site
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from tests.annotations_tests.factories import (
     BooleanClassificationAnnotationFactory,
@@ -37,7 +38,6 @@ from tests.factories import (
     ImageFactory,
     UserFactory,
 )
-from tests.fixtures import create_uploaded_image
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,

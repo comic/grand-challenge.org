@@ -2,7 +2,7 @@ import pytest
 from django.conf import settings
 from django.http import Http404
 
-from grandchallenge.workstations.models import Session
+from grandchallenge.workstations.models import Session, Workstation
 from grandchallenge.workstations.utils import (
     get_or_create_active_session,
     get_workstation_image_or_404,
@@ -73,8 +73,11 @@ def test_get_workstation_image_or_404():
     with pytest.raises(Http404):
         get_workstation_image_or_404()
 
+    default_workstation = Workstation.objects.get(
+        slug=settings.DEFAULT_WORKSTATION_SLUG
+    )
     default_wsi = WorkstationImageFactory(
-        workstation__title=settings.DEFAULT_WORKSTATION_SLUG, ready=True
+        workstation=default_workstation, ready=True
     )
     wsi = WorkstationImageFactory(ready=True)
 

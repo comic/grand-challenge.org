@@ -263,9 +263,10 @@ def test_session_create(client):
 @pytest.mark.django_db
 def test_session_redirect(client):
     user = UserFactory()
-    wsi = WorkstationImageFactory(
-        workstation__title=settings.DEFAULT_WORKSTATION_SLUG, ready=True
+    default_workstation = Workstation.objects.get(
+        slug=settings.DEFAULT_WORKSTATION_SLUG
     )
+    wsi = WorkstationImageFactory(workstation=default_workstation, ready=True)
 
     wsi.workstation.add_user(user=user)
 

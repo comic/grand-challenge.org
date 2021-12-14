@@ -273,7 +273,7 @@ def test_create_experiment_input_fields(
 
     def load_create_experiment_form():
         return get_view_for_user(
-            viewname="algorithms:execution-session-create-new",
+            viewname="algorithms:execution-session-create",
             client=client,
             reverse_kwargs={"slug": alg.slug},
             follow=True,
@@ -307,7 +307,7 @@ def test_create_experiment_json_input_field_validation(
 
     def try_create_algorithm_experiment():
         return get_view_for_user(
-            viewname="algorithms:execution-session-create-new",
+            viewname="algorithms:execution-session-create",
             client=client,
             reverse_kwargs={"slug": alg.slug},
             method=client.post,
@@ -344,7 +344,7 @@ def test_create_experiment_simple_input_field_validation(
 
     def try_create_algorithm_experiment():
         return get_view_for_user(
-            viewname="algorithms:execution-session-create-new",
+            viewname="algorithms:execution-session-create",
             client=client,
             reverse_kwargs={"slug": alg.slug},
             method=client.post,

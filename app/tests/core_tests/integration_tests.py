@@ -8,6 +8,7 @@ from django.core import mail
 from django.test import TestCase
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
@@ -16,7 +17,6 @@ from tests.factories import (
     RegistrationRequestFactory,
     UserFactory,
 )
-from tests.fixtures import create_uploaded_image
 from tests.utils import get_http_host
 
 PI_LINE_END_REGEX = "(\r\n|\n)"

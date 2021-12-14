@@ -33,6 +33,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
     Evaluation,
@@ -47,7 +48,6 @@ from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.verifications.models import Verification
 from grandchallenge.workstations.models import Workstation
-from tests.fixtures import create_uploaded_image
 
 logger = logging.getLogger(__name__)
 
@@ -497,11 +497,7 @@ def _create_job_result(users, algorithm_image, cases_image, result, detection):
 
 
 def _create_workstation(users):
-    w = Workstation.objects.create(
-        title=settings.DEFAULT_WORKSTATION_SLUG,
-        logo=create_uploaded_image(),
-        public=True,
-    )
+    w = Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG,)
     w.add_editor(user=users["workstation"])
 
 

@@ -13,9 +13,9 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.evaluation.models import Method
 from grandchallenge.workstations.models import Workstation
-from tests.fixtures import create_uploaded_image
 
 
 def run():
@@ -122,7 +122,6 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
     algorithm = Algorithm.objects.create(
         title=f"Test Algorithm Evaluation {suffix}",
         logo=create_uploaded_image(),
-        use_flexible_inputs=True,
     )
     algorithm.inputs.set(inputs)
     algorithm.outputs.set(outputs)

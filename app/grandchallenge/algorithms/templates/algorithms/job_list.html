@@ -21,9 +21,9 @@
 
     {% if "execute_algorithm" in algorithm_perms and algorithm.latest_ready_image %}
         <p>
-            {% if algorithm.use_flexible_inputs %}
+            {% if algorithm.supports_batch_upload %}
                 <a class="btn btn-primary"
-                   href="{% url 'algorithms:execution-session-create-new' slug=algorithm.slug %}">
+                   href="{% url 'algorithms:execution-session-create-batch' slug=algorithm.slug %}">
                     <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
                 </a>
             {% else %}
