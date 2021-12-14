@@ -122,7 +122,6 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
     algorithm = Algorithm.objects.create(
         title=f"Test Algorithm Evaluation {suffix}",
         logo=create_uploaded_image(),
-        use_flexible_inputs=True,
     )
     algorithm.inputs.set(inputs)
     algorithm.outputs.set(outputs)

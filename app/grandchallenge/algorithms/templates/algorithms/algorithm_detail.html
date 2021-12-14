@@ -68,9 +68,9 @@
             {% endif %}
 
             {% if "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
-                {% if object.use_flexible_inputs %}
+                {% if object.supports_batch_upload %}
                     <a class="nav-link"
-                       href="{% url 'algorithms:execution-session-create-new' slug=object.slug %}">
+                       href="{% url 'algorithms:execution-session-create-batch' slug=object.slug %}">
                         <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
                     </a>
                 {% else %}

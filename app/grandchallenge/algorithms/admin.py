@@ -25,10 +25,7 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "average_duration",
         "container_count",
     )
-    list_filter = (
-        "public",
-        "use_flexible_inputs",
-    )
+    list_filter = ("public",)
 
     def container_count(self, obj):
         return obj.container_count

@@ -16,7 +16,6 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
-from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -301,15 +300,6 @@ class Challenge(ChallengeBase):
         ),
     )
     use_workspaces = models.BooleanField(default=False)
-    use_evaluation = deprecate_field(
-        models.BooleanField(
-            default=True,
-            help_text=(
-                "If true, use the automated evaluation system. See the evaluation "
-                "page created in the Challenge site."
-            ),
-        )
-    )
     use_teams = models.BooleanField(
         default=False,
         help_text=(

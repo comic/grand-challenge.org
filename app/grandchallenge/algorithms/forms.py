@@ -162,7 +162,6 @@ class AlgorithmForm(
             "logo",
             "social_image",
             "public",
-            "use_flexible_inputs",
             "inputs",
             "outputs",
             "workstation",
@@ -250,7 +249,6 @@ class AlgorithmForm(
                 "social_image",
                 "workstation",
                 "workstation_config",
-                "use_flexible_inputs",
                 "inputs",
                 "outputs",
                 "credits_per_job",
@@ -270,21 +268,6 @@ class AlgorithmForm(
         self.fields[
             "workstation_config"
         ].queryset = WorkstationConfig.objects.order_by("title")
-
-    def clean(self):
-        cleaned_data = super().clean()
-        inputs = {inpt.slug for inpt in cleaned_data["inputs"]}
-
-        if (
-            inputs != {"generic-medical-image"}
-            and not cleaned_data["use_flexible_inputs"]
-        ):
-            raise ValidationError(
-                "'Use Flexible Inputs' must also be selected when using the "
-                "set of inputs you have selected."
-            )
-
-        return cleaned_data
 
 
 class AlgorithmDescriptionForm(ModelForm):

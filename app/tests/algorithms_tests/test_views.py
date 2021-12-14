@@ -174,7 +174,7 @@ def test_algorithm_run(client):
     ai1.algorithm.users_group.user_set.add(user)
 
     response = get_view_for_user(
-        viewname="algorithms:execution-session-create",
+        viewname="algorithms:execution-session-create-batch",
         reverse_kwargs={"slug": slugify(ai1.algorithm.slug)},
         client=client,
         user=user,
@@ -462,49 +462,6 @@ def test_algorithm_jobs_list_view(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_detail_flexible_inputs(client):
-    editor = UserFactory()
-
-    alg = AlgorithmFactory(use_flexible_inputs=False)
-    alg.add_editor(editor)
-    AlgorithmImageFactory(algorithm=alg, ready=True)
-
-    flexi_input_url = reverse(
-        viewname="algorithms:execution-session-create-new",
-        kwargs={"slug": alg.slug},
-    )
-
-    response = get_view_for_user(
-        viewname="algorithms:detail",
-        reverse_kwargs={"slug": slugify(alg.slug)},
-        client=client,
-        user=editor,
-        method=client.get,
-        follow=True,
-        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
-    )
-
-    assert response.status_code == 200
-    assert flexi_input_url not in response.rendered_content
-
-    alg.use_flexible_inputs = True
-    alg.save()
-
-    response = get_view_for_user(
-        viewname="algorithms:detail",
-        reverse_kwargs={"slug": slugify(alg.slug)},
-        client=client,
-        user=editor,
-        method=client.get,
-        follow=True,
-        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
-    )
-
-    assert response.status_code == 200
-    assert flexi_input_url in response.rendered_content
-
-
-@pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         ai = AlgorithmImageFactory(ready=True)
@@ -556,14 +513,14 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
-                "execution-session-create",
+                "execution-session-create-batch",
                 {"slug": ai.algorithm.slug},
                 "execute_algorithm",
                 ai.algorithm,
                 None,
             ),
             (
-                "execution-session-create-new",
+                "execution-session-create",
                 {"slug": ai.algorithm.slug},
                 "execute_algorithm",
                 ai.algorithm,
