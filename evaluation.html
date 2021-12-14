@@ -261,6 +261,15 @@ is one number per evaluation. For example:</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="grandchallenge.evaluation.models.Phase.clean">
+<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.clean" title="Permalink to this definition"></a></dt>
+<dd><p>Hook for doing any extra model-wide validation after clean() has been
+called on every field by self.clean_fields. Any ValidationError raised
+by this method will not be associated with a particular field; it will
+have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.evaluation.models.Phase.get_next_submission">
 <span class="sig-name descname"><span class="pre">get_next_submission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase.get_next_submission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.get_next_submission" title="Permalink to this definition"></a></dt>
 <dd><p>Determines the number of submissions left for the user,
