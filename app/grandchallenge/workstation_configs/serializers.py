@@ -105,6 +105,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_annotation_counter_tool",
             "enabled_preprocessors",
             "auto_jump_center_of_gravity",
+            "link_images",
         ]
 
     def get_enabled_preprocessors(self, obj):
