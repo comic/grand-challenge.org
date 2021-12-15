@@ -230,7 +230,7 @@ class PermissionRequestUpdate(
 
     def get_success_message(self, cleaned_data):
         if not self.base_object.is_editor(self.request.user):
-            return "You request for access has been sent to editors"
+            return "Your request for access has been sent to the editors"
         return "Permission request successfully updated"
 
     def get_success_url(self):

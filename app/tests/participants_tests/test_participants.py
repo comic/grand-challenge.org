@@ -90,13 +90,12 @@ def test_participation_request_notification_flow(client):
     )
     assert RegistrationRequest.objects.count() == 1
     reg = RegistrationRequest.objects.get()
-    # requester follows the request object
-    assert is_following(user, reg)
+
     # when participation request review is disabled,
-    # no notification for admin should be created, only for the user
-    assert Notification.objects.count() == 1
-    assert Notification.objects.get().user != ch.creator
-    assert Notification.objects.get().user == user
+    # no follows are created
+    assert not is_following(user, reg)
+    # no notifications are sent
+    assert Notification.objects.count() == 0
 
     # change participation review to active
     ch.require_participant_review = True
@@ -147,7 +146,7 @@ def test_participation_request_notification_flow(client):
     # upon request acceptance, the user gets notified and the notification for the admin
     # is removed automatically
     assert Notification.objects.first().user == user2
-    assert "was approved" in Notification.objects.first().print_notification(
+    assert "was accepted" in Notification.objects.first().print_notification(
         user=user2
     )
     Notification.objects.all().delete()

@@ -59,6 +59,14 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         related_name="users_of_archive",
     )
     public = models.BooleanField(default=False)
+    require_user_review = models.BooleanField(
+        default=True,
+        help_text=(
+            "If ticked, new users need to be approved by an "
+            "editor before they can access the archive. If not ticked, "
+            "new users are allowed access immediately."
+        ),
+    )
     workstation = models.ForeignKey(
         "workstations.Workstation",
         null=True,
@@ -274,7 +282,7 @@ class ArchivePermissionRequest(RequestBase):
     def save(self, *args, **kwargs):
         adding = self._state.adding
         super().save(*args, **kwargs)
-        if adding:
+        if adding and self.archive.require_user_review:
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
             )
@@ -284,6 +292,10 @@ class ArchivePermissionRequest(RequestBase):
                 actor=self.user,
                 target=self.base_object,
             )
+        elif adding and not self.archive.require_user_review:
+            # immediately allow access, no need for a notification
+            self.status = self.ACCEPTED
+            self.save()
 
     def delete(self):
         ct = ContentType.objects.filter(

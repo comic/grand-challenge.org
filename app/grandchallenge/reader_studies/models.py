@@ -232,6 +232,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "study's readers group in order to do that."
         ),
     )
+    require_user_review = models.BooleanField(
+        default=True,
+        help_text=(
+            "If ticked, new users need to be approved by an "
+            "editor before they can participate in the reader study. If not ticked, "
+            "new users are allowed access immediately."
+        ),
+    )
     logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
@@ -329,6 +337,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "allow_answer_modification",
         "allow_case_navigation",
         "allow_show_all_annotations",
+        "require_user_review",
     )
 
     def __str__(self):
@@ -1400,7 +1409,7 @@ class ReaderStudyPermissionRequest(RequestBase):
     def save(self, *args, **kwargs):
         adding = self._state.adding
         super().save(*args, **kwargs)
-        if adding:
+        if adding and self.reader_study.require_user_review:
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
             )
@@ -1410,6 +1419,10 @@ class ReaderStudyPermissionRequest(RequestBase):
                 actor=self.user,
                 target=self.base_object,
             )
+        elif adding and not self.reader_study.require_user_review:
+            # immediately allow access, no need for a notification
+            self.status = self.ACCEPTED
+            self.save()
 
     def delete(self):
         ct = ContentType.objects.filter(

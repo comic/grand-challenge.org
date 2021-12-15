@@ -93,6 +93,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "algorithm users group in order to do that."
         ),
     )
+    require_user_review = models.BooleanField(
+        default=True,
+        help_text=(
+            "If ticked, new users need to be approved by an "
+            "editor before they can try out the algorithm. If not ticked, "
+            "new users are allowed access immediately."
+        ),
+    )
     detail_page_markdown = models.TextField(blank=True)
     job_create_page_markdown = models.TextField(blank=True)
     additional_terms_markdown = models.TextField(
@@ -692,7 +700,7 @@ class AlgorithmPermissionRequest(RequestBase):
     def save(self, *args, **kwargs):
         adding = self._state.adding
         super().save(*args, **kwargs)
-        if adding:
+        if adding and self.algorithm.require_user_review:
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
             )
@@ -702,6 +710,10 @@ class AlgorithmPermissionRequest(RequestBase):
                 actor=self.user,
                 target=self.base_object,
             )
+        elif adding and not self.algorithm.require_user_review:
+            # immediately allow access, no need for a notification
+            self.status = self.ACCEPTED
+            self.save()
 
     def delete(self):
         ct = ContentType.objects.filter(
