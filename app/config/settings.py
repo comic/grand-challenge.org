@@ -197,6 +197,10 @@ UPLOADS_MAX_SIZE_VERIFIED = int(
 )
 UPLOADS_TIMEOUT_DAYS = int(os.environ.get("UPLOADS_TIMEOUT_DAYS", 1))
 
+VERIFICATIONS_REVIEW_PERIOD_DAYS = int(
+    os.environ.get("VERIFICATIONS_REVIEW_PERIOD_DAYS", 10)
+)
+
 # Key pair used for signing CloudFront URLS, only used if
 # PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
 CLOUDFRONT_KEY_PAIR_ID = os.environ.get("CLOUDFRONT_KEY_PAIR_ID", "")

@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from allauth.account.signals import email_confirmed
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q
@@ -63,7 +64,9 @@ class Verification(models.Model):
 
     @property
     def review_deadline(self):
-        return self.modified + timedelta(days=3)
+        return self.modified + timedelta(
+            days=settings.VERIFICATIONS_REVIEW_PERIOD_DAYS
+        )
 
     @property
     def user_info(self):
