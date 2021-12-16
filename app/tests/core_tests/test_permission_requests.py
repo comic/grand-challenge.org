@@ -6,12 +6,13 @@ from django.utils.html import format_html
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
 from grandchallenge.notifications.models import Notification
+from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.factories import UserFactory
+from tests.factories import ChallengeFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
@@ -41,26 +42,43 @@ from tests.utils import get_view_for_user
             "archive",
             "is_user",
         ),
+        (
+            ChallengeFactory,
+            "participants",
+            RegistrationRequest,
+            "challenge",
+            "is_participant",
+        ),
     ),
 )
 def test_permission_request_workflow(
     client, factory, namespace, request_model, request_attr, group_test
 ):
-    base_object = factory()
+    if namespace == "participants":
+        base_object = factory(require_participant_review=True)
+        permission_create_url = reverse(
+            f"{namespace}:registration-create",
+            kwargs={"challenge_short_name": base_object.short_name},
+        )
+    else:
+        base_object = factory(require_user_review=True)
+        permission_create_url = reverse(
+            f"{namespace}:permission-request-create",
+            kwargs={"slug": base_object.slug},
+        )
+
     user = UserFactory()
-    permission_create_url = reverse(
-        f"{namespace}:permission-request-create",
-        kwargs={"slug": base_object.slug},
-    )
+
     assert request_model.objects.count() == 0
     assert not getattr(base_object, group_test)(user)
 
-    # Check the detail view redirects to permission create view
-    response = get_view_for_user(
-        client=client, user=user, url=base_object.get_absolute_url()
-    )
-    assert response.status_code == 302
-    assert response.url == permission_create_url
+    # Check the detail view redirects to permission create view for algorithms, archives, reader studies
+    if not namespace == "participants":
+        response = get_view_for_user(
+            client=client, user=user, url=base_object.get_absolute_url()
+        )
+        assert response.status_code == 302
+        assert response.url == permission_create_url
 
     # Check the permission create view is viewable
     response = get_view_for_user(
@@ -84,11 +102,12 @@ def test_permission_request_workflow(
     assert getattr(pr, request_attr) == base_object
 
     # Check the detail view should still redirect to the permission create view
-    response = get_view_for_user(
-        client=client, user=user, url=base_object.get_absolute_url()
-    )
-    assert response.status_code == 302
-    assert response.url == permission_create_url
+    if not namespace == "participants":
+        response = get_view_for_user(
+            client=client, user=user, url=base_object.get_absolute_url()
+        )
+        assert response.status_code == 302
+        assert response.url == permission_create_url
 
     # Making a second permission request create should fail
     response = get_view_for_user(
@@ -100,16 +119,26 @@ def test_permission_request_workflow(
     assert response.status_code == 200
 
     # The permission update url should not be viewable by this user
-    permission_update_url = reverse(
-        f"{namespace}:permission-request-update",
-        kwargs={"slug": base_object.slug, "pk": pr.pk},
-    )
+    if namespace == "participants":
+        permission_update_url = reverse(
+            f"{namespace}:registration-update",
+            kwargs={
+                "challenge_short_name": base_object.short_name,
+                "pk": pr.pk,
+            },
+        )
+    else:
+        permission_update_url = reverse(
+            f"{namespace}:permission-request-update",
+            kwargs={"slug": base_object.slug, "pk": pr.pk},
+        )
+
     response = get_view_for_user(
         client=client, user=user, url=permission_update_url
     )
     assert response.status_code == 403
 
-    # But this user should not be able to change it
+    # This user should not be able to change it
     response = get_view_for_user(
         client=client,
         user=user,
@@ -141,7 +170,11 @@ def test_permission_request_workflow(
     assert pr.status == request_model.PENDING
 
     # But they should be able to change it when they are made an editor
-    base_object.add_editor(editor)
+    if namespace == "participants":
+        base_object.add_admin(editor)
+    else:
+        base_object.add_editor(editor)
+
     response = get_view_for_user(
         client=client,
         user=editor,
@@ -187,23 +220,34 @@ def test_permission_request_workflow(
             "reader_study",
         ),
         (ArchiveFactory, "archives", ArchivePermissionRequest, "archive",),
+        (ChallengeFactory, "participants", RegistrationRequest, "challenge",),
     ),
 )
 def test_permission_request_notifications_flow(
     client, factory, namespace, request_model, request_attr
 ):
-    base_object = factory()
-    editor = UserFactory()
+    if namespace == "participants":
+        base_object = factory(require_participant_review=True)
+        permission_create_url = reverse(
+            f"{namespace}:registration-create",
+            kwargs={"challenge_short_name": base_object.short_name},
+        )
+        assert base_object.admins_group.user_set.count() == 1
+        editor = base_object.admins_group.user_set.get()
+        # challenge creation results in a notification, delete this notification
+        Notification.objects.all().delete()
+    else:
+        editor = UserFactory()
+        base_object = factory(require_user_review=True)
+        base_object.add_editor(editor)
+        permission_create_url = reverse(
+            f"{namespace}:permission-request-create",
+            kwargs={"slug": base_object.slug},
+        )
+        assert base_object.editors_group.user_set.count() == 1
+
     user = UserFactory()
-    base_object.add_editor(editor)
-
-    permission_create_url = reverse(
-        f"{namespace}:permission-request-create",
-        kwargs={"slug": base_object.slug},
-    )
-
     assert request_model.objects.count() == 0
-    assert base_object.editors_group.user_set.count() == 1
     # editors automatically follow the base_obj
     assert is_following(user=editor, obj=base_object)
 
@@ -230,11 +274,34 @@ def test_permission_request_notifications_flow(
         user=editor
     )
 
-    permission_update_url = reverse(
-        f"{namespace}:permission-request-update",
-        kwargs={"slug": base_object.slug, "pk": pr.pk},
+    if namespace == "participants":
+        permission_update_url = reverse(
+            f"{namespace}:registration-update",
+            kwargs={
+                "challenge_short_name": base_object.short_name,
+                "pk": pr.pk,
+            },
+        )
+    else:
+        permission_update_url = reverse(
+            f"{namespace}:permission-request-update",
+            kwargs={"slug": base_object.slug, "pk": pr.pk},
+        )
+
+    # user cannot update the permission request himself
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        url=permission_update_url,
+        method=client.post,
+        data={"status": pr.ACCEPTED},
     )
-    # accept permission request
+
+    assert response.status_code == 403
+    pr.refresh_from_db()
+    assert pr.status == request_model.PENDING
+
+    # admin can change the status, accept permission request
     _ = get_view_for_user(
         client=client,
         user=editor,
@@ -279,10 +346,14 @@ def test_permission_request_notifications_flow(
     pr.delete()
     assert not Follow.objects.filter(object_id=pr.pk)
 
-    # when editor is removed from base_obj, they no longer receive notifications about new requests
+    # when editor is removed from base_obj,
+    # they no longer receive notifications about new requests
     Notification.objects.all().delete()
     assert Notification.objects.count() == 0
-    base_object.remove_editor(editor)
+    if namespace == "participants":
+        base_object.remove_admin(editor)
+    else:
+        base_object.remove_editor(editor)
     user2 = UserFactory()
     _ = get_view_for_user(
         client=client,
@@ -292,8 +363,42 @@ def test_permission_request_notifications_flow(
     )
     assert Notification.objects.count() == 0
 
+    # when require_participant_review is False,
+    # no notifications are sent, no follows are created
+    # and the request is automatically accepted
+    request_model.objects.all().delete()
+    if namespace == "participants":
+        base_object.add_admin(editor)
+        base_object.require_participant_review = False
+        base_object.save()
+        # remove admin notification
+        Notification.objects.all().delete()
+    else:
+        base_object.add_editor(editor)
+        base_object.require_user_review = False
+        base_object.save()
+
+    user3 = UserFactory()
+    _ = get_view_for_user(
+        client=client,
+        user=user3,
+        url=permission_create_url,
+        method=client.post,
+    )
+
+    pr = request_model.objects.get()
+    assert pr.status == request_model.ACCEPTED
+    assert pr.user == user3
+    assert not is_following(user=user3, obj=pr)
+    assert Notification.objects.count() == 0
+
     # when the base_obj is deleted, the follows are deleted as well
-    base_object.delete()
+    if namespace == "participants":
+        base_object.phase_set.all().delete()
+        base_object.page_set.all().delete()
+        base_object.delete()
+    else:
+        base_object.delete()
     assert not Follow.objects.filter(object_id=base_object.pk)
 
 

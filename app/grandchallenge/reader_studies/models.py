@@ -1408,7 +1408,12 @@ class ReaderStudyPermissionRequest(RequestBase):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
+
+        if adding and not self.reader_study.require_user_review:
+            # immediately allow access, no need for a notification
+            self.status = self.ACCEPTED
         super().save(*args, **kwargs)
+
         if adding and self.reader_study.require_user_review:
             follow(
                 user=self.user, obj=self, actor_only=False, send_action=False,
@@ -1419,10 +1424,6 @@ class ReaderStudyPermissionRequest(RequestBase):
                 actor=self.user,
                 target=self.base_object,
             )
-        elif adding and not self.reader_study.require_user_review:
-            # immediately allow access, no need for a notification
-            self.status = self.ACCEPTED
-            self.save()
 
     def delete(self):
         ct = ContentType.objects.filter(
