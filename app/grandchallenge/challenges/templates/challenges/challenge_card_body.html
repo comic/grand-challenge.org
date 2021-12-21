@@ -48,7 +48,7 @@
 
 <div>
     {% if challenge.event_name %}
-        <a class="badge badge-info above-stretched-link"
+        <a class="badge badge-info above-stretched-link text-wrap"
            href="{% firstof challenge.event_url challenge.get_absolute_url %}"
            title="Associated with {{ challenge.event_name }}">
             <i class="fas fa-globe fa-fw"></i>
@@ -65,7 +65,7 @@
     {% endfor %}
 
     {% if challenge.registered_domain %}
-        <a class="badge badge-info above-stretched-link"
+        <a class="badge badge-info above-stretched-link text-wrap"
            href="{{ challenge.get_absolute_url }}"
            title="Hosted on {{ challenge.registered_domain }}">
             <i class="fas fa-link fa-fw"></i>
