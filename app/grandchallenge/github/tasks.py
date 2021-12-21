@@ -59,7 +59,10 @@ def get_zipfile(*, pk):  # noqa C901
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
 
-    if ghwm.zip_file_status != ZipStatusChoices.COMPLETED:
+    if ghwm.zip_file_status not in [
+        ZipStatusChoices.COMPLETED,
+        ZipStatusChoices.STARTED,
+    ]:
         payload = ghwm.payload
         repo_url = get_repo_url(payload)
         zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
