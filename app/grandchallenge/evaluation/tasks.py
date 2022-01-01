@@ -202,7 +202,7 @@ def handle_failed_jobs(*, evaluation_pk):
 @shared_task
 def set_evaluation_inputs(*, evaluation_pk):
     """
-    Sets the inputs to the Evaluation for a algorithm submission.
+    Sets the inputs to the Evaluation for an algorithm submission.
 
     If all of the `Job`s for this algorithm `Submission` are
     successful this will set the inputs to the `Evaluation` job and schedule
@@ -220,6 +220,20 @@ def set_evaluation_inputs(*, evaluation_pk):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
+
+    # TODO this checks for all jobs for the image, could include non-submission jobs
+    has_pending_jobs = (
+        Job.objects.filter(
+            algorithm_image__submission__evaluation=evaluation_pk
+        )
+        .exclude(status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED])
+        .exists()
+    )
+
+    if has_pending_jobs:
+        logger.info("Nothing to do: the algorithm has pending jobs.")
+        return
+
     evaluation_queryset = Evaluation.objects.filter(
         pk=evaluation_pk
     ).select_for_update()
@@ -228,14 +242,21 @@ def set_evaluation_inputs(*, evaluation_pk):
         # Acquire lock
         evaluation = evaluation_queryset.get()
 
+        if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
+            logger.info(
+                f"Nothing to do: evaluation is {evaluation.get_status_display()}."
+            )
+            return
+
         civ_sets = {
             i.values.all()
             for i in evaluation.submission.phase.archive.items.all()
         }
 
-        jobs_queryset = (
+        successful_jobs = (
             Job.objects.filter(
                 algorithm_image=evaluation.submission.algorithm_image,
+                status=Job.SUCCESS,
             )
             .annotate(
                 inputs_match_count=Count(
@@ -255,18 +276,7 @@ def set_evaluation_inputs(*, evaluation_pk):
             .select_related("algorithm_image__algorithm")
         )
 
-        pending_jobs = jobs_queryset.exclude(
-            status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED]
-        )
-        successful_jobs = jobs_queryset.filter(status=Job.SUCCESS)
-
-        if (
-            pending_jobs.exists()
-            or evaluation.status != evaluation.EXECUTING_PREREQUISITES
-        ):
-            # Nothing to do
-            return
-        elif successful_jobs.count() == len(civ_sets):
+        if successful_jobs.count() == len(civ_sets):
             from grandchallenge.algorithms.serializers import JobSerializer
             from grandchallenge.components.models import (
                 ComponentInterface,
