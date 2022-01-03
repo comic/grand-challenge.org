@@ -373,15 +373,16 @@ class LeaderboardRedirect(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         # Redirect old leaderboard urls to the first leaderboard for this
         # challenge
-        try:
+        first_phase = self.request.challenge.phase_set.first()
+        if first_phase:
             return reverse(
                 "evaluation:leaderboard",
                 kwargs={
-                    "challenge_short_name": self.request.challenge.short_name,
-                    "slug": self.request.challenge.phase_set.first().slug,
+                    "challenge_short_name": first_phase.short_name,
+                    "slug": first_phase.slug,
                 },
             )
-        except AttributeError:
+        else:
             raise Http404("Leaderboard not found")
 
 
