@@ -1,3 +1,6 @@
+import SimpleITK
+import numpy as np
+from django.http import Http404
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -15,6 +18,7 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.reader_studies.tasks import (
@@ -117,7 +121,9 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
             self.fields["archive"].queryset = get_objects_for_user(
-                user, "archives.upload_archive", accept_global_perms=False,
+                user,
+                "archives.upload_archive",
+                accept_global_perms=False,
             )
 
             self.fields["reader_study"].queryset = get_objects_for_user(
@@ -195,7 +201,8 @@ def process_images(*, instance, targets):
 def _get_linked_task(*, targets):
     if "archive" in targets:
         return add_images_to_archive.signature(
-            kwargs={"archive_pk": targets["archive"].pk}, immutable=True,
+            kwargs={"archive_pk": targets["archive"].pk},
+            immutable=True,
         )
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(
@@ -204,7 +211,83 @@ def _get_linked_task(*, targets):
         )
     elif "answer" in targets:
         return add_image_to_answer.signature(
-            kwargs={"answer_pk": targets["answer"].pk}, immutable=True,
+            kwargs={"answer_pk": targets["answer"].pk},
+            immutable=True,
         )
     else:
         raise RuntimeError(f"Unknown target {targets=}")
+
+
+SITK_PIXEL_TYPE_TO_BIT_SIZE = {
+    SimpleITK.sitkUInt8: 8,
+    SimpleITK.sitkInt8: 8,
+    SimpleITK.sitkUInt16: 16,
+    SimpleITK.sitkInt16: 16,
+    SimpleITK.sitkUInt32: 32,
+    SimpleITK.sitkInt32: 32,
+    SimpleITK.sitkUInt64: 64,
+    SimpleITK.sitkInt64: 64,
+    SimpleITK.sitkFloat32: 32,
+    SimpleITK.sitkFloat64: 64,
+    SimpleITK.sitkComplexFloat32: 32,
+    SimpleITK.sitkComplexFloat64: 64,
+    SimpleITK.sitkVectorUInt8: 8,
+    SimpleITK.sitkVectorInt8: 8,
+    SimpleITK.sitkVectorUInt16: 16,
+    SimpleITK.sitkVectorInt16: 16,
+    SimpleITK.sitkVectorUInt32: 32,
+    SimpleITK.sitkVectorInt32: 32,
+    SimpleITK.sitkVectorUInt64: 64,
+    SimpleITK.sitkVectorInt64: 64,
+    SimpleITK.sitkVectorFloat32: 32,
+    SimpleITK.sitkVectorFloat64: 64,
+    SimpleITK.sitkLabelUInt8: 8,
+    SimpleITK.sitkLabelUInt16: 16,
+    SimpleITK.sitkLabelUInt32: 32,
+    SimpleITK.sitkLabelUInt64: 64,
+}
+
+
+class CSImageSerializer(serializers.BaseSerializer):
+    """
+    Serializer that serializes a cases.Image object into a Cornerstone image
+    object as defined in https://docs.cornerstonejs.org/api.html#image
+    """
+
+    def to_representation(self, instance):
+        try:
+            image_itk = get_sitk_image(image=instance)
+        except Exception:
+            raise Http404
+
+        nda = SimpleITK.GetArrayFromImage(image_itk)
+
+        size_in_bytes = instance.width * instance.height
+        if instance.depth is not None:
+            size_in_bytes *= instance.depth
+        size_in_bytes *= image_itk.GetNumberOfComponentsPerPixel()
+        size_in_bytes *= SITK_PIXEL_TYPE_TO_BIT_SIZE[
+            image_itk.GetPixelIDValue()
+        ]
+
+        # TODO fix non grayscale, fix 16 bit
+        return {
+            "imageId": instance.pk,
+            "minPixelValue": np.min(nda),
+            "maxPixelValue": np.max(nda),
+            "slope": 1,
+            "intercept": 0,
+            "windowCenter": instance.window_center or 127,
+            "windowWidth": instance.window_width or 256,
+            "pixelData": nda.flatten(order="C"),
+            "rows": instance.height,
+            "columns": instance.width,
+            "height": instance.height,
+            "width": instance.width,
+            "color": instance.color_space != Image.COLOR_SPACE_GRAY,
+            "rgba": False,
+            "columnPixelSpacing": image_itk.GetSpacing()[0],
+            "rowPixelSpacing": image_itk.GetSpacing()[1],
+            "invert": False,
+            "sizeInBytes": size_in_bytes,
+        }
