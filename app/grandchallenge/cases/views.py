@@ -7,12 +7,14 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.renderers import JSONRenderer
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -24,6 +26,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.cases.serializers import (
+    CSImageSerializer,
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
@@ -139,3 +142,33 @@ class VTKImageDetail(
             }
         )
         return context
+
+
+class CSImageDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = Image
+    permission_required = (
+        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
+    )
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    template_name = "cases/image_detail_cs.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            mh_file, _ = self.object.get_metaimage_files()
+        except FileNotFoundError as e:
+            raise Http404 from e
+
+        context.update({"image_pk": self.object.pk})
+        return context
+
+
+class CSImageLoader(RetrieveAPIView):
+    queryset = Image.objects.all()
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = (ObjectPermissionsFilter,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = CSImageSerializer
