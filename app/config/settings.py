@@ -1130,6 +1130,7 @@ DISALLOWED_EMAIL_DOMAINS = {
     "mail.ru",
     "verizon.net",
     "comcast.net",
+    "nudt.edu.cn",
     *blocklist,
 }
 
