@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -94,36 +92,16 @@ class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
     def clean_token(self):
         token = self.cleaned_data["token"]
 
-        try:
-            self.user.verification
-        except ObjectDoesNotExist:
-            self.deactivate_duplicate_users(token=token)
-            raise ValidationError("Token is invalid")
-
-        if not email_verification_token_generator.check_token(
+        if not hasattr(
+            self.user, "verification"
+        ) or not email_verification_token_generator.check_token(
             self.user, token
         ):
+            # This user is trying to validate for another,
+            # likely a duplicate account, do not wait for commit here
+            deactivate_user.signature(
+                kwargs={"user_pk": self.user.pk}
+            ).apply_async()
             raise ValidationError("Token is invalid")
 
         return token
-
-    def deactivate_duplicate_users(self, *, token):
-        # This user is trying to validate for another,
-        # likely a duplicate account, do not wait for commit here
-        deactivate_user.signature(
-            kwargs={"user_pk": self.user.pk}
-        ).apply_async()
-
-        # Try to invalidate the verification created at this time, match on
-        # the token created time
-        timeband = 2  # +/- seconds to find a verification
-        ts = email_verification_token_generator.get_timestamp(token)
-        v = Verification.objects.get(
-            created__gt=ts - timedelta(seconds=timeband),
-            created__lt=ts + timedelta(seconds=timeband),
-        )
-        v.is_verified = False
-        v.verified_at = None
-        v.save()
-
-        deactivate_user.signature(kwargs={"user_pk": v.user.pk}).apply_async()
