@@ -378,7 +378,7 @@ class LeaderboardRedirect(RedirectView):
             return reverse(
                 "evaluation:leaderboard",
                 kwargs={
-                    "challenge_short_name": first_phase.short_name,
+                    "challenge_short_name": first_phase.challenge.short_name,
                     "slug": first_phase.slug,
                 },
             )
