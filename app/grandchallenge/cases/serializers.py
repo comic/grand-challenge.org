@@ -270,6 +270,15 @@ class CSImageSerializer(serializers.BaseSerializer):
             image_itk.GetPixelIDValue()
         ]
 
+        min = np.min(nda)
+        max = np.max(nda)
+        window_center = instance.window_center
+        window_width = instance.window_width
+        if not window_width:
+            window_width = max - min
+        if not window_center:
+            window_center = window_width / 2
+
         # TODO fix non grayscale, fix 16 bit
         return {
             "imageId": instance.pk,
@@ -277,8 +286,8 @@ class CSImageSerializer(serializers.BaseSerializer):
             "maxPixelValue": np.max(nda),
             "slope": 1,
             "intercept": 0,
-            "windowCenter": instance.window_center or 127,
-            "windowWidth": instance.window_width or 256,
+            "windowCenter": window_center,
+            "windowWidth": window_width,
             "pixelData": nda.flatten(order="C"),
             "rows": instance.height,
             "columns": instance.width,
