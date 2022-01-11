@@ -110,6 +110,7 @@ def _create_challenge(
     p.submission_kind = p.SubmissionKind.ALGORITHM
     p.archive = archive
     p.score_jsonpath = "score"
+    p.submission_limit = 10
     p.save()
 
     m = Method(creator=creator, phase=p)

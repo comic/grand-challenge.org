@@ -6,7 +6,10 @@ from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.algorithms.exceptions import ImageImportError
+from grandchallenge.algorithms.exceptions import (
+    ImageImportError,
+    TooManyJobsScheduled,
+)
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
@@ -293,7 +296,13 @@ def create_algorithm_jobs(
         civ_sets = civ_sets[:max_jobs]
 
     jobs = []
+    job_count = 0
+
     for civ_set in civ_sets:
+
+        if job_count >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+            raise TooManyJobsScheduled
+
         with transaction.atomic():
             j = Job.objects.create(
                 creator=creator,
@@ -313,6 +322,8 @@ def create_algorithm_jobs(
             jobs.append(j)
 
             on_commit(j.execute)
+
+            job_count += 1
 
     return jobs
 

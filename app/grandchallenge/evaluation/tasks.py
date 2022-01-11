@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
+from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -155,23 +156,30 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
     )
 
-    create_algorithm_jobs(
-        algorithm_image=evaluation.submission.algorithm_image,
-        civ_sets=[
-            {*ai.values.all()}
-            for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                "values__interface"
-            )
-        ],
-        creator=None,
-        extra_viewer_groups=challenge_admins,
-        extra_logs_viewer_groups=challenge_admins,
-        task_on_success=task_on_success,
-        task_on_failure=task_on_failure,
-        max_jobs=max_jobs,
-    )
-
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
+
+    try:
+        create_algorithm_jobs(
+            algorithm_image=evaluation.submission.algorithm_image,
+            civ_sets=[
+                {*ai.values.all()}
+                for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                    "values__interface"
+                )
+            ],
+            creator=None,
+            extra_viewer_groups=challenge_admins,
+            extra_logs_viewer_groups=challenge_admins,
+            task_on_success=task_on_success,
+            task_on_failure=task_on_failure,
+            max_jobs=max_jobs,
+        )
+    except TooManyJobsScheduled:
+        # Re-run the task
+        create_algorithm_jobs_for_evaluation.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": max_jobs},
+            immutable=True,
+        ).apply_async()
 
 
 @shared_task
