@@ -10,6 +10,7 @@ from django.utils.text import get_valid_filename
 
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.github.tasks import get_zipfile, unlink_algorithm
+from grandchallenge.github.utils import CloneStatusChoices
 
 
 def zipfile_path(instance, filename):
@@ -81,6 +82,11 @@ class GitHubWebhookMessage(models.Model):
     has_open_source_license = models.BooleanField(default=False)
     license_check_result = models.CharField(max_length=1024, blank=True)
     error = models.TextField(blank=True)
+    clone_status = models.CharField(
+        choices=CloneStatusChoices.choices,
+        default=CloneStatusChoices.PENDING,
+        max_length=12,
+    )
 
     def __str__(self):
         return f"{self.repo_name} {self.tag}"
