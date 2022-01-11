@@ -83,12 +83,15 @@ class TestConfirmEmailForm:
 
         assert form.is_valid()
 
-    def test_user_can_not_verify_other_token(self):
+    def test_user_can_not_verify_other_token(self, settings):
+        settings.task_eager_propagates = (True,)
+        settings.task_always_eager = (True,)
+
         u1 = UserFactory()
         v1 = VerificationFactory(user=u1)
 
         u2 = UserFactory()
-        VerificationFactory(user=u2)
+        v2 = VerificationFactory(user=u2)
 
         form = ConfirmEmailForm(
             user=u2, token=v1.token, data={"token": v1.token},
@@ -96,3 +99,13 @@ class TestConfirmEmailForm:
 
         assert not form.is_valid()
         assert ["Token is invalid"] == form.errors["token"]
+
+        u1.refresh_from_db()
+        u2.refresh_from_db()
+        v1.refresh_from_db()
+        v2.refresh_from_db()
+
+        assert u1.is_active is True
+        assert u2.is_active is False
+        assert v1.is_verified is None
+        assert v2.is_verified is None

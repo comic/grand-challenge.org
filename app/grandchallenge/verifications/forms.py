@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from pyswot.pyswot import _domain_parts, _is_stoplisted
 
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.verifications.models import Verification
 from grandchallenge.verifications.resources.free_email_domains import (
     FREE_EMAIL_DOMAINS,
@@ -91,9 +92,16 @@ class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
     def clean_token(self):
         token = self.cleaned_data["token"]
 
-        if not email_verification_token_generator.check_token(
+        if not hasattr(
+            self.user, "verification"
+        ) or not email_verification_token_generator.check_token(
             self.user, token
         ):
+            # This user is trying to validate for another,
+            # likely a duplicate account, do not wait for commit here
+            deactivate_user.signature(
+                kwargs={"user_pk": self.user.pk}
+            ).apply_async()
             raise ValidationError("Token is invalid")
 
         return token
