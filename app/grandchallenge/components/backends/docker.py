@@ -48,6 +48,7 @@ class DockerConnection:
         exec_image_repo_tag: str,
         exec_image_file: File,
         memory_limit: int,
+        time_limit: int,
         requires_gpu: bool,
     ):
         super().__init__()
@@ -57,6 +58,9 @@ class DockerConnection:
         self._exec_image_file = exec_image_file
         self._memory_limit = memory_limit
         self._requires_gpu = requires_gpu
+
+        if time_limit != settings.CELERY_TASK_TIME_LIMIT:
+            logger.warning("Time limits are not implemented in this backend")
 
         self.__client = None
 

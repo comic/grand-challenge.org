@@ -425,6 +425,7 @@ class Session(UUIDModel):
             exec_image_file=self.workstation_image.image,
             memory_limit=settings.COMPONENTS_MEMORY_LIMIT,
             requires_gpu=False,
+            time_limit=settings.WORKSTATIONS_SESSION_DURATION_LIMIT,
         )
 
     @property

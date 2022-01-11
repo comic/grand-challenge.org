@@ -42,6 +42,7 @@ def test_cpuset_cpus(settings, cpuset, expected):
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
 
@@ -109,6 +110,7 @@ def test_provision(tmp_path, settings):
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
 
@@ -207,6 +209,7 @@ def test_input_prefixes(tmp_path, settings):
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     executor.provision(
@@ -254,6 +257,7 @@ def test_ecs_unzip(tmp_path, settings, submission_file):
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     executor.provision(
@@ -341,6 +345,7 @@ def test_handle_stopped_successful_task():
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     event = {
@@ -373,6 +378,7 @@ def test_handle_stopped_successful_fast_task():
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     event = {
@@ -405,6 +411,7 @@ def test_handle_stopped_start_failed_task():
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     event = {
@@ -437,6 +444,7 @@ def test_handle_stopped_terminated_task():
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     event = {
@@ -469,6 +477,7 @@ def test_handle_stopped_cancelled_task():
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     event = {
@@ -501,6 +510,7 @@ def test_set_duration_success():
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     executor._set_duration(
@@ -522,6 +532,7 @@ def test_set_duration_fast_task():
         exec_image_repo_tag="",
         exec_image_file=None,
         memory_limit=4,
+        time_limit=60,
         requires_gpu=False,
     )
     executor._set_duration(

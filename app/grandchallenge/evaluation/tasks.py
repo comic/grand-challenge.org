@@ -173,6 +173,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             task_on_success=task_on_success,
             task_on_failure=task_on_failure,
             max_jobs=max_jobs,
+            time_limit=evaluation.submission.phase.algorithm_time_limit,
         )
     except TooManyJobsScheduled:
         # Re-run the task

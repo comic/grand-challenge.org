@@ -248,6 +248,7 @@ def create_algorithm_jobs(
     max_jobs=None,
     task_on_success=None,
     task_on_failure=None,
+    time_limit=None,
 ):
     """
     Creates algorithm jobs for sets of component interface values
@@ -273,6 +274,8 @@ def create_algorithm_jobs(
         to handle being called more than once, and in parallel.
     task_on_failure
         Celery task that is run on job failure
+    time_limit
+        The time limit for the Job
     """
     civ_sets = filter_civs_for_algorithm(
         civ_sets=civ_sets, algorithm_image=algorithm_image
@@ -295,6 +298,9 @@ def create_algorithm_jobs(
     if max_jobs is not None:
         civ_sets = civ_sets[:max_jobs]
 
+    if time_limit is None:
+        time_limit = settings.CELERY_TASK_TIME_LIMIT
+
     jobs = []
     job_count = 0
 
@@ -309,6 +315,7 @@ def create_algorithm_jobs(
                 algorithm_image=algorithm_image,
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
+                time_limit=time_limit,
             )
             j.inputs.set(civ_set)
 
