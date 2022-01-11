@@ -84,10 +84,8 @@ class GitHubWebhookMessage(models.Model):
     error = models.TextField(blank=True)
     zip_file_status = models.CharField(
         choices=ZipStatusChoices.choices,
-        default=ZipStatusChoices.NOT_STARTED,
+        default=ZipStatusChoices.PENDING,
         max_length=12,
-        blank=True,
-        null=True,
     )
 
     def __str__(self):

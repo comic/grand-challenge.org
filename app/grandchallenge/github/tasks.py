@@ -52,6 +52,68 @@ def get_repo_url(payload):
     return repo_url.replace("//", f"//x-access-token:{access_token}@")
 
 
+def install_lfs():
+    process = subprocess.check_output(
+        ["git", "lfs", "install"], stderr=subprocess.STDOUT
+    )
+    return process
+
+
+def fetch_repo(payload, repo_url, tmpdirname, recurse_submodules):
+    cmd = [
+        "git",
+        "clone",
+        "--branch",
+        payload["ref"],
+        "--depth",
+        "1",
+        repo_url,
+        tmpdirname,
+    ]
+    if recurse_submodules:
+        cmd.insert(2, "--recurse-submodules")
+
+    process = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    return process
+
+
+def check_license(tmpdirname):
+    has_open_source_license = False
+    license = "No license file found"
+    process = subprocess.Popen(
+        ["licensee", tmpdirname], stdout=subprocess.PIPE
+    )
+    process.wait()
+    output = process.stdout.read()
+    regex_license = re.compile(r"License: (?P<license>.*)?$", re.M)
+    match = regex_license.search(output.decode("utf-8"))
+    if match:
+        license = match.group("license")
+        if license in settings.OPEN_SOURCE_LICENSES:
+            has_open_source_license = True
+    return license, has_open_source_license
+
+
+def save_zipfile(ghwm, tmpdirname):
+    zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
+    tmp_zip = tempfile.NamedTemporaryFile()
+    with zipfile.ZipFile(tmp_zip.name, "w") as zipf:
+        for foldername, _subfolders, filenames in os.walk(tmpdirname):
+            for filename in filenames:
+                file_path = os.path.join(foldername, filename)
+                zipf.write(
+                    file_path, file_path.replace(f"{tmpdirname}/", ""),
+                )
+    temp_file = files.File(tmp_zip, name=zip_name,)
+    return temp_file
+
+
+def build_repo(ghwm_pk):
+    on_commit(
+        lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm_pk})
+    )
+
+
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def get_zipfile(*, pk):  # noqa C901
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
@@ -59,16 +121,9 @@ def get_zipfile(*, pk):  # noqa C901
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
 
-    if ghwm.zip_file_status not in [
-        ZipStatusChoices.COMPLETED,
-        ZipStatusChoices.STARTED,
-    ]:
+    if ghwm.zip_file_status == ZipStatusChoices.PENDING:
         payload = ghwm.payload
         repo_url = get_repo_url(payload)
-        zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
-        tmp_zip = tempfile.NamedTemporaryFile()
-        has_open_source_license = False
-        license = "No license file found"
         ghwm.zip_file_status = ZipStatusChoices.STARTED
         ghwm.save()
 
@@ -76,80 +131,30 @@ def get_zipfile(*, pk):  # noqa C901
             recurse_submodules = Algorithm.objects.get(
                 repo_name=ghwm.payload["repository"]["full_name"]
             ).recurse_submodules
-
         except Algorithm.DoesNotExist:
             recurse_submodules = False
+
         with tempfile.TemporaryDirectory() as tmpdirname:
-            # Run git lfs install here, doing it in the dockerfile does not seem
-            # to work
             try:
-                process = subprocess.check_output(
-                    ["git", "lfs", "install"], stderr=subprocess.STDOUT
-                )
-            except subprocess.CalledProcessError as err:
-                ghwm.error = str(err)
-                ghwm.zip_file_status = ZipStatusChoices.FAILED
+                # Run git lfs install here, doing it in the dockerfile does not seem
+                # to work
+                install_lfs()
+                fetch_repo(payload, repo_url, tmpdirname, recurse_submodules)
+                license, has_open_source_license = check_license(tmpdirname)
+                temp_file = save_zipfile(ghwm, tmpdirname)
+                # update GithubWebhook object
+                ghwm.zipfile = temp_file
+                ghwm.has_open_source_license = has_open_source_license
+                ghwm.license_check_result = license
+                ghwm.zip_file_status = ZipStatusChoices.SUCCESS
+                ghwm.save()
+                # build repo
+                build_repo(ghwm.pk)
+            except Exception as e:
+                ghwm.error = str(e)
+                ghwm.zip_file_status = ZipStatusChoices.FAILURE
                 ghwm.save()
                 raise
-            cmd = [
-                "git",
-                "clone",
-                "--branch",
-                payload["ref"],
-                "--depth",
-                "1",
-                repo_url,
-                tmpdirname,
-            ]
-            if recurse_submodules:
-                cmd.insert(2, "--recurse-submodules")
-            try:
-                process = subprocess.check_output(
-                    cmd, stderr=subprocess.STDOUT
-                )
-            except subprocess.CalledProcessError as err:
-                ghwm.error = str(err)
-                ghwm.zip_file_status = ZipStatusChoices.FAILED
-                ghwm.save()
-                raise
-
-            process = subprocess.Popen(
-                ["licensee", tmpdirname], stdout=subprocess.PIPE
-            )
-            process.wait()
-            output = process.stdout.read()
-            regex_license = re.compile(r"License: (?P<license>.*)?$", re.M)
-            match = regex_license.search(output.decode("utf-8"))
-            if match:
-                license = match.group("license")
-                if license in settings.OPEN_SOURCE_LICENSES:
-                    has_open_source_license = True
-            try:
-                with zipfile.ZipFile(tmp_zip.name, "w") as zipf:
-                    for foldername, _subfolders, filenames in os.walk(
-                        tmpdirname
-                    ):
-                        for filename in filenames:
-                            file_path = os.path.join(foldername, filename)
-                            zipf.write(
-                                file_path,
-                                file_path.replace(f"{tmpdirname}/", ""),
-                            )
-            except OSError:
-                ghwm.zip_file_status = ZipStatusChoices.FAILED
-                ghwm.save()
-                raise
-
-            temp_file = files.File(tmp_zip, name=zip_name,)
-            ghwm.zipfile = temp_file
-            ghwm.has_open_source_license = has_open_source_license
-            ghwm.license_check_result = license
-            ghwm.zip_file_status = ZipStatusChoices.COMPLETED
-            ghwm.save()
-
-    on_commit(
-        lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm.pk})
-    )
 
 
 @shared_task

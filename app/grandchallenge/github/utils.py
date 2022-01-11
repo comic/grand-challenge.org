@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 class ZipStatusChoices(models.TextChoices):
     """Notification type choices."""
 
-    NOT_STARTED = "NOT_STARTED", _("Not started")
+    PENDING = "PENDING", _("Pending")
     STARTED = "STARTED", _("Started")
-    COMPLETED = "COMPLETED", _("Completed")
-    FAILED = "FAILED", _("Failed")
+    SUCCESS = "SUCCESS", _("Success")
+    FAILURE = "FAILURE", _("Failure")
