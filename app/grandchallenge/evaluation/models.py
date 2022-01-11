@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.validators import (
+    MaxValueValidator,
     MinValueValidator,
     RegexValidator,
 )
@@ -418,6 +419,14 @@ class Phase(UUIDModel):
         related_name="+",
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
+    )
+    algorithm_time_limit = models.PositiveSmallIntegerField(
+        default=20 * 60,
+        help_text="Time limit for inference jobs in seconds",
+        validators=[
+            MinValueValidator(limit_value=60),
+            MaxValueValidator(limit_value=4 * 60 * 60),
+        ],
     )
 
     class Meta:

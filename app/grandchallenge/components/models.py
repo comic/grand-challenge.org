@@ -13,7 +13,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
-from django.core.validators import RegexValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
@@ -889,6 +893,14 @@ class ComponentJob(models.Model):
         editable=False,
         help_text="Serialized task that is run on job failure",
     )
+    time_limit = models.PositiveSmallIntegerField(
+        default=2 * 60 * 60,
+        help_text="Time limit for the job in seconds",
+        validators=[
+            MinValueValidator(limit_value=60),
+            MaxValueValidator(limit_value=4 * 60 * 60),
+        ],
+    )
 
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
@@ -951,6 +963,7 @@ class ComponentJob(models.Model):
             "exec_image_repo_tag": self.container.repo_tag,
             "exec_image_file": self.container.image,
             "memory_limit": self.container.requires_memory_gb,
+            "time_limit": self.time_limit,
             "requires_gpu": self.container.requires_gpu,
         }
 
