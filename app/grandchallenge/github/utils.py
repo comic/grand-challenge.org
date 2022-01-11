@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class ZipStatusChoices(models.TextChoices):
+class CloneStatusChoices(models.TextChoices):
     """Notification type choices."""
 
     PENDING = "PENDING", _("Pending")

@@ -19,7 +19,7 @@ from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
-from grandchallenge.github.utils import ZipStatusChoices
+from grandchallenge.github.utils import CloneStatusChoices
 
 
 def get_repo_url(payload):
@@ -121,10 +121,10 @@ def get_zipfile(*, pk):  # noqa C901
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
 
-    if ghwm.zip_file_status == ZipStatusChoices.PENDING:
+    if ghwm.clone_status == CloneStatusChoices.PENDING:
         payload = ghwm.payload
         repo_url = get_repo_url(payload)
-        ghwm.zip_file_status = ZipStatusChoices.STARTED
+        ghwm.clone_status = CloneStatusChoices.STARTED
         ghwm.save()
 
         try:
@@ -146,13 +146,13 @@ def get_zipfile(*, pk):  # noqa C901
                 ghwm.zipfile = temp_file
                 ghwm.has_open_source_license = has_open_source_license
                 ghwm.license_check_result = license
-                ghwm.zip_file_status = ZipStatusChoices.SUCCESS
+                ghwm.clone_status = CloneStatusChoices.SUCCESS
                 ghwm.save()
                 # build repo
                 build_repo(ghwm.pk)
             except Exception as e:
                 ghwm.error = str(e)
-                ghwm.zip_file_status = ZipStatusChoices.FAILURE
+                ghwm.clone_status = CloneStatusChoices.FAILURE
                 ghwm.save()
                 raise
 
