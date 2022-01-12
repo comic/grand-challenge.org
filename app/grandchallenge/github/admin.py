@@ -22,9 +22,11 @@ class GitHubUserTokenAdmin(admin.ModelAdmin):
 class GitHubWebhookMessageAdmin(admin.ModelAdmin):
     list_display = (
         "created",
+        "repo_name",
+        "tag",
         "clone_status",
         "has_open_source_license",
-        "licence_check_result",
+        "license_check_result",
         "error",
     )
     list_filter = (
