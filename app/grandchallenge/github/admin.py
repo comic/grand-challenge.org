@@ -20,8 +20,22 @@ class GitHubUserTokenAdmin(admin.ModelAdmin):
 
 
 class GitHubWebhookMessageAdmin(admin.ModelAdmin):
+    list_display = (
+        "created",
+        "repo_name",
+        "tag",
+        "clone_status",
+        "has_open_source_license",
+        "license_check_result",
+        "error",
+    )
+    list_filter = (
+        "clone_status",
+        "has_open_source_license",
+    )
+    search_fields = ("payload",)
     exclude = ("zipfile",)
-    readonly_fields = ("payload",)
+    readonly_fields = ("payload", "clone_status")
 
 
 admin.site.register(GitHubUserToken, GitHubUserTokenAdmin)
