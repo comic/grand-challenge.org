@@ -4,69 +4,86 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cornerstone Image Detail</title>
-<link type="text/css" href="{% static 'vendor/css/base.min.css' %}" rel="stylesheet" media="screen">
-<link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cornerstone Image Viewer</title>
+    <link type="text/css" href="{% static 'vendor/css/base.min.css' %}" rel="stylesheet" media="screen">
+    <link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
+    <script type="text/javascript" src="{% static 'vendor/js/jquery.min.js' %}"></script>
     <style>
         body {
             margin: 0;
         }
         .viewer {
-            width: 50vw;
-            height: 100vh;
-            margin: 0 auto;
+            position: relative;
             background: #000;
+            color: #fff;
         }
         .loading-overlay {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             position: fixed;
+            left: 0;
+            top: 0;
             width: 100vw;
-            height: 100vw;
+            height: 100vh;
+            background: #000;
         }
     </style>
 </head>
 <body>
-    <button id="invert" class="btn btn-primary">Toggle Invert</button>
-    <button id="interpolation" class="btn btn-primary">Toggle Interpolation</button>
-    <button id="hflip" class="btn btn-primary">Horizontal Flip</button>
-    <button id="vflip" class="btn btn-primary">Vertical Flip</button>
-    <button id="rotate" class="btn btn-primary">Rotate 90</button>
-    <div id="itkImageWrapper" class="viewer" style="position: relative;color: white"
-         oncontextmenu="return false"
-         onmousedown="return false">
+    <div class="d-flex flex-column vh-100 vw-100">
 
-        <div id="itkImage"
-             style="width: 100%;height: 100%;top: 0;left: 0;position: absolute">
-        </div>
+        <div id="itkImageWrapper" class="flex-grow-1 viewer" style="position: relative; color: white" oncontextmenu="return false" onmousedown="return false">
+            <div id="itkImage" style="width: 100%; height: 100%; top: 0; left: 0; position: absolute">
+            </div>
 
-        <div id="topleft" class="overlay" style="position: absolute;top: 0;left: 0">
-            Patient Name
+            <div id="topleft" class="overlay" style="position: absolute; top: 0; left: 0;">
+                <div class="btn-group btn-group-sm m-1" role="group">
+                    <button type="button" id="invert" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Invert">
+                        <i class="fas fa-adjust fa-lg"></i>
+                    </button>
+                    <button type="button" id="hflip" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Horizontal flip">
+                        <i class="fas fa-exchange-alt fa-lg"></i>
+                    </button>
+                    <button type="button" id="vflip" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Vertical flip">
+                        <i class="fas fa-exchange-alt fa-lg" style="transform: rotate(90deg);"></i>
+                    </button>
+                    <button type="button" id="rotate" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Rotate clockwise">
+                        <i class="fas fa-undo fa-lg" style="transform: scaleX(-1);"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="topright" class="overlay" style="position: absolute; top: 0; right: 0;">
+                Render Time:
+            </div>
+            <div id="bottomright" class="overlay" style="position: absolute; bottom: 0; right: 0;">
+                Zoom:
+            </div>
+            <div id="bottomleft" class="overlay" style="position: absolute; bottom: 0; left: 0;">
+                WW/WC:
+            </div>
+            <div><span id="coords"></span></div>
         </div>
-        <div id="topright" class="overlay" style="position: absolute;top: 0;right: 0">
-            Render Time:
-        </div>
-        <div id="bottomright" class="overlay" style="position: absolute;bottom: 0;right: 0">
-            Zoom:
-        </div>
-        <div id="bottomleft" class="overlay" style="position: absolute;bottom: 0;left: 0">
-            WW/WC:
+    </div>
+    <div class="loading-overlay" id="loading">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
         </div>
     </div>
 
-    <div><span id="coords"></span></div>
+    <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
+
     <!-- Dependencies -->
-<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
-<script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.6/dist/cornerstoneMath.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.2.4/dist/cornerstone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8" integrity="sha384-Cs3dgUx6+jDxxuqHvVH8Onpyj2LF1gKZurLDlhqzuJmUqVYMJ0THTWpxK5Z086Zm" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.6/dist/cornerstoneMath.js" integrity="sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.2.4/dist/cornerstone.js" integrity="sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8" crossorigin="anonymous"></script>
 
-<!-- development version, includes helpful console warnings -->
-<script src="https://cdn.jsdelivr.net/npm/cornerstone-tools@3.0.0-b.641/dist/cornerstoneTools.js"></script>
-    <!--<script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.js" integrity="sha384-aSHR6jodhZP+aagFmVyHIxqJXe0CLVaVwtUf9aFJxnMYbWTXOICmJkYpcdZFz1Fx" crossorigin="anonymous"></script>-->
     <script>
-
-
-        const csTools = cornerstoneTools.init();
-
+        const imageId = 'grandChallengeLoader://{{ image_pk }}';
+        const loadingEl = document.getElementById('loading');
         const element = document.getElementById('itkImage');
+
 
         const getGCImage = (imageId) => {
             return {
@@ -86,154 +103,107 @@
         };
 
         cornerstone.registerImageLoader('grandChallengeLoader', getGCImage);
-        cornerstone.enable(element);
-        csTools.addEnabledElement(element);
 
+        // Register grand challenge image loader
+        // cornerstone.registerImageLoader('grandChallengeLoader', (imageId) => ({
+        //     promise: new Promise((resolve, reject) => {
+        //         fetch(`loader#${imageId}`).then(r => {
+        //             if (r.status === 200) {
+        //                 return r.json()
+        //             }
+        //         }).then(r => {
+        //             r.getPixelData = () => r.pixelData;
+        //             resolve(r);
+        //         }).catch(e => reject(e));
+        //     })
+        // }));
 
-        const imageId = 'grandChallengeLoader://{{ image_pk }}';
+        // setup handlers before we display the image
+        element.addEventListener('cornerstoneimagerendered', e => {
+            const eventData = e.detail;
+            console.log("Render Time:" + eventData.renderTimeInMs + " ms");
+            // set the canvas context to the image coordinate system
+            cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, eventData.canvasContext);
+            document.getElementById('bottomright').textContent = "Window level: " + Math.round(eventData.viewport.voi.windowWidth) + "/" + Math.round(eventData.viewport.voi.windowCenter) + ", Zoom: " + eventData.viewport.scale.toFixed(2);
+        });
 
-    // updates the image display
-    function updateTheImage() {
-        return cornerstone.loadAndCacheImage(imageId).then(function(image) {
+        // Initialize viewport element
+        cornerstone.enable(element, {
+            renderer: 'webgl',
+            desynchronized: true,
+            preserveDrawingBuffer: true
+        });
+
+        // load and display the image
+        cornerstone.loadAndCacheImage(imageId).then(function(image) {
             const viewport = cornerstone.getViewport(element);
             cornerstone.displayImage(element, image, viewport);
-        });
-    }
+            const {pixelData, getPixelData, ...restImage} = image;
+            return restImage;
+        }).then(function(image) {
+            console.log(image); // TODO remove.
+            loadingEl.style.display = 'none';
+            $('[data-toggle="tooltip"]').tooltip();
 
-    const options = {
-        renderer: 'webgl',
-        desynchronized: true,
-        preserveDrawingBuffer: true
-    };
+            // add event handlers to pan/windowlevel/zoom image on mouse move
+            element.addEventListener('mousedown', function (e) {
+                let lastX = e.pageX;
+                let lastY = e.pageY;
 
-    cornerstone.enable(element, options);
-
-    // setup handlers before we display the image
-    function onImageRendered(e) {
-        console.log('loaded!')
-        const eventData = e.detail;
-
-        // set the canvas context to the image coordinate system
-        cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, eventData.canvasContext);
-
-        // NOTE: The coordinate system of the canvas is in image pixel space.  Drawing
-        // to location 0,0 will be the top left of the image and rows,columns is the bottom
-        // right.
-        // const context = eventData.canvasContext;
-        // context.beginPath();
-        // context.strokeStyle = 'white';
-        // context.lineWidth = .5;
-        // context.rect(128, 90, 50, 60);
-        // context.stroke();
-        // context.fillStyle = "white";
-        // context.font = "6px Arial";
-        // context.fillText("Tumor Here", 128, 85);
-
-        document.getElementById('topright').textContent = "Render Time:" + eventData.renderTimeInMs + " ms";
-        document.getElementById('bottomleft').textContent = "WW/WL:" + Math.round(eventData.viewport.voi.windowWidth) + "/" + Math.round(eventData.viewport.voi.windowCenter);
-        document.getElementById('bottomright').textContent = "Zoom:" + eventData.viewport.scale.toFixed(2);
-
-    }
-    element.addEventListener('cornerstoneimagerendered', onImageRendered);
-
-    // load and display the image
-    const imagePromise = updateTheImage();
-
-    // add handlers for mouse events once the image is loaded.
-    imagePromise.then(function() {
-
-        // add event handlers to pan image on mouse move
-        element.addEventListener('mousedown', function (e) {
-            let lastX = e.pageX;
-            let lastY = e.pageY;
-            const mouseButton = e.which;
-
-            function mouseMoveHandler(e) {
-              const deltaX = e.pageX - lastX;
-              const deltaY = e.pageY - lastY;
-              lastX = e.pageX;
-              lastY = e.pageY;
-
-              if (mouseButton === 1) {
-                let viewport = cornerstone.getViewport(element);
-                viewport.voi.windowWidth += (deltaX / viewport.scale);
-                viewport.voi.windowCenter += (deltaY / viewport.scale);
+                function mouseMoveHandler(e) {
+                const deltaX = e.pageX - lastX;
+                const deltaY = e.pageY - lastY;
+                lastX = e.pageX;
+                lastY = e.pageY;
+                const viewport = cornerstone.getViewport(element);
+                if (e.which === 2) {
+                    const maxWindowWidth = image.maxPixelValue - image.minPixelValue;
+                    viewport.voi.windowWidth += deltaX / element.clientHeight * maxWindowWidth; 
+                    viewport.voi.windowCenter += deltaY / element.clientWidth * maxWindowWidth;
+                } else if (e.which === 1) {
+                    viewport.translation.x += deltaX / viewport.scale;
+                    viewport.translation.y += deltaY / viewport.scale / 2;
+                } else if (e.which === 3) {
+                    viewport.scale += (deltaY / 100);
+                }
                 cornerstone.setViewport(element, viewport);
-              } else if (mouseButton === 2) {
-                let viewport = cornerstone.getViewport(element);
-                viewport.translation.x += (deltaX / viewport.scale);
-                viewport.translation.y += (deltaY / viewport.scale);
-                cornerstone.setViewport(element, viewport);
-              } else if (mouseButton === 3) {
-                let viewport = cornerstone.getViewport(element);
-                viewport.scale += (deltaY / 100);
-                cornerstone.setViewport(element, viewport);
-              }
-            }
-
-            function mouseUpHandler() {
-              document.removeEventListener('mouseup', mouseUpHandler);
-              document.removeEventListener('mousemove', mouseMoveHandler);
-            }
-
-            document.addEventListener('mousemove', mouseMoveHandler);
-            document.addEventListener('mouseup', mouseUpHandler);
-        });
-
-        /*
-        const mouseWheelEvents = ['mousewheel', 'DOMMouseScroll'];
-        mouseWheelEvents.forEach(function(eventType) {
-            element.addEventListener(eventType, function (e) {
-                // Firefox e.detail > 0 scroll back, < 0 scroll forward
-                // chrome/safari e.wheelDelta < 0 scroll back, > 0 scroll forward
-                if (e.wheelDelta < 0 || e.detail > 0) {
-                    if (currentImageIndex === 0) {
-                        updateTheImage(1);
-                    }
-                } else {
-                    if (currentImageIndex === 1) {
-                        updateTheImage(0);
-                    }
                 }
 
-                // Prevent page from scrolling
-                return false;
+                function mouseUpHandler() {
+                document.removeEventListener('mouseup', mouseUpHandler);
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                }
+
+                document.addEventListener('mousemove', mouseMoveHandler);
+                document.addEventListener('mouseup', mouseUpHandler);
+            });
+
+
+            // Add button toolbar manipulation events
+            function manipulateViewport(element, manipulationFn) {
+                const viewport = cornerstone.getViewport(element);
+                viewport = manipulationFn(viewport);
+                cornerstone.setViewport(element, viewport);
+            }
+            document.getElementById('invert').addEventListener('click', function (e) {
+                manipulateViewport(element, vp => ({...vp, invert: !vp.invert}));
+            });
+            document.getElementById('hflip').addEventListener('click', function (e) {
+                manipulateViewport(element, vp => ({...vp, hflip: !vp.hflip}));
+            });
+            document.getElementById('vflip').addEventListener('click', function (e) {
+                manipulateViewport(element, vp => ({...vp, vflip: !vp.vflip}));
+            });
+            document.getElementById('rotate').addEventListener('click', function (e) {
+                manipulateViewport(element, vp => ({...vp, rotation: vp.rotation + 90}));
+            });
+
+            // Show world coordinate values on mousemove
+            element.addEventListener('mousemove', function(event) {
+                const pixelCoords = cornerstone.pageToPixel(element, event.pageX, event.pageY);
+                document.getElementById('bottomleft').textContent = "X=" + pixelCoords.x + ", Y=" + pixelCoords.y;
             });
         });
-        */
-
-        document.getElementById('invert').addEventListener('click', function (e) {
-            const viewport = cornerstone.getViewport(element);
-            viewport.invert = !viewport.invert;
-            cornerstone.setViewport(element, viewport);
-        });
-
-        document.getElementById('interpolation').addEventListener('click', function (e) {
-            const viewport = cornerstone.getViewport(element);
-            viewport.pixelReplication = !viewport.pixelReplication;
-            cornerstone.setViewport(element, viewport);
-        });
-        document.getElementById('hflip').addEventListener('click', function (e) {
-            const viewport = cornerstone.getViewport(element);
-            viewport.hflip = !viewport.hflip;
-            cornerstone.setViewport(element, viewport);
-        });
-        document.getElementById('vflip').addEventListener('click', function (e) {
-            const viewport = cornerstone.getViewport(element);
-            viewport.vflip = !viewport.vflip;
-            cornerstone.setViewport(element, viewport);
-        });
-        document.getElementById('rotate').addEventListener('click', function (e) {
-            const viewport = cornerstone.getViewport(element);
-            viewport.rotation += 90;
-            cornerstone.setViewport(element, viewport);
-        });
-
-        element.addEventListener('mousemove', function(event) {
-            const pixelCoords = cornerstone.pageToPixel(element, event.pageX, event.pageY);
-            document.getElementById('coords').textContent = "pageX=" + event.pageX + ", pageY=" + event.pageY + ", pixelX=" + pixelCoords.x + ", pixelY=" + pixelCoords.y;
-        });
-    });
     </script>
 </body>
 </html>

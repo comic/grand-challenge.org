@@ -279,6 +279,9 @@ class CSImageSerializer(serializers.BaseSerializer):
         if not window_center:
             window_center = window_width / 2
 
+        # if instance.color_space != Image.COLOR_SPACE_GRAY:
+            # nda
+# 
         # TODO fix non grayscale, fix 16 bit
         return {
             "imageId": instance.pk,
