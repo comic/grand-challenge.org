@@ -11,6 +11,27 @@ from grandchallenge.reader_studies.models import (
 
 class ReaderStudyAdmin(GuardedModelAdmin):
     exclude = ("images",)
+    list_display = (
+        "title",
+        "slug",
+        "pk",
+        "public",
+        "is_educational",
+        "allow_answer_modification",
+        "allow_case_navigation",
+    )
+    list_filter = (
+        "public",
+        "is_educational",
+        "allow_answer_modification",
+        "allow_case_navigation",
+        "validate_hanging_list",
+    )
+    search_fields = (
+        "title",
+        "slug",
+        "pk",
+    )
 
 
 class AnswersAdmin(GuardedModelAdmin):
