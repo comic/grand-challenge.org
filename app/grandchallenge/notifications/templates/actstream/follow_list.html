@@ -58,20 +58,7 @@
         {% endfor %}
     </ul>
     <br>
-    <div class="d-flex justify-content-end">
-        <ul class="pagination">
-            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                <a class="page-link" href="?{% update_search_params page=previous_page %}">Previous</a>
-            </li>
-
-            <li class="page-item disabled"><span class="page-link">Page {{ current_page }} of {{ num_pages }}</span>
-            </li>
-
-            <li class="page-item {% if current_page == num_pages %}disabled{% endif %}">
-                <a class="page-link" href="?{% update_search_params page=next_page %}">Next</a>
-            </li>
-        </ul>
-    </div>
+    {% include "grandchallenge/partials/pagination.html" %}
 {% endblock %}
 
 {% block script %}
