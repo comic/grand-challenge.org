@@ -121,9 +121,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
             self.fields["archive"].queryset = get_objects_for_user(
-                user,
-                "archives.upload_archive",
-                accept_global_perms=False,
+                user, "archives.upload_archive", accept_global_perms=False,
             )
 
             self.fields["reader_study"].queryset = get_objects_for_user(
@@ -201,8 +199,7 @@ def process_images(*, instance, targets):
 def _get_linked_task(*, targets):
     if "archive" in targets:
         return add_images_to_archive.signature(
-            kwargs={"archive_pk": targets["archive"].pk},
-            immutable=True,
+            kwargs={"archive_pk": targets["archive"].pk}, immutable=True,
         )
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(
@@ -211,14 +208,13 @@ def _get_linked_task(*, targets):
         )
     elif "answer" in targets:
         return add_image_to_answer.signature(
-            kwargs={"answer_pk": targets["answer"].pk},
-            immutable=True,
+            kwargs={"answer_pk": targets["answer"].pk}, immutable=True,
         )
     else:
         raise RuntimeError(f"Unknown target {targets=}")
 
 
-SITK_PIXEL_TYPE_TO_BIT_SIZE = {
+SITK_PIXEL_TYPE_TO_BIT_DEPTH = {
     SimpleITK.sitkUInt8: 8,
     SimpleITK.sitkInt8: 8,
     SimpleITK.sitkUInt16: 16,
@@ -257,36 +253,31 @@ class CSImageSerializer(serializers.BaseSerializer):
     def to_representation(self, instance):
         try:
             image_itk = get_sitk_image(image=instance)
+            # TODO disallow 3D images
         except Exception:
             raise Http404
 
         nda = SimpleITK.GetArrayFromImage(image_itk)
 
+        bit_depth = SITK_PIXEL_TYPE_TO_BIT_DEPTH[image_itk.GetPixelIDValue()]
         size_in_bytes = instance.width * instance.height
-        if instance.depth is not None:
-            size_in_bytes *= instance.depth
+        size_in_bytes *= bit_depth
         size_in_bytes *= image_itk.GetNumberOfComponentsPerPixel()
-        size_in_bytes *= SITK_PIXEL_TYPE_TO_BIT_SIZE[
-            image_itk.GetPixelIDValue()
-        ]
 
-        min = np.min(nda)
-        max = np.max(nda)
+        p_min = np.min(nda)
+        p_max = np.max(nda)
         window_center = instance.window_center
         window_width = instance.window_width
         if not window_width:
-            window_width = max - min
+            window_width = p_max - p_min
         if not window_center:
             window_center = window_width / 2
 
-        # if instance.color_space != Image.COLOR_SPACE_GRAY:
-            # nda
-# 
-        # TODO fix non grayscale, fix 16 bit
+        # TODO fix color images
         return {
             "imageId": instance.pk,
-            "minPixelValue": np.min(nda),
-            "maxPixelValue": np.max(nda),
+            "minPixelValue": p_min,
+            "maxPixelValue": p_max,
             "slope": 1,
             "intercept": 0,
             "windowCenter": window_center,
@@ -302,4 +293,5 @@ class CSImageSerializer(serializers.BaseSerializer):
             "rowPixelSpacing": image_itk.GetSpacing()[1],
             "invert": False,
             "sizeInBytes": size_in_bytes,
+            "sitkPixelID": image_itk.GetPixelIDTypeAsString(),
         }
