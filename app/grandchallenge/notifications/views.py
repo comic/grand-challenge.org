@@ -1,6 +1,8 @@
 from actstream.models import Follow
 from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.paginator import EmptyPage, Paginator
 from django.views.generic import CreateView, DeleteView, ListView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -121,21 +123,79 @@ class FollowList(
     paginate_by = 50
 
     def get_queryset(self, *args, **kwargs):
+        excludes = [
+            ContentType.objects.filter(
+                app_label="archives", model="archivepermissionrequest"
+            ).get(),
+            ContentType.objects.filter(
+                app_label="algorithms", model="algorithmpermissionrequest"
+            ).get(),
+            ContentType.objects.filter(
+                app_label="reader_studies",
+                model="readerstudypermissionrequest",
+            ).get(),
+            ContentType.objects.filter(
+                app_label="participants", model="registrationrequest"
+            ).get(),
+            ContentType.objects.filter(
+                app_label="cases", model="rawimageuploadsession"
+            ).get(),
+        ]
         return (
             super()
             .get_queryset()
+            .exclude(content_type__in=excludes)
+            .exclude(flag="job-inactive")
             .select_related("user", "content_type")
             .order_by("content_type")
         )
 
+    @property
+    def _current_page(self):
+        return int(self.request.GET.get("page", 1))
+
+    @property
+    def _filters_applied(self):
+        return any(k for k in self.request.GET if k.lower() != "page")
+
+    def _get_page(self, qs):
+        self.filter = FollowFilter(self.request.GET, qs,)
+        total_count = qs.count()
+        paginator = Paginator(self.filter.qs, self.paginate_by)
+        num_pages = paginator.num_pages
+        num_results = paginator.count
+
+        try:
+            page = paginator.page(self._current_page)
+        except EmptyPage:
+            page = []
+
+        return [*page], num_pages, num_results, total_count
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Prefetch the object list here as at this point it has been paginated
-        # which saves prefetching the related objects for all notifications
-        context["object_list"] = prefetch_generic_foreign_key_objects(
-            context["object_list"]
+        page_obj, num_pages, num_results, total_count = self._get_page(
+            qs=context["object_list"]
         )
+
+        context.update(
+            {
+                "filter": self.filter,
+                "filters_applied": self._filters_applied,
+                "page_obj": page_obj,
+                "num_pages": num_pages,
+                "num_results": num_results,
+                "total_count": total_count,
+                "current_page": self._current_page,
+                "next_page": self._current_page + 1,
+                "previous_page": self._current_page - 1,
+                "object_list": prefetch_generic_foreign_key_objects(
+                    context["object_list"]
+                ),
+            }
+        )
+
         return context
 
 
