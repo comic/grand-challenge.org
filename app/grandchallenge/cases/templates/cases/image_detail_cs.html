@@ -183,7 +183,7 @@
 
             // Add button toolbar manipulation events
             function manipulateViewport(element, manipulationFn) {
-                const viewport = cornerstone.getViewport(element);
+                let viewport = cornerstone.getViewport(element);
                 viewport = manipulationFn(viewport);
                 cornerstone.setViewport(element, viewport);
             }
