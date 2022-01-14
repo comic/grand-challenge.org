@@ -158,9 +158,13 @@ class CSImageDetail(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         try:
-            mh_file, _ = self.object.get_metaimage_files()
+            self.object.get_metaimage_files()
         except FileNotFoundError as e:
             raise Http404 from e
+
+        if self.object.depth > 1:
+            # 3D volumes not supported in cornerstone
+            raise Http404
 
         context.update({"image_pk": self.object.pk})
         return context

@@ -253,8 +253,11 @@ class CSImageSerializer(serializers.BaseSerializer):
     def to_representation(self, instance):
         try:
             image_itk = get_sitk_image(image=instance)
-            # TODO disallow 3D images
         except Exception:
+            raise Http404
+
+        if self.object.depth > 1:
+            # 3D volumes not supported in cornerstone
             raise Http404
 
         nda = SimpleITK.GetArrayFromImage(image_itk)
