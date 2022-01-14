@@ -54,12 +54,31 @@
                     </button>
                 </div>
             </div>
-            <div id="topright" class="overlay" style="position: absolute; top: 0; right: 0;"></div>
+            <div id="topright" class="overlay" style="position: absolute; top: 0; right: 0;">
+                <button type="button" id="invert" class="m-1 btn btn-primary btn-sm" data-toggle="modal" data-target="#helpModal">
+                    <i class="fas fa-question fa-lg"></i>
+                </button>
+            </div>
             <div id="bottomright" class="overlay" style="position: absolute; bottom: 0; right: 0;"></div>
             <div id="bottomleft" class="overlay" style="position: absolute; bottom: 0; left: 0;"></div>
             <div><span id="coords"></span></div>
         </div>
     </div>
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Help</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <ul><li>Drag left-mouse button to pan image.</li><li>Drag middle-mouse button to adjust window levels.</li><li>Drag right-mouse button to zoom.</li><li>Use the buttons on the top left to respectively invert, flip horizontal, flip vertical or rotate clockwise.</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
     <div class="loading-overlay" id="loading">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
@@ -153,27 +172,28 @@
                 let lastY = e.pageY;
 
                 function mouseMoveHandler(e) {
-                const deltaX = e.pageX - lastX;
-                const deltaY = e.pageY - lastY;
-                lastX = e.pageX;
-                lastY = e.pageY;
-                const viewport = cornerstone.getViewport(element);
-                if (e.which === 2) {
-                    const maxWindowWidth = image.maxPixelValue - image.minPixelValue;
-                    viewport.voi.windowWidth += deltaX / element.clientHeight * maxWindowWidth;
-                    viewport.voi.windowCenter += deltaY / element.clientWidth * maxWindowWidth;
-                } else if (e.which === 1) {
-                    viewport.translation.x += deltaX / viewport.scale;
-                    viewport.translation.y += deltaY / viewport.scale / 2;
-                } else if (e.which === 3) {
-                    viewport.scale += (deltaY / 100);
-                }
-                cornerstone.setViewport(element, viewport);
+                    const deltaX = e.pageX - lastX;
+                    const deltaY = e.pageY - lastY;
+                    lastX = e.pageX;
+                    lastY = e.pageY;
+                    const viewport = cornerstone.getViewport(element);
+                    if (e.which === 2) {
+                        const maxWindowWidth = image.maxPixelValue - image.minPixelValue;
+                        viewport.voi.windowWidth += deltaX / element.clientHeight * maxWindowWidth;
+                        viewport.voi.windowCenter += deltaY / element.clientWidth * maxWindowWidth;
+                    } else if (e.which === 1) {
+                        viewport.translation.x += deltaX / viewport.scale;
+                        viewport.translation.y += deltaY / viewport.scale / 2;
+                    } else if (e.which === 3) {
+                        viewport.scale += (deltaY / 100);
+                    }
+                    cornerstone.setViewport(element, viewport);
                 }
 
                 function mouseUpHandler() {
-                document.removeEventListener('mouseup', mouseUpHandler);
-                document.removeEventListener('mousemove', mouseMoveHandler);
+                    document.body.style.cursor = 'default';
+                    document.removeEventListener('mouseup', mouseUpHandler);
+                    document.removeEventListener('mousemove', mouseMoveHandler);
                 }
 
                 document.addEventListener('mousemove', mouseMoveHandler);
