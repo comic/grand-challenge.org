@@ -122,6 +122,8 @@ class ImageFactoryWithImageFile(ImageFactoryWithoutImageFile):
             ImageFileFactoryWithRAWFile2D(image=self)
 
     color_space = Image.COLOR_SPACE_RGB
+    width = 3
+    height = 4
 
 
 class ImageFactoryWithImageFile3D(ImageFactoryWithImageFile):
@@ -138,6 +140,9 @@ class ImageFactoryWithImageFile3D(ImageFactoryWithImageFile):
             ImageFileFactoryWithRAWFile(image=self)
 
     modality = factory.SubFactory(ImagingModalityFactory, modality="OCT")
+    width = 5
+    height = 6
+    depth = 7
 
 
 class ImageFactoryWithImageFile4D(ImageFactoryWithImageFile):
