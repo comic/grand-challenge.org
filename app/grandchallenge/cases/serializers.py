@@ -256,7 +256,7 @@ class CSImageSerializer(serializers.BaseSerializer):
         except Exception:
             raise Http404
 
-        if self.object.depth > 1:
+        if instance.depth > 1:
             # 3D volumes not supported in cornerstone
             raise Http404
 
