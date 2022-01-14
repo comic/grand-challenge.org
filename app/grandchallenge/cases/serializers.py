@@ -217,8 +217,8 @@ def _get_linked_task(*, targets):
 
 class CSImageSerializer(serializers.BaseSerializer):
     """
-    Serializer that serializes a cases.Image object into a Cornerstone image
-    object as defined in https://docs.cornerstonejs.org/api.html#image
+    Sserializes a cases.Image object into a Cornerstone image object as
+    defined in https://docs.cornerstonejs.org/api.html#image.
     """
 
     def to_representation(self, instance):
@@ -252,7 +252,17 @@ class CSImageSerializer(serializers.BaseSerializer):
         if not window_center:
             window_center = window_width / 2
 
-        # TODO fix color images
+        if instance.color_space in (
+            Image.COLOR_SPACE_GRAY,
+            Image.COLOR_SPACE_RGBA,
+        ):
+            pixel_data = nda.flatten(order="C")
+        elif instance.color_space == Image.COLOR_SPACE_RGB:
+            # Convert RGB to RGBA before flattening
+            pixel_data = np.insert(nda, 3, 2 ** bit_depth, axis=2).flatten("C")
+        else:
+            raise Http404
+
         return {
             "imageId": instance.pk,
             "minPixelValue": p_min,
@@ -261,13 +271,13 @@ class CSImageSerializer(serializers.BaseSerializer):
             "intercept": 0,
             "windowCenter": window_center,
             "windowWidth": window_width,
-            "pixelData": nda.flatten(order="C"),
+            "pixelData": pixel_data,
             "rows": instance.height,
             "columns": instance.width,
             "height": instance.height,
             "width": instance.width,
             "color": instance.color_space != Image.COLOR_SPACE_GRAY,
-            "rgba": False,
+            "rgba": True,
             "columnPixelSpacing": image_itk.GetSpacing()[0],
             "rowPixelSpacing": image_itk.GetSpacing()[1],
             "invert": False,
