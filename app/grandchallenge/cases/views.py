@@ -162,7 +162,7 @@ class CSImageDetail(
         except FileNotFoundError as e:
             raise Http404 from e
 
-        if self.object.depth > 1:
+        if self.object.depth and self.object.depth > 1:
             # 3D volumes not supported in cornerstone
             raise Http404
 
