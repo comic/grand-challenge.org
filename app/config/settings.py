@@ -1210,7 +1210,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
-ENABLE_DEBUG_TOOLBAR = True
+ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
     # Allow localhost in development
