@@ -1,5 +1,6 @@
 import SimpleITK
 import numpy as np
+from django.conf import settings
 from django.http import Http404
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
@@ -214,36 +215,6 @@ def _get_linked_task(*, targets):
         raise RuntimeError(f"Unknown target {targets=}")
 
 
-SITK_PIXEL_TYPE_TO_BIT_DEPTH = {
-    SimpleITK.sitkUInt8: 8,
-    SimpleITK.sitkInt8: 8,
-    SimpleITK.sitkUInt16: 16,
-    SimpleITK.sitkInt16: 16,
-    SimpleITK.sitkUInt32: 32,
-    SimpleITK.sitkInt32: 32,
-    SimpleITK.sitkUInt64: 64,
-    SimpleITK.sitkInt64: 64,
-    SimpleITK.sitkFloat32: 32,
-    SimpleITK.sitkFloat64: 64,
-    SimpleITK.sitkComplexFloat32: 32,
-    SimpleITK.sitkComplexFloat64: 64,
-    SimpleITK.sitkVectorUInt8: 8,
-    SimpleITK.sitkVectorInt8: 8,
-    SimpleITK.sitkVectorUInt16: 16,
-    SimpleITK.sitkVectorInt16: 16,
-    SimpleITK.sitkVectorUInt32: 32,
-    SimpleITK.sitkVectorInt32: 32,
-    SimpleITK.sitkVectorUInt64: 64,
-    SimpleITK.sitkVectorInt64: 64,
-    SimpleITK.sitkVectorFloat32: 32,
-    SimpleITK.sitkVectorFloat64: 64,
-    SimpleITK.sitkLabelUInt8: 8,
-    SimpleITK.sitkLabelUInt16: 16,
-    SimpleITK.sitkLabelUInt32: 32,
-    SimpleITK.sitkLabelUInt64: 64,
-}
-
-
 class CSImageSerializer(serializers.BaseSerializer):
     """
     Serializer that serializes a cases.Image object into a Cornerstone image
@@ -253,16 +224,21 @@ class CSImageSerializer(serializers.BaseSerializer):
     def to_representation(self, instance):
         try:
             image_itk = get_sitk_image(image=instance)
-        except Exception:
-            raise Http404
+        except Exception as e:
+            raise Http404 from e
 
         if instance.depth and instance.depth > 1:
             # 3D volumes not supported in cornerstone
             raise Http404
 
-        nda = SimpleITK.GetArrayFromImage(image_itk)
+        try:
+            bit_depth = settings.SITK_PIXEL_TYPE_TO_BIT_DEPTH[
+                image_itk.GetPixelIDValue()
+            ]
+        except IndexError as e:
+            raise Http404 from e
 
-        bit_depth = SITK_PIXEL_TYPE_TO_BIT_DEPTH[image_itk.GetPixelIDValue()]
+        nda = SimpleITK.GetArrayFromImage(image_itk)
         size_in_bytes = instance.width * instance.height
         size_in_bytes *= bit_depth
         size_in_bytes *= image_itk.GetNumberOfComponentsPerPixel()

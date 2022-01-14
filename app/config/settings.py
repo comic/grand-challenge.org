@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 from itertools import product
 
+import SimpleITK
 import sentry_sdk
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
@@ -1162,6 +1163,35 @@ CASES_POST_PROCESSORS = os.environ.get(
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.utils.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
+
+SITK_PIXEL_TYPE_TO_BIT_DEPTH = {
+    SimpleITK.sitkUInt8: 8,
+    SimpleITK.sitkInt8: 8,
+    SimpleITK.sitkUInt16: 16,
+    SimpleITK.sitkInt16: 16,
+    SimpleITK.sitkUInt32: 32,
+    SimpleITK.sitkInt32: 32,
+    SimpleITK.sitkUInt64: 64,
+    SimpleITK.sitkInt64: 64,
+    SimpleITK.sitkFloat32: 32,
+    SimpleITK.sitkFloat64: 64,
+    SimpleITK.sitkComplexFloat32: 32,
+    SimpleITK.sitkComplexFloat64: 64,
+    SimpleITK.sitkVectorUInt8: 8,
+    SimpleITK.sitkVectorInt8: 8,
+    SimpleITK.sitkVectorUInt16: 16,
+    SimpleITK.sitkVectorInt16: 16,
+    SimpleITK.sitkVectorUInt32: 32,
+    SimpleITK.sitkVectorInt32: 32,
+    SimpleITK.sitkVectorUInt64: 64,
+    SimpleITK.sitkVectorInt64: 64,
+    SimpleITK.sitkVectorFloat32: 32,
+    SimpleITK.sitkVectorFloat64: 64,
+    SimpleITK.sitkLabelUInt8: 8,
+    SimpleITK.sitkLabelUInt16: 16,
+    SimpleITK.sitkLabelUInt32: 32,
+    SimpleITK.sitkLabelUInt64: 64,
+}
 
 # The maximum size of all the files in an upload session in bytes
 UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
