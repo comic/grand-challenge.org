@@ -91,7 +91,6 @@ class TestConfirmEmailForm:
         v1 = VerificationFactory(user=u1)
 
         u2 = UserFactory()
-        v2 = VerificationFactory(user=u2)
 
         form = ConfirmEmailForm(
             user=u2, token=v1.token, data={"token": v1.token},
@@ -103,9 +102,7 @@ class TestConfirmEmailForm:
         u1.refresh_from_db()
         u2.refresh_from_db()
         v1.refresh_from_db()
-        v2.refresh_from_db()
 
         assert u1.is_active is True
         assert u2.is_active is False
         assert v1.is_verified is None
-        assert v2.is_verified is None
