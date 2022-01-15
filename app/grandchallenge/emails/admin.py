@@ -1,7 +1,5 @@
 from django.contrib import admin, messages
 from django.db.transaction import on_commit
-from django.utils.timezone import now
-from django.utils.translation import ngettext
 from markdownx.admin import MarkdownxModelAdmin
 
 from grandchallenge.emails.models import Email
@@ -14,27 +12,10 @@ def schedule_emails(modeladmin, queryset, request, action):
     if emails:
         for email in emails:
             send_admin_emails = send_bulk_email.signature(
-                kwargs={
-                    "action": action,
-                    "subject": email.subject,
-                    "body": email.body,
-                },
+                kwargs={"action": action, "email_pk": email.pk},
                 immutable=True,
             )
             on_commit(send_admin_emails.apply_async)
-
-        updated = emails.update(sent=True, sent_at=now())
-
-        modeladmin.message_user(
-            request,
-            ngettext(
-                f"%d email was successfully sent to {action.label.lower()}.",
-                f"%d emails were successfully sent to {action.label.lower()}.",
-                updated,
-            )
-            % updated,
-            messages.SUCCESS,
-        )
     else:
         modeladmin.message_user(
             request,
@@ -47,7 +28,7 @@ class EmailAdmin(MarkdownxModelAdmin):
     list_display = ("subject", "sent", "sent_at")
     actions = [*SendActionChoices]
 
-    @admin.action(description="Send to mailing list")
+    @admin.action(description="Send to mailing list", permissions=["change"])
     def send_to_mailing_list(self, request, queryset):
         schedule_emails(
             modeladmin=self,
@@ -56,7 +37,7 @@ class EmailAdmin(MarkdownxModelAdmin):
             action=SendActionChoices.MAILING_LIST,
         )
 
-    @admin.action(description="Send to staff")
+    @admin.action(description="Send to staff", permissions=["change"])
     def send_to_staff(self, request, queryset):
         schedule_emails(
             modeladmin=self,
@@ -65,7 +46,9 @@ class EmailAdmin(MarkdownxModelAdmin):
             action=SendActionChoices.STAFF,
         )
 
-    @admin.action(description="Send to challenge admins")
+    @admin.action(
+        description="Send to challenge admins", permissions=["change"]
+    )
     def send_to_challenge_admins(self, request, queryset):
         schedule_emails(
             modeladmin=self,
@@ -74,7 +57,9 @@ class EmailAdmin(MarkdownxModelAdmin):
             action=SendActionChoices.CHALLENGE_ADMINS,
         )
 
-    @admin.action(description="Send to reader study editors")
+    @admin.action(
+        description="Send to reader study editors", permissions=["change"]
+    )
     def send_to_readerstudy_editors(self, request, queryset):
         schedule_emails(
             modeladmin=self,
@@ -83,7 +68,9 @@ class EmailAdmin(MarkdownxModelAdmin):
             action=SendActionChoices.READER_STUDY_EDITORS,
         )
 
-    @admin.action(description="Send to algorithm editors")
+    @admin.action(
+        description="Send to algorithm editors", permissions=["change"]
+    )
     def send_to_algorithm_editors(self, request, queryset):
         schedule_emails(
             modeladmin=self,

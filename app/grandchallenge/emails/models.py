@@ -9,6 +9,12 @@ class Email(models.Model):
     )
     sent = models.BooleanField(default=False)
     sent_at = models.DateTimeField(blank=True, null=True)
+    status_report = models.JSONField(
+        blank=True,
+        null=True,
+        default=None,
+        help_text="This stores the page number of the last successfully sent email batch for this email.",
+    )
 
     def __str__(self):
         return self.subject
