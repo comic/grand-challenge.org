@@ -1,7 +1,7 @@
 from actstream.models import Follow
 from django.contrib import messages
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Q
 from django.views.generic import CreateView, DeleteView, ListView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -120,25 +120,29 @@ class FollowList(
     permission_required = "view_follow"
     filter_class = FollowFilter
     paginate_by = 50
-    excludes = [
-        ContentType.objects.filter(
-            app_label="archives", model="archivepermissionrequest"
-        ).get(),
-        ContentType.objects.filter(
-            app_label="algorithms", model="algorithmpermissionrequest"
-        ).get(),
-        ContentType.objects.filter(
-            app_label="reader_studies", model="readerstudypermissionrequest",
-        ).get(),
-        ContentType.objects.filter(
-            app_label="participants", model="registrationrequest"
-        ).get(),
-        ContentType.objects.filter(
-            app_label="cases", model="rawimageuploadsession"
-        ).get(),
-    ]
     queryset = (
-        Follow.objects.exclude(content_type__in=excludes)
+        Follow.objects.exclude(
+            Q(
+                content_type__app_label="archives",
+                content_type__model="archivepermissionrequest",
+            )
+            | Q(
+                content_type__app_label="algorithms",
+                content_type__model="algorithmpermissionrequest",
+            )
+            | Q(
+                content_type__app_label="reader_studies",
+                content_type__model="readerstudypermissionrequest",
+            )
+            | Q(
+                content_type__app_label="participants",
+                content_type__model="registrationrequest",
+            )
+            | Q(
+                content_type__app_label="cases",
+                content_type__model="rawimageuploadsessions",
+            )
+        )
         .exclude(flag="job-inactive")
         .select_related("user", "content_type")
         .order_by("content_type")
