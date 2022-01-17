@@ -29,6 +29,12 @@
             height: 100vh;
             background: #000;
         }
+        .overlay {
+            position: absolute;
+            bottom: 0;
+            background: rgba(0, 0, 0, .5);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -38,7 +44,7 @@
             <div id="itkImage" style="width: 100%; height: 100%; top: 0; left: 0; position: absolute">
             </div>
 
-            <div id="topleft" class="overlay" style="position: absolute; top: 0; left: 0;">
+            <div id="topleft" style="position: absolute; top: 0; left: 0;">
                 <div class="btn-group btn-group-sm m-1" role="group">
                     <button type="button" id="invert" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Invert">
                         <i class="fas fa-adjust fa-lg"></i>
@@ -54,14 +60,13 @@
                     </button>
                 </div>
             </div>
-            <div id="topright" class="overlay" style="position: absolute; top: 0; right: 0;">
+            <div id="topright" style="position: absolute; top: 0; right: 0;">
                 <button type="button" id="invert" class="m-1 btn btn-primary btn-sm" data-toggle="modal" data-target="#helpModal">
                     <i class="fas fa-question fa-lg"></i>
                 </button>
             </div>
-            <div id="bottomright" class="overlay" style="position: absolute; bottom: 0; right: 0;"></div>
-            <div id="bottomleft" class="overlay" style="position: absolute; bottom: 0; left: 0;"></div>
-            <div><span id="coords"></span></div>
+            <div id="bottomright" class="overlay" style="right: 0;"></div>
+            <div id="bottomleft" class="overlay" style="left: 0;"></div>
         </div>
     </div>
     <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
