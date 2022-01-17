@@ -16,7 +16,6 @@
         .viewer {
             position: relative;
             background: #000;
-            color: #fff;
         }
         .loading-overlay {
             display: flex;
@@ -92,10 +91,10 @@
 
     <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
 
-    <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8" integrity="sha384-Cs3dgUx6+jDxxuqHvVH8Onpyj2LF1gKZurLDlhqzuJmUqVYMJ0THTWpxK5Z086Zm" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.6/dist/cornerstoneMath.js" integrity="sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.2.4/dist/cornerstone.js" integrity="sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/itk-wasm@1.0.0-a.10/dist/umd/itk-wasm.min.js" integrity="sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3" crossorigin="anonymous"></script>
     <script>
         const imageId = 'grandChallengeLoader://{{ image_pk }}';
         const loadingEl = document.getElementById('loading');
@@ -133,13 +132,36 @@
                     if (r.status === 200) {
                         return r.json()
                     } else {
-                        throw Error('Fetch error'+ r.text());
+                        reject(`Fetch error: ${r.text()}`);
                     }
                 }).then(r => {
-                    const arrayType = sitkPixelIDToTypedArray(r.sitkPixelID);
-                    r.getPixelData = () => new arrayType(r.pixelData);
-                    const {pixelData, ...strippedR} = r; // Remove unused raw pixeldata to preserve memory
-                    resolve(strippedR);
+                    return fetch(r.mh_url).then(r => {
+                        if (r.status === 200) {
+                            return r.blob();
+                        } else {
+                            reject(`Fetch error: ${r.text()}`);
+                        }
+                    }).then(mhBlob => {
+                        const file = new File([mhBlob], 'image.mha');
+                        return itk.readFile(null, file).then(function({ image, mesh, polyData, webWorker }) {
+                            if (r.color && !r.rgba) {
+                                // convert RGB to RGBA
+                                const newLength = image.data.length + image.data.length / 3;
+                                const rgbaArr = new image.data.constructor(newLength);
+                                for (let i = 0; i < image.data.length / 3; i++) {
+                                    rgbaArr[i * 4] = image.data[i * 3];
+                                    rgbaArr[i * 4 + 1] = image.data[i * 3 + 1];
+                                    rgbaArr[i * 4 + 2] = image.data[i * 3 + 2];
+                                    rgbaArr[i * 4 + 3] = 2 ** r.bit_depth;
+                                }
+                                r.getPixelData = () => rgbaArr;
+                            } else {
+                                r.getPixelData = () => image.data;
+                            }
+                            resolve(r);
+                            webWorker.terminate();
+                        });
+                    });
                 }).catch(e => reject(e));
             })
         }));
