@@ -878,7 +878,7 @@ class AlgorithmAddRepo(
 ):
     model = Algorithm
     form_class = AlgorithmRepoForm
-    template_name = "algorithms/.html"
+    template_name = "algorithms/algorithm_add_repo.html"
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
