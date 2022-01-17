@@ -162,10 +162,12 @@ class CSImageDetail(
         except FileNotFoundError as e:
             raise Http404 from e
 
-        if (
-            self.object.depth and self.object.depth > 1
-        ) or self.object.color_space == Image.COLOR_SPACE_YCBCR:
-            # >2D volumes and YCrBr not supported in cornerstone
+        if self.object.color_space not in (
+            Image.COLOR_SPACE_GRAY,
+            Image.COLOR_SPACE_RGBA,
+            Image.COLOR_SPACE_RGB,
+        ):
+            # YCrBr not supported in cornerstone
             raise Http404
 
         context.update({"image_pk": self.object.pk})
