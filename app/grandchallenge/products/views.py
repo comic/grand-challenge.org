@@ -69,15 +69,16 @@ class ProductList(ListView):
 
     fda_classes = ["All", "Class I", "Class II", "Class III", "No FDA"]
 
+    sort_bys = {
+        "CE certification": "-ce_under",
+        "Last modified": "-modified",
+        "A-Z product": "product_name",
+        "A-Z company": "company__company_name",
+    }
+
     def get_sort_by(self):
-        self.sort_query = self.request.GET.get("sort_by", "CE certification")
-        self.sort_bys = {
-            "CE certification": "-ce_under",
-            "Last modified": "-modified",
-            "A-Z product": "product_name",
-            "A-Z company": "company__company_name",
-        }
-        return self.sort_bys[self.sort_query]
+        sort_query = self.request.GET.get("sort_by")
+        return self.sort_bys[sort_query]
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("company")
@@ -87,7 +88,6 @@ class ProductList(ListView):
         ce_class_query = self.request.GET.get("ce_class")
         fda_class_query = self.request.GET.get("fda_class")
         search_query = self.request.GET.get("search")
-        # sort_query = self.request.GET.get("sort_by")
         self.product_total_all = queryset.count()
 
         if search_query:
@@ -151,6 +151,7 @@ class ProductList(ListView):
         ce_under_query = self.request.GET.get("ce_under", "All")
         ce_class_query = self.request.GET.get("ce_class", "All")
         fda_class_query = self.request.GET.get("fda_class", "All")
+        sort_query = self.request.GET.get("sort_by", "CE certification")
         search_query = self.request.GET.get("search", "")
 
         context.update(
@@ -167,7 +168,7 @@ class ProductList(ListView):
                 "selected_ce_under": ce_under_query,
                 "selected_ce_class": ce_class_query,
                 "selected_fda_class": fda_class_query,
-                "selected_sort_by": self.sort_query,
+                "selected_sort_by": sort_query,
                 "products_selected_page": True,
                 "product_total": context["object_list"].count(),
                 "product_total_all": self.product_total_all,
