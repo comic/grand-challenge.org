@@ -895,7 +895,11 @@ class AlgorithmAddRepo(
         """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
 
-        user_token = get_object_or_404(GitHubUserToken, user=self.request.user)
+        try:
+            user_token = GitHubUserToken.objects.get(user=self.request.user)
+        except GitHubUserToken.DoesNotExist:
+            kwargs.update({"repos": []})
+            return kwargs
 
         if user_token.access_token_is_expired:
             user_token.refresh_access_token()
