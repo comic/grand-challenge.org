@@ -513,6 +513,7 @@ LOCAL_APPS = [
     "grandchallenge.timezones",
     "grandchallenge.documentation",
     "grandchallenge.flatpages",
+    "grandchallenge.emails",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
