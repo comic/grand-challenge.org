@@ -14,6 +14,7 @@ from tests.annotations_tests.factories import (
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
     ImageFactoryWithImageFile16Bit,
+    ImageFactoryWithImageFile2DGray16Bit,
     ImageFactoryWithImageFile3D,
     ImageFactoryWithoutImageFile,
 )
@@ -128,7 +129,6 @@ class TestCSImageSerializer:
                 ImageFactoryWithImageFile,
                 {"color_space": Image.COLOR_SPACE_YCBCR},
             ),
-            (ImageFactoryWithImageFile3D, {}),
         ],
     )
     def test_not_allowed(self, factory, kwargs):
@@ -138,10 +138,7 @@ class TestCSImageSerializer:
     @pytest.mark.parametrize(
         "factory,kwargs",
         [
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_GRAY},
-            ),
+            (ImageFactoryWithImageFile2DGray16Bit, {}),
             (
                 ImageFactoryWithImageFile,
                 {"color_space": Image.COLOR_SPACE_RGB},
@@ -151,6 +148,7 @@ class TestCSImageSerializer:
                 {"color_space": Image.COLOR_SPACE_RGBA},
             ),
             (ImageFactoryWithImageFile16Bit, {}),
+            (ImageFactoryWithImageFile3D, {}),
         ],
     )
     def test_allowed(self, factory, kwargs):
@@ -160,10 +158,9 @@ class TestCSImageSerializer:
         i = ImageFactoryWithImageFile16Bit()
         serialized_data = CSImageSerializer(i).data
         expected_data = {
+            "imageId": i.pk,
             "minPixelValue": 0,
-            "maxPixelValue": 0,
-            "slope": 1,
-            "intercept": 0,
+            "maxPixelValue": 65536,
             "windowCenter": 0.0,
             "windowWidth": 0,
             "rows": 4,
@@ -172,11 +169,8 @@ class TestCSImageSerializer:
             "width": 3,
             "color": True,
             "rgba": True,
-            "columnPixelSpacing": 1.0,
-            "rowPixelSpacing": 1.0,
-            "invert": False,
-            "sizeInBytes": 192,
-            "sitkPixelID": "16-bit signed integer",
+            "bit_depth": 16,
+            "mh_url": i.get_metaimage_files()[0].file.url,
         }
         for k, v in expected_data.items():
             assert serialized_data[k] == v

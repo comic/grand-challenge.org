@@ -5,6 +5,7 @@ from grandchallenge.cases.models import Image
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
     ImageFactoryWithImageFile16Bit,
+    ImageFactoryWithImageFile2DGray16Bit,
     ImageFactoryWithImageFile3D,
     ImageFactoryWithoutImageFile,
     RawImageUploadSessionFactory,
@@ -207,7 +208,6 @@ class TestCSImageDetail:
                 ImageFactoryWithImageFile,
                 {"color_space": Image.COLOR_SPACE_YCBCR},
             ),
-            (ImageFactoryWithImageFile3D, {}),
         ],
     )
     def test_not_allowed(self, client, factory, kwargs):
@@ -216,10 +216,7 @@ class TestCSImageDetail:
     @pytest.mark.parametrize(
         "factory,kwargs",
         [
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_GRAY},
-            ),
+            (ImageFactoryWithImageFile2DGray16Bit, {}),
             (
                 ImageFactoryWithImageFile,
                 {"color_space": Image.COLOR_SPACE_RGB},
@@ -229,6 +226,7 @@ class TestCSImageDetail:
                 {"color_space": Image.COLOR_SPACE_RGBA},
             ),
             (ImageFactoryWithImageFile16Bit, {}),
+            (ImageFactoryWithImageFile3D, {}),
         ],
     )
     def test_allowed(self, client, factory, kwargs):
