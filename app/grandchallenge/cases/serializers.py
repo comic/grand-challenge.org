@@ -1,5 +1,4 @@
 import SimpleITK
-import numpy as np
 from django.conf import settings
 from django.http import Http404
 from guardian.shortcuts import get_objects_for_user
@@ -222,65 +221,51 @@ class CSImageSerializer(serializers.BaseSerializer):
     """
 
     def to_representation(self, instance):
-        try:
-            image_itk = get_sitk_image(image=instance)
-        except Exception as e:
-            raise Http404 from e
-
-        if instance.depth and instance.depth > 1:
-            # 3D volumes not supported in cornerstone
+        if instance.color_space not in (
+            Image.COLOR_SPACE_GRAY,
+            Image.COLOR_SPACE_RGBA,
+            Image.COLOR_SPACE_RGB,
+        ):
             raise Http404
 
         try:
+            mh_file, _ = instance.get_metaimage_files()
+            image_itk = get_sitk_image(image=instance)
             bit_depth = settings.SITK_PIXEL_TYPE_TO_BIT_DEPTH[
                 image_itk.GetPixelIDValue()
             ]
-        except IndexError as e:
+        except (OSError, RuntimeError, IndexError) as e:
             raise Http404 from e
 
-        nda = SimpleITK.GetArrayFromImage(image_itk)
-        size_in_bytes = instance.width * instance.height
-        size_in_bytes *= bit_depth
-        size_in_bytes *= image_itk.GetNumberOfComponentsPerPixel()
-
-        p_min = np.min(nda)
-        p_max = np.max(nda)
-        window_center = instance.window_center
-        window_width = instance.window_width
-        if not window_width:
-            window_width = p_max - p_min
-        if not window_center:
-            window_center = window_width / 2
-
-        if instance.color_space in (
-            Image.COLOR_SPACE_GRAY,
-            Image.COLOR_SPACE_RGBA,
-        ):
-            pixel_data = nda.flatten(order="C")
-        elif instance.color_space == Image.COLOR_SPACE_RGB:
-            # Convert RGB to RGBA before flattening
-            pixel_data = np.insert(nda, 3, 2 ** bit_depth, axis=2).flatten("C")
+        # Finding min/max pixel values cannot be done on the client because it
+        # is not supported in itk-wasm and a simple Math.min(...pixelValues)
+        # will exceed max call stack size for large images. For non-grayscale
+        # images we cannot use the built-in min/max filter so we resort to
+        # setting the min/max allowed values for those pixel types.
+        if instance.color_space == Image.COLOR_SPACE_GRAY:
+            min_max_filter = SimpleITK.MinimumMaximumImageFilter()
+            min_max_filter.Execute(image_itk)
+            min_value = min_max_filter.GetMinimum()
+            max_value = min_max_filter.GetMaximum()
+        elif "unsigned" in image_itk.GetPixelIDTypeAsString():
+            max_value = 2 ** bit_depth / 2
+            min_value = -max_value
         else:
-            raise Http404
+            min_value = 0
+            max_value = 2 ** bit_depth
 
         return {
             "imageId": instance.pk,
-            "minPixelValue": p_min,
-            "maxPixelValue": p_max,
-            "slope": 1,
-            "intercept": 0,
-            "windowCenter": window_center,
-            "windowWidth": window_width,
-            "pixelData": pixel_data,
+            "minPixelValue": min_value,
+            "maxPixelValue": max_value,
+            "windowCenter": instance.window_center,
+            "windowWidth": instance.window_width,
             "rows": instance.height,
             "columns": instance.width,
             "height": instance.height,
             "width": instance.width,
             "color": instance.color_space != Image.COLOR_SPACE_GRAY,
-            "rgba": True,
-            "columnPixelSpacing": image_itk.GetSpacing()[0],
-            "rowPixelSpacing": image_itk.GetSpacing()[1],
-            "invert": False,
-            "sizeInBytes": size_in_bytes,
-            "sitkPixelID": image_itk.GetPixelIDTypeAsString(),
+            "rgba": instance.color_space == Image.COLOR_SPACE_RGBA,
+            "bit_depth": bit_depth,
+            "mh_url": mh_file.file.url,
         }

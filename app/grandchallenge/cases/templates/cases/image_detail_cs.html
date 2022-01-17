@@ -33,6 +33,7 @@
             bottom: 0;
             background: rgba(0, 0, 0, .5);
             color: #fff;
+            padding: 0 3px;
         }
     </style>
 </head>
@@ -100,31 +101,6 @@
         const loadingEl = document.getElementById('loading');
         const element = document.getElementById('itkImage');
 
-        const sitkPixelIDToTypedArray = (pixelIDValueString) => {
-            // String matching function to find corresponding TypedArray
-            const splits = pixelIDValueString.split(' ');
-            const type = splits.pop();
-            if (type === 'integer') {
-                switch (splits[splits.length - 2].split('-')[0]) {
-                    case '8':
-                        return splits[splits.length - 1] === 'unsigned' ? Uint8Array: Int8Array;
-                        break;
-                    case '16':
-                        return splits[splits.length - 1] === 'unsigned' ? Uint16Array: Int16Array;
-                        break;
-                    case '32':
-                        return splits[splits.length - 1] === 'unsigned' ? Uint32Array: Int32Array;
-                        break;
-                    default:
-                        throw Error(`Unsupported pixel type for SimpleITK pixel ID value string ${pixelIDValueString}`);
-                }
-            } else if (type === 'float') {
-                return splits[splits.length - 1].split('-')[0] === '32' ? Float32Array : Float64Array;
-            } else {
-                throw Error(`Unsupported pixel type for SimpleITK pixel ID value string ${pixelIDValueString}`);
-            }
-        };
-
         // Register grand challenge image loader
         cornerstone.registerImageLoader('grandChallengeLoader', (imageId) => ({
             promise: new Promise((resolve, reject) => {
@@ -132,7 +108,7 @@
                     if (r.status === 200) {
                         return r.json()
                     } else {
-                        reject(`Fetch error: ${r.text()}`);
+                        throw Error(`Fetch error: ${r.statusText}`);
                     }
                 }).then(r => {
                     return fetch(r.mh_url).then(r => {
@@ -144,20 +120,28 @@
                     }).then(mhBlob => {
                         const file = new File([mhBlob], 'image.mha');
                         return itk.readFile(null, file).then(function({ image, mesh, polyData, webWorker }) {
+                            let imageData = image.data;
                             if (r.color && !r.rgba) {
                                 // convert RGB to RGBA
-                                const newLength = image.data.length + image.data.length / 3;
-                                const rgbaArr = new image.data.constructor(newLength);
-                                for (let i = 0; i < image.data.length / 3; i++) {
-                                    rgbaArr[i * 4] = image.data[i * 3];
-                                    rgbaArr[i * 4 + 1] = image.data[i * 3 + 1];
-                                    rgbaArr[i * 4 + 2] = image.data[i * 3 + 2];
+                                const newLength = imageData.length + imageData.length / 3;
+                                const rgbaArr = new imageData.constructor(newLength);
+                                for (let i = 0; i < imageData.length / 3; i++) {
+                                    rgbaArr[i * 4] = imageData[i * 3];
+                                    rgbaArr[i * 4 + 1] = imageData[i * 3 + 1];
+                                    rgbaArr[i * 4 + 2] = imageData[i * 3 + 2];
                                     rgbaArr[i * 4 + 3] = 2 ** r.bit_depth;
                                 }
-                                r.getPixelData = () => rgbaArr;
-                            } else {
-                                r.getPixelData = () => image.data;
+                                imageData = rgbaArr;
                             }
+                            r.sizeInBytes = imageData.length * r.bit_depth / 8;
+                            r.windowWidth = r.windowWidth ?? (r.maxPixelValue - r.minPixelValue);
+                            r.windowCenter = r.windowCenter ?? r.minPixelValue + r.windowWidth / 2;
+                            r.columnPixelSpacing = image.spacing[0];
+                            r.rowPixelSpacing = image.spacing[1];
+                            r.slope = 1;
+                            r.intercept = 0;
+                            r.invert = false;
+                            r.getPixelData = () => imageData;
                             resolve(r);
                             webWorker.terminate();
                         });
