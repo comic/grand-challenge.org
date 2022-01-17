@@ -25,6 +25,7 @@ from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -214,6 +215,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
     )
+
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.PROTECT
     )
@@ -894,6 +896,7 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
+<<<<<<< HEAD
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
     SINGLE_LINE_TEXT = "STXT", "Single line text"
@@ -916,6 +919,15 @@ class AnswerType(models.TextChoices):
     MULTIPLE_CHOICE = "MCHO", "Multiple choice"
     MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
     MASK = "MASK", "Mask"
+=======
+class DisplaySet(UUIDModel):
+    reader_study = models.ForeignKey(
+        ReaderStudy, related_name="display_sets", on_delete=models.PROTECT
+    )
+    values = models.ManyToManyField(
+        ComponentInterfaceValue, blank=True, related_name="displays_sets"
+    )
+>>>>>>> Add DisplaySet model
 
 
 class Question(UUIDModel):
