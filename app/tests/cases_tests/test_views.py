@@ -5,6 +5,7 @@ from grandchallenge.cases.models import Image
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
     ImageFactoryWithImageFile16Bit,
+    ImageFactoryWithImageFile2DGray16Bit,
     ImageFactoryWithImageFile3D,
     ImageFactoryWithoutImageFile,
     RawImageUploadSessionFactory,
@@ -207,7 +208,6 @@ class TestCSImageDetail:
                 ImageFactoryWithImageFile,
                 {"color_space": Image.COLOR_SPACE_YCBCR},
             ),
-            (ImageFactoryWithImageFile3D, {}),
         ],
     )
     def test_not_allowed(self, client, factory, kwargs):
@@ -216,10 +216,7 @@ class TestCSImageDetail:
     @pytest.mark.parametrize(
         "factory,kwargs",
         [
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_GRAY},
-            ),
+            (ImageFactoryWithImageFile2DGray16Bit, {}),
             (
                 ImageFactoryWithImageFile,
                 {"color_space": Image.COLOR_SPACE_RGB},
@@ -229,28 +226,8 @@ class TestCSImageDetail:
                 {"color_space": Image.COLOR_SPACE_RGBA},
             ),
             (ImageFactoryWithImageFile16Bit, {}),
+            (ImageFactoryWithImageFile3D, {}),
         ],
     )
     def test_allowed(self, client, factory, kwargs):
         assert self.get_status_code(client, factory(**kwargs)) == 200
-
-
-@pytest.mark.django_db
-def test_cs_image_loader_permissions(client):
-    u = UserFactory()
-    image = ImageFactoryWithImageFile()
-    response = get_view_for_user(
-        client=client,
-        viewname="cases:cs-image-loader",
-        reverse_kwargs={"pk": image.pk},
-        user=u,
-    )
-    assert response.status_code == 404
-    assign_perm("view_image", u, image)
-    response = get_view_for_user(
-        client=client,
-        viewname="cases:cs-image-loader",
-        reverse_kwargs={"pk": image.pk},
-        user=u,
-    )
-    assert response.status_code == 200

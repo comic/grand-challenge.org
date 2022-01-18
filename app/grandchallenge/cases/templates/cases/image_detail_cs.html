@@ -16,7 +16,6 @@
         .viewer {
             position: relative;
             background: #000;
-            color: #fff;
         }
         .loading-overlay {
             display: flex;
@@ -29,6 +28,13 @@
             height: 100vh;
             background: #000;
         }
+        .overlay {
+            position: absolute;
+            bottom: 0;
+            background: rgba(0, 0, 0, .5);
+            color: #fff;
+            padding: 0 3px;
+        }
     </style>
 </head>
 <body>
@@ -38,7 +44,7 @@
             <div id="itkImage" style="width: 100%; height: 100%; top: 0; left: 0; position: absolute">
             </div>
 
-            <div id="topleft" class="overlay" style="position: absolute; top: 0; left: 0;">
+            <div id="topleft" style="position: absolute; top: 0; left: 0;">
                 <div class="btn-group btn-group-sm m-1" role="group">
                     <button type="button" id="invert" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Invert">
                         <i class="fas fa-adjust fa-lg"></i>
@@ -54,14 +60,13 @@
                     </button>
                 </div>
             </div>
-            <div id="topright" class="overlay" style="position: absolute; top: 0; right: 0;">
+            <div id="topright" style="position: absolute; top: 0; right: 0;">
                 <button type="button" id="invert" class="m-1 btn btn-primary btn-sm" data-toggle="modal" data-target="#helpModal">
                     <i class="fas fa-question fa-lg"></i>
                 </button>
             </div>
-            <div id="bottomright" class="overlay" style="position: absolute; bottom: 0; right: 0;"></div>
-            <div id="bottomleft" class="overlay" style="position: absolute; bottom: 0; left: 0;"></div>
-            <div><span id="coords"></span></div>
+            <div id="bottomright" class="overlay" style="right: 0;"></div>
+            <div id="bottomleft" class="overlay" style="left: 0;"></div>
         </div>
     </div>
     <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
@@ -87,57 +92,114 @@
 
     <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
 
-    <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8" integrity="sha384-Cs3dgUx6+jDxxuqHvVH8Onpyj2LF1gKZurLDlhqzuJmUqVYMJ0THTWpxK5Z086Zm" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.6/dist/cornerstoneMath.js" integrity="sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.2.4/dist/cornerstone.js" integrity="sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/itk-wasm@1.0.0-a.10/dist/umd/itk-wasm.min.js" integrity="sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3" crossorigin="anonymous"></script>
     <script>
-        const imageId = 'grandChallengeLoader://{{ image_pk }}';
+        const SITK_PIXEL_TYPE_TO_BIT_DEPTH = new Map([
+            [itk.IntTypes.UInt8, 8],
+            [itk.IntTypes.Int8, 8],
+            [itk.IntTypes.UInt16, 16],
+            [itk.IntTypes.Int16, 16],
+            [itk.IntTypes.UInt32, 32],
+            [itk.IntTypes.Int32, 32],
+            [itk.IntTypes.UInt64, 64],
+            [itk.IntTypes.Int64, 64],
+            [itk.FloatTypes.Float32, 32],
+            [itk.FloatTypes.Float64, 64],
+        ]);
+
+        const imagePk = '{{ image_pk }}';
+        const imageId = `grandChallengeLoader://${imagePk}`;
         const loadingEl = document.getElementById('loading');
         const element = document.getElementById('itkImage');
 
-        const sitkPixelIDToTypedArray = (pixelIDValueString) => {
-            // String matching function to find corresponding TypedArray
-            const splits = pixelIDValueString.split(' ');
-            const type = splits.pop();
-            if (type === 'integer') {
-                switch (splits[splits.length - 2].split('-')[0]) {
-                    case '8':
-                        return splits[splits.length - 1] === 'unsigned' ? Uint8Array: Int8Array;
-                        break;
-                    case '16':
-                        return splits[splits.length - 1] === 'unsigned' ? Uint16Array: Int16Array;
-                        break;
-                    case '32':
-                        return splits[splits.length - 1] === 'unsigned' ? Uint32Array: Int32Array;
-                        break;
-                    default:
-                        throw Error(`Unsupported pixel type for SimpleITK pixel ID value string ${pixelIDValueString}`);
-                }
-            } else if (type === 'float') {
-                return splits[splits.length - 1].split('-')[0] === '32' ? Float32Array : Float64Array;
-            } else {
-                throw Error(`Unsupported pixel type for SimpleITK pixel ID value string ${pixelIDValueString}`);
+        function itkBlobToCsImage(itkBlob, imageObj) {
+            if (imageObj.color_space === "YCBCR") {
+                throw Error('Unsupported color space: YCBCR');
             }
-        };
+            const file = new File([itkBlob], 'image.mha');
+            return itk.readFile(null, file).then(function({ image, mesh, polyData, webWorker }) {
+                if (!SITK_PIXEL_TYPE_TO_BIT_DEPTH.has(image.imageType.componentType)) {
+                    throw Error('Unsupported ITK image type: ' + image.imageType.componentType);
+                }
+                const bitDepth = SITK_PIXEL_TYPE_TO_BIT_DEPTH.get(image.imageType.componentType);
+                let imageData = image.data;
+
+
+                imageObj.color = ['RGB', 'RGBA'].includes(imageObj.color_space);
+                if (imageObj.color_space === 'RGB') {
+                    // convert RGB to RGBA
+                    const newLength = imageData.length + imageData.length / 3;
+                    const rgbaArr = new imageData.constructor(newLength);
+                    for (let i = 0; i < imageData.length / 3; i++) {
+                        rgbaArr[i * 4] = imageData[i * 3];
+                        rgbaArr[i * 4 + 1] = imageData[i * 3 + 1];
+                        rgbaArr[i * 4 + 2] = imageData[i * 3 + 2];
+                        rgbaArr[i * 4 + 3] = 2 ** bitDepth;
+                    }
+                    imageData = rgbaArr;
+                    imageObj.rgba = true;
+                }
+
+                // Finding actual min/max pixel values cannot be done because
+                // using Math.min(...pixelValues) will exceed max call stack
+                // size for large images. We use a simple heuristic to find
+                // theoretical min/max values for this pixel type.
+                imageObj.maxPixelValue = 2 ** bitDepth / 2;
+                imageObj.minPixelValue = -imageObj.maxPixelValue;
+                if (image.imageType.componentType.includes('uint')) {
+                    imageObj.minPixelValue = 0;
+                    imageObj.maxPixelValue = 2 ** bitDepth;
+                }
+                imageObj.sizeInBytes = imageData.length * bitDepth / 8;
+                imageObj.windowWidth = imageObj.window_width ?? (imageObj.maxPixelValue - imageObj.minPixelValue);
+                imageObj.windowCenter = imageObj.window_center ?? imageObj.minPixelValue + imageObj.windowWidth / 2;
+                imageObj.columnPixelSpacing = image.spacing[0];
+                imageObj.rowPixelSpacing = image.spacing[1];
+                imageObj.rows = imageObj.height;
+                imageObj.columns = imageObj.width;
+                imageObj.imageId = imageId;
+                imageObj.slope = 1;
+                imageObj.intercept = 0;
+                imageObj.invert = false;
+                imageObj.getPixelData = () => imageData;
+                webWorker.terminate();
+                return imageObj;
+            });
+        }
 
         // Register grand challenge image loader
-        cornerstone.registerImageLoader('grandChallengeLoader', (imageId) => ({
-            promise: new Promise((resolve, reject) => {
-                fetch(`loader#${imageId}`).then(r => {
-                    if (r.status === 200) {
-                        return r.json()
-                    } else {
-                        throw Error('Fetch error'+ r.text());
-                    }
-                }).then(r => {
-                    const arrayType = sitkPixelIDToTypedArray(r.sitkPixelID);
-                    r.getPixelData = () => new arrayType(r.pixelData);
-                    const {pixelData, ...strippedR} = r; // Remove unused raw pixeldata to preserve memory
-                    resolve(strippedR);
-                }).catch(e => reject(e));
-            })
-        }));
+        cornerstone.registerImageLoader('grandChallengeLoader', (imageId) => {
+            const [gc, imagePk] = imageId.split('://');
+            const url = `/api/v1/cases/images/${imagePk}/`;
+            return {
+                promise: new Promise((resolve, reject) => {
+                    fetch(url).then(r => {
+                        if (r.status === 200) {
+                            return r.json()
+                        } else {
+                            throw Error(`Fetch error: ${r.statusText}`);
+                        }
+                    }).then(imageObj => {
+                        const mhFiles = imageObj.files.filter(f => ["MHD", "MHA"].includes(f.image_type));
+                        if (mhFiles.length < 1) {
+                            throw Error('No MHD/MHA files found for image.');
+                        }
+                        return fetch(mhFiles[0].file).then(r => {
+                            if (r.status === 200) {
+                                return r.blob();
+                            } else {
+                                reject(`Fetch error: ${r.text()}`);
+                            }
+                        }).then(itkBlob => {
+                            itkBlobToCsImage(itkBlob, imageObj).then(csImage => { resolve(csImage) });
+                        });
+                    }).catch(e => reject(e));
+                }),
+            };
+        });
 
         // setup handlers before we display the image
         element.addEventListener('cornerstoneimagerendered', e => {
@@ -162,7 +224,6 @@
             const {pixelData, getPixelData, ...restImage} = image;
             return restImage;
         }).then(function(image) {
-            console.log(image); // TODO remove.
             loadingEl.style.display = 'none';
             $('[data-toggle="tooltip"]').tooltip();
 

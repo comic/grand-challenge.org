@@ -1,7 +1,3 @@
-import SimpleITK
-import numpy as np
-from django.conf import settings
-from django.http import Http404
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -19,7 +15,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageUploadSession,
 )
-from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.reader_studies.tasks import (
@@ -69,6 +64,8 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "series_instance_uid",
             "study_description",
             "series_description",
+            "window_center",
+            "window_width",
         )
 
 
@@ -213,74 +210,3 @@ def _get_linked_task(*, targets):
         )
     else:
         raise RuntimeError(f"Unknown target {targets=}")
-
-
-class CSImageSerializer(serializers.BaseSerializer):
-    """
-    Sserializes a cases.Image object into a Cornerstone image object as
-    defined in https://docs.cornerstonejs.org/api.html#image.
-    """
-
-    def to_representation(self, instance):
-        try:
-            image_itk = get_sitk_image(image=instance)
-        except Exception as e:
-            raise Http404 from e
-
-        if instance.depth and instance.depth > 1:
-            # 3D volumes not supported in cornerstone
-            raise Http404
-
-        try:
-            bit_depth = settings.SITK_PIXEL_TYPE_TO_BIT_DEPTH[
-                image_itk.GetPixelIDValue()
-            ]
-        except IndexError as e:
-            raise Http404 from e
-
-        nda = SimpleITK.GetArrayFromImage(image_itk)
-        size_in_bytes = instance.width * instance.height
-        size_in_bytes *= bit_depth
-        size_in_bytes *= image_itk.GetNumberOfComponentsPerPixel()
-
-        p_min = np.min(nda)
-        p_max = np.max(nda)
-        window_center = instance.window_center
-        window_width = instance.window_width
-        if not window_width:
-            window_width = p_max - p_min
-        if not window_center:
-            window_center = window_width / 2
-
-        if instance.color_space in (
-            Image.COLOR_SPACE_GRAY,
-            Image.COLOR_SPACE_RGBA,
-        ):
-            pixel_data = nda.flatten(order="C")
-        elif instance.color_space == Image.COLOR_SPACE_RGB:
-            # Convert RGB to RGBA before flattening
-            pixel_data = np.insert(nda, 3, 2 ** bit_depth, axis=2).flatten("C")
-        else:
-            raise Http404
-
-        return {
-            "imageId": instance.pk,
-            "minPixelValue": p_min,
-            "maxPixelValue": p_max,
-            "slope": 1,
-            "intercept": 0,
-            "windowCenter": window_center,
-            "windowWidth": window_width,
-            "pixelData": pixel_data,
-            "rows": instance.height,
-            "columns": instance.width,
-            "height": instance.height,
-            "width": instance.width,
-            "color": instance.color_space != Image.COLOR_SPACE_GRAY,
-            "rgba": True,
-            "columnPixelSpacing": image_itk.GetSpacing()[0],
-            "rowPixelSpacing": image_itk.GetSpacing()[1],
-            "invert": False,
-            "sizeInBytes": size_in_bytes,
-            "sitkPixelID": image_itk.GetPixelIDTypeAsString(),
-        }

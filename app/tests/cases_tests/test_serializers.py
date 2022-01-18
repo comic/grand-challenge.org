@@ -1,22 +1,12 @@
 import pytest
-from django.http import Http404
 
-from grandchallenge.cases.models import Image
-from grandchallenge.cases.serializers import (
-    CSImageSerializer,
-    HyperlinkedImageSerializer,
-)
+from grandchallenge.cases.serializers import HyperlinkedImageSerializer
 from grandchallenge.retina_api.serializers import RetinaImageSerializer
 from tests.annotations_tests.factories import (
     LandmarkAnnotationSetFactory,
     SingleLandmarkAnnotationFactory,
 )
-from tests.cases_tests.factories import (
-    ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile16Bit,
-    ImageFactoryWithImageFile3D,
-    ImageFactoryWithoutImageFile,
-)
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.factories import ImageFactory, UserFactory
 from tests.serializer_helpers import (
     check_if_valid,
@@ -100,6 +90,8 @@ class TestRetinaImageSerializers:
                     "series_instance_uid",
                     "study_description",
                     "series_description",
+                    "window_center",
+                    "window_width",
                 ),
                 "no_valid_check": True,
                 # This check is done manually because of the need to skip the image in the check
@@ -113,70 +105,3 @@ class TestSerializers:
 
     def test_serializer_fields(self, serializer_data):
         do_test_serializer_fields(serializer_data)
-
-
-@pytest.mark.django_db
-class TestCSImageSerializer:
-    @pytest.mark.parametrize(
-        "factory,kwargs",
-        [
-            (
-                ImageFactoryWithoutImageFile,
-                {"color_space": Image.COLOR_SPACE_GRAY},
-            ),
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_YCBCR},
-            ),
-            (ImageFactoryWithImageFile3D, {}),
-        ],
-    )
-    def test_not_allowed(self, factory, kwargs):
-        with pytest.raises(Http404):
-            CSImageSerializer(factory(**kwargs)).data
-
-    @pytest.mark.parametrize(
-        "factory,kwargs",
-        [
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_GRAY},
-            ),
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_RGB},
-            ),
-            (
-                ImageFactoryWithImageFile,
-                {"color_space": Image.COLOR_SPACE_RGBA},
-            ),
-            (ImageFactoryWithImageFile16Bit, {}),
-        ],
-    )
-    def test_allowed(self, factory, kwargs):
-        CSImageSerializer(factory(**kwargs)).data
-
-    def test_values(self):
-        i = ImageFactoryWithImageFile16Bit()
-        serialized_data = CSImageSerializer(i).data
-        expected_data = {
-            "minPixelValue": 0,
-            "maxPixelValue": 0,
-            "slope": 1,
-            "intercept": 0,
-            "windowCenter": 0.0,
-            "windowWidth": 0,
-            "rows": 4,
-            "columns": 3,
-            "height": 4,
-            "width": 3,
-            "color": True,
-            "rgba": True,
-            "columnPixelSpacing": 1.0,
-            "rowPixelSpacing": 1.0,
-            "invert": False,
-            "sizeInBytes": 192,
-            "sitkPixelID": "16-bit signed integer",
-        }
-        for k, v in expected_data.items():
-            assert serialized_data[k] == v

@@ -33,6 +33,10 @@ class ImageFileFactoryWithRAWFile2D(ImageFileFactory):
     file = factory.django.FileField(from_path=RESOURCE_PATH / "image3x4.zraw")
 
 
+class ImageFileFactoryWithMHAFile2DGray16Bit(ImageFileFactory):
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "1x2int16.mha")
+
+
 class ImageFileFactoryWithMHDFile2DLarge(ImageFileFactory):
     file = factory.django.FileField(
         from_path=RESOURCE_PATH / "image128x256RGB.mhd"
@@ -124,6 +128,23 @@ class ImageFactoryWithImageFile(ImageFactoryWithoutImageFile):
     color_space = Image.COLOR_SPACE_RGB
     width = 3
     height = 4
+
+
+class ImageFactoryWithImageFile2DGray16Bit(ImageFactoryWithoutImageFile):
+    @factory.post_generation
+    def files(self, create, extracted, **kwargs):
+        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
+        if not create:
+            return
+        if extracted:
+            for image in extracted:
+                self.files.add(image)
+        if create and not extracted:
+            ImageFileFactoryWithMHAFile2DGray16Bit(image=self)
+
+    color_space = Image.COLOR_SPACE_GRAY
+    width = 1
+    height = 2
 
 
 class ImageFactoryWithImageFile3D(ImageFactoryWithImageFile):
