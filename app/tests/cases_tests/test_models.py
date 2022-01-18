@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
-from grandchallenge.cases.utils import get_sitk_image
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
@@ -15,6 +14,7 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
 )
+from tests.cases_tests.utils import get_sitk_image
 from tests.factories import ImageFileFactory
 
 
