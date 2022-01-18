@@ -51,6 +51,14 @@ class Build(UUIDModel):
     def build_number(self):
         return self.build_id.split(":")[-1]
 
+    @property
+    def redacted_build_log(self):
+        return "\n".join(
+            line
+            for line in self.build_log.splitlines()
+            if not line.startswith("[container]")
+        )
+
     def refresh_status(self):
         build_statuses = self.client.batch_get_builds(ids=[self.build_id])
         self.status = build_statuses["builds"][0]["buildStatus"]
