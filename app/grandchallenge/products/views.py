@@ -70,14 +70,18 @@ class ProductList(ListView):
     fda_classes = ["All", "Class I", "Class II", "Class III", "No FDA"]
 
     def get_sort_by(self):
-        self.sort_query = self.request.GET.get("sort_by", "CE certification")
+        self.sort_query = self.request.GET.get("sort_by", "ce certification")
         self.sort_bys = {
-            "CE certification": "-ce_under",
-            "Last modified": "-modified",
-            "A-Z product": "product_name",
-            "A-Z company": "company__company_name",
+            "ce certification": "-ce_under",
+            "last modified": "-modified",
+            "a-z product": "product_name",
+            "a-z company": "company__company_name",
         }
-        return self.sort_bys[self.sort_query]
+
+        try:
+            return self.sort_bys[self.sort_query.lower()]
+        except KeyError:
+            return "product_name"
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("company")
