@@ -152,14 +152,14 @@ class CSImageDetail(
     login_url = reverse_lazy("account_login")
     template_name = "cases/image_detail_cs.html"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_object(self):
+        img = super().get_object()
         try:
-            self.object.get_metaimage_files()
+            img.get_metaimage_files()
         except FileNotFoundError as e:
             raise Http404 from e
 
-        if self.object.color_space not in (
+        if img.color_space not in (
             Image.COLOR_SPACE_GRAY,
             Image.COLOR_SPACE_RGBA,
             Image.COLOR_SPACE_RGB,
@@ -167,5 +167,4 @@ class CSImageDetail(
             # YCrBr not supported in cornerstone
             raise Http404
 
-        context.update({"image_pk": self.object.pk})
-        return context
+        return img
