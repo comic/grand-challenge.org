@@ -56,7 +56,7 @@ class Build(UUIDModel):
         return "\n".join(
             line
             for line in self.build_log.splitlines()
-            if not line.startswith("[container]")
+            if not line.startswith("[Container]")
         )
 
     def refresh_status(self):
