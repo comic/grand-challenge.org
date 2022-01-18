@@ -97,9 +97,68 @@
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.2.4/dist/cornerstone.js" integrity="sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/itk-wasm@1.0.0-a.10/dist/umd/itk-wasm.min.js" integrity="sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3" crossorigin="anonymous"></script>
     <script>
+        const SITK_PIXEL_TYPE_TO_BIT_DEPTH = new Map([
+            [itk.IntTypes.UInt8, 8],
+            [itk.IntTypes.Int8, 8],
+            [itk.IntTypes.UInt16, 16],
+            [itk.IntTypes.Int16, 16],
+            [itk.IntTypes.UInt32, 32],
+            [itk.IntTypes.Int32, 32],
+            [itk.IntTypes.UInt64, 64],
+            [itk.IntTypes.Int64, 64],
+            [itk.FloatTypes.Float32, 32],
+            [itk.FloatTypes.Float64, 64],
+        ]);
+
         const imageId = 'grandChallengeLoader://{{ image_pk }}';
         const loadingEl = document.getElementById('loading');
         const element = document.getElementById('itkImage');
+
+        function itkBlobToCsImage(itkBlob, imageObj) {
+            const file = new File([itkBlob], 'image.mha');
+            return itk.readFile(null, file).then(function({ image, mesh, polyData, webWorker }) {
+                if (!SITK_PIXEL_TYPE_TO_BIT_DEPTH.has(image.imageType.componentType)) {
+                    throw Error('Unsupported ITK image type: ' + image.imageType.componentType);
+                }
+                const bitDepth = SITK_PIXEL_TYPE_TO_BIT_DEPTH.get(image.imageType.componentType);
+                let imageData = image.data;
+
+                // convert RGB to RGBA
+                if (imageObj.color && !imageObj.rgba) {
+                    const newLength = imageData.length + imageData.length / 3;
+                    const rgbaArr = new imageData.constructor(newLength);
+                    for (let i = 0; i < imageData.length / 3; i++) {
+                        rgbaArr[i * 4] = imageData[i * 3];
+                        rgbaArr[i * 4 + 1] = imageData[i * 3 + 1];
+                        rgbaArr[i * 4 + 2] = imageData[i * 3 + 2];
+                        rgbaArr[i * 4 + 3] = 2 ** bitDepth;
+                    }
+                    imageData = rgbaArr;
+                }
+
+                // Finding actual min/max pixel values cannot be done because
+                // using Math.min(...pixelValues) will exceed max call stack
+                // size for large images. We use a simple heuristic to find
+                // theoretical min/max values for this pixel type.
+                imageObj.maxPixelValue = 2 ** bitDepth / 2;
+                imageObj.minPixelValue = -imageObj.maxPixelValue;
+                if (image.imageType.componentType.includes('uint')) {
+                    imageObj.minPixelValue = 0;
+                    imageObj.maxPixelValue = 2 ** bitDepth;
+                }
+                imageObj.sizeInBytes = imageData.length * bitDepth / 8;
+                imageObj.windowWidth = imageObj.windowWidth ?? (imageObj.maxPixelValue - imageObj.minPixelValue);
+                imageObj.windowCenter = imageObj.windowCenter ?? imageObj.minPixelValue + imageObj.windowWidth / 2;
+                imageObj.columnPixelSpacing = image.spacing[0];
+                imageObj.rowPixelSpacing = image.spacing[1];
+                imageObj.slope = 1;
+                imageObj.intercept = 0;
+                imageObj.invert = false;
+                imageObj.getPixelData = () => imageData;
+                webWorker.terminate();
+                return imageObj;
+            });
+        }
 
         // Register grand challenge image loader
         cornerstone.registerImageLoader('grandChallengeLoader', (imageId) => ({
@@ -110,41 +169,15 @@
                     } else {
                         throw Error(`Fetch error: ${r.statusText}`);
                     }
-                }).then(r => {
-                    return fetch(r.mh_url).then(r => {
+                }).then(imageObj => {
+                    return fetch(imageObj.mh_url).then(r => {
                         if (r.status === 200) {
                             return r.blob();
                         } else {
                             reject(`Fetch error: ${r.text()}`);
                         }
-                    }).then(mhBlob => {
-                        const file = new File([mhBlob], 'image.mha');
-                        return itk.readFile(null, file).then(function({ image, mesh, polyData, webWorker }) {
-                            let imageData = image.data;
-                            if (r.color && !r.rgba) {
-                                // convert RGB to RGBA
-                                const newLength = imageData.length + imageData.length / 3;
-                                const rgbaArr = new imageData.constructor(newLength);
-                                for (let i = 0; i < imageData.length / 3; i++) {
-                                    rgbaArr[i * 4] = imageData[i * 3];
-                                    rgbaArr[i * 4 + 1] = imageData[i * 3 + 1];
-                                    rgbaArr[i * 4 + 2] = imageData[i * 3 + 2];
-                                    rgbaArr[i * 4 + 3] = 2 ** r.bit_depth;
-                                }
-                                imageData = rgbaArr;
-                            }
-                            r.sizeInBytes = imageData.length * r.bit_depth / 8;
-                            r.windowWidth = r.windowWidth ?? (r.maxPixelValue - r.minPixelValue);
-                            r.windowCenter = r.windowCenter ?? r.minPixelValue + r.windowWidth / 2;
-                            r.columnPixelSpacing = image.spacing[0];
-                            r.rowPixelSpacing = image.spacing[1];
-                            r.slope = 1;
-                            r.intercept = 0;
-                            r.invert = false;
-                            r.getPixelData = () => imageData;
-                            resolve(r);
-                            webWorker.terminate();
-                        });
+                    }).then(itkBlob => {
+                        itkBlobToCsImage(itkBlob, imageObj).then(csImage => { resolve(csImage) });
                     });
                 }).catch(e => reject(e));
             })
