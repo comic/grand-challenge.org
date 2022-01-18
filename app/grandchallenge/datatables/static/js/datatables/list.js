@@ -31,7 +31,7 @@ $(document).ready(function () {
                 orderable: false,
             },
             {
-                className: "align-middle text-center",
+                className: `align-middle text-${textAlign}`,
                 targets: "_all" ,
             },
         ],

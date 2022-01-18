@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import reduce
 from operator import or_
-from typing import Callable, Optional, Tuple
+from typing import Callable, Iterable, Optional, Tuple
 
 from django.db.models import Q
 from django.http import JsonResponse
@@ -13,6 +13,7 @@ class PaginatedTableListView(ListView):
     columns = []
     search_fields = []
     default_sort_column = 0
+    text_align = "center"
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
@@ -20,6 +21,7 @@ class PaginatedTableListView(ListView):
             {
                 "columns": self.columns,
                 "default_sort_column": self.default_sort_column,
+                "text_align": self.text_align,
             }
         )
         return context
@@ -89,6 +91,7 @@ class Column:
     sort_field: str
     classes: Tuple[str, ...] = ()
     identifier: str = ""
+    sub_items: Iterable = ()
 
     # A column will be hidden when the `optional_condition` evaluates to False
     # for every object shown in the current list (page). `optional_condition`

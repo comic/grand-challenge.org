@@ -77,6 +77,7 @@ from grandchallenge.reader_studies.forms import (
 from grandchallenge.reader_studies.models import (
     Answer,
     CategoricalOption,
+    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -319,6 +320,39 @@ class ReaderStudyStatistics(
 
 
 class ReaderStudyImagesList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
+):
+    model = DisplaySet
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_images_list.html"
+    row_template = "reader_studies/readerstudy_display_sets_row.html"
+    search_fields = ["pk", "name"]
+    columns = [
+        Column(title="Name", sort_field="id"),
+    ]
+    text_align = "left"
+
+    @cached_property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"reader_study": self.reader_study})
+        return context
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs
+
+
+class _ReaderStudyImagesList(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     model = Image
