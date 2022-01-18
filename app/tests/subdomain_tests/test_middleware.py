@@ -1,7 +1,6 @@
 import pytest
 from django.contrib.sites.middleware import CurrentSiteMiddleware
 from django.core.handlers.wsgi import WSGIRequest
-from django.http import HttpResponseRedirect
 
 from grandchallenge.subdomains.middleware import (
     challenge_subdomain_middleware,
@@ -52,13 +51,7 @@ def test_invalid_domain(settings, rf, host, subdomain):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "subdomain",
-    [
-        None,
-        "challengesubdomaintest",
-        "ChallengeSubdomainTest",
-        "notachallenge",
-    ],
+    "subdomain", [None, "challengesubdomaintest", "ChallengeSubdomainTest"],
 )
 def test_challenge_attribute(settings, rf, subdomain):
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
@@ -77,8 +70,6 @@ def test_challenge_attribute(settings, rf, subdomain):
         assert request.challenge is None
     elif subdomain.lower() == c.short_name.lower():
         assert request.challenge == c
-    else:
-        assert request.url == f"http://{SITE_DOMAIN}/"
 
 
 @pytest.mark.django_db
@@ -88,7 +79,6 @@ def test_challenge_attribute(settings, rf, subdomain):
         (None, WSGIRequest, False),
         ("us-east-1", WSGIRequest, False),
         ("c", WSGIRequest, True),
-        ("notaregion", HttpResponseRedirect, False),
     ],
 )
 def test_rendering_challenge_settings(

@@ -565,9 +565,8 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
             % (page_url, response.status_code),
         )
 
-    def test_non_exitant_project_gives_404_or_302(self):
+    def test_non_exitant_project_gives_404(self):
         """Reproduces https://github.com/comic/grand-challenge.org/issues/219."""
-        # main domain robots.txt
         non_existant_url = reverse(
             "pages:home",
             kwargs={"challenge_short_name": "nonexistingproject"},
@@ -577,9 +576,9 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         # We redirect to the main challenge if it is not found
         self.assertEqual(
             response.status_code,
-            302,
+            404,
             "Expected non existing url"
-            "'%s' to give 302, instead found %s"
+            "'%s' to give 404, instead found %s"
             % (non_existant_url, response.status_code),
         )
 
