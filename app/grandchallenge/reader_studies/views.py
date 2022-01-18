@@ -48,6 +48,7 @@ from rest_framework.viewsets import (
 )
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.filters import FilterMixin
@@ -85,7 +86,10 @@ from grandchallenge.reader_studies.serializers import (
     QuestionSerializer,
     ReaderStudySerializer,
 )
-from grandchallenge.reader_studies.tasks import add_images_to_reader_study
+from grandchallenge.reader_studies.tasks import (
+    add_images_to_reader_study,
+    create_display_sets_for_upload_session,
+)
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -572,6 +576,29 @@ class ReaderStudyCopy(
         rs.save()
         self.reader_study = rs
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+
+class AddDisplaySetsToReaderStudy(AddObjectToReaderStudyMixin):
+    model = RawImageUploadSession
+    form_class = AddCasesForm
+    template_name = "reader_studies/readerstudy_add_object.html"
+    type_to_add = "images"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "linked_task": create_display_sets_for_upload_session.signature(
+                    kwargs={"reader_study_pk": self.reader_study.pk},
+                    immutable=True,
+                ),
+            }
+        )
+        return kwargs
 
     def get_success_url(self):
         return self.reader_study.get_absolute_url()

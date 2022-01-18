@@ -2,7 +2,15 @@ from celery import shared_task
 from django.db import transaction
 
 from grandchallenge.cases.models import Image
-from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
+from grandchallenge.reader_studies.models import (
+    Answer,
+    DisplaySet,
+    ReaderStudy,
+)
 
 
 @transaction.atomic
@@ -37,6 +45,22 @@ def add_scores(*, instance_pk, pk_set):
         ).first()
         if ground_truth:
             add_score(instance, ground_truth.answer)
+
+
+@shared_task
+def create_display_sets_for_upload_session(
+    *, upload_session_pk, reader_study_pk, interface_pk
+):
+    images = Image.objects.filter(origin_id=upload_session_pk)
+    reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+
+    for image in images:
+        civ = ComponentInterfaceValue.objects.create(
+            interface=interface, image=image
+        )
+        ds = DisplaySet.objects.create(reader_study=reader_study)
+        ds.values.add(civ)
 
 
 @shared_task
