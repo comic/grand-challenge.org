@@ -7,14 +7,12 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from rest_framework.generics import RetrieveAPIView
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.renderers import JSONRenderer
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -26,7 +24,6 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.cases.serializers import (
-    CSImageSerializer,
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
@@ -172,11 +169,3 @@ class CSImageDetail(
 
         context.update({"image_pk": self.object.pk})
         return context
-
-
-class CSImageLoader(RetrieveAPIView):
-    queryset = Image.objects.all()
-    permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (ObjectPermissionsFilter,)
-    renderer_classes = (JSONRenderer,)
-    serializer_class = CSImageSerializer

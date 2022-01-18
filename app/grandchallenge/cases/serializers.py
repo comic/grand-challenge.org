@@ -1,6 +1,3 @@
-import SimpleITK
-from django.conf import settings
-from django.http import Http404
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -18,7 +15,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageUploadSession,
 )
-from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.reader_studies.tasks import (
@@ -68,6 +64,8 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "series_instance_uid",
             "study_description",
             "series_description",
+            "window_center",
+            "window_width",
         )
 
 
@@ -212,60 +210,3 @@ def _get_linked_task(*, targets):
         )
     else:
         raise RuntimeError(f"Unknown target {targets=}")
-
-
-class CSImageSerializer(serializers.BaseSerializer):
-    """
-    Sserializes a cases.Image object into a Cornerstone image object as
-    defined in https://docs.cornerstonejs.org/api.html#image.
-    """
-
-    def to_representation(self, instance):
-        if instance.color_space not in (
-            Image.COLOR_SPACE_GRAY,
-            Image.COLOR_SPACE_RGBA,
-            Image.COLOR_SPACE_RGB,
-        ):
-            raise Http404
-
-        try:
-            mh_file, _ = instance.get_metaimage_files()
-            image_itk = get_sitk_image(image=instance)
-            bit_depth = settings.SITK_PIXEL_TYPE_TO_BIT_DEPTH[
-                image_itk.GetPixelIDValue()
-            ]
-        except (OSError, RuntimeError, IndexError) as e:
-            raise Http404 from e
-
-        # Finding min/max pixel values cannot be done on the client because it
-        # is not supported in itk-wasm and a simple Math.min(...pixelValues)
-        # will exceed max call stack size for large images. For non-grayscale
-        # images we cannot use the built-in min/max filter so we resort to
-        # setting the min/max allowed values for those pixel types.
-        if instance.color_space == Image.COLOR_SPACE_GRAY:
-            min_max_filter = SimpleITK.MinimumMaximumImageFilter()
-            min_max_filter.Execute(image_itk)
-            min_value = min_max_filter.GetMinimum()
-            max_value = min_max_filter.GetMaximum()
-        elif "unsigned" in image_itk.GetPixelIDTypeAsString():
-            max_value = 2 ** bit_depth / 2
-            min_value = -max_value
-        else:
-            min_value = 0
-            max_value = 2 ** bit_depth
-
-        return {
-            "imageId": instance.pk,
-            "minPixelValue": min_value,
-            "maxPixelValue": max_value,
-            "windowCenter": instance.window_center,
-            "windowWidth": instance.window_width,
-            "rows": instance.height,
-            "columns": instance.width,
-            "height": instance.height,
-            "width": instance.width,
-            "color": instance.color_space != Image.COLOR_SPACE_GRAY,
-            "rgba": instance.color_space == Image.COLOR_SPACE_RGBA,
-            "bit_depth": bit_depth,
-            "mh_url": mh_file.file.url,
-        }

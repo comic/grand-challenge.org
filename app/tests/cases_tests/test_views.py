@@ -231,24 +231,3 @@ class TestCSImageDetail:
     )
     def test_allowed(self, client, factory, kwargs):
         assert self.get_status_code(client, factory(**kwargs)) == 200
-
-
-@pytest.mark.django_db
-def test_cs_image_loader_permissions(client):
-    u = UserFactory()
-    image = ImageFactoryWithImageFile()
-    response = get_view_for_user(
-        client=client,
-        viewname="cases:cs-image-loader",
-        reverse_kwargs={"pk": image.pk},
-        user=u,
-    )
-    assert response.status_code == 404
-    assign_perm("view_image", u, image)
-    response = get_view_for_user(
-        client=client,
-        viewname="cases:cs-image-loader",
-        reverse_kwargs={"pk": image.pk},
-        user=u,
-    )
-    assert response.status_code == 200
