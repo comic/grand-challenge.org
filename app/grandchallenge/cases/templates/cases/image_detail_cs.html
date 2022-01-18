@@ -96,6 +96,7 @@
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.6/dist/cornerstoneMath.js" integrity="sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.2.4/dist/cornerstone.js" integrity="sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/itk-wasm@1.0.0-a.10/dist/umd/itk-wasm.min.js" integrity="sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3" crossorigin="anonymous"></script>
+    {{ object.pk|json_script:"imagePk" }}
     <script>
         const SITK_PIXEL_TYPE_TO_BIT_DEPTH = new Map([
             [itk.IntTypes.UInt8, 8],
@@ -110,7 +111,7 @@
             [itk.FloatTypes.Float64, 64],
         ]);
 
-        const imagePk = '{{ image_pk }}';
+        const imagePk = JSON.parse(document.getElementById('imagePk').textContent);
         const imageId = `grandChallengeLoader://${imagePk}`;
         const loadingEl = document.getElementById('loading');
         const element = document.getElementById('itkImage');
