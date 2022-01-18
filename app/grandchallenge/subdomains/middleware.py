@@ -2,7 +2,7 @@ import logging
 import re
 
 from django.conf import settings
-from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 
 from grandchallenge.challenges.models import Challenge
 
@@ -34,8 +34,8 @@ def subdomain_middleware(get_response):
 def challenge_subdomain_middleware(get_response):
     def middleware(request):
         """
-        Adds the challenge to the request based on the subdomain, redirecting
-        to the main site if the challenge is not valid. Requires the
+        Adds the challenge to the request based on the subdomain,
+        raising Http404 if challenge is not valid. Requires the
         subdomain to be set on the request (eg, by using subdomain_middleware)
         """
         subdomain = request.subdomain
@@ -43,16 +43,12 @@ def challenge_subdomain_middleware(get_response):
         if subdomain in [*settings.WORKSTATIONS_RENDERING_SUBDOMAINS, None]:
             request.challenge = None
         else:
-            try:
-                request.challenge = (
-                    Challenge.objects.select_related("forum")
-                    .prefetch_related("phase_set")
-                    .get(short_name__iexact=subdomain)
-                )
-            except Challenge.DoesNotExist:
-                logger.warning(f"Could not find challenge {subdomain}")
-                domain = request.site.domain.lower()
-                return HttpResponseRedirect(f"{request.scheme}://{domain}/")
+            request.challenge = get_object_or_404(
+                Challenge.objects.select_related("forum").prefetch_related(
+                    "phase_set"
+                ),
+                short_name__iexact=subdomain,
+            )
 
         response = get_response(request)
 
