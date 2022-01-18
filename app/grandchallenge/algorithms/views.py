@@ -71,7 +71,6 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.codebuild.models import Build
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -200,12 +199,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             status=AlgorithmPermissionRequest.PENDING,
         ).count()
         context.update(
-            {
-                "pending_permission_requests": pending_permission_requests,
-                "builds": Build.objects.filter(
-                    algorithm_image__algorithm=self.object
-                ),
-            }
+            {"pending_permission_requests": pending_permission_requests}
         )
 
         return context

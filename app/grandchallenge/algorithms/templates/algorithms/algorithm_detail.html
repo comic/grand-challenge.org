@@ -59,12 +59,6 @@
                 ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
                 </a>
-                {% if builds.count > 0 %}
-                     <a class="nav-link" id="v-pills-builds-tab" data-toggle="pill"
-                       href="#builds" role="tab" aria-controls="v-pills-builds"
-                       aria-selected="false"><i class="fas fa-tools fa-fw"></i>&nbsp;Builds
-                    </a>
-                {% endif %}
             {% endif %}
 
             {% if "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
@@ -316,20 +310,6 @@
                     {% endif %}
                 </p>
 
-            </div>
-
-            <div class="tab-pane fade" id="builds" role="tabpanel"
-                 aria-labelledby="v-pills-builds-tab">
-
-                <h2>Builds</h2>
-
-                {% for build in builds %}
-                    <div class="mb-2">
-                        <a class="btn btn-{% if build.status == 'SUCCEEDED' %}success{% elif build.status == 'IN_PROGRESS' %}warning{% else %}danger{% endif %}">
-                            <i class="fa fa-tools"></i> Build {{ build.build_id }} ({{ build.webhook_message.tag }}): {{ build.status }}
-                        </a>
-                    </div>
-                {% endfor %}
             </div>
 
             <div class="tab-pane fade" id="containers" role="tabpanel"
