@@ -4,6 +4,9 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.cases.models import Image
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
+    ImageFactoryWithImageFile16Bit,
+    ImageFactoryWithImageFile2DGray16Bit,
+    ImageFactoryWithImageFile3D,
     ImageFactoryWithoutImageFile,
     RawImageUploadSessionFactory,
 )
@@ -36,6 +39,12 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "vtk-image-detail",
+                {"pk": image_file_mh.pk},
+                "view_image",
+                image_file_mh,
+            ),
+            (
+                "cs-image-detail",
                 {"pk": image_file_mh.pk},
                 "view_image",
                 image_file_mh,
@@ -173,3 +182,52 @@ def test_imageviewset_empty_fields_filtering(
         response = get_view_for_user(**view_kwargs, data=data)
         assert response.status_code == 200
         assert len(response.data["results"]) == 0
+
+
+@pytest.mark.django_db
+class TestCSImageDetail:
+    def get_status_code(self, client, image):
+        u = UserFactory()
+        assign_perm("view_image", u, image)
+        response = get_view_for_user(
+            client=client,
+            viewname="cases:cs-image-detail",
+            reverse_kwargs={"pk": image.pk},
+            user=u,
+        )
+        return response.status_code
+
+    @pytest.mark.parametrize(
+        "factory,kwargs",
+        [
+            (
+                ImageFactoryWithoutImageFile,
+                {"color_space": Image.COLOR_SPACE_GRAY},
+            ),
+            (
+                ImageFactoryWithImageFile,
+                {"color_space": Image.COLOR_SPACE_YCBCR},
+            ),
+        ],
+    )
+    def test_not_allowed(self, client, factory, kwargs):
+        assert self.get_status_code(client, factory(**kwargs)) == 404
+
+    @pytest.mark.parametrize(
+        "factory,kwargs",
+        [
+            (ImageFactoryWithImageFile2DGray16Bit, {}),
+            (
+                ImageFactoryWithImageFile,
+                {"color_space": Image.COLOR_SPACE_RGB},
+            ),
+            (
+                ImageFactoryWithImageFile,
+                {"color_space": Image.COLOR_SPACE_RGBA},
+            ),
+            (ImageFactoryWithImageFile16Bit, {}),
+            (ImageFactoryWithImageFile3D, {}),
+        ],
+    )
+    def test_allowed(self, client, factory, kwargs):
+        assert self.get_status_code(client, factory(**kwargs)) == 200

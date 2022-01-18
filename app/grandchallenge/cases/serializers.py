@@ -64,6 +64,8 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "series_instance_uid",
             "study_description",
             "series_description",
+            "window_center",
+            "window_width",
         )
 
 
