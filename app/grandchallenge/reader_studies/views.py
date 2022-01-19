@@ -276,6 +276,20 @@ class ReaderStudyUpdate(
     raise_exception = True
     success_message = "Reader study successfully updated"
 
+    def form_valid(self, form):
+        civs = dict(
+            self.object.display_sets.values_list(
+                "values__image__name", "values__id"
+            )
+        )
+        self.object.display_sets.all().delete()
+        if "hanging_list" in form.changed_data:
+            for item in form.cleaned_data["hanging_list"]:
+                ds = DisplaySet.objects.create(reader_study=self.object)
+                for key in item:
+                    ds.values.add(civs[item[key]])
+        return super().form_valid(form)
+
 
 class ReaderStudyDelete(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView

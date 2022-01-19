@@ -589,6 +589,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             question__reader_study_id=self.id, is_ground_truth=True
         ).exists()
 
+    @property
+    def ds_images(self):
+        return sorted(
+            list(
+                self.display_sets.values_list("values__image__name", flat=True)
+            )
+        )
+
     @cached_property
     def answerable_questions(self):
         """
