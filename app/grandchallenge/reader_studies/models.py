@@ -524,6 +524,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Tests that all of the study images are included in the hanging list
         exactly once.
         """
+        if True:
+            hl_images = sorted(
+                [values[val] for values in self.hanging_list for val in values]
+            )
+            return self.ds_images == hl_images
         return not self.validate_hanging_list or sorted(
             self.study_image_names
         ) == sorted(self.hanging_image_names)
