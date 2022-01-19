@@ -1,4 +1,5 @@
 const defaultSortColumn = JSON.parse(document.getElementById("defaultSortColumn").textContent)
+const textAlign = JSON.parse(document.getElementById("textAlign").textContent)
 
 $(document).ready(function () {
     $('#ajaxDataTable').DataTable({
