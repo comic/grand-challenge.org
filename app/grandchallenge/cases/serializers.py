@@ -15,6 +15,7 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.reader_studies.tasks import (
@@ -83,6 +84,11 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     answer = PrimaryKeyRelatedField(
         queryset=Answer.objects.none(), required=False
     )
+    interface = SlugRelatedField(
+        slug_field="slug",
+        queryset=ComponentInterface.objects.all(),
+        required=False,
+    )
 
     class Meta:
         model = RawImageUploadSession
@@ -97,6 +103,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "archive",
             "reader_study",
             "answer",
+            "interface",
         )
 
     def __init__(self, *args, **kwargs):
@@ -136,7 +143,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
     @property
     def targets(self):
-        return ["archive", "reader_study", "answer"]
+        return ["archive", "reader_study", "answer", "interface"]
 
     def create(self, validated_data):
         set_targets = {
@@ -166,7 +173,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             raise ValidationError("Filenames must be unique")
 
         num_targets = sum(f in attrs for f in self.targets)
-        if num_targets > 1:
+        if num_targets > 2 and "interface" not in self.targets:
             raise ValidationError(
                 "Only one of archive, answer or reader study can be set"
             )
@@ -196,9 +203,12 @@ def process_images(*, instance, targets):
 
 def _get_linked_task(*, targets):
     if "archive" in targets:
-        return add_images_to_archive.signature(
-            kwargs={"archive_pk": targets["archive"].pk}, immutable=True,
-        )
+        kwargs = {
+            "archive_pk": targets["archive"].pk,
+        }
+        if "interface" in targets:
+            kwargs["interface_pk"] = targets["interface"].pk
+        return add_images_to_archive.signature(kwargs=kwargs, immutable=True,)
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(
             kwargs={"reader_study_pk": targets["reader_study"].pk},
