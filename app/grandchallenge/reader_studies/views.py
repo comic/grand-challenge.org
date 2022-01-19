@@ -84,6 +84,7 @@ from grandchallenge.reader_studies.models import (
 )
 from grandchallenge.reader_studies.serializers import (
     AnswerSerializer,
+    DisplaySetSerializer,
     QuestionSerializer,
     ReaderStudySerializer,
 )
@@ -940,6 +941,18 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
                 for answer in answers
             }
         )
+
+
+class DisplaySetViewSet(ReadOnlyModelViewSet):
+    serializer_class = DisplaySetSerializer
+    queryset = DisplaySet.objects.all().select_related("reader_study")
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["reader_study"]
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):

@@ -61,6 +61,9 @@ def create_display_sets_for_upload_session(
         )
         ds = DisplaySet.objects.create(reader_study=reader_study)
         ds.values.add(civ)
+        reader_study.editors_group.add_obj_perm("view_displayset")
+        reader_study.readers_group.add_obj_perm("view_displayset")
+
     reader_study.hanging_list = reader_study.hanging_list + [
         {"main": im.name} for im in images
     ]

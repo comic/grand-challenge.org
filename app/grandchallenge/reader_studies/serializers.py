@@ -10,9 +10,13 @@ from rest_framework.serializers import (
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
+from grandchallenge.components.serializers import (
+    ComponentInterfaceValueSerializer,
+)
 from grandchallenge.reader_studies.models import (
     Answer,
     CategoricalOption,
+    DisplaySet,
     Question,
     ReaderStudy,
 )
@@ -47,6 +51,20 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "reader_study",
             "required",
             "options",
+        )
+
+
+class DisplaySetSerializer(HyperlinkedModelSerializer):
+    reader_study = HyperlinkedRelatedField(
+        view_name="api:reader-study-detail", read_only=True
+    )
+    values = ComponentInterfaceValueSerializer(many=True)
+
+    class Meta:
+        model = DisplaySet
+        fields = (
+            "reader_study",
+            "values",
         )
 
 

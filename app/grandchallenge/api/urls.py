@@ -23,6 +23,7 @@ from grandchallenge.notifications.views import (
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
+    DisplaySetViewSet,
     QuestionViewSet,
     ReaderStudyViewSet,
 )
@@ -97,6 +98,11 @@ router.register(
     r"reader-studies/questions",
     QuestionViewSet,
     basename="reader-studies-question",
+)
+router.register(
+    r"reader-studies/display-sets",
+    DisplaySetViewSet,
+    basename="reader-studies-display-set",
 )
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
 
