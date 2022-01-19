@@ -61,6 +61,10 @@ def create_display_sets_for_upload_session(
         )
         ds = DisplaySet.objects.create(reader_study=reader_study)
         ds.values.add(civ)
+    reader_study.hanging_list = reader_study.hanging_list + [
+        {"main": im.name} for im in images
+    ]
+    reader_study.save()
 
 
 @shared_task
