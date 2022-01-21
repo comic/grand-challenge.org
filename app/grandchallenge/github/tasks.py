@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import os
 import re
 import subprocess
@@ -20,6 +21,9 @@ from django.db.transaction import on_commit
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
 from grandchallenge.github.utils import CloneStatusChoices
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_repo_url(payload):
@@ -151,6 +155,14 @@ def get_zipfile(*, pk):  # noqa C901
                 # build repo
                 build_repo(ghwm.pk)
             except Exception as e:
+                stdout = getattr(e, "stdout", "")
+                stderr = getattr(e, "stderr", "")
+                logger.error(
+                    f"get_zipfile failed with exception: {str(e)}\n\n"
+                    "Additional information: \n\n"
+                    f"stdout: {stdout}\n"
+                    f"stderr: {stderr}\n"
+                )
                 ghwm.error = str(e)
                 ghwm.clone_status = CloneStatusChoices.FAILURE
                 ghwm.save()
