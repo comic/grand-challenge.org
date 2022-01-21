@@ -31,7 +31,6 @@ class ArchiveSerializer(serializers.ModelSerializer):
     url = URLField(source="get_absolute_url", read_only=True)
     # Include the read only name for legacy clients
     name = ReadOnlyField()
-    items = ArchiveItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Archive
@@ -44,5 +43,4 @@ class ArchiveSerializer(serializers.ModelSerializer):
             "description",
             "api_url",
             "url",
-            "items",
         )

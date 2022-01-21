@@ -27,6 +27,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_objects_for_user
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -52,7 +53,11 @@ from grandchallenge.archives.models import (
     ArchiveItem,
     ArchivePermissionRequest,
 )
-from grandchallenge.archives.serializers import ArchiveSerializer
+from grandchallenge.archives.permissions import ArchiveItemPermission
+from grandchallenge.archives.serializers import (
+    ArchiveItemSerializer,
+    ArchiveSerializer,
+)
 from grandchallenge.archives.tasks import (
     add_images_to_archive,
     update_archive_item_values,
@@ -732,3 +737,20 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
             .distinct("study_description")
         )
         return Response(studies)
+
+
+class ArchiveItemViewSet(ReadOnlyModelViewSet):
+    serializer_class = ArchiveItemSerializer
+    permission_classes = [ArchiveItemPermission]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["archive"]
+
+    def get_queryset(self):
+        # restrict queryset to items from archives the user has view permission for
+        user = self.request.user
+        archives = get_objects_for_user(
+            user, "archives.view_archive", Archive.objects.all()
+        )
+        return ArchiveItem.objects.filter(
+            archive__id__in=archives.values_list("id", flat=True)
+        )

@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import pytest
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import RawImageUploadSession
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -67,11 +69,11 @@ def test_upload_session_detail(client):
 
 
 @pytest.mark.django_db
-def test_upload_sessions_create(client):
+def test_upload_sessions_create(client, settings):
     user = UserFactory()
     a = ArchiveFactory()
     a.add_uploader(user)
-
+    # without interface
     response = get_view_for_user(
         viewname="api:upload-session-list",
         user=user,
@@ -80,6 +82,26 @@ def test_upload_sessions_create(client):
         content_type="application/json",
         data={
             "archive": a.slug,
+            "uploads": [create_completed_upload(user=user).api_url],
+        },
+    )
+    assert response.status_code == 201
+
+    upload_session = RawImageUploadSession.objects.get(
+        pk=response.data.get("pk")
+    )
+    assert upload_session.creator == user
+
+    # with interface
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=user,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={
+            "archive": a.slug,
+            "interface": "generic-overlay",
             "uploads": [create_completed_upload(user=user).api_url],
         },
     )
@@ -230,10 +252,19 @@ def test_archive_upload_session_create(client, obj, factory):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "obj,factory",
-    (("archive", ArchiveFactory), ("reader_study", ReaderStudyFactory)),
+    "obj,factory,interface",
+    (
+        ("archive", ArchiveFactory, None),
+        ("reader_study", ReaderStudyFactory, None),
+        ("archive", ArchiveFactory, "generic-overlay"),
+        ("reader_study", ReaderStudyFactory, "generic-overlay"),
+    ),
 )
-def test_session_with_user_upload(client, obj, factory):
+def test_session_with_user_upload(client, settings, obj, factory, interface):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     user = UserFactory()
     o = factory()
     o.add_editor(user=user)
@@ -243,20 +274,45 @@ def test_session_with_user_upload(client, obj, factory):
         creator=user,
     )
 
-    response = get_view_for_user(
-        viewname="api:upload-session-list",
-        user=user,
-        client=client,
-        method=client.post,
-        content_type="application/json",
-        data={"uploads": [upload.api_url], obj: o.slug},
-        HTTP_X_FORWARDED_PROTO="https",
-    )
+    if interface:
+        data = {
+            "uploads": [upload.api_url],
+            obj: o.slug,
+            "interface": interface,
+        }
+    else:
+        data = {"uploads": [upload.api_url], obj: o.slug}
 
-    assert response.status_code == 201
-    upload_session = response.json()
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data=data,
+            HTTP_X_FORWARDED_PROTO="https",
+        )
 
-    assert upload_session["uploads"] == [upload.api_url]
+    if obj == "reader_study" and interface:
+        assert response.status_code == 400
+        assert (
+            "An interface can only be defined for archive uploads."
+            in response.json()["non_field_errors"]
+        )
+    elif obj == "reader_study" and not interface:
+        assert response.status_code == 201
+        upload_session = response.json()
+        assert upload_session["uploads"] == [upload.api_url]
+    elif obj == "archive":
+        assert response.status_code == 201
+        upload_session = response.json()
+        assert upload_session["uploads"] == [upload.api_url]
+        item = ArchiveItem.objects.get()
+        assert (
+            item.values.get().interface.slug == interface
+            or "generic-medical-image"
+        )
 
 
 @pytest.mark.django_db

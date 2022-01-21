@@ -8,7 +8,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmViewSet,
     JobViewSet,
 )
-from grandchallenge.archives.views import ArchiveViewSet
+from grandchallenge.archives.views import ArchiveItemViewSet, ArchiveViewSet
 from grandchallenge.cases.views import (
     ImageViewSet,
     RawImageUploadSessionViewSet,
@@ -56,6 +56,9 @@ router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
 router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
 # Archives
+router.register(
+    r"archives/items", ArchiveItemViewSet, basename="archives-item"
+)
 router.register(r"archives", ArchiveViewSet, basename="archive")
 
 # Cases

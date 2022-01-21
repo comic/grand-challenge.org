@@ -143,7 +143,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
     @property
     def targets(self):
-        return ["archive", "reader_study", "answer", "interface"]
+        return ["archive", "reader_study", "answer"]
 
     def create(self, validated_data):
         set_targets = {
@@ -151,6 +151,10 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             for t in self.targets
             if t in validated_data
         }
+        try:
+            interface = validated_data.pop("interface")
+        except KeyError:
+            interface = None
 
         instance = super().create(validated_data=validated_data)
 
@@ -161,7 +165,9 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             answer.save()
 
         if set_targets:
-            process_images(instance=instance, targets=set_targets)
+            process_images(
+                instance=instance, targets=set_targets, interface=interface
+            )
 
         return instance
 
@@ -173,9 +179,16 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             raise ValidationError("Filenames must be unique")
 
         num_targets = sum(f in attrs for f in self.targets)
-        if num_targets > 2 and "interface" not in self.targets:
+        if num_targets > 1:
             raise ValidationError(
                 "Only one of archive, answer or reader study can be set"
+            )
+
+        if "interface" in attrs and (
+            "reader_study" in attrs or "answer" in attrs
+        ):
+            raise ValidationError(
+                "An interface can only be defined for archive uploads."
             )
 
         return attrs
@@ -194,20 +207,22 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         return value
 
 
-def process_images(*, instance, targets):
+def process_images(*, instance, targets, interface):
     if instance.status != instance.PENDING:
         raise ValidationError("Session is not pending")
 
-    instance.process_images(linked_task=_get_linked_task(targets=targets))
+    instance.process_images(
+        linked_task=_get_linked_task(targets=targets, interface=interface)
+    )
 
 
-def _get_linked_task(*, targets):
+def _get_linked_task(*, targets, interface):
     if "archive" in targets:
         kwargs = {
             "archive_pk": targets["archive"].pk,
         }
-        if "interface" in targets:
-            kwargs["interface_pk"] = targets["interface"].pk
+        if interface:
+            kwargs["interface_pk"] = interface.pk
         return add_images_to_archive.signature(kwargs=kwargs, immutable=True,)
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(
