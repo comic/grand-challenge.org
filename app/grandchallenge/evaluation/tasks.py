@@ -362,8 +362,8 @@ def filter_by_creators_best(*, evaluations, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-@shared_task  # noqa: C901
-def calculate_ranks(*, phase_pk: uuid.UUID):  # noqa: C901
+@shared_task
+def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Phase"
     )

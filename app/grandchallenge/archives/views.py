@@ -401,7 +401,7 @@ class ArchiveEditArchiveItem(
         context.update({"archive": self.archive})
         return context
 
-    def form_valid(self, form):  # noqa: C901
+    def form_valid(self, form):
         def create_upload(image_files):
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user

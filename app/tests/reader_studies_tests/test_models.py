@@ -163,7 +163,7 @@ def test_progress_for_user(settings):
     assert progress["questions"] == 100.0
 
 
-@pytest.mark.django_db  # noqa: C901
+@pytest.mark.django_db
 def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -229,7 +229,7 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
         assert user_score["score__avg"] == 1.0
 
 
-@pytest.mark.django_db  # noqa - C901
+@pytest.mark.django_db
 def test_statistics(reader_study_with_gt, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -299,7 +299,7 @@ def test_statistics(reader_study_with_gt, settings):
         )
 
 
-@pytest.mark.django_db  # noqa - C901
+@pytest.mark.django_db
 def test_score_for_user(reader_study_with_gt, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
