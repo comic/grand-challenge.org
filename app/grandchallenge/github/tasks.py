@@ -119,7 +119,7 @@ def build_repo(ghwm_pk):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def get_zipfile(*, pk):  # noqa C901
+def get_zipfile(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
     )

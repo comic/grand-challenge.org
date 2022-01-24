@@ -159,7 +159,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
     try:
-        create_algorithm_jobs(
+        jobs = create_algorithm_jobs(
             algorithm_image=evaluation.submission.algorithm_image,
             civ_sets=[
                 {*ai.values.all()}
@@ -175,6 +175,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             max_jobs=max_jobs,
             time_limit=evaluation.submission.phase.algorithm_time_limit,
         )
+
+        if not jobs:
+            # No more jobs created from this task, so everything must be ready
+            # for evaluation
+            set_evaluation_inputs.signature(
+                kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
+            ).apply_async()
+
     except TooManyJobsScheduled:
         # Re-run the task
         create_algorithm_jobs_for_evaluation.signature(
@@ -208,7 +216,7 @@ def handle_failed_jobs(*, evaluation_pk):
     ).update(status=Job.CANCELLED)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def set_evaluation_inputs(*, evaluation_pk):
     """
     Sets the inputs to the Evaluation for an algorithm submission.
@@ -217,6 +225,8 @@ def set_evaluation_inputs(*, evaluation_pk):
     successful this will set the inputs to the `Evaluation` job and schedule
     it. If any of the `Job`s are unsuccessful then the
     `Evaluation` will be marked as Failed.
+
+    This task can take a while so place it on the large queue.
 
     Parameters
     ----------
@@ -230,10 +240,10 @@ def set_evaluation_inputs(*, evaluation_pk):
         app_label="evaluation", model_name="Evaluation"
     )
 
-    # TODO this checks for all jobs for the image, could include non-submission jobs
     has_pending_jobs = (
         Job.objects.filter(
-            algorithm_image__submission__evaluation=evaluation_pk
+            algorithm_image__submission__evaluation=evaluation_pk,
+            creator__isnull=True,  # Evaluation inference jobs have no creator
         )
         .exclude(status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED])
         .exists()
@@ -352,8 +362,8 @@ def filter_by_creators_best(*, evaluations, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-@shared_task  # noqa: C901
-def calculate_ranks(*, phase_pk: uuid.UUID):  # noqa: C901
+@shared_task
+def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Phase"
     )
