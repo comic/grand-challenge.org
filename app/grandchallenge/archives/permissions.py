@@ -9,7 +9,7 @@ class ArchiveItemPermission(permissions.BasePermission):
     """
 
     perms_map = {
-        "GET": ["archives.view_archive"],
+        "GET": ["archives.use_archive"],
         "PUT": ["archives.upload_archive"],
         "PATCH": ["archives.upload_archive"],
     }

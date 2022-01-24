@@ -250,6 +250,17 @@ def test_api_archive_item_retrieve_permissions(client):
     editor, user = UserFactory(), UserFactory()
     archive.add_editor(editor)
     i1 = ArchiveItemFactory(archive=archive)
+
+    # editor can retrieve archive item
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=editor,
+        client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(i1.pk)
+
     # user cannot retrieve archive item
     response = get_view_for_user(
         viewname="api:archives-item-detail",
@@ -259,11 +270,12 @@ def test_api_archive_item_retrieve_permissions(client):
     )
     assert response.status_code == 404
 
-    # editor can retrieve archive item
+    # add user to archive
+    archive.add_user(user)
     response = get_view_for_user(
         viewname="api:archives-item-detail",
         reverse_kwargs={"pk": i1.pk},
-        user=editor,
+        user=user,
         client=client,
     )
     assert response.status_code == 200
