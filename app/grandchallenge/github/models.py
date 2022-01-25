@@ -122,21 +122,22 @@ class GitHubWebhookMessage(models.Model):
             return ""
 
     def save(self, *args, **kwargs):
+        post_save_task = None
+
         if self._state.adding:
             if self.payload.get("ref_type") == "tag":
-                on_commit(
-                    lambda: get_zipfile.apply_async(kwargs={"pk": self.pk})
-                )
+                post_save_task = get_zipfile
             elif self.payload.get("action") == "deleted":
-                on_commit(
-                    lambda: unlink_algorithm.apply_async(
-                        kwargs={"pk": self.pk}
-                    )
-                )
+                post_save_task = unlink_algorithm
             else:
                 self.clone_status = CloneStatusChoices.INVALID
 
         super().save(*args, **kwargs)
+
+        if post_save_task:
+            on_commit(
+                post_save_task.signature(kwargs={"pk": self.pk}).apply_async
+            )
 
     class Meta:
         indexes = [
