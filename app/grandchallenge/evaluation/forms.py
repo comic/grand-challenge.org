@@ -99,10 +99,10 @@ class PhaseCreateForm(
         fields = ("title", "submissions_open_at", "submissions_close_at")
         widgets = {
             "submissions_open_at": forms.DateTimeInput(
-                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
+                format=("%Y-%m-%dT%H:%M"), attrs={"type": "datetime-local"}
             ),
             "submissions_close_at": forms.DateTimeInput(
-                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
+                format=("%Y-%m-%dT%H:%M"), attrs={"type": "datetime-local"}
             ),
         }
 
@@ -137,10 +137,10 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
                 schema=EXTRA_RESULT_COLUMNS_SCHEMA
             ),
             "submissions_open_at": forms.DateTimeInput(
-                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
+                format=("%Y-%m-%dT%H:%M"), attrs={"type": "datetime-local"}
             ),
             "submissions_close_at": forms.DateTimeInput(
-                format=("%Y-%m-%d %H:%M"), attrs={"type": "datetime-local"}
+                format=("%Y-%m-%dT%H:%M"), attrs={"type": "datetime-local"}
             ),
         }
 
