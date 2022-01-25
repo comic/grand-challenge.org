@@ -224,6 +224,37 @@ class ArchiveItem(UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="archive_items"
     )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Archive editors, uploaders and users can view this archive item
+        assign_perm(
+            f"view_{self._meta.model_name}", self.archive.editors_group, self
+        )
+        assign_perm(
+            f"view_{self._meta.model_name}", self.archive.uploaders_group, self
+        )
+        assign_perm(
+            f"view_{self._meta.model_name}", self.archive.users_group, self
+        )
+        # Archive editors and uploaders can change this archive item
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.archive.editors_group,
+            self,
+        )
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.archive.uploaders_group,
+            self,
+        )
+
 
 class ArchivePermissionRequest(RequestBase):
     """

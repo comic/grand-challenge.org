@@ -27,7 +27,6 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_objects_for_user
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -53,7 +52,6 @@ from grandchallenge.archives.models import (
     ArchiveItem,
     ArchivePermissionRequest,
 )
-from grandchallenge.archives.permissions import ArchiveItemPermission
 from grandchallenge.archives.serializers import (
     ArchiveItemSerializer,
     ArchiveSerializer,
@@ -373,12 +371,12 @@ class ArchiveEditArchiveItem(
     form_class = ArchiveItemForm
     template_name = "archives/archive_item_form.html"
     permission_required = (
-        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
+        f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
     )
     raise_exception = True
 
     def get_permission_object(self):
-        return self.archive
+        return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
 
     @cached_property
     def archive(self):
@@ -481,11 +479,11 @@ class ArchiveEditArchiveItem(
 
 
 class ArchiveItemsList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView,
 ):
     model = ArchiveItem
     permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
+        f"{ArchiveItem._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
     raise_exception = True
     template_name = "archives/archive_items_list.html"
@@ -505,9 +503,6 @@ class ArchiveItemsList(
     @cached_property
     def archive(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -740,17 +735,8 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
 
 
 class ArchiveItemViewSet(ReadOnlyModelViewSet):
+    queryset = ArchiveItem.objects.all().prefetch_related("archive")
     serializer_class = ArchiveItemSerializer
-    permission_classes = [ArchiveItemPermission]
-    filter_backends = [DjangoFilterBackend]
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["archive"]
-
-    def get_queryset(self):
-        # restrict queryset to items from archives the user has view permission for
-        user = self.request.user
-        archives = get_objects_for_user(
-            user, "archives.view_archive", Archive.objects.all()
-        )
-        return ArchiveItem.objects.filter(
-            archive__id__in=archives.values_list("id", flat=True)
-        )

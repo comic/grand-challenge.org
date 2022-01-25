@@ -151,10 +151,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             for t in self.targets
             if t in validated_data
         }
-        try:
-            interface = validated_data.pop("interface")
-        except KeyError:
-            interface = None
+        interface = validated_data.pop("interface", None)
 
         instance = super().create(validated_data=validated_data)
 
@@ -184,9 +181,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 "Only one of archive, answer or reader study can be set"
             )
 
-        if "interface" in attrs and (
-            "reader_study" in attrs or "answer" in attrs
-        ):
+        if "interface" in attrs and "archive" not in attrs:
             raise ValidationError(
                 "An interface can only be defined for archive uploads."
             )
