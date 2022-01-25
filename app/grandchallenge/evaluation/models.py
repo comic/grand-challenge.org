@@ -15,6 +15,7 @@ from django.db import models
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.text import get_valid_filename
+from django.utils.timezone import get_current_timezone
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -656,13 +657,19 @@ class Phase(UUIDModel):
     @property
     def submission_status_string(self):
         if self.status == StatusChoices.OPEN and self.submissions_close_at:
-            return f'Accepting submissions for {self.title} until {self.submissions_close_at.strftime("%b %d %Y at %H:%M")}'
+            return (
+                f"Accepting submissions for {self.title} until "
+                f'{self.submissions_close_at.astimezone(get_current_timezone()).strftime("%b %d %Y at %H:%M")}'
+            )
         elif (
             self.status == StatusChoices.OPEN and not self.submissions_close_at
         ):
             return f"Accepting submissions for {self.title}"
         elif self.status == StatusChoices.OPENING_SOON:
-            return f'Opening submissions for {self.title} on {self.submissions_open_at.strftime("%b %d %Y at %H:%M")}'
+            return (
+                f"Opening submissions for {self.title} on "
+                f'{self.submissions_open_at.astimezone(get_current_timezone()).strftime("%b %d %Y at %H:%M")}'
+            )
         elif self.status == StatusChoices.COMPLETED:
             return f"{self.title} completed"
         elif self.status == StatusChoices.CLOSED:

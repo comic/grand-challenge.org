@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.utils.timezone import get_current_timezone
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import (
     TitleSlugDescriptionModel as BaseTitleSlugDescriptionModel,
@@ -75,7 +76,9 @@ class RequestBase(models.Model):
 
     @staticmethod
     def format_date(date):
-        return date.strftime("%b %d, %Y at %H:%M")
+        return date.astimezone(get_current_timezone()).strftime(
+            "%b %d, %Y at %H:%M"
+        )
 
     def user_affiliation(self):
         profile = self.user.user_profile
