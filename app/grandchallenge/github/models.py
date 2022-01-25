@@ -81,7 +81,8 @@ class GitHubWebhookMessage(models.Model):
     )
     has_open_source_license = models.BooleanField(default=False)
     license_check_result = models.CharField(max_length=1024, blank=True)
-    error = models.TextField(blank=True)
+    stdout = models.TextField(blank=True)
+    stderr = models.TextField(blank=True)
     clone_status = models.CharField(
         choices=CloneStatusChoices.choices,
         default=CloneStatusChoices.PENDING,
@@ -109,15 +110,33 @@ class GitHubWebhookMessage(models.Model):
     def tag_url(self):
         return f"https://github.com/{self.payload['repository']['full_name']}/releases/tag/{self.payload['ref']}"
 
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-        super().save(*args, **kwargs)
-        if adding and self.payload.get("ref_type") == "tag":
-            on_commit(lambda: get_zipfile.apply_async(kwargs={"pk": self.pk}))
-        if adding and self.payload.get("action") == "deleted":
-            on_commit(
-                lambda: unlink_algorithm.apply_async(kwargs={"pk": self.pk})
+    @property
+    def user_error(self):
+        if "This repository is over its data quota" in self.stdout:
+            return (
+                f"Repository {self.repo_name} has used all of its LFS "
+                f"bandwidth. Please purchase more data packs on GitHub for "
+                f"this repo so that we can clone it."
             )
+        else:
+            return ""
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            if self.payload.get("ref_type") == "tag":
+                on_commit(
+                    lambda: get_zipfile.apply_async(kwargs={"pk": self.pk})
+                )
+            elif self.payload.get("action") == "deleted":
+                on_commit(
+                    lambda: unlink_algorithm.apply_async(
+                        kwargs={"pk": self.pk}
+                    )
+                )
+            else:
+                self.clone_status = CloneStatusChoices.INVALID
+
+        super().save(*args, **kwargs)
 
     class Meta:
         indexes = [

@@ -27,7 +27,7 @@ class GitHubWebhookMessageAdmin(admin.ModelAdmin):
         "clone_status",
         "has_open_source_license",
         "license_check_result",
-        "error",
+        "user_error",
     )
     list_filter = (
         "clone_status",
