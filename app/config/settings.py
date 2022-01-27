@@ -1099,6 +1099,7 @@ ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 # Number of jobs that can be scheduled in one task
 ALGORITHMS_JOB_BATCH_LIMIT = 256
 # Maximum and minimum values the user can set for algorithm requirements
+# Current limits of 4g/30g are restrictions from the instance types used on ECS
 ALGORITHMS_MIN_MEMORY_GB = 4
 ALGORITHMS_MAX_MEMORY_GB = 30
 
