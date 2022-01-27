@@ -340,6 +340,10 @@ def test_session_with_user_upload_to_archive(client, settings):
     item = ArchiveItem.objects.get()
     assert item.values.get().interface.slug == "generic-overlay"
 
+    upload2 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
     # without interface
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
@@ -348,14 +352,14 @@ def test_session_with_user_upload_to_archive(client, settings):
             client=client,
             method=client.post,
             content_type="application/json",
-            data={"uploads": [upload.api_url], "archive": archive.slug},
+            data={"uploads": [upload2.api_url], "archive": archive.slug},
             HTTP_X_FORWARDED_PROTO="https",
         )
 
     assert response.status_code == 201
     upload_session = response.json()
-    assert upload_session["uploads"] == [upload.api_url]
-    item = ArchiveItem.objects.get()
+    assert upload_session["uploads"] == [upload2.api_url]
+    item = ArchiveItem.objects.first()
     assert item.values.get().interface.slug == "generic-medical-image"
 
 
