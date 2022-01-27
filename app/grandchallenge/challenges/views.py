@@ -57,7 +57,7 @@ class ChallengeCreate(
 
 class ChallengeList(FilterMixin, ListView):
     model = Challenge
-    ordering = "-created"
+    ordering = ("-highlight", "-created")
     filter_class = InternalChallengeFilter
     paginate_by = 40
     queryset = Challenge.objects.filter(hidden=False).prefetch_related(
@@ -100,7 +100,7 @@ class CombinedChallengeList(TemplateView):
         int_qs = (
             Challenge.objects.filter(hidden=False)
             .prefetch_related("phase_set", "publications")
-            .order_by("-created")
+            .order_by("-highlight", "-created")
         )
         self.int_filter = ChallengeFilter(self.request.GET, int_qs,)
         ext_qs = (

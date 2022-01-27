@@ -119,7 +119,7 @@ def build_repo(ghwm_pk):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def get_zipfile(*, pk):  # noqa C901
+def get_zipfile(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
     )
@@ -140,33 +140,30 @@ def get_zipfile(*, pk):  # noqa C901
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             try:
-                # Run git lfs install here, doing it in the dockerfile does not seem
-                # to work
+                # Run git lfs install here, doing it in the dockerfile does not
+                # seem to work
                 install_lfs()
                 fetch_repo(payload, repo_url, tmpdirname, recurse_submodules)
                 license, has_open_source_license = check_license(tmpdirname)
                 temp_file = save_zipfile(ghwm, tmpdirname)
+
                 # update GithubWebhook object
                 ghwm.zipfile = temp_file
                 ghwm.has_open_source_license = has_open_source_license
                 ghwm.license_check_result = license
                 ghwm.clone_status = CloneStatusChoices.SUCCESS
                 ghwm.save()
-                # build repo
+
                 build_repo(ghwm.pk)
+
             except Exception as e:
-                stdout = getattr(e, "stdout", "")
-                stderr = getattr(e, "stderr", "")
-                logger.error(
-                    f"get_zipfile failed with exception: {str(e)}\n\n"
-                    "Additional information: \n\n"
-                    f"stdout: {stdout}\n"
-                    f"stderr: {stderr}\n"
-                )
-                ghwm.error = str(e)
+                ghwm.stdout = str(getattr(e, "stdout", ""))
+                ghwm.stderr = str(getattr(e, "stderr", ""))
                 ghwm.clone_status = CloneStatusChoices.FAILURE
                 ghwm.save()
-                raise
+
+                if not ghwm.user_error:
+                    raise
 
 
 @shared_task

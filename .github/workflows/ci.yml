@@ -5,6 +5,10 @@ on: [push, pull_request]
 env:
   PYTHON_VERSION: '3.8'
 
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
 
   precommit:

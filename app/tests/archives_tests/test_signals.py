@@ -14,7 +14,7 @@ from tests.factories import ImageFactory
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("reverse", [True, False])
-def test_archive_item_permissions_signal(client, reverse):  # noqa: C901
+def test_archive_item_permissions_signal(client, reverse):
     ai1, ai2 = ArchiveItemFactory.create_batch(2)
     im1, im2, im3, im4 = ImageFactory.create_batch(4)
 
