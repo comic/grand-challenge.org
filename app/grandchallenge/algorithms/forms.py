@@ -119,8 +119,9 @@ class AlgorithmForm(
     RepoNameValidationMixin, WorkstationUserFilterMixin, ModelForm
 ):
     image_requires_memory_gb = IntegerField(
-        min_value=1,
+        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
         max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
+        initial=15,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
     inputs = ModelMultipleChoiceField(
@@ -345,7 +346,7 @@ class AlgorithmUpdateForm(AlgorithmForm):
 
 class AlgorithmImageForm(ContainerImageForm):
     requires_memory_gb = IntegerField(
-        min_value=1,
+        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
         max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
