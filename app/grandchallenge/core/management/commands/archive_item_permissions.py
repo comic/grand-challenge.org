@@ -8,7 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         items = (
             ArchiveItem.objects.select_related("archive")
-            .order_by("-created")
+            .order_by("created")
             .all()
         )
         paginator = Paginator(items, 100)
