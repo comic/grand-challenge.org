@@ -125,7 +125,21 @@ class ReaderStudyCreateForm(
             and not self.cleaned_data["allow_case_navigation"]
         ):
             self.add_error(
-                error="`allow_case_navigation` must be checked if `allow_answer_modification` is",
+                error=ValidationError(
+                    "Case navigation is required when answer modification is allowed",
+                    code="invalid",
+                ),
+                field=None,
+            )
+        if self.cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
+            self.cleaned_data["allow_case_navigation"]
+            or self.cleaned_data["shuffle_hanging_list"]
+        ):
+            self.add_error(
+                error=ValidationError(
+                    "Rolling over answers should not be used together with case navigation or shuffling of the hanging list",
+                    code="invalid",
+                ),
                 field=None,
             )
 
