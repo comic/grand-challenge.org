@@ -118,6 +118,11 @@ class RepoNameValidationMixin:
 class AlgorithmForm(
     RepoNameValidationMixin, WorkstationUserFilterMixin, ModelForm
 ):
+    image_requires_memory_gb = IntegerField(
+        min_value=1,
+        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text="The maximum system memory required by the algorithm in gigabytes.",
+    )
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
             slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
@@ -341,7 +346,7 @@ class AlgorithmUpdateForm(AlgorithmForm):
 class AlgorithmImageForm(ContainerImageForm):
     requires_memory_gb = IntegerField(
         min_value=1,
-        max_value=30,
+        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
     algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
