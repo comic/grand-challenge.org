@@ -302,7 +302,11 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
                 submission__algorithm_image__image_sha256=algorithm.latest_ready_image.image_sha256,
             )
             .exclude(
-                status__in=[self.SUCCESS, self.FAILURE, self.CANCELLED],
+                status__in=[
+                    Evaluation.SUCCESS,
+                    Evaluation.FAILURE,
+                    Evaluation.CANCELLED,
+                ],
                 submission__phase=self._phase,
             )
             .exists()
