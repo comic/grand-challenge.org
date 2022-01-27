@@ -251,38 +251,21 @@ def test_archive_upload_session_create(client, obj, factory):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "obj,factory,interface",
-    (
-        ("archive", ArchiveFactory, None),
-        ("reader_study", ReaderStudyFactory, None),
-        ("archive", ArchiveFactory, "generic-overlay"),
-        ("reader_study", ReaderStudyFactory, "generic-overlay"),
-    ),
-)
-def test_session_with_user_upload(client, settings, obj, factory, interface):
+def test_session_with_user_upload_to_readerstudy(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     user = UserFactory()
-    o = factory()
-    o.add_editor(user=user)
+    rs = ReaderStudyFactory()
+    rs.add_editor(user=user)
 
     upload = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
 
-    if interface:
-        data = {
-            "uploads": [upload.api_url],
-            obj: o.slug,
-            "interface": interface,
-        }
-    else:
-        data = {"uploads": [upload.api_url], obj: o.slug}
-
+    # try upload with interface
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
@@ -290,29 +273,90 @@ def test_session_with_user_upload(client, settings, obj, factory, interface):
             client=client,
             method=client.post,
             content_type="application/json",
-            data=data,
+            data={
+                "uploads": [upload.api_url],
+                "reader_study": rs.slug,
+                "interface": "generic-overlay",
+            },
             HTTP_X_FORWARDED_PROTO="https",
         )
 
-    if obj == "reader_study" and interface:
-        assert response.status_code == 400
-        assert (
-            "An interface can only be defined for archive uploads."
-            in response.json()["non_field_errors"]
+    assert response.status_code == 400
+    assert (
+        "An interface can only be defined for archive uploads."
+        in response.json()["non_field_errors"]
+    )
+
+    # try without interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload.api_url], "reader_study": rs.slug},
+            HTTP_X_FORWARDED_PROTO="https",
         )
-    elif obj == "reader_study" and not interface:
-        assert response.status_code == 201
-        upload_session = response.json()
-        assert upload_session["uploads"] == [upload.api_url]
-    elif obj == "archive":
-        assert response.status_code == 201
-        upload_session = response.json()
-        assert upload_session["uploads"] == [upload.api_url]
-        item = ArchiveItem.objects.get()
-        assert (
-            item.values.get().interface.slug == interface
-            or "generic-medical-image"
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload.api_url]
+
+
+@pytest.mark.django_db
+def test_session_with_user_upload_to_archive(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    # with interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload.api_url],
+                "archive": archive.slug,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
         )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload.api_url]
+    item = ArchiveItem.objects.get()
+    assert item.values.get().interface.slug == "generic-overlay"
+
+    # without interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload.api_url], "archive": archive.slug},
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload.api_url]
+    item = ArchiveItem.objects.get()
+    assert item.values.get().interface.slug == "generic-medical-image"
 
 
 @pytest.mark.django_db
