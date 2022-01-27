@@ -5,6 +5,7 @@ from statistics import mean, median
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
@@ -101,7 +102,15 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         civ = ComponentInterfaceValue(
             interface=interface, file=submission.predictions_file
         )
-        civ.full_clean()
+
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            evaluation.update_status(
+                status=Evaluation.FAILURE, error_message=str(e),
+            )
+            return
+
         civ.save()
 
         evaluation.inputs.set([civ])
