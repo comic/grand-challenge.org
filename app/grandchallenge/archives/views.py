@@ -376,7 +376,7 @@ class ArchiveEditArchiveItem(
     raise_exception = True
 
     def get_permission_object(self):
-        return get_object_or_404(ArchiveItem, pk=self.kwargs["pk"])
+        return self.archive_item
 
     @cached_property
     def archive(self):
