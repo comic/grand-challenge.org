@@ -107,7 +107,11 @@ def test_reader_study_create(client, uploaded_image):
     creator = get_rs_creator()
     ws = WorkstationFactory()
 
-    def try_create_rs(allow_case_navigation):
+    def try_create_rs(
+        allow_case_navigation=False,
+        shuffle_hanging_list=False,
+        roll_over_answers_for_n_cases=0,
+    ):
         return get_view_for_user(
             viewname="reader-studies:create",
             client=client,
@@ -117,31 +121,49 @@ def test_reader_study_create(client, uploaded_image):
                 "logo": uploaded_image(),
                 "workstation": ws.pk,
                 "allow_answer_modification": True,
+                "shuffle_hanging_list": shuffle_hanging_list,
                 "allow_case_navigation": allow_case_navigation,
+                "roll_over_answers_for_n_cases": roll_over_answers_for_n_cases,
             },
             follow=True,
             user=creator,
         )
 
-    response = try_create_rs(False)
+    response = try_create_rs()
     assert "error_1_id_workstation" in response.rendered_content
 
     # The editor must have view permissions for the workstation to add it
     ws.add_user(user=creator)
 
-    response = try_create_rs(False)
-    assert "error_1_id_workstation" not in response.rendered_content
-    assert (
-        "`allow_case_navigation` must be checked if `allow_answer_modification` is"
-        in response.rendered_content
-    )
+    roll_over_error = "Rolling over answers should not be used together with case navigation or shuffling of the hanging list"
+    for navigation, shuffle in [
+        (True, True),
+        (True, False),
+        (False, True),
+    ]:
+        response = try_create_rs(
+            allow_case_navigation=navigation,
+            shuffle_hanging_list=shuffle,
+            roll_over_answers_for_n_cases=1,
+        )
+        assert "error_1_id_workstation" not in response.rendered_content
+        assert roll_over_error in response.rendered_content
 
-    response = try_create_rs(True)
+    response = try_create_rs(roll_over_answers_for_n_cases=1)
     assert "error_1_id_workstation" not in response.rendered_content
-    assert (
-        "`allow_case_navigation` must be checked if `allow_answer_modification` is"
-        not in response.rendered_content
+    assert roll_over_error not in response.rendered_content
+    assert response.status_code == 200
+
+    case_navigation_error = (
+        "Case navigation is required when answer modification is allowed"
     )
+    response = try_create_rs(allow_case_navigation=False)
+    assert "error_1_id_workstation" not in response.rendered_content
+    assert case_navigation_error in response.rendered_content
+
+    response = try_create_rs(allow_case_navigation=True)
+    assert "error_1_id_workstation" not in response.rendered_content
+    assert case_navigation_error not in response.rendered_content
     assert response.status_code == 200
 
     rs = ReaderStudy.objects.get(title="foo bar")

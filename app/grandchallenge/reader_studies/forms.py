@@ -101,6 +101,7 @@ class ReaderStudyCreateForm(
             "is_educational",
             "public",
             "allow_answer_modification",
+            "shuffle_hanging_list",
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
