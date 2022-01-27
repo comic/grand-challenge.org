@@ -19,6 +19,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
+    Evaluation,
     Method,
     Phase,
     Submission,
@@ -294,6 +295,28 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             raise ValidationError(
                 "A submission for this algorithm container image "
                 "for this phase already exists."
+            )
+
+        if (
+            Evaluation.objects.filter(
+                submission__algorithm_image__image_sha256=algorithm.latest_ready_image.image_sha256,
+            )
+            .exclude(
+                status__in=[
+                    Evaluation.SUCCESS,
+                    Evaluation.FAILURE,
+                    Evaluation.CANCELLED,
+                ],
+                submission__phase=self._phase,
+            )
+            .exists()
+        ):
+            # This causes problems in `set_evaluation_inputs` if two
+            # evaluations are running for the same image at the same time
+            raise ValidationError(
+                "A evaluation for this algorithm is already in progress for "
+                "another phase. Please wait for the other evaluation to "
+                "complete."
             )
 
         return algorithm
