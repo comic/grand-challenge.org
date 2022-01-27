@@ -945,7 +945,6 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
 
 class DisplaySetViewSet(ReadOnlyModelViewSet):
     serializer_class = DisplaySetSerializer
-    queryset = DisplaySet.objects.all().select_related("reader_study")
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["reader_study"]
@@ -953,6 +952,15 @@ class DisplaySetViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+
+    def get_queryset(self):
+        queryset = DisplaySet.objects.all().select_related("reader_study")
+        unanswered_by_user = self.request.query_params.get(
+            "unanswered_by_user"
+        )
+        if unanswered_by_user == "True":
+            queryset = queryset.exclude(answers__creator=self.request.user)
+        return queryset
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):

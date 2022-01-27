@@ -7,10 +7,12 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.reader_studies.models import Answer, Question
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
+    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -1190,3 +1192,77 @@ def test_question_accepts_image_type_answers(client, settings):
         b"This question does not accept image type answers"
         in response.rendered_content
     )
+
+
+@pytest.mark.django_db
+def test_display_set_endpoints(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    r = UserFactory()
+
+    # TODO: fix permissions
+    r.is_superuser = True
+    r.save()
+
+    rs1, rs2 = (ReaderStudyFactory() for _ in range(2))
+    rs1.add_reader(r)
+    rs2.add_reader(r)
+    q1, q2 = (
+        QuestionFactory(reader_study=rs1, answer_type=Question.AnswerType.BOOL)
+        for _ in range(2)
+    )
+    civ1, civ2 = (
+        ComponentInterfaceValueFactory(image=ImageFactory()) for _ in range(2)
+    )
+    ds1, ds2 = (DisplaySetFactory(reader_study=rs1) for _ in range(2))
+    ds1.values.add(civ1)
+    ds2.values.add(civ2)
+
+    civ3, civ4 = (
+        ComponentInterfaceValueFactory(image=ImageFactory()) for _ in range(2)
+    )
+    ds3, ds4 = (DisplaySetFactory(reader_study=rs2) for _ in range(2))
+    ds3.values.add(civ3)
+    ds4.values.add(civ4)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 4
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk)},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 2
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 2
+
+    AnswerFactory(question=q1, display_set=ds1, creator=r)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 1
