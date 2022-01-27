@@ -1188,6 +1188,9 @@ class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
+    display_set = models.ForeignKey(
+        DisplaySet, related_name="answers", on_delete=models.PROTECT, null=True
+    )
     answer = models.JSONField(
         null=True, validators=[JSONValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
