@@ -23,6 +23,7 @@ from machina.apps.forum.models import Forum
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
+from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import (
     Challenge,
@@ -93,6 +94,7 @@ def run():
     _create_workstation(users)
     _create_algorithm_demo(users)
     _create_reader_studies(users)
+    _create_archive(users)
     _create_user_tokens(users)
     _create_github_user_token(users["algorithm"])
     _create_github_webhook_message()
@@ -524,6 +526,17 @@ def _create_reader_studies(users):
     answer.save()
 
 
+def _create_archive(users):
+    archive = Archive.objects.create(
+        title="Archive",
+        workstation=Workstation.objects.last(),
+        logo=create_uploaded_image(),
+        description="Test archive",
+    )
+    archive.editors_group.user_set.add(users["archive"])
+    archive.uploaders_group.user_set.add(users["demo"])
+
+
 def _create_user_tokens(users):
     # Hard code tokens used in gcapi integration tests
     user_tokens = {
@@ -531,6 +544,7 @@ def _create_user_tokens(users):
         "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
         "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
         "demop": "00aa710f4dc5621a0cb64b0795fbba02e39d7700",
+        "archive": "0d284528953157759d26c469297afcf6fd367f71",
     }
 
     out = f"{'*' * 80}\n"

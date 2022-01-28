@@ -2,7 +2,25 @@ from rest_framework import serializers
 from rest_framework.fields import ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.components.serializers import (
+    ComponentInterfaceValueSerializer,
+)
+
+
+class ArchiveItemSerializer(serializers.ModelSerializer):
+    archive = HyperlinkedRelatedField(
+        read_only=True, view_name="api:archive-detail",
+    )
+    values = ComponentInterfaceValueSerializer(many=True)
+
+    class Meta:
+        model = ArchiveItem
+        fields = (
+            "id",
+            "archive",
+            "values",
+        )
 
 
 class ArchiveSerializer(serializers.ModelSerializer):

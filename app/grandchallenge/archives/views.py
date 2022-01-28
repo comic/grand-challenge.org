@@ -52,7 +52,10 @@ from grandchallenge.archives.models import (
     ArchiveItem,
     ArchivePermissionRequest,
 )
-from grandchallenge.archives.serializers import ArchiveSerializer
+from grandchallenge.archives.serializers import (
+    ArchiveItemSerializer,
+    ArchiveSerializer,
+)
 from grandchallenge.archives.tasks import (
     add_images_to_archive,
     update_archive_item_values,
@@ -368,12 +371,12 @@ class ArchiveEditArchiveItem(
     form_class = ArchiveItemForm
     template_name = "archives/archive_item_form.html"
     permission_required = (
-        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
+        f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
     )
     raise_exception = True
 
     def get_permission_object(self):
-        return self.archive
+        return self.archive_item
 
     @cached_property
     def archive(self):
@@ -476,11 +479,11 @@ class ArchiveEditArchiveItem(
 
 
 class ArchiveItemsList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView,
 ):
     model = ArchiveItem
     permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
+        f"{ArchiveItem._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
     raise_exception = True
     template_name = "archives/archive_items_list.html"
@@ -500,9 +503,6 @@ class ArchiveItemsList(
     @cached_property
     def archive(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -732,3 +732,11 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
             .distinct("study_description")
         )
         return Response(studies)
+
+
+class ArchiveItemViewSet(ReadOnlyModelViewSet):
+    queryset = ArchiveItem.objects.all().prefetch_related("archive")
+    serializer_class = ArchiveItemSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["archive"]

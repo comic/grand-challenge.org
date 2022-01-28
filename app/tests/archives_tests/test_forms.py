@@ -205,6 +205,8 @@ def test_archive_item_form(client, settings):
     archive = ArchiveFactory()
 
     editor = UserFactory()
+    user = UserFactory()
+
     archive.editors_group.user_set.add(editor)
 
     ci = ComponentInterfaceFactory(
@@ -215,6 +217,36 @@ def test_archive_item_form(client, settings):
     )
     ai = ArchiveItemFactory(archive=archive)
     ai.values.add(civ)
+
+    # user cannot edit archive item
+    response = get_view_for_user(
+        viewname="archives:item-edit",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "archive_slug": archive.slug,
+            "pk": ai.pk,
+            "interface_slug": ci.slug,
+        },
+        follow=True,
+        user=user,
+    )
+    assert response.status_code == 403
+
+    archive.add_uploader(user)
+    response = get_view_for_user(
+        viewname="archives:item-edit",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "archive_slug": archive.slug,
+            "pk": ai.pk,
+            "interface_slug": ci.slug,
+        },
+        follow=True,
+        user=user,
+    )
+    assert response.status_code == 200
 
     response = get_view_for_user(
         viewname="archives:item-edit",

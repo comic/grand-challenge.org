@@ -212,3 +212,71 @@ class TestArchiveViewSetStudies:
         response = self.get_view(client, u, a.pk, p_id)
         assert response.status_code == 200
         assert set(response.data) == set(studies + [""])
+
+
+@pytest.mark.django_db
+def test_api_archive_item_list_is_filtered(client):
+    a1, a2 = ArchiveFactory(), ArchiveFactory()
+    a1_editor, user = UserFactory(), UserFactory()
+    a1.add_editor(a1_editor)
+    _, _ = (
+        ArchiveItemFactory(archive=a1),
+        ArchiveItemFactory(archive=a1),
+    )
+    i3 = ArchiveItemFactory(archive=a2)
+
+    # user does not see any archive items
+    response = get_view_for_user(
+        viewname="api:archives-item-list", user=user, client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+
+    # editor of archive 1 sees the items from archive 1, but not from archive 2
+    response = get_view_for_user(
+        viewname="api:archives-item-list", user=a1_editor, client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
+    assert i3.id not in (
+        response.json()["results"][0]["id"],
+        response.json()["results"][1]["id"],
+    )
+
+
+@pytest.mark.django_db
+def test_api_archive_item_retrieve_permissions(client):
+    archive = ArchiveFactory()
+    editor, user = UserFactory(), UserFactory()
+    archive.add_editor(editor)
+    i1 = ArchiveItemFactory(archive=archive)
+
+    # editor can retrieve archive item
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=editor,
+        client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(i1.pk)
+
+    # user cannot retrieve archive item
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=user,
+        client=client,
+    )
+    assert response.status_code == 404
+
+    # add user to archive
+    archive.add_user(user)
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=user,
+        client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(i1.pk)
