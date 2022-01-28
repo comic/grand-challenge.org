@@ -45,7 +45,10 @@ class SummernoteAttachment(AbstractAttachment):
     )
 
 
-_S3_CLIENT_KWARGS = {"endpoint_url": settings.AWS_S3_ENDPOINT_URL}
+_S3_CLIENT_KWARGS = {
+    "endpoint_url": settings.AWS_S3_ENDPOINT_URL,
+    "region_name": settings.AWS_S3_REGION_NAME,
+}
 _UPLOADS_CLIENT = boto3.client("s3", **_S3_CLIENT_KWARGS)
 _ACCELERATED_UPLOADS_CLIENT = boto3.client(
     "s3",
