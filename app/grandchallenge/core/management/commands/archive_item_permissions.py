@@ -12,7 +12,11 @@ class Command(BaseCommand):
             .all()
         )
         paginator = Paginator(items, 100)
+        num_pages = paginator.end_index()
 
         for page_nr in paginator.page_range:
+            print(f"Page {page_nr} / {num_pages}...")
             for item in paginator.page(page_nr).object_list:
                 item.assign_permissions()
+
+        print("Done")
