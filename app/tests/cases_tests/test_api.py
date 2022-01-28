@@ -340,6 +340,7 @@ def test_session_with_user_upload_to_archive(client, settings):
     item = ArchiveItem.objects.get()
     assert item.values.get().interface.slug == "generic-overlay"
 
+    ArchiveItem.objects.all().delete()
     upload2 = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
@@ -359,7 +360,7 @@ def test_session_with_user_upload_to_archive(client, settings):
     assert response.status_code == 201
     upload_session = response.json()
     assert upload_session["uploads"] == [upload2.api_url]
-    item = ArchiveItem.objects.first()
+    item = ArchiveItem.objects.get()
     assert item.values.get().interface.slug == "generic-medical-image"
 
 
