@@ -160,13 +160,17 @@ class AmazonECSExecutor:
     @property
     def _ecs_client(self):
         if self.__ecs_client is None:
-            self.__ecs_client = boto3.client("ecs")
+            self.__ecs_client = boto3.client(
+                "ecs", region_name=settings.COMPONENTS_AMAZON_ECS_REGION
+            )
         return self.__ecs_client
 
     @property
     def _logs_client(self):
         if self.__logs_client is None:
-            self.__logs_client = boto3.client("logs")
+            self.__logs_client = boto3.client(
+                "logs", region_name=settings.COMPONENTS_AMAZON_ECS_REGION
+            )
         return self.__logs_client
 
     @property
