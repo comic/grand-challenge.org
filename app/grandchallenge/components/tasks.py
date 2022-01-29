@@ -100,7 +100,9 @@ def _get_repo_login_cmd():
 
 
 def _get_ecr_user_and_token():
-    client = boto3.client("ecr")
+    client = boto3.client(
+        "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
+    )
     auth = client.get_authorization_token()
 
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecr.html#ECR.Client.get_authorization_token

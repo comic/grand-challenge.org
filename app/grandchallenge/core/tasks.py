@@ -1,5 +1,6 @@
 import boto3
 from celery import shared_task
+from django.conf import settings
 from django.contrib.sitemaps import ping_google as _ping_google
 from django.contrib.sites.models import Site
 from django.core.management import call_command
@@ -24,7 +25,9 @@ def ping_google():
 
 @shared_task
 def put_cloudwatch_metrics():
-    client = boto3.client("cloudwatch")
+    client = boto3.client(
+        "cloudwatch", region_name=settings.AWS_CLOUDWATCH_REGION_NAME
+    )
     metrics = _get_metrics()
 
     for metric in metrics:

@@ -44,7 +44,9 @@ class Build(UUIDModel):
     @property
     def client(self):
         if self.__client is None:
-            self.__client = boto3.client("codebuild")
+            self.__client = boto3.client(
+                "codebuild", region_name=settings.AWS_CODEBUILD_REGION_NAME
+            )
         return self.__client
 
     @property
