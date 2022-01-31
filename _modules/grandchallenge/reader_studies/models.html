@@ -363,6 +363,15 @@
             <span class="s2">&quot;for a case.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">roll_over_answers_for_n_cases</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The number of cases for which answers should roll over. &quot;</span>
+            <span class="s2">&quot;It can be used for repeated readings with slightly different hangings. &quot;</span>
+            <span class="s2">&quot;For instance, if set to 1. Case 2 will start with the answers from case 1; &quot;</span>
+            <span class="s2">&quot;whereas case 3 starts anew but its answers will rollover to case 4.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">validate_hanging_list</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">publications</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
         <span class="n">Publication</span><span class="p">,</span>
@@ -399,6 +408,7 @@
         <span class="s2">&quot;help_text_markdown&quot;</span><span class="p">,</span>
         <span class="s2">&quot;shuffle_hanging_list&quot;</span><span class="p">,</span>
         <span class="s2">&quot;is_educational&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;roll_over_answers_for_n_cases&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_answer_modification&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_case_navigation&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_show_all_annotations&quot;</span><span class="p">,</span>
