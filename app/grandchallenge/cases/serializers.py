@@ -201,18 +201,10 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
         if "archive_item" in attrs:
-            archive_item_interfaces = attrs["archive_item"].values.values_list(
-                "interface__slug", flat=True
-            )
-            interface_slug = (
-                attrs["interface"].slug
-                if "interface" in attrs
-                else "generic-medical-image"
-            )
-            if interface_slug in archive_item_interfaces:
+            if "interface" not in attrs:
                 raise ValidationError(
-                    f"This archive item already has a component interface of "
-                    f"{interface_slug} associated with it."
+                    "An interface needs to be defined to upload to an "
+                    "archive item."
                 )
             if len(uploads) > 1:
                 raise ValidationError(

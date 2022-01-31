@@ -442,12 +442,15 @@ def test_session_with_user_upload_to_archive_item(client, settings):
     assert "generic-overlay" in [
         item.interface.slug for item in item.values.all()
     ]
+    generic_overlay_civ_1 = item.values.filter(
+        interface__slug="generic-overlay"
+    ).get()
 
+    # upload another generic-overlay to the same item
     upload2 = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
-    # without interface
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
@@ -455,25 +458,48 @@ def test_session_with_user_upload_to_archive_item(client, settings):
             client=client,
             method=client.post,
             content_type="application/json",
-            data={"uploads": [upload2.api_url], "archive_item": item.pk},
+            data={
+                "uploads": [upload2.api_url],
+                "archive_item": item.pk,
+                "interface": "generic-overlay",
+            },
             HTTP_X_FORWARDED_PROTO="https",
         )
-
     assert response.status_code == 201
-    upload_session = response.json()
-    assert upload_session["uploads"] == [upload2.api_url]
     item.refresh_from_db()
-    assert item.values.count() == 3
-    assert "generic-medical-image" in [
-        item.interface.slug for item in item.values.all()
-    ]
+    # check that there is only one civ with the generic-overlay interface
+    assert item.values.filter(interface__slug="generic-overlay").count() == 1
+    # and that the previously added one is not longer associated with the item
+    assert generic_overlay_civ_1 not in item.values.all()
 
-    # try to upload multiple files to the same archive item
+    # try upload without interface
     upload3 = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload3.api_url], "archive_item": item.pk},
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 400
+    assert (
+        "An interface needs to be defined to upload to an archive item."
+        in response.json()["non_field_errors"]
+    )
+
+    # try to upload multiple files to the same archive item
     upload4 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    upload5 = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x11x12x13.mha",
         creator=user,
     )
@@ -486,7 +512,7 @@ def test_session_with_user_upload_to_archive_item(client, settings):
             method=client.post,
             content_type="application/json",
             data={
-                "uploads": [upload3.api_url, upload4.api_url],
+                "uploads": [upload4.api_url, upload5.api_url],
                 "archive_item": item.pk,
                 "interface": ci2.slug,
             },
@@ -495,30 +521,5 @@ def test_session_with_user_upload_to_archive_item(client, settings):
     assert response.status_code == 400
     assert (
         "Only one image can be uploaded to an archive item at a time."
-        in response.json()["non_field_errors"]
-    )
-
-    # try to add another civ with an already existing interface kind
-    upload5 = create_upload_from_file(
-        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
-        creator=user,
-    )
-    with capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="api:upload-session-list",
-            user=user,
-            client=client,
-            method=client.post,
-            content_type="application/json",
-            data={
-                "uploads": [upload5.api_url],
-                "archive_item": item.pk,
-                "interface": "generic-overlay",
-            },
-            HTTP_X_FORWARDED_PROTO="https",
-        )
-    assert response.status_code == 400
-    assert (
-        "This archive item already has a component interface of generic-overlay associated with it."
         in response.json()["non_field_errors"]
     )

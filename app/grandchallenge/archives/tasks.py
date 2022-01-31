@@ -41,23 +41,27 @@ def add_image_to_archive_item(
 ):
     image = Image.objects.filter(origin_id=upload_session_pk).get()
     archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
+    interface = ComponentInterface.objects.get(pk=interface_pk)
 
-    if interface_pk is not None:
-        interface = ComponentInterface.objects.get(pk=interface_pk)
-    else:
-        interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
+    civ_pks_to_remove = set()
+    civ_pks_to_add = set()
 
-    if ComponentInterfaceValue.objects.filter(
-        interface=interface, image=image
-    ).exists():
-        return
+    try:
+        old_civ = archive_item.values.filter(interface=interface).get()
+        civ_pks_to_remove.add(old_civ.pk)
+    except ComponentInterfaceValue.DoesNotExist:
+        pass
 
     civ = ComponentInterfaceValue.objects.create(
         interface=interface, image=image
     )
-    archive_item.values.add(civ)
+    civ_pks_to_add.add(civ)
+
+    update_archive_item_values(
+        archive_item_pk=archive_item_pk,
+        civ_pks_to_remove=civ_pks_to_remove,
+        civ_pks_to_add=civ_pks_to_add,
+    )
 
 
 @shared_task
