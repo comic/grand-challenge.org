@@ -1244,7 +1244,8 @@ def test_display_set_endpoints(client, settings):
     )
 
     assert response.json()["count"] == 2
-
+    rs1.shuffle_hanging_list = True
+    rs1.save()
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
@@ -1266,3 +1267,98 @@ def test_display_set_endpoints(client, settings):
     )
 
     assert response.json()["count"] == 1
+
+
+@pytest.mark.django_db
+def test_display_set_shuffling(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    r1, r2 = UserFactory(), UserFactory()
+
+    # TODO: fix permissions
+    r1.is_superuser = True
+    r1.save()
+    r2.is_superuser = True
+    r2.save()
+
+    rs = ReaderStudyFactory()
+    rs.add_reader(r1)
+    rs.add_reader(r2)
+
+    for _ in range(20):
+        civ = ComponentInterfaceValueFactory(image=ImageFactory())
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r1,
+        client=client,
+        method=client.get,
+    )
+
+    r1_unshuffled = response.json()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+
+    r2_unshuffled = response.json()
+
+    assert r1_unshuffled == r2_unshuffled
+
+    rs.shuffle_hanging_list = True
+    rs.save()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r1,
+        client=client,
+        method=client.get,
+    )
+
+    r1_shuffled_1 = response.json()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+
+    r2_shuffled_1 = response.json()
+
+    assert r1_shuffled_1 != r2_shuffled_1
+    assert r1_shuffled_1 != r1_unshuffled
+    assert r2_shuffled_1 != r2_unshuffled
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r1,
+        client=client,
+        method=client.get,
+    )
+
+    r1_shuffled_2 = response.json()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+
+    r2_shuffled_2 = response.json()
+
+    assert r1_shuffled_1 == r1_shuffled_2
+    assert r2_shuffled_1 == r2_shuffled_2

@@ -37,6 +37,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
+from numpy.random.mtrand import RandomState
 from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
@@ -953,6 +954,12 @@ class DisplaySetViewSet(ReadOnlyModelViewSet):
         PaginatedCSVRenderer,
     )
 
+    @property
+    def reader_study(self):
+        reader_study_pk = self.request.query_params.get("reader_study")
+        if reader_study_pk:
+            return ReaderStudy.objects.get(pk=reader_study_pk)
+
     def get_queryset(self):
         queryset = DisplaySet.objects.all().select_related("reader_study")
         unanswered_by_user = self.request.query_params.get(
@@ -961,6 +968,19 @@ class DisplaySetViewSet(ReadOnlyModelViewSet):
         if unanswered_by_user == "True":
             queryset = queryset.exclude(answers__creator=self.request.user)
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if self.reader_study and self.reader_study.shuffle_hanging_list:
+            queryset = list(list(queryset))
+            RandomState(seed=int(self.request.user.pk)).shuffle(queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):
