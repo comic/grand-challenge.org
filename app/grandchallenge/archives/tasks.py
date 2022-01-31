@@ -36,6 +36,31 @@ def add_images_to_archive(*, upload_session_pk, archive_pk, interface_pk=None):
 
 
 @shared_task
+def add_image_to_archive_item(
+    *, upload_session_pk, archive_item_pk, interface_pk=None
+):
+    image = Image.objects.filter(origin_id=upload_session_pk).get()
+    archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
+
+    if interface_pk is not None:
+        interface = ComponentInterface.objects.get(pk=interface_pk)
+    else:
+        interface = ComponentInterface.objects.get(
+            slug="generic-medical-image"
+        )
+
+    if ComponentInterfaceValue.objects.filter(
+        interface=interface, image=image
+    ).exists():
+        return
+
+    civ = ComponentInterfaceValue.objects.create(
+        interface=interface, image=image
+    )
+    archive_item.values.add(civ)
+
+
+@shared_task
 def update_archive_item_values(
     *, archive_item_pk, civ_pks_to_remove, civ_pks_to_add,
 ):

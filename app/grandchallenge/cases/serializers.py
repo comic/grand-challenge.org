@@ -8,8 +8,11 @@ from rest_framework.relations import (
     SlugRelatedField,
 )
 
-from grandchallenge.archives.models import Archive
-from grandchallenge.archives.tasks import add_images_to_archive
+from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.archives.tasks import (
+    add_image_to_archive_item,
+    add_images_to_archive,
+)
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
@@ -89,6 +92,9 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         queryset=ComponentInterface.objects.all(),
         required=False,
     )
+    archive_item = PrimaryKeyRelatedField(
+        queryset=ArchiveItem.objects.none(), required=False
+    )
 
     class Meta:
         model = RawImageUploadSession
@@ -104,6 +110,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "reader_study",
             "answer",
             "interface",
+            "archive_item",
         )
 
     def __init__(self, *args, **kwargs):
@@ -141,9 +148,13 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 accept_global_perms=False,
             )
 
+            self.fields["archive_item"].queryset = get_objects_for_user(
+                user, "archives.change_archiveitem", accept_global_perms=False,
+            )
+
     @property
     def targets(self):
-        return ["archive", "reader_study", "answer"]
+        return ["archive", "archive_item", "reader_study", "answer"]
 
     def create(self, validated_data):
         set_targets = {
@@ -178,13 +189,36 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         num_targets = sum(f in attrs for f in self.targets)
         if num_targets > 1:
             raise ValidationError(
-                "Only one of archive, answer or reader study can be set"
+                "Only one of archive, archive item, answer or reader study can be set"
             )
 
-        if "interface" in attrs and "archive" not in attrs:
+        if "interface" in attrs and not (
+            "archive" in attrs or "archive_item" in attrs
+        ):
             raise ValidationError(
-                "An interface can only be defined for archive uploads."
+                "An interface can only be defined for archive "
+                "or archive item uploads."
             )
+
+        if "archive_item" in attrs:
+            archive_item_interfaces = attrs["archive_item"].values.values_list(
+                "interface__slug", flat=True
+            )
+            interface_slug = (
+                attrs["interface"].slug
+                if "interface" in attrs
+                else "generic-medical-image"
+            )
+            if interface_slug in archive_item_interfaces:
+                raise ValidationError(
+                    f"This archive item already has a component interface of "
+                    f"{interface_slug} associated with it."
+                )
+            if len(uploads) > 1:
+                raise ValidationError(
+                    "Only one image can be uploaded to an archive item "
+                    "at a time."
+                )
 
         return attrs
 
@@ -219,6 +253,15 @@ def _get_linked_task(*, targets, interface):
         if interface:
             kwargs["interface_pk"] = interface.pk
         return add_images_to_archive.signature(kwargs=kwargs, immutable=True,)
+    elif "archive_item" in targets:
+        kwargs = {
+            "archive_item_pk": targets["archive_item"].pk,
+        }
+        if interface:
+            kwargs["interface_pk"] = interface.pk
+        return add_image_to_archive_item.signature(
+            kwargs=kwargs, immutable=True,
+        )
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(
             kwargs={"reader_study_pk": targets["reader_study"].pk},

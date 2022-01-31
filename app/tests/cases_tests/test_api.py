@@ -5,14 +5,18 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
-from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
@@ -283,7 +287,7 @@ def test_session_with_user_upload_to_readerstudy(client, settings):
 
     assert response.status_code == 400
     assert (
-        "An interface can only be defined for archive uploads."
+        "An interface can only be defined for archive or archive item uploads."
         in response.json()["non_field_errors"]
     )
 
@@ -391,3 +395,130 @@ def test_session_with_user_duplicate_upload(client):
     assert response.json() == {
         "non_field_errors": ["Filenames must be unique"]
     }
+
+
+@pytest.mark.django_db
+def test_session_with_user_upload_to_archive_item(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.STRING, title="Test"
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(civ)
+    assert item.values.count() == 1
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    # with interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload.api_url],
+                "archive_item": item.pk,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload.api_url]
+    item.refresh_from_db()
+    assert item.values.count() == 2
+    assert "generic-overlay" in [
+        item.interface.slug for item in item.values.all()
+    ]
+
+    upload2 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    # without interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload2.api_url], "archive_item": item.pk},
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload2.api_url]
+    item.refresh_from_db()
+    assert item.values.count() == 3
+    assert "generic-medical-image" in [
+        item.interface.slug for item in item.values.all()
+    ]
+
+    # try to upload multiple files to the same archive item
+    upload3 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    upload4 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x11x12x13.mha",
+        creator=user,
+    )
+    ci2 = ComponentInterfaceFactory()
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload3.api_url, upload4.api_url],
+                "archive_item": item.pk,
+                "interface": ci2.slug,
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 400
+    assert (
+        "Only one image can be uploaded to an archive item at a time."
+        in response.json()["non_field_errors"]
+    )
+
+    # try to add another civ with an already existing interface kind
+    upload5 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload5.api_url],
+                "archive_item": item.pk,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 400
+    assert (
+        "This archive item already has a component interface of generic-overlay associated with it."
+        in response.json()["non_field_errors"]
+    )
