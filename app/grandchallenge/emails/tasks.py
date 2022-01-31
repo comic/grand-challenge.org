@@ -66,7 +66,7 @@ def send_bulk_email(action, email_pk):
     subject = email.subject
     body = email.body
     receivers = get_receivers(action=action)
-    paginator = Paginator(receivers, 2)
+    paginator = Paginator(receivers, 100)
     site = Site.objects.get_current()
     if email.status_report:
         start_page = email.status_report["last_processed_batch"]
