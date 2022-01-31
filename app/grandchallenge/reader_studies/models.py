@@ -290,6 +290,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "for a case."
         ),
     )
+    roll_over_answers_for_n_cases = models.PositiveSmallIntegerField(
+        default=False,
+        help_text=(
+            "The number of cases for which answers should roll over. "
+            "It can be used for repeated readings with slightly different hangings. "
+            "For instance, if set to 1. Case 2 will start with the answers from case 1; "
+            "whereas case 3 starts anew but its answers will rollover to case 4."
+        ),
+    )
     validate_hanging_list = models.BooleanField(default=True)
     publications = models.ManyToManyField(
         Publication,
@@ -326,6 +335,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",
+        "roll_over_answers_for_n_cases",
         "allow_answer_modification",
         "allow_case_navigation",
         "allow_show_all_annotations",
