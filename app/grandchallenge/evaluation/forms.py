@@ -307,14 +307,14 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
                     Evaluation.FAILURE,
                     Evaluation.CANCELLED,
                 ],
-                submission__phase=self._phase,
             )
+            .exclude(submission__phase=self._phase)
             .exists()
         ):
             # This causes problems in `set_evaluation_inputs` if two
             # evaluations are running for the same image at the same time
             raise ValidationError(
-                "A evaluation for this algorithm is already in progress for "
+                "An evaluation for this algorithm is already in progress for "
                 "another phase. Please wait for the other evaluation to "
                 "complete."
             )
