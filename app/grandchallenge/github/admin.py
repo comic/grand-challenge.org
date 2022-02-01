@@ -30,7 +30,7 @@ class GitHubWebhookMessageAdmin(admin.ModelAdmin):
         "user_error",
     )
     list_filter = ("clone_status",)
-    search_fields = ("payload", "license_check")
+    search_fields = ("payload", "license_check_result")
     exclude = ("zipfile",)
     readonly_fields = ("payload", "clone_status")
 
