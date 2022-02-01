@@ -121,17 +121,18 @@ class GitHubWebhookMessage(models.Model):
             return ""
 
     @property
-    def license(self):
-        # Return the first license found in the results
-        return self.license_check_result.get("licenses", [{}])[0]
+    def licenses(self):
+        return self.license_check_result.get("licenses", [])
 
     @property
-    def license_key(self):
-        return self.license.get("key")
+    def license_keys(self):
+        return {_license.get("key") for _license in self.licenses}
 
     @property
     def has_open_source_license(self):
-        return self.license_key in settings.OPEN_SOURCE_LICENSES
+        return bool(self.license_keys) and self.license_keys.issubset(
+            settings.OPEN_SOURCE_LICENSES
+        )
 
     def save(self, *args, **kwargs):
         post_save_task = None

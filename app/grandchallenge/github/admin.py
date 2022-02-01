@@ -25,7 +25,7 @@ class GitHubWebhookMessageAdmin(admin.ModelAdmin):
         "repo_name",
         "tag",
         "clone_status",
-        "license_key",
+        "license_keys",
         "has_open_source_license",
         "user_error",
     )
