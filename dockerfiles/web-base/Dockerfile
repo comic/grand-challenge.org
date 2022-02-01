@@ -17,8 +17,11 @@ RUN apt-get update \
         wget \
         gettext \
         libopenslide-dev \
-        libvips-dev \
-        ruby-licensee
+        libvips-dev
+
+# Fetch and install licensee for checking licenses
+RUN apt-get install -y ruby2.7 ruby-rugged \
+    && gem install licensee -v 9.15.1
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \

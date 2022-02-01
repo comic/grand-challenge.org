@@ -27,14 +27,15 @@ def test_get_zipfile(get_repo_url):
     assert ghwm2.clone_status == CloneStatusChoices.PENDING
     get_repo_url.return_value = "https://github.com/DIAGNijmegen/rse-panimg"
     get_zipfile(pk=ghwm2.pk)
+    assert ghwm2.license_key is None
 
     ghwm2.refresh_from_db()
     assert ghwm2.zipfile is not None
     previous_zipfile = ghwm2.zipfile
     assert ghwm2.clone_status == CloneStatusChoices.SUCCESS
     assert "diagnijmegen-rse-panimg-v0-4-2" in ghwm2.zipfile.name
+    assert ghwm2.license_key == "apache-2.0"
     assert ghwm2.has_open_source_license is True
-    assert ghwm2.license_check_result == "Apache License 2.0"
 
     # check that task is idempotent
     get_zipfile(pk=ghwm2.pk)

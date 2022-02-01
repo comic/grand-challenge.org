@@ -1156,16 +1156,20 @@ GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
 
+# License keys from https://github.com/licensee/licensee/tree/v9.15.1/vendor/choosealicense.com/_licenses
 OPEN_SOURCE_LICENSES = [
-    "Apache License 2.0",
-    "MIT License",
-    "GNU GPLv3",
-    "GNU AGPLv3",
-    "GNU GPLv3",
-    "GNU LGPLv3",
-    "Mozilla Public License 2.0",
-    "Boost Software License 1.0",
-    "The Unlicense",
+    "agpl-3.0",
+    "apache-2.0",
+    "bsd-2-clause",
+    "bsd-3-clause",
+    "bsd-3-clause-clear",
+    "bsd-4-clause",
+    "bsl-1.0",
+    "gpl-3.0",
+    "lgpl-3.0",
+    "mit",
+    "mpl-2.0",
+    "unlicense",
 ]
 
 # Set the post processors to use for the image imports

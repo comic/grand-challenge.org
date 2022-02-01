@@ -79,14 +79,13 @@ class GitHubWebhookMessage(models.Model):
     zipfile = models.FileField(
         null=True, upload_to=zipfile_path, storage=private_s3_storage
     )
-    has_open_source_license = models.BooleanField(default=False)
-    license_check_result = models.CharField(max_length=1024, blank=True)
+    license_check_result = models.JSONField(blank=True, default=dict)
     stdout = models.TextField(blank=True)
     stderr = models.TextField(blank=True)
     clone_status = models.CharField(
         choices=CloneStatusChoices.choices,
-        default=CloneStatusChoices.PENDING,
-        max_length=12,
+        default=CloneStatusChoices.NOT_APPLICABLE,
+        max_length=14,
     )
 
     def __str__(self):
@@ -121,14 +120,29 @@ class GitHubWebhookMessage(models.Model):
         else:
             return ""
 
+    @property
+    def license(self):
+        # Return the first license found in the results
+        return self.license_check_result.get("licenses", [{}])[0]
+
+    @property
+    def license_key(self):
+        return self.license.get("key")
+
+    @property
+    def has_open_source_license(self):
+        return self.license_key in settings.OPEN_SOURCE_LICENSES
+
     def save(self, *args, **kwargs):
         post_save_task = None
 
         if self._state.adding:
             if self.payload.get("ref_type") == "tag":
                 post_save_task = get_zipfile
+                self.clone_status = CloneStatusChoices.PENDING
             elif self.payload.get("action") == "deleted":
                 post_save_task = unlink_algorithm
+                self.clone_status = CloneStatusChoices.NOT_APPLICABLE
             else:
                 self.clone_status = CloneStatusChoices.INVALID
 
