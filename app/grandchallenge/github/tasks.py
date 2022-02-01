@@ -2,7 +2,6 @@ import base64
 import json
 import logging
 import os
-import re
 import subprocess
 import tempfile
 import zipfile
@@ -82,20 +81,12 @@ def fetch_repo(payload, repo_url, tmpdirname, recurse_submodules):
 
 
 def check_license(tmpdirname):
-    has_open_source_license = False
-    license = "No license file found"
     process = subprocess.Popen(
-        ["licensee", tmpdirname], stdout=subprocess.PIPE
+        ["licensee", "detect", tmpdirname, "--json", "--no-remote"],
+        stdout=subprocess.PIPE,
     )
     process.wait()
-    output = process.stdout.read()
-    regex_license = re.compile(r"License: (?P<license>.*)?$", re.M)
-    match = regex_license.search(output.decode("utf-8"))
-    if match:
-        license = match.group("license")
-        if license in settings.OPEN_SOURCE_LICENSES:
-            has_open_source_license = True
-    return license, has_open_source_license
+    return json.loads(process.stdout.read().decode("utf-8"))
 
 
 def save_zipfile(ghwm, tmpdirname):
@@ -144,13 +135,12 @@ def get_zipfile(*, pk):
                 # seem to work
                 install_lfs()
                 fetch_repo(payload, repo_url, tmpdirname, recurse_submodules)
-                license, has_open_source_license = check_license(tmpdirname)
+                license_check_result = check_license(tmpdirname)
                 temp_file = save_zipfile(ghwm, tmpdirname)
 
                 # update GithubWebhook object
                 ghwm.zipfile = temp_file
-                ghwm.has_open_source_license = has_open_source_license
-                ghwm.license_check_result = license
+                ghwm.license_check_result = license_check_result
                 ghwm.clone_status = CloneStatusChoices.SUCCESS
                 ghwm.save()
 

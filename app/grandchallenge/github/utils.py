@@ -8,3 +8,4 @@ class CloneStatusChoices(models.TextChoices):
     SUCCESS = "SUCCESS", _("Success")
     FAILURE = "FAILURE", _("Failure")
     INVALID = "INVALID", _("Invalid")
+    NOT_APPLICABLE = "NOT_APPLICABLE", _("Not Applicable")
