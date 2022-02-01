@@ -61,8 +61,8 @@ def add_images_to_archive_item(
     )
     update_archive_item_values(
         archive_item_pk=archive_item_pk,
-        civ_pks_to_remove=civ_pks_to_remove,
-        civ_pks_to_add=civ_pks_to_add,
+        civ_pks_to_remove=list(civ_pks_to_remove),
+        civ_pks_to_add=list(civ_pks_to_add),
     )
 
 
