@@ -10,8 +10,8 @@ from rest_framework.relations import (
 
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.archives.tasks import (
-    add_image_to_archive_item,
     add_images_to_archive,
+    add_images_to_archive_item,
 )
 from grandchallenge.cases.models import (
     Image,
@@ -206,11 +206,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                     "An interface needs to be defined to upload to an "
                     "archive item."
                 )
-            if len(uploads) > 1:
-                raise ValidationError(
-                    "Only one image can be uploaded to an archive item "
-                    "at a time."
-                )
 
         return attrs
 
@@ -251,7 +246,7 @@ def _get_linked_task(*, targets, interface):
         }
         if interface:
             kwargs["interface_pk"] = interface.pk
-        return add_image_to_archive_item.signature(
+        return add_images_to_archive_item.signature(
             kwargs=kwargs, immutable=True,
         )
     elif "reader_study" in targets:

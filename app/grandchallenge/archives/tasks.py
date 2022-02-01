@@ -1,5 +1,8 @@
 from celery import shared_task
 
+from grandchallenge.algorithms.tasks import (
+    add_images_to_component_interface_value,
+)
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
@@ -36,27 +39,26 @@ def add_images_to_archive(*, upload_session_pk, archive_pk, interface_pk=None):
 
 
 @shared_task
-def add_image_to_archive_item(
+def add_images_to_archive_item(
     *, upload_session_pk, archive_item_pk, interface_pk=None
 ):
-    image = Image.objects.filter(origin_id=upload_session_pk).get()
     archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
 
     civ_pks_to_remove = set()
     civ_pks_to_add = set()
 
-    try:
-        old_civ = archive_item.values.filter(interface=interface).get()
-        civ_pks_to_remove.add(old_civ.pk)
-    except ComponentInterfaceValue.DoesNotExist:
-        pass
+    civ = archive_item.values.filter(interface=interface).first()
+    if civ:
+        civ_pks_to_remove.add(civ.pk)
 
-    civ = ComponentInterfaceValue.objects.create(
-        interface=interface, image=image
-    )
+    civ = ComponentInterfaceValue.objects.create(interface=interface)
     civ_pks_to_add.add(civ)
 
+    add_images_to_component_interface_value(
+        component_interface_value_pk=civ.pk,
+        upload_session_pk=upload_session_pk,
+    )
     update_archive_item_values(
         archive_item_pk=archive_item_pk,
         civ_pks_to_remove=civ_pks_to_remove,

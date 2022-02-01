@@ -493,33 +493,3 @@ def test_session_with_user_upload_to_archive_item(client, settings):
         "An interface needs to be defined to upload to an archive item."
         in response.json()["non_field_errors"]
     )
-
-    # try to upload multiple files to the same archive item
-    upload4 = create_upload_from_file(
-        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
-        creator=user,
-    )
-    upload5 = create_upload_from_file(
-        file_path=Path(__file__).parent / "resources" / "image10x11x12x13.mha",
-        creator=user,
-    )
-    ci2 = ComponentInterfaceFactory()
-    with capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="api:upload-session-list",
-            user=user,
-            client=client,
-            method=client.post,
-            content_type="application/json",
-            data={
-                "uploads": [upload4.api_url, upload5.api_url],
-                "archive_item": item.pk,
-                "interface": ci2.slug,
-            },
-            HTTP_X_FORWARDED_PROTO="https",
-        )
-    assert response.status_code == 400
-    assert (
-        "Only one image can be uploaded to an archive item at a time."
-        in response.json()["non_field_errors"]
-    )
