@@ -23,6 +23,9 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.components.tasks import (
+    add_images_to_component_interface_value,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -85,27 +88,6 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
     )
 
     on_commit(linked_task.apply_async)
-
-
-@shared_task
-def add_images_to_component_interface_value(
-    *, component_interface_value_pk, upload_session_pk
-):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-
-    if session.image_set.count() != 1:
-        error_message = "Image imports should result in a single image"
-        session.status = RawImageUploadSession.FAILURE
-        session.error_message = error_message
-        session.save()
-        raise ImageImportError(error_message)
-
-    civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
-    civ.image = session.image_set.get()
-    civ.full_clean()
-    civ.save()
-
-    civ.image.update_viewer_groups_permissions()
 
 
 @shared_task

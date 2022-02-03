@@ -200,12 +200,11 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 "or archive item uploads."
             )
 
-        if "archive_item" in attrs:
-            if "interface" not in attrs:
-                raise ValidationError(
-                    "An interface needs to be defined to upload to an "
-                    "archive item."
-                )
+        if "archive_item" in attrs and "interface" not in attrs:
+            raise ValidationError(
+                "An interface needs to be defined to upload to an "
+                "archive item."
+            )
 
         return attrs
 
@@ -241,13 +240,12 @@ def _get_linked_task(*, targets, interface):
             kwargs["interface_pk"] = interface.pk
         return add_images_to_archive.signature(kwargs=kwargs, immutable=True,)
     elif "archive_item" in targets:
-        kwargs = {
-            "archive_item_pk": targets["archive_item"].pk,
-        }
-        if interface:
-            kwargs["interface_pk"] = interface.pk
         return add_images_to_archive_item.signature(
-            kwargs=kwargs, immutable=True,
+            kwargs={
+                "archive_item_pk": targets["archive_item"].pk,
+                "interface_pk": interface.pk,
+            },
+            immutable=True,
         )
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(

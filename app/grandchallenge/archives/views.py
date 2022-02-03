@@ -34,9 +34,6 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.tasks import (
-    add_images_to_component_interface_value,
-)
 from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
@@ -69,6 +66,9 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
+)
+from grandchallenge.components.tasks import (
+    add_images_to_component_interface_value,
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin

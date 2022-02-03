@@ -398,7 +398,7 @@ def test_session_with_user_duplicate_upload(client):
 
 
 @pytest.mark.django_db
-def test_session_with_user_upload_to_archive_item(client, settings):
+def test_user_upload_to_archive_item_with_new_interface(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -418,7 +418,7 @@ def test_session_with_user_upload_to_archive_item(client, settings):
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
-    # with interface
+
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
@@ -442,12 +442,25 @@ def test_session_with_user_upload_to_archive_item(client, settings):
     assert "generic-overlay" in [
         item.interface.slug for item in item.values.all()
     ]
-    generic_overlay_civ_1 = item.values.filter(
-        interface__slug="generic-overlay"
-    ).get()
+
+
+@pytest.mark.django_db
+def test_user_upload_to_archive_item_with_existing_interface(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    ci = ComponentInterface.objects.filter(slug="generic-overlay").get()
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(civ)
+    assert item.values.count() == 1
 
     # upload another generic-overlay to the same item
-    upload2 = create_upload_from_file(
+    upload = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
@@ -459,7 +472,7 @@ def test_session_with_user_upload_to_archive_item(client, settings):
             method=client.post,
             content_type="application/json",
             data={
-                "uploads": [upload2.api_url],
+                "uploads": [upload.api_url],
                 "archive_item": item.pk,
                 "interface": "generic-overlay",
             },
@@ -469,11 +482,26 @@ def test_session_with_user_upload_to_archive_item(client, settings):
     item.refresh_from_db()
     # check that there is only one civ with the generic-overlay interface
     assert item.values.filter(interface__slug="generic-overlay").count() == 1
-    # and that the previously added one is not longer associated with the item
-    assert generic_overlay_civ_1 not in item.values.all()
+    # and that the previously added one is no longer associated with the item
+    assert civ not in item.values.all()
 
-    # try upload without interface
-    upload3 = create_upload_from_file(
+
+@pytest.mark.django_db
+def test_user_upload_to_archive_item_without_interface(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    ci = ComponentInterface.objects.filter(slug="generic-overlay").get()
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(civ)
+    assert item.values.count() == 1
+
+    upload = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
@@ -484,7 +512,7 @@ def test_session_with_user_upload_to_archive_item(client, settings):
             client=client,
             method=client.post,
             content_type="application/json",
-            data={"uploads": [upload3.api_url], "archive_item": item.pk},
+            data={"uploads": [upload.api_url], "archive_item": item.pk},
             HTTP_X_FORWARDED_PROTO="https",
         )
 
