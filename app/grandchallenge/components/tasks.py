@@ -19,6 +19,8 @@ from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
+from grandchallenge.algorithms.exceptions import ImageImportError
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     EventError,
@@ -536,3 +538,29 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
         service.stop()
 
     return [str(s) for s in services_to_stop]
+
+
+@shared_task
+def add_images_to_component_interface_value(
+    *, component_interface_value_pk, upload_session_pk
+):
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+
+    if session.image_set.count() != 1:
+        error_message = "Image imports should result in a single image"
+        session.status = RawImageUploadSession.FAILURE
+        session.error_message = error_message
+        session.save()
+        raise ImageImportError(error_message)
+
+    civ = get_model_instance(
+        pk=component_interface_value_pk,
+        app_label="components",
+        model_name="componentinterfacevalue",
+    )
+
+    civ.image = session.image_set.get()
+    civ.full_clean()
+    civ.save()
+
+    civ.image.update_viewer_groups_permissions()

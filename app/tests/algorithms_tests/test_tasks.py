@@ -11,7 +11,6 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
-    add_images_to_component_interface_value,
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
     filter_civs_for_algorithm,
@@ -23,6 +22,9 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
     InterfaceKindChoices,
+)
+from grandchallenge.components.tasks import (
+    add_images_to_component_interface_value,
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (

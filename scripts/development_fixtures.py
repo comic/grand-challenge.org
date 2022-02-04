@@ -23,7 +23,7 @@ from machina.apps.forum.models import Forum
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import (
     Challenge,
@@ -535,6 +535,21 @@ def _create_archive(users):
     )
     archive.editors_group.user_set.add(users["archive"])
     archive.uploaders_group.user_set.add(users["demo"])
+
+    image = Image(
+        name="test_image2.mha",
+        modality=ImagingModality.objects.get(modality="MR"),
+        width=128,
+        height=128,
+        color_space="RGB",
+    )
+    image.save()
+    item = ArchiveItem.objects.create(archive=archive)
+    civ = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="generic-medical-image"),
+        image=image,
+    )
+    item.values.add(civ)
 
 
 def _create_user_tokens(users):
