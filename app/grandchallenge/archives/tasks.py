@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.transaction import on_commit
 
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -48,6 +48,12 @@ def add_images_to_archive_item(
 ):
     archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+
+    if archive_item.values.filter(
+        interface=interface, image__in=session.image_set.all()
+    ).exists():
+        return
 
     with transaction.atomic():
         archive_item.values.remove(
