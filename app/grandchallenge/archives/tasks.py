@@ -49,19 +49,12 @@ def add_images_to_archive_item(
     archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
 
-    civ_pks_to_remove = set()
-    civ_pks_to_add = set()
-
-    civ = archive_item.values.filter(interface=interface).first()
-    if civ:
-        civ_pks_to_remove.add(civ.pk)
-
     with transaction.atomic():
+        archive_item.values.remove(
+            *archive_item.values.filter(interface=interface)
+        )
         new_civ = ComponentInterfaceValue.objects.create(interface=interface)
-        civ_pks_to_add.add(new_civ)
-
-        archive_item.values.remove(*civ_pks_to_remove)
-        archive_item.values.add(*civ_pks_to_add)
+        archive_item.values.add(new_civ)
 
         on_commit(
             add_images_to_component_interface_value.signature(
