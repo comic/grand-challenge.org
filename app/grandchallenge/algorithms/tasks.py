@@ -84,7 +84,7 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
         error_message += str(res)
 
     job.update_status(
-        status=job.FAILURE, error_message=error_message,
+        status=job.CANCELLED, error_message=error_message,
     )
 
     on_commit(linked_task.apply_async)
@@ -104,7 +104,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
     if missing_inputs:
         job.update_status(
-            status=job.FAILURE,
+            status=job.CANCELLED,
             error_message=(
                 f"Job can't be started, input is missing for "
                 f"{oxford_comma([c.interface.title for c in missing_inputs])}"
