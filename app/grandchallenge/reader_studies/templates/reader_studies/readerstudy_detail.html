@@ -161,8 +161,14 @@
             {% endif %}
 
             {% if "read_readerstudy" in readerstudy_perms and object.is_valid %}
+                {% if object.has_deprecated_questions %}
+                    <div class="alert alert-danger" role="alert">
+                        This reader study can no longer be run, please remove the deprecated questions.
+                    </div>
+                {% endif %}
+
                 <p>
-                    <a class="btn btn-primary"
+                    <a class="btn btn-primary {% if object.has_deprecated_questions %}disabled{% endif %}"
                        href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
                         <i class="fas fa-eye"></i> Launch this Reader Study
                     </a>
@@ -265,7 +271,12 @@
                         <li class="list-group-item">
                             <div class="row">
                                 <div class="col justify-content-start">
-                                    <div>{{ question }}</div>
+                                    <div>
+                                        {% if question.is_deprecated %}
+                                            <i class="fa fa-exclamation-triangle text-danger" title="Deprecated Question Type"></i>
+                                        {% endif %}
+                                        {{ question }}
+                                    </div>
                                 </div>
                                 <div class="col-md-auto justify-content-end">
                                     <a class="btn btn-primary btn-sm"
