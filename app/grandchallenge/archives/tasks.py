@@ -1,13 +1,15 @@
-from celery import shared_task
+from celery import chain, chord, group, shared_task
 from django.conf import settings
 from django.db import transaction
 from django.db.transaction import on_commit
 
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKind,
 )
 from grandchallenge.components.tasks import (
     add_images_to_component_interface_value,
@@ -81,3 +83,90 @@ def update_archive_item_values(
         archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
         archive_item.values.remove(*civ_pks_to_remove)
         archive_item.values.add(*civ_pks_to_add)
+
+
+def update_archive_item_update_kwargs(
+    instance,
+    interface,
+    civ_pks_to_add,
+    civ_pks_to_remove,
+    upload_pks,
+    value=None,
+    image=None,
+    user_upload=None,
+    upload_session=None,
+):
+
+    if instance.values.filter(interface=interface.pk).exists():
+        civ_pks_to_remove.add(
+            *instance.values.filter(interface=interface.pk).values_list(
+                "pk", flat=True
+            )
+        )
+    else:
+        # for images, check if there are any CIVs with the provided image
+        if interface.kind in InterfaceKind.interface_type_image():
+            if instance.values.filter(image=image).exists():
+                civ_pks_to_remove.add(
+                    *instance.values.filter(image=image).values_list(
+                        "pk", flat=True
+                    )
+                )
+
+    with transaction.atomic():
+        if interface.kind in InterfaceKind.interface_type_image():
+            civ = ComponentInterfaceValue.objects.create(interface=interface)
+            if image:
+                civ.image = image
+                civ.full_clean()
+            elif upload_session:
+                upload_pks[civ.pk] = upload_session.pk
+            civ.save()
+            civ_pks_to_add.add(civ.pk)
+        elif interface.kind in InterfaceKind.interface_type_file():
+            civ = ComponentInterfaceValue.objects.create(interface=interface)
+            user_upload.copy_object(to_field=civ.file)
+            civ.full_clean()
+            civ.save()
+            user_upload.delete()
+            civ_pks_to_add.add(civ.pk)
+        else:
+            civ = interface.create_instance(value=value)
+            civ_pks_to_add.add(civ.pk)
+
+    return civ_pks_to_add, civ_pks_to_remove, upload_pks
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def start_archive_item_update_tasks(
+    archive_item_pk, civ_pks_to_add, civ_pks_to_remove, upload_pks
+):
+    tasks = update_archive_item_values.signature(
+        kwargs={
+            "archive_item_pk": archive_item_pk,
+            "civ_pks_to_add": civ_pks_to_add,
+            "civ_pks_to_remove": civ_pks_to_remove,
+        },
+        immutable=True,
+    )
+
+    if len(upload_pks) > 0:
+        image_tasks = group(
+            chain(
+                build_images.signature(
+                    kwargs={"upload_session_pk": upload_pk}
+                ),
+                add_images_to_component_interface_value.signature(
+                    kwargs={
+                        "component_interface_value_pk": civ_pk,
+                        "upload_session_pk": upload_pk,
+                    },
+                    immutable=True,
+                ),
+            )
+            for civ_pk, upload_pk in upload_pks.items()
+        )
+        tasks = chord(image_tasks, tasks)
+
+    with transaction.atomic():
+        on_commit(tasks.apply_async)
