@@ -632,10 +632,6 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">has_deprecated_questions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">is_deprecated</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">hanging_list_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Substitutes the image name for the image detail api url for each image</span>
@@ -988,18 +984,11 @@
     <span class="n">POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Point&quot;</span>
     <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple points&quot;</span>
     <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span>
-    <span class="n">POLYGON_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;PIMG&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon (saved as mask)&quot;</span>
     <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span>
-    <span class="n">MULTIPLE_POLYGONS_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;MPIM&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons (saved as mask)&quot;</span>
     <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span>
     <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span>
     <span class="n">MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span>
     <span class="n">MASK</span> <span class="o">=</span> <span class="s2">&quot;MASK&quot;</span><span class="p">,</span> <span class="s2">&quot;Mask&quot;</span></div>
-
-
-<span class="n">DEPRECATED_ANSWER_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
-    <span class="p">[</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON_IMAGE</span><span class="p">,</span> <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS_IMAGE</span><span class="p">]</span>
-<span class="p">)</span>
 
 
 <div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
@@ -1091,10 +1080,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_set</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="n">DEPRECATED_ANSWER_TYPES</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">read_only_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        ``question_text``, ``answer_type``, ``image_port``, ``required`` if</span>
@@ -1182,9 +1167,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POINT</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON_IMAGE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS_IMAGE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">,</span>
         <span class="p">]</span>
 
@@ -1223,8 +1206,6 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_image_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON_IMAGE</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS_IMAGE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">,</span>
         <span class="p">]</span>
 
