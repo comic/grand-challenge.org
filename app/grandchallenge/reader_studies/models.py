@@ -559,6 +559,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         )
 
     @property
+    def has_deprecated_questions(self):
+        return any(q.is_deprecated for q in self.questions.all())
+
+    @property
     def hanging_list_images(self):
         """
         Substitutes the image name for the image detail api url for each image
@@ -894,31 +898,39 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
+class AnswerType(models.TextChoices):
+    # WARNING: Do not change the display text, these are used in the front end
+    SINGLE_LINE_TEXT = "STXT", "Single line text"
+    MULTI_LINE_TEXT = "MTXT", "Multi line text"
+    BOOL = "BOOL", "Bool"
+    NUMBER = "NUMB", "Number"
+    HEADING = "HEAD", "Heading"
+    BOUNDING_BOX_2D = "2DBB", "2D bounding box"
+    MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
+    DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        "Multiple distance measurements",
+    )
+    POINT = "POIN", "Point"
+    MULTIPLE_POINTS = "MPOI", "Multiple points"
+    POLYGON = "POLY", "Polygon"
+    POLYGON_IMAGE = "PIMG", "Polygon (saved as mask)"
+    MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
+    MULTIPLE_POLYGONS_IMAGE = "MPIM", "Multiple polygons (saved as mask)"
+    CHOICE = "CHOI", "Choice"
+    MULTIPLE_CHOICE = "MCHO", "Multiple choice"
+    MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
+    MASK = "MASK", "Mask"
+
+
+DEPRECATED_ANSWER_TYPES = frozenset(
+    [AnswerType.POLYGON_IMAGE, AnswerType.MULTIPLE_POLYGONS_IMAGE]
+)
+
+
 class Question(UUIDModel):
-    class AnswerType(models.TextChoices):
-        # WARNING: Do not change the display text, these are used in the front end
-        SINGLE_LINE_TEXT = "STXT", "Single line text"
-        MULTI_LINE_TEXT = "MTXT", "Multi line text"
-        BOOL = "BOOL", "Bool"
-        NUMBER = "NUMB", "Number"
-        HEADING = "HEAD", "Heading"
-        BOUNDING_BOX_2D = "2DBB", "2D bounding box"
-        MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
-        DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
-        MULTIPLE_DISTANCE_MEASUREMENTS = (
-            "MDIS",
-            "Multiple distance measurements",
-        )
-        POINT = "POIN", "Point"
-        MULTIPLE_POINTS = "MPOI", "Multiple points"
-        POLYGON = "POLY", "Polygon"
-        POLYGON_IMAGE = "PIMG", "Polygon (saved as mask)"
-        MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
-        MULTIPLE_POLYGONS_IMAGE = "MPIM", "Multiple polygons (saved as mask)"
-        CHOICE = "CHOI", "Choice"
-        MULTIPLE_CHOICE = "MCHO", "Multiple choice"
-        MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
-        MASK = "MASK", "Mask"
+    AnswerType = AnswerType
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -1004,6 +1016,10 @@ class Question(UUIDModel):
     def is_fully_editable(self):
         """``True`` if no ``Answer`` has been given for this ``Question``."""
         return self.answer_set.count() == 0
+
+    @property
+    def is_deprecated(self):
+        return self.answer_type in DEPRECATED_ANSWER_TYPES
 
     @property
     def read_only_fields(self):

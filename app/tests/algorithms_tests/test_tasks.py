@@ -522,7 +522,7 @@ def test_execute_algorithm_job_for_inputs(
     execute_algorithm_job_for_inputs(job_pk=job.pk)
 
     job.refresh_from_db()
-    assert job.status == Job.FAILURE
+    assert job.status == Job.CANCELLED
     assert "Job can't be started, input is missing for " in job.error_message
 
 
