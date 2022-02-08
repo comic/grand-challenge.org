@@ -1061,7 +1061,7 @@ def test_ground_truth(client):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("answer_type", ("MASK"))
+@pytest.mark.parametrize("answer_type", ("MASK",))
 def test_assign_answer_image(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -1122,7 +1122,7 @@ def test_assign_answer_image(client, settings, answer_type):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("answer_type", ("MASK"))
+@pytest.mark.parametrize("answer_type", ("MASK",))
 def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
