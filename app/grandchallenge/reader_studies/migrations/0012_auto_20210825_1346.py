@@ -34,9 +34,7 @@ class Migration(migrations.Migration):
                                 {"$ref": "#/definitions/POIN"},
                                 {"$ref": "#/definitions/MPOI"},
                                 {"$ref": "#/definitions/POLY"},
-                                {"$ref": "#/definitions/PIMG"},
                                 {"$ref": "#/definitions/MPOL"},
-                                {"$ref": "#/definitions/MPIM"},
                                 {"$ref": "#/definitions/CHOI"},
                                 {"$ref": "#/definitions/MCHO"},
                                 {"$ref": "#/definitions/MCHD"},
@@ -207,17 +205,6 @@ class Migration(migrations.Migration):
                                     "required": ["version", "type", "lines"],
                                     "type": "object",
                                 },
-                                "MPIM": {
-                                    "additionalProperties": False,
-                                    "properties": {
-                                        "upload_session_pk": {
-                                            "format": "uuid",
-                                            "type": "string",
-                                        }
-                                    },
-                                    "required": ["upload_session_pk"],
-                                    "type": "object",
-                                },
                                 "MPOI": {
                                     "additionalProperties": False,
                                     "properties": {
@@ -266,17 +253,6 @@ class Migration(migrations.Migration):
                                 },
                                 "MTXT": {"type": "string"},
                                 "NUMB": {"type": "number"},
-                                "PIMG": {
-                                    "additionalProperties": False,
-                                    "properties": {
-                                        "upload_session_pk": {
-                                            "format": "uuid",
-                                            "type": "string",
-                                        }
-                                    },
-                                    "required": ["upload_session_pk"],
-                                    "type": "object",
-                                },
                                 "POIN": {
                                     "additionalProperties": False,
                                     "properties": {
@@ -477,9 +453,7 @@ class Migration(migrations.Migration):
                                 {"$ref": "#/definitions/POIN"},
                                 {"$ref": "#/definitions/MPOI"},
                                 {"$ref": "#/definitions/POLY"},
-                                {"$ref": "#/definitions/PIMG"},
                                 {"$ref": "#/definitions/MPOL"},
-                                {"$ref": "#/definitions/MPIM"},
                                 {"$ref": "#/definitions/CHOI"},
                                 {"$ref": "#/definitions/MCHO"},
                                 {"$ref": "#/definitions/MCHD"},
@@ -650,17 +624,6 @@ class Migration(migrations.Migration):
                                     "required": ["version", "type", "lines"],
                                     "type": "object",
                                 },
-                                "MPIM": {
-                                    "additionalProperties": False,
-                                    "properties": {
-                                        "upload_session_pk": {
-                                            "format": "uuid",
-                                            "type": "string",
-                                        }
-                                    },
-                                    "required": ["upload_session_pk"],
-                                    "type": "object",
-                                },
                                 "MPOI": {
                                     "additionalProperties": False,
                                     "properties": {
@@ -709,17 +672,6 @@ class Migration(migrations.Migration):
                                 },
                                 "MTXT": {"type": "string"},
                                 "NUMB": {"type": "number"},
-                                "PIMG": {
-                                    "additionalProperties": False,
-                                    "properties": {
-                                        "upload_session_pk": {
-                                            "format": "uuid",
-                                            "type": "string",
-                                        }
-                                    },
-                                    "required": ["upload_session_pk"],
-                                    "type": "object",
-                                },
                                 "POIN": {
                                     "additionalProperties": False,
                                     "properties": {
@@ -915,9 +867,7 @@ class Migration(migrations.Migration):
                     ("POIN", "Point"),
                     ("MPOI", "Multiple points"),
                     ("POLY", "Polygon"),
-                    ("PIMG", "Polygon (saved as mask)"),
                     ("MPOL", "Multiple polygons"),
-                    ("MPIM", "Multiple polygons (saved as mask)"),
                     ("CHOI", "Choice"),
                     ("MCHO", "Multiple choice"),
                     ("MCHD", "Multiple choice dropdown"),

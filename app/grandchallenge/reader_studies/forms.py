@@ -38,10 +38,8 @@ from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.reader_studies.models import (
     Answer,
-    AnswerType,
     CASE_TEXT_SCHEMA,
     CategoricalOption,
-    DEPRECATED_ANSWER_TYPES,
     HANGING_LIST_SCHEMA,
     Question,
     ReaderStudy,
@@ -237,12 +235,6 @@ class ReaderStudyCopyForm(Form):
 class QuestionForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.fields["answer_type"].choices = [
-            a
-            for a in AnswerType.choices
-            if a[0] not in DEPRECATED_ANSWER_TYPES
-        ]
 
         self.helper = FormHelper()
         self.helper.form_tag = True
