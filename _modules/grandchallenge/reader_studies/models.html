@@ -632,6 +632,10 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_deprecated_questions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">is_deprecated</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">hanging_list_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Substitutes the image name for the image detail api url for each image</span>
@@ -967,31 +971,39 @@
         <span class="k">pass</span></div>
 
 
+<div class="viewcode-block" id="AnswerType"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerType">[docs]</a><span class="k">class</span> <span class="nc">AnswerType</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="c1"># WARNING: Do not change the display text, these are used in the front end</span>
+    <span class="n">SINGLE_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;STXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Single line text&quot;</span>
+    <span class="n">MULTI_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;MTXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Multi line text&quot;</span>
+    <span class="n">BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Bool&quot;</span>
+    <span class="n">NUMBER</span> <span class="o">=</span> <span class="s2">&quot;NUMB&quot;</span><span class="p">,</span> <span class="s2">&quot;Number&quot;</span>
+    <span class="n">HEADING</span> <span class="o">=</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;Heading&quot;</span>
+    <span class="n">BOUNDING_BOX_2D</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span><span class="p">,</span> <span class="s2">&quot;2D bounding box&quot;</span>
+    <span class="n">MULTIPLE_2D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span>
+    <span class="n">DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance measurement&quot;</span>
+    <span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;MDIS&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Point&quot;</span>
+    <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple points&quot;</span>
+    <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span>
+    <span class="n">POLYGON_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;PIMG&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon (saved as mask)&quot;</span>
+    <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span>
+    <span class="n">MULTIPLE_POLYGONS_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;MPIM&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons (saved as mask)&quot;</span>
+    <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span>
+    <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span>
+    <span class="n">MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span>
+    <span class="n">MASK</span> <span class="o">=</span> <span class="s2">&quot;MASK&quot;</span><span class="p">,</span> <span class="s2">&quot;Mask&quot;</span></div>
+
+
+<span class="n">DEPRECATED_ANSWER_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON_IMAGE</span><span class="p">,</span> <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS_IMAGE</span><span class="p">]</span>
+<span class="p">)</span>
+
+
 <div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
-<div class="viewcode-block" id="Question.AnswerType"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.AnswerType">[docs]</a>    <span class="k">class</span> <span class="nc">AnswerType</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
-        <span class="c1"># WARNING: Do not change the display text, these are used in the front end</span>
-        <span class="n">SINGLE_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;STXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Single line text&quot;</span>
-        <span class="n">MULTI_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;MTXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Multi line text&quot;</span>
-        <span class="n">BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Bool&quot;</span>
-        <span class="n">NUMBER</span> <span class="o">=</span> <span class="s2">&quot;NUMB&quot;</span><span class="p">,</span> <span class="s2">&quot;Number&quot;</span>
-        <span class="n">HEADING</span> <span class="o">=</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;Heading&quot;</span>
-        <span class="n">BOUNDING_BOX_2D</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span><span class="p">,</span> <span class="s2">&quot;2D bounding box&quot;</span>
-        <span class="n">MULTIPLE_2D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span>
-        <span class="n">DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance measurement&quot;</span>
-        <span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot;MDIS&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Point&quot;</span>
-        <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple points&quot;</span>
-        <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span>
-        <span class="n">POLYGON_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;PIMG&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon (saved as mask)&quot;</span>
-        <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span>
-        <span class="n">MULTIPLE_POLYGONS_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;MPIM&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons (saved as mask)&quot;</span>
-        <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span>
-        <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span>
-        <span class="n">MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span>
-        <span class="n">MASK</span> <span class="o">=</span> <span class="s2">&quot;MASK&quot;</span><span class="p">,</span> <span class="s2">&quot;Mask&quot;</span></div>
+    <span class="n">AnswerType</span> <span class="o">=</span> <span class="n">AnswerType</span>
 
     <span class="c1"># What is the orientation of the question form when presented on the</span>
     <span class="c1"># front end?</span>
@@ -1077,6 +1089,10 @@
     <span class="k">def</span> <span class="nf">is_fully_editable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;``True`` if no ``Answer`` has been given for this ``Question``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_set</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="n">DEPRECATED_ANSWER_TYPES</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">read_only_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
