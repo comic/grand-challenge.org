@@ -203,14 +203,6 @@ ANSWER_TYPE_SCHEMA = {
             ],
             "additionalProperties": False,
         },
-        "PIMG": {
-            "type": "object",
-            "properties": {
-                "upload_session_pk": {"type": "string", "format": "uuid"}
-            },
-            "required": ["upload_session_pk"],
-            "additionalProperties": False,
-        },
         "MPOL": {
             "type": "object",
             "properties": {
@@ -223,14 +215,6 @@ ANSWER_TYPE_SCHEMA = {
                 "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["type", "version", "polygons"],
-            "additionalProperties": False,
-        },
-        "MPIM": {
-            "type": "object",
-            "properties": {
-                "upload_session_pk": {"type": "string", "format": "uuid"}
-            },
-            "required": ["upload_session_pk"],
             "additionalProperties": False,
         },
         "MASK": {
@@ -304,9 +288,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/POIN"},
         {"$ref": "#/definitions/MPOI"},
         {"$ref": "#/definitions/POLY"},
-        {"$ref": "#/definitions/PIMG"},
         {"$ref": "#/definitions/MPOL"},
-        {"$ref": "#/definitions/MPIM"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
         {"$ref": "#/definitions/MCHD"},

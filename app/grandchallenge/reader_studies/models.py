@@ -559,10 +559,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         )
 
     @property
-    def has_deprecated_questions(self):
-        return any(q.is_deprecated for q in self.questions.all())
-
-    @property
     def hanging_list_images(self):
         """
         Substitutes the image name for the image detail api url for each image
@@ -915,18 +911,11 @@ class AnswerType(models.TextChoices):
     POINT = "POIN", "Point"
     MULTIPLE_POINTS = "MPOI", "Multiple points"
     POLYGON = "POLY", "Polygon"
-    POLYGON_IMAGE = "PIMG", "Polygon (saved as mask)"
     MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
-    MULTIPLE_POLYGONS_IMAGE = "MPIM", "Multiple polygons (saved as mask)"
     CHOICE = "CHOI", "Choice"
     MULTIPLE_CHOICE = "MCHO", "Multiple choice"
     MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
     MASK = "MASK", "Mask"
-
-
-DEPRECATED_ANSWER_TYPES = frozenset(
-    [AnswerType.POLYGON_IMAGE, AnswerType.MULTIPLE_POLYGONS_IMAGE]
-)
 
 
 class Question(UUIDModel):
@@ -1018,10 +1007,6 @@ class Question(UUIDModel):
         return self.answer_set.count() == 0
 
     @property
-    def is_deprecated(self):
-        return self.answer_type in DEPRECATED_ANSWER_TYPES
-
-    @property
     def read_only_fields(self):
         """
         ``question_text``, ``answer_type``, ``image_port``, ``required`` if
@@ -1109,9 +1094,7 @@ class Question(UUIDModel):
             self.AnswerType.POINT,
             self.AnswerType.MULTIPLE_POINTS,
             self.AnswerType.POLYGON,
-            self.AnswerType.POLYGON_IMAGE,
             self.AnswerType.MULTIPLE_POLYGONS,
-            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 
@@ -1150,8 +1133,6 @@ class Question(UUIDModel):
     @property
     def is_image_type(self):
         return self.answer_type in [
-            self.AnswerType.POLYGON_IMAGE,
-            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 
