@@ -658,7 +658,7 @@ class ArchiveCasesToReaderStudyUpdate(
         reader_study: ReaderStudy = form.cleaned_data["reader_study"]
         images = form.cleaned_data["images"]
 
-        if True:
+        if reader_study.use_display_sets:
             civs = ComponentInterfaceValue.objects.filter(image__in=images)
             for civ in civs:
                 ds = DisplaySet.objects.create(reader_study=reader_study)

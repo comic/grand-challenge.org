@@ -1162,7 +1162,7 @@ def test_question_accepts_image_type_answers(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=True)
     im = ImageFactory()
     reader = UserFactory()
 
@@ -1201,7 +1201,7 @@ def test_display_set_endpoints(client, settings):
 
     r = UserFactory()
 
-    rs1, rs2 = (ReaderStudyFactory() for _ in range(2))
+    rs1, rs2 = (ReaderStudyFactory(use_display_sets=True) for _ in range(2))
     rs1.add_reader(r)
     rs2.add_reader(r)
     q1, q2 = (
