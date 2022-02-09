@@ -75,7 +75,7 @@ from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -658,7 +658,13 @@ class ArchiveCasesToReaderStudyUpdate(
         reader_study: ReaderStudy = form.cleaned_data["reader_study"]
         images = form.cleaned_data["images"]
 
-        reader_study.images.add(*images)
+        if True:
+            civs = ComponentInterfaceValue.objects.filter(image__in=images)
+            for civ in civs:
+                ds = DisplaySet.objects.create(reader_study=reader_study)
+                ds.values.add(civ)
+        else:
+            reader_study.images.add(*images)
 
         self.success_url = reader_study.get_absolute_url()
         self.success_message = f"Added {len(images)} cases to {reader_study}."
