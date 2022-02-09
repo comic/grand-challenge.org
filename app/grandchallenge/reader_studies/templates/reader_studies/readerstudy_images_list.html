@@ -80,6 +80,19 @@
                     }
                 })
             });
+
+             $(document).on('change', '.add-interface', (e) => {
+                $.ajax({
+                    type: 'PATCH',
+                    url:  $(e.currentTarget).data("url"),
+                    data: JSON.stringify({value: $(e.currentTarget).val()}),
+                    contentType: 'application/json',
+                    accept: 'application/json',
+                    complete: (response) => {
+                        window.location.replace(window.location.href);
+                    }
+                })
+            });
         });
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>

@@ -52,6 +52,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -278,20 +279,6 @@ class ReaderStudyUpdate(
     raise_exception = True
     success_message = "Reader study successfully updated"
 
-    def form_valid(self, form):
-        civs = dict(
-            self.object.display_sets.values_list(
-                "values__image__name", "values__id"
-            )
-        )
-        self.object.display_sets.all().delete()
-        if "hanging_list" in form.changed_data:
-            for item in form.cleaned_data["hanging_list"]:
-                ds = DisplaySet.objects.create(reader_study=self.object)
-                for key in item:
-                    ds.values.add(civs[item[key]])
-        return super().form_valid(form)
-
 
 class ReaderStudyDelete(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
@@ -364,7 +351,7 @@ class ReaderStudyImagesList(
         return context
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().filter(reader_study=self.reader_study)
         return qs
 
 
@@ -944,7 +931,13 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         )
 
 
-class DisplaySetViewSet(ReadOnlyModelViewSet):
+class DisplaySetViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     serializer_class = DisplaySetSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -959,6 +952,18 @@ class DisplaySetViewSet(ReadOnlyModelViewSet):
         reader_study_pk = self.request.query_params.get("reader_study")
         if reader_study_pk:
             return ReaderStudy.objects.get(pk=reader_study_pk)
+
+    def partial_update(self, request, pk=None):
+        instance = self.get_object()
+        civ = ComponentInterfaceValue.objects.get(id=request.data.get("value"))
+        civ.displays_sets.clear()
+        instance.values.add(civ)
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        DisplaySet.objects.filter(
+            reader_study=instance.reader_study, values=None
+        ).delete()
+        return Response(serializer.data)
 
     def get_queryset(self):
         queryset = DisplaySet.objects.all().select_related("reader_study")

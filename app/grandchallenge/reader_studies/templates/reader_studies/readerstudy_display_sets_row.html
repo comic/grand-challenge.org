@@ -20,12 +20,14 @@
       <div class="card-body py-1">
         <table class="table table-striped table-sm">
           <tr>
+            <th>Interface</th>
             <th>Name</th>
             <th>Created</th>
             <th>View</th>
           </tr>
           {% for value in object.values.all %}
             <tr>
+              <td>{{ value.interface.title }}</td>
               <td>{{ value.image.name }}</td>
               <td>{{ value.image.created|naturaltime }}</td>
               <td>
@@ -34,6 +36,19 @@
                       <i class="fa fa-eye"></i> View Case
                   </span>
                 </a>
+              </td>
+            </tr>
+          {% endfor %}
+          {% for interface in object.empty_interfaces %}
+            <tr>
+              <td>{{ interface.title }}:</td>
+              <td>
+                <select class="form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
+                  <option selected>---</option>
+                  {% for value in interface.values %}
+                    <option value="{{ value.id }}">{{ value.id }}</option>
+                  {% endfor %}
+                </select>
               </td>
             </tr>
           {% endfor %}

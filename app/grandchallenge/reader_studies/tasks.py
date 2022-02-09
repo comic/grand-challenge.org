@@ -1,5 +1,6 @@
 from celery import shared_task
 from django.db import transaction
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
@@ -54,19 +55,22 @@ def create_display_sets_for_upload_session(
     images = Image.objects.filter(origin_id=upload_session_pk)
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
-
     for image in images:
         civ = ComponentInterfaceValue.objects.create(
             interface=interface, image=image
         )
         ds = DisplaySet.objects.create(reader_study=reader_study)
         ds.values.add(civ)
-        reader_study.editors_group.add_obj_perm("view_displayset")
-        reader_study.readers_group.add_obj_perm("view_displayset")
+        assign_perm(
+            f"view_{ds._meta.model_name}", reader_study.editors_group, ds
+        )
+        assign_perm(
+            f"view_{ds._meta.model_name}", reader_study.readers_group, ds
+        )
+        assign_perm(
+            f"change_{ds._meta.model_name}", reader_study.editors_group, ds
+        )
 
-    reader_study.hanging_list = reader_study.hanging_list + [
-        {"main": im.name} for im in images
-    ]
     reader_study.save()
 
 

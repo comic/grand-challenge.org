@@ -146,6 +146,13 @@ class ReaderStudyCreateForm(
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if True:
+            del self.fields["hanging_list"]
+        else:
+            del self.fields["image_port_mapping"]
+
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -168,10 +175,12 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "roll_over_answers_for_n_cases",
             "hanging_list",
             "case_text",
+            "image_port_mapping",
         )
         widgets = {
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
+            "image_port_mapping": JSONEditorWidget(),
             "help_text_markdown": MarkdownEditorWidget,
             "description": TextInput,
             "publications": Select2MultipleWidget,

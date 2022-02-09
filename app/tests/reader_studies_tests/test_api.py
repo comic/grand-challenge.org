@@ -1201,10 +1201,6 @@ def test_display_set_endpoints(client, settings):
 
     r = UserFactory()
 
-    # TODO: fix permissions
-    r.is_superuser = True
-    r.save()
-
     rs1, rs2 = (ReaderStudyFactory() for _ in range(2))
     rs1.add_reader(r)
     rs2.add_reader(r)
@@ -1275,12 +1271,6 @@ def test_display_set_shuffling(client, settings):
     settings.task_always_eager = (True,)
 
     r1, r2 = UserFactory(), UserFactory()
-
-    # TODO: fix permissions
-    r1.is_superuser = True
-    r1.save()
-    r2.is_superuser = True
-    r2.save()
 
     rs = ReaderStudyFactory()
     rs.add_reader(r1)

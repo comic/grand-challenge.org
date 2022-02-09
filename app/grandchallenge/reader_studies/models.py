@@ -25,7 +25,10 @@ from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -323,6 +326,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
+    image_port_mapping = models.JSONField(null=True)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -704,9 +708,27 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Each image in the ``ReaderStudy`` is assigned to the primary port of its
         own hanging.
         """
-        image_names = self.images.values_list("name", flat=True)
-        self.hanging_list = [{"main": name} for name in image_names]
+        if True:
+            image_names = self.display_sets.values_list(
+                "values__image__name", flat=True
+            )
+            hanging_list = [{"main": name} for name in image_names]
+            self.recreate_display_sets(hanging_list)
+        else:
+            image_names = self.images.values_list("name", flat=True)
+            hanging_list = [{"main": name} for name in image_names]
+        self.hanging_list = hanging_list
         self.save()
+
+    def recreate_display_sets(self, hanging_list):
+        civs = dict(
+            self.display_sets.values_list("values__image__name", "values__id")
+        )
+        self.display_sets.all().delete()
+        for item in hanging_list:
+            ds = DisplaySet.objects.create(reader_study=self)
+            for key in item:
+                ds.values.add(civs[item[key]])
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
@@ -941,6 +963,47 @@ class DisplaySet(UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="displays_sets"
     )
 >>>>>>> Add DisplaySet model
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.reader_study.editors_group,
+            self,
+        )
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.reader_study.editors_group,
+            self,
+        )
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.reader_study.readers_group,
+            self,
+        )
+
+    @property
+    def empty_interfaces(self):
+        interfaces = ComponentInterface.objects.exclude(
+            id__in=self.values.values_list("interface_id", flat=True)
+        ).filter(
+            id__in=self.reader_study.display_sets.values_list(
+                "values__interface_id", flat=True
+            )
+        )
+        result = []
+        for interface in interfaces:
+            values = ComponentInterfaceValue.objects.none()
+            for ds in self.reader_study.display_sets.all():
+                values |= ds.values.filter(interface=interface)
+            result.append({"title": interface.title, "values": values})
+        return result
 
 
 class Question(UUIDModel):
