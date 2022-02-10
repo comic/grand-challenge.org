@@ -1,15 +1,19 @@
+import csv
 import html
+import io
 
 import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
+    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -872,3 +876,40 @@ def test_reader_study_add_ground_truth(client, settings):
     assert Answer.objects.get(images__in=[im1.pk], question=q2).answer == [
         options["1-0"].pk
     ]
+
+
+@pytest.mark.django_db
+def test_reader_study_add_ground_truth_ds(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    rs = ReaderStudyFactory(use_display_sets=True)
+    QuestionFactory(
+        reader_study=rs,
+        question_text="bar",
+        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+    )
+
+    civ = ComponentInterfaceValueFactory(image=ImageFactory())
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ)
+
+    editor = UserFactory()
+    rs.editors_group.user_set.add(editor)
+
+    gt = io.StringIO()
+    fake_writer = csv.writer(gt)
+    fake_writer.writerows([["images", "foo"], [str(ds.pk), "bar"]])
+    gt.seek(0)
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-ground-truth",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"ground_truth": gt},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
