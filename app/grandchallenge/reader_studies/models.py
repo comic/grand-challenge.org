@@ -737,27 +737,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Each image in the ``ReaderStudy`` is assigned to the primary port of its
         own hanging.
         """
-        if self.use_display_sets:
-            image_names = self.display_sets.values_list(
-                "values__image__name", flat=True
-            )
-            hanging_list = [{"main": name} for name in image_names]
-            self.recreate_display_sets(hanging_list)
-        else:
-            image_names = self.images.values_list("name", flat=True)
-            hanging_list = [{"main": name} for name in image_names]
+        image_names = self.images.values_list("name", flat=True)
+        hanging_list = [{"main": name} for name in image_names]
         self.hanging_list = hanging_list
         self.save()
-
-    def recreate_display_sets(self, hanging_list):
-        civs = dict(
-            self.display_sets.values_list("values__image__name", "values__id")
-        )
-        self.display_sets.all().delete()
-        for item in hanging_list:
-            ds = DisplaySet.objects.create(reader_study=self)
-            for key in item:
-                ds.values.add(civs[item[key]])
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
