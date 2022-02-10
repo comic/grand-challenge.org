@@ -1252,9 +1252,7 @@ class Question(UUIDModel):
             self.AnswerType.POINT,
             self.AnswerType.MULTIPLE_POINTS,
             self.AnswerType.POLYGON,
-            self.AnswerType.POLYGON_IMAGE,
             self.AnswerType.MULTIPLE_POLYGONS,
-            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 
@@ -1293,8 +1291,6 @@ class Question(UUIDModel):
     @property
     def is_image_type(self):
         return self.answer_type in [
-            self.AnswerType.POLYGON_IMAGE,
-            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 
