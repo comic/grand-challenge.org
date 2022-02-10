@@ -71,7 +71,11 @@ router.register(
 )
 
 # Component Interfaces
-router.register(r"interfaces", ComponentInterfaceViewSet, basename="interface")
+router.register(
+    r"components/interfaces",
+    ComponentInterfaceViewSet,
+    basename="components-interface",
+)
 
 # Evaluations
 router.register(

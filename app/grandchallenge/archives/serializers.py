@@ -60,10 +60,6 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
         write_only=True,
     )
 
-    class Meta:
-        model = ArchiveItem
-        fields = ["id", "archive", "values"]
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["values"] = ComponentInterfaceValuePostSerializer(

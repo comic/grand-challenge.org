@@ -1,4 +1,4 @@
-from celery import chain, chord, group, shared_task
+from celery import chain, group, shared_task
 from django.conf import settings
 from django.db import transaction
 from django.db.transaction import on_commit
@@ -96,7 +96,15 @@ def update_archive_item_update_kwargs(
     user_upload=None,
     upload_session=None,
 ):
-
+    """
+    Given an interface and a value/image/user_upload/upload_session, this task
+    determines whether to create a new CIV for the specified archive item instance
+    with those values, and whether to delete any existing CIVs from the archive item.
+    It appends the respective CIV pk(s) to the set of to be added and removed
+    civs and returns those. If an upload_session is specified,
+    it also appends the session pk together with the new civ pk to the list of
+    to be processed images.
+    """
     if instance.values.filter(interface=interface.pk).exists():
         civ_pks_to_remove.add(
             *instance.values.filter(interface=interface.pk).values_list(
@@ -166,7 +174,7 @@ def start_archive_item_update_tasks(
             )
             for civ_pk, upload_pk in upload_pks.items()
         )
-        tasks = chord(image_tasks, tasks)
+        tasks = group(image_tasks, tasks)
 
     with transaction.atomic():
         on_commit(tasks.apply_async)
