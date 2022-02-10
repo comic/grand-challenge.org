@@ -287,7 +287,7 @@ def test_session_with_user_upload_to_readerstudy(client, settings):
 
     assert response.status_code == 400
     assert (
-        "An interface can only be defined for archive or archive item uploads."
+        "An interface can only be defined for archive, archive item or display set uploads."
         in response.json()["non_field_errors"]
     )
 
