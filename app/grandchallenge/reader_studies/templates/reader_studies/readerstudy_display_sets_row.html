@@ -46,7 +46,7 @@
                 <select class="form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
                   <option selected>---</option>
                   {% for value in interface.values %}
-                    <option value="{{ value.id }}">{{ value.id }}</option>
+                    <option value="{{ value.id }}">{{ value.image.name }}</option>
                   {% endfor %}
                 </select>
               </td>
