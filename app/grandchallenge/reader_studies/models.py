@@ -672,7 +672,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 kwargs = {
                     "creator": user,
                     "question": question,
-                    "aswer": _answer,
+                    "answer": _answer,
                     "is_ground_truth": True,
                 }
                 if not self.use_display_sets:
