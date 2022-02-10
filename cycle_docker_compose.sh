@@ -14,6 +14,7 @@ make build_http
 trap 'docker-compose down ; echo Stopped ; exit 0' SIGINT
 
 make development_fixtures
+make algorithm_evaluation_fixtures
 
 docker-compose up &
 
