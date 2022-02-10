@@ -768,7 +768,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         hanging_list_count = (
             self.display_sets.count()
-            if self.user_upload
+            if self.use_display_sets
             else len(self.hanging_list)
         )
 
