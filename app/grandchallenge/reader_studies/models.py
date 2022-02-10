@@ -25,7 +25,10 @@ from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -323,6 +326,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
+    image_port_mapping = models.JSONField(null=True)
+    use_display_sets = models.BooleanField(default=False)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -367,7 +372,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return result
 
     def get_example_ground_truth_csv_text(self, limit=None):
-        if len(self.hanging_list) == 0:
+        if len(self.hanging_list) == 0 and self.display_sets.count() == 0:
             return "No cases in this reader study"
         headers = self.ground_truth_file_headers
         return "\n".join(
@@ -499,7 +504,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def cleaned_case_text(self):
-        study_images = {im.name: im.api_url for im in self.images.all()}
+        if self.use_display_sets:
+            study_images = {
+                im.name: im.api_url
+                for im in self.display_sets.values_list(
+                    "values__image__name", flat=True
+                )
+            }
+        else:
+            study_images = {im.name: im.api_url for im in self.images.all()}
         return {
             study_images.get(k): md2html(v)
             for k, v in self.case_text.items()
@@ -509,6 +522,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def study_image_names(self):
         """Names for all images added to this ``ReaderStudy``."""
+        if self.use_display_sets:
+            self.display_sets.values_list("values__image__name", flat=True)
         return self.images.values_list("name", flat=True)
 
     @property
@@ -524,6 +539,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Tests that all of the study images are included in the hanging list
         exactly once.
         """
+        if self.use_display_sets:
+            # As the answers is now linked to a display set, this check is
+            # no longer necessary
+            return True
         return not self.validate_hanging_list or sorted(
             self.study_image_names
         ) == sorted(self.hanging_image_names)
@@ -543,6 +562,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def non_unique_study_image_names(self):
         """Returns all of the non-unique image names for this ``ReaderStudy``."""
+        if self.use_display_sets:
+            # As the answers is now linked to a display set, this check is
+            # no longer necessary
+            return []
         return [
             name
             for name, count in Counter(self.study_image_names).items()
@@ -581,6 +604,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def image_groups(self):
         """Names of the images as they are grouped in the hanging list."""
+        if self.use_display_sets:
+            return self.display_sets.all().values_list("pk", flat=True)
         return [sorted(x.values()) for x in self.hanging_list]
 
     @property
@@ -588,6 +613,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return Answer.objects.filter(
             question__reader_study_id=self.id, is_ground_truth=True
         ).exists()
+
+    @property
+    def ds_images(self):
+        return sorted(
+            list(
+                self.display_sets.values_list("values__image__name", flat=True)
+            )
+        )
 
     @cached_property
     def answerable_questions(self):
@@ -606,7 +639,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
         answers = []
         for gt in data:
-            images = self.images.filter(name__in=gt["images"].split(";"))
+            if self.use_display_sets:
+                display_set = self.display_sets.get(pk=gt["images"])
+                images = []
+            else:
+                display_set = None
+                images = self.images.filter(name__in=gt["images"].split(";"))
             for key in gt.keys():
                 if key == "images" or key.endswith("__explanation"):
                     continue
@@ -629,13 +667,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                             "pk", flat=True
                         )
                     )
-                Answer.validate(
-                    creator=user,
-                    question=question,
-                    images=images,
-                    answer=_answer,
-                    is_ground_truth=True,
-                )
+                kwargs = {
+                    "creator": user,
+                    "question": question,
+                    "aswer": _answer,
+                    "is_ground_truth": True,
+                }
+                if not self.use_display_sets:
+                    # validation for display sets is already implicitly handled
+                    # by getting the object
+                    kwargs["images"] = images
+                Answer.validate(**kwargs)
                 try:
                     explanation = json.loads(gt.get(key + "__explanation", ""))
                 except (json.JSONDecodeError, TypeError):
@@ -656,6 +698,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                         "answer": _answer,
                         "explanation": explanation,
                         "images": images,
+                        "display_set": display_set,
                     }
                 )
 
@@ -664,6 +707,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             answer["answer_obj"].explanation = answer["explanation"]
             answer["answer_obj"].save()
             answer["answer_obj"].images.set(answer["images"])
+            answer["answer_obj"].display_set = answer["display_set"]
             answer["answer_obj"].save()
 
     def get_hanging_list_images_for_user(self, *, user):
@@ -691,9 +735,27 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Each image in the ``ReaderStudy`` is assigned to the primary port of its
         own hanging.
         """
-        image_names = self.images.values_list("name", flat=True)
-        self.hanging_list = [{"main": name} for name in image_names]
+        if self.use_display_sets:
+            image_names = self.display_sets.values_list(
+                "values__image__name", flat=True
+            )
+            hanging_list = [{"main": name} for name in image_names]
+            self.recreate_display_sets(hanging_list)
+        else:
+            image_names = self.images.values_list("name", flat=True)
+            hanging_list = [{"main": name} for name in image_names]
+        self.hanging_list = hanging_list
         self.save()
+
+    def recreate_display_sets(self, hanging_list):
+        civs = dict(
+            self.display_sets.values_list("values__image__name", "values__id")
+        )
+        self.display_sets.all().delete()
+        for item in hanging_list:
+            ds = DisplaySet.objects.create(reader_study=self)
+            for key in item:
+                ds.values.add(civs[item[key]])
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
@@ -704,7 +766,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 "diff": 0.0,
             }
 
-        hanging_list_count = len(self.hanging_list)
+        hanging_list_count = (
+            self.display_sets.count()
+            if self.user_upload
+            else len(self.hanging_list)
+        )
 
         expected = hanging_list_count * self.answerable_question_count
 
@@ -717,6 +783,28 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         if expected == 0 or answer_count == 0:
             return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
+
+        if self.use_display_sets:
+            completed_hangings = (
+                self.display_sets.annotate(
+                    answers_for_user=Count(
+                        Subquery(
+                            Answer.objects.filter(
+                                creator=user,
+                                display_set=OuterRef("pk"),
+                                is_ground_truth=False,
+                            ).values("pk")[:1]
+                        )
+                    )
+                ).filter(answers_for_user=self.answerable_question_count)
+            ).count()
+            questions = answer_count / expected * 100
+            hangings = completed_hangings / hanging_list_count * 100
+            return {
+                "questions": questions,
+                "hangings": hangings,
+                "diff": questions - hangings,
+            }
 
         # Group the answers by images and filter out the images that
         # have an inadequate amount of answers
@@ -785,9 +873,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @cached_property
     def leaderboard(self):
         """The leaderboard for this ``ReaderStudy``."""
-        question_count = float(self.answerable_question_count) * len(
-            self.hanging_list
+        n_hangings = (
+            self.display_sets.count()
+            if self.use_display_sets
+            else len(self.hanging_list)
         )
+        question_count = float(self.answerable_question_count) * n_hangings
         return {
             "question_count": question_count,
             "grouped_scores": self.scores_by_user,
@@ -806,15 +897,26 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .order_by("-score__avg")
         )
 
-        scores_by_case = (
-            Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=False
+        if self.use_display_sets:
+            scores_by_case = (
+                Answer.objects.filter(
+                    question__reader_study=self, is_ground_truth=False
+                )
+                .order_by("display_set")
+                .values("display_set_id")
+                .annotate(Sum("score"), Avg("score"),)
+                .order_by("score__avg")
             )
-            .order_by("images__name")
-            .values("images__name", "images__pk")
-            .annotate(Sum("score"), Avg("score"),)
-            .order_by("score__avg")
-        )
+        else:
+            scores_by_case = (
+                Answer.objects.filter(
+                    question__reader_study=self, is_ground_truth=False
+                )
+                .order_by("images__name")
+                .values("images__name", "images__pk")
+                .annotate(Sum("score"), Avg("score"),)
+                .order_by("score__avg")
+            )
 
         options = {}
         for option in CategoricalOption.objects.filter(
@@ -831,6 +933,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 question__reader_study=self, is_ground_truth=True
             )
             .values(
+                "display_set_id",
                 "images__name",
                 "answer",
                 "question",
@@ -841,9 +944,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ):
             questions.append(gt["question__question_text"])
 
-            ground_truths[gt["images__name"]] = ground_truths.get(
-                gt["images__name"], {}
+            field = (
+                gt["display_set_id"]
+                if self.use_display_sets
+                else gt["images__name"]
             )
+            ground_truths[field] = ground_truths.get(field, {})
 
             if gt["question__answer_type"] in [
                 Question.AnswerType.MULTIPLE_CHOICE,
@@ -859,7 +965,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     gt["answer"], gt["answer"]
                 )
 
-            ground_truths[gt["images__name"]][
+            ground_truths[field][
                 gt["question__question_text"]
             ] = human_readable_answer
 
@@ -904,33 +1010,73 @@ class DisplaySet(UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="displays_sets"
     )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+        super().save(*args, **kwargs)
 
-class AnswerType(models.TextChoices):
-    # WARNING: Do not change the display text, these are used in the front end
-    SINGLE_LINE_TEXT = "STXT", "Single line text"
-    MULTI_LINE_TEXT = "MTXT", "Multi line text"
-    BOOL = "BOOL", "Bool"
-    NUMBER = "NUMB", "Number"
-    HEADING = "HEAD", "Heading"
-    BOUNDING_BOX_2D = "2DBB", "2D bounding box"
-    MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
-    DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
-    MULTIPLE_DISTANCE_MEASUREMENTS = (
-        "MDIS",
-        "Multiple distance measurements",
-    )
-    POINT = "POIN", "Point"
-    MULTIPLE_POINTS = "MPOI", "Multiple points"
-    POLYGON = "POLY", "Polygon"
-    MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
-    CHOICE = "CHOI", "Choice"
-    MULTIPLE_CHOICE = "MCHO", "Multiple choice"
-    MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
-    MASK = "MASK", "Mask"
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.reader_study.editors_group,
+            self,
+        )
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.reader_study.editors_group,
+            self,
+        )
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.reader_study.readers_group,
+            self,
+        )
+
+    @property
+    def empty_interfaces(self):
+        interfaces = ComponentInterface.objects.exclude(
+            id__in=self.values.values_list("interface_id", flat=True)
+        ).filter(
+            id__in=self.reader_study.display_sets.values_list(
+                "values__interface_id", flat=True
+            )
+        )
+        result = []
+        for interface in interfaces:
+            values = ComponentInterfaceValue.objects.none()
+            for ds in self.reader_study.display_sets.all():
+                values |= ds.values.filter(interface=interface)
+            result.append({"title": interface.title, "values": values})
+        return result
 
 
 class Question(UUIDModel):
-    AnswerType = AnswerType
+    class AnswerType(models.TextChoices):
+        # WARNING: Do not change the display text, these are used in the front end
+        SINGLE_LINE_TEXT = "STXT", "Single line text"
+        MULTI_LINE_TEXT = "MTXT", "Multi line text"
+        BOOL = "BOOL", "Bool"
+        NUMBER = "NUMB", "Number"
+        HEADING = "HEAD", "Heading"
+        BOUNDING_BOX_2D = "2DBB", "2D bounding box"
+        MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
+        DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
+        MULTIPLE_DISTANCE_MEASUREMENTS = (
+            "MDIS",
+            "Multiple distance measurements",
+        )
+        POINT = "POIN", "Point"
+        MULTIPLE_POINTS = "MPOI", "Multiple points"
+        POLYGON = "POLY", "Polygon"
+        POLYGON_IMAGE = "PIMG", "Polygon (saved as mask)"
+        MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
+        MULTIPLE_POLYGONS_IMAGE = "MPIM", "Multiple polygons (saved as mask)"
+        CHOICE = "CHOI", "Choice"
+        MULTIPLE_CHOICE = "MCHO", "Multiple choice"
+        MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
+        MASK = "MASK", "Mask"
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -1105,7 +1251,9 @@ class Question(UUIDModel):
             self.AnswerType.POINT,
             self.AnswerType.MULTIPLE_POINTS,
             self.AnswerType.POLYGON,
+            self.AnswerType.POLYGON_IMAGE,
             self.AnswerType.MULTIPLE_POLYGONS,
+            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 
@@ -1144,6 +1292,8 @@ class Question(UUIDModel):
     @property
     def is_image_type(self):
         return self.answer_type in [
+            self.AnswerType.POLYGON_IMAGE,
+            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 
@@ -1174,6 +1324,9 @@ class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
+    display_set = models.ForeignKey(
+        DisplaySet, related_name="answers", on_delete=models.PROTECT, null=True
+    )
     answer = models.JSONField(
         null=True, validators=[JSONValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
@@ -1250,7 +1403,7 @@ class Answer(UUIDModel):
         creator,
         question,
         answer,
-        images,
+        images=None,
         is_ground_truth=False,
         instance=None,
     ):
@@ -1271,12 +1424,13 @@ class Answer(UUIDModel):
                 "You must specify the images that this answer corresponds to."
             )
 
-        reader_study_images = question.reader_study.images.all()
-        for im in images:
-            if im not in reader_study_images:
-                raise ValidationError(
-                    f"Image {im} does not belong to this reader study."
-                )
+        if images is not None:
+            reader_study_images = question.reader_study.images.all()
+            for im in images:
+                if im not in reader_study_images:
+                    raise ValidationError(
+                        f"Image {im} does not belong to this reader study."
+                    )
 
         if not is_ground_truth:
             if (
