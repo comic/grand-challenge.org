@@ -214,17 +214,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             ),
         }
 
-    def clean_hanging_list(self):
-        hl = self.cleaned_data["hanging_list"]
-        hl_images = sorted([values[val] for values in hl for val in values])
-        ds_images = self.instance.ds_images
-        if hl_images != ds_images:
-            raise ValidationError(
-                "Images in hanging list do not match images in reader study. "
-                f"The following images should be in the hanging list: {', '.join(ds_images)}"
-            )
-        return hl
-
 
 class ReaderStudyCopyForm(Form):
     title = CharField(required=True)
