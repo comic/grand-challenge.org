@@ -968,7 +968,7 @@ class DisplaySetViewSet(
             civ = ComponentInterfaceValue.objects.get(
                 id=request.data.get("value")
             )
-            civ.displays_sets.clear()
+            civ.displays_set.clear()
             assigned_civs = instance.values.filter(interface=civ.interface)
             for assigned in assigned_civs:
                 ds = DisplaySet.objects.create(

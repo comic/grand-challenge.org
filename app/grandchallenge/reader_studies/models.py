@@ -1009,7 +1009,7 @@ class DisplaySet(UUIDModel):
         ReaderStudy, related_name="display_sets", on_delete=models.PROTECT
     )
     values = models.ManyToManyField(
-        ComponentInterfaceValue, blank=True, related_name="displays_sets"
+        ComponentInterfaceValue, blank=True, related_name="display_sets"
     )
 
     def save(self, *args, **kwargs):
