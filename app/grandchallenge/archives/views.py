@@ -65,6 +65,7 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.components.models import (
     ComponentInterface,
+    ComponentInterfaceValue,
     InterfaceKind,
 )
 from grandchallenge.core.filters import FilterMixin

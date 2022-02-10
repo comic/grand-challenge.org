@@ -49,6 +49,23 @@ def add_scores(*, instance_pk, pk_set):
 
 
 @shared_task
+def add_image_to_display_set(
+    *, upload_session_pk, display_set_pk, interface_pk
+):
+    display_set = DisplaySet.objects.get(pk=display_set_pk)
+    image = Image.objects.get(origin_id=upload_session_pk)
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    with transaction.atomic():
+        display_set.values.remove(
+            *display_set.values.filter(interface=interface)
+        )
+        civ, _ = ComponentInterfaceValue.objects.get_or_create(
+            interface=interface, image=image
+        )
+        display_set.values.add(civ)
+
+
+@shared_task
 def create_display_sets_for_upload_session(
     *, upload_session_pk, reader_study_pk, interface_pk
 ):
@@ -56,22 +73,21 @@ def create_display_sets_for_upload_session(
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
     for image in images:
-        civ = ComponentInterfaceValue.objects.create(
-            interface=interface, image=image
-        )
-        ds = DisplaySet.objects.create(reader_study=reader_study)
-        ds.values.add(civ)
-        assign_perm(
-            f"view_{ds._meta.model_name}", reader_study.editors_group, ds
-        )
-        assign_perm(
-            f"view_{ds._meta.model_name}", reader_study.readers_group, ds
-        )
-        assign_perm(
-            f"change_{ds._meta.model_name}", reader_study.editors_group, ds
-        )
-
-    reader_study.save()
+        with transaction.atomic():
+            civ = ComponentInterfaceValue.objects.create(
+                interface=interface, image=image
+            )
+            ds = DisplaySet.objects.create(reader_study=reader_study)
+            ds.values.add(civ)
+            assign_perm(
+                f"view_{ds._meta.model_name}", reader_study.editors_group, ds
+            )
+            assign_perm(
+                f"view_{ds._meta.model_name}", reader_study.readers_group, ds
+            )
+            assign_perm(
+                f"change_{ds._meta.model_name}", reader_study.editors_group, ds
+            )
 
 
 @shared_task

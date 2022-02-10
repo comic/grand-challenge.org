@@ -53,6 +53,9 @@ from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.serializers import (
+    ComponentInterfaceValuePostSerializer,
+)
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -86,6 +89,7 @@ from grandchallenge.reader_studies.models import (
 )
 from grandchallenge.reader_studies.serializers import (
     AnswerSerializer,
+    DisplaySetPostSerializer,
     DisplaySetSerializer,
     QuestionSerializer,
     ReaderStudySerializer,
@@ -953,16 +957,37 @@ class DisplaySetViewSet(
         if reader_study_pk:
             return ReaderStudy.objects.get(pk=reader_study_pk)
 
+    def get_serializer_class(self):
+        if self.action in ["partial_update", "update", "create"]:
+            return DisplaySetPostSerializer
+        return DisplaySetSerializer
+
     def partial_update(self, request, pk=None):
         instance = self.get_object()
-        civ = ComponentInterfaceValue.objects.get(id=request.data.get("value"))
-        civ.displays_sets.clear()
-        instance.values.add(civ)
-        instance.refresh_from_db()
+        if request.data.get("value"):
+            civ = ComponentInterfaceValue.objects.get(
+                id=request.data.get("value")
+            )
+            civ.displays_sets.clear()
+            instance.values.add(civ)
+            instance.refresh_from_db()
+            DisplaySet.objects.filter(
+                reader_study=instance.reader_study, values=None
+            ).delete()
+
+        if request.data.get("values"):
+            serialized_data = ComponentInterfaceValuePostSerializer(
+                many=True, data=request.data.get("values")
+            )
+            if serialized_data.is_valid():
+                civs = serialized_data.create(serialized_data.validated_data)
+                instance.values.remove(
+                    *instance.values.filter(
+                        interface__in=[civ.interface for civ in civs]
+                    )
+                )
+                instance.values.add(*civs)
         serializer = self.get_serializer(instance)
-        DisplaySet.objects.filter(
-            reader_study=instance.reader_study, values=None
-        ).delete()
         return Response(serializer.data)
 
     def get_queryset(self):

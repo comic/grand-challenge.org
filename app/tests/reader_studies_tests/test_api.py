@@ -6,8 +6,12 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.reader_studies.models import Answer, Question
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from grandchallenge.components.models import InterfaceKind
+from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -1162,7 +1166,7 @@ def test_question_accepts_image_type_answers(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory(use_display_sets=True)
+    rs = ReaderStudyFactory()
     im = ImageFactory()
     reader = UserFactory()
 
@@ -1272,7 +1276,7 @@ def test_display_set_shuffling(client, settings):
 
     r1, r2 = UserFactory(), UserFactory()
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=True)
     rs.add_reader(r1)
     rs.add_reader(r2)
 
@@ -1352,3 +1356,103 @@ def test_display_set_shuffling(client, settings):
 
     assert r1_shuffled_1 == r1_shuffled_2
     assert r2_shuffled_1 == r2_shuffled_2
+
+
+@pytest.mark.django_db
+def test_display_set_add_and_edit(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    r1 = UserFactory()
+
+    rs = ReaderStudyFactory(use_display_sets=True)
+    rs.add_editor(r1)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        user=r1,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={"reader_study": rs.slug},
+    )
+
+    ds = DisplaySet.objects.get(pk=response.json()["pk"])
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=r1,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "display_set": ds.pk,
+                "interface": "generic-medical-image",
+                "uploads": [
+                    create_upload_from_file(
+                        file_path=Path(__file__).parent.parent
+                        / "cases_tests"
+                        / "resources"
+                        / "test_grayscale.jpg",
+                        creator=r1,
+                    ).api_url
+                ],
+            },
+        )
+
+    ds.refresh_from_db()
+    assert ds.values.count() == 1
+
+    initial_value = ds.values.first()
+    assert initial_value.interface.slug == "generic-medical-image"
+    assert initial_value.image.name == "test_grayscale.jpg"
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=r1,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "display_set": ds.pk,
+                "interface": "generic-medical-image",
+                "uploads": [
+                    create_upload_from_file(
+                        file_path=Path(__file__).parent.parent
+                        / "cases_tests"
+                        / "resources"
+                        / "test_grayscale.png",
+                        creator=r1,
+                    ).api_url
+                ],
+            },
+        )
+
+    ds.refresh_from_db()
+    assert ds.values.count() == 1
+
+    new = ds.values.first()
+    assert new != initial_value
+    assert new.interface.slug == "generic-medical-image"
+    assert new.image.name == "test_grayscale.png"
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=r1,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={"values": [{"interface": ci.slug, "value": True}]},
+    )
+
+    assert sorted(
+        [val["interface"] for val in response.json()["values"]]
+    ) == sorted([ci.slug, "generic-medical-image"])
+    ds.refresh_from_db()
+    assert ds.values.count() == 2

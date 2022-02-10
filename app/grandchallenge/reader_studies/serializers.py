@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
+from guardian.shortcuts import get_objects_for_user
 from rest_framework.fields import CharField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
@@ -11,6 +12,7 @@ from rest_framework.serializers import (
 from grandchallenge.cases.models import Image
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
+    ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
 )
 from grandchallenge.reader_studies.models import (
@@ -63,9 +65,27 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     class Meta:
         model = DisplaySet
         fields = (
+            "pk",
             "reader_study",
             "values",
         )
+
+
+class DisplaySetPostSerializer(DisplaySetSerializer):
+    reader_study = SlugRelatedField(
+        slug_field="slug", queryset=ReaderStudy.objects.none(), required=False
+    )
+    values = ComponentInterfaceValuePostSerializer(many=True, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["request"].user
+            self.fields["reader_study"].queryset = get_objects_for_user(
+                user,
+                "reader_studies.change_readerstudy",
+                accept_global_perms=False,
+            )
 
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):

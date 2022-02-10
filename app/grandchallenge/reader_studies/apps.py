@@ -22,7 +22,9 @@ def init_reader_study_permissions(*_, **__):
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
         g,
     )
-
+    assign_perm(
+        f"{ReaderStudy._meta.app_label}.add_{DisplaySet._meta.model_name}", g,
+    )
     assign_perm(
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}",
         g,
