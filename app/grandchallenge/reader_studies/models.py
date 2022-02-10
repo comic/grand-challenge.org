@@ -1052,31 +1052,32 @@ class DisplaySet(UUIDModel):
         return result
 
 
+class AnswerType(models.TextChoices):
+    # WARNING: Do not change the display text, these are used in the front end
+    SINGLE_LINE_TEXT = "STXT", "Single line text"
+    MULTI_LINE_TEXT = "MTXT", "Multi line text"
+    BOOL = "BOOL", "Bool"
+    NUMBER = "NUMB", "Number"
+    HEADING = "HEAD", "Heading"
+    BOUNDING_BOX_2D = "2DBB", "2D bounding box"
+    MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
+    DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        "Multiple distance measurements",
+    )
+    POINT = "POIN", "Point"
+    MULTIPLE_POINTS = "MPOI", "Multiple points"
+    POLYGON = "POLY", "Polygon"
+    MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
+    CHOICE = "CHOI", "Choice"
+    MULTIPLE_CHOICE = "MCHO", "Multiple choice"
+    MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
+    MASK = "MASK", "Mask"
+
+
 class Question(UUIDModel):
-    class AnswerType(models.TextChoices):
-        # WARNING: Do not change the display text, these are used in the front end
-        SINGLE_LINE_TEXT = "STXT", "Single line text"
-        MULTI_LINE_TEXT = "MTXT", "Multi line text"
-        BOOL = "BOOL", "Bool"
-        NUMBER = "NUMB", "Number"
-        HEADING = "HEAD", "Heading"
-        BOUNDING_BOX_2D = "2DBB", "2D bounding box"
-        MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
-        DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
-        MULTIPLE_DISTANCE_MEASUREMENTS = (
-            "MDIS",
-            "Multiple distance measurements",
-        )
-        POINT = "POIN", "Point"
-        MULTIPLE_POINTS = "MPOI", "Multiple points"
-        POLYGON = "POLY", "Polygon"
-        POLYGON_IMAGE = "PIMG", "Polygon (saved as mask)"
-        MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
-        MULTIPLE_POLYGONS_IMAGE = "MPIM", "Multiple polygons (saved as mask)"
-        CHOICE = "CHOI", "Choice"
-        MULTIPLE_CHOICE = "MCHO", "Multiple choice"
-        MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
-        MASK = "MASK", "Mask"
+    AnswerType = AnswerType
 
     # What is the orientation of the question form when presented on the
     # front end?
