@@ -326,7 +326,7 @@ class ReaderStudyStatistics(
     # If the permission is changed to 'read', we need to filter these values out.
 
 
-class ReaderStudyImagesList(
+class ReaderStudyDisplaySetList(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     model = DisplaySet
@@ -359,7 +359,7 @@ class ReaderStudyImagesList(
         return qs
 
 
-class _ReaderStudyImagesList(
+class ReaderStudyImagesList(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     model = Image

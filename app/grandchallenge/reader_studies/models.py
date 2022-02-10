@@ -358,7 +358,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ]
 
     def get_ground_truth_csv_dict(self):
-        if len(self.hanging_list) == 0:
+        if len(self.hanging_list) == 0 and self.display_sets.count() == 0:
             return {}
         result = []
         answers = {
@@ -367,7 +367,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         }
         for images in self.image_groups:
             _answers = answers.copy()
-            _answers["images"] = ";".join(images)
+            _answers["images"] = (
+                str(images) if self.use_display_sets else ";".join(images)
+            )
             result.append(_answers)
         return result
 
