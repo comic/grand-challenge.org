@@ -74,9 +74,13 @@ def create_display_sets_for_upload_session(
     interface = ComponentInterface.objects.get(pk=interface_pk)
     for image in images:
         with transaction.atomic():
-            civ = ComponentInterfaceValue.objects.create(
+            civ, _ = ComponentInterfaceValue.objects.get_or_create(
                 interface=interface, image=image
             )
+            if DisplaySet.objects.filter(
+                reader_study=reader_study, values=civ
+            ).exists():
+                return
             ds = DisplaySet.objects.create(reader_study=reader_study)
             ds.values.add(civ)
             assign_perm(
