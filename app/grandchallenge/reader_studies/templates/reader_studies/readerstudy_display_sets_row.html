@@ -2,6 +2,7 @@
 {% load profiles %}
 {% load workstations %}
 {% load pathlib %}
+{% load reader_study_tags %}
 
 <div id="accordion">
   <div class="card">
@@ -28,7 +29,15 @@
           {% for value in object.values.all %}
             <tr>
               <td>{{ value.interface.title }}</td>
-              <td>{{ value.image.name }}</td>
+              <td>
+                <select class="form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
+                  <option>---</option>
+                  {% get_values_for_interface object value.interface as values %}
+                  {% for val in values %}
+                    <option value="{{ val.id }}" {% if val.id == value.id %}selected{% endif %}>{{ val.image.name }}</option>
+                  {% endfor %}
+                </select>
+              </td>
               <td>{{ value.image.created|naturaltime }}</td>
               <td>
                 <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=object config=reader_study.workstation_config %}">

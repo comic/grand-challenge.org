@@ -969,6 +969,13 @@ class DisplaySetViewSet(
                 id=request.data.get("value")
             )
             civ.displays_sets.clear()
+            assigned_civs = instance.values.filter(interface=civ.interface)
+            for assigned in assigned_civs:
+                ds = DisplaySet.objects.create(
+                    reader_study=instance.reader_study
+                )
+                ds.values.add(assigned)
+                instance.values.remove(assigned)
             instance.values.add(civ)
             instance.refresh_from_db()
             DisplaySet.objects.filter(

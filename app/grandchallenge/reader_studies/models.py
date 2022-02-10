@@ -1034,6 +1034,12 @@ class DisplaySet(UUIDModel):
             self,
         )
 
+    def values_for_interface(self, interface):
+        values = ComponentInterfaceValue.objects.none()
+        for ds in self.reader_study.display_sets.all():
+            values |= ds.values.filter(interface=interface)
+        return values
+
     @property
     def empty_interfaces(self):
         interfaces = ComponentInterface.objects.exclude(
@@ -1045,9 +1051,7 @@ class DisplaySet(UUIDModel):
         )
         result = []
         for interface in interfaces:
-            values = ComponentInterfaceValue.objects.none()
-            for ds in self.reader_study.display_sets.all():
-                values |= ds.values.filter(interface=interface)
+            values = self.values_for_interface(interface)
             result.append({"title": interface.title, "values": values})
         return result
 
