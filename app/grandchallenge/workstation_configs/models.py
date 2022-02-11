@@ -283,6 +283,9 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
                 self,
             )
 
+    def get_help_text(self, field):
+        return self._meta.get_field(field).help_text
+
 
 class WindowPreset(TitleSlugDescriptionModel):
     width = models.PositiveIntegerField(
