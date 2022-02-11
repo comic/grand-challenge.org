@@ -151,6 +151,8 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         to="WindowPreset",
         blank=True,
         related_name="workstation_window_presets",
+        help_text="Window-preset options that change the projection of (computed) "
+        "image values to displayed pixels",
     )
 
     default_window_preset = models.ForeignKey(
@@ -159,10 +161,14 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         null=True,
         on_delete=models.SET_NULL,
         related_name="workstation_default_window_presets",
+        help_text="The preset that is applied when an image is fist shown",
     )
 
     image_context = models.CharField(
-        blank=True, max_length=6, choices=ImageContext.choices
+        blank=True,
+        max_length=6,
+        choices=ImageContext.choices,
+        help_text="Sets several heuristics used for automatically selecting tools, hanging protocols, et cetera",
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max
@@ -172,22 +178,39 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         max_digits=4,
         decimal_places=2,
         validators=[MinValueValidator(limit_value=0.01)],
+        help_text="The size (depth/Z size) in millimeters used to project image values "
+        "to displayed pixels",
     )
 
     default_slab_render_method = models.CharField(
-        max_length=3, choices=SlabRenderMethod.choices, blank=True
+        max_length=3,
+        choices=SlabRenderMethod.choices,
+        blank=True,
+        help_text="The method used to project multiple voxels in the volume, found within "
+        "the slab thickness column, to displayed pixels",
     )
 
     default_orientation = models.CharField(
-        max_length=1, choices=Orientation.choices, blank=True
+        max_length=1,
+        choices=Orientation.choices,
+        blank=True,
+        help_text="The orientation that defines the 3D-intersection plane used to render slabs of 3D images",
     )
 
     overlay_luts = models.ManyToManyField(
-        to="LookUpTable", blank=True, related_name="workstation_overlay_luts"
+        to="LookUpTable",
+        blank=True,
+        related_name="workstation_overlay_luts",
+        help_text="The preset look-up tables options that are used to project overlay-image values to "
+        "displayed pixel colors",
     )
 
     default_overlay_lut = models.ForeignKey(
-        to="LookUpTable", blank=True, null=True, on_delete=models.SET_NULL
+        to="LookUpTable",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="The look-up table that is applied when an overlay image is fist shown",
     )
 
     default_overlay_interpolation = models.CharField(
@@ -195,6 +218,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         choices=ImageInterpolationType.choices,
         default=ImageInterpolationType.NEAREST,
         blank=True,
+        help_text="The method used to interpolate multiple voxels of overlay images and project them to screen pixels",
     )
 
     # 3 digits, 2 decimal places, 0.00 min, 1.00 max
@@ -207,18 +231,21 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
             MinValueValidator(limit_value=0.00),
             MaxValueValidator(limit_value=1.00),
         ],
+        help_text="The alpha value used for setting the degree of opacity for displayed pixels of overlay images",
     )
 
     overlay_segments = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+        help_text="The schema that defines how categories of values in the overlay images are differentiated",
     )
 
     key_bindings = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONValidator(schema=KEY_BINDINGS_SCHEMA)],
+        help_text="The schema that overwrites the mapping between keyboard shortcuts and viewer actions",
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max
@@ -230,21 +257,58 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         validators=[MinValueValidator(limit_value=0.01)],
     )
 
-    show_image_info_plugin = models.BooleanField(default=True)
-    show_display_plugin = models.BooleanField(default=True)
-    show_image_switcher_plugin = models.BooleanField(default=True)
+    show_image_info_plugin = models.BooleanField(
+        default=True,
+        help_text="A plugin that shows meta-data information derived from image headers "
+        "as well as any configured case text for reader studies",
+    )
+    show_display_plugin = models.BooleanField(
+        default=True,
+        help_text="A plugin that allows control over display properties such as window preset, "
+        "slab thickness, or orientation",
+    )
+    show_image_switcher_plugin = models.BooleanField(
+        default=True,
+        help_text="A plugin that allows switching images when viewing algorithm outputs",
+    )
     show_algorithm_output_plugin = models.BooleanField(
         default=True,
-        help_text="Show algorithm outputs with navigation controls",
+        help_text="A plugin that shows algorithm outputs, including navigation controls",
     )
-    show_overlay_plugin = models.BooleanField(default=True)
-    show_invert_tool = models.BooleanField(default=True)
-    show_flip_tool = models.BooleanField(default=True)
-    show_window_level_tool = models.BooleanField(default=True)
-    show_reset_tool = models.BooleanField(default=True)
-    show_overlay_selection_tool = models.BooleanField(default=True)
-    show_lut_selection_tool = models.BooleanField(default=True)
-    show_annotation_counter_tool = models.BooleanField(default=True)
+    show_overlay_plugin = models.BooleanField(
+        default=True,
+        help_text="A plugin that contains overlay-related controls, "
+        "such as the overlay-selection tool and overlay-segmentation visibility",
+    )
+    show_invert_tool = models.BooleanField(
+        default=True,
+        help_text="A tool/button that allows inverting the displayed pixel colors of an image",
+    )
+    show_flip_tool = models.BooleanField(
+        default=True,
+        help_text="A tool/button that allows vertical flipping/mirroring of an image",
+    )
+    show_window_level_tool = models.BooleanField(
+        default=True,
+        help_text="A tool that allows selection of window presets and changing the window width/center",
+    )
+    show_reset_tool = models.BooleanField(
+        default=True,
+        help_text="A tool/button that resets all display properties of the images to defaults",
+    )
+    show_overlay_selection_tool = models.BooleanField(
+        default=True,
+        help_text="A tool that allows switching overlay images when viewing algorithm outputs",
+    )
+    show_lut_selection_tool = models.BooleanField(
+        default=True,
+        verbose_name="Show overlay-lut selection tool",
+        help_text="A tool that allows switching between the overlay-lut presets",
+    )
+    show_annotation_counter_tool = models.BooleanField(
+        default=True,
+        help_text="A tool that can be used to show summary statistics of annotations within an area",
+    )
 
     link_images = models.BooleanField(
         default=True,
@@ -254,13 +318,15 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     enable_contrast_enhancement = models.BooleanField(
         default=False,
-        verbose_name="Enable contrast enhancement preprocessing (fundus)",
+        verbose_name="Contrast-enhancement preprocessing tool",
+        help_text="A tool that uses image preprocessing to enhance contrast. "
+        "It is mainly used for viewing eye-fundus images",
     )
 
     auto_jump_center_of_gravity = models.BooleanField(
         default=True,
-        help_text="Jump to center of gravity of first output when viewing algorithm "
-        "results or the first overlay segment when viewing a reader study",
+        help_text="Enables a jump to center of gravity of the first output when viewing algorithm "
+        "outputs or the first overlay segment when viewing a reader study",
     )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):

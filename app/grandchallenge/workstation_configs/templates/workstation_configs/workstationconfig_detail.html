@@ -108,6 +108,7 @@
     <h2>Plugin and Tools</h2>
 
     <p class="text-muted">Plugins are components of the viewer, whereas tools are (generally) contained within plugins.</p>
+
     <table class="table table-hover my-3" >
         <tr data-toggle="tooltip" title="{% get_help_text object 'show_image_info_plugin' %}">
             <td class="font-weight-bold">Image info plugin</td>
@@ -157,20 +158,20 @@
                 <i class="fas {% if object.show_window_level_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'image_context' %}">
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_reset_tool' %}">
             <td class="font-weight-bold">Reset tool</td>
             <td>
                 <i class="fas {% if object.show_reset_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'image_context' %}">
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_overlay_selection_tool' %}">
             <td class="font-weight-bold">Overlay selection tool</td>
             <td>
                 <i class="fas {% if object.show_overlay_selection_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
         <tr data-toggle="tooltip" title="{% get_help_text object 'show_lut_selection_tool' %}">
-            <td class="font-weight-bold">LUT selection tool</td>
+            <td class="font-weight-bold">Show overlay-LUT selection tool</td>
             <td>
                 <i class="fas {% if object.show_lut_selection_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
@@ -182,7 +183,7 @@
             </td>
         </tr>
         <tr data-toggle="tooltip" title="{% get_help_text object 'enable_contrast_enhancement' %}">
-            <td class="font-weight-bold">Enable contrast enhancement preprocessing (fundus)</td>
+            <td class="font-weight-bold">Contrast-enhancement preprocessing tool</td>
             <td>
                 <i class="fas {% if object.enable_contrast_enhancement %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
