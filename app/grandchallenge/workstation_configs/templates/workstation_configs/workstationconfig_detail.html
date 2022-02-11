@@ -5,6 +5,7 @@
 {% load workstations %}
 {% load guardian_tags %}
 {% load evaluation_extras %}
+{% load get_help_text %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -24,41 +25,41 @@
         <p>{{ object.description }}</p>
     {% endif %}
 
+    <p class="text-muted">Hover over the configuration for more information</p>
     <table class="table table-hover my-3">
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'image_context' %}">
             <td class="font-weight-bold">Image context</td>
             <td>{{ object.get_image_context_display }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'window_presets' %}">
             <td class="font-weight-bold">Window presets</td>
             <td>
                 {% for x in object.window_presets.all %}
                     <div>{{ x }}</div>
                 {% endfor %}
             </td>
-        <td>{{ object.get_window_preset_display }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_window_preset' %}">
             <td class="font-weight-bold">Default window preset</td>
             <td>{{ object.default_window_preset }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_slab_thickness_mm' %}">
             <td class="font-weight-bold">Default slab thickness (mm)</td>
             <td>{{ object.default_slab_thickness_mm }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_slab_render_method' %}">
             <td class="font-weight-bold">Default slab render method</td>
             <td>{{ object.get_default_slab_render_method_display }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_orientation' %}">
             <td class="font-weight-bold">Default orientation</td>
             <td>{{ object.get_default_orientation_display }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_alpha' %}">
             <td class="font-weight-bold">Default overlay alpha</td>
             <td>{{ object.default_overlay_alpha }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'overlay_luts' %}">
             <td class="font-weight-bold">Overlay lookup tables</td>
             <td>
                 {% for x in object.overlay_luts.all %}
@@ -66,118 +67,124 @@
                 {% endfor %}
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_lut' %}">
             <td class="font-weight-bold">Default overlay lookup table</td>
             <td>{{ object.default_overlay_lut }}</td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_interpolation' %}">
             <td class="font-weight-bold">Default overlay interpolation</td>
             <td>{{ object.get_default_overlay_interpolation_display }}</td>
         </tr>
-        <tr>
-            <td class="font-weight-bold">Overlay Segments</td>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'overlay_segments' %}">
+            <td class="font-weight-bold">Overlay segments</td>
             <td>
                 <pre>{{ object.overlay_segments|json_dumps }}</pre>
             </td>
         </tr>
-        <tr>
-            <td class="font-weight-bold">Key Bindings</td>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'key_bindings' %}">
+            <td class="font-weight-bold">Key bindings</td>
             <td>
                 <pre>{{ object.key_bindings|json_dumps }}</pre>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_zoom_scale' %}">
             <td class="font-weight-bold">Default zoom scale</td>
             <td>{{ object.default_zoom_scale }}</td>
         </tr>
-        <tr>
+         <tr data-toggle="tooltip" title="{% get_help_text object 'auto_jump_center_of_gravity' %}">
+            <td class="font-weight-bold">Jump to first center of gravity</td>
+            <td>
+                <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_images' %}">
+            <td class="font-weight-bold">Start with images linked</td>
+            <td>
+                <i class="fas {% if object.link_images %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+    </table>
+
+    <h2>Plugin and Tools</h2>
+
+    <p class="text-muted">Plugins are components of the viewer, whereas tools are (generally) contained within plugins.</p>
+    <table class="table table-hover my-3" >
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_image_info_plugin' %}">
             <td class="font-weight-bold">Image info plugin</td>
             <td>
                 <i class="fas {% if object.show_image_info_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_display_plugin' %}">
             <td class="font-weight-bold">Display plugin</td>
             <td>
                 <i class="fas {% if object.show_display_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_image_switcher_plugin' %}">
             <td class="font-weight-bold">Image switcher plugin</td>
             <td>
                 <i class="fas {% if object.show_image_switcher_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_algorithm_output_plugin' %}">
             <td class="font-weight-bold">Algorithm output plugin</td>
             <td>
                 <i class="fas {% if object.show_algorithm_output_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_overlay_plugin' %}">
             <td class="font-weight-bold">Overlay plugin</td>
             <td>
                 <i class="fas {% if object.show_overlay_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_invert_tool' %}">
             <td class="font-weight-bold">Invert tool</td>
             <td>
                 <i class="fas {% if object.show_invert_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_flip_tool' %}">
             <td class="font-weight-bold">Flip tool</td>
             <td>
                 <i class="fas {% if object.show_flip_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_window_level_tool' %}">
             <td class="font-weight-bold">Window level tool</td>
             <td>
                 <i class="fas {% if object.show_window_level_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'image_context' %}">
             <td class="font-weight-bold">Reset tool</td>
             <td>
                 <i class="fas {% if object.show_reset_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'image_context' %}">
             <td class="font-weight-bold">Overlay selection tool</td>
             <td>
                 <i class="fas {% if object.show_overlay_selection_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_lut_selection_tool' %}">
             <td class="font-weight-bold">LUT selection tool</td>
             <td>
                 <i class="fas {% if object.show_lut_selection_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_annotation_counter_tool' %}">
             <td class="font-weight-bold">Annotation counter tool</td>
             <td>
                 <i class="fas {% if object.show_annotation_counter_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'enable_contrast_enhancement' %}">
             <td class="font-weight-bold">Enable contrast enhancement preprocessing (fundus)</td>
             <td>
                 <i class="fas {% if object.enable_contrast_enhancement %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
-            </td>
-        </tr>
-        <tr>
-            <td class="font-weight-bold">Jump to center of gravity of first output when viewing algorithm results</td>
-            <td>
-                <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
-            </td>
-        </tr>
-        <tr>
-            <td class="font-weight-bold">Start with images linked</td>
-            <td>
-                <i class="fas {% if object.link_images %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
     </table>
@@ -194,5 +201,13 @@
             </a>
         </div>
     {% endif %}
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+      $(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+      });
+    </script>
 {% endblock %}
