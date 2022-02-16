@@ -11,6 +11,11 @@
         <li class="breadcrumb-item"><a href="{% url 'documentation:home' %}">Documentation</a></li>
         {% if currentdocpage.parent %}
             {% if currentdocpage.parent.parent %}
+                {% if currentdocpage.parent.parent.parent %}
+                    <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.parent.parent.slug %}">
+                        {{ currentdocpage.parent.parent.parent.title }}
+                    </a></li>
+                {% endif %}
                 <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.parent.slug %}">
                         {{ currentdocpage.parent.parent.title }}
                 </a></li>
@@ -31,8 +36,8 @@
         <nav class="documentation-sidebar p-3 sticky-top">
             <ul class="nav flex-column" id="documentation_nav_accordion">
                 {% for page in top_level_pages %}
-                    {% get_grandchildren page as grandchildren %}
-                    {% if not page.children.all %}
+                    {% get_subordinate_pages page as subpages %}
+                    {% if not subpages %}
                         <li class="nav-item mb-1">
                             <a class="nav-link rounded {% if page == currentdocpage %}active {% endif %}text-white bg-dark"
                                id="{{ page.slug }}"
@@ -40,16 +45,17 @@
                                     {{ page.title }}
                             </a>
                         </li>
-                    {% elif page.children.all %}
-                        <li class="nav-item mb-1 has-submenu rounded">
-                            <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in page.children.all or currentdocpage in grandchildren %}active{% endif %} text-white bg-dark"
+                    {% else %}
+                        <li class="nav-item mb-1 rounded">
+                            <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in subpages %}active{% endif %} text-white bg-dark"
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
                                     {{ page.title }} &nbsp;&nbsp;<i class="fas fa-caret-down"></i>
                             </a>
-                                <ul class="submenu rounded {% if currentdocpage == page or currentdocpage in page.children.all or currentdocpage in grandchildren %}collapse show{% else %}collapse hide{% endif %} list-group">
+                                <ul class="rounded {% if currentdocpage == page or currentdocpage in subpages %}collapse show{% else %}collapse hide{% endif %} list-group">
                                     {% for subpage in page.children.all %}
-                                        {% if not subpage.children.all %}
+                                        {% get_subordinate_pages subpage as subpage_subpages %}
+                                        {% if not subpage_subpages %}
                                             <li class="list-group-item border-0 p-0 {% if subpage == page.children.first %}mt-1{% endif %} mb-1">
                                                 <a class="nav-link rounded {% if subpage == currentdocpage  %}active font-weight-bold{% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
@@ -58,22 +64,43 @@
                                                 </a>
                                             </li>
                                         {% else %}
-                                            <li class="list-group-item has-submenu border-0 p-0 mb-1 {% if subpage == page.children.first %}mt-1{% endif %}">
+                                            <li class="list-group-item border-0 p-0 mb-1 {% if subpage == page.children.first %}mt-1{% endif %}">
                                                 <a class="nav-link rounded {% if subpage == currentdocpage  %}active font-weight-bold{% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
                                                    href="{% url 'documentation:detail' slug=subpage.slug %}">
                                                         {{ subpage.title }} &nbsp;&nbsp;<i class="fas fa-caret-down"></i>
                                                 </a>
                                             </li>
-                                            <ul class="submenu-2 rounded {% if currentdocpage == subpage or currentdocpage in subpage.children.all %}collapse show{% else %}collapse hide{% endif %} list-group">
+                                            <ul class="rounded {% if currentdocpage == subpage or currentdocpage in subpage_subpages %}collapse show{% else %}collapse hide{% endif %} list-group">
                                                 {% for tertiarypage in subpage.children.all %}
-                                                    <li class="list-group-item p-0 mb-1 border">
-                                                        <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold{% endif %} text-primary"
-                                                           id="{{ tertiarypage.slug }}"
-                                                           href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
-                                                                {{ tertiarypage.title }}
-                                                        </a>
-                                                    </li>
+                                                    {% if not tertiarypage.children.all %}
+                                                        <li class="list-group-item border p-0 mb-1">
+                                                            <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold{% endif %} text-primary"
+                                                               id="{{ tertiarypage.slug }}"
+                                                               href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
+                                                                    {{ tertiarypage.title }}
+                                                            </a>
+                                                        </li>
+                                                    {% else %}
+                                                        <li class="list-group-item border {% if tertiarypage == currentdocpage or currentdocpage in tertiarypage.children.all %}border-bottom-0 {% else %}mb-1{% endif %} p-0">
+                                                            <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active font-weight-bold{% endif %} text-primary"
+                                                               id="{{ tertiarypage.slug }}"
+                                                               href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
+                                                                    {{ tertiarypage.title }}&nbsp;&nbsp;<i class="fas fa-caret-down"></i>
+                                                            </a>
+                                                        </li>
+                                                        <ul class="border-left border-right border-bottom {% if currentdocpage == tertiarypage or currentdocpage in tertiarypage.children.all %} collapse show {% else %} collapse hide {% endif %} list-group mb-1">
+                                                            {% for fourthpage in tertiarypage.children.all %}
+                                                                <li class="p-0 mb-1 ml-5 mr-3">
+                                                                    <a class="nav-link {% if fourthpage == currentdocpage %}active font-weight-bold{% endif %} {% if forloop.last %} border-bottom-0 {% else %} border-bottom {% endif %} text-primary pl-2"
+                                                                       id="{{ fourthpage.slug }}"
+                                                                       href="{% url 'documentation:detail' slug=fourthpage.slug %}">
+                                                                            {{ fourthpage.title }}
+                                                                    </a>
+                                                                </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    {% endif %}
                                                 {% endfor %}
                                             </ul>
                                         {% endif %}
