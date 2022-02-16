@@ -30,9 +30,13 @@ def rename_site(sender, **kwargs):
     from django.contrib.sites.models import Site
 
     s = Site.objects.get(pk=settings.SITE_ID)
-    s.domain = settings.SESSION_COOKIE_DOMAIN.lstrip(".")
-    s.name = s.name.split(".")[0].replace("-", " ").title()
-    s.save()
+
+    desired_domain = settings.SESSION_COOKIE_DOMAIN.lstrip(".")
+
+    if s.domain != desired_domain:
+        s.domain = desired_domain
+        s.name = s.name.split(".")[0].replace("-", " ").title()
+        s.save()
 
 
 class CoreConfig(AppConfig):
