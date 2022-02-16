@@ -81,7 +81,7 @@ def create_display_sets_for_upload_session(
             if DisplaySet.objects.filter(
                 reader_study=reader_study, values=civ
             ).exists():
-                return
+                continue
             ds = DisplaySet.objects.create(reader_study=reader_study)
             ds.values.add(civ)
             assign_perm(
