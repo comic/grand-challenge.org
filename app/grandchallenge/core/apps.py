@@ -35,7 +35,7 @@ def rename_site(sender, **kwargs):
 
     if s.domain != desired_domain:
         s.domain = desired_domain
-        s.name = s.name.split(".")[0].replace("-", " ").title()
+        s.name = desired_domain.split(".")[0].replace("-", " ").title()
         s.save()
 
 
