@@ -229,6 +229,12 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 "archive item."
             )
 
+        if "display_set" in attrs and "interface" not in attrs:
+            raise ValidationError(
+                "An interface needs to be defined to upload to a "
+                "display_set."
+            )
+
         return attrs
 
     def validate_answer(self, value):
