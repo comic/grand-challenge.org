@@ -14,6 +14,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.core.files.base import ContentFile
+from django.db import IntegrityError
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from knox import crypto
@@ -76,19 +77,12 @@ def run():
             "Skipping this command, server is not in DEBUG mode."
         )
 
-    site = Site.objects.get(pk=settings.SITE_ID)
-    if site.domain == "gc.localhost":
-        raise RuntimeError("Fixtures already initialised")
+    try:
+        users = _create_users(usernames=DEFAULT_USERS)
+    except IntegrityError:
+        raise RuntimeError("Fixtures already initialized")
 
-    site.domain = "gc.localhost"
-    site.name = "Grand Challenge"
-    site.save()
-
-    _create_flatpages(site)
-
-    users = _create_users(usernames=DEFAULT_USERS)
     _set_user_permissions(users)
-    _create_help_forum()
     _create_demo_challenge(users)
     _create_external_challenge(users)
     _create_workstation(users)
@@ -98,12 +92,15 @@ def run():
     _create_user_tokens(users)
     _create_github_user_token(users["algorithm"])
     _create_github_webhook_message()
+    _create_help_forum()
+    _create_flatpages()
     _setup_public_storage()
 
     print("✨ Development fixtures successfully created ✨")
 
 
-def _create_flatpages(site):
+def _create_flatpages():
+    site = Site.objects.get(pk=settings.SITE_ID)
     page = FlatPage.objects.create(
         url="/about/",
         title="About us",

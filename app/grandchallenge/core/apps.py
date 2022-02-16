@@ -26,11 +26,21 @@ def init_users_groups(sender, **kwargs):
     anon.groups.remove(g_reg)
 
 
+def rename_site(sender, **kwargs):
+    from django.contrib.sites.models import Site
+
+    s = Site.objects.get(pk=settings.SITE_ID)
+    s.domain = settings.SESSION_COOKIE_DOMAIN.lstrip(".")
+    s.name = s.name.split(".")[0].replace("-", " ").title()
+    s.save()
+
+
 class CoreConfig(AppConfig):
     name = "grandchallenge.core"
 
     def ready(self):
         post_migrate.connect(init_users_groups, sender=self)
+        post_migrate.connect(rename_site, sender=self)
 
         # noinspection PyUnresolvedReferences
         import grandchallenge.core.signals  # noqa: F401
