@@ -91,7 +91,6 @@ class Column:
     sort_field: str
     classes: Tuple[str, ...] = ()
     identifier: str = ""
-    sub_items: Iterable = ()
 
     # A column will be hidden when the `optional_condition` evaluates to False
     # for every object shown in the current list (page). `optional_condition`
