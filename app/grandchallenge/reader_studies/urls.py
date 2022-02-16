@@ -68,7 +68,7 @@ urlpatterns = [
         name="example-ground-truth",
     ),
     path(
-        "<slug>/display_sets/add/",
+        "<slug>/display-sets/add/",
         AddDisplaySetsToReaderStudy.as_view(),
         name="add-displaysets",
     ),
