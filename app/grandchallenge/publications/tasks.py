@@ -1,6 +1,7 @@
 import logging
 
 from celery import shared_task
+from requests.exceptions import RequestException
 
 from grandchallenge.publications.models import Publication
 from grandchallenge.publications.utils import get_identifier_csl
@@ -19,6 +20,9 @@ def update_publication_metadata():
             logger.warning(
                 f"Identifier {publication.identifier} not recognised"
             )
+            continue
+        except RequestException as e:
+            logger.warning(f"Error updating {publication.identifier}: {e}")
             continue
 
         publication.identifier = new_identifier
