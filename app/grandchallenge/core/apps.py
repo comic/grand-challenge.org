@@ -29,11 +29,11 @@ def init_users_groups(sender, **kwargs):
 def rename_site(sender, **kwargs):
     from django.contrib.sites.models import Site
 
-    s = Site.objects.get(pk=settings.SITE_ID)
-
     desired_domain = settings.SESSION_COOKIE_DOMAIN.lstrip(".")
 
-    if s.domain != desired_domain:
+    if not Site.objects.filter(domain=desired_domain).exists():
+        # Set the domain of the main site id if one doesn't already exist
+        s = Site.objects.get(pk=settings.SITE_ID)
         s.domain = desired_domain
         s.name = desired_domain.split(".")[0].replace("-", " ").title()
         s.save()
