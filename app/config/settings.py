@@ -151,9 +151,7 @@ AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 AWS_S3_OBJECT_PARAMETERS = {
     # Note that these do not affect the Uploads bucket, which is configured separately.
     # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
-    "StorageClass": os.environ.get(
-        "AWS_S3_DEFAULT_STORAGE_CLASS", "INTELLIGENT_TIERING"
-    ),
+    "StorageClass": os.environ.get("AWS_S3_DEFAULT_STORAGE_CLASS", "STANDARD"),
 }
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
