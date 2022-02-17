@@ -86,6 +86,11 @@ class DisplaySetPostSerializer(DisplaySetSerializer):
                 "reader_studies.change_readerstudy",
                 accept_global_perms=False,
             )
+            self.fields["values"].queryset = get_objects_for_user(
+                user,
+                "reader_studies.change_displayset",
+                accept_global_perms=False,
+            )
 
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
