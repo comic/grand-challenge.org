@@ -1,4 +1,3 @@
-from celery import chain, chord, group
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
@@ -28,15 +27,13 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.decorators import action
+from rest_framework.mixins import UpdateModelMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.tasks import (
-    add_images_to_component_interface_value,
-)
 from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     AddCasesForm,
@@ -52,19 +49,22 @@ from grandchallenge.archives.models import (
     ArchiveItem,
     ArchivePermissionRequest,
 )
-from grandchallenge.archives.serializers import ArchiveSerializer
+from grandchallenge.archives.serializers import (
+    ArchiveItemPostSerializer,
+    ArchiveItemSerializer,
+    ArchiveSerializer,
+)
 from grandchallenge.archives.tasks import (
     add_images_to_archive,
-    update_archive_item_values,
+    start_archive_item_update_tasks,
+    update_archive_item_update_kwargs,
 )
 from grandchallenge.cases.models import (
     Image,
     RawImageUploadSession,
 )
-from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
     ComponentInterface,
-    ComponentInterfaceValue,
     InterfaceKind,
 )
 from grandchallenge.core.filters import FilterMixin
@@ -368,12 +368,12 @@ class ArchiveEditArchiveItem(
     form_class = ArchiveItemForm
     template_name = "archives/archive_item_form.html"
     permission_required = (
-        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
+        f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
     )
     raise_exception = True
 
     def get_permission_object(self):
-        return self.archive
+        return self.archive_item
 
     @cached_property
     def archive(self):
@@ -401,13 +401,13 @@ class ArchiveEditArchiveItem(
         context.update({"archive": self.archive})
         return context
 
-    def form_valid(self, form):  # noqa: C901
+    def form_valid(self, form):
         def create_upload(image_files):
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
             )
             upload_session.user_uploads.set(image_files)
-            return upload_session.pk
+            return upload_session
 
         upload_pks = {}
         civ_pks_to_remove = set()
@@ -418,57 +418,38 @@ class ArchiveEditArchiveItem(
                 continue
 
             ci = ComponentInterface.objects.get(slug=slug)
-            civ = self.archive_item.values.filter(interface=ci).first()
-
-            if civ:
-                if civ.value == value:
-                    continue
-                civ_pks_to_remove.add(civ.pk)
 
             if ci.kind in InterfaceKind.interface_type_image():
                 if value:
-                    civ = ComponentInterfaceValue.objects.create(interface=ci)
-                    civ_pks_to_add.add(civ.pk)
-                    upload_pks[civ.pk] = create_upload(value)
-            elif ci.kind in InterfaceKind.interface_type_file():
-                civ = ComponentInterfaceValue.objects.create(interface=ci)
-                value.copy_object(to_field=civ.file)
-                civ.full_clean()
-                civ.save()
-                value.delete()
-                civ_pks_to_add.add(civ.pk)
+                    upload_session = create_upload(value)
             else:
-                civ = ci.create_instance(value=value)
-                civ_pks_to_add.add(civ.pk)
+                upload_session = None
 
-        tasks = update_archive_item_values.signature(
-            kwargs={
-                "archive_item_pk": self.archive_item.pk,
-                "civ_pks_to_add": list(civ_pks_to_add),
-                "civ_pks_to_remove": list(civ_pks_to_remove),
-            },
-            immutable=True,
-        )
-
-        if len(upload_pks) > 0:
-            image_tasks = group(
-                chain(
-                    build_images.signature(
-                        kwargs={"upload_session_pk": upload_pk}
-                    ),
-                    add_images_to_component_interface_value.signature(
-                        kwargs={
-                            "component_interface_value_pk": civ_pk,
-                            "upload_session_pk": upload_pk,
-                        },
-                        immutable=True,
-                    ),
-                )
-                for civ_pk, upload_pk in upload_pks.items()
+            update_archive_item_update_kwargs(
+                instance=self.archive_item,
+                interface=ci,
+                value=value
+                if ci.kind in InterfaceKind.interface_type_json()
+                else None,
+                user_upload=value
+                if InterfaceKind.interface_type_file()
+                else None,
+                upload_session=upload_session,
+                civ_pks_to_add=civ_pks_to_add,
+                civ_pks_to_remove=civ_pks_to_remove,
+                upload_pks=upload_pks,
             )
-            tasks = chord(image_tasks, tasks)
 
-        on_commit(tasks.apply_async)
+        on_commit(
+            start_archive_item_update_tasks.signature(
+                kwargs={
+                    "archive_item_pk": self.archive_item.pk,
+                    "civ_pks_to_add": list(civ_pks_to_add),
+                    "civ_pks_to_remove": list(civ_pks_to_remove),
+                    "upload_pks": upload_pks,
+                },
+            ).apply_async
+        )
 
         return HttpResponseRedirect(
             reverse("archives:items-list", kwargs={"slug": self.archive.slug},)
@@ -476,11 +457,11 @@ class ArchiveEditArchiveItem(
 
 
 class ArchiveItemsList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView,
 ):
     model = ArchiveItem
     permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
+        f"{ArchiveItem._meta.app_label}.view_{ArchiveItem._meta.model_name}"
     )
     raise_exception = True
     template_name = "archives/archive_items_list.html"
@@ -500,9 +481,6 @@ class ArchiveItemsList(
     @cached_property
     def archive(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -732,3 +710,17 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
             .distinct("study_description")
         )
         return Response(studies)
+
+
+class ArchiveItemViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
+    queryset = ArchiveItem.objects.all().prefetch_related("archive")
+    serializer_class = ArchiveItemSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["archive"]
+
+    def get_serializer_class(self):
+        if "update" in self.action:
+            return ArchiveItemPostSerializer
+        else:
+            return ArchiveItemSerializer

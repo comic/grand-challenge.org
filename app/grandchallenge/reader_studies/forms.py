@@ -102,8 +102,10 @@ class ReaderStudyCreateForm(
             "public",
             "access_request_handling",
             "allow_answer_modification",
+            "shuffle_hanging_list",
             "allow_case_navigation",
             "allow_show_all_annotations",
+            "roll_over_answers_for_n_cases",
         )
         help_texts = READER_STUDY_HELP_TEXTS
         widgets = {
@@ -125,7 +127,21 @@ class ReaderStudyCreateForm(
             and not self.cleaned_data["allow_case_navigation"]
         ):
             self.add_error(
-                error="`allow_case_navigation` must be checked if `allow_answer_modification` is",
+                error=ValidationError(
+                    "Case navigation is required when answer modification is allowed",
+                    code="invalid",
+                ),
+                field=None,
+            )
+        if self.cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
+            self.cleaned_data["allow_case_navigation"]
+            or self.cleaned_data["shuffle_hanging_list"]
+        ):
+            self.add_error(
+                error=ValidationError(
+                    "Rolling over answers should not be used together with case navigation or shuffling of the hanging list",
+                    code="invalid",
+                ),
                 field=None,
             )
 
@@ -151,6 +167,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "allow_answer_modification",
             "allow_case_navigation",
             "allow_show_all_annotations",
+            "roll_over_answers_for_n_cases",
             "hanging_list",
             "case_text",
         )
@@ -220,6 +237,7 @@ class ReaderStudyCopyForm(Form):
 class QuestionForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.layout = Layout(

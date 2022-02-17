@@ -298,6 +298,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "for a case."
         ),
     )
+    roll_over_answers_for_n_cases = models.PositiveSmallIntegerField(
+        default=False,
+        help_text=(
+            "The number of cases for which answers should roll over. "
+            "It can be used for repeated readings with slightly different hangings. "
+            "For instance, if set to 1. Case 2 will start with the answers from case 1; "
+            "whereas case 3 starts anew but its answers will rollover to case 4."
+        ),
+    )
     validate_hanging_list = models.BooleanField(default=True)
     publications = models.ManyToManyField(
         Publication,
@@ -334,6 +343,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",
+        "roll_over_answers_for_n_cases",
         "allow_answer_modification",
         "allow_case_navigation",
         "allow_show_all_annotations",
@@ -893,31 +903,32 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
+class AnswerType(models.TextChoices):
+    # WARNING: Do not change the display text, these are used in the front end
+    SINGLE_LINE_TEXT = "STXT", "Single line text"
+    MULTI_LINE_TEXT = "MTXT", "Multi line text"
+    BOOL = "BOOL", "Bool"
+    NUMBER = "NUMB", "Number"
+    HEADING = "HEAD", "Heading"
+    BOUNDING_BOX_2D = "2DBB", "2D bounding box"
+    MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
+    DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        "Multiple distance measurements",
+    )
+    POINT = "POIN", "Point"
+    MULTIPLE_POINTS = "MPOI", "Multiple points"
+    POLYGON = "POLY", "Polygon"
+    MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
+    CHOICE = "CHOI", "Choice"
+    MULTIPLE_CHOICE = "MCHO", "Multiple choice"
+    MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
+    MASK = "MASK", "Mask"
+
+
 class Question(UUIDModel):
-    class AnswerType(models.TextChoices):
-        # WARNING: Do not change the display text, these are used in the front end
-        SINGLE_LINE_TEXT = "STXT", "Single line text"
-        MULTI_LINE_TEXT = "MTXT", "Multi line text"
-        BOOL = "BOOL", "Bool"
-        NUMBER = "NUMB", "Number"
-        HEADING = "HEAD", "Heading"
-        BOUNDING_BOX_2D = "2DBB", "2D bounding box"
-        MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
-        DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
-        MULTIPLE_DISTANCE_MEASUREMENTS = (
-            "MDIS",
-            "Multiple distance measurements",
-        )
-        POINT = "POIN", "Point"
-        MULTIPLE_POINTS = "MPOI", "Multiple points"
-        POLYGON = "POLY", "Polygon"
-        POLYGON_IMAGE = "PIMG", "Polygon (saved as mask)"
-        MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
-        MULTIPLE_POLYGONS_IMAGE = "MPIM", "Multiple polygons (saved as mask)"
-        CHOICE = "CHOI", "Choice"
-        MULTIPLE_CHOICE = "MCHO", "Multiple choice"
-        MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
-        MASK = "MASK", "Mask"
+    AnswerType = AnswerType
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -1092,9 +1103,7 @@ class Question(UUIDModel):
             self.AnswerType.POINT,
             self.AnswerType.MULTIPLE_POINTS,
             self.AnswerType.POLYGON,
-            self.AnswerType.POLYGON_IMAGE,
             self.AnswerType.MULTIPLE_POLYGONS,
-            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 
@@ -1133,8 +1142,6 @@ class Question(UUIDModel):
     @property
     def is_image_type(self):
         return self.answer_type in [
-            self.AnswerType.POLYGON_IMAGE,
-            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
             self.AnswerType.MASK,
         ]
 

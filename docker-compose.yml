@@ -3,7 +3,7 @@ version: '2.3'
 services:
 
   postgres:
-    image: postgres:11
+    image: postgres:14
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: grandchallenge

@@ -1,7 +1,7 @@
 import base64
 import json
+import logging
 import os
-import re
 import subprocess
 import tempfile
 import zipfile
@@ -19,6 +19,10 @@ from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
+from grandchallenge.github.utils import CloneStatusChoices
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_repo_url(payload):
@@ -51,81 +55,105 @@ def get_repo_url(payload):
     return repo_url.replace("//", f"//x-access-token:{access_token}@")
 
 
-@shared_task()
-def get_zipfile(*, pk):  # noqa C901
+def install_lfs():
+    process = subprocess.check_output(
+        ["git", "lfs", "install"], stderr=subprocess.STDOUT
+    )
+    return process
+
+
+def fetch_repo(payload, repo_url, tmpdirname, recurse_submodules):
+    cmd = [
+        "git",
+        "clone",
+        "--branch",
+        payload["ref"],
+        "--depth",
+        "1",
+        repo_url,
+        tmpdirname,
+    ]
+    if recurse_submodules:
+        cmd.insert(2, "--recurse-submodules")
+
+    process = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    return process
+
+
+def check_license(tmpdirname):
+    process = subprocess.Popen(
+        ["licensee", "detect", tmpdirname, "--json", "--no-remote"],
+        stdout=subprocess.PIPE,
+    )
+    process.wait()
+    return json.loads(process.stdout.read().decode("utf-8"))
+
+
+def save_zipfile(ghwm, tmpdirname):
+    zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
+    tmp_zip = tempfile.NamedTemporaryFile()
+    with zipfile.ZipFile(tmp_zip.name, "w") as zipf:
+        for foldername, _subfolders, filenames in os.walk(tmpdirname):
+            for filename in filenames:
+                file_path = os.path.join(foldername, filename)
+                zipf.write(
+                    file_path, file_path.replace(f"{tmpdirname}/", ""),
+                )
+    temp_file = files.File(tmp_zip, name=zip_name,)
+    return temp_file
+
+
+def build_repo(ghwm_pk):
+    on_commit(
+        lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm_pk})
+    )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def get_zipfile(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
-    payload = ghwm.payload
-    repo_url = get_repo_url(payload)
-    zip_name = f"{ghwm.repo_name}-{ghwm.tag}.zip"
-    tmp_zip = tempfile.NamedTemporaryFile()
-    has_open_source_license = False
-    license = "No license file found"
-    try:
-        recurse_submodules = Algorithm.objects.get(
-            repo_name=ghwm.payload["repository"]["full_name"]
-        ).recurse_submodules
 
-    except Algorithm.DoesNotExist:
-        recurse_submodules = False
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        # Run git lfs install here, doing it in the dockerfile does not seem
-        # to work
-        try:
-            process = subprocess.check_output(
-                ["git", "lfs", "install"], stderr=subprocess.STDOUT
-            )
-        except subprocess.CalledProcessError as err:
-            ghwm.error = str(err)
-            ghwm.save()
-            raise
-        cmd = [
-            "git",
-            "clone",
-            "--branch",
-            payload["ref"],
-            "--depth",
-            "1",
-            repo_url,
-            tmpdirname,
-        ]
-        if recurse_submodules:
-            cmd.insert(2, "--recurse-submodules")
-        try:
-            process = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as err:
-            ghwm.error = str(err)
-            ghwm.save()
-            raise
-
-        process = subprocess.Popen(
-            ["licensee", tmpdirname], stdout=subprocess.PIPE
-        )
-        process.wait()
-        output = process.stdout.read()
-        regex_license = re.compile(r"License: (?P<license>.*)?$", re.M)
-        match = regex_license.search(output.decode("utf-8"))
-        if match:
-            license = match.group("license")
-            if license in settings.OPEN_SOURCE_LICENSES:
-                has_open_source_license = True
-        with zipfile.ZipFile(tmp_zip.name, "w") as zipf:
-            for foldername, _subfolders, filenames in os.walk(tmpdirname):
-                for filename in filenames:
-                    file_path = os.path.join(foldername, filename)
-                    zipf.write(
-                        file_path, file_path.replace(f"{tmpdirname}/", "")
-                    )
-        temp_file = files.File(tmp_zip, name=zip_name,)
-        ghwm.zipfile = temp_file
-        ghwm.has_open_source_license = has_open_source_license
-        ghwm.license_check_result = license
+    if ghwm.clone_status == CloneStatusChoices.PENDING:
+        payload = ghwm.payload
+        repo_url = get_repo_url(payload)
+        ghwm.clone_status = CloneStatusChoices.STARTED
         ghwm.save()
-    on_commit(
-        lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm.pk})
-    )
+
+        try:
+            recurse_submodules = Algorithm.objects.get(
+                repo_name=ghwm.payload["repository"]["full_name"]
+            ).recurse_submodules
+        except Algorithm.DoesNotExist:
+            recurse_submodules = False
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            try:
+                # Run git lfs install here, doing it in the dockerfile does not
+                # seem to work
+                install_lfs()
+                fetch_repo(payload, repo_url, tmpdirname, recurse_submodules)
+                license_check_result = check_license(tmpdirname)
+                temp_file = save_zipfile(ghwm, tmpdirname)
+
+                # update GithubWebhook object
+                ghwm.zipfile = temp_file
+                ghwm.license_check_result = license_check_result
+                ghwm.clone_status = CloneStatusChoices.SUCCESS
+                ghwm.save()
+
+                build_repo(ghwm.pk)
+
+            except Exception as e:
+                ghwm.stdout = str(getattr(e, "stdout", ""))
+                ghwm.stderr = str(getattr(e, "stderr", ""))
+                ghwm.clone_status = CloneStatusChoices.FAILURE
+                ghwm.save()
+
+                if not ghwm.user_error:
+                    raise
 
 
 @shared_task

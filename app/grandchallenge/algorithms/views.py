@@ -71,7 +71,6 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.codebuild.models import Build
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -200,12 +199,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             status=AlgorithmPermissionRequest.PENDING,
         ).count()
         context.update(
-            {
-                "pending_permission_requests": pending_permission_requests,
-                "builds": Build.objects.filter(
-                    algorithm_image__algorithm=self.object
-                ),
-            }
+            {"pending_permission_requests": pending_permission_requests}
         )
 
         return context
@@ -895,7 +889,11 @@ class AlgorithmAddRepo(
         """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
 
-        user_token = get_object_or_404(GitHubUserToken, user=self.request.user)
+        try:
+            user_token = GitHubUserToken.objects.get(user=self.request.user)
+        except GitHubUserToken.DoesNotExist:
+            kwargs.update({"repos": []})
+            return kwargs
 
         if user_token.access_token_is_expired:
             user_token.refresh_access_token()

@@ -23,7 +23,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for subspec in subspecialities %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}&ce_under={{ selected_ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&search={{ q_search }}">{{ subspec }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}&ce_under={{ selected_ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&sort_by={{ selected_sort_by }}&search={{ q_search }}">{{ subspec }}</a>
           {% endfor %}
         </div>
       </div>
@@ -38,7 +38,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for modality in modalities %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}&ce_under={{ selected_ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&search={{ q_search }}">{{ modality }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}&ce_under={{ selected_ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&sort_by={{ selected_sort_by }}&search={{ q_search }}">{{ modality }}</a>
           {% endfor %}
         </div>
       </div>
@@ -53,7 +53,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for ce_under in ce_mdd_mdr %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_under={{ ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&search={{ q_search }}">{{ ce_under }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_under={{ ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&sort_by={{ selected_sort_by }}&search={{ q_search }}">{{ ce_under }}</a>
           {% endfor %}
         </div>
       </div>
@@ -68,7 +68,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for ce_class in ce_classes %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_under={{ selected_ce_under }}&ce_class={{ ce_class }}&fda_class={{ selected_fda_class }}&search={{ q_search }}">{{ ce_class }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_under={{ selected_ce_under }}&ce_class={{ ce_class }}&fda_class={{ selected_fda_class }}&sort_by={{ selected_sort_by }}&search={{ q_search }}">{{ ce_class }}</a>
           {% endfor %}
         </div>
       </div>
@@ -83,7 +83,22 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for fda_class in fda_classes %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_under={{ selected_ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ fda_class }}&search={{ q_search }}">{{ fda_class }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_under={{ selected_ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ fda_class }}&sort_by={{ selected_sort_by }}&search={{ q_search }}">{{ fda_class }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="p-2 align-self-end">
+      <div class="dropdown">
+        <div class="h6 text-muted">Sort by:</div>
+        <button class="btn btn-light btn-square dropdown-toggle" type="button" id="dropdownSortby" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {{ selected_sort_by }}
+        </button>
+
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+          {% for sort_by in sort_bys %}
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_under={{ selected_ce_under }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&sort_by={{ sort_by }}&search={{ q_search }}">{{ sort_by }}</a>
           {% endfor %}
         </div>
       </div>
@@ -98,6 +113,7 @@
             <input hidden name="ce_under" value="{{ selected_ce_under }}">
             <input hidden name="ce_class" value="{{ selected_ce_class }}">
             <input hidden name="fda_class" value="{{ selected_fda_class }}">
+            <input hidden name="sort_by" value="{{ selected_sort_by }}">
             <input class="form-control" name="search" type="text" placeholder="Search..." value={{ q_search }} >
           </div>
           <div class="col-auto">

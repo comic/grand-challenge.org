@@ -49,6 +49,7 @@ class AmazonECSExecutor:
         exec_image_repo_tag: str,
         exec_image_file: File,
         memory_limit: int,
+        time_limit: int,
         requires_gpu: bool,
     ):
         self._job_id = job_id
@@ -56,6 +57,7 @@ class AmazonECSExecutor:
         self._exec_image_repo_tag = exec_image_repo_tag
         self._exec_image_file = exec_image_file
         self._memory_limit = memory_limit
+        self._time_limit = time_limit
         self._requires_gpu = requires_gpu
 
         if not self._requires_gpu and self._memory_limit > 6:
@@ -158,13 +160,17 @@ class AmazonECSExecutor:
     @property
     def _ecs_client(self):
         if self.__ecs_client is None:
-            self.__ecs_client = boto3.client("ecs")
+            self.__ecs_client = boto3.client(
+                "ecs", region_name=settings.COMPONENTS_AMAZON_ECS_REGION
+            )
         return self.__ecs_client
 
     @property
     def _logs_client(self):
         if self.__logs_client is None:
-            self.__logs_client = boto3.client("logs")
+            self.__logs_client = boto3.client(
+                "logs", region_name=settings.COMPONENTS_AMAZON_ECS_REGION
+            )
         return self.__logs_client
 
     @property
@@ -307,7 +313,7 @@ class AmazonECSExecutor:
                 # Add a second essential container that kills the task
                 # once the time limit is reached.
                 # See https://github.com/aws/containers-roadmap/issues/572
-                "command": ["sleep", "7200"],  # TODO customize timeout
+                "command": ["sleep", str(self._time_limit)],
                 "image": "public.ecr.aws/amazonlinux/amazonlinux:2",
                 "name": self._timeout_container_name,
                 "dependsOn": [

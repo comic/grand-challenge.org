@@ -8,13 +8,17 @@ from rest_framework.relations import (
     SlugRelatedField,
 )
 
-from grandchallenge.archives.models import Archive
-from grandchallenge.archives.tasks import add_images_to_archive
+from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.archives.tasks import (
+    add_images_to_archive,
+    add_images_to_archive_item,
+)
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.reader_studies.tasks import (
@@ -64,6 +68,8 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "series_instance_uid",
             "study_description",
             "series_description",
+            "window_center",
+            "window_width",
         )
 
 
@@ -81,6 +87,14 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     answer = PrimaryKeyRelatedField(
         queryset=Answer.objects.none(), required=False
     )
+    interface = SlugRelatedField(
+        slug_field="slug",
+        queryset=ComponentInterface.objects.all(),
+        required=False,
+    )
+    archive_item = PrimaryKeyRelatedField(
+        queryset=ArchiveItem.objects.none(), required=False
+    )
 
     class Meta:
         model = RawImageUploadSession
@@ -95,6 +109,8 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "archive",
             "reader_study",
             "answer",
+            "interface",
+            "archive_item",
         )
 
     def __init__(self, *args, **kwargs):
@@ -132,9 +148,13 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 accept_global_perms=False,
             )
 
+            self.fields["archive_item"].queryset = get_objects_for_user(
+                user, "archives.change_archiveitem", accept_global_perms=False,
+            )
+
     @property
     def targets(self):
-        return ["archive", "reader_study", "answer"]
+        return ["archive", "archive_item", "reader_study", "answer"]
 
     def create(self, validated_data):
         set_targets = {
@@ -142,6 +162,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             for t in self.targets
             if t in validated_data
         }
+        interface = validated_data.pop("interface", None)
 
         instance = super().create(validated_data=validated_data)
 
@@ -152,7 +173,9 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             answer.save()
 
         if set_targets:
-            process_images(instance=instance, targets=set_targets)
+            process_images(
+                instance=instance, targets=set_targets, interface=interface
+            )
 
         return instance
 
@@ -166,7 +189,21 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         num_targets = sum(f in attrs for f in self.targets)
         if num_targets > 1:
             raise ValidationError(
-                "Only one of archive, answer or reader study can be set"
+                "Only one of archive, archive item, answer or reader study can be set"
+            )
+
+        if "interface" in attrs and not (
+            "archive" in attrs or "archive_item" in attrs
+        ):
+            raise ValidationError(
+                "An interface can only be defined for archive "
+                "or archive item uploads."
+            )
+
+        if "archive_item" in attrs and "interface" not in attrs:
+            raise ValidationError(
+                "An interface needs to be defined to upload to an "
+                "archive item."
             )
 
         return attrs
@@ -185,17 +222,30 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         return value
 
 
-def process_images(*, instance, targets):
+def process_images(*, instance, targets, interface):
     if instance.status != instance.PENDING:
         raise ValidationError("Session is not pending")
 
-    instance.process_images(linked_task=_get_linked_task(targets=targets))
+    instance.process_images(
+        linked_task=_get_linked_task(targets=targets, interface=interface)
+    )
 
 
-def _get_linked_task(*, targets):
+def _get_linked_task(*, targets, interface):
     if "archive" in targets:
-        return add_images_to_archive.signature(
-            kwargs={"archive_pk": targets["archive"].pk}, immutable=True,
+        kwargs = {
+            "archive_pk": targets["archive"].pk,
+        }
+        if interface:
+            kwargs["interface_pk"] = interface.pk
+        return add_images_to_archive.signature(kwargs=kwargs, immutable=True,)
+    elif "archive_item" in targets:
+        return add_images_to_archive_item.signature(
+            kwargs={
+                "archive_item_pk": targets["archive_item"].pk,
+                "interface_pk": interface.pk,
+            },
+            immutable=True,
         )
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(

@@ -1,17 +1,24 @@
 import pytest
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm, remove_perm
 
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.subdomains.utils import reverse
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
     ArchivePermissionRequestFactory,
 )
+from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.test_background_tasks import (
+    create_raw_upload_image_session,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
+from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 
 
@@ -212,3 +219,243 @@ class TestArchiveViewSetStudies:
         response = self.get_view(client, u, a.pk, p_id)
         assert response.status_code == 200
         assert set(response.data) == set(studies + [""])
+
+
+@pytest.mark.django_db
+def test_api_archive_item_list_is_filtered(client):
+    a1, a2 = ArchiveFactory(), ArchiveFactory()
+    a1_editor, user = UserFactory(), UserFactory()
+    a1.add_editor(a1_editor)
+    _, _ = (
+        ArchiveItemFactory(archive=a1),
+        ArchiveItemFactory(archive=a1),
+    )
+    i3 = ArchiveItemFactory(archive=a2)
+
+    # user does not see any archive items
+    response = get_view_for_user(
+        viewname="api:archives-item-list", user=user, client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+
+    # editor of archive 1 sees the items from archive 1, but not from archive 2
+    response = get_view_for_user(
+        viewname="api:archives-item-list", user=a1_editor, client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
+    assert i3.id not in (
+        response.json()["results"][0]["id"],
+        response.json()["results"][1]["id"],
+    )
+
+
+@pytest.mark.django_db
+def test_api_archive_item_retrieve_permissions(client):
+    archive = ArchiveFactory()
+    editor, user = UserFactory(), UserFactory()
+    archive.add_editor(editor)
+    i1 = ArchiveItemFactory(archive=archive)
+
+    # editor can retrieve archive item
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=editor,
+        client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(i1.pk)
+
+    # user cannot retrieve archive item
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=user,
+        client=client,
+    )
+    assert response.status_code == 404
+
+    # add user to archive
+    archive.add_user(user)
+    response = get_view_for_user(
+        viewname="api:archives-item-detail",
+        reverse_kwargs={"pk": i1.pk},
+        user=user,
+        client=client,
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(i1.pk)
+
+
+@pytest.mark.django_db
+def test_api_archive_item_interface_type_update(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+
+    session, _ = create_raw_upload_image_session(
+        images=["image10x10x10.mha"], user=editor
+    )
+    session.refresh_from_db()
+    im = session.image_set.get()
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
+    item.values.add(civ)
+    civ.image.update_viewer_groups_permissions()
+    assert item.values.count() == 1
+
+    # change interface type from generic medical image to generic overlay
+    # for the already uploaded image
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={
+                "values": [
+                    {"interface": "generic-overlay", "image": im.api_url},
+                ]
+            },
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(item.pk)
+    item.refresh_from_db()
+    # check that the old item was removed and a new one was added with the same
+    # image but the new interface type
+    assert item.values.count() == 1
+    new_civ = item.values.get()
+    assert new_civ.interface.slug == "generic-overlay"
+    assert new_civ.image == im
+    assert new_civ != civ
+
+
+@pytest.mark.django_db
+def test_api_archive_item_add_and_update_value(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    # add civ
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={"values": [{"interface": ci.slug, "value": True}]},
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(item.pk)
+    item.refresh_from_db()
+    assert item.values.count() == 1
+    civ = item.values.get()
+    assert civ.interface.slug == ci.slug
+    assert civ.value
+    #  update civ
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={"values": [{"interface": ci.slug, "value": False}]},
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(item.pk)
+    item.refresh_from_db()
+    assert item.values.count() == 1
+    new_civ = item.values.get()
+    assert new_civ.interface.slug == ci.slug
+    assert new_civ != civ
+
+
+@pytest.mark.django_db
+def test_api_archive_item_add_and_update_non_image_file(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+    assert item.values.count() == 0
+    ci = ComponentInterfaceFactory(kind=InterfaceKind.InterfaceKindChoices.PDF)
+    upload = create_upload_from_file(
+        creator=editor, file_path=RESOURCE_PATH / "test.pdf"
+    )
+    # add civ
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={
+                "values": [
+                    {"interface": ci.slug, "user_upload": upload.api_url},
+                ]
+            },
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(item.pk)
+    item.refresh_from_db()
+    assert item.values.count() == 1
+    civ = item.values.get()
+    assert civ.interface.slug == ci.slug
+
+    # update civ
+    upload2 = create_upload_from_file(
+        creator=editor, file_path=RESOURCE_PATH / "test.zip"
+    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={
+                "values": [
+                    {"interface": ci.slug, "user_upload": upload2.api_url},
+                ]
+            },
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 200
+    assert response.json()["id"] == str(item.pk)
+    item.refresh_from_db()
+    assert item.values.count() == 1
+    new_civ = item.values.get()
+    assert new_civ.interface.slug == ci.slug
+    assert new_civ != civ

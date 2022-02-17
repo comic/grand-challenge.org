@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.validators import (
+    MaxValueValidator,
     MinValueValidator,
     RegexValidator,
 )
@@ -14,6 +15,7 @@ from django.db import models
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.text import get_valid_filename
+from django.utils.timezone import localtime
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -419,6 +421,14 @@ class Phase(UUIDModel):
         blank=True,
         help_text="The output interfaces that the algorithms for this phase must use",
     )
+    algorithm_time_limit = models.PositiveSmallIntegerField(
+        default=20 * 60,
+        help_text="Time limit for inference jobs in seconds",
+        validators=[
+            MinValueValidator(limit_value=60),
+            MaxValueValidator(limit_value=4 * 60 * 60),
+        ],
+    )
 
     class Meta:
         unique_together = (
@@ -647,13 +657,19 @@ class Phase(UUIDModel):
     @property
     def submission_status_string(self):
         if self.status == StatusChoices.OPEN and self.submissions_close_at:
-            return f'Accepting submissions for {self.title} until {self.submissions_close_at.strftime("%b %d %Y at %H:%M")}'
+            return (
+                f"Accepting submissions for {self.title} until "
+                f'{localtime(self.submissions_close_at).strftime("%b %d %Y at %H:%M")}'
+            )
         elif (
             self.status == StatusChoices.OPEN and not self.submissions_close_at
         ):
             return f"Accepting submissions for {self.title}"
         elif self.status == StatusChoices.OPENING_SOON:
-            return f'Opening submissions for {self.title} on {self.submissions_open_at.strftime("%b %d %Y at %H:%M")}'
+            return (
+                f"Opening submissions for {self.title} on "
+                f'{localtime(self.submissions_open_at).strftime("%b %d %Y at %H:%M")}'
+            )
         elif self.status == StatusChoices.COMPLETED:
             return f"{self.title} completed"
         elif self.status == StatusChoices.CLOSED:

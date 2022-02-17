@@ -90,6 +90,8 @@ class TestRetinaImageSerializers:
                     "series_instance_uid",
                     "study_description",
                     "series_description",
+                    "window_center",
+                    "window_width",
                 ),
                 "no_valid_check": True,
                 # This check is done manually because of the need to skip the image in the check

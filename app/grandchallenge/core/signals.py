@@ -117,7 +117,7 @@ def remove_permission_request_notifications(sender, *, instance, created, **_):
 @receiver(m2m_changed, sender=Group.user_set.through)
 def update_editor_follows(  # noqa: C901
     instance, action, reverse, model, pk_set, **_
-):  # noqa: C901
+):
 
     if action not in ["post_add", "pre_remove", "pre_clear"]:
         # nothing to do for the other actions

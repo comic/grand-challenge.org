@@ -6,7 +6,10 @@ from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.algorithms.exceptions import ImageImportError
+from grandchallenge.algorithms.exceptions import (
+    ImageImportError,
+    TooManyJobsScheduled,
+)
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
@@ -19,6 +22,9 @@ from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+)
+from grandchallenge.components.tasks import (
+    add_images_to_component_interface_value,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
@@ -78,31 +84,10 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
         error_message += str(res)
 
     job.update_status(
-        status=job.FAILURE, error_message=error_message,
+        status=job.CANCELLED, error_message=error_message,
     )
 
     on_commit(linked_task.apply_async)
-
-
-@shared_task
-def add_images_to_component_interface_value(
-    *, component_interface_value_pk, upload_session_pk
-):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-
-    if session.image_set.count() != 1:
-        error_message = "Image imports should result in a single image"
-        session.status = RawImageUploadSession.FAILURE
-        session.error_message = error_message
-        session.save()
-        raise ImageImportError(error_message)
-
-    civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
-    civ.image = session.image_set.get()
-    civ.full_clean()
-    civ.save()
-
-    civ.image.update_viewer_groups_permissions()
 
 
 @shared_task
@@ -119,7 +104,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
     if missing_inputs:
         job.update_status(
-            status=job.FAILURE,
+            status=job.CANCELLED,
             error_message=(
                 f"Job can't be started, input is missing for "
                 f"{oxford_comma([c.interface.title for c in missing_inputs])}"
@@ -245,6 +230,7 @@ def create_algorithm_jobs(
     max_jobs=None,
     task_on_success=None,
     task_on_failure=None,
+    time_limit=None,
 ):
     """
     Creates algorithm jobs for sets of component interface values
@@ -270,6 +256,8 @@ def create_algorithm_jobs(
         to handle being called more than once, and in parallel.
     task_on_failure
         Celery task that is run on job failure
+    time_limit
+        The time limit for the Job
     """
     civ_sets = filter_civs_for_algorithm(
         civ_sets=civ_sets, algorithm_image=algorithm_image
@@ -292,14 +280,24 @@ def create_algorithm_jobs(
     if max_jobs is not None:
         civ_sets = civ_sets[:max_jobs]
 
+    if time_limit is None:
+        time_limit = settings.CELERY_TASK_TIME_LIMIT
+
     jobs = []
+    job_count = 0
+
     for civ_set in civ_sets:
+
+        if job_count >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+            raise TooManyJobsScheduled
+
         with transaction.atomic():
             j = Job.objects.create(
                 creator=creator,
                 algorithm_image=algorithm_image,
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
+                time_limit=time_limit,
             )
             j.inputs.set(civ_set)
 
@@ -313,6 +311,8 @@ def create_algorithm_jobs(
             jobs.append(j)
 
             on_commit(j.execute)
+
+            job_count += 1
 
     return jobs
 

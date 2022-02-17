@@ -145,9 +145,17 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
-AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", None)
+AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
-AWS_SES_REGION_ENDPOINT = f"email.{AWS_DEFAULT_REGION}.amazonaws.com"
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+AWS_S3_OBJECT_PARAMETERS = {
+    # Note that these do not affect the Uploads bucket, which is configured separately.
+    # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
+    "StorageClass": os.environ.get("AWS_S3_DEFAULT_STORAGE_CLASS", "STANDARD"),
+}
+AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
+AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
+AWS_SES_REGION_ENDPOINT = f'email.{os.environ.get("AWS_SES_REGION_NAME", AWS_DEFAULT_REGION)}.amazonaws.com'
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
@@ -196,6 +204,10 @@ UPLOADS_MAX_SIZE_VERIFIED = int(
     os.environ.get("UPLOADS_MAX_SIZE_VERIFIED", 128 * 1024 * 1024 * 1024)
 )
 UPLOADS_TIMEOUT_DAYS = int(os.environ.get("UPLOADS_TIMEOUT_DAYS", 1))
+
+VERIFICATIONS_REVIEW_PERIOD_DAYS = int(
+    os.environ.get("VERIFICATIONS_REVIEW_PERIOD_DAYS", 10)
+)
 
 # Key pair used for signing CloudFront URLS, only used if
 # PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
@@ -509,6 +521,7 @@ LOCAL_APPS = [
     "grandchallenge.timezones",
     "grandchallenge.documentation",
     "grandchallenge.flatpages",
+    "grandchallenge.emails",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -913,6 +926,8 @@ COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10_737_418_240  # 10 gb
+COMPONENTS_AMAZON_ECR_REGION = os.environ.get("COMPONENTS_AMAZON_ECR_REGION")
+COMPONENTS_AMAZON_ECS_REGION = os.environ.get("COMPONENTS_AMAZON_ECS_REGION")
 COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = os.environ.get(
     "COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT", "/mnt/aws-batch-nfs/"
 )
@@ -920,7 +935,7 @@ COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME = os.environ.get(
     "COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME", ""
 )
 COMPONENTS_AMAZON_ECS_LOGS_REGION = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_LOGS_REGION", AWS_DEFAULT_REGION
+    "COMPONENTS_AMAZON_ECS_LOGS_REGION"
 )
 COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN = os.environ.get(
     "COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN", ""
@@ -1091,6 +1106,12 @@ if strtobool(os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")):
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
+# Number of jobs that can be scheduled in one task
+ALGORITHMS_JOB_BATCH_LIMIT = 256
+# Maximum and minimum values the user can set for algorithm requirements
+# Current limits of 4g/30g are restrictions from the instance types used on ECS
+ALGORITHMS_MIN_MEMORY_GB = 4
+ALGORITHMS_MAX_MEMORY_GB = 30
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {
@@ -1126,6 +1147,8 @@ DISALLOWED_EMAIL_DOMAINS = {
     "mail.ru",
     "verizon.net",
     "comcast.net",
+    "nudt.edu.cn",
+    "ihpc.a-star.edu.sg",
     *blocklist,
 }
 
@@ -1139,24 +1162,30 @@ GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
 
-OPEN_SOURCE_LICENSES = [
-    "Apache License 2.0",
-    "MIT License",
-    "GNU GPLv3",
-    "GNU AGPLv3",
-    "GNU GPLv3",
-    "GNU LGPLv3",
-    "Mozilla Public License 2.0",
-    "Boost Software License 1.0",
-    "The Unlicense",
-]
+# License keys from https://github.com/licensee/licensee/tree/v9.15.1/vendor/choosealicense.com/_licenses
+OPEN_SOURCE_LICENSES = frozenset(
+    (
+        "agpl-3.0",
+        "apache-2.0",
+        "bsd-2-clause",
+        "bsd-3-clause",
+        "bsd-3-clause-clear",
+        "bsd-4-clause",
+        "bsl-1.0",
+        "gpl-3.0",
+        "lgpl-3.0",
+        "mit",
+        "mpl-2.0",
+        "unlicense",
+    )
+)
 
 # Set the post processors to use for the image imports
 CASES_POST_PROCESSORS = os.environ.get(
     "CASES_POST_PROCESSORS", "panimg.post_processors.tiff_to_dzi"
 ).split(",")
 
-# Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
+# Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases_tests.utils.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
 # The maximum size of all the files in an upload session in bytes

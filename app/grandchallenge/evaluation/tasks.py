@@ -5,10 +5,12 @@ from statistics import mean, median
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
+from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -100,7 +102,15 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         civ = ComponentInterfaceValue(
             interface=interface, file=submission.predictions_file
         )
-        civ.full_clean()
+
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            evaluation.update_status(
+                status=Evaluation.FAILURE, error_message=str(e),
+            )
+            return
+
         civ.save()
 
         evaluation.inputs.set([civ])
@@ -155,23 +165,39 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
     )
 
-    create_algorithm_jobs(
-        algorithm_image=evaluation.submission.algorithm_image,
-        civ_sets=[
-            {*ai.values.all()}
-            for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                "values__interface"
-            )
-        ],
-        creator=None,
-        extra_viewer_groups=challenge_admins,
-        extra_logs_viewer_groups=challenge_admins,
-        task_on_success=task_on_success,
-        task_on_failure=task_on_failure,
-        max_jobs=max_jobs,
-    )
-
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
+
+    try:
+        jobs = create_algorithm_jobs(
+            algorithm_image=evaluation.submission.algorithm_image,
+            civ_sets=[
+                {*ai.values.all()}
+                for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                    "values__interface"
+                )
+            ],
+            creator=None,
+            extra_viewer_groups=challenge_admins,
+            extra_logs_viewer_groups=challenge_admins,
+            task_on_success=task_on_success,
+            task_on_failure=task_on_failure,
+            max_jobs=max_jobs,
+            time_limit=evaluation.submission.phase.algorithm_time_limit,
+        )
+
+        if not jobs:
+            # No more jobs created from this task, so everything must be ready
+            # for evaluation
+            set_evaluation_inputs.signature(
+                kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
+            ).apply_async()
+
+    except TooManyJobsScheduled:
+        # Re-run the task
+        create_algorithm_jobs_for_evaluation.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": max_jobs},
+            immutable=True,
+        ).apply_async()
 
 
 @shared_task
@@ -199,15 +225,17 @@ def handle_failed_jobs(*, evaluation_pk):
     ).update(status=Job.CANCELLED)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def set_evaluation_inputs(*, evaluation_pk):
     """
-    Sets the inputs to the Evaluation for a algorithm submission.
+    Sets the inputs to the Evaluation for an algorithm submission.
 
     If all of the `Job`s for this algorithm `Submission` are
     successful this will set the inputs to the `Evaluation` job and schedule
     it. If any of the `Job`s are unsuccessful then the
     `Evaluation` will be marked as Failed.
+
+    This task can take a while so place it on the large queue.
 
     Parameters
     ----------
@@ -220,6 +248,20 @@ def set_evaluation_inputs(*, evaluation_pk):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
+
+    has_pending_jobs = (
+        Job.objects.filter(
+            algorithm_image__submission__evaluation=evaluation_pk,
+            creator__isnull=True,  # Evaluation inference jobs have no creator
+        )
+        .exclude(status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED])
+        .exists()
+    )
+
+    if has_pending_jobs:
+        logger.info("Nothing to do: the algorithm has pending jobs.")
+        return
+
     evaluation_queryset = Evaluation.objects.filter(
         pk=evaluation_pk
     ).select_for_update()
@@ -228,14 +270,21 @@ def set_evaluation_inputs(*, evaluation_pk):
         # Acquire lock
         evaluation = evaluation_queryset.get()
 
+        if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
+            logger.info(
+                f"Nothing to do: evaluation is {evaluation.get_status_display()}."
+            )
+            return
+
         civ_sets = {
             i.values.all()
             for i in evaluation.submission.phase.archive.items.all()
         }
 
-        jobs_queryset = (
+        successful_jobs = (
             Job.objects.filter(
                 algorithm_image=evaluation.submission.algorithm_image,
+                status=Job.SUCCESS,
             )
             .annotate(
                 inputs_match_count=Count(
@@ -255,18 +304,7 @@ def set_evaluation_inputs(*, evaluation_pk):
             .select_related("algorithm_image__algorithm")
         )
 
-        pending_jobs = jobs_queryset.exclude(
-            status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED]
-        )
-        successful_jobs = jobs_queryset.filter(status=Job.SUCCESS)
-
-        if (
-            pending_jobs.exists()
-            or evaluation.status != evaluation.EXECUTING_PREREQUISITES
-        ):
-            # Nothing to do
-            return
-        elif successful_jobs.count() == len(civ_sets):
+        if successful_jobs.count() == len(civ_sets):
             from grandchallenge.algorithms.serializers import JobSerializer
             from grandchallenge.components.models import (
                 ComponentInterface,
@@ -333,8 +371,8 @@ def filter_by_creators_best(*, evaluations, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-@shared_task  # noqa: C901
-def calculate_ranks(*, phase_pk: uuid.UUID):  # noqa: C901
+@shared_task
+def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Phase"
     )

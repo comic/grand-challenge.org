@@ -8,11 +8,12 @@ from grandchallenge.algorithms.views import (
     AlgorithmViewSet,
     JobViewSet,
 )
-from grandchallenge.archives.views import ArchiveViewSet
+from grandchallenge.archives.views import ArchiveItemViewSet, ArchiveViewSet
 from grandchallenge.cases.views import (
     ImageViewSet,
     RawImageUploadSessionViewSet,
 )
+from grandchallenge.components.views import ComponentInterfaceViewSet
 from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.github.views import github_webhook
 from grandchallenge.notifications.views import (
@@ -56,6 +57,9 @@ router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
 router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
 # Archives
+router.register(
+    r"archives/items", ArchiveItemViewSet, basename="archives-item"
+)
 router.register(r"archives", ArchiveViewSet, basename="archive")
 
 # Cases
@@ -64,6 +68,13 @@ router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
     basename="upload-session",
+)
+
+# Component Interfaces
+router.register(
+    r"components/interfaces",
+    ComponentInterfaceViewSet,
+    basename="components-interface",
 )
 
 # Evaluations

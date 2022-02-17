@@ -10,6 +10,7 @@ from django.utils.text import get_valid_filename
 
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.github.tasks import get_zipfile, unlink_algorithm
+from grandchallenge.github.utils import CloneStatusChoices
 
 
 def zipfile_path(instance, filename):
@@ -78,9 +79,14 @@ class GitHubWebhookMessage(models.Model):
     zipfile = models.FileField(
         null=True, upload_to=zipfile_path, storage=private_s3_storage
     )
-    has_open_source_license = models.BooleanField(default=False)
-    license_check_result = models.CharField(max_length=1024, blank=True)
-    error = models.TextField(blank=True)
+    license_check_result = models.JSONField(blank=True, default=dict)
+    stdout = models.TextField(blank=True)
+    stderr = models.TextField(blank=True)
+    clone_status = models.CharField(
+        choices=CloneStatusChoices.choices,
+        default=CloneStatusChoices.NOT_APPLICABLE,
+        max_length=14,
+    )
 
     def __str__(self):
         return f"{self.repo_name} {self.tag}"
@@ -103,14 +109,49 @@ class GitHubWebhookMessage(models.Model):
     def tag_url(self):
         return f"https://github.com/{self.payload['repository']['full_name']}/releases/tag/{self.payload['ref']}"
 
+    @property
+    def user_error(self):
+        if "This repository is over its data quota" in self.stdout:
+            return (
+                f"Repository {self.repo_name} has used all of its LFS "
+                f"bandwidth. Please purchase more data packs on GitHub for "
+                f"this repo so that we can clone it."
+            )
+        else:
+            return ""
+
+    @property
+    def licenses(self):
+        return self.license_check_result.get("licenses", [])
+
+    @property
+    def license_keys(self):
+        return {_license.get("key") for _license in self.licenses}
+
+    @property
+    def has_open_source_license(self):
+        return bool(self.license_keys) and self.license_keys.issubset(
+            settings.OPEN_SOURCE_LICENSES
+        )
+
     def save(self, *args, **kwargs):
-        adding = self._state.adding
+        post_save_task = None
+
+        if self._state.adding:
+            if self.payload.get("ref_type") == "tag":
+                post_save_task = get_zipfile
+                self.clone_status = CloneStatusChoices.PENDING
+            elif self.payload.get("action") == "deleted":
+                post_save_task = unlink_algorithm
+                self.clone_status = CloneStatusChoices.NOT_APPLICABLE
+            else:
+                self.clone_status = CloneStatusChoices.INVALID
+
         super().save(*args, **kwargs)
-        if adding and self.payload.get("ref_type") == "tag":
-            on_commit(lambda: get_zipfile.apply_async(kwargs={"pk": self.pk}))
-        if adding and self.payload.get("action") == "deleted":
+
+        if post_save_task:
             on_commit(
-                lambda: unlink_algorithm.apply_async(kwargs={"pk": self.pk})
+                post_save_task.signature(kwargs={"pk": self.pk}).apply_async
             )
 
     class Meta:

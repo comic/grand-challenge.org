@@ -9,6 +9,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
+from grandchallenge.uploads.models import UserUpload
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
@@ -61,6 +62,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         required=False,
         write_only=True,
     )
+    user_upload = serializers.HyperlinkedRelatedField(
+        queryset=UserUpload.objects.none(),
+        view_name="api:upload-detail",
+        required=False,
+        write_only=True,
+    )
 
     class Meta:
         model = ComponentInterfaceValue
@@ -71,6 +78,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             "image",
             "pk",
             "upload_session",
+            "user_upload",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -88,8 +96,20 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 accept_global_perms=False,
             ).filter(status=RawImageUploadSession.PENDING)
 
+            self.fields["user_upload"].queryset = get_objects_for_user(
+                user, "uploads.change_userupload", accept_global_perms=False,
+            )
+
     def validate(self, attrs):
         interface = attrs["interface"]
+        attributes = [
+            attribute for attribute in attrs if attribute != "interface"
+        ]
+        if len(attributes) > 1:
+            raise serializers.ValidationError(
+                "Only one of image, value, user_upload and "
+                "upload_session should be set."
+            )
 
         if interface.kind in InterfaceKind.interface_type_image():
             if not attrs.get("image") and not attrs.get("upload_session"):
@@ -98,19 +118,21 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                     f"kind {interface.kind}"
                 )
 
-            if attrs.get("image") and attrs.get("upload_session"):
-                raise serializers.ValidationError(
-                    "Only one of image or upload_session should be set"
-                )
-
-        if not attrs.get("upload_session"):
-            # Instances without an image are never valid, this will be checked
+        if not attrs.get("upload_session") and not attrs.get("user_upload"):
+            # Instances without an image or a file are never valid, this will be checked
             # later, but for now check everything else. DRF 3.0 dropped calling
             # full_clean on instances, so we need to do it ourselves.
             instance = ComponentInterfaceValue(
                 **{k: v for k, v in attrs.items() if k != "upload_session"}
             )
             instance.full_clean()
+
+        if interface.kind in InterfaceKind.interface_type_file():
+            if not attrs.get("user_upload"):
+                raise serializers.ValidationError(
+                    f"user_upload is required for interface "
+                    f"kind {interface.kind}"
+                )
 
         return attrs
 

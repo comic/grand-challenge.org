@@ -23,6 +23,7 @@ def test_service_start_cleanup():
         exec_image_file=None,
         requires_gpu=False,
         memory_limit=4,
+        time_limit=60,
     )
     assert len(dockerclient.containers.list(filters=filters)) == 0
 

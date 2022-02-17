@@ -44,12 +44,22 @@ class Build(UUIDModel):
     @property
     def client(self):
         if self.__client is None:
-            self.__client = boto3.client("codebuild")
+            self.__client = boto3.client(
+                "codebuild", region_name=settings.AWS_CODEBUILD_REGION_NAME
+            )
         return self.__client
 
     @property
     def build_number(self):
         return self.build_id.split(":")[-1]
+
+    @property
+    def redacted_build_log(self):
+        return "\n".join(
+            line
+            for line in self.build_log.splitlines()
+            if not line.startswith("[Container]")
+        )
 
     def refresh_status(self):
         build_statuses = self.client.batch_get_builds(ids=[self.build_id])

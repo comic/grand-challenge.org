@@ -1,16 +1,22 @@
 from pathlib import Path
 
 import pytest
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
-from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
@@ -67,11 +73,11 @@ def test_upload_session_detail(client):
 
 
 @pytest.mark.django_db
-def test_upload_sessions_create(client):
+def test_upload_sessions_create(client, settings):
     user = UserFactory()
     a = ArchiveFactory()
     a.add_uploader(user)
-
+    # without interface
     response = get_view_for_user(
         viewname="api:upload-session-list",
         user=user,
@@ -80,6 +86,26 @@ def test_upload_sessions_create(client):
         content_type="application/json",
         data={
             "archive": a.slug,
+            "uploads": [create_completed_upload(user=user).api_url],
+        },
+    )
+    assert response.status_code == 201
+
+    upload_session = RawImageUploadSession.objects.get(
+        pk=response.data.get("pk")
+    )
+    assert upload_session.creator == user
+
+    # with interface
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=user,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={
+            "archive": a.slug,
+            "interface": "generic-overlay",
             "uploads": [create_completed_upload(user=user).api_url],
         },
     )
@@ -229,34 +255,117 @@ def test_archive_upload_session_create(client, obj, factory):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "obj,factory",
-    (("archive", ArchiveFactory), ("reader_study", ReaderStudyFactory)),
-)
-def test_session_with_user_upload(client, obj, factory):
+def test_session_with_user_upload_to_readerstudy(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     user = UserFactory()
-    o = factory()
-    o.add_editor(user=user)
+    rs = ReaderStudyFactory()
+    rs.add_editor(user=user)
 
     upload = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
 
-    response = get_view_for_user(
-        viewname="api:upload-session-list",
-        user=user,
-        client=client,
-        method=client.post,
-        content_type="application/json",
-        data={"uploads": [upload.api_url], obj: o.slug},
-        HTTP_X_FORWARDED_PROTO="https",
+    # try upload with interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload.api_url],
+                "reader_study": rs.slug,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 400
+    assert (
+        "An interface can only be defined for archive or archive item uploads."
+        in response.json()["non_field_errors"]
     )
+
+    # try without interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload.api_url], "reader_study": rs.slug},
+            HTTP_X_FORWARDED_PROTO="https",
+        )
 
     assert response.status_code == 201
     upload_session = response.json()
-
     assert upload_session["uploads"] == [upload.api_url]
+
+
+@pytest.mark.django_db
+def test_session_with_user_upload_to_archive(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    # with interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload.api_url],
+                "archive": archive.slug,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload.api_url]
+    item = ArchiveItem.objects.get()
+    assert item.values.get().interface.slug == "generic-overlay"
+
+    ArchiveItem.objects.all().delete()
+    upload2 = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    # without interface
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload2.api_url], "archive": archive.slug},
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload2.api_url]
+    item = ArchiveItem.objects.get()
+    assert item.values.get().interface.slug == "generic-medical-image"
 
 
 @pytest.mark.django_db
@@ -286,3 +395,129 @@ def test_session_with_user_duplicate_upload(client):
     assert response.json() == {
         "non_field_errors": ["Filenames must be unique"]
     }
+
+
+@pytest.mark.django_db
+def test_user_upload_to_archive_item_with_new_interface(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.STRING, title="Test"
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(civ)
+    assert item.values.count() == 1
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload.api_url],
+                "archive_item": item.pk,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 201
+    upload_session = response.json()
+    assert upload_session["uploads"] == [upload.api_url]
+    item.refresh_from_db()
+    assert item.values.count() == 2
+    assert "generic-overlay" in [
+        item.interface.slug for item in item.values.all()
+    ]
+
+
+@pytest.mark.django_db
+def test_user_upload_to_archive_item_with_existing_interface(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    ci = ComponentInterface.objects.filter(slug="generic-overlay").get()
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(civ)
+    assert item.values.count() == 1
+
+    # upload another generic-overlay to the same item
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload.api_url],
+                "archive_item": item.pk,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    assert response.status_code == 201
+    item.refresh_from_db()
+    # check that there is only one civ with the generic-overlay interface
+    assert item.values.filter(interface__slug="generic-overlay").count() == 1
+    # and that the previously added one is no longer associated with the item
+    assert civ not in item.values.all()
+
+
+@pytest.mark.django_db
+def test_user_upload_to_archive_item_without_interface(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    ci = ComponentInterface.objects.filter(slug="generic-overlay").get()
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(civ)
+    assert item.values.count() == 1
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload.api_url], "archive_item": item.pk},
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 400
+    assert (
+        "An interface needs to be defined to upload to an archive item."
+        in response.json()["non_field_errors"]
+    )

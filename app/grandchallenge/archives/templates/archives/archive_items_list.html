@@ -11,8 +11,5 @@
 
 {% block content %}
     <h2>Items for {{ archive.title }}</h2>
-
-    {% get_obj_perms request.user for archive as "archive_perms" %}
-
     {{ block.super }}
 {% endblock %}

@@ -1,3 +1,5 @@
+import logging
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -6,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from pyswot.pyswot import _domain_parts, _is_stoplisted
 
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.verifications.models import Verification
 from grandchallenge.verifications.resources.free_email_domains import (
     FREE_EMAIL_DOMAINS,
@@ -13,6 +16,8 @@ from grandchallenge.verifications.resources.free_email_domains import (
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class VerificationForm(SaveFormInitMixin, forms.ModelForm):
@@ -81,7 +86,9 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
 
 
 class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
-    token = forms.CharField(help_text="Enter your email confirmation token")
+    token = forms.CharField(
+        help_text="Your email confirmation token", disabled=True,
+    )
 
     def __init__(self, *args, user, token, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,9 +98,22 @@ class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
     def clean_token(self):
         token = self.cleaned_data["token"]
 
+        if not hasattr(self.user, "verification"):
+            deactivate_user.signature(
+                kwargs={"user_pk": self.user.pk}
+            ).apply_async()
+            logger.error(
+                f"{self.user} was deactivated for using verification {token}"
+                "which does not belong to them."
+            )
+            raise ValidationError("Token is invalid")
+
         if not email_verification_token_generator.check_token(
             self.user, token
         ):
+            logger.error(
+                f"{self.user} used invalid verification token {token}."
+            )
             raise ValidationError("Token is invalid")
 
         return token
