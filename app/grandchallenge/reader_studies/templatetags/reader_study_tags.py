@@ -4,12 +4,9 @@ register = template.Library()
 
 
 @register.simple_tag
-def get_ground_truth(obj, image, question):
-    """
-    Get the ground truth value for the image/question combination in reader
-    study obj.
-    """
-    ground_truths = obj.statistics["ground_truths"]
+def get_ground_truth(reader_study, image, question):
+    """Get the ground truth value for the image/question combination in reader_study."""
+    ground_truths = reader_study.statistics["ground_truths"]
     return ground_truths[image][question]
 
 
