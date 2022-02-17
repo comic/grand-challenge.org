@@ -16,7 +16,6 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
-from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -283,15 +282,13 @@ class Challenge(ChallengeBase):
             "For showing 'under construction' type messages"
         ),
     )
-    require_participant_review = deprecate_field(
-        models.BooleanField(
-            default=False,
-            help_text=(
-                "If ticked, new participants need to be approved by project "
-                "admins before they can access restricted pages. If not ticked, "
-                "new users are allowed access immediately"
-            ),
-        )
+    require_participant_review = models.BooleanField(
+        default=False,
+        help_text=(
+            "If ticked, new participants need to be approved by project "
+            "admins before they can access restricted pages. If not ticked, "
+            "new users are allowed access immediately"
+        ),
     )
     access_request_handling = models.CharField(
         max_length=25,

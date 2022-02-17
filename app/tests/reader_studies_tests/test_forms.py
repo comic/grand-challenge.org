@@ -4,6 +4,9 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests import RESOURCE_PATH
@@ -118,6 +121,7 @@ def test_reader_study_create(client, uploaded_image):
                 "workstation": ws.pk,
                 "allow_answer_modification": True,
                 "allow_case_navigation": allow_case_navigation,
+                "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
             },
             follow=True,
             user=creator,

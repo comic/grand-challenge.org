@@ -9,6 +9,9 @@ from django.test import TestCase
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.fixtures import create_uploaded_image
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
@@ -342,6 +345,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "page_set-TOTAL_FORMS": "0",
             "page_set-INITIAL_FORMS": "0",
             "page_set-MAX_NUM_FORMS": "",
+            "access_request_handling": AccessRequestHandlingOptions.ACCEPT_ALL,
         }
         self._login(user)
         response = self.client.post(url, data)
