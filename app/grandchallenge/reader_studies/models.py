@@ -506,12 +506,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def cleaned_case_text(self):
         if self.use_display_sets:
-            study_images = {
-                im.name: im.api_url
-                for im in self.display_sets.values_list(
-                    "values__image__name", flat=True
-                )
-            }
+            study_images = {im.name: im.api_url for im in self.ds_images}
         else:
             study_images = {im.name: im.api_url for im in self.images.all()}
         return {
@@ -524,8 +519,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def study_image_names(self):
         """Names for all images added to this ``ReaderStudy``."""
         if self.use_display_sets:
-            self.display_sets.values_list("values__image__name", flat=True)
-        return self.images.values_list("name", flat=True)
+            return self.ds_images
+        else:
+            return self.images.values_list("name", flat=True)
 
     @property
     def hanging_image_names(self):
@@ -544,9 +540,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             # As the answers is now linked to a display set, this check is
             # no longer necessary
             return True
-        return not self.validate_hanging_list or sorted(
-            self.study_image_names
-        ) == sorted(self.hanging_image_names)
+        else:
+            return not self.validate_hanging_list or sorted(
+                self.study_image_names
+            ) == sorted(self.hanging_image_names)
 
     def hanging_list_diff(self, provided=None):
         """
@@ -567,11 +564,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             # As the answers is now linked to a display set, this check is
             # no longer necessary
             return []
-        return [
-            name
-            for name, count in Counter(self.study_image_names).items()
-            if count > 1
-        ]
+        else:
+            return [
+                name
+                for name, count in Counter(self.study_image_names).items()
+                if count > 1
+            ]
 
     @property
     def is_valid(self):
@@ -607,7 +605,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         """Names of the images as they are grouped in the hanging list."""
         if self.use_display_sets:
             return self.display_sets.all().values_list("pk", flat=True)
-        return [sorted(x.values()) for x in self.hanging_list]
+        else:
+            return [sorted(x.values()) for x in self.hanging_list]
 
     @property
     def has_ground_truth(self):
@@ -615,7 +614,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             question__reader_study_id=self.id, is_ground_truth=True
         ).exists()
 
-    @property
+    @cached_property
     def ds_images(self):
         return sorted(
             list(
@@ -789,51 +788,51 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 "hangings": hangings,
                 "diff": questions - hangings,
             }
-
-        # Group the answers by images and filter out the images that
-        # have an inadequate amount of answers
-        unanswered_images = (
-            answers.order_by("images__name")
-            .values("images__name")
-            .annotate(answer_count=Count("images__name"))
-            .filter(answer_count__lt=self.answerable_question_count)
-        )
-        image_names = set(
-            unanswered_images.values_list("images__name", flat=True)
-        ).union(
-            set(
-                Image.objects.filter(readerstudies=self)
-                .annotate(
-                    answers_for_user=Count(
-                        Subquery(
-                            Answer.objects.filter(
-                                creator=user,
-                                images=OuterRef("pk"),
-                                is_ground_truth=False,
-                            ).values("pk")[:1]
+        else:
+            # Group the answers by images and filter out the images that
+            # have an inadequate amount of answers
+            unanswered_images = (
+                answers.order_by("images__name")
+                .values("images__name")
+                .annotate(answer_count=Count("images__name"))
+                .filter(answer_count__lt=self.answerable_question_count)
+            )
+            image_names = set(
+                unanswered_images.values_list("images__name", flat=True)
+            ).union(
+                set(
+                    Image.objects.filter(readerstudies=self)
+                    .annotate(
+                        answers_for_user=Count(
+                            Subquery(
+                                Answer.objects.filter(
+                                    creator=user,
+                                    images=OuterRef("pk"),
+                                    is_ground_truth=False,
+                                ).values("pk")[:1]
+                            )
                         )
                     )
+                    .filter(answers_for_user=0)
+                    .order_by("name")
+                    .distinct()
+                    .values_list("name", flat=True)
                 )
-                .filter(answers_for_user=0)
-                .order_by("name")
-                .distinct()
-                .values_list("name", flat=True)
             )
-        )
-        # Determine which hangings have images with unanswered questions
-        hanging_list = [set(x.values()) for x in self.hanging_list]
-        completed_hangings = [
-            x for x in hanging_list if len(x - image_names) == len(x)
-        ]
-        completed_hangings = len(completed_hangings)
+            # Determine which hangings have images with unanswered questions
+            hanging_list = [set(x.values()) for x in self.hanging_list]
+            completed_hangings = [
+                x for x in hanging_list if len(x - image_names) == len(x)
+            ]
+            completed_hangings = len(completed_hangings)
 
-        hangings = completed_hangings / hanging_list_count * 100
-        questions = answer_count / expected * 100
-        return {
-            "questions": questions,
-            "hangings": hangings,
-            "diff": questions - hangings,
-        }
+            hangings = completed_hangings / hanging_list_count * 100
+            questions = answer_count / expected * 100
+            return {
+                "questions": questions,
+                "hangings": hangings,
+                "diff": questions - hangings,
+            }
 
     def score_for_user(self, user):
         """Returns the average and total score for answers given by ``user``."""
