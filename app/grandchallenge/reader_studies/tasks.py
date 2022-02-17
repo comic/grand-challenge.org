@@ -73,8 +73,8 @@ def create_display_sets_for_upload_session(
     images = Image.objects.filter(origin_id=upload_session_pk)
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
-    for image in images:
-        with transaction.atomic():
+    with transaction.atomic():
+        for image in images:
             civ, _ = ComponentInterfaceValue.objects.get_or_create(
                 interface=interface, image=image
             )
