@@ -15,6 +15,7 @@ from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
@@ -598,6 +599,10 @@ class Challenge(ChallengeBase):
             raise NotImplementedError(f"{self.status} not handled")
 
         return detail[0]
+
+    @cached_property
+    def visible_phases(self):
+        return self.phase_set.filter(hidden=False)
 
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"

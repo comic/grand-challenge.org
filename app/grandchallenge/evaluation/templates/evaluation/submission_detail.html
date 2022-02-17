@@ -25,6 +25,10 @@
 
 {% block content %}
 
+    {% if object.phase.hidden %}
+        <div class="alert alert-danger">The phase that this submission belongs to, is no longer active. </div>
+    {% endif %}
+
     <h2>Submission {{ object.pk }}</h2>
 
     <dl>

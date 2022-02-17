@@ -429,6 +429,17 @@ class Phase(UUIDModel):
             MaxValueValidator(limit_value=4 * 60 * 60),
         ],
     )
+    hidden = models.BooleanField(
+        default=False,
+        help_text="Set to true to hide this phase's submission page and "
+        "leaderboard from participants. Participants will still "
+        "have access to their submissions and evaluations from this "
+        "phase if they exist, but they will no longer see the "
+        "respective submit and leaderboard tabs for this phase. "
+        "For you as admin these tabs remain visible."
+        "Note that hiding a phase is only possible if submissions for "
+        "this phase are closed for participants.",
+    )
 
     class Meta:
         unique_together = (
@@ -491,6 +502,15 @@ class Phase(UUIDModel):
             raise ValidationError(
                 "The submissions close date needs to be after "
                 "the submissions open date."
+            )
+
+        if self.hidden and (
+            self.submission_limit != 0 or self.open_for_submissions
+        ):
+            raise ValidationError(
+                "A phase can only be hidden if it is closed for submissions. "
+                "To close submissions for this phase, either set "
+                "submission_limit to 0, or set appropriate phase start / end dates."
             )
 
     def set_default_interfaces(self):
