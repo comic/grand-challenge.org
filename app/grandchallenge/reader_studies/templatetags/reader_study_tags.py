@@ -11,6 +11,6 @@ def get_ground_truth(reader_study, image, question):
 
 
 @register.simple_tag
-def get_values_for_interface(display_set, interface):
+def get_values_for_interface(reader_study, interface):
     """Get all values available for `interface` in `display_set`'s reader study."""
-    return display_set.values_for_interface(interface)
+    return reader_study.values_for_interface(interface.slug)

@@ -32,7 +32,7 @@
               <td>
                 <select class="form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
                   <option>---</option>
-                  {% get_values_for_interface object value.interface as values %}
+                  {% get_values_for_interface object.reader_study value.interface as values %}
                   {% for val in values %}
                     <option value="{{ val.id }}" {% if val.id == value.id %}selected{% endif %}>{{ val.image.name }}</option>
                   {% endfor %}

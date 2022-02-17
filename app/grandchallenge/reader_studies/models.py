@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Avg, Count, OuterRef, Subquery, Sum
@@ -965,6 +966,27 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "questions": questions,
         }
 
+    @cached_property
+    def values_for_interfaces(self):
+        cache_key = f"{self.slug}-{self.modified.timestamp()}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+        interfaces = self.display_sets.values_list(
+            "values__interface__slug", flat=True
+        )
+        values_for_interfaces = {}
+        for interface in interfaces:
+            values = ComponentInterfaceValue.objects.none()
+            for ds in self.display_sets.all():
+                values |= ds.values.filter(interface__slug=interface)
+            values_for_interfaces[interface] = values
+        cache.set(cache_key, values_for_interfaces)
+        return values_for_interfaces
+
+    def values_for_interface(self, interface):
+        return self.values_for_interfaces[interface]
+
 
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
@@ -1017,14 +1039,12 @@ class DisplaySet(UUIDModel):
             self,
         )
 
-    def values_for_interface(self, interface):
-        values = ComponentInterfaceValue.objects.none()
-        for ds in self.reader_study.display_sets.all():
-            values |= ds.values.filter(interface=interface)
-        return values
-
-    @property
+    @cached_property
     def empty_interfaces(self):
+        cache_key = f"{self.pk}-{self.modified.timestamp()}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
         interfaces = ComponentInterface.objects.exclude(
             id__in=self.values.values_list("interface_id", flat=True)
         ).filter(
@@ -1034,8 +1054,9 @@ class DisplaySet(UUIDModel):
         )
         result = []
         for interface in interfaces:
-            values = self.values_for_interface(interface)
+            values = self.reader_study.values_for_interface(interface.slug)
             result.append({"title": interface.title, "values": values})
+        cache.set(cache_key, result)
         return result
 
 
