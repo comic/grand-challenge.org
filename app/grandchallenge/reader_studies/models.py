@@ -326,7 +326,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
-    image_port_mapping = models.JSONField(null=True)
     use_display_sets = models.BooleanField(default=False)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):

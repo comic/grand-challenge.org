@@ -150,8 +150,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.use_display_sets:
             del self.fields["hanging_list"]
-        else:
-            del self.fields["image_port_mapping"]
 
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
@@ -175,7 +173,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "roll_over_answers_for_n_cases",
             "hanging_list",
             "case_text",
-            "image_port_mapping",
         )
         widgets = {
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),

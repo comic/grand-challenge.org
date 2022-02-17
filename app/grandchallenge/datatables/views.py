@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import reduce
 from operator import or_
-from typing import Callable, Iterable, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 from django.db.models import Q
 from django.http import JsonResponse
