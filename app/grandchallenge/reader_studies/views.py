@@ -641,9 +641,6 @@ class AddDisplaySetsToReaderStudy(AddObjectToReaderStudyMixin):
         )
         return kwargs
 
-    def get_success_url(self):
-        return self.reader_study.get_absolute_url()
-
 
 class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
     model = RawImageUploadSession
