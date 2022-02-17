@@ -42,7 +42,7 @@ urlpatterns = [
     ),
     path("<slug>/cases/", ReaderStudyImagesList.as_view(), name="images",),
     path(
-        "<slug>/display_sets/",
+        "<slug>/display-sets/",
         ReaderStudyDisplaySetList.as_view(),
         name="display_sets",
     ),
