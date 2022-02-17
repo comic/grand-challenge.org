@@ -974,7 +974,6 @@ class DisplaySetViewSet(
                 ds.values.add(assigned)
                 instance.values.remove(assigned)
             instance.values.add(civ)
-            instance.refresh_from_db()
             DisplaySet.objects.filter(
                 reader_study=instance.reader_study, values=None
             ).delete()
