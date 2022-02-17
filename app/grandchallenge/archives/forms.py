@@ -143,11 +143,15 @@ class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
         self.user = user
         self.archive = archive
 
-        self.fields["reader_study"].queryset = get_objects_for_user(
-            self.user,
-            "reader_studies.change_readerstudy",
-            accept_global_perms=False,
-        ).order_by("title")
+        self.fields["reader_study"].queryset = (
+            get_objects_for_user(
+                self.user,
+                "reader_studies.change_readerstudy",
+                accept_global_perms=False,
+            )
+            .exclude(use_display_sets=True)
+            .order_by("title")
+        )
 
         self.fields["images"].queryset = Image.objects.filter(
             componentinterfacevalue__archive_items__archive=self.archive
