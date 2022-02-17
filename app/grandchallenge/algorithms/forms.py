@@ -175,7 +175,7 @@ class AlgorithmForm(
             "recurse_submodules",
             "contact_email",
             "display_editors",
-            "require_user_review",
+            "access_request_handling",
         )
         widgets = {
             "description": TextInput,
@@ -241,7 +241,7 @@ class AlgorithmForm(
                 "contact_email",
                 "display_editors",
                 "public",
-                "require_user_review",
+                "access_request_handling",
                 "organizations",
                 "publications",
                 "modalities",

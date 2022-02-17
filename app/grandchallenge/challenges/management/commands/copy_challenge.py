@@ -16,7 +16,7 @@ class Command(BaseCommand):
         "description",
         "educational",
         "disclaimer",
-        "require_participant_review",
+        "access_request_handling",
         "use_registration_page",
         "registration_page_text",
         "logo",

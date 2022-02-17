@@ -3,7 +3,6 @@ import json
 from collections import Counter
 
 import numpy as np
-from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -33,9 +32,12 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+    process_access_request,
+)
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -232,13 +234,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "study's readers group in order to do that."
         ),
     )
-    require_user_review = models.BooleanField(
-        default=True,
-        help_text=(
-            "If ticked, new users need to be approved by an "
-            "editor before they can participate in the reader study. If not ticked, "
-            "new users are allowed access immediately."
-        ),
+    access_request_handling = models.CharField(
+        max_length=25,
+        choices=AccessRequestHandlingOptions.choices,
+        default=AccessRequestHandlingOptions.MANUAL_REVIEW,
+        help_text=("How would you like to handle access requests?"),
     )
     logo = JPEGField(
         upload_to=get_logo_path,
@@ -337,7 +337,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "allow_answer_modification",
         "allow_case_navigation",
         "allow_show_all_annotations",
-        "require_user_review",
+        "access_request_handling",
     )
 
     def __str__(self):
@@ -1408,22 +1408,9 @@ class ReaderStudyPermissionRequest(RequestBase):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
-        if adding and not self.reader_study.require_user_review:
-            # immediately allow access, no need for a notification
-            self.status = self.ACCEPTED
         super().save(*args, **kwargs)
-
-        if adding and self.reader_study.require_user_review:
-            follow(
-                user=self.user, obj=self, actor_only=False, send_action=False,
-            )
-            Notification.send(
-                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-                message="requested access to",
-                actor=self.user,
-                target=self.base_object,
-            )
+        if adding:
+            process_access_request(request_object=self)
 
     def delete(self):
         ct = ContentType.objects.filter(

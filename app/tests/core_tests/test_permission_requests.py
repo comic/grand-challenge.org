@@ -5,11 +5,15 @@ from django.utils.html import format_html
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.models import Verification
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.factories import ChallengeFactory, UserFactory
@@ -54,14 +58,15 @@ from tests.utils import get_view_for_user
 def test_permission_request_workflow(
     client, factory, namespace, request_model, request_attr, group_test
 ):
+    base_object = factory(
+        access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
+    )
     if namespace == "participants":
-        base_object = factory(require_participant_review=True)
         permission_create_url = reverse(
             f"{namespace}:registration-create",
             kwargs={"challenge_short_name": base_object.short_name},
         )
     else:
-        base_object = factory(require_user_review=True)
         permission_create_url = reverse(
             f"{namespace}:permission-request-create",
             kwargs={"slug": base_object.slug},
@@ -223,11 +228,13 @@ def test_permission_request_workflow(
         (ChallengeFactory, "participants", RegistrationRequest, "challenge",),
     ),
 )
-def test_permission_request_notifications_flow(
+def test_permission_request_notifications_flow_for_manual_review(
     client, factory, namespace, request_model, request_attr
 ):
+    base_object = factory(
+        access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
+    )
     if namespace == "participants":
-        base_object = factory(require_participant_review=True)
         permission_create_url = reverse(
             f"{namespace}:registration-create",
             kwargs={"challenge_short_name": base_object.short_name},
@@ -238,7 +245,6 @@ def test_permission_request_notifications_flow(
         Notification.objects.all().delete()
     else:
         editor = UserFactory()
-        base_object = factory(require_user_review=True)
         base_object.add_editor(editor)
         permission_create_url = reverse(
             f"{namespace}:permission-request-create",
@@ -288,20 +294,7 @@ def test_permission_request_notifications_flow(
             kwargs={"slug": base_object.slug, "pk": pr.pk},
         )
 
-    # user cannot update the permission request himself
-    response = get_view_for_user(
-        client=client,
-        user=user,
-        url=permission_update_url,
-        method=client.post,
-        data={"status": pr.ACCEPTED},
-    )
-
-    assert response.status_code == 403
-    pr.refresh_from_db()
-    assert pr.status == request_model.PENDING
-
-    # admin can change the status, accept permission request
+    # accepting the permission request
     _ = get_view_for_user(
         client=client,
         user=editor,
@@ -342,41 +335,53 @@ def test_permission_request_notifications_flow(
         user=user
     )
 
-    # when pr is deleted, the follows associated with it are too
-    pr.delete()
-    assert not Follow.objects.filter(object_id=pr.pk)
 
-    # when editor is removed from base_obj,
-    # they no longer receive notifications about new requests
-    Notification.objects.all().delete()
-    assert Notification.objects.count() == 0
-    if namespace == "participants":
-        base_object.remove_admin(editor)
-    else:
-        base_object.remove_editor(editor)
-    user2 = UserFactory()
-    _ = get_view_for_user(
-        client=client,
-        user=user2,
-        url=permission_create_url,
-        method=client.post,
-    )
-    assert Notification.objects.count() == 0
-
-    # when require_participant_review is False,
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "factory,namespace,request_model,request_attr",
+    (
+        (
+            AlgorithmFactory,
+            "algorithms",
+            AlgorithmPermissionRequest,
+            "algorithm",
+        ),
+        (
+            ReaderStudyFactory,
+            "reader-studies",
+            ReaderStudyPermissionRequest,
+            "reader_study",
+        ),
+        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive",),
+        (ChallengeFactory, "participants", RegistrationRequest, "challenge",),
+    ),
+)
+def test_permission_request_notifications_flow_for_accept_all(
+    client, factory, namespace, request_model, request_attr
+):
+    # when access_request_handling is set to accept all,
     # no notifications are sent, no follows are created
     # and the request is automatically accepted
-    request_model.objects.all().delete()
+    base_object = factory(
+        access_request_handling=AccessRequestHandlingOptions.ACCEPT_ALL
+    )
     if namespace == "participants":
-        base_object.add_admin(editor)
-        base_object.require_participant_review = False
-        base_object.save()
-        # remove admin notification
+        permission_create_url = reverse(
+            f"{namespace}:registration-create",
+            kwargs={"challenge_short_name": base_object.short_name},
+        )
+        assert base_object.admins_group.user_set.count() == 1
+        editor = base_object.admins_group.user_set.get()
+        # challenge creation results in a notification, delete this notification
         Notification.objects.all().delete()
     else:
+        editor = UserFactory()
         base_object.add_editor(editor)
-        base_object.require_user_review = False
-        base_object.save()
+        permission_create_url = reverse(
+            f"{namespace}:permission-request-create",
+            kwargs={"slug": base_object.slug},
+        )
+        assert base_object.editors_group.user_set.count() == 1
 
     user3 = UserFactory()
     _ = get_view_for_user(
@@ -392,14 +397,83 @@ def test_permission_request_notifications_flow(
     assert not is_following(user=user3, obj=pr)
     assert Notification.objects.count() == 0
 
-    # when the base_obj is deleted, the follows are deleted as well
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "factory,namespace,request_model,request_attr",
+    (
+        (
+            AlgorithmFactory,
+            "algorithms",
+            AlgorithmPermissionRequest,
+            "algorithm",
+        ),
+        (
+            ReaderStudyFactory,
+            "reader-studies",
+            ReaderStudyPermissionRequest,
+            "reader_study",
+        ),
+        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive",),
+        (ChallengeFactory, "participants", RegistrationRequest, "challenge",),
+    ),
+)
+def test_permission_request_notifications_flow_for_accept_verified_users(
+    client, factory, namespace, request_model, request_attr
+):
+    base_object = factory(
+        access_request_handling=AccessRequestHandlingOptions.ACCEPT_VERIFIED_USERS
+    )
     if namespace == "participants":
-        base_object.phase_set.all().delete()
-        base_object.page_set.all().delete()
-        base_object.delete()
+        permission_create_url = reverse(
+            f"{namespace}:registration-create",
+            kwargs={"challenge_short_name": base_object.short_name},
+        )
+        assert base_object.admins_group.user_set.count() == 1
+        editor = base_object.admins_group.user_set.get()
+        # challenge creation results in a notification, delete this notification
+        Notification.objects.all().delete()
     else:
-        base_object.delete()
-    assert not Follow.objects.filter(object_id=base_object.pk)
+        editor = UserFactory()
+        base_object.add_editor(editor)
+        permission_create_url = reverse(
+            f"{namespace}:permission-request-create",
+            kwargs={"slug": base_object.slug},
+        )
+        assert base_object.editors_group.user_set.count() == 1
+
+    not_verified_user = UserFactory()
+    verified_user = UserFactory()
+    Verification.objects.create(user=verified_user, is_verified=True)
+
+    # the verified users gets accepted automatically, no follows and no notifcations
+    _ = get_view_for_user(
+        client=client,
+        user=verified_user,
+        url=permission_create_url,
+        method=client.post,
+    )
+    pr = request_model.objects.get()
+    assert pr.status == request_model.ACCEPTED
+    assert pr.user == verified_user
+    assert not is_following(user=verified_user, obj=pr)
+    assert Notification.objects.count() == 0
+    pr.delete()
+
+    # for the not verified user, a follow is created, the request is pending and
+    # the admin gets a notification
+    _ = get_view_for_user(
+        client=client,
+        user=not_verified_user,
+        url=permission_create_url,
+        method=client.post,
+    )
+    pr = request_model.objects.get()
+    assert pr.status == request_model.PENDING
+    assert pr.user == not_verified_user
+    assert is_following(user=not_verified_user, obj=pr)
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user == editor
 
 
 @pytest.mark.django_db
@@ -429,3 +503,52 @@ def test_algorithm_permission_request_notification_for_admins_only(client):
 
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user == editor
+
+
+@pytest.mark.django_db
+def test_follows_deleted_when_request_deleted(client):
+    base_object = AlgorithmFactory(
+        access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
+    )
+    editor = UserFactory()
+    base_object.add_editor(editor)
+    permission_create_url = reverse(
+        "algorithms:permission-request-create",
+        kwargs={"slug": base_object.slug},
+    )
+    user = UserFactory()
+    _ = get_view_for_user(
+        client=client,
+        user=user,
+        url=permission_create_url,
+        method=client.post,
+    )
+    pr = AlgorithmPermissionRequest.objects.get()
+    assert is_following(user, pr)
+    pr.delete()
+    assert not Follow.objects.filter(object_id=pr.pk)
+
+
+@pytest.mark.django_db
+def test_follows_deleted_when_base_obj_deleted(client):
+    base_object = AlgorithmFactory(
+        access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
+    )
+    editor = UserFactory()
+    base_object.add_editor(editor)
+    permission_create_url = reverse(
+        "algorithms:permission-request-create",
+        kwargs={"slug": base_object.slug},
+    )
+    user = UserFactory()
+    _ = get_view_for_user(
+        client=client,
+        user=user,
+        url=permission_create_url,
+        method=client.post,
+    )
+    pr = AlgorithmPermissionRequest.objects.get()
+    assert is_following(user, pr)
+
+    base_object.delete()
+    assert not Follow.objects.filter(object_id=base_object.pk)

@@ -34,9 +34,12 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+    process_access_request,
+)
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -93,13 +96,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "algorithm users group in order to do that."
         ),
     )
-    require_user_review = models.BooleanField(
-        default=True,
-        help_text=(
-            "If ticked, new users need to be approved by an "
-            "editor before they can try out the algorithm. If not ticked, "
-            "new users are allowed access immediately."
-        ),
+    access_request_handling = models.CharField(
+        max_length=25,
+        choices=AccessRequestHandlingOptions.choices,
+        default=AccessRequestHandlingOptions.MANUAL_REVIEW,
+        help_text=("How would you like to handle access requests?"),
     )
     detail_page_markdown = models.TextField(blank=True)
     job_create_page_markdown = models.TextField(blank=True)
@@ -699,22 +700,9 @@ class AlgorithmPermissionRequest(RequestBase):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
-        if adding and not self.algorithm.require_user_review:
-            # immediately allow access, no need for a notification
-            self.status = self.ACCEPTED
         super().save(*args, **kwargs)
-
-        if adding and self.algorithm.require_user_review:
-            follow(
-                user=self.user, obj=self, actor_only=False, send_action=False,
-            )
-            Notification.send(
-                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-                message="requested access to",
-                actor=self.user,
-                target=self.base_object,
-            )
+        if adding:
+            process_access_request(request_object=self)
 
     def delete(self):
         ct = ContentType.objects.filter(

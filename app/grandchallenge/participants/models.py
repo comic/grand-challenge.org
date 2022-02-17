@@ -1,11 +1,12 @@
-from actstream.actions import follow
 from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import RequestBase
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.core.utils.access_request_utils import (
+    process_access_request,
+)
 
 
 class RegistrationRequest(RequestBase):
@@ -42,22 +43,9 @@ class RegistrationRequest(RequestBase):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
-        if adding and not self.challenge.require_participant_review:
-            # immediately allow access, no need for a notification
-            self.status = self.ACCEPTED
         super().save(*args, **kwargs)
-
-        if adding and self.challenge.require_participant_review:
-            follow(
-                user=self.user, obj=self, actor_only=False, send_action=False,
-            )
-            Notification.send(
-                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-                message="requested access to",
-                actor=self.user,
-                target=self.base_object,
-            )
+        if adding:
+            process_access_request(request_object=self)
 
     def delete(self):
         ct = ContentType.objects.filter(
