@@ -421,6 +421,7 @@ a set of questions on a set of images (cases).</p>
 <li><p><strong>workstation</strong> (ForeignKey to <a class="reference internal" href="workstations.html#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Workstation</p></li>
 <li><p><strong>workstation_config</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationConfig</span></code>) – Workstation config</p></li>
 <li><p><strong>public</strong> (<em>BooleanField</em>) – Public. Should this reader study be visible to all users on the overview page? This does not grant all users permission to read this study. Users will still need to be added to the study’s readers group in order to do that.</p></li>
+<li><p><strong>access_request_handling</strong> (<em>CharField</em>) – Access request handling. How would you like to handle access requests?</p></li>
 <li><p><strong>logo</strong> (<em>JPEGField</em>) – Logo</p></li>
 <li><p><strong>social_image</strong> (<em>JPEGField</em>) – Social image. An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).</p></li>
 <li><p><strong>help_text_markdown</strong> (<em>TextField</em>) – Help text markdown</p></li>
