@@ -1,7 +1,6 @@
 from celery import shared_task
 from django.conf import settings
 from django.db import transaction
-from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
@@ -84,15 +83,6 @@ def create_display_sets_for_upload_session(
                 continue
             ds = DisplaySet.objects.create(reader_study=reader_study)
             ds.values.add(civ)
-            assign_perm(
-                f"view_{ds._meta.model_name}", reader_study.editors_group, ds
-            )
-            assign_perm(
-                f"view_{ds._meta.model_name}", reader_study.readers_group, ds
-            )
-            assign_perm(
-                f"change_{ds._meta.model_name}", reader_study.editors_group, ds
-            )
 
 
 @shared_task
