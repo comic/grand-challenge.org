@@ -1148,6 +1148,7 @@ DISALLOWED_EMAIL_DOMAINS = {
     "verizon.net",
     "comcast.net",
     "nudt.edu.cn",
+    "ihpc.a-star.edu.sg",
     *blocklist,
 }
 
