@@ -175,7 +175,18 @@
                 <p>
                     This reader study
                     {% if object.public %}
-                        <b>is visible to the public,</b> and
+                        <b>is visible to the public,</b>
+                            {% if object.access_request_handling != 'ACCEPT_ALL' %}
+                            however, users will need to request access, which you
+                            will need to approve
+                                {% if object.access_request_handling == 'ACCEPT_VERIFIED_USERS' %}
+                                    (unless they are verified)
+                                {% endif %}
+                            before they can participate in this reader study.
+                        {% else %}
+                            and users' access requests will be granted automatically.
+                        {% endif %}
+                        It
                     {% endif %}
                     uses
                     <a href="{{ object.workstation.get_absolute_url }}">

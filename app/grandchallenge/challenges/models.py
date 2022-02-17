@@ -38,6 +38,9 @@ from grandchallenge.core.storage import (
     get_social_image_path,
     public_s3_storage,
 )
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.modalities.models import ImagingModality
@@ -286,6 +289,12 @@ class Challenge(ChallengeBase):
             "admins before they can access restricted pages. If not ticked, "
             "new users are allowed access immediately"
         ),
+    )
+    access_request_handling = models.CharField(
+        max_length=25,
+        choices=AccessRequestHandlingOptions.choices,
+        default=AccessRequestHandlingOptions.MANUAL_REVIEW,
+        help_text=("How would you like to handle access requests?"),
     )
     use_registration_page = models.BooleanField(
         default=True,

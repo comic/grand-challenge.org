@@ -1,4 +1,3 @@
-from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -17,8 +16,11 @@ from grandchallenge.core.storage import (
     get_social_image_path,
     public_s3_storage,
 )
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+    process_access_request,
+)
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -59,6 +61,12 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         related_name="users_of_archive",
     )
     public = models.BooleanField(default=False)
+    access_request_handling = models.CharField(
+        max_length=25,
+        choices=AccessRequestHandlingOptions.choices,
+        default=AccessRequestHandlingOptions.MANUAL_REVIEW,
+        help_text=("How would you like to handle access requests?"),
+    )
     workstation = models.ForeignKey(
         "workstations.Workstation",
         null=True,
@@ -306,15 +314,7 @@ class ArchivePermissionRequest(RequestBase):
         adding = self._state.adding
         super().save(*args, **kwargs)
         if adding:
-            follow(
-                user=self.user, obj=self, actor_only=False, send_action=False,
-            )
-            Notification.send(
-                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-                message="requested access to",
-                actor=self.user,
-                target=self.base_object,
-            )
+            process_access_request(request_object=self)
 
     def delete(self):
         ct = ContentType.objects.filter(
