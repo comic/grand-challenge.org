@@ -61,6 +61,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "workstation_config",
             "algorithms",
             "public",
+            "access_request_handling",
             "detail_page_markdown",
         )
         widgets = {

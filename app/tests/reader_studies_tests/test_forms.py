@@ -6,6 +6,9 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
@@ -127,6 +130,7 @@ def test_reader_study_create(client, uploaded_image):
                 "allow_answer_modification": True,
                 "shuffle_hanging_list": shuffle_hanging_list,
                 "allow_case_navigation": allow_case_navigation,
+                "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
                 "roll_over_answers_for_n_cases": roll_over_answers_for_n_cases,
             },
             follow=True,

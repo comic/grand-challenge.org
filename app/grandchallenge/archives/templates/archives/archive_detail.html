@@ -99,9 +99,16 @@
                 <p>
                     {% if object.public %}
                         This {{ object|meta_attr:'verbose_name' }} is <b>visible to the public</b>,
-                        however, users will need to request access which you
-                        will need to approve before they can view this
-                        {{ object|meta_attr:'verbose_name' }}.
+                        {% if object.access_request_handling != 'ACCEPT_ALL' %}
+                            however, users will need to request access, which you
+                            will need to approve
+                                {% if object.access_request_handling == 'ACCEPT_VERIFIED_USERS' %}
+                                    (unless they are verified)
+                                {% endif %}
+                            before they can view this {{ object|meta_attr:'verbose_name' }}.
+                        {% else %}
+                            and users' access requests will be accepted automatically.
+                        {% endif %}
                     {% else %}
                         Only users that you add to the users group will be
                         able to view this {{ object|meta_attr:'verbose_name' }}.

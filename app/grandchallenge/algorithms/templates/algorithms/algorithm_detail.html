@@ -225,9 +225,16 @@
                 <p>
                     {% if algorithm.public %}
                         This algorithm is <b>visible to the public</b>,
-                        however, users will need to request access which you
-                        will need to approve before they can run this
-                        algorithm.
+                        {% if algorithm.access_request_handling != 'ACCEPT_ALL' %}
+                            however, users will need to request access, which you
+                            will need to approve
+                                {% if algorithm.access_request_handling == 'ACCEPT_VERIFIED_USERS' %}
+                                    (unless they are verified)
+                                {% endif %}
+                            before they can run this algorithm.
+                        {% else %}
+                            and users' access requests will be granted automatically.
+                        {% endif %}
                     {% else %}
                         Only users that you add to the users group will be
                         able to run this algorithm.

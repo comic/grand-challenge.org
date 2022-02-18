@@ -148,6 +148,11 @@ AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+AWS_S3_OBJECT_PARAMETERS = {
+    # Note that these do not affect the Uploads bucket, which is configured separately.
+    # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
+    "StorageClass": os.environ.get("AWS_S3_DEFAULT_STORAGE_CLASS", "STANDARD"),
+}
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
 AWS_SES_REGION_ENDPOINT = f'email.{os.environ.get("AWS_SES_REGION_NAME", AWS_DEFAULT_REGION)}.amazonaws.com'
@@ -1143,6 +1148,7 @@ DISALLOWED_EMAIL_DOMAINS = {
     "verizon.net",
     "comcast.net",
     "nudt.edu.cn",
+    "ihpc.a-star.edu.sg",
     *blocklist,
 }
 

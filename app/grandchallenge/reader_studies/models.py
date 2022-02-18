@@ -3,7 +3,6 @@ import json
 from collections import Counter
 
 import numpy as np
-from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -38,9 +37,12 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+    process_access_request,
+)
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -238,6 +240,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "study's readers group in order to do that."
         ),
     )
+    access_request_handling = models.CharField(
+        max_length=25,
+        choices=AccessRequestHandlingOptions.choices,
+        default=AccessRequestHandlingOptions.MANUAL_REVIEW,
+        help_text=("How would you like to handle access requests?"),
+    )
     logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
@@ -346,6 +354,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "allow_answer_modification",
         "allow_case_navigation",
         "allow_show_all_annotations",
+        "access_request_handling",
     )
 
     def __str__(self):
@@ -1578,15 +1587,7 @@ class ReaderStudyPermissionRequest(RequestBase):
         adding = self._state.adding
         super().save(*args, **kwargs)
         if adding:
-            follow(
-                user=self.user, obj=self, actor_only=False, send_action=False,
-            )
-            Notification.send(
-                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-                message="requested access to",
-                actor=self.user,
-                target=self.base_object,
-            )
+            process_access_request(request_object=self)
 
     def delete(self):
         ct = ContentType.objects.filter(

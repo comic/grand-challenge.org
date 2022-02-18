@@ -34,9 +34,12 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+    process_access_request,
+)
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -92,6 +95,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "this algorithm. Users will still need to be added to the "
             "algorithm users group in order to do that."
         ),
+    )
+    access_request_handling = models.CharField(
+        max_length=25,
+        choices=AccessRequestHandlingOptions.choices,
+        default=AccessRequestHandlingOptions.MANUAL_REVIEW,
+        help_text=("How would you like to handle access requests?"),
     )
     detail_page_markdown = models.TextField(blank=True)
     job_create_page_markdown = models.TextField(blank=True)
@@ -693,15 +702,7 @@ class AlgorithmPermissionRequest(RequestBase):
         adding = self._state.adding
         super().save(*args, **kwargs)
         if adding:
-            follow(
-                user=self.user, obj=self, actor_only=False, send_action=False,
-            )
-            Notification.send(
-                type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
-                message="requested access to",
-                actor=self.user,
-                target=self.base_object,
-            )
+            process_access_request(request_object=self)
 
     def delete(self):
         ct = ContentType.objects.filter(

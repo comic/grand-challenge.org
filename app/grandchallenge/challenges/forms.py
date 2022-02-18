@@ -24,7 +24,7 @@ class ChallengeCreateForm(forms.ModelForm):
         fields = [
             "short_name",
             "description",
-            "require_participant_review",
+            "access_request_handling",
             "contact_email",
         ]
 
@@ -48,7 +48,7 @@ event_items = ("event_url", "workshop_date")
 
 registration_items = (
     "use_registration_page",
-    "require_participant_review",
+    "access_request_handling",
     "registration_page_text",
 )
 

@@ -4,9 +4,12 @@ register = template.Library()
 
 
 @register.simple_tag
-def get_grandchildren(page):
-    grandchildren = []
+def get_subordinate_pages(page):
+    subordinate_pages = []
     for child in page.children.all():
+        subordinate_pages.append(child)
         for grandchild in child.children.all():
-            grandchildren.append(grandchild)
-    return grandchildren
+            subordinate_pages.append(grandchild)
+            for greatgrandchild in grandchild.children.all():
+                subordinate_pages.append(greatgrandchild)
+    return subordinate_pages

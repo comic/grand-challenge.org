@@ -62,6 +62,7 @@ def add_user_to_groups(
 @receiver(pre_save, sender=AlgorithmPermissionRequest)
 @receiver(pre_save, sender=ArchivePermissionRequest)
 @receiver(pre_save, sender=ReaderStudyPermissionRequest)
+@receiver(pre_save, sender=RegistrationRequest)
 def process_permission_request_update(sender, instance, *_, **__):
     try:
         old_values = sender.objects.get(pk=instance.pk)

@@ -12,6 +12,9 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
+from grandchallenge.core.utils.access_request_utils import (
+    AccessRequestHandlingOptions,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -140,6 +143,7 @@ def test_archive_create(client, uploaded_image):
                 "title": "foo bar",
                 "logo": uploaded_image(),
                 "workstation": ws.pk,
+                "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
             },
             follow=True,
             user=creator,
@@ -184,6 +188,7 @@ def test_social_image_meta_tag(client, uploaded_image):
                 "logo": uploaded_image(),
                 "social_image": uploaded_image(),
                 "workstation": ws.pk,
+                "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
             },
             follow=True,
             user=creator,
