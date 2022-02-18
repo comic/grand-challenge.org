@@ -962,10 +962,22 @@ class DisplaySetViewSet(
     def partial_update(self, request, pk=None):
         instance = self.get_object()
         if request.data.get("value"):
-            civ = ComponentInterfaceValue.objects.get(
+            # Get the provided civ from the current reader study's display sets.
+            civs = instance.reader_study.display_sets.values_list(
+                "values", flat=True
+            )
+            civ = ComponentInterfaceValue.objects.filter(id__in=civs).get(
                 id=request.data.get("value")
             )
-            civ.displays_set.clear()
+
+            # Because the civ is added to a display set, it can no longer be
+            # a value for another display set.
+            civ.display_sets.clear()
+
+            # If there is already a value for the provided civ's interface in
+            # this display set, remove it. There should not be any cases where
+            # multiple civs are assigned for the same interface, but loop over
+            # the qs just in case.
             assigned_civs = instance.values.filter(interface=civ.interface)
             for assigned in assigned_civs:
                 ds = DisplaySet.objects.create(
@@ -973,7 +985,12 @@ class DisplaySetViewSet(
                 )
                 ds.values.add(assigned)
                 instance.values.remove(assigned)
+
+            # Add the provided civ to the current display set
             instance.values.add(civ)
+
+            # Adding the civ to this display set removes it from another.
+            # Find any display sets with no values and delete them.
             DisplaySet.objects.filter(
                 reader_study=instance.reader_study, values=None
             ).delete()
