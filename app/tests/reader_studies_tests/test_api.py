@@ -1456,3 +1456,25 @@ def test_display_set_add_and_edit(client, settings):
     ) == sorted([ci.slug, "generic-medical-image"])
     ds.refresh_from_db()
     assert ds.values.count() == 2
+
+    # Create another display set
+    ds2 = DisplaySetFactory(reader_study=rs)
+    civ = ComponentInterfaceValueFactory(interface=ci, value=False)
+    ds2.values.add(civ)
+
+    assert ds2.values.count() == 1
+
+    # Move the image civ to the new display set
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds2.pk},
+        user=r1,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={"value": new.pk},
+    )
+
+    ds.refresh_from_db()
+    assert ds.values.count() == 1
+    assert ds2.values.count() == 2
