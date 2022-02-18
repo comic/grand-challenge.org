@@ -232,7 +232,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         if "display_set" in attrs and "interface" not in attrs:
             raise ValidationError(
                 "An interface needs to be defined to upload to a "
-                "display_set."
+                "display set."
             )
 
         return attrs

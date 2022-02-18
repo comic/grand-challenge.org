@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.reader_studies.models import Answer
-from grandchallenge.reader_studies.templatetags.get_ground_truth import (
+from grandchallenge.reader_studies.templatetags.reader_study_tags import (
     get_ground_truth,
 )
 

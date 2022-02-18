@@ -18,7 +18,10 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
-from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    ReaderStudyFactory,
+)
 from tests.uploads_tests.factories import (
     create_completed_upload,
     create_upload_from_file,
@@ -519,5 +522,42 @@ def test_user_upload_to_archive_item_without_interface(client, settings):
     assert response.status_code == 400
     assert (
         "An interface needs to be defined to upload to an archive item."
+        in response.json()["non_field_errors"]
+    )
+
+
+@pytest.mark.django_db
+def test_user_upload_to_display_set_without_interface(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory()
+    rs = ReaderStudyFactory()
+    rs.add_editor(user=user)
+    ci = ComponentInterface.objects.filter(slug="generic-overlay").get()
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ)
+    assert ds.values.count() == 1
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={"uploads": [upload.api_url], "display_set": ds.pk},
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 400
+    assert (
+        "An interface needs to be defined to upload to a display set."
         in response.json()["non_field_errors"]
     )
