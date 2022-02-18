@@ -140,8 +140,9 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         MPMRI = "MPMRI", "Multiparametric MRI"
 
     class ImageInterpolationType(models.TextChoices):
-        NEAREST = "NN", "NearestNeighbor"
-        TRILINEAR = "TL", "Trilinear"
+        NEAREST = "NN", "NearestNeighbor"  # Maps to FILTER_NEAREST in MeVisLab
+        TRILINEAR = "TL", "Trilinear"  # Maps to FILTER_LINEAR in MeVisLab
+        CUBIC = "CU", "Cubic"  # Maps to FILTER_CUBIC_POSTCLASS in MeVisLab
 
     creator = models.ForeignKey(
         get_user_model(), null=True, on_delete=models.SET_NULL
@@ -219,6 +220,14 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         default=ImageInterpolationType.NEAREST,
         blank=True,
         help_text="The method used to interpolate multiple voxels of overlay images and project them to screen pixels",
+    )
+
+    default_interpolation = models.CharField(
+        max_length=2,
+        choices=ImageInterpolationType.choices,
+        default=ImageInterpolationType.CUBIC,
+        blank=True,
+        help_text="The method used to interpolate multiple voxels of the image and project them to screen pixels",
     )
 
     # 3 digits, 2 decimal places, 0.00 min, 1.00 max
