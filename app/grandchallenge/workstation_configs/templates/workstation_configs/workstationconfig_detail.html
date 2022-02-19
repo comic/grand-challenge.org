@@ -206,9 +206,5 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript">
-      $(function() {
-        $('[data-toggle="tooltip"]').tooltip();
-      });
-    </script>
+    <script type="text/javascript" src="{% static "js/tooltips.js" %}"></script>
 {% endblock %}
