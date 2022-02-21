@@ -222,7 +222,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="The method used to interpolate multiple voxels of overlay images and project them to screen pixels",
     )
 
-    default_interpolation = models.CharField(
+    default_image_interpolation = models.CharField(
         max_length=2,
         choices=ImageInterpolationType.choices,
         default=ImageInterpolationType.CUBIC,

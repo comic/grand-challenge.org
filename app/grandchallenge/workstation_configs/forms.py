@@ -24,7 +24,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_overlay_alpha",
             "overlay_luts",
             "default_overlay_lut",
-            "default_interpolation",
+            "default_image_interpolation",
             "default_overlay_interpolation",
             "overlay_segments",
             "key_bindings",
