@@ -5,7 +5,7 @@ from django.utils.html import format_html
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.notifications.models import Notification
