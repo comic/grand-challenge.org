@@ -40,6 +40,7 @@ def get_users_with_set_perms(*args, **kwargs):
     return {k: {*v} for k, v in get_users_with_perms(*args, **kwargs).items()}
 
 
+@pytest.mark.django_db
 class TestPhasePermissions(TestCase):
     def test_phase_permissions(self):
         """Only challenge admins should be able to view and change phases."""
@@ -55,7 +56,7 @@ class TestPhasePermissions(TestCase):
         }
         assert get_users_with_perms(p, with_group_users=False).count() == 0
 
-    def test_hiding_phase_updates_perms(self, settings):
+    def test_hiding_phase_updates_perms(self):
         e: Evaluation = EvaluationFactory(
             submission__phase__auto_publish_new_results=True,
             submission__phase__hidden=False,
@@ -98,7 +99,7 @@ class TestPhasePermissions(TestCase):
             e.submission.phase.challenge.admins_group: {"view_submission"},
         }
 
-    def test_unhiding_phase_updates_perms(self, settings):
+    def test_unhiding_phase_updates_perms(self):
         e: Evaluation = EvaluationFactory(
             submission__phase__auto_publish_new_results=True,
             submission__phase__hidden=True,
