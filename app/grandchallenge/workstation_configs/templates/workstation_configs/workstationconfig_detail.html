@@ -55,6 +55,10 @@
             <td class="font-weight-bold">Default orientation</td>
             <td>{{ object.get_default_orientation_display }}</td>
         </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_image_interpolation' %}">
+            <td class="font-weight-bold">Default image interpolation</td>
+            <td>{{ object.get_default_image_interpolation_display }}</td>
+        </tr>
         <tr data-toggle="tooltip" title="{% get_help_text object 'default_overlay_alpha' %}">
             <td class="font-weight-bold">Default overlay alpha</td>
             <td>{{ object.default_overlay_alpha }}</td>
