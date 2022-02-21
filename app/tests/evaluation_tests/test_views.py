@@ -371,3 +371,75 @@ def test_evaluation_list(client, two_challenge_sets):
     assert str(e_p_s1.pk) not in response.rendered_content
     assert str(e_p_s2.pk) not in response.rendered_content
     assert str(e_p1_s1.pk) not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_hidden_phase_visible_for_admins_but_not_participants(client):
+    ch = ChallengeFactory()
+    u = UserFactory()
+    ch.add_participant(u)
+    visible_phase = ch.phase_set.first()
+    hidden_phase = PhaseFactory(challenge=ch, hidden=True)
+    e1 = EvaluationFactory(
+        submission__phase=visible_phase, submission__creator=u
+    )
+    e2 = EvaluationFactory(
+        submission__phase=hidden_phase, submission__creator=u
+    )
+
+    for view_name, kwargs, status in [
+        # phase non-specific pages
+        ("list", {}, 200),
+        ("submission-list", {}, 200),
+        # visible phase
+        ("detail", {"pk": e1.pk}, 200),
+        ("submission-create", {"slug": visible_phase.slug}, 200),
+        ("submission-detail", {"pk": e1.submission.pk}, 200),
+        ("leaderboard", {"slug": visible_phase.slug}, 200),
+        # hidden phase
+        ("detail", {"pk": e2.pk}, 403),
+        ("submission-create", {"slug": hidden_phase.slug}, 200),
+        ("submission-detail", {"pk": e2.submission.pk}, 403),
+        ("leaderboard", {"slug": hidden_phase.slug}, 200),
+    ]:
+        # for participants only the visible phase tab is visible
+        # and they do not have access to the detail pages of their evals and
+        # submissions from the hidden phase, and do not see subs/evals from the hidden
+        # phase on the respective list pages
+        response = get_view_for_user(
+            client=client,
+            viewname=f"evaluation:{view_name}",
+            reverse_kwargs={"challenge_short_name": ch.short_name, **kwargs},
+            user=u,
+        )
+        assert response.status_code == status
+        if status == 200:
+            assert f"{visible_phase.title}</a>" in response.rendered_content
+            assert f"{hidden_phase.title}</a>" not in response.rendered_content
+        if "list" in view_name:
+            assert (
+                f"<td>{visible_phase.title}</td>" in response.rendered_content
+            )
+            assert (
+                f"<td>{hidden_phase.title}</td>"
+                not in response.rendered_content
+            )
+
+        # for the admin both phases are visible and they have access to submissions
+        # and evals from both phases
+        response = get_view_for_user(
+            client=client,
+            viewname=f"evaluation:{view_name}",
+            reverse_kwargs={"challenge_short_name": ch.short_name, **kwargs},
+            user=ch.admins_group.user_set.first(),
+        )
+        assert response.status_code == 200
+        assert f"{visible_phase.title}</a>" in response.rendered_content
+        assert f"{hidden_phase.title}</a>" in response.rendered_content
+        if "list" in view_name:
+            assert (
+                f"<td>{visible_phase.title}</td>" in response.rendered_content
+            )
+            assert (
+                f"<td>{hidden_phase.title}</td>" in response.rendered_content
+            )
