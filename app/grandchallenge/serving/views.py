@@ -52,11 +52,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         user = request.user
 
     if user.has_perm("view_image", image):
-        on_commit(
-            lambda: create_download.apply_async(
-                kwargs={"creator_id": user.pk, "image_id": image.pk}
-            )
-        )
+        create_download(creator_id=user.pk, image_id=image.pk)
         return protected_storage_redirect(name=name)
 
     raise PermissionDenied
