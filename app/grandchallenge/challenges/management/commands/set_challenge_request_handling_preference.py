@@ -1,7 +1,7 @@
 from django.core.management import BaseCommand
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 

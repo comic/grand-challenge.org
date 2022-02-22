@@ -4,7 +4,7 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy

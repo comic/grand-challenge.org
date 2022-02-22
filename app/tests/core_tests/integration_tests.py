@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.pages.models import Page
