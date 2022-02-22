@@ -97,6 +97,32 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["seed_point", "path_points", "sub_type", "groups"],
             "additionalProperties": False,
         },
+        "spline-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Line"]},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "closed": {"type": "boolean"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["seed_point", "path_points", "closed"],
+            "additionalProperties": False,
+        },
         "DIST": {
             "type": "object",
             "properties": {
@@ -217,6 +243,47 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["type", "version", "polygons"],
             "additionalProperties": False,
         },
+        "LINE": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Line"]},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "closed": {"type": "boolean"},
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["seed_point", "path_points", "closed", "version"],
+            "additionalProperties": False,
+        },
+        "MLIN": {
+            "type": "object",
+            "properties": {
+                "type": {"enum": ["Multiple lines"]},
+                "name": {"type": "string"},
+                "lines": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/spline-object"},
+                },
+                "version": {"$ref": "#/definitions/version-object"},
+            },
+            "required": ["type", "version", "lines"],
+            "additionalProperties": False,
+        },
         "MASK": {
             "type": "object",
             "properties": {
@@ -294,6 +361,8 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MCHD"},
         {"$ref": "#/definitions/M2DB"},
         {"$ref": "#/definitions/MASK"},
+        {"$ref": "#/definitions/LINE"},
+        {"$ref": "#/definitions/MLIN"},
     ],
 }
 
@@ -318,6 +387,8 @@ INTERFACE_VALUE_SCHEMA = {
         "MPOI": ANSWER_TYPE_SCHEMA["definitions"]["MPOI"],
         "POLY": ANSWER_TYPE_SCHEMA["definitions"]["POLY"],
         "MPOL": ANSWER_TYPE_SCHEMA["definitions"]["MPOL"],
+        "LINE": ANSWER_TYPE_SCHEMA["definitions"]["LINE"],
+        "MLIN": ANSWER_TYPE_SCHEMA["definitions"]["MLIN"],
         "CHOI": {"type": "string"},
         "MCHO": {"type": "array", "items": {"type": "string"}},
         "CHART": VEGA_LITE_SCHEMA,
@@ -329,6 +400,7 @@ INTERFACE_VALUE_SCHEMA = {
         "line-object": ANSWER_TYPE_SCHEMA["definitions"]["line-object"],
         "point-object": ANSWER_TYPE_SCHEMA["definitions"]["point-object"],
         "polygon-object": ANSWER_TYPE_SCHEMA["definitions"]["polygon-object"],
+        "spline-object": ANSWER_TYPE_SCHEMA["definitions"]["spline-object"],
     },
     "anyOf": [
         {"$ref": "#/definitions/STR"},
@@ -347,5 +419,7 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
         {"$ref": "#/definitions/CHART"},
+        {"$ref": "#/definitions/LINE"},
+        {"$ref": "#/definitions/MLIN"},
     ],
 }

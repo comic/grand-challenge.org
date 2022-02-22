@@ -235,6 +235,35 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
+    "LINE": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Line",
+        "name": "test_name",
+        "seed_point": [0, 0, 0],
+        "path_points": [[0, 0, 0], [0, 0, 0]],
+        "closed": True,
+        "probability": 0.3,
+    },
+    "MLIN": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple lines",
+        "name": "test_name",
+        "lines": [
+            {
+                "name": "test_name",
+                "seed_point": [0, 0, 0],
+                "path_points": [[0, 0, 0], [0, 0, 0]],
+                "closed": True,
+            },
+            {
+                "name": "test_name",
+                "seed_point": [0, 0, 0],
+                "path_points": [[0, 0, 0], [0, 0, 0]],
+                "closed": False,
+                "probability": 0.54,
+            },
+        ],
+    },
 }
 
 
@@ -293,6 +322,8 @@ def test_new_answer_type_listed():
         ["MCHO", False],
         ["MCHD", False],
         ["MASK", True],
+        ["LINE", True],
+        ["MLIN", True],
     ],
 )
 def test_answer_type_allows_null(answer_type, allow_null):

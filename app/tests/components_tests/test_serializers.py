@@ -99,6 +99,36 @@ TEST_DATA = {
             },
         ],
     },
+    "LINE": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Line",
+        "name": "test_name",
+        "seed_point": [0, 0, 0],
+        "path_points": [[0, 0, 0], [0, 0, 0]],
+        "closed": True,
+        "probability": 0.3,
+    },
+    "MLIN": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple lines",
+        "name": "test_name",
+        "lines": [
+            {
+                "name": "test_name",
+                "seed_point": [0, 0, 0],
+                "path_points": [[0, 0, 0], [0, 0, 0]],
+                "closed": True,
+                "probability": 0.54,
+            },
+            {
+                "name": "test_name",
+                "seed_point": [0, 0, 0],
+                "path_points": [[0, 0, 0], [0, 0, 0]],
+                "closed": False,
+                "probability": 0.54,
+            },
+        ],
+    },
 }
 
 
@@ -139,6 +169,8 @@ def test_civ_post_objects_do_not_exist(civ, error_message):
         InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
         InterfaceKind.InterfaceKindChoices.POLYGON,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+        InterfaceKind.InterfaceKindChoices.LINE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
     ),
 )
 def test_civ_post_value_validation(kind):

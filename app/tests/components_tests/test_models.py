@@ -111,6 +111,8 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.SQREG, True, False),
         (InterfaceKindChoices.PDF, True, False),
         (InterfaceKindChoices.CHART, False, False),
+        (InterfaceKindChoices.LINE, False, False),
+        (InterfaceKindChoices.MULTIPLE_LINES, False, False),
     ),
 )
 def test_save_in_object_store(kind, object_store_required, is_image):
