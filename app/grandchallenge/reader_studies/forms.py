@@ -179,7 +179,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         widgets = {
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
-            "image_port_mapping": JSONEditorWidget(),
             "help_text_markdown": MarkdownEditorWidget,
             "description": TextInput,
             "publications": Select2MultipleWidget,
