@@ -925,6 +925,8 @@ class AnswerType(models.TextChoices):
     MULTIPLE_CHOICE = "MCHO", "Multiple choice"
     MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
     MASK = "MASK", "Mask"
+    LINE = "LINE", "Line"
+    MULTIPLE_LINES = "MLIN", "Multiple lines"
 
 
 class Question(UUIDModel):
@@ -1105,6 +1107,8 @@ class Question(UUIDModel):
             self.AnswerType.POLYGON,
             self.AnswerType.MULTIPLE_POLYGONS,
             self.AnswerType.MASK,
+            self.AnswerType.LINE,
+            self.AnswerType.MULTIPLE_LINES,
         ]
 
     @property
