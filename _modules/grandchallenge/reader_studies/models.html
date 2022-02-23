@@ -997,7 +997,9 @@
     <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span>
     <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span>
     <span class="n">MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span>
-    <span class="n">MASK</span> <span class="o">=</span> <span class="s2">&quot;MASK&quot;</span><span class="p">,</span> <span class="s2">&quot;Mask&quot;</span></div>
+    <span class="n">MASK</span> <span class="o">=</span> <span class="s2">&quot;MASK&quot;</span><span class="p">,</span> <span class="s2">&quot;Mask&quot;</span>
+    <span class="n">LINE</span> <span class="o">=</span> <span class="s2">&quot;LINE&quot;</span><span class="p">,</span> <span class="s2">&quot;Line&quot;</span>
+    <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple lines&quot;</span></div>
 
 
 <div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
@@ -1178,6 +1180,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
         <span class="p">]</span>
 
     <span class="nd">@property</span>

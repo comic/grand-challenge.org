@@ -152,6 +152,8 @@
     <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple points&quot;</span><span class="p">)</span>
     <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Polygon&quot;</span><span class="p">)</span>
     <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple polygons&quot;</span><span class="p">)</span>
+    <span class="n">LINE</span> <span class="o">=</span> <span class="s2">&quot;LINE&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Line&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple lines&quot;</span><span class="p">)</span>
 
     <span class="c1"># Choice Types</span>
     <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Choice&quot;</span><span class="p">)</span>
@@ -201,6 +203,8 @@
 <span class="sd">        * Multiple points</span>
 <span class="sd">        * Polygon</span>
 <span class="sd">        * Multiple polygons</span>
+<span class="sd">        * Lines</span>
+<span class="sd">        * Multiple lines</span>
 <span class="sd">        * Choice (string)</span>
 <span class="sd">        * Multiple choice (array of strings)</span>
 <span class="sd">        * Chart</span>
@@ -355,6 +359,51 @@
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
+<span class="sd">        Example json for Line annotation</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;type&quot;: &quot;Line&quot;,</span>
+<span class="sd">                &quot;seed_point&quot;: [ 76.413756408691, 124.014717102050, 0.5009999871253967 ],</span>
+<span class="sd">                &quot;path_points&quot;: [</span>
+<span class="sd">                    [ 76.41375842260106, 124.01471710205078, 0.5009999871253967 ],</span>
+<span class="sd">                    [ 76.41694876387268, 124.0511828696491, 0.5009999871253967 ],</span>
+<span class="sd">                    [ 76.42642285078242, 124.0865406433515, 0.5009999871253967 ]</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;closed&quot;: &quot;false&quot;,</span>
+<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Example json for Multiple lines annotation</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;type&quot;: &quot;Multiple lines&quot;,</span>
+<span class="sd">                &quot;lines&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;seed_point&quot;: [ 55.82666793823242, 90.46666717529297, 0.5009999871253967 ],</span>
+<span class="sd">                        &quot;path_points&quot;: [</span>
+<span class="sd">                            [ 55.82667599387105, 90.46666717529297, 0.5009999871253967 ],</span>
+<span class="sd">                            [ 55.93921357544119, 90.88666314747366, 0.5009999871253967 ],</span>
+<span class="sd">                            [ 56.246671966051736, 91.1941215380842, 0.5009999871253967 ],</span>
+<span class="sd">                            [ 56.66666793823242, 91.30665911965434, 0.5009999871253967 ]</span>
+<span class="sd">                        ],</span>
+<span class="sd">                        &quot;closed&quot;: &quot;false&quot;</span>
+<span class="sd">                    },</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;seed_point&quot;: [ 90.22666564941406, 96.06666564941406, 0.5009999871253967 ],</span>
+<span class="sd">                        &quot;path_points&quot;: [</span>
+<span class="sd">                            [ 90.22667370505269, 96.06666564941406, 0.5009999871253967 ],</span>
+<span class="sd">                            [ 90.33921128662283, 96.48666162159475, 0.5009999871253967 ],</span>
+<span class="sd">                            [ 90.64666967723338, 96.7941200122053, 0.5009999871253967 ]</span>
+<span class="sd">                        ],</span>
+<span class="sd">                        &quot;closed&quot;: &quot;true&quot;</span>
+<span class="sd">                    }</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
+<span class="sd">            }</span>
 <span class="sd">        Example json for Chart (for more examples, see `here&lt;https://vega.github.io/vega-lite/examples/&gt;` and `here&lt;https://grand-challenge.org/blogs/visualisations-for-challenges/&gt;`)</span>
 
 <span class="sd">        .. code-block:: json</span>
@@ -464,6 +513,8 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANY</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_image"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>    <span class="nd">@staticmethod</span>

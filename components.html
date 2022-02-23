@@ -260,6 +260,8 @@ else as it clobbers the input directory.</p>
 <li><p>Multiple points</p></li>
 <li><p>Polygon</p></li>
 <li><p>Multiple polygons</p></li>
+<li><p>Lines</p></li>
+<li><p>Multiple lines</p></li>
 <li><p>Choice (string)</p></li>
 <li><p>Multiple choice (array of strings)</p></li>
 <li><p>Chart</p></li>
@@ -392,6 +394,48 @@ else as it clobbers the input directory.</p>
             <span class="p">],</span>
             <span class="nt">&quot;sub_type&quot;</span><span class="p">:</span> <span class="s2">&quot;brush&quot;</span><span class="p">,</span>
             <span class="nt">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Example json for Line annotation</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Line&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">76.413756408691</span><span class="p">,</span> <span class="mf">124.014717102050</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+    <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">[</span> <span class="mf">76.41375842260106</span><span class="p">,</span> <span class="mf">124.01471710205078</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">76.41694876387268</span><span class="p">,</span> <span class="mf">124.0511828696491</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">76.42642285078242</span><span class="p">,</span> <span class="mf">124.0865406433515</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
+    <span class="p">],</span>
+    <span class="nt">&quot;closed&quot;</span><span class="p">:</span> <span class="s2">&quot;false&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Example json for Multiple lines annotation</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple lines&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">55.82666793823242</span><span class="p">,</span> <span class="mf">90.46666717529297</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+            <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span> <span class="mf">55.82667599387105</span><span class="p">,</span> <span class="mf">90.46666717529297</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+                <span class="p">[</span> <span class="mf">55.93921357544119</span><span class="p">,</span> <span class="mf">90.88666314747366</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+                <span class="p">[</span> <span class="mf">56.246671966051736</span><span class="p">,</span> <span class="mf">91.1941215380842</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+                <span class="p">[</span> <span class="mf">56.66666793823242</span><span class="p">,</span> <span class="mf">91.30665911965434</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
+            <span class="p">],</span>
+            <span class="nt">&quot;closed&quot;</span><span class="p">:</span> <span class="s2">&quot;false&quot;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">90.22666564941406</span><span class="p">,</span> <span class="mf">96.06666564941406</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+            <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span> <span class="mf">90.22667370505269</span><span class="p">,</span> <span class="mf">96.06666564941406</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+                <span class="p">[</span> <span class="mf">90.33921128662283</span><span class="p">,</span> <span class="mf">96.48666162159475</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
+                <span class="p">[</span> <span class="mf">90.64666967723338</span><span class="p">,</span> <span class="mf">96.7941200122053</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
+            <span class="p">],</span>
+            <span class="nt">&quot;closed&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span>
         <span class="p">}</span>
     <span class="p">],</span>
     <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
