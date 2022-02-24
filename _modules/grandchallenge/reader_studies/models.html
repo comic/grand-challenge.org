@@ -778,11 +778,7 @@
 <div class="viewcode-block" id="ReaderStudy.get_progress_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">get_progress_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the percentage of completed hangings and questions for ``user``.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-                <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-                <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-            <span class="p">}</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
 
         <span class="n">hanging_list_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">)</span>
 
@@ -892,7 +888,7 @@
             <span class="p">)</span>
             <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">)</span>
             <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">,</span> <span class="s2">&quot;images__pk&quot;</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">))</span>
             <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;score__avg&quot;</span><span class="p">)</span>
         <span class="p">)</span>
 
@@ -986,10 +982,7 @@
     <span class="n">BOUNDING_BOX_2D</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span><span class="p">,</span> <span class="s2">&quot;2D bounding box&quot;</span>
     <span class="n">MULTIPLE_2D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span>
     <span class="n">DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance measurement&quot;</span>
-    <span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;MDIS&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;MDIS&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">)</span>
     <span class="n">POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Point&quot;</span>
     <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple points&quot;</span>
     <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span>
@@ -1014,9 +1007,7 @@
 <div class="viewcode-block" id="Question.ScoringFunction"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ScoringFunction">[docs]</a>    <span class="k">class</span> <span class="nc">ScoringFunction</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
         <span class="n">ACCURACY</span> <span class="o">=</span> <span class="s2">&quot;ACC&quot;</span><span class="p">,</span> <span class="s2">&quot;Accuracy score&quot;</span></div>
 
-    <span class="n">SCORING_FUNCTIONS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">ScoringFunction</span><span class="o">.</span><span class="n">ACCURACY</span><span class="p">:</span> <span class="n">accuracy_score</span><span class="p">,</span>
-    <span class="p">}</span>
+    <span class="n">SCORING_FUNCTIONS</span> <span class="o">=</span> <span class="p">{</span><span class="n">ScoringFunction</span><span class="o">.</span><span class="n">ACCURACY</span><span class="p">:</span> <span class="n">accuracy_score</span><span class="p">}</span>
 
     <span class="n">EXAMPLE_FOR_ANSWER_TYPE</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
@@ -1194,9 +1185,7 @@
 
 <div class="viewcode-block" id="Question.is_answer_valid"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.is_answer_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_answer_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">answer</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``.&quot;&quot;&quot;</span>
-        <span class="n">allowed_types</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;#/definitions/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">},</span>
-        <span class="p">]</span>
+        <span class="n">allowed_types</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;#/definitions/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_null_types</span><span class="p">:</span>
             <span class="n">allowed_types</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/null&quot;</span><span class="p">})</span>
@@ -1218,9 +1207,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_image_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">,</span>
-        <span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">get_absolute_url</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;#questions&quot;</span></div>
@@ -1250,7 +1237,7 @@
     <span class="n">question</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
     <span class="n">images</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;answers&quot;</span><span class="p">)</span>
     <span class="n">answer</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
-        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">ANSWER_TYPE_SCHEMA</span><span class="p">)],</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">ANSWER_TYPE_SCHEMA</span><span class="p">)]</span>
     <span class="p">)</span>
     <span class="n">answer_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
@@ -1267,7 +1254,7 @@
             <span class="s2">&quot;images&quot;</span><span class="p">,</span>
             <span class="s2">&quot;is_ground_truth&quot;</span><span class="p">,</span>
             <span class="s2">&quot;score&quot;</span><span class="p">,</span>
-        <span class="p">],</span>
+        <span class="p">]</span>
     <span class="p">)</span>
 
     <span class="n">_csv_headers</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">csv_headers</span> <span class="o">+</span> <span class="p">[</span>
