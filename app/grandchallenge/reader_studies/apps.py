@@ -6,6 +6,7 @@ from django.db.models.signals import post_migrate
 def init_reader_study_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
+
     from grandchallenge.reader_studies.models import ReaderStudy
 
     g, _ = Group.objects.get_or_create(
@@ -27,6 +28,7 @@ def init_reader_study_permissions(*_, **__):
 def init_answer_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
+
     from grandchallenge.reader_studies.models import Answer
 
     g, _ = Group.objects.get_or_create(

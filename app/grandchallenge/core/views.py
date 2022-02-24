@@ -12,8 +12,8 @@ from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from django.views.generic import TemplateView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

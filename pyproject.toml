@@ -2,6 +2,13 @@
 requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.isort]
+profile = "black"
+known_first_party = ["config", "grandchallenge", "tests"]
+line_length = 79
+case_sensitive = true
+order_by_type = false
+
 [tool.black]
 line-length = 79
 target-version = ['py38']

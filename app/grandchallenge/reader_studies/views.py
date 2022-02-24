@@ -31,9 +31,8 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms

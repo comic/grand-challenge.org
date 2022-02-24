@@ -3,9 +3,8 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.views.generic import CreateView, DeleteView, ListView
+from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework import mixins, viewsets

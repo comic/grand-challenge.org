@@ -28,6 +28,7 @@ def init_default_workstation(*_, **__):
 def init_workstation_creators_group(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
+
     from grandchallenge.workstations.models import Workstation
 
     g, _ = Group.objects.get_or_create(
@@ -41,6 +42,7 @@ def init_workstation_creators_group(*_, **__):
 def init_session_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
+
     from grandchallenge.workstations.models import Session
 
     g, _ = Group.objects.get_or_create(

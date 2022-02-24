@@ -6,8 +6,8 @@ from django.db.models import CharField, Q, Value
 from django.db.models.functions import Concat
 from django.utils.html import format_html
 from django.views.generic import FormView
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
