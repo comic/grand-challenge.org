@@ -15,6 +15,7 @@ from django.forms.utils import ErrorList
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
@@ -963,7 +964,7 @@ class DisplaySetViewSet(
     def partial_update(self, request, pk=None):
         instance = self.get_object()
         if not instance.is_editable:
-            raise ValidationError(
+            return HttpResponseBadRequest(
                 "This display set cannot be changed, "
                 "as answers for it already exist."
             )
@@ -978,12 +979,14 @@ class DisplaySetViewSet(
             )
 
             # If there is already a value for the provided civ's interface in
-            # this display set, remove it from this display set.
-            assigned_civs = instance.values.filter(interface=civ.interface)
+            # this display set, remove it from this display set. Cast to list
+            # to evaluate immediately.
+            assigned_civs = list(
+                instance.values.filter(interface=civ.interface)
+            )
 
             # Add the provided civ to the current display set
             instance.values.add(civ)
-
         if request.data.get("values"):
             serialized_data = ComponentInterfaceValuePostSerializer(
                 many=True, data=request.data.get("values")
@@ -1000,8 +1003,13 @@ class DisplaySetViewSet(
         # new value in this display set, to ensure it remains connected to
         # the reader study.
         for assigned in assigned_civs:
-            ds = DisplaySet.objects.create(reader_study=instance.reader_study)
-            ds.values.add(assigned)
+            if not instance.reader_study.display_sets.filter(
+                values=assigned
+            ).exists():
+                ds = DisplaySet.objects.create(
+                    reader_study=instance.reader_study
+                )
+                ds.values.add(assigned)
             instance.values.remove(assigned)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -1014,7 +1022,7 @@ class DisplaySetViewSet(
         if unanswered_by_user == "True":
             reader_study = self.reader_study
             if reader_study is None:
-                raise ValidationError(
+                return HttpResponseBadRequest(
                     "Please provide a reader study when filtering for "
                     "unanswered display_sets."
                 )

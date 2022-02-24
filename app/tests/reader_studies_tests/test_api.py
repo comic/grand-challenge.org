@@ -1375,10 +1375,11 @@ def test_display_set_add_and_edit(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    r1 = UserFactory()
+    r1, r2 = UserFactory(), UserFactory()
 
     rs = ReaderStudyFactory(use_display_sets=True)
     rs.add_editor(r1)
+    rs.add_reader(r2)
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
@@ -1476,7 +1477,7 @@ def test_display_set_add_and_edit(client, settings):
 
     assert ds2.values.count() == 1
 
-    # Move the image civ to the new display set
+    # Add the image civ to the new display set
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
         reverse_kwargs={"pk": ds2.pk},
@@ -1488,5 +1489,26 @@ def test_display_set_add_and_edit(client, settings):
     )
 
     ds.refresh_from_db()
-    assert ds.values.count() == 1
+    ds2.refresh_from_db()
+
+    # The image civ is now part of both display sets
+    assert ds.values.count() == 2
     assert ds2.values.count() == 2
+
+    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
+    AnswerFactory(question=q, creator=r2, display_set=ds)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=r1,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={"values": [{"interface": ci.slug, "value": True}]},
+    )
+
+    assert response.status_code == 400
+    assert response.content.decode("utf-8") == (
+        "This display set cannot be changed, as answers for it already exist."
+    )
