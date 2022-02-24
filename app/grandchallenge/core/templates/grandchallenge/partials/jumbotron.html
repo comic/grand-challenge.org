@@ -19,7 +19,7 @@
                 <div class="text-light text-center row pt-lg-5 pt-md-5 pt-sm-4">
                     <div class="col-sm-2 mb-2">
                         <i class="fa fa-users fa-lg mr-2" aria-hidden="true"></i>
-                        {{ all_users.count|round_to:1000|intcomma }}+&nbsp;users
+                        {{ all_users.count|round_to:1000|floatformat:0|intcomma }}+&nbsp;users
                     </div>
                     <div class="col-sm-2 mb-2">
                         <i class="fa fa-trophy fa-lg mr-2" aria-hidden="true"></i>
