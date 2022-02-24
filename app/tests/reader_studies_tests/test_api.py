@@ -1266,6 +1266,18 @@ def test_display_set_endpoints(client, settings):
         method=client.get,
     )
 
+    assert response.json()["count"] == 2
+
+    AnswerFactory(question=q2, display_set=ds1, creator=r)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
     assert response.json()["count"] == 1
 
 
