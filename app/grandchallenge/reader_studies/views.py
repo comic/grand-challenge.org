@@ -961,6 +961,12 @@ class DisplaySetViewSet(
 
     def partial_update(self, request, pk=None):
         instance = self.get_object()
+        if not instance.is_editable:
+            raise ValidationError(
+                "This display set cannot be changed, "
+                "as answers for it already exist."
+            )
+        assigned_civs = []
         if request.data.get("value"):
             # Get the provided civ from the current reader study's display sets.
             civs = instance.reader_study.display_sets.values_list(
@@ -970,30 +976,12 @@ class DisplaySetViewSet(
                 id=request.data.get("value")
             )
 
-            # Because the civ is added to a display set, it can no longer be
-            # a value for another display set.
-            civ.display_sets.clear()
-
             # If there is already a value for the provided civ's interface in
-            # this display set, remove it. There should not be any cases where
-            # multiple civs are assigned for the same interface, but loop over
-            # the qs just in case.
+            # this display set, remove it from this display set.
             assigned_civs = instance.values.filter(interface=civ.interface)
-            for assigned in assigned_civs:
-                ds = DisplaySet.objects.create(
-                    reader_study=instance.reader_study
-                )
-                ds.values.add(assigned)
-                instance.values.remove(assigned)
 
             # Add the provided civ to the current display set
             instance.values.add(civ)
-
-            # Adding the civ to this display set removes it from another.
-            # Find any display sets with no values and delete them.
-            DisplaySet.objects.filter(
-                reader_study=instance.reader_study, values=None
-            ).delete()
 
         if request.data.get("values"):
             serialized_data = ComponentInterfaceValuePostSerializer(
@@ -1001,12 +989,19 @@ class DisplaySetViewSet(
             )
             if serialized_data.is_valid():
                 civs = serialized_data.create(serialized_data.validated_data)
-                instance.values.remove(
-                    *instance.values.filter(
-                        interface__in=[civ.interface for civ in civs]
-                    )
+                assigned_civs = instance.values.filter(
+                    interface__in=[civ.interface for civ in civs]
                 )
+                instance.values.remove(*assigned_civs)
                 instance.values.add(*civs)
+
+        # Create a new display set for any civs that have been replaced by a
+        # new value in this display set, to ensure it remains connected to
+        # the reader study.
+        for assigned in assigned_civs:
+            ds = DisplaySet.objects.create(reader_study=instance.reader_study)
+            ds.values.add(assigned)
+            instance.values.remove(assigned)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 

@@ -1068,6 +1068,10 @@ class DisplaySet(UUIDModel):
         cache.set(cache_key, result)
         return result
 
+    @cached_property
+    def is_editable(self):
+        return not self.answers.exists()
+
 
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
