@@ -32,5 +32,5 @@ class Migration(migrations.Migration):
                 ),
                 ("modified", models.DateTimeField(auto_now=True)),
             ],
-        ),
+        )
     ]

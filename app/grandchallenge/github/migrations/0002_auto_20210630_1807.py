@@ -5,14 +5,12 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("github", "0001_initial"),
-    ]
+    dependencies = [("github", "0001_initial")]
 
     operations = [
         migrations.RenameField(
             model_name="githubwebhookmessage",
             old_name="tarball",
             new_name="zipfile",
-        ),
+        )
     ]

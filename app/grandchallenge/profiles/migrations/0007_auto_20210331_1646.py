@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("profiles", "0006_userprofile_display_organizations"),
-    ]
+    dependencies = [("profiles", "0006_userprofile_display_organizations")]
 
     operations = [
         migrations.AddField(

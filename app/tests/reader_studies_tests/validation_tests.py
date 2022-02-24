@@ -1,10 +1,7 @@
 import pytest
 
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.reader_studies.models import (
-    HANGING_LIST_SCHEMA,
-    Question,
-)
+from grandchallenge.reader_studies.models import HANGING_LIST_SCHEMA, Question
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user

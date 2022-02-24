@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
         (
             "workstation_configs",
             "0010_workstationconfig_show_annotation_counter_tool",
-        ),
+        )
     ]
 
     operations = [
@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
                 default=True,
                 help_text="Linked images share tool interactions and display properties, it is possible to manually (un)link them during viewing",
             ),
-        ),
+        )
     ]

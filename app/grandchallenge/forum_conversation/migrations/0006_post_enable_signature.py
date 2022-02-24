@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("forum_conversation", "0005_auto_20160607_0455"),
-    ]
+    dependencies = [("forum_conversation", "0005_auto_20160607_0455")]
 
     operations = [
         migrations.AddField(
@@ -15,5 +13,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 db_index=True, default=True, verbose_name="Attach a signature"
             ),
-        ),
+        )
     ]

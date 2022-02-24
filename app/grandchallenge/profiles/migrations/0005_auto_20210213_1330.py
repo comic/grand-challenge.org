@@ -5,11 +5,9 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("profiles", "0004_remove_userprofile_is_verified"),
-    ]
+    dependencies = [("profiles", "0004_remove_userprofile_is_verified")]
 
     operations = [
-        migrations.AlterModelOptions(name="userprofile", options={},),
-        migrations.RemoveField(model_name="userprofile", name="privacy",),
+        migrations.AlterModelOptions(name="userprofile", options={}),
+        migrations.RemoveField(model_name="userprofile", name="privacy"),
     ]

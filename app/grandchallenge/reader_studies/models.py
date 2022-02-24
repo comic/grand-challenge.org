@@ -705,11 +705,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
         if not self.is_valid or not self.hanging_list:
-            return {
-                "questions": 0.0,
-                "hangings": 0.0,
-                "diff": 0.0,
-            }
+            return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
         hanging_list_count = len(self.hanging_list)
 
@@ -819,7 +815,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             )
             .order_by("images__name")
             .values("images__name", "images__pk")
-            .annotate(Sum("score"), Avg("score"),)
+            .annotate(Sum("score"), Avg("score"))
             .order_by("score__avg")
         )
 
@@ -913,10 +909,7 @@ class AnswerType(models.TextChoices):
     BOUNDING_BOX_2D = "2DBB", "2D bounding box"
     MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
     DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
-    MULTIPLE_DISTANCE_MEASUREMENTS = (
-        "MDIS",
-        "Multiple distance measurements",
-    )
+    MULTIPLE_DISTANCE_MEASUREMENTS = ("MDIS", "Multiple distance measurements")
     POINT = "POIN", "Point"
     MULTIPLE_POINTS = "MPOI", "Multiple points"
     POLYGON = "POLY", "Polygon"
@@ -941,9 +934,7 @@ class Question(UUIDModel):
     class ScoringFunction(models.TextChoices):
         ACCURACY = "ACC", "Accuracy score"
 
-    SCORING_FUNCTIONS = {
-        ScoringFunction.ACCURACY: accuracy_score,
-    }
+    SCORING_FUNCTIONS = {ScoringFunction.ACCURACY: accuracy_score}
 
     EXAMPLE_FOR_ANSWER_TYPE = {
         AnswerType.SINGLE_LINE_TEXT: "'\"answer\"'",
@@ -1121,9 +1112,7 @@ class Question(UUIDModel):
 
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
-        allowed_types = [
-            {"$ref": f"#/definitions/{self.answer_type}"},
-        ]
+        allowed_types = [{"$ref": f"#/definitions/{self.answer_type}"}]
 
         if self.answer_type in self.allow_null_types:
             allowed_types.append({"$ref": "#/definitions/null"})
@@ -1145,9 +1134,7 @@ class Question(UUIDModel):
 
     @property
     def is_image_type(self):
-        return self.answer_type in [
-            self.AnswerType.MASK,
-        ]
+        return self.answer_type in [self.AnswerType.MASK]
 
     def get_absolute_url(self):
         return self.reader_study.get_absolute_url() + "#questions"
@@ -1177,7 +1164,7 @@ class Answer(UUIDModel):
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = models.JSONField(
-        null=True, validators=[JSONValidator(schema=ANSWER_TYPE_SCHEMA)],
+        null=True, validators=[JSONValidator(schema=ANSWER_TYPE_SCHEMA)]
     )
     answer_image = models.ForeignKey(
         "cases.Image", null=True, on_delete=models.PROTECT
@@ -1194,7 +1181,7 @@ class Answer(UUIDModel):
             "images",
             "is_ground_truth",
             "score",
-        ],
+        ]
     )
 
     _csv_headers = Question.csv_headers + [

@@ -35,7 +35,7 @@ def put_cloudwatch_metrics():
         # elements, so send individually
         if metric["MetricData"]:
             client.put_metric_data(
-                Namespace=metric["Namespace"], MetricData=metric["MetricData"],
+                Namespace=metric["Namespace"], MetricData=metric["MetricData"]
             )
 
 

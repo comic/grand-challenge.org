@@ -19,5 +19,5 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.SET_NULL,
                 to="knox.authtoken",
             ),
-        ),
+        )
     ]

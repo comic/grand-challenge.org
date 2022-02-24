@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("evaluation", "0017_auto_20211207_1124"),
-    ]
+    dependencies = [("evaluation", "0017_auto_20211207_1124")]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=0,
                 help_text="The limit on the number of times that a user can make a submission over the submission limit period. Set this to 0 to close submissions for this phase.",
             ),
-        ),
+        )
     ]

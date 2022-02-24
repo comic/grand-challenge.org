@@ -1,10 +1,7 @@
 from django_filters import ChoiceFilter, ModelMultipleChoiceFilter
 from django_select2.forms import Select2MultipleWidget
 
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeSeries,
-)
+from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
 from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.task_categories.models import TaskType

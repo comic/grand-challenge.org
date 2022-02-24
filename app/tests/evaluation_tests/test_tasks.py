@@ -304,10 +304,11 @@ def test_evaluation_notifications(
     # challenge, both notifications are for the admin.
     for notification in Notification.objects.all():
         assert notification.user == submission.phase.challenge.creator
-    assert "there is no valid evaluation method" in Notification.objects.filter(
-        message="missing method"
-    ).get().print_notification(
-        user=submission.phase.challenge.creator
+    assert (
+        "there is no valid evaluation method"
+        in Notification.objects.filter(message="missing method")
+        .get()
+        .print_notification(user=submission.phase.challenge.creator)
     )
 
     # Add method and upload a submission
@@ -341,15 +342,17 @@ def test_evaluation_notifications(
         submission.phase.challenge.get_absolute_url(),
         submission.phase.challenge.short_name,
     )
-    assert f"There is a new {result_string} for {challenge_string}" in Notification.objects.filter(
-        user=recipients[0]
-    ).get().print_notification(
-        user=recipients[0]
+    assert (
+        f"There is a new {result_string} for {challenge_string}"
+        in Notification.objects.filter(user=recipients[0])
+        .get()
+        .print_notification(user=recipients[0])
     )
-    assert f"Your {submission_string} to {challenge_string} succeeded" in Notification.objects.filter(
-        user=recipients[1]
-    ).get().print_notification(
-        user=recipients[1]
+    assert (
+        f"Your {submission_string} to {challenge_string} succeeded"
+        in Notification.objects.filter(user=recipients[1])
+        .get()
+        .print_notification(user=recipients[1])
     )
 
     Notification.objects.all().delete()
@@ -367,10 +370,11 @@ def test_evaluation_notifications(
     ).get().print_notification(
         user=recipients[0]
     )
-    assert f"Your {submission_string} to {challenge_string} failed" in Notification.objects.filter(
-        user=recipients[1]
-    ).get().print_notification(
-        user=recipients[1]
+    assert (
+        f"Your {submission_string} to {challenge_string} failed"
+        in Notification.objects.filter(user=recipients[1])
+        .get()
+        .print_notification(user=recipients[1])
     )
 
     # check that when admin unsubscribed from phase, they no longer

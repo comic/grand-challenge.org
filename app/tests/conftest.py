@@ -33,11 +33,7 @@ from tests.annotations_tests.factories import (
 )
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import MethodFactory
-from tests.factories import (
-    ChallengeFactory,
-    ImageFactory,
-    UserFactory,
-)
+from tests.factories import ChallengeFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
@@ -178,10 +174,10 @@ def docker_image(
     """Create the docker container."""
     if not full_path:
         full_path = os.path.join(
-            os.path.split(__file__)[0], path, "resources", "docker",
+            os.path.split(__file__)[0], path, "resources", "docker"
         )
     im, _ = docker_client.images.build(
-        path=full_path, tag=f"test-{label}:latest",
+        path=full_path, tag=f"test-{label}:latest"
     )
     assert im.id in [x.id for x in docker_client.images.list()]
     image = docker_api_client.get_image(f"test-{label}:latest")
@@ -233,7 +229,7 @@ def algorithm_io_image(tmpdir_factory, docker_client, docker_api_client):
         path="",
         label="algorithm-io",
         full_path=os.path.join(
-            os.path.split(__file__)[0], "resources", "gc_demo_algorithm",
+            os.path.split(__file__)[0], "resources", "gc_demo_algorithm"
         ),
     )
 

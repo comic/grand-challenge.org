@@ -49,7 +49,7 @@ EXPECTED_HTML = """<p><img alt="" class="img-fluid" src="whatever.png" /></p>
 
 def test_markdown_rendering():
     output = markdown(
-        TEST_MARKDOWN, extensions=settings.MARKDOWNX_MARKDOWN_EXTENSIONS,
+        TEST_MARKDOWN, extensions=settings.MARKDOWNX_MARKDOWN_EXTENSIONS
     )
 
     assert output == EXPECTED_HTML

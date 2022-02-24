@@ -5,9 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("evaluation", "0016_auto_20211014_1854"),
-    ]
+    dependencies = [("evaluation", "0016_auto_20211014_1854")]
 
     operations = [
         migrations.AlterModelOptions(

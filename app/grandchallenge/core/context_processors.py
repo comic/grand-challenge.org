@@ -61,9 +61,7 @@ def sentry_dsn(request):
 
 
 def footer_links(*_, **__):
-    return {
-        "policy_pages": Policy.objects.all(),
-    }
+    return {"policy_pages": Policy.objects.all()}
 
 
 def help_forum(*_, **__):
@@ -74,12 +72,8 @@ def help_forum(*_, **__):
 
 
 def about_page(*_, **__):
-    return {
-        "about_page_url": settings.FLATPAGE_ABOUT_URL,
-    }
+    return {"about_page_url": settings.FLATPAGE_ABOUT_URL}
 
 
 def newsletter_signup(*_, **__):
-    return {
-        "newletter_signup_form": NewsletterSignupForm,
-    }
+    return {"newletter_signup_form": NewsletterSignupForm}

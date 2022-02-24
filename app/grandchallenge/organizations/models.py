@@ -5,10 +5,7 @@ from django_countries.fields import CountryField
 from guardian.shortcuts import assign_perm
 from stdimage import JPEGField
 
-from grandchallenge.core.models import (
-    TitleSlugDescriptionModel,
-    UUIDModel,
-)
+from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 

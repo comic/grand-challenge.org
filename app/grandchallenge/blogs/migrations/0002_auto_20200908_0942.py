@@ -17,5 +17,5 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(
                 related_name="blog_authors", to=settings.AUTH_USER_MODEL
             ),
-        ),
+        )
     ]

@@ -29,12 +29,7 @@ def test_related_permissions_assigned(
 ):
     org1, org2 = OrganizationFactory(), OrganizationFactory()
 
-    obj1, obj2, obj3, obj4 = (
-        factory(),
-        factory(),
-        factory(),
-        factory(),
-    )
+    obj1, obj2, obj3, obj4 = (factory(), factory(), factory(), factory())
 
     if reverse:
         for obj in [obj1, obj2, obj3, obj4]:

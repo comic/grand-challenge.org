@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("challenges", "0007_auto_20211004_1104"),
-    ]
+    dependencies = [("challenges", "0007_auto_20211004_1104")]
 
     operations = [
         migrations.AddField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                 help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
                 max_length=254,
             ),
-        ),
+        )
     ]

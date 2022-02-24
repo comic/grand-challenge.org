@@ -162,7 +162,7 @@ class HomeTemplate(TemplateView):
                 "highlighted_algorithms": Algorithm.objects.filter(
                     public=True, highlight=True
                 )
-                .prefetch_related("publications",)
+                .prefetch_related("publications")
                 .order_by("-created")
                 .all()[:4],
                 "news_caroussel_items": news_caroussel_items,

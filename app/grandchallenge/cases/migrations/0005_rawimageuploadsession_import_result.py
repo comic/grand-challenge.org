@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("cases", "0004_auto_20210929_1055"),
-    ]
+    dependencies = [("cases", "0004_auto_20210929_1055")]
 
     operations = [
         migrations.AddField(
@@ -15,5 +13,5 @@ class Migration(migrations.Migration):
             field=models.JSONField(
                 blank=True, default=None, editable=False, null=True
             ),
-        ),
+        )
     ]

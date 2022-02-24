@@ -3,12 +3,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.utils.html import format_html
-from django.views.generic import (
-    CreateView,
-    ListView,
-    TemplateView,
-    UpdateView,
-)
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
@@ -23,10 +18,7 @@ from grandchallenge.challenges.forms import (
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
-from grandchallenge.challenges.models import (
-    Challenge,
-    ExternalChallenge,
-)
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -102,13 +94,13 @@ class CombinedChallengeList(TemplateView):
             .prefetch_related("phase_set", "publications")
             .order_by("-highlight", "-created")
         )
-        self.int_filter = ChallengeFilter(self.request.GET, int_qs,)
+        self.int_filter = ChallengeFilter(self.request.GET, int_qs)
         ext_qs = (
             ExternalChallenge.objects.filter(hidden=False)
             .prefetch_related("publications")
             .order_by("-created")
         )
-        self.ext_filter = ChallengeFilter(self.request.GET, ext_qs,)
+        self.ext_filter = ChallengeFilter(self.request.GET, ext_qs)
 
         total_count = int_qs.count() + ext_qs.count()
 
@@ -167,11 +159,7 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
     model = Challenge
     template_name = "challenges/challenge_users_list.html"
     row_template = "challenges/challenge_users_row.html"
-    search_fields = [
-        "title",
-        "short_name",
-        "description",
-    ]
+    search_fields = ["title", "short_name", "description"]
     columns = [
         Column(title="Name", sort_field="short_name"),
         Column(title="Created", sort_field="created"),

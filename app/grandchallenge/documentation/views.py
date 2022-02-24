@@ -75,9 +75,7 @@ class DocumentationHome(DocPageDetail):
         return get_object_or_404(DocPage, order=1)
 
 
-class DocPageUpdate(
-    LoginRequiredMixin, PermissionRequiredMixin, UpdateView,
-):
+class DocPageUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = DocPage
     form_class = DocPageUpdateForm
     permission_required = "documentation.change_docpage"
@@ -90,9 +88,7 @@ class DocPageUpdate(
         return response
 
 
-class DocPageCreate(
-    LoginRequiredMixin, PermissionRequiredMixin, CreateView,
-):
+class DocPageCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = DocPage
     form_class = DocPageCreateForm
     permission_required = "documentation.add_docpage"

@@ -84,7 +84,7 @@ def test_color_alpha_validation(lut):
 window_presets_tests = [
     ({"width": 2000, "center": 0}, True),
     ({"width": 0, "center": 0}, False),
-    ({"lower_percentile": 15, "upper_percentile": 85}, True,),
+    ({"lower_percentile": 15, "upper_percentile": 85}, True),
     ({"lower_percentile": 15, "upper_percentile": 15}, False),
     ({"lower_percentile": 15, "upper_percentile": 16}, True),
     ({"width": -2000, "center": 0}, False),

@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("forum_conversation", "0006_post_enable_signature"),
-    ]
+    dependencies = [("forum_conversation", "0006_post_enable_signature")]
 
     operations = [
         migrations.AddField(

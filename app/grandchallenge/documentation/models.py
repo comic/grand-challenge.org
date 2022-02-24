@@ -111,7 +111,7 @@ class DocPage(models.Model):
         DocPage.objects.bulk_update(pages, ["order"])
 
     def get_absolute_url(self):
-        url = reverse("documentation:detail", kwargs={"slug": self.slug},)
+        url = reverse("documentation:detail", kwargs={"slug": self.slug})
         return url
 
     @property

@@ -7,5 +7,5 @@ class PagesSitemap(SubdomainSitemap):
 
     def items(self):
         return Page.objects.filter(
-            permission_level=Page.ALL, challenge__hidden=False, hidden=False,
+            permission_level=Page.ALL, challenge__hidden=False, hidden=False
         )

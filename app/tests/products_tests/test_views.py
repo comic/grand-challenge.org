@@ -2,10 +2,7 @@ import pytest
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.products.models import Status
-from tests.products_tests.factories import (
-    CompanyFactory,
-    ProductFactory,
-)
+from tests.products_tests.factories import CompanyFactory, ProductFactory
 from tests.utils import get_view_for_user
 
 

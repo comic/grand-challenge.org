@@ -6,9 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("evaluation", "0018_alter_phase_submission_limit"),
-    ]
+    dependencies = [("evaluation", "0018_alter_phase_submission_limit")]
 
     operations = [
         migrations.AddField(

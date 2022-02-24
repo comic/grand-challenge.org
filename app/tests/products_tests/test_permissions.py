@@ -14,7 +14,7 @@ class TestObjectPermissionRequiredViews:
 
         for view_name, kwargs, permission, obj in [
             ("blogs-create", {}, "blogs.add_post", None),
-            ("blogs-update", {"slug": p.slug}, "blogs.change_post", p,),
+            ("blogs-update", {"slug": p.slug}, "blogs.change_post", p),
         ]:
 
             def _get_view():

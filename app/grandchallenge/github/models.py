@@ -96,14 +96,14 @@ class GitHubWebhookMessage(models.Model):
         if not self.payload.get("repository"):
             return "repo"
         return re.sub(
-            "[^0-9a-zA-Z]+", "-", self.payload["repository"]["full_name"],
+            "[^0-9a-zA-Z]+", "-", self.payload["repository"]["full_name"]
         ).lower()
 
     @property
     def tag(self):
         if not self.payload.get("ref"):
             return "tag"
-        return re.sub("[^0-9a-zA-Z]+", "-", self.payload["ref"],).lower()
+        return re.sub("[^0-9a-zA-Z]+", "-", self.payload["ref"]).lower()
 
     @property
     def tag_url(self):
@@ -155,6 +155,4 @@ class GitHubWebhookMessage(models.Model):
             )
 
     class Meta:
-        indexes = [
-            models.Index(fields=["created"]),
-        ]
+        indexes = [models.Index(fields=["created"])]

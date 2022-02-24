@@ -4,13 +4,11 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("github", "0007_auto_20220125_1411"),
-    ]
+    dependencies = [("github", "0007_auto_20220125_1411")]
 
     operations = [
         migrations.RemoveField(
-            model_name="githubwebhookmessage", name="has_open_source_license",
+            model_name="githubwebhookmessage", name="has_open_source_license"
         ),
         migrations.AlterField(
             model_name="githubwebhookmessage",
@@ -29,7 +27,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RemoveField(
-            model_name="githubwebhookmessage", name="license_check_result",
+            model_name="githubwebhookmessage", name="license_check_result"
         ),
         migrations.AddField(
             model_name="githubwebhookmessage",

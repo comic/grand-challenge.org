@@ -649,8 +649,9 @@ class ComponentInterface(models.Model):
         if self.kind in InterfaceKind.interface_type_json():
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
-        elif self.kind in InterfaceKind.interface_type_file() and not self.relative_path.endswith(
-            f".{self.kind.lower()}"
+        elif (
+            self.kind in InterfaceKind.interface_type_file()
+            and not self.relative_path.endswith(f".{self.kind.lower()}")
         ):
             raise ValidationError(
                 f"Relative path should end with .{self.kind.lower()}"

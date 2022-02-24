@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
                 related_name="readerstudies",
                 to="organizations.Organization",
             ),
-        ),
+        )
     ]

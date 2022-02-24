@@ -57,13 +57,7 @@ class ProductList(ListView):
         "Other",
     ]
 
-    ce_classes = [
-        "All",
-        "Class I",
-        "Class IIa",
-        "Class IIb",
-        "Class III",
-    ]
+    ce_classes = ["All", "Class I", "Class IIa", "Class IIb", "Class III"]
 
     ce_mdd_mdr = ["All", "MDR", "MDD"]
 

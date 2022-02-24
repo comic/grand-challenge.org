@@ -7,9 +7,7 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("archives", "0007_remove_archive_images"),
-    ]
+    dependencies = [("archives", "0007_remove_archive_images")]
 
     operations = [
         migrations.AlterField(

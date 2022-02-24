@@ -33,7 +33,7 @@ def public_media_filepath(instance, filename):
 
 def summernote_upload_filepath(instance, filename):
     return os.path.join(
-        strftime(now(), "i/%Y/%m/%d"), get_valid_filename(filename),
+        strftime(now(), "i/%Y/%m/%d"), get_valid_filename(filename)
     )
 
 
@@ -198,7 +198,7 @@ class UserUpload(UUIDModel):
             raise RuntimeError("Upload is not pending")
 
         response = self._client.create_multipart_upload(
-            Bucket=settings.UPLOADS_S3_BUCKET_NAME, Key=self.key,
+            Bucket=settings.UPLOADS_S3_BUCKET_NAME, Key=self.key
         )
         self.s3_upload_id = response["UploadId"]
         self.status = self.StatusChoices.INITIALIZED
@@ -263,7 +263,7 @@ class UserUpload(UUIDModel):
             raise RuntimeError("Upload is not initialized")
 
         self._client.abort_multipart_upload(
-            Bucket=self.bucket, Key=self.key, UploadId=self.s3_upload_id,
+            Bucket=self.bucket, Key=self.key, UploadId=self.s3_upload_id
         )
         self.s3_upload_id = ""
         self.status = self.StatusChoices.ABORTED

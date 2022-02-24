@@ -7,10 +7,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import (
-    AlgorithmImage,
-    Job,
-)
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
