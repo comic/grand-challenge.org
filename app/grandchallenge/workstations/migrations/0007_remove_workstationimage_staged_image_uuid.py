@@ -5,12 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("workstations", "0006_workstationimage_user_upload"),
-    ]
+    dependencies = [("workstations", "0006_workstationimage_user_upload")]
 
     operations = [
         migrations.RemoveField(
-            model_name="workstationimage", name="staged_image_uuid",
-        ),
+            model_name="workstationimage", name="staged_image_uuid"
+        )
     ]

@@ -74,7 +74,7 @@ def _create_archive(*, creator, interfaces, suffix, items=5):
             v = ComponentInterfaceValue.objects.create(interface=interface)
 
             im = Image.objects.create(
-                name=f"Test Image {n}", width=10, height=10,
+                name=f"Test Image {n}", width=10, height=10
             )
             im_file = ImageFile.objects.create(image=im)
 
@@ -147,6 +147,6 @@ def _uploaded_image_file():
 
 
 def _uploaded_file(*, path):
-    with open(os.path.join(settings.SITE_ROOT, path), "rb",) as f:
+    with open(os.path.join(settings.SITE_ROOT, path), "rb") as f:
         with ContentFile(f.read()) as content:
             yield content

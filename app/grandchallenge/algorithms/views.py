@@ -123,7 +123,7 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
         return (
             super()
             .get_queryset()
-            .prefetch_related("publications",)
+            .prefetch_related("publications")
             .order_by("-created")
         )
 
@@ -194,10 +194,12 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             {"form": form, "editor_remove_form": editor_remove_form}
         )
 
-        pending_permission_requests = AlgorithmPermissionRequest.objects.filter(
-            algorithm=context["object"],
-            status=AlgorithmPermissionRequest.PENDING,
-        ).count()
+        pending_permission_requests = (
+            AlgorithmPermissionRequest.objects.filter(
+                algorithm=context["object"],
+                status=AlgorithmPermissionRequest.PENDING,
+            ).count()
+        )
         context.update(
             {"pending_permission_requests": pending_permission_requests}
         )
@@ -619,8 +621,8 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
                 if key == "JSON":
                     columns.append(
                         Column(
-                            title=interface.title, sort_field=interface.slug,
-                        ),
+                            title=interface.title, sort_field=interface.slug
+                        )
                     )
                 else:
                     columns.append(
@@ -628,19 +630,14 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
                             title=interface.title,
                             sort_field="",
                             classes=("nonSortable",),
-                        ),
+                        )
                     )
 
         return columns
 
     @cached_property
     def outputs_list_display(self):
-        grouped_interfaces = {
-            "JSON": [],
-            "TIMG": [],
-            "CHART": [],
-            "FILE": [],
-        }
+        grouped_interfaces = {"JSON": [], "TIMG": [], "CHART": [], "FILE": []}
 
         for interface in self.algorithm.outputs.all():
             if interface.kind == InterfaceKind.InterfaceKindChoices.CHART:

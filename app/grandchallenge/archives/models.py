@@ -253,9 +253,7 @@ class ArchiveItem(UUIDModel):
         )
         # Archive editors and uploaders can change this archive item
         assign_perm(
-            f"change_{self._meta.model_name}",
-            self.archive.editors_group,
-            self,
+            f"change_{self._meta.model_name}", self.archive.editors_group, self
         )
         assign_perm(
             f"change_{self._meta.model_name}",

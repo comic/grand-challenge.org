@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("blogs", "0005_post_companies"),
-    ]
+    dependencies = [("blogs", "0005_post_companies")]
 
     operations = [
         migrations.AddField(

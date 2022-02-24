@@ -93,7 +93,7 @@ class TestConfirmEmailForm:
         u2 = UserFactory()
 
         form = ConfirmEmailForm(
-            user=u2, token=v1.token, data={"token": v1.token},
+            user=u2, token=v1.token, data={"token": v1.token}
         )
 
         assert not form.is_valid()

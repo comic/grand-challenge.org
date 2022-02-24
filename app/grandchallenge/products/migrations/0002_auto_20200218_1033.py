@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("products", "0001_initial"),
-    ]
+    dependencies = [("products", "0001_initial")]
 
     operations = [
         migrations.AlterField(
@@ -16,12 +14,10 @@ class Migration(migrations.Migration):
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
         migrations.AlterField(
-            model_name="product", name="diseases", field=models.TextField(),
+            model_name="product", name="diseases", field=models.TextField()
         ),
         migrations.AlterField(
-            model_name="product",
-            name="key_features",
-            field=models.TextField(),
+            model_name="product", name="key_features", field=models.TextField()
         ),
         migrations.AlterField(
             model_name="product",
@@ -29,6 +25,6 @@ class Migration(migrations.Migration):
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
         migrations.AlterField(
-            model_name="product", name="population", field=models.TextField(),
+            model_name="product", name="population", field=models.TextField()
         ),
     ]

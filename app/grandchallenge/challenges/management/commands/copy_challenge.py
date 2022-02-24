@@ -24,11 +24,7 @@ class Command(BaseCommand):
         "use_teams",
     ]
 
-    challenge_m2m_fields = [
-        "task_types",
-        "modalities",
-        "structures",
-    ]
+    challenge_m2m_fields = ["task_types", "modalities", "structures"]
 
     config_fields = [
         "score_title",
@@ -121,9 +117,9 @@ class Command(BaseCommand):
 
     def _substitute_urls(self, html, domain, old, new):
         quote_replace = r"href='([^']*)'"
-        regex = fr'href="[^/]*//{old}.{domain}([^""]*)"'
+        regex = rf'href="[^/]*//{old}.{domain}([^""]*)"'
         html = re.sub(quote_replace, r'href="\1"', html)
-        return re.sub(regex, fr'href="https://{new}.{domain}\1"', html)
+        return re.sub(regex, rf'href="https://{new}.{domain}\1"', html)
 
     def _copy_pages(self, *, src_challenge, dest_challenge):
         src_pages = src_challenge.page_set.all()

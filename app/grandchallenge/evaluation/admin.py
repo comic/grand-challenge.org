@@ -24,10 +24,7 @@ class SubmissionAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "phase", "creator")
     list_filter = ("phase__challenge__short_name",)
-    search_fields = (
-        "pk",
-        "creator__username",
-    )
+    search_fields = ("pk", "creator__username")
     readonly_fields = (
         "creator",
         "phase",

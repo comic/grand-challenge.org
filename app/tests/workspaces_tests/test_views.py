@@ -67,7 +67,7 @@ class TestObjectPermissionRequiredViews:
                 {"challenge_short_name": w.phase.challenge.short_name},
                 "view_workspace",
                 {w},
-            ),
+            )
         ]:
 
             def _get_view():

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("evaluation", "0002_delete_algorithmevaluation"),
-    ]
+    dependencies = [("evaluation", "0002_delete_algorithmevaluation")]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=False,
                 help_text="If True, only participants with verified accounts can make submissions to this phase",
             ),
-        ),
+        )
     ]

@@ -51,7 +51,7 @@ def test_invalid_domain(settings, rf, host, subdomain):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "subdomain", [None, "challengesubdomaintest", "ChallengeSubdomainTest"],
+    "subdomain", [None, "challengesubdomaintest", "ChallengeSubdomainTest"]
 )
 def test_challenge_attribute(settings, rf, subdomain):
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]

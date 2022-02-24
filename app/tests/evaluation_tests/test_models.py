@@ -48,7 +48,7 @@ class TestSubmission(TestCase):
     @override_settings(CELERY_TASK_EAGER_PROPAGATES=True)
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):
         s = SubmissionFactory(
-            phase=self.method.phase, algorithm_image=self.algorithm_image,
+            phase=self.method.phase, algorithm_image=self.algorithm_image
         )
 
         with capture_on_commit_callbacks() as callbacks:
@@ -67,7 +67,7 @@ class TestSubmission(TestCase):
     @override_settings(CELERY_TASK_EAGER_PROPAGATES=True)
     def test_create_evaluation_is_idempotent(self):
         s = SubmissionFactory(
-            phase=self.method.phase, algorithm_image=self.algorithm_image,
+            phase=self.method.phase, algorithm_image=self.algorithm_image
         )
 
         with capture_on_commit_callbacks(execute=False) as callbacks1:
@@ -137,8 +137,7 @@ class TestPhaseLimits:
         assert i["next_submission_at"] is None
 
     @pytest.mark.parametrize(
-        "submission_limit_period,expected_remaining",
-        ((1, 2), (3, 1), (28, 0)),
+        "submission_limit_period,expected_remaining", ((1, 2), (3, 1), (28, 0))
     )
     def test_submissions_period(
         self, submission_limit_period, expected_remaining
@@ -153,7 +152,7 @@ class TestPhaseLimits:
         assert i["next_submission_at"] is not None
 
     @pytest.mark.parametrize(
-        "submission_limit,expected_remaining", ((4, 1), (3, 0), (1, 0)),
+        "submission_limit,expected_remaining", ((4, 1), (3, 0), (1, 0))
     )
     def test_submissions_period_none(
         self, submission_limit, expected_remaining
@@ -175,7 +174,7 @@ class TestPhaseLimits:
 @pytest.mark.parametrize(
     "submission_limit,submissions_open,submissions_close,open_for_submissions,expected_status",
     [
-        (0, None, None, False, "Not accepting submissions",),
+        (0, None, None, False, "Not accepting submissions"),
         (
             0,
             now() - timedelta(days=1),
@@ -197,7 +196,7 @@ class TestPhaseLimits:
             False,
             "Not accepting submissions",
         ),
-        (0, now() + timedelta(days=10), None, False, "Opening submissions",),
+        (0, now() + timedelta(days=10), None, False, "Opening submissions"),
         (
             0,
             now() + timedelta(days=10),
@@ -205,7 +204,7 @@ class TestPhaseLimits:
             False,
             "Opening submissions",
         ),
-        (0, None, now() - timedelta(days=15), False, "completed",),
+        (0, None, now() - timedelta(days=15), False, "completed"),
         (
             0,
             None,
@@ -213,8 +212,8 @@ class TestPhaseLimits:
             False,
             "Not accepting submissions",
         ),
-        (10, None, None, True, "Accepting submissions",),
-        (10, now() - timedelta(days=1), None, True, "Accepting submissions",),
+        (10, None, None, True, "Accepting submissions"),
+        (10, now() - timedelta(days=1), None, True, "Accepting submissions"),
         (
             10,
             now() - timedelta(days=10),
@@ -229,7 +228,7 @@ class TestPhaseLimits:
             True,
             "Accepting submissions",
         ),
-        (10, now() + timedelta(days=10), None, False, "Opening submissions",),
+        (10, now() + timedelta(days=10), None, False, "Opening submissions"),
         (
             10,
             now() + timedelta(days=10),
@@ -237,8 +236,8 @@ class TestPhaseLimits:
             False,
             "Opening submissions",
         ),
-        (10, None, now() - timedelta(days=15), False, "completed",),
-        (10, None, now() + timedelta(days=15), True, "Accepting submissions",),
+        (10, None, now() - timedelta(days=15), False, "completed"),
+        (10, None, now() + timedelta(days=15), True, "Accepting submissions"),
     ],
 )
 def test_open_for_submission(

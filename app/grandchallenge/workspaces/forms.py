@@ -30,9 +30,4 @@ class WorkspaceForm(SaveFormInitMixin, forms.ModelForm):
 
     class Meta:
         model = Workspace
-        fields = (
-            "user",
-            "phase",
-            "configuration",
-            "allowed_ip",
-        )
+        fields = ("user", "phase", "configuration", "allowed_ip")

@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0015_auto_20210922_1634"),
-    ]
+    dependencies = [("algorithms", "0015_auto_20210922_1634")]
 
     operations = [
         migrations.AlterField(
             model_name="algorithmimage",
             name="queue_override",
             field=models.CharField(blank=True, max_length=128, null=True),
-        ),
+        )
     ]

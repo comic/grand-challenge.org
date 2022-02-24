@@ -219,7 +219,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
                 fields=["repo_name"],
                 name="unique_repo_name",
                 condition=~Q(repo_name=""),
-            ),
+            )
         ]
 
     def __str__(self):

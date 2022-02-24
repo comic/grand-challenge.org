@@ -14,7 +14,7 @@ repos:
         language: python
         args: [--py38-plus]
   - repo: https://github.com/ambv/black
-    rev: 19.10b0
+    rev: 22.1.0
     hooks:
       - id: black
         language: python

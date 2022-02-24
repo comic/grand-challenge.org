@@ -52,10 +52,7 @@ class JobAdmin(GuardedModelAdmin):
         "error_message",
     )
     list_select_related = ("algorithm_image__algorithm",)
-    list_filter = (
-        "status",
-        "public",
-    )
+    list_filter = ("status", "public")
     readonly_fields = (
         "creator",
         "algorithm_image",
@@ -81,10 +78,7 @@ class JobAdmin(GuardedModelAdmin):
 
 
 class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
-    readonly_fields = (
-        "user",
-        "algorithm",
-    )
+    readonly_fields = ("user", "algorithm")
 
 
 admin.site.register(Algorithm, AlgorithmAdmin)

@@ -2,11 +2,7 @@ from typing import Optional
 
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import serializers
-from rest_framework.fields import (
-    CharField,
-    SerializerMethodField,
-    URLField,
-)
+from rest_framework.fields import CharField, SerializerMethodField, URLField
 from rest_framework.relations import (
     HyperlinkedRelatedField,
     StringRelatedField,
@@ -128,9 +124,7 @@ class JobPostSerializer(JobSerializer):
             user = self.context["request"].user
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                "algorithms.execute_algorithm",
-                accept_global_perms=False,
+                user, "algorithms.execute_algorithm", accept_global_perms=False
             )
 
     def validate(self, data):

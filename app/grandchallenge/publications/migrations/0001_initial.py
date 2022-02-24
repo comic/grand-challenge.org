@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                         unique=True,
                         validators=[
                             django.core.validators.RegexValidator(
-                                regex="^10\\.\\d{4,9}/[-._;()/:a-z0-9]+$|^\\d{4}\\.\\d{4,5}$",
+                                regex="^10\\.\\d{4,9}/[-._;()/:a-z0-9]+$|^\\d{4}\\.\\d{4,5}$"
                             )
                         ],
                     ),
@@ -54,5 +54,5 @@ class Migration(migrations.Migration):
                     models.PositiveIntegerField(editable=False, null=True),
                 ),
             ],
-        ),
+        )
     ]

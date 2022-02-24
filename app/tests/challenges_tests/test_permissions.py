@@ -25,12 +25,12 @@ def test_create_challenge_only_when_verified(client):
     assert not Verification.objects.filter(user=user)
 
     response = get_view_for_user(
-        client=client, viewname="challenges:create", user=user,
+        client=client, viewname="challenges:create", user=user
     )
     assert response.status_code == 403
     Verification.objects.create(user=user, is_verified=True)
     response = get_view_for_user(
-        client=client, viewname="challenges:create", user=user,
+        client=client, viewname="challenges:create", user=user
     )
     assert response.status_code == 200
 

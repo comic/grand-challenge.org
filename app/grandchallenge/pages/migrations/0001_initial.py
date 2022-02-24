@@ -8,9 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ("challenges", "0001_initial"),
-    ]
+    dependencies = [("challenges", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
@@ -76,5 +74,5 @@ class Migration(migrations.Migration):
                 "ordering": ["challenge", "order"],
                 "unique_together": {("challenge", "title")},
             },
-        ),
+        )
     ]

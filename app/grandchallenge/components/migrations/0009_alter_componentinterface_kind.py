@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("components", "0008_alter_componentinterfacevalue_file"),
-    ]
+    dependencies = [("components", "0008_alter_componentinterfacevalue_file")]
 
     operations = [
         migrations.AlterField(
@@ -46,5 +44,5 @@ class Migration(migrations.Migration):
                 help_text="What is the type of this interface? Used to validate interface values and connections between components.",
                 max_length=5,
             ),
-        ),
+        )
     ]

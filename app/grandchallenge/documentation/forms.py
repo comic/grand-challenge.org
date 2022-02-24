@@ -14,11 +14,7 @@ class DocPageCreateForm(forms.ModelForm):
 
     class Meta:
         model = DocPage
-        fields = (
-            "title",
-            "content",
-            "parent",
-        )
+        fields = ("title", "content", "parent")
         widgets = {"content": MarkdownEditorWidget}
 
 

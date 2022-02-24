@@ -50,7 +50,7 @@ def update_related_permissions(
 
 
 def _update_related_view_permissions(
-    *, action, instance, model, pk_set, reverse, related_model, related_name,
+    *, action, instance, model, pk_set, reverse, related_model, related_name
 ):
     if reverse:
         organizations = [instance]
@@ -73,9 +73,5 @@ def _update_related_view_permissions(
     perm = f"view_{related_model._meta.model_name}"
 
     for org in organizations:
-        op(
-            perm, org.editors_group, related_objects,
-        )
-        op(
-            perm, org.members_group, related_objects,
-        )
+        op(perm, org.editors_group, related_objects)
+        op(perm, org.members_group, related_objects)

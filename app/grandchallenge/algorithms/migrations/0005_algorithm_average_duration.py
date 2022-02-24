@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0004_algorithm_social_image"),
-    ]
+    dependencies = [("algorithms", "0004_algorithm_social_image")]
 
     operations = [
         migrations.AddField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                 help_text="The average duration of successful jobs.",
                 null=True,
             ),
-        ),
+        )
     ]

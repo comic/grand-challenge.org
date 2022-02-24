@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0009_auto_20210601_0802"),
-    ]
+    dependencies = [("algorithms", "0009_auto_20210601_0802")]
 
     operations = [
         migrations.AddField(
             model_name="algorithm",
             name="repo_name",
             field=models.CharField(blank=True, max_length=512),
-        ),
+        )
     ]

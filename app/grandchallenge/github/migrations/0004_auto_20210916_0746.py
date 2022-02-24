@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("github", "0003_githubusertoken"),
-    ]
+    dependencies = [("github", "0003_githubusertoken")]
 
     operations = [
         migrations.AddField(

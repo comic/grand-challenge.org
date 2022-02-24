@@ -7,9 +7,7 @@ import grandchallenge.core.storage
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("products", "0006_product_ce_under"),
-    ]
+    dependencies = [("products", "0006_product_ce_under")]
 
     operations = [
         migrations.CreateModel(
@@ -32,5 +30,5 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-        ),
+        )
     ]

@@ -10,7 +10,7 @@ import grandchallenge.core.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workstation_configs", "0011_workstationconfig_link_images"),
+        ("workstation_configs", "0011_workstationconfig_link_images")
     ]
 
     operations = [

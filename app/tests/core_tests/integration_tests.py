@@ -572,8 +572,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
     def test_non_exitant_project_gives_404(self):
         """Reproduces https://github.com/comic/grand-challenge.org/issues/219."""
         non_existant_url = reverse(
-            "pages:home",
-            kwargs={"challenge_short_name": "nonexistingproject"},
+            "pages:home", kwargs={"challenge_short_name": "nonexistingproject"}
         )
         response, username = self._view_url(None, non_existant_url)
 

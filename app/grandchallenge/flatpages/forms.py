@@ -18,12 +18,7 @@ class FlatPageForm(FlatpageForm):
 
     class Meta:
         model = FlatPage
-        fields = (
-            "title",
-            "registration_required",
-            "url",
-            "sites",
-        )
+        fields = ("title", "registration_required", "url", "sites")
 
 
 class FlatPageUpdateForm(forms.ModelForm):
@@ -34,11 +29,5 @@ class FlatPageUpdateForm(forms.ModelForm):
 
     class Meta:
         model = FlatPage
-        fields = (
-            "title",
-            "registration_required",
-            "content",
-        )
-        widgets = {
-            "content": MarkdownEditorWidget,
-        }
+        fields = ("title", "registration_required", "content")
+        widgets = {"content": MarkdownEditorWidget}

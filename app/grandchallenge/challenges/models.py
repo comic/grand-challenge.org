@@ -471,7 +471,7 @@ class Challenge(ChallengeBase):
 
     def create_forum(self):
         f, created = Forum.objects.get_or_create(
-            name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT,
+            name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT
         )
 
         if created:
@@ -533,7 +533,7 @@ class Challenge(ChallengeBase):
 
     def get_absolute_url(self):
         return reverse(
-            "pages:home", kwargs={"challenge_short_name": self.short_name},
+            "pages:home", kwargs={"challenge_short_name": self.short_name}
         )
 
     def add_participant(self, user):

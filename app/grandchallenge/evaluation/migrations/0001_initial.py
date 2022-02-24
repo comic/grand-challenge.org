@@ -494,7 +494,7 @@ class Migration(migrations.Migration):
             options={
                 "unique_together": {
                     ("phase", "predictions_file", "algorithm_image")
-                },
+                }
             },
         ),
         migrations.CreateModel(

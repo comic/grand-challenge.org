@@ -5,15 +5,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0018_algorithmimage_user_upload"),
-    ]
+    dependencies = [("algorithms", "0018_algorithmimage_user_upload")]
 
     operations = [
         migrations.RemoveField(
-            model_name="algorithmimage", name="queue_override",
+            model_name="algorithmimage", name="queue_override"
         ),
         migrations.RemoveField(
-            model_name="algorithmimage", name="staged_image_uuid",
+            model_name="algorithmimage", name="staged_image_uuid"
         ),
     ]

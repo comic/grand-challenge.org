@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("publications", "0002_auto_20200918_1132"),
-    ]
+    dependencies = [("publications", "0002_auto_20200918_1132")]
 
     operations = [
         migrations.AlterField(
             model_name="publication",
             name="csl",
             field=models.JSONField(editable=False),
-        ),
+        )
     ]

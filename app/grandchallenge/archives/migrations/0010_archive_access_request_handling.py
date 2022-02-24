@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("archives", "0009_auto_20210601_0802"),
-    ]
+    dependencies = [("archives", "0009_auto_20210601_0802")]
 
     operations = [
         migrations.AddField(
@@ -29,5 +27,5 @@ class Migration(migrations.Migration):
                 help_text="How would you like to handle access requests?",
                 max_length=25,
             ),
-        ),
+        )
     ]

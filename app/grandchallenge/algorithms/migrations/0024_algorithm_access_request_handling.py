@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0023_job_time_limit"),
-    ]
+    dependencies = [("algorithms", "0023_job_time_limit")]
 
     operations = [
         migrations.AddField(
@@ -29,5 +27,5 @@ class Migration(migrations.Migration):
                 help_text="How would you like to handle access requests?",
                 max_length=25,
             ),
-        ),
+        )
     ]

@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("publications", "0003_auto_20201001_0758"),
-    ]
+    dependencies = [("publications", "0003_auto_20201001_0758")]
 
     operations = [
         migrations.AddField(
             model_name="publication",
             name="citation",
             field=models.TextField(blank=True, editable=False),
-        ),
+        )
     ]

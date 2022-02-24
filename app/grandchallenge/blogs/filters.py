@@ -13,7 +13,7 @@ from grandchallenge.core.filters import FilterForm
 class BlogFilter(FilterSet):
     search = CharFilter(method="search_filter", label="Title or Content")
     tags = ModelMultipleChoiceFilter(
-        queryset=Tag.objects.all(), widget=Select2MultipleWidget, label="Tags",
+        queryset=Tag.objects.all(), widget=Select2MultipleWidget, label="Tags"
     )
     authors = ModelMultipleChoiceFilter(
         queryset=get_user_model()

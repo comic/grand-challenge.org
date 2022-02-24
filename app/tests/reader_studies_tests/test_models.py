@@ -75,10 +75,7 @@ def test_generate_hanging_list():
 
     rs.images.set([im1, im2])
     rs.generate_hanging_list()
-    assert rs.hanging_list == [
-        {"main": "im1"},
-        {"main": "im2"},
-    ]
+    assert rs.hanging_list == [{"main": "im1"}, {"main": "im2"}]
 
 
 @pytest.mark.django_db
@@ -377,20 +374,18 @@ def test_validate_answer():
         question_text="q1",
     )
 
-    answer = AnswerFactory(creator=u, question=q, answer=True,)
+    answer = AnswerFactory(creator=u, question=q, answer=True)
     answer.images.set([im1, im3])
 
     with pytest.raises(ValidationError) as e:
-        Answer.validate(
-            creator=u, question=q, answer=True, images=[im1, im3],
-        )
+        Answer.validate(creator=u, question=q, answer=True, images=[im1, im3])
         assert (
             e.value.message
             == f"User {u} has already answered this question for this set of images."
         )
 
     assert (
-        Answer.validate(creator=u, question=q, answer=True, images=[im2, im3],)
+        Answer.validate(creator=u, question=q, answer=True, images=[im2, im3])
         is None
     )
 

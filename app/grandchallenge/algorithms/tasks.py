@@ -83,9 +83,7 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
     if isinstance(res, ImageImportError):
         error_message += str(res)
 
-    job.update_status(
-        status=job.CANCELLED, error_message=error_message,
-    )
+    job.update_status(status=job.CANCELLED, error_message=error_message)
 
     on_commit(linked_task.apply_async)
 

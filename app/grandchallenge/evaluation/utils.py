@@ -31,7 +31,7 @@ def get(inputs):
 
 
 def rank_results(
-    *, evaluations: Tuple, metrics: Tuple[Metric, ...], score_method: Callable,
+    *, evaluations: Tuple, metrics: Tuple[Metric, ...], score_method: Callable
 ) -> Positions:
     """Determine the overall rank for each result."""
     evaluations = _filter_valid_results(

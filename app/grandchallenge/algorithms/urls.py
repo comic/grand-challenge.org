@@ -75,11 +75,9 @@ urlpatterns = [
         name="execution-session-detail",
     ),
     path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
-    path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail",),
+    path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
-        "<slug>/jobs/<uuid:pk>/update/",
-        JobUpdate.as_view(),
-        name="job-update",
+        "<slug>/jobs/<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"
     ),
     path(
         "<slug>/jobs/<uuid:pk>/experiment/",

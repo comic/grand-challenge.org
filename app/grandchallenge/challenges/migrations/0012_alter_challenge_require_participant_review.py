@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("challenges", "0011_challenge_access_request_handling"),
-    ]
+    dependencies = [("challenges", "0011_challenge_access_request_handling")]
 
     operations = [
         migrations.AlterField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 help_text="If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately",
                 null=True,
             ),
-        ),
+        )
     ]

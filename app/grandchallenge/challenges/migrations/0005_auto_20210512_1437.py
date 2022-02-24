@@ -7,9 +7,7 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("challenges", "0004_auto_20210423_1049"),
-    ]
+    dependencies = [("challenges", "0004_auto_20210423_1049")]
 
     operations = [
         migrations.AlterField(

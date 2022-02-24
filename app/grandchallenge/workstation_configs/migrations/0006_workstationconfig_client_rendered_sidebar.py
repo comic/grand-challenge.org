@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("workstation_configs", "0005_auto_20210409_1210"),
-    ]
+    dependencies = [("workstation_configs", "0005_auto_20210409_1210")]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=True,
                 help_text="Use client side rendering for the side bar",
             ),
-        ),
+        )
     ]

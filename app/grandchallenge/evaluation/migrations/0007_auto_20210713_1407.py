@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("evaluation", "0006_auto_20210601_0802"),
-    ]
+    dependencies = [("evaluation", "0006_auto_20210601_0802")]
 
     operations = [
         migrations.RenameField(
