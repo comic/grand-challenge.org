@@ -18,5 +18,5 @@ class Migration(migrations.Migration):
                 related_name="image_upload_sessions",
                 to="uploads.UserUpload",
             ),
-        ),
+        )
     ]

@@ -40,7 +40,7 @@ urlpatterns = [
         ReaderStudyLeaderBoard.as_view(),
         name="leaderboard",
     ),
-    path("<slug>/cases/", ReaderStudyImagesList.as_view(), name="images",),
+    path("<slug>/cases/", ReaderStudyImagesList.as_view(), name="images"),
     path(
         "<slug>/display-sets/",
         ReaderStudyDisplaySetList.as_view(),
@@ -51,7 +51,7 @@ urlpatterns = [
         ReaderStudyStatistics.as_view(),
         name="statistics",
     ),
-    path("<slug>/copy/", ReaderStudyCopy.as_view(), name="copy",),
+    path("<slug>/copy/", ReaderStudyCopy.as_view(), name="copy"),
     path(
         "<slug>/remove-answers/",
         AnswersRemove.as_view(),
@@ -102,7 +102,7 @@ urlpatterns = [
         ReadersUpdate.as_view(),
         name="readers-update",
     ),
-    path("<slug>/progress/", UsersProgress.as_view(), name="users-progress",),
+    path("<slug>/progress/", UsersProgress.as_view(), name="users-progress"),
     path(
         "<slug>/permission-requests/",
         ReaderStudyPermissionRequestList.as_view(),

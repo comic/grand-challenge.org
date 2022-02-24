@@ -45,10 +45,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework.viewsets import (
-    GenericViewSet,
-    ReadOnlyModelViewSet,
-)
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
@@ -133,7 +130,7 @@ class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
 
 
 class ReaderStudyCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView
 ):
     model = ReaderStudy
     form_class = ReaderStudyCreateForm
@@ -208,10 +205,12 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
             editor_remove_form = EditorsForm()
             editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
 
-            pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
-                reader_study=context["object"],
-                status=ReaderStudyPermissionRequest.PENDING,
-            ).count()
+            pending_permission_requests = (
+                ReaderStudyPermissionRequest.objects.filter(
+                    reader_study=context["object"],
+                    status=ReaderStudyPermissionRequest.PENDING,
+                ).count()
+            )
 
             readers = (
                 self.object.readers_group.user_set.select_related(
@@ -397,7 +396,7 @@ class ReaderStudyImagesList(
         qs = super().get_queryset()
         return (
             qs.filter(readerstudies=self.reader_study)
-            .prefetch_related("files",)
+            .prefetch_related("files")
             .select_related(
                 "origin__creator__user_profile",
                 "origin__creator__verification",
@@ -530,7 +529,7 @@ class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
     def form_valid(self, form):
         try:
             self.reader_study.add_ground_truth(
-                data=form.cleaned_data["ground_truth"], user=self.request.user,
+                data=form.cleaned_data["ground_truth"], user=self.request.user
             )
             return super().form_valid(form)
         except ValidationError as e:
@@ -882,7 +881,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         messages.add_message(
             request, messages.SUCCESS, "Hanging list re-generated."
         )
-        return Response({"status": "Hanging list generated."},)
+        return Response({"status": "Hanging list generated."})
 
     @action(detail=True, methods=["patch"])
     def remove_image(self, request, pk=None):
@@ -893,7 +892,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
             messages.add_message(
                 request, messages.SUCCESS, "Image removed from reader study."
             )
-            return Response({"status": "Image removed from reader study."},)
+            return Response({"status": "Image removed from reader study."})
         except Image.DoesNotExist:
             messages.add_message(
                 request,
@@ -901,7 +900,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
                 "Image could not be removed from reader study.",
             )
         return Response(
-            {"status": "Image could not be removed from reader study."},
+            {"status": "Image could not be removed from reader study."}
         )
 
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")

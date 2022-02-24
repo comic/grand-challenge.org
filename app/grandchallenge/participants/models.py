@@ -4,9 +4,7 @@ from django.db import models
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import RequestBase
-from grandchallenge.core.utils.access_request_utils import (
-    process_access_request,
-)
+from grandchallenge.core.utils.access_requests import process_access_request
 
 
 class RegistrationRequest(RequestBase):

@@ -32,7 +32,7 @@ def github_webhook(request):
         signature, request.headers.get("X-Hub-Signature-256", "")
     ):
         return HttpResponseForbidden(
-            "Signatures do not match", content_type="text/plain",
+            "Signatures do not match", content_type="text/plain"
         )
 
     payload = json.loads(request.body)
@@ -76,7 +76,7 @@ def post_install_redirect(request):
     }
 
     github_user = requests.get(
-        "https://api.github.com/user", headers=headers, timeout=5,
+        "https://api.github.com/user", headers=headers, timeout=5
     ).json()
     user_token.github_user_id = github_user["id"]
     user_token.save()

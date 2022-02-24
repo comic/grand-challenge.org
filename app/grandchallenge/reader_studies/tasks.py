@@ -40,9 +40,7 @@ def add_scores(*, instance_pk, pk_set):
             add_score(answer, instance.answer)
     else:
         ground_truth = Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=True,
-            images__in=pk_set,
+            question=instance.question, is_ground_truth=True, images__in=pk_set
         ).first()
         if ground_truth:
             add_score(instance, ground_truth.answer)

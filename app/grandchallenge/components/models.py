@@ -79,6 +79,8 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_POINTS = "MPOI", _("Multiple points")
     POLYGON = "POLY", _("Polygon")
     MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
+    LINE = "LINE", _("Line")
+    MULTIPLE_LINES = "MLIN", _("Multiple lines")
 
     # Choice Types
     CHOICE = "CHOI", _("Choice")
@@ -128,6 +130,8 @@ class InterfaceKind:
         * Multiple points
         * Polygon
         * Multiple polygons
+        * Lines
+        * Multiple lines
         * Choice (string)
         * Multiple choice (array of strings)
         * Chart
@@ -282,6 +286,51 @@ class InterfaceKind:
                 "version": { "major": 1, "minor": 0 }
             }
 
+        Example json for Line annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Line",
+                "seed_point": [ 76.413756408691, 124.014717102050, 0.5009999871253967 ],
+                "path_points": [
+                    [ 76.41375842260106, 124.01471710205078, 0.5009999871253967 ],
+                    [ 76.41694876387268, 124.0511828696491, 0.5009999871253967 ],
+                    [ 76.42642285078242, 124.0865406433515, 0.5009999871253967 ]
+                ],
+                "closed": "false",
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Multiple lines annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Multiple lines",
+                "lines": [
+                    {
+                        "seed_point": [ 55.82666793823242, 90.46666717529297, 0.5009999871253967 ],
+                        "path_points": [
+                            [ 55.82667599387105, 90.46666717529297, 0.5009999871253967 ],
+                            [ 55.93921357544119, 90.88666314747366, 0.5009999871253967 ],
+                            [ 56.246671966051736, 91.1941215380842, 0.5009999871253967 ],
+                            [ 56.66666793823242, 91.30665911965434, 0.5009999871253967 ]
+                        ],
+                        "closed": "false"
+                    },
+                    {
+                        "seed_point": [ 90.22666564941406, 96.06666564941406, 0.5009999871253967 ],
+                        "path_points": [
+                            [ 90.22667370505269, 96.06666564941406, 0.5009999871253967 ],
+                            [ 90.33921128662283, 96.48666162159475, 0.5009999871253967 ],
+                            [ 90.64666967723338, 96.7941200122053, 0.5009999871253967 ]
+                        ],
+                        "closed": "true"
+                    }
+                ],
+                "version": { "major": 1, "minor": 0 }
+            }
         Example json for Chart (for more examples, see `here<https://vega.github.io/vega-lite/examples/>` and `here<https://grand-challenge.org/blogs/visualisations-for-challenges/>`)
 
         .. code-block:: json
@@ -391,6 +440,8 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
             InterfaceKind.InterfaceKindChoices.ANY,
             InterfaceKind.InterfaceKindChoices.CHART,
+            InterfaceKind.InterfaceKindChoices.LINE,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
         )
 
     @staticmethod
@@ -598,8 +649,9 @@ class ComponentInterface(models.Model):
         if self.kind in InterfaceKind.interface_type_json():
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
-        elif self.kind in InterfaceKind.interface_type_file() and not self.relative_path.endswith(
-            f".{self.kind.lower()}"
+        elif (
+            self.kind in InterfaceKind.interface_type_file()
+            and not self.relative_path.endswith(f".{self.kind.lower()}")
         ):
             raise ValidationError(
                 f"Relative path should end with .{self.kind.lower()}"

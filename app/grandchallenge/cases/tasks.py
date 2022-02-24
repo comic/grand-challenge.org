@@ -3,15 +3,7 @@ from dataclasses import asdict, dataclass
 from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import (
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Set,
-)
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
@@ -52,7 +44,7 @@ def _populate_tmp_dir(tmp_dir, upload_session):
 
 
 def populate_provisioning_directory(
-    input_files: Sequence[UserUpload], provisioning_dir: Path,
+    input_files: Sequence[UserUpload], provisioning_dir: Path
 ):
     """
     Provisions provisioning_dir with the files associated using the given
@@ -161,7 +153,7 @@ def build_images(*, upload_session_pk):
 
 def _handle_raw_image_files(tmp_dir, upload_session):
     importer_result = import_images(
-        input_directory=tmp_dir, origin=upload_session,
+        input_directory=tmp_dir, origin=upload_session
     )
 
     _handle_raw_files(

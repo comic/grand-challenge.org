@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("products", "0008_projectairfiles_archive"),
-    ]
+    dependencies = [("products", "0008_projectairfiles_archive")]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=False,
                 help_text="Set to True if the file is no longer the most recent version. It will remain available on the page for download under archived protocols.",
             ),
-        ),
+        )
     ]

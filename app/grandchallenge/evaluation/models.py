@@ -146,7 +146,7 @@ class Phase(UUIDModel):
         ALGORITHM = 3, "Algorithm"
 
     challenge = models.ForeignKey(
-        Challenge, on_delete=models.PROTECT, editable=False,
+        Challenge, on_delete=models.PROTECT, editable=False
     )
     archive = models.ForeignKey(
         Archive,
@@ -431,10 +431,7 @@ class Phase(UUIDModel):
     )
 
     class Meta:
-        unique_together = (
-            ("challenge", "title"),
-            ("challenge", "slug"),
-        )
+        unique_together = (("challenge", "title"), ("challenge", "slug"))
         ordering = ("challenge", "submissions_open_at", "created")
         permissions = (
             ("create_phase_submission", "Create Phase Submission"),
@@ -618,7 +615,7 @@ class Phase(UUIDModel):
     def has_pending_evaluations(self, *, user):
         return (
             Evaluation.objects.filter(
-                submission__phase=self, submission__creator=user,
+                submission__phase=self, submission__creator=user
             )
             .exclude(
                 status__in=(
@@ -751,7 +748,7 @@ class Submission(UUIDModel):
         AlgorithmImage, null=True, on_delete=models.SET_NULL
     )
     user_upload = models.ForeignKey(
-        UserUpload, blank=True, null=True, on_delete=models.SET_NULL,
+        UserUpload, blank=True, null=True, on_delete=models.SET_NULL
     )
     predictions_file = models.FileField(
         upload_to=submission_file_path,
@@ -780,7 +777,7 @@ class Submission(UUIDModel):
         ),
     )
     supplementary_url = models.URLField(
-        blank=True, help_text="A URL associated with this submission.",
+        blank=True, help_text="A URL associated with this submission."
     )
 
     class Meta:
@@ -801,7 +798,7 @@ class Submission(UUIDModel):
                     send_action=False,
                 )
             e = create_evaluation.signature(
-                kwargs={"submission_pk": self.pk}, immutable=True,
+                kwargs={"submission_pk": self.pk}, immutable=True
             )
             on_commit(e.apply_async)
 

@@ -13,10 +13,7 @@ from grandchallenge.core.filters import FilterForm
 from grandchallenge.notifications.models import Notification
 
 
-BOOLEAN_CHOICES = (
-    ("1", "Read"),
-    ("0", "Unread"),
-)
+BOOLEAN_CHOICES = (("1", "Read"), ("0", "Unread"))
 
 
 class NotificationFilter(FilterSet):
@@ -48,7 +45,7 @@ class NotificationFilter(FilterSet):
 
         return queryset.filter(
             reduce(
-                or_, [Q(**{f"{f}__in": name_qs}) for f in search_fields], Q(),
+                or_, [Q(**{f"{f}__in": name_qs}) for f in search_fields], Q()
             )
         )
 

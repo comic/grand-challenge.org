@@ -18,7 +18,7 @@ class AuthorFilter(Filter):
 
 
 class PublicationFilter(FilterSet):
-    year = CharFilter(label="Year",)
+    year = CharFilter(label="Year")
     authors = AuthorFilter(label="Author last name")
 
     class Meta:

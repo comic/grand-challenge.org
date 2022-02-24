@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
                 related_name="algorithms",
                 to="organizations.Organization",
             ),
-        ),
+        )
     ]

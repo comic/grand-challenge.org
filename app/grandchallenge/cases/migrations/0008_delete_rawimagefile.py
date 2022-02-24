@@ -4,10 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("cases", "0007_remove_image_study"),
-    ]
+    dependencies = [("cases", "0007_remove_image_study")]
 
-    operations = [
-        migrations.DeleteModel(name="RawImageFile"),
-    ]
+    operations = [migrations.DeleteModel(name="RawImageFile")]

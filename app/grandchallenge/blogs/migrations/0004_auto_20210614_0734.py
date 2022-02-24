@@ -6,9 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("blogs", "0003_auto_20210512_1502"),
-    ]
+    dependencies = [("blogs", "0003_auto_20210512_1502")]
 
     operations = [
         migrations.CreateModel(

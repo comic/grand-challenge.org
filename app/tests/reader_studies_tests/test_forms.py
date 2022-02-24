@@ -6,7 +6,7 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -144,11 +144,7 @@ def test_reader_study_create(client, uploaded_image):
     ws.add_user(user=creator)
 
     roll_over_error = "Rolling over answers should not be used together with case navigation or shuffling of the hanging list"
-    for navigation, shuffle in [
-        (True, True),
-        (True, False),
-        (False, True),
-    ]:
+    for navigation, shuffle in [(True, True), (True, False), (False, True)]:
         response = try_create_rs(
             allow_case_navigation=navigation,
             shuffle_hanging_list=shuffle,

@@ -5,9 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("archives", "0002_auto_20201214_0939"),
-    ]
+    dependencies = [("archives", "0002_auto_20201214_0939")]
 
     operations = [
         migrations.AlterModelOptions(
@@ -22,5 +20,5 @@ class Migration(migrations.Migration):
                     ("upload_archive", "Can upload to archive"),
                 ],
             },
-        ),
+        )
     ]

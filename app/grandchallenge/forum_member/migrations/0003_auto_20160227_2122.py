@@ -5,9 +5,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("forum_member", "0002_auto_20160225_0515"),
-    ]
+    dependencies = [("forum_member", "0002_auto_20160225_0515")]
 
     operations = [
         migrations.AlterField(
@@ -22,5 +20,5 @@ class Migration(migrations.Migration):
                 ],
                 verbose_name="Signature",
             ),
-        ),
+        )
     ]

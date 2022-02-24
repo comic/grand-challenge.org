@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("cases", "0002_auto_20210305_1248"),
-    ]
+    dependencies = [("cases", "0002_auto_20210305_1248")]
 
     operations = [
         migrations.AlterField(
@@ -25,5 +23,5 @@ class Migration(migrations.Migration):
                 db_index=True,
                 default=0,
             ),
-        ),
+        )
     ]

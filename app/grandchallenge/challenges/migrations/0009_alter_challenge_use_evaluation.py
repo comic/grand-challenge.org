@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("challenges", "0008_challenge_contact_email"),
-    ]
+    dependencies = [("challenges", "0008_challenge_contact_email")]
 
     operations = [
         migrations.AlterField(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                 help_text="If true, use the automated evaluation system. See the evaluation page created in the Challenge site.",
                 null=True,
             ),
-        ),
+        )
     ]

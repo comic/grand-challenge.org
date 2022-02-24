@@ -5,12 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("policies", "0001_initial"),
-    ]
+    dependencies = [("policies", "0001_initial")]
 
     operations = [
         migrations.AlterModelOptions(
-            name="policy", options={"ordering": ("pk",)},
-        ),
+            name="policy", options={"ordering": ("pk",)}
+        )
     ]

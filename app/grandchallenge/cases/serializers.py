@@ -13,11 +13,7 @@ from grandchallenge.archives.tasks import (
     add_images_to_archive,
     add_images_to_archive_item,
 )
-from grandchallenge.cases.models import (
-    Image,
-    ImageFile,
-    RawImageUploadSession,
-)
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import (
@@ -142,7 +138,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
             self.fields["archive"].queryset = get_objects_for_user(
-                user, "archives.upload_archive", accept_global_perms=False,
+                user, "archives.upload_archive", accept_global_perms=False
             )
 
             self.fields["reader_study"].queryset = get_objects_for_user(
@@ -152,13 +148,11 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
             self.fields["answer"].queryset = get_objects_for_user(
-                user,
-                "reader_studies.change_answer",
-                accept_global_perms=False,
+                user, "reader_studies.change_answer", accept_global_perms=False
             )
 
             self.fields["archive_item"].queryset = get_objects_for_user(
-                user, "archives.change_archiveitem", accept_global_perms=False,
+                user, "archives.change_archiveitem", accept_global_perms=False
             )
 
             self.fields["display_set"].queryset = get_objects_for_user(
@@ -262,12 +256,10 @@ def process_images(*, instance, targets, interface):
 
 def _get_linked_task(*, targets, interface):
     if "archive" in targets:
-        kwargs = {
-            "archive_pk": targets["archive"].pk,
-        }
+        kwargs = {"archive_pk": targets["archive"].pk}
         if interface:
             kwargs["interface_pk"] = interface.pk
-        return add_images_to_archive.signature(kwargs=kwargs, immutable=True,)
+        return add_images_to_archive.signature(kwargs=kwargs, immutable=True)
     elif "archive_item" in targets:
         return add_images_to_archive_item.signature(
             kwargs={
@@ -291,7 +283,7 @@ def _get_linked_task(*, targets, interface):
         )
     elif "answer" in targets:
         return add_image_to_answer.signature(
-            kwargs={"answer_pk": targets["answer"].pk}, immutable=True,
+            kwargs={"answer_pk": targets["answer"].pk}, immutable=True
         )
     else:
         raise RuntimeError(f"Unknown target {targets=}")

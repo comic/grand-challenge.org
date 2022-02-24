@@ -429,7 +429,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 
         values = [x for x in rdr]
 
-        images = sorted([sorted(x["images"].split(";")) for x in values])
+        images = sorted(sorted(x["images"].split(";")) for x in values)
         if images != sorted(self.reader_study.image_groups):
             diff = self.reader_study.hanging_list_diff(
                 provided=list(itertools.chain(*images))

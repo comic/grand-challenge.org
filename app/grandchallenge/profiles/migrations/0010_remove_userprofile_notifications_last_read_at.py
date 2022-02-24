@@ -5,12 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("profiles", "0009_auto_20210512_1516"),
-    ]
+    dependencies = [("profiles", "0009_auto_20210512_1516")]
 
     operations = [
         migrations.RemoveField(
-            model_name="userprofile", name="notifications_last_read_at",
-        ),
+            model_name="userprofile", name="notifications_last_read_at"
+        )
     ]

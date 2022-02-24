@@ -11,9 +11,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ("cases", "0001_initial"),
-    ]
+    dependencies = [("cases", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
@@ -60,5 +58,5 @@ class Migration(migrations.Migration):
                 "abstract": False,
                 "unique_together": {("obs_image", "oct_image")},
             },
-        ),
+        )
     ]

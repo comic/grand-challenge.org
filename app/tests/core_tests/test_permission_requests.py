@@ -5,7 +5,7 @@ from django.utils.html import format_html
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.notifications.models import Notification
@@ -93,10 +93,7 @@ def test_permission_request_workflow(
 
     # Create the permission request
     response = get_view_for_user(
-        client=client,
-        user=user,
-        url=permission_create_url,
-        method=client.post,
+        client=client, user=user, url=permission_create_url, method=client.post
     )
     assert response.status_code == 302
 
@@ -116,10 +113,7 @@ def test_permission_request_workflow(
 
     # Making a second permission request create should fail
     response = get_view_for_user(
-        client=client,
-        user=user,
-        url=permission_create_url,
-        method=client.post,
+        client=client, user=user, url=permission_create_url, method=client.post
     )
     assert response.status_code == 200
 
@@ -224,8 +218,8 @@ def test_permission_request_workflow(
             ReaderStudyPermissionRequest,
             "reader_study",
         ),
-        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive",),
-        (ChallengeFactory, "participants", RegistrationRequest, "challenge",),
+        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive"),
+        (ChallengeFactory, "participants", RegistrationRequest, "challenge"),
     ),
 )
 def test_permission_request_notifications_flow_for_manual_review(
@@ -259,10 +253,7 @@ def test_permission_request_notifications_flow_for_manual_review(
 
     # Create the permission request
     _ = get_view_for_user(
-        client=client,
-        user=user,
-        url=permission_create_url,
-        method=client.post,
+        client=client, user=user, url=permission_create_url, method=client.post
     )
 
     pr = request_model.objects.get()
@@ -276,8 +267,9 @@ def test_permission_request_notifications_flow_for_manual_review(
     base_obj_str = format_html(
         '<a href="{}">{}</a>', base_object.get_absolute_url(), base_object
     )
-    assert f"{user_profile_link(user)} requested access to {base_obj_str}" in Notification.objects.get().print_notification(
-        user=editor
+    assert (
+        f"{user_profile_link(user)} requested access to {base_obj_str}"
+        in Notification.objects.get().print_notification(user=editor)
     )
 
     if namespace == "participants":
@@ -310,10 +302,9 @@ def test_permission_request_notifications_flow_for_manual_review(
     # and removal of the notification for the editor
     assert Notification.objects.count() == 1
     assert Notification.objects.all()[0].user == user
-    assert f"Your registration request for {base_obj_str} was accepted" in Notification.objects.all()[
-        0
-    ].print_notification(
-        user=user
+    assert (
+        f"Your registration request for {base_obj_str} was accepted"
+        in Notification.objects.all()[0].print_notification(user=user)
     )
 
     # reject permission request
@@ -329,10 +320,9 @@ def test_permission_request_notifications_flow_for_manual_review(
     assert pr.status == request_model.REJECTED
     assert Notification.objects.count() == 2
     assert Notification.objects.all()[1].user == user
-    assert f"Your registration request for {base_obj_str} was rejected" in Notification.objects.all()[
-        1
-    ].print_notification(
-        user=user
+    assert (
+        f"Your registration request for {base_obj_str} was rejected"
+        in Notification.objects.all()[1].print_notification(user=user)
     )
 
 
@@ -352,8 +342,8 @@ def test_permission_request_notifications_flow_for_manual_review(
             ReaderStudyPermissionRequest,
             "reader_study",
         ),
-        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive",),
-        (ChallengeFactory, "participants", RegistrationRequest, "challenge",),
+        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive"),
+        (ChallengeFactory, "participants", RegistrationRequest, "challenge"),
     ),
 )
 def test_permission_request_notifications_flow_for_accept_all(
@@ -414,8 +404,8 @@ def test_permission_request_notifications_flow_for_accept_all(
             ReaderStudyPermissionRequest,
             "reader_study",
         ),
-        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive",),
-        (ChallengeFactory, "participants", RegistrationRequest, "challenge",),
+        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive"),
+        (ChallengeFactory, "participants", RegistrationRequest, "challenge"),
     ),
 )
 def test_permission_request_notifications_flow_for_accept_verified_users(
@@ -495,10 +485,7 @@ def test_algorithm_permission_request_notification_for_admins_only(client):
 
     # Create the permission request
     _ = get_view_for_user(
-        client=client,
-        user=user,
-        url=permission_create_url,
-        method=client.post,
+        client=client, user=user, url=permission_create_url, method=client.post
     )
 
     assert Notification.objects.count() == 1
@@ -518,10 +505,7 @@ def test_follows_deleted_when_request_deleted(client):
     )
     user = UserFactory()
     _ = get_view_for_user(
-        client=client,
-        user=user,
-        url=permission_create_url,
-        method=client.post,
+        client=client, user=user, url=permission_create_url, method=client.post
     )
     pr = AlgorithmPermissionRequest.objects.get()
     assert is_following(user, pr)
@@ -542,10 +526,7 @@ def test_follows_deleted_when_base_obj_deleted(client):
     )
     user = UserFactory()
     _ = get_view_for_user(
-        client=client,
-        user=user,
-        url=permission_create_url,
-        method=client.post,
+        client=client, user=user, url=permission_create_url, method=client.post
     )
     pr = AlgorithmPermissionRequest.objects.get()
     assert is_following(user, pr)

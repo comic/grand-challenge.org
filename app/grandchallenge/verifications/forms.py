@@ -87,7 +87,7 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
 
 class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
     token = forms.CharField(
-        help_text="Your email confirmation token", disabled=True,
+        help_text="Your email confirmation token", disabled=True
     )
 
     def __init__(self, *args, user, token, **kwargs):

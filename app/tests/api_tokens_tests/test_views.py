@@ -10,7 +10,7 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view", ("list", "create",))
+@pytest.mark.parametrize("view", ("list", "create"))
 def test_logged_in_views(client, view):
     viewname = f"api-tokens:{view}"
 

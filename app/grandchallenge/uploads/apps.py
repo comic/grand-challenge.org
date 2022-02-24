@@ -12,11 +12,10 @@ def init_upload_permissions(*_, **__):
         name=settings.REGISTERED_USERS_GROUP_NAME
     )
     assign_perm(
-        f"{UserUpload._meta.app_label}.add_{UserUpload._meta.model_name}", g,
+        f"{UserUpload._meta.app_label}.add_{UserUpload._meta.model_name}", g
     )
     assign_perm(
-        f"{UserUpload._meta.app_label}.change_{UserUpload._meta.model_name}",
-        g,
+        f"{UserUpload._meta.app_label}.change_{UserUpload._meta.model_name}", g
     )
 
 

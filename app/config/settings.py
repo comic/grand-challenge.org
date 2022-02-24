@@ -151,7 +151,7 @@ AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 AWS_S3_OBJECT_PARAMETERS = {
     # Note that these do not affect the Uploads bucket, which is configured separately.
     # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
-    "StorageClass": os.environ.get("AWS_S3_DEFAULT_STORAGE_CLASS", "STANDARD"),
+    "StorageClass": os.environ.get("AWS_S3_DEFAULT_STORAGE_CLASS", "STANDARD")
 }
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
@@ -161,7 +161,7 @@ AWS_SES_REGION_ENDPOINT = f'email.{os.environ.get("AWS_SES_REGION_NAME", AWS_DEF
 PRIVATE_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
-    ),
+    )
 }
 
 PROTECTED_S3_STORAGE_KWARGS = {
@@ -246,7 +246,7 @@ DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 # Workaround for https://github.com/ellmetha/django-machina/issues/219
 ABSOLUTE_URL_OVERRIDES = {
     "forum.forum": lambda o: reverse(
-        "forum:forum", kwargs={"slug": o.slug, "pk": o.pk},
+        "forum:forum", kwargs={"slug": o.slug, "pk": o.pk}
     ),
     "forum_conversation.topic": lambda o: reverse(
         "forum_conversation:topic",
@@ -269,9 +269,7 @@ CSRF_COOKIE_SECURE = True
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
-CSRF_TRUSTED_ORIGINS = [
-    SESSION_COOKIE_DOMAIN,
-]
+CSRF_TRUSTED_ORIGINS = [SESSION_COOKIE_DOMAIN]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Set the allowed hosts to the cookie domain
@@ -710,7 +708,7 @@ MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
 
 HAYSTACK_CONNECTIONS = {
-    "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"},
+    "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"}
 }
 
 FORUMS_CHALLENGE_CATEGORY_NAME = "Challenges"
@@ -824,9 +822,7 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
 }
 
-REST_KNOX = {
-    "AUTH_HEADER_PREFIX": "Bearer",
-}
+REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
 
 ###############################################################################
 #
@@ -908,9 +904,7 @@ else:
 
 # Keep results of sent emails
 CELERY_EMAIL_CHUNK_SIZE = 1
-CELERY_EMAIL_TASK_CONFIG = {
-    "ignore_result": False,
-}
+CELERY_EMAIL_TASK_CONFIG = {"ignore_result": False}
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",

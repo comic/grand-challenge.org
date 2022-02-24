@@ -113,7 +113,7 @@ def create_image_set_for_study(archive, patient, study, nums):
                     Sitk.sitkUInt16,
                     [256, 128, 128],
                     spacing=[0.25, 0.5, 0.5],
-                    scale=2 ** 16 - 1,
+                    scale=2**16 - 1,
                 ),
                 "modality": ImagingModality.objects.get_or_create(
                     modality="OCT"
@@ -222,7 +222,7 @@ def create_image_set_for_study(archive, patient, study, nums):
             )
 
             image_file = ImageFile.objects.create(
-                image=image, image_type=ImageFile.IMAGE_TYPE_MHD,
+                image=image, image_type=ImageFile.IMAGE_TYPE_MHD
             )
             image_file.file.save(f"{image_file.pk}.mha", file, save=True)
 

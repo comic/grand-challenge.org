@@ -4,10 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("evaluation", "0001_initial"),
-    ]
+    dependencies = [("evaluation", "0001_initial")]
 
-    operations = [
-        migrations.DeleteModel(name="AlgorithmEvaluation",),
-    ]
+    operations = [migrations.DeleteModel(name="AlgorithmEvaluation")]

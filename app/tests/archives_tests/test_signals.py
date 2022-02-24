@@ -174,9 +174,11 @@ def test_adding_images_triggers_task(reverse, mocker):
             with capture_on_commit_callbacks(execute=True):
                 ai.values.set([civ])
 
-            kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
-                "kwargs"
-            ]
+            kwargs = (
+                create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
+                    "kwargs"
+                ]
+            )
             create_algorithm_jobs_for_archive.apply_async.assert_called_once()
             assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
             assert {*kwargs["archive_item_pks"]} == {ai.pk}
@@ -193,9 +195,11 @@ def test_adding_images_triggers_task(reverse, mocker):
                 civ = ComponentInterfaceValueFactory()
                 civ.archive_items.add(ai)
 
-            kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
-                "kwargs"
-            ]
+            kwargs = (
+                create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
+                    "kwargs"
+                ]
+            )
             create_algorithm_jobs_for_archive.apply_async.assert_called_once()
             assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
             assert {*kwargs["archive_item_pks"]} == {ai.pk}
@@ -250,9 +254,11 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
         with capture_on_commit_callbacks(execute=True):
             arch_set.arch1.algorithms.add(*algorithms)
 
-        kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
-            "kwargs"
-        ]
+        kwargs = (
+            create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
+                "kwargs"
+            ]
+        )
         create_algorithm_jobs_for_archive.apply_async.assert_called_once()
         assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
         assert {*kwargs["algorithm_pks"]} == {a.pk for a in algorithms}
@@ -268,9 +274,11 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
             with capture_on_commit_callbacks(execute=True):
                 alg.archive_set.add(arch_set.arch1, arch_set.arch2)
 
-            kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
-                "kwargs"
-            ]
+            kwargs = (
+                create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
+                    "kwargs"
+                ]
+            )
             create_algorithm_jobs_for_archive.apply_async.assert_called_once()
             assert {*kwargs["archive_pks"]} == {
                 arch_set.arch1.pk,

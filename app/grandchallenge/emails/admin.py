@@ -12,8 +12,7 @@ def schedule_emails(modeladmin, queryset, request, action):
     if emails:
         for email in emails:
             send_admin_emails = send_bulk_email.signature(
-                kwargs={"action": action, "email_pk": email.pk},
-                immutable=True,
+                kwargs={"action": action, "email_pk": email.pk}, immutable=True
             )
             on_commit(send_admin_emails.apply_async)
     else:

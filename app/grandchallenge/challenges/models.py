@@ -16,6 +16,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -38,7 +39,7 @@ from grandchallenge.core.storage import (
     get_social_image_path,
     public_s3_storage,
 )
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
@@ -282,13 +283,15 @@ class Challenge(ChallengeBase):
             "For showing 'under construction' type messages"
         ),
     )
-    require_participant_review = models.BooleanField(
-        default=False,
-        help_text=(
-            "If ticked, new participants need to be approved by project "
-            "admins before they can access restricted pages. If not ticked, "
-            "new users are allowed access immediately"
-        ),
+    require_participant_review = deprecate_field(
+        models.BooleanField(
+            default=False,
+            help_text=(
+                "If ticked, new participants need to be approved by project "
+                "admins before they can access restricted pages. If not ticked, "
+                "new users are allowed access immediately"
+            ),
+        )
     )
     access_request_handling = models.CharField(
         max_length=25,
@@ -468,7 +471,7 @@ class Challenge(ChallengeBase):
 
     def create_forum(self):
         f, created = Forum.objects.get_or_create(
-            name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT,
+            name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT
         )
 
         if created:
@@ -530,7 +533,7 @@ class Challenge(ChallengeBase):
 
     def get_absolute_url(self):
         return reverse(
-            "pages:home", kwargs={"challenge_short_name": self.short_name},
+            "pages:home", kwargs={"challenge_short_name": self.short_name}
         )
 
     def add_participant(self, user):
@@ -590,11 +593,11 @@ class Challenge(ChallengeBase):
             detail = ["Not accepting submissions"]
         elif self.status == StatusChoices.OPENING_SOON:
             start_date = min(
-                [
+                (
                     phase.submissions_open_at
                     for phase in self.phase_set.all()
                     if phase.status == StatusChoices.OPENING_SOON
-                ],
+                ),
                 default=None,
             )
             phase = (

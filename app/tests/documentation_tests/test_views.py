@@ -26,7 +26,7 @@ def test_permissions(client, view, perm):
         reverse_kwargs = None
 
     response = get_view_for_user(
-        viewname=view, client=client, reverse_kwargs=reverse_kwargs, user=u1,
+        viewname=view, client=client, reverse_kwargs=reverse_kwargs, user=u1
     )
     assert response.status_code == 403
 
@@ -34,7 +34,7 @@ def test_permissions(client, view, perm):
     assign_perm(perm, u1)
 
     response = get_view_for_user(
-        viewname=view, client=client, reverse_kwargs=reverse_kwargs, user=u1,
+        viewname=view, client=client, reverse_kwargs=reverse_kwargs, user=u1
     )
     assert response.status_code == 200
 

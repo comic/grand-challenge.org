@@ -188,7 +188,7 @@ def test_forum_subscribe_and_unsubscribe(client):
         data={
             "user": user1.id,
             "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name,
+                app_label=f._meta.app_label, model=f._meta.model_name
             ).id,
             "object_id": f.id,
             "actor_only": False,
@@ -233,7 +233,7 @@ def test_topic_subscribe_and_unsubscribe(client):
         data={
             "user": user1.id,
             "content_type": ContentType.objects.get(
-                app_label=t._meta.app_label, model=t._meta.model_name,
+                app_label=t._meta.app_label, model=t._meta.model_name
             ).id,
             "object_id": t.id,
             "actor_only": False,
@@ -294,7 +294,7 @@ def test_follow_create_permission(client):
         data={
             "user": user1.id,
             "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name,
+                app_label=f._meta.app_label, model=f._meta.model_name
             ).id,
             "object_id": f.id,
             "actor_only": False,
@@ -311,7 +311,7 @@ def test_follow_create_permission(client):
         data={
             "user": user1.id,
             "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name,
+                app_label=f._meta.app_label, model=f._meta.model_name
             ).id,
             "object_id": f.id,
             "actor_only": False,
@@ -336,7 +336,7 @@ def test_follow_create_permission(client):
         data={
             "user": user1.id,
             "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name,
+                app_label=f._meta.app_label, model=f._meta.model_name
             ).id,
             "object_id": f.id,
             "actor_only": False,

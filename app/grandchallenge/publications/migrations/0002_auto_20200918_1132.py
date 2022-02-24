@@ -4,15 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("publications", "0001_initial"),
-    ]
+    dependencies = [("publications", "0001_initial")]
 
     operations = [
         migrations.RenameField(
-            model_name="publication", old_name="doi", new_name="identifier",
+            model_name="publication", old_name="doi", new_name="identifier"
         ),
         migrations.RenameField(
-            model_name="publication", old_name="citeproc_json", new_name="csl",
+            model_name="publication", old_name="citeproc_json", new_name="csl"
         ),
     ]

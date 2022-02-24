@@ -5,9 +5,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("forum_conversation", "0002_post_anonymous_key"),
-    ]
+    dependencies = [("forum_conversation", "0002_post_anonymous_key")]
 
     operations = [
         migrations.AlterField(
@@ -20,5 +18,5 @@ class Migration(migrations.Migration):
                 ],
                 verbose_name="Content",
             ),
-        ),
+        )
     ]

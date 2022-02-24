@@ -4,14 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("uploads", "0003_delete_publicmedia"),
-    ]
+    dependencies = [("uploads", "0003_delete_publicmedia")]
 
     operations = [
         migrations.AlterField(
             model_name="userupload",
             name="s3_upload_id",
             field=models.CharField(blank=True, max_length=192),
-        ),
+        )
     ]

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0011_job_input_prefixes"),
-    ]
+    dependencies = [("algorithms", "0011_job_input_prefixes")]
 
     operations = [
         migrations.AlterField(
@@ -31,5 +29,5 @@ class Migration(migrations.Migration):
                 db_index=True,
                 default=0,
             ),
-        ),
+        )
     ]

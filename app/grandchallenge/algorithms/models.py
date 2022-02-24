@@ -34,7 +34,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
@@ -219,7 +219,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
                 fields=["repo_name"],
                 name="unique_repo_name",
                 condition=~Q(repo_name=""),
-            ),
+            )
         ]
 
     def __str__(self):

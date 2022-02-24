@@ -4,9 +4,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("algorithms", "0012_auto_20210728_1019"),
-    ]
+    dependencies = [("algorithms", "0012_auto_20210728_1019")]
 
     operations = [
         migrations.AlterModelOptions(
@@ -15,5 +13,5 @@ class Migration(migrations.Migration):
                 "ordering": ("created",),
                 "permissions": [("view_logs", "Can view the jobs logs")],
             },
-        ),
+        )
     ]

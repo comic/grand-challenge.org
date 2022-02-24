@@ -92,9 +92,7 @@ class PhaseTitleMixin:
         return title
 
 
-class PhaseCreateForm(
-    PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm,
-):
+class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = Phase
         fields = ("title", "submissions_open_at", "submissions_close_at")
@@ -197,9 +195,7 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
         ),
     )
 
-    def __init__(  # noqa: C901
-        self, *args, user, phase: Phase, **kwargs,
-    ):
+    def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
         super().__init__(*args, **kwargs)
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
@@ -299,14 +295,14 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
 
         if (
             Evaluation.objects.filter(
-                submission__algorithm_image__image_sha256=algorithm.latest_ready_image.image_sha256,
+                submission__algorithm_image__image_sha256=algorithm.latest_ready_image.image_sha256
             )
             .exclude(
                 status__in=[
                     Evaluation.SUCCESS,
                     Evaluation.FAILURE,
                     Evaluation.CANCELLED,
-                ],
+                ]
             )
             .exclude(submission__phase=self._phase)
             .exists()

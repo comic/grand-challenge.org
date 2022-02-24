@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workstation_configs", "0002_workstationconfig_image_context"),
+        ("workstation_configs", "0002_workstationconfig_image_context")
     ]
 
     operations = [
@@ -17,5 +17,5 @@ class Migration(migrations.Migration):
                 default=False,
                 verbose_name="Enable contrast enhancement preprocessing (fundus)",
             ),
-        ),
+        )
     ]

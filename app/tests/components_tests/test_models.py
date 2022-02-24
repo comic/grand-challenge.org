@@ -111,6 +111,8 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.SQREG, True, False),
         (InterfaceKindChoices.PDF, True, False),
         (InterfaceKindChoices.CHART, False, False),
+        (InterfaceKindChoices.LINE, False, False),
+        (InterfaceKindChoices.MULTIPLE_LINES, False, False),
     ),
 )
 def test_save_in_object_store(kind, object_store_required, is_image):
@@ -208,7 +210,7 @@ def test_multi_value_fails(kind, image, file, value):
         image = ImageFactory()
 
     if file:
-        file = ContentFile(json.dumps(True).encode("utf-8"), name="test.csv",)
+        file = ContentFile(json.dumps(True).encode("utf-8"), name="test.csv")
 
     i = ComponentInterfaceFactory(kind=kind)
     v = ComponentInterfaceValue(
@@ -435,7 +437,7 @@ def test_default_validation(kind, value, expectation, use_file):
     if use_file:
         kwargs = {
             "file": ContentFile(
-                json.dumps(value).encode("utf-8"), name="test.json",
+                json.dumps(value).encode("utf-8"), name="test.json"
             )
         }
     else:
@@ -583,7 +585,7 @@ def test_extra_schema_validation(kind, value, invalidation_schema, use_file):
     if use_file:
         kwargs = {
             "file": ContentFile(
-                json.dumps(value).encode("utf-8"), name="test.json",
+                json.dumps(value).encode("utf-8"), name="test.json"
             )
         }
     else:

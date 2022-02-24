@@ -78,9 +78,7 @@ router.register(
     basename="components-interface",
 )
 # Evaluations
-router.register(
-    r"evaluations", EvaluationViewSet, basename="evaluation",
-)
+router.register(r"evaluations", EvaluationViewSet, basename="evaluation")
 
 # Notifications
 router.register(r"notifications", NotificationViewSet, basename="notification")
@@ -162,9 +160,7 @@ router.register(
     ETDRSGridAnnotationViewSet,
     basename="retina-etdrs-grid-annotation",
 )
-router.register(
-    r"retina/images", RetinaImageViewSet, basename="retina-images",
-)
+router.register(r"retina/images", RetinaImageViewSet, basename="retina-images")
 
 # Follows (Subscriptions)
 router.register(r"subscriptions", FollowViewSet, basename="follow")
@@ -182,9 +178,7 @@ router.register(r"workstations/sessions", SessionViewSet)
 
 
 class SchemaView(SpectacularAPIView):
-    urlconf = [
-        path("api/v1/", include(router.urls)),
-    ]
+    urlconf = [path("api/v1/", include(router.urls))]
 
 
 urlpatterns = [

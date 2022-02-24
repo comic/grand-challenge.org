@@ -11,8 +11,6 @@ def create_credits(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("credits", "0001_initial"),
-    ]
+    dependencies = [("credits", "0001_initial")]
 
     operations = [migrations.RunPython(create_credits, elidable=True)]

@@ -5,9 +5,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("forum_member", "0001_initial"),
-    ]
+    dependencies = [("forum_member", "0001_initial")]
 
     operations = [
         migrations.AlterField(
@@ -20,5 +18,5 @@ class Migration(migrations.Migration):
                 validators=[django.core.validators.MaxLengthValidator(255)],
                 verbose_name="Signature",
             ),
-        ),
+        )
     ]

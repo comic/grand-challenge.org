@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workstation_configs", "0004_workstationconfig_overlay_luts"),
+        ("workstation_configs", "0004_workstationconfig_overlay_luts")
     ]
 
     operations = [

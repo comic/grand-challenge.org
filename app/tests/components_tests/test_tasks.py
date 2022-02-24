@@ -19,10 +19,7 @@ def test_retry_initial_options():
     new_task = callbacks[0].__self__
 
     assert new_task.options["queue"] == "mine-delay"
-    assert new_task.kwargs == {
-        "foo": "bar",
-        "retries": 1,
-    }
+    assert new_task.kwargs == {"foo": "bar", "retries": 1}
 
 
 @pytest.mark.django_db
@@ -36,10 +33,7 @@ def test_retry_initial():
     new_task = callbacks[0].__self__
 
     assert new_task.options["queue"] == "acks-late-micro-short-delay"
-    assert new_task.kwargs == {
-        "foo": "bar",
-        "retries": 1,
-    }
+    assert new_task.kwargs == {"foo": "bar", "retries": 1}
 
 
 @pytest.mark.django_db
@@ -53,10 +47,7 @@ def test_retry_many():
     new_task = callbacks[0].__self__
 
     assert new_task.options["queue"] == "acks-late-micro-short-delay"
-    assert new_task.kwargs == {
-        "foo": "bar",
-        "retries": 11,
-    }
+    assert new_task.kwargs == {"foo": "bar", "retries": 11}
 
 
 def test_retry_too_many():

@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("products", "0005_auto_20200709_1129"),
-    ]
+    dependencies = [("products", "0005_auto_20200709_1129")]
 
     operations = [
         migrations.AddField(
             model_name="product",
             name="ce_under",
             field=models.CharField(blank=True, max_length=10),
-        ),
+        )
     ]

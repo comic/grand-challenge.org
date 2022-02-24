@@ -5,10 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("cases", "0006_rawimageuploadsession_user_uploads"),
-    ]
+    dependencies = [("cases", "0006_rawimageuploadsession_user_uploads")]
 
-    operations = [
-        migrations.RemoveField(model_name="image", name="study",),
-    ]
+    operations = [migrations.RemoveField(model_name="image", name="study")]

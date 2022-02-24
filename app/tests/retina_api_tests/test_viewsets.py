@@ -73,7 +73,7 @@ from tests.viewset_helpers import get_user_from_user_type, view_test
             PolygonAnnotationSetViewSet,
             NestedPolygonAnnotationSetSerializer,
             False,
-        ),
+        )
     ],
 )
 class TestPolygonAnnotationSetViewSet:
@@ -421,14 +421,7 @@ class TestPolygonAnnotationSetViewSet:
 )
 @pytest.mark.parametrize(
     "namespace,basename,viewset,with_user",
-    [
-        (
-            "api",
-            "retina-single-polygon-annotation",
-            SinglePolygonViewSet,
-            False,
-        ),
-    ],
+    [("api", "retina-single-polygon-annotation", SinglePolygonViewSet, False)],
 )
 class TestSinglePolygonAnnotationViewSet:
     def test_list_view(

@@ -41,10 +41,10 @@ class TestObjectPermissionRequiredViews:
                     kwargs={"slug": a.slug},
                 ),
             ),
-            ("update", {"slug": a.slug}, "change_archive", a, None,),
-            ("editors-update", {"slug": a.slug}, "change_archive", a, None,),
-            ("uploaders-update", {"slug": a.slug}, "change_archive", a, None,),
-            ("users-update", {"slug": a.slug}, "change_archive", a, None,),
+            ("update", {"slug": a.slug}, "change_archive", a, None),
+            ("editors-update", {"slug": a.slug}, "change_archive", a, None),
+            ("uploaders-update", {"slug": a.slug}, "change_archive", a, None),
+            ("users-update", {"slug": a.slug}, "change_archive", a, None),
             (
                 "permission-request-update",
                 {"slug": a.slug, "pk": p.pk},
@@ -52,8 +52,8 @@ class TestObjectPermissionRequiredViews:
                 a,
                 None,
             ),
-            ("cases-list", {"slug": a.slug}, "use_archive", a, None,),
-            ("cases-create", {"slug": a.slug}, "upload_archive", a, None,),
+            ("cases-list", {"slug": a.slug}, "use_archive", a, None),
+            ("cases-create", {"slug": a.slug}, "upload_archive", a, None),
             (
                 "cases-reader-study-update",
                 {"slug": a.slug},
@@ -90,7 +90,7 @@ class TestObjectPermissionRequiredViews:
         u = UserFactory()
 
         for view_name, kwargs, permission, objs in [
-            ("list", {}, "view_archive", {a}),
+            ("list", {}, "view_archive", {a})
         ]:
 
             def _get_view():
@@ -226,22 +226,19 @@ def test_api_archive_item_list_is_filtered(client):
     a1, a2 = ArchiveFactory(), ArchiveFactory()
     a1_editor, user = UserFactory(), UserFactory()
     a1.add_editor(a1_editor)
-    _, _ = (
-        ArchiveItemFactory(archive=a1),
-        ArchiveItemFactory(archive=a1),
-    )
+    _, _ = (ArchiveItemFactory(archive=a1), ArchiveItemFactory(archive=a1))
     i3 = ArchiveItemFactory(archive=a2)
 
     # user does not see any archive items
     response = get_view_for_user(
-        viewname="api:archives-item-list", user=user, client=client,
+        viewname="api:archives-item-list", user=user, client=client
     )
     assert response.status_code == 200
     assert response.json()["count"] == 0
 
     # editor of archive 1 sees the items from archive 1, but not from archive 2
     response = get_view_for_user(
-        viewname="api:archives-item-list", user=a1_editor, client=client,
+        viewname="api:archives-item-list", user=a1_editor, client=client
     )
     assert response.status_code == 200
     assert response.json()["count"] == 2
@@ -321,7 +318,7 @@ def test_api_archive_item_interface_type_update(client, settings):
             reverse_kwargs={"pk": item.pk},
             data={
                 "values": [
-                    {"interface": "generic-overlay", "image": im.api_url},
+                    {"interface": "generic-overlay", "image": im.api_url}
                 ]
             },
             user=editor,
@@ -417,7 +414,7 @@ def test_api_archive_item_add_and_update_non_image_file(client, settings):
             reverse_kwargs={"pk": item.pk},
             data={
                 "values": [
-                    {"interface": ci.slug, "user_upload": upload.api_url},
+                    {"interface": ci.slug, "user_upload": upload.api_url}
                 ]
             },
             user=editor,
@@ -443,7 +440,7 @@ def test_api_archive_item_add_and_update_non_image_file(client, settings):
             reverse_kwargs={"pk": item.pk},
             data={
                 "values": [
-                    {"interface": ci.slug, "user_upload": upload2.api_url},
+                    {"interface": ci.slug, "user_upload": upload2.api_url}
                 ]
             },
             user=editor,

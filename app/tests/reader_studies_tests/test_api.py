@@ -496,7 +496,7 @@ def test_answer_creator_is_reader(client):
                 "version": {"major": 1, "minor": 0},
                 "type": "Point",
                 "name": "test",
-                "point": (1, 2,),
+                "point": (1, 2),
             },
             400,
         ),
@@ -659,7 +659,7 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "answer_type", (Question.AnswerType.CHOICE, Question.AnswerType.NUMBER),
+    "answer_type", (Question.AnswerType.CHOICE, Question.AnswerType.NUMBER)
 )
 def test_only_non_required_can_be_null(client, answer_type):
     im = ImageFactory()
@@ -1143,7 +1143,7 @@ def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
 
     question = QuestionFactory(reader_study=rs, answer_type=answer_type)
 
-    answer1 = AnswerFactory(creator=reader, question=question, answer=None,)
+    answer1 = AnswerFactory(creator=reader, question=question, answer=None)
 
     response = get_view_for_user(
         viewname="api:upload-session-list",
@@ -1177,7 +1177,7 @@ def test_question_accepts_image_type_answers(client, settings):
         reader_study=rs, answer_type=Question.AnswerType.BOOL
     )
 
-    answer = AnswerFactory(creator=reader, question=question, answer=None,)
+    answer = AnswerFactory(creator=reader, question=question, answer=None)
 
     response = get_view_for_user(
         viewname="api:upload-session-list",

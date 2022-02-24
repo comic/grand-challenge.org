@@ -47,7 +47,7 @@ def init_session_permissions(*_, **__):
         name=settings.REGISTERED_USERS_GROUP_NAME
     )
     assign_perm(
-        f"{Session._meta.app_label}.change_{Session._meta.model_name}", g,
+        f"{Session._meta.app_label}.change_{Session._meta.model_name}", g
     )
 
 

@@ -4,9 +4,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("evaluation", "0004_auto_20210402_1508"),
-    ]
+    dependencies = [("evaluation", "0004_auto_20210402_1508")]
 
     operations = [
         migrations.AlterModelOptions(
@@ -18,5 +16,5 @@ class Migration(migrations.Migration):
                     ("create_phase_workspace", "Create Phase Workspace"),
                 ),
             },
-        ),
+        )
     ]

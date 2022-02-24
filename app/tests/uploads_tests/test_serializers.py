@@ -24,7 +24,7 @@ def test_validate_filename_exceptions(filename):
 
 
 @pytest.mark.parametrize(
-    "filename", ("ok.bat", "ok..bat", ".ok.bat", "..ok.bat", "..ok..bat",),
+    "filename", ("ok.bat", "ok..bat", ".ok.bat", "..ok.bat", "..ok..bat")
 )
 def test_validate_filename(filename):
     serializer = UserUploadCreateSerializer()

@@ -10,6 +10,4 @@ class Migration(migrations.Migration):
         ("patients", "0001_initial"),
     ]
 
-    operations = [
-        migrations.DeleteModel(name="Patient",),
-    ]
+    operations = [migrations.DeleteModel(name="Patient")]

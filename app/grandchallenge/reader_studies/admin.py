@@ -27,26 +27,13 @@ class ReaderStudyAdmin(GuardedModelAdmin):
         "allow_case_navigation",
         "validate_hanging_list",
     )
-    search_fields = (
-        "title",
-        "slug",
-        "pk",
-    )
+    search_fields = ("title", "slug", "pk")
 
 
 class AnswersAdmin(GuardedModelAdmin):
     ordering = ("-created",)
-    list_display = (
-        "pk",
-        "created",
-        "question",
-        "creator",
-        "is_ground_truth",
-    )
-    list_filter = (
-        "is_ground_truth",
-        "question__reader_study__slug",
-    )
+    list_display = ("pk", "created", "question", "creator", "is_ground_truth")
+    list_filter = ("is_ground_truth", "question__reader_study__slug")
     list_select_related = ("question__reader_study",)
     readonly_fields = (
         "images",
@@ -60,11 +47,7 @@ class AnswersAdmin(GuardedModelAdmin):
 
 
 class QuestionsAdmin(GuardedModelAdmin):
-    list_filter = (
-        "answer_type",
-        "required",
-        "reader_study__slug",
-    )
+    list_filter = ("answer_type", "required", "reader_study__slug")
     readonly_fields = ("reader_study",)
     list_display = (
         "question_text",
@@ -78,10 +61,7 @@ class QuestionsAdmin(GuardedModelAdmin):
 
 
 class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
-    readonly_fields = (
-        "user",
-        "reader_study",
-    )
+    readonly_fields = ("user", "reader_study")
 
 
 admin.site.register(ReaderStudy, ReaderStudyAdmin)

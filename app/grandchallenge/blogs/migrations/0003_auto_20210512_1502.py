@@ -7,9 +7,7 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("blogs", "0002_auto_20200908_0942"),
-    ]
+    dependencies = [("blogs", "0002_auto_20200908_0942")]
 
     operations = [
         migrations.AlterField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                 storage=grandchallenge.core.storage.PublicS3Storage(),
                 upload_to=grandchallenge.core.storage.get_logo_path,
             ),
-        ),
+        )
     ]

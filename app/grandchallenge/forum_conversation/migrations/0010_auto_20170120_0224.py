@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("forum_conversation", "0009_auto_20160925_2126"),
-    ]
+    dependencies = [("forum_conversation", "0009_auto_20160925_2126")]
 
     operations = [
         migrations.AlterField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 to="forum_conversation.Post",
                 verbose_name="First post",
             ),
-        ),
+        )
     ]
