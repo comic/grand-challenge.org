@@ -28,7 +28,7 @@ if __name__ == "__main__":
     input_file = next(Path("/input/").glob("*.csv"))
     preds = get_classes(input_file)
     # The evaluation algorithm computes the scores of this submission
-    acc = sum([a == b for a, b in zip(gt, preds)]) / len(gt)
+    acc = sum(a == b for a, b in zip(gt, preds)) / len(gt)
     # A dictionary is created of the metrics, which is then written to
     # /output/metrics.json
     metrics = {"acc": acc, "inf": float("inf"), "nan": float("nan")}

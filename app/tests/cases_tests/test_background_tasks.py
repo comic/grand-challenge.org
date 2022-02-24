@@ -297,15 +297,13 @@ def test_check_compressed_and_extract_same_name(
     tmpdir_path = Path(tmpdir)
     check_compressed_and_extract(src_path=tmp_file, checked_paths=set())
     expected = sorted(
-        [
-            os.path.join(
-                tmpdir_path,
-                file_name,
-                f"{x}.zip" if double_zipped else f"{x}/1",
-                "test_grayscale.png",
-            )
-            for x in range(1, 11)
-        ]
+        os.path.join(
+            tmpdir_path,
+            file_name,
+            f"{x}.zip" if double_zipped else f"{x}/1",
+            "test_grayscale.png",
+        )
+        for x in range(1, 11)
     )
     actual = []
     for root, _, files in os.walk(tmpdir_path):

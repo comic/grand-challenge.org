@@ -593,11 +593,11 @@ class Challenge(ChallengeBase):
             detail = ["Not accepting submissions"]
         elif self.status == StatusChoices.OPENING_SOON:
             start_date = min(
-                [
+                (
                     phase.submissions_open_at
                     for phase in self.phase_set.all()
                     if phase.status == StatusChoices.OPENING_SOON
-                ],
+                ),
                 default=None,
             )
             phase = (
