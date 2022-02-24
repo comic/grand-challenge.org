@@ -1465,7 +1465,7 @@ def test_display_set_add_and_edit(client, settings):
     )
 
     assert sorted(
-        [val["interface"] for val in response.json()["values"]]
+        val["interface"] for val in response.json()["values"]
     ) == sorted([ci.slug, "generic-medical-image"])
     ds.refresh_from_db()
     assert ds.values.count() == 2

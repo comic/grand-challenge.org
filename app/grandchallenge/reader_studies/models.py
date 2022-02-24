@@ -893,7 +893,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 )
                 .order_by("display_set")
                 .values("display_set_id")
-                .annotate(Sum("score"), Avg("score"),)
+                .annotate(
+                    Sum("score"),
+                    Avg("score"),
+                )
                 .order_by("score__avg")
             )
         else:
@@ -903,7 +906,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 )
                 .order_by("images__name")
                 .values("images__name", "images__pk")
-                .annotate(Sum("score"), Avg("score"),)
+                .annotate(
+                    Sum("score"),
+                    Avg("score"),
+                )
                 .order_by("score__avg")
             )
 
