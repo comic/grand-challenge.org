@@ -10,6 +10,7 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db import transaction
+from django.db.models import Count
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -1011,7 +1012,19 @@ class DisplaySetViewSet(
             "unanswered_by_user"
         )
         if unanswered_by_user == "True":
-            queryset = queryset.exclude(answers__creator=self.request.user)
+            reader_study = self.reader_study
+            if reader_study is None:
+                raise ValidationError(
+                    "Please provide a reader study when filtering for "
+                    "unanswered display_sets."
+                )
+            answerable_question_count = reader_study.answerable_question_count
+            queryset = queryset.annotate(
+                answer_count=Count("answers")
+            ).exclude(
+                answers__creator=self.request.user,
+                answer_count__gte=answerable_question_count,
+            )
         return queryset
 
     def list(self, request, *args, **kwargs):
