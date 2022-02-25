@@ -39,8 +39,8 @@ class NotificationFilter(FilterSet):
             ]
 
         search_fields = (
-            "action__target_object_id",
-            "action__action_object_object_id",
+            "target_object_id",
+            "action_object_object_id",
         )
 
         return queryset.filter(
