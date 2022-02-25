@@ -27,9 +27,7 @@ class GroupWithUsers(GroupAdmin):
 
 class MarkdownFlatPageForm(FlatpageForm):
     class Meta(FlatpageForm.Meta):
-        widgets = {
-            "content": MarkdownEditorAdminWidget(),
-        }
+        widgets = {"content": MarkdownEditorAdminWidget()}
 
 
 class MarkdownFlatPageAdmin(FlatPageAdmin):

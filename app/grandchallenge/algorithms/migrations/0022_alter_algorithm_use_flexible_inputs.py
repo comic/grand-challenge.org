@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("algorithms", "0021_alter_algorithm_additional_terms_markdown"),
+        ("algorithms", "0021_alter_algorithm_additional_terms_markdown")
     ]
 
     operations = [
@@ -13,5 +13,5 @@ class Migration(migrations.Migration):
             model_name="algorithm",
             name="use_flexible_inputs",
             field=models.BooleanField(default=True, null=True),
-        ),
+        )
     ]

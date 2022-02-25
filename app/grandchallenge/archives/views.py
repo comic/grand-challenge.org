@@ -59,14 +59,8 @@ from grandchallenge.archives.tasks import (
     start_archive_item_update_tasks,
     update_archive_item_update_kwargs,
 )
-from grandchallenge.cases.models import (
-    Image,
-    RawImageUploadSession,
-)
-from grandchallenge.components.models import (
-    ComponentInterface,
-    InterfaceKind,
-)
+from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -109,9 +103,7 @@ class ArchiveList(FilterMixin, PermissionListMixin, ListView):
         return context
 
 
-class ArchiveCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
-):
+class ArchiveCreate(PermissionRequiredMixin, UserFormKwargsMixin, CreateView):
     model = Archive
     form_class = ArchiveForm
     permission_required = (
@@ -182,7 +174,7 @@ class ArchiveDetail(
         )
 
         pending_permission_requests = ArchivePermissionRequest.objects.filter(
-            archive=context["object"], status=ArchivePermissionRequest.PENDING,
+            archive=context["object"], status=ArchivePermissionRequest.PENDING
         ).count()
         context.update(
             {"pending_permission_requests": pending_permission_requests}
@@ -264,10 +256,7 @@ class ArchivePermissionRequestCreate(
             archive=self.archive, user=self.request.user
         ).first()
         context.update(
-            {
-                "permission_request": permission_request,
-                "archive": self.archive,
-            }
+            {"permission_request": permission_request, "archive": self.archive}
         )
         return context
 
@@ -447,17 +436,17 @@ class ArchiveEditArchiveItem(
                     "civ_pks_to_add": list(civ_pks_to_add),
                     "civ_pks_to_remove": list(civ_pks_to_remove),
                     "upload_pks": upload_pks,
-                },
+                }
             ).apply_async
         )
 
         return HttpResponseRedirect(
-            reverse("archives:items-list", kwargs={"slug": self.archive.slug},)
+            reverse("archives:items-list", kwargs={"slug": self.archive.slug})
         )
 
 
 class ArchiveItemsList(
-    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView,
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
 ):
     model = ArchiveItem
     permission_required = (
@@ -506,7 +495,7 @@ class ArchiveItemsList(
 
 
 class ArchiveCasesList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     model = Image
     permission_required = (
@@ -670,10 +659,7 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
     serializer_class = ArchiveSerializer
     queryset = Archive.objects.all()
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (
-        DjangoFilterBackend,
-        ObjectPermissionsFilter,
-    )
+    filter_backends = (DjangoFilterBackend, ObjectPermissionsFilter)
     filterset_fields = ("slug",)
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,

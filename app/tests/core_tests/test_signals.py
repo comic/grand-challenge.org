@@ -15,12 +15,12 @@ from tests.reader_studies_tests.factories import ReaderStudyFactory
 @pytest.mark.parametrize(
     "factory,reverse",
     (
-        (AlgorithmFactory, True,),
-        (ReaderStudyFactory, True,),
-        (ArchiveFactory, True,),
+        (AlgorithmFactory, True),
+        (ReaderStudyFactory, True),
+        (ArchiveFactory, True),
         (AlgorithmFactory, False),
-        (ReaderStudyFactory, False,),
-        (ArchiveFactory, False,),
+        (ReaderStudyFactory, False),
+        (ArchiveFactory, False),
     ),
 )
 def test_update_editor_follows_signal(client, factory, reverse):

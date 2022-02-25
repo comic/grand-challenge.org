@@ -67,7 +67,7 @@ def test_user_can_download_images(client, reverse):
                 iv2.image.pk,
             ],
         ),
-        (alg_set.editor2, 200, [i.image.pk for i in alg2_job.inputs.all()],),
+        (alg_set.editor2, 200, [i.image.pk for i in alg2_job.inputs.all()]),
         (alg_set.user2, 200, []),
         (j2_creator, 200, [i.image.pk for i in alg2_job.inputs.all()]),
         (alg_set.u, 200, []),
@@ -153,7 +153,7 @@ def test_user_can_download_input_images(client, reverse):
             [*alg1_origin_input, iv1.image.pk, iv2.image.pk],
         ),
         (alg_set.user1, 200, []),
-        (j1_creator, 200, [*alg1_origin_input, iv1.image.pk, iv2.image.pk],),
+        (j1_creator, 200, [*alg1_origin_input, iv1.image.pk, iv2.image.pk]),
         (alg_set.editor2, 200, alg2_origin_input),
         (alg_set.user2, 200, []),
         (j2_creator, 200, alg2_origin_input),
@@ -201,9 +201,7 @@ class TestAlgorithmJobViewersGroup:
         job = AlgorithmJobFactory()
         viewer_groups = {*job.viewer_groups.all()}
 
-        assert viewer_groups == {
-            job.viewers,
-        }
+        assert viewer_groups == {job.viewers}
         for group in viewer_groups:
             assert "view_job" in get_perms(group, job)
 

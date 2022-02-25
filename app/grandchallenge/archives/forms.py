@@ -61,6 +61,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "workstation_config",
             "algorithms",
             "public",
+            "access_request_handling",
             "detail_page_markdown",
         )
         widgets = {
@@ -130,7 +131,7 @@ class ArchivePermissionRequestUpdateForm(PermissionRequestUpdateForm):
 
 class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
     reader_study = ModelChoiceField(
-        queryset=ReaderStudy.objects.none(), required=True,
+        queryset=ReaderStudy.objects.none(), required=True
     )
     images = ModelMultipleChoiceField(
         queryset=Image.objects.none(),
@@ -185,7 +186,7 @@ class AddCasesForm(UploadRawImagesForm):
 
 class ArchiveItemForm(SaveFormInitMixin, Form):
     def __init__(
-        self, *args, user=None, archive_item=None, interface=None, **kwargs,
+        self, *args, user=None, archive_item=None, interface=None, **kwargs
     ):
         super().__init__(*args, **kwargs)
 

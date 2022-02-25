@@ -96,10 +96,8 @@ def save_zipfile(ghwm, tmpdirname):
         for foldername, _subfolders, filenames in os.walk(tmpdirname):
             for filename in filenames:
                 file_path = os.path.join(foldername, filename)
-                zipf.write(
-                    file_path, file_path.replace(f"{tmpdirname}/", ""),
-                )
-    temp_file = files.File(tmp_zip, name=zip_name,)
+                zipf.write(file_path, file_path.replace(f"{tmpdirname}/", ""))
+    temp_file = files.File(tmp_zip, name=zip_name)
     return temp_file
 
 

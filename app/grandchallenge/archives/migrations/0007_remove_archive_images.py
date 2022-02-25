@@ -4,10 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("archives", "0006_archiveitem"),
-    ]
+    dependencies = [("archives", "0006_archiveitem")]
 
-    operations = [
-        migrations.RemoveField(model_name="archive", name="images"),
-    ]
+    operations = [migrations.RemoveField(model_name="archive", name="images")]

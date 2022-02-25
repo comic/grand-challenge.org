@@ -4,10 +4,8 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("challenges", "0009_alter_challenge_use_evaluation"),
-    ]
+    dependencies = [("challenges", "0009_alter_challenge_use_evaluation")]
 
     operations = [
-        migrations.RemoveField(model_name="challenge", name="use_evaluation",),
+        migrations.RemoveField(model_name="challenge", name="use_evaluation")
     ]

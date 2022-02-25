@@ -50,7 +50,7 @@ def test_validate_dicom_files():
     with mock.patch(
         "panimg.image_builders.dicom._get_headers_by_study",
         return_value={
-            "foo": {"headers": headers[1:], "file": "bar", "index": 1},
+            "foo": {"headers": headers[1:], "file": "bar", "index": 1}
         },
     ):
         errors = defaultdict(list)
@@ -98,7 +98,7 @@ def test_image_builder_dicom_4dct(tmpdir):
     )
     assert np.allclose(
         list(map(float, spacing))[:2],
-        list(map(float, list(dcm_ref.PixelSpacing),)),
+        list(map(float, list(dcm_ref.PixelSpacing))),
     )
     assert np.allclose(
         list(map(float, origin)),

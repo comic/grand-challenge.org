@@ -17,13 +17,8 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     )
     serializer_class = EvaluationSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (
-        DjangoFilterBackend,
-        ObjectPermissionsFilter,
-    )
-    filterset_fields = [
-        "submission__phase",
-    ]
+    filter_backends = (DjangoFilterBackend, ObjectPermissionsFilter)
+    filterset_fields = ["submission__phase"]
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,

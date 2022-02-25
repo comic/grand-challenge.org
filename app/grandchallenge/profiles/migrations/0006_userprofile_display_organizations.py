@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("profiles", "0005_auto_20210213_1330"),
-    ]
+    dependencies = [("profiles", "0005_auto_20210213_1330")]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=True,
                 help_text="Display the organizations that you are a member of in your profile.",
             ),
-        ),
+        )
     ]

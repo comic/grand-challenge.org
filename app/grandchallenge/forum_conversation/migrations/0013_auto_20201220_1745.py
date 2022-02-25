@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("forum_conversation", "0012_auto_20200423_1049"),
-    ]
+    dependencies = [("forum_conversation", "0012_auto_20200423_1049")]
 
     operations = [
         migrations.AlterField(

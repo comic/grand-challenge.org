@@ -82,7 +82,7 @@ class TestObjectPermissionRequiredViews:
                 {},
                 "view_rawimageuploadsession",
                 rius,
-            ),
+            )
         ]:
             assign_perm(permission, u, obj)
 

@@ -9,6 +9,9 @@ from django.test import TestCase
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.fixtures import create_uploaded_image
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
@@ -342,6 +345,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "page_set-TOTAL_FORMS": "0",
             "page_set-INITIAL_FORMS": "0",
             "page_set-MAX_NUM_FORMS": "",
+            "access_request_handling": AccessRequestHandlingOptions.ACCEPT_ALL,
         }
         self._login(user)
         response = self.client.post(url, data)
@@ -568,8 +572,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
     def test_non_exitant_project_gives_404(self):
         """Reproduces https://github.com/comic/grand-challenge.org/issues/219."""
         non_existant_url = reverse(
-            "pages:home",
-            kwargs={"challenge_short_name": "nonexistingproject"},
+            "pages:home", kwargs={"challenge_short_name": "nonexistingproject"}
         )
         response, username = self._view_url(None, non_existant_url)
 

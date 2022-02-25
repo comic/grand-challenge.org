@@ -74,7 +74,7 @@ def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
                 kwargs={
                     "archive_pks": list(archive_pks),
                     "archive_item_pks": list(archive_item_pks),
-                },
+                }
             )
         )
 
@@ -99,6 +99,6 @@ def on_archive_algorithms_changed(
             kwargs={
                 "archive_pks": list(archive_pks),
                 "algorithm_pks": list(algorithm_pks),
-            },
+            }
         )
     )

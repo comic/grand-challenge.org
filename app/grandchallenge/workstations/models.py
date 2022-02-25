@@ -191,10 +191,10 @@ class WorkstationImage(UUIDModel, ComponentImage):
 
     workstation = models.ForeignKey(Workstation, on_delete=models.PROTECT)
     http_port = models.PositiveIntegerField(
-        default=8080, validators=[MaxValueValidator(2 ** 16 - 1)]
+        default=8080, validators=[MaxValueValidator(2**16 - 1)]
     )
     websocket_port = models.PositiveIntegerField(
-        default=4114, validators=[MaxValueValidator(2 ** 16 - 1)]
+        default=4114, validators=[MaxValueValidator(2**16 - 1)]
     )
     initial_path = models.CharField(
         max_length=256,
@@ -312,7 +312,7 @@ class Session(UUIDModel):
         EU_NL_2 = "eu-nl-2", "Netherlands (Amsterdam)"
 
     status = models.PositiveSmallIntegerField(
-        choices=STATUS_CHOICES, default=QUEUED, db_index=True,
+        choices=STATUS_CHOICES, default=QUEUED, db_index=True
     )
     region = models.CharField(
         max_length=14,

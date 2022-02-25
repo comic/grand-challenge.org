@@ -46,7 +46,4 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         self.fields["creator"].initial = user
 
     class Meta:
-        fields = (
-            "user_upload",
-            "creator",
-        )
+        fields = ("user_upload", "creator")

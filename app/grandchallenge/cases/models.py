@@ -58,7 +58,7 @@ class RawImageUploadSession(UUIDModel):
     )
 
     user_uploads = models.ManyToManyField(
-        UserUpload, blank=True, related_name="image_upload_sessions",
+        UserUpload, blank=True, related_name="image_upload_sessions"
     )
 
     status = models.PositiveSmallIntegerField(
@@ -243,7 +243,7 @@ class Image(UUIDModel):
         on_delete=models.SET_NULL,
     )
     modality = models.ForeignKey(
-        ImagingModality, null=True, blank=True, on_delete=models.SET_NULL,
+        ImagingModality, null=True, blank=True, on_delete=models.SET_NULL
     )
 
     width = models.IntegerField(blank=False)
@@ -267,7 +267,7 @@ class Image(UUIDModel):
     patient_birth_date = models.DateField(null=True, blank=True)
     patient_age = models.CharField(max_length=4, default="", blank=True)
     patient_sex = models.CharField(
-        max_length=1, blank=True, choices=PATIENT_SEX_CHOICES, default="",
+        max_length=1, blank=True, choices=PATIENT_SEX_CHOICES, default=""
     )
     study_date = models.DateField(null=True, blank=True)
     study_instance_uid = models.CharField(

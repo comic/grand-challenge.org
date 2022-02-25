@@ -32,9 +32,7 @@ class UserProfileForm(forms.ModelForm):
             "receive_notification_emails",
             "receive_newsletter",
         )
-        widgets = {
-            "receive_newsletter": CheckboxInput(),
-        }
+        widgets = {"receive_newsletter": CheckboxInput()}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,8 +114,8 @@ class NewsletterSignupForm(SaveFormInitMixin, forms.ModelForm):
         fields = ("receive_newsletter",)
         widgets = {
             "receive_newsletter": Select(
-                choices=((True, "Yes, sign me up!"), (False, "No, thanks."),)
-            ),
+                choices=((True, "Yes, sign me up!"), (False, "No, thanks."))
+            )
         }
 
     def __init__(self, *args, **kwargs):

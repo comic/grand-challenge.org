@@ -87,7 +87,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
 
             self.fields["image"].queryset = get_objects_for_user(
-                user, "cases.view_image", accept_global_perms=False,
+                user, "cases.view_image", accept_global_perms=False
             )
 
             self.fields["upload_session"].queryset = get_objects_for_user(
@@ -97,7 +97,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             ).filter(status=RawImageUploadSession.PENDING)
 
             self.fields["user_upload"].queryset = get_objects_for_user(
-                user, "uploads.change_userupload", accept_global_perms=False,
+                user, "uploads.change_userupload", accept_global_perms=False
             )
 
     def validate(self, attrs):

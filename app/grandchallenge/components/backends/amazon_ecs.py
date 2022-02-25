@@ -503,7 +503,7 @@ class AmazonECSExecutor:
 
         for task_arn in task_arns:
             self._ecs_client.stop_task(
-                cluster=self._cluster_arn, task=task_arn,
+                cluster=self._cluster_arn, task=task_arn
             )
 
     def _deregister_task_definitions(self):
@@ -514,7 +514,7 @@ class AmazonECSExecutor:
 
         for task_definition_arn in response["taskDefinitionArns"]:
             self._ecs_client.deregister_task_definition(
-                taskDefinition=task_definition_arn,
+                taskDefinition=task_definition_arn
             )
 
         if next_token:

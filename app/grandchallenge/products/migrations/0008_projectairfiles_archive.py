@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("products", "0007_projectairfiles"),
-    ]
+    dependencies = [("products", "0007_projectairfiles")]
 
     operations = [
         migrations.AddField(
             model_name="projectairfiles",
             name="archive",
             field=models.BooleanField(default=False),
-        ),
+        )
     ]

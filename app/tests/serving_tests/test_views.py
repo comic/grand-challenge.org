@@ -10,10 +10,7 @@ from grandchallenge.components.models import (
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.evaluation_tests.factories import SubmissionFactory
-from tests.factories import (
-    ImageFileFactory,
-    UserFactory,
-)
+from tests.factories import ImageFileFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -152,11 +149,7 @@ def test_output_download(client):
     )
     job.outputs.add(output_civ)
 
-    tests = [
-        (403, None),
-        (302, user1),
-        (403, user2),
-    ]
+    tests = [(403, None), (302, user1), (403, user2)]
 
     for test in tests:
         response = get_view_for_user(

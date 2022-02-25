@@ -6,6 +6,9 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
 )
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.core.utils.access_requests import (
+    AccessRequestHandlingOptions,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmPermissionRequestFactory,
@@ -132,6 +135,7 @@ def test_algorithm_create(client, uploaded_image):
                 "outputs": [ci.pk],
                 "contact_email": creator.email,
                 "display_editors": True,
+                "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
             },
             follow=True,
             user=creator,

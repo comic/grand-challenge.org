@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("evaluation", "0007_auto_20210713_1407"),
-    ]
+    dependencies = [("evaluation", "0007_auto_20210713_1407")]
 
     operations = [
         migrations.AddField(
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
                     "Map of the ComponentInterfaceValue id to the path prefix to use for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at /input/foo/bar/<relative_path>"
                 ),
             ),
-        ),
+        )
     ]

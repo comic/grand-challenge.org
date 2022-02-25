@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("github", "0004_auto_20210916_0746"),
-    ]
+    dependencies = [("github", "0004_auto_20210916_0746")]
 
     operations = [
         migrations.AddField(
             model_name="githubusertoken",
             name="github_user_id",
             field=models.BigIntegerField(null=True),
-        ),
+        )
     ]

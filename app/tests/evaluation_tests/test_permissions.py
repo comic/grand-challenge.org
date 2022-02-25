@@ -215,7 +215,7 @@ class TestEvaluationPermissions:
             e.submission.phase.challenge.admins_group: {
                 "change_evaluation",
                 "view_evaluation",
-            },
+            }
         }
         assert get_users_with_perms(e, with_group_users=False).count() == 0
 
@@ -253,7 +253,7 @@ class TestEvaluationPermissions:
             e.submission.phase.challenge.admins_group: {
                 "change_evaluation",
                 "view_evaluation",
-            },
+            }
         }
 
     def test_hiding_challenge_updates_perms(self, settings):

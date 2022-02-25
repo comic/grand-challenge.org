@@ -13,9 +13,9 @@ class Company(models.Model):
     founded = models.IntegerField()
     hq = models.CharField(max_length=100)
     email = models.EmailField()
-    logo = models.ImageField(upload_to=get_logo_path, null=True,)
+    logo = models.ImageField(upload_to=get_logo_path, null=True)
     description = models.TextField(
-        blank=True, help_text="Short summary of this project.",
+        blank=True, help_text="Short summary of this project."
     )
     description_short = models.CharField(
         max_length=250,
@@ -86,7 +86,7 @@ class Product(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     slug = models.SlugField()
     description = models.TextField(
-        blank=True, help_text="Short summary of this project.",
+        blank=True, help_text="Short summary of this project."
     )
     description_short = models.CharField(
         max_length=250,

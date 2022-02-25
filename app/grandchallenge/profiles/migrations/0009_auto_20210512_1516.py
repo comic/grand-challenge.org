@@ -7,9 +7,7 @@ import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("profiles", "0008_auto_20210406_0757"),
-    ]
+    dependencies = [("profiles", "0008_auto_20210406_0757")]
 
     operations = [
         migrations.AlterField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 upload_to=grandchallenge.core.storage.get_mugshot_path,
                 verbose_name="mugshot",
             ),
-        ),
+        )
     ]

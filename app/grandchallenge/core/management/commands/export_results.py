@@ -16,7 +16,7 @@ class Command(BaseCommand):
         )
 
         jobs = (
-            Evaluation.objects.filter(method__challenge=challenge,)
+            Evaluation.objects.filter(method__challenge=challenge)
             .select_related("submission", "method")
             .prefetch_related("outputs")
         )

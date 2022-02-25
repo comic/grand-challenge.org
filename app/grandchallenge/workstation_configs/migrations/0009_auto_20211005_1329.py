@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("workstation_configs", "0008_auto_20210920_1439"),
-    ]
+    dependencies = [("workstation_configs", "0008_auto_20210920_1439")]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=True,
                 help_text="Jump to center of gravity of first output when viewing algorithm results or the first overlay segment when viewing a reader study",
             ),
-        ),
+        )
     ]

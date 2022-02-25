@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.PROTECT,
                 to="challenges.challenge",
             ),
-        ),
+        )
     ]

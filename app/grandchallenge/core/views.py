@@ -162,7 +162,7 @@ class HomeTemplate(TemplateView):
                 "highlighted_algorithms": Algorithm.objects.filter(
                     public=True, highlight=True
                 )
-                .prefetch_related("publications",)
+                .prefetch_related("publications")
                 .order_by("-created")
                 .all()[:4],
                 "news_caroussel_items": news_caroussel_items,
@@ -230,7 +230,7 @@ class PermissionRequestUpdate(
 
     def get_success_message(self, cleaned_data):
         if not self.base_object.is_editor(self.request.user):
-            return "You request for access has been sent to editors"
+            return "Your request for access has been sent to the editors"
         return "Permission request successfully updated"
 
     def get_success_url(self):

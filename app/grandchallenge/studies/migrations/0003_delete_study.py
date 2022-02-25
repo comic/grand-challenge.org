@@ -10,6 +10,4 @@ class Migration(migrations.Migration):
         ("studies", "0002_auto_20211012_0942"),
     ]
 
-    operations = [
-        migrations.DeleteModel(name="Study",),
-    ]
+    operations = [migrations.DeleteModel(name="Study")]

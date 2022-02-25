@@ -6,11 +6,7 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
-from grandchallenge.evaluation.models import (
-    Evaluation,
-    Phase,
-    Submission,
-)
+from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 
 
 class UserSerializer(ModelSerializer):
@@ -22,10 +18,7 @@ class UserSerializer(ModelSerializer):
 class ChallengeSerializer(ModelSerializer):
     class Meta:
         model = Challenge
-        fields = (
-            "title",
-            "short_name",
-        )
+        fields = ("title", "short_name")
 
 
 class PhaseSerializer(ModelSerializer):
@@ -33,11 +26,7 @@ class PhaseSerializer(ModelSerializer):
 
     class Meta:
         model = Phase
-        fields = (
-            "challenge",
-            "title",
-            "slug",
-        )
+        fields = ("challenge", "title", "slug")
 
 
 class SubmissionSerializer(ModelSerializer):

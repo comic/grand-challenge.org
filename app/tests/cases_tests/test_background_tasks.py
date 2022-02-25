@@ -16,10 +16,7 @@ from panimg.image_builders.metaio_utils import (
     parse_mh_header,
 )
 
-from grandchallenge.cases.models import (
-    Image,
-    RawImageUploadSession,
-)
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.tasks import (
     build_images,
     check_compressed_and_extract,
@@ -33,7 +30,7 @@ from tests.uploads_tests.factories import create_upload_from_file
 
 
 def create_raw_upload_image_session(
-    *, images: List[str], delete_file=False, user=None, linked_task=None,
+    *, images: List[str], delete_file=False, user=None, linked_task=None
 ) -> Tuple[RawImageUploadSession, Dict[str, UserUpload]]:
     creator = user or UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession.objects.create(creator=creator)
@@ -297,15 +294,13 @@ def test_check_compressed_and_extract_same_name(
     tmpdir_path = Path(tmpdir)
     check_compressed_and_extract(src_path=tmp_file, checked_paths=set())
     expected = sorted(
-        [
-            os.path.join(
-                tmpdir_path,
-                file_name,
-                f"{x}.zip" if double_zipped else f"{x}/1",
-                "test_grayscale.png",
-            )
-            for x in range(1, 11)
-        ]
+        os.path.join(
+            tmpdir_path,
+            file_name,
+            f"{x}.zip" if double_zipped else f"{x}/1",
+            "test_grayscale.png",
+        )
+        for x in range(1, 11)
     )
     actual = []
     for root, _, files in os.walk(tmpdir_path):

@@ -62,6 +62,7 @@ def add_user_to_groups(
 @receiver(pre_save, sender=AlgorithmPermissionRequest)
 @receiver(pre_save, sender=ArchivePermissionRequest)
 @receiver(pre_save, sender=ReaderStudyPermissionRequest)
+@receiver(pre_save, sender=RegistrationRequest)
 def process_permission_request_update(sender, instance, *_, **__):
     try:
         old_values = sender.objects.get(pk=instance.pk)
@@ -153,9 +154,7 @@ def update_editor_follows(  # noqa: C901
     for user in users:
         for obj in follow_objects:
             if action == "post_add" and obj._meta.model_name != "algorithm":
-                follow(
-                    user=user, obj=obj, actor_only=False, send_action=False,
-                )
+                follow(user=user, obj=obj, actor_only=False, send_action=False)
                 # only new admins of a challenge get notified
                 if obj._meta.model_name == "challenge":
                     Notification.send(

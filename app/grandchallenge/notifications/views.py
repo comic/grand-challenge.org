@@ -42,14 +42,14 @@ class NotificationViewSet(
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
         messages.add_message(
-            request, messages.SUCCESS, "Notifications successfully deleted.",
+            request, messages.SUCCESS, "Notifications successfully deleted."
         )
         return response
 
     def update(self, request, *args, **kwargs):
         response = super().update(request, *args, **kwargs)
         messages.add_message(
-            request, messages.SUCCESS, "Notifications successfully updated.",
+            request, messages.SUCCESS, "Notifications successfully updated."
         )
         return response
 
@@ -67,7 +67,7 @@ class FollowViewSet(
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
         messages.add_message(
-            request, messages.SUCCESS, "Subscription successfully deleted.",
+            request, messages.SUCCESS, "Subscription successfully deleted."
         )
         return response
 
@@ -178,9 +178,7 @@ class FollowDelete(
         return reverse("notifications:follow-list")
 
 
-class FollowCreate(
-    LoginRequiredMixin, SuccessMessageMixin, CreateView,
-):
+class FollowCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Follow
     form_class = FollowForm
     success_message = "Subscription successfully added"

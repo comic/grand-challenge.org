@@ -6,9 +6,7 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("components", "0004_auto_20210601_0802"),
-    ]
+    dependencies = [("components", "0004_auto_20210601_0802")]
 
     operations = [
         migrations.AddField(
@@ -22,5 +20,5 @@ class Migration(migrations.Migration):
                     grandchallenge.core.validators.JSONSchemaValidator()
                 ],
             ),
-        ),
+        )
     ]

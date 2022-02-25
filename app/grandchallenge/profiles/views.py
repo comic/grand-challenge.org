@@ -31,7 +31,7 @@ def profile(request):
     """Redirect to the profile page of the currently signed in user."""
     if request.user.is_authenticated:
         url = reverse(
-            "profile-detail", kwargs={"username": request.user.username},
+            "profile-detail", kwargs={"username": request.user.username}
         )
     else:
         url = reverse("account_login")
@@ -110,21 +110,11 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
         )
 
         checker = ObjectPermissionChecker(user_or_group=profile_user)
-        for qs in [
-            archives,
-            reader_studies,
-            challenges,
-            algorithms,
-        ]:
+        for qs in [archives, reader_studies, challenges, algorithms]:
             # Perms can only be prefetched for sets of the same objects
             checker.prefetch_perms(objects=qs)
 
-        object_list = [
-            *archives,
-            *reader_studies,
-            *challenges,
-            *algorithms,
-        ]
+        object_list = [*archives, *reader_studies, *challenges, *algorithms]
 
         role = {}
         for obj in object_list:

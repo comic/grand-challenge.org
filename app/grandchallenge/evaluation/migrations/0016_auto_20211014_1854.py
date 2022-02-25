@@ -5,13 +5,11 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("evaluation", "0015_submission_user_upload"),
-    ]
+    dependencies = [("evaluation", "0015_submission_user_upload")]
 
     operations = [
-        migrations.RemoveField(model_name="method", name="staged_image_uuid",),
+        migrations.RemoveField(model_name="method", name="staged_image_uuid"),
         migrations.RemoveField(
-            model_name="submission", name="staged_predictions_file_uuid",
+            model_name="submission", name="staged_predictions_file_uuid"
         ),
     ]

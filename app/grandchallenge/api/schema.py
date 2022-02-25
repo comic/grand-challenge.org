@@ -11,10 +11,7 @@ class KnoxTokenScheme(OpenApiAuthenticationExtension):
     def get_security_definition(self, auto_schema):
         prefix = knox_settings.AUTH_HEADER_PREFIX
         if prefix == "Bearer":
-            return {
-                "type": "http",
-                "scheme": "bearer",
-            }
+            return {"type": "http", "scheme": "bearer"}
         else:
             return {
                 "type": "apiKey",

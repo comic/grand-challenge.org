@@ -57,5 +57,5 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={"unique_together": {("creator", "image", "submission")}},
-        ),
+        )
     ]

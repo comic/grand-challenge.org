@@ -23,10 +23,7 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "requires_memory_gb",
         "status",
     )
-    list_filter = (
-        "ready",
-        "requires_gpu",
-    )
+    list_filter = ("ready", "requires_gpu")
     search_fields = ("pk", "creator__username", "image_sha256")
 
 

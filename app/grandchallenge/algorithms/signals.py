@@ -61,12 +61,12 @@ def update_input_image_permissions(
 
 
 def _update_image_permissions(
-    *, jobs, component_interface_values, exclude_jobs: bool,
+    *, jobs, component_interface_values, exclude_jobs: bool
 ):
     for civ in component_interface_values:
         # image__isnull=False is used above so we know that civ.image exists
         civ.image.update_viewer_groups_permissions(
-            exclude_jobs=jobs if exclude_jobs else None,
+            exclude_jobs=jobs if exclude_jobs else None
         )
 
 

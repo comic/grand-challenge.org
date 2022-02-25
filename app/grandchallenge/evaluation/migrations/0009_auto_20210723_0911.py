@@ -4,14 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("evaluation", "0008_evaluation_input_prefixes"),
-    ]
+    dependencies = [("evaluation", "0008_evaluation_input_prefixes")]
 
     operations = [
-        migrations.RemoveField(model_name="submission", name="creators_ip",),
+        migrations.RemoveField(model_name="submission", name="creators_ip"),
         migrations.RemoveField(
-            model_name="submission", name="creators_user_agent",
+            model_name="submission", name="creators_user_agent"
         ),
         migrations.AddField(
             model_name="submission",

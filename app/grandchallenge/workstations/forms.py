@@ -1,11 +1,6 @@
 from crispy_forms.helper import FormHelper
 from django.conf import settings
-from django.forms import (
-    ChoiceField,
-    HiddenInput,
-    ModelChoiceField,
-    ModelForm,
-)
+from django.forms import ChoiceField, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -64,7 +59,4 @@ class SessionForm(ModelForm):
 
     class Meta:
         model = Session
-        fields = (
-            "region",
-            "ping_times",
-        )
+        fields = ("region", "ping_times")

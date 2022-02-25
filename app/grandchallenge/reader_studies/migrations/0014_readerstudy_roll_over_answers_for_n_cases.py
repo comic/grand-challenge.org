@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("reader_studies", "0013_auto_20211206_0925"),
-    ]
+    dependencies = [("reader_studies", "0013_auto_20211206_0925")]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=False,
                 help_text="The number of cases for which answers should roll over. It can be used for repeated readings with slightly different hangings. For instance, if set to 1. Case 2 will start with the answers from case 1; whereas case 3 starts anew but its answers will rollover to case 4.",
             ),
-        ),
+        )
     ]

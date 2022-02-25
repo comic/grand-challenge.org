@@ -23,7 +23,7 @@ class Verification(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
     user = models.OneToOneField(
-        get_user_model(), unique=True, on_delete=models.CASCADE,
+        get_user_model(), unique=True, on_delete=models.CASCADE
     )
 
     email = models.EmailField(blank=True)
@@ -60,7 +60,7 @@ class Verification(models.Model):
 
     @property
     def verification_url(self):
-        return reverse("verifications:confirm", kwargs={"token": self.token},)
+        return reverse("verifications:confirm", kwargs={"token": self.token})
 
     @property
     def review_deadline(self):

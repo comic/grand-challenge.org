@@ -85,9 +85,7 @@ class Build(UUIDModel):
                         fd.write(chunk)
 
                 tmp_file.flush()
-                temp_file = files.File(
-                    tmp_file, name=f"{str(self.pk)}.tar.gz",
-                )
+                temp_file = files.File(tmp_file, name=f"{str(self.pk)}.tar.gz")
 
                 self.algorithm_image.image = temp_file
                 self.algorithm_image.save()
@@ -139,6 +137,4 @@ class Build(UUIDModel):
             return "secondary"
 
     class Meta:
-        indexes = [
-            models.Index(fields=["build_id"]),
-        ]
+        indexes = [models.Index(fields=["build_id"])]

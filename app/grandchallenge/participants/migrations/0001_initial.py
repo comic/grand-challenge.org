@@ -59,5 +59,5 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={"unique_together": {("challenge", "user")}},
-        ),
+        )
     ]

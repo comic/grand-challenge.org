@@ -39,7 +39,7 @@ def create_codebuild_build(*, pk):
             requires_memory_gb=algorithm.image_requires_memory_gb,
         )
         build = Build.objects.create(
-            webhook_message=ghwm, algorithm_image=algorithm_image,
+            webhook_message=ghwm, algorithm_image=algorithm_image
         )
 
         on_commit(

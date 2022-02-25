@@ -6,9 +6,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("forum_conversation", "0011_remove_post_poster_ip"),
-    ]
+    dependencies = [("forum_conversation", "0011_remove_post_poster_ip")]
 
     operations = [
         migrations.AlterField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 ],
                 verbose_name="Content",
             ),
-        ),
+        )
     ]

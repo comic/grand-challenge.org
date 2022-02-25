@@ -6,10 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
-from grandchallenge.challenges.models import (
-    Challenge,
-    ExternalChallenge,
-)
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest

@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("github", "0006_githubwebhookmessage_clone_status"),
-    ]
+    dependencies = [("github", "0006_githubwebhookmessage_clone_status")]
 
     operations = [
         migrations.RenameField(

@@ -228,7 +228,7 @@ class TestViewFilters:
                 client=client,
                 viewname=f"evaluation:{view_name}",
                 reverse_kwargs={
-                    "challenge_short_name": e1.submission.phase.challenge.short_name,
+                    "challenge_short_name": e1.submission.phase.challenge.short_name
                 },
                 user=u,
             )
@@ -276,7 +276,7 @@ def test_submission_time_limit(client, two_challenge_sets):
     phase.save()
 
     SubmissionFactory(
-        phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
+        phase=phase, creator=two_challenge_sets.challenge_set_1.participant
     )
 
     def get_submission_view():
@@ -293,14 +293,14 @@ def test_submission_time_limit(client, two_challenge_sets):
     assert "create 9 more" in get_submission_view().rendered_content
 
     s = SubmissionFactory(
-        phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
+        phase=phase, creator=two_challenge_sets.challenge_set_1.participant
     )
     s.created = timezone.now() - timedelta(hours=23)
     s.save()
     assert "create 8 more" in get_submission_view().rendered_content
 
     s = SubmissionFactory(
-        phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
+        phase=phase, creator=two_challenge_sets.challenge_set_1.participant
     )
     s.created = timezone.now() - timedelta(hours=25)
     s.save()
