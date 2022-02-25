@@ -26,7 +26,7 @@
 
 {% block content %}
 
-    {% if object.submission.phase.hidden %}
+    {% if not object.submission.phase.public %}
         <div class="alert alert-danger">The phase that this evaluation belongs to, is no longer active. </div>
     {% endif %}
 

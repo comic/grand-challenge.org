@@ -468,27 +468,21 @@ def _update_evaluations(*, evaluations, final_positions):
     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def assign_evaluation_permissions(*, challenge_pk: uuid.UUID, phase_pk=None):
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-    evals = (
-        Evaluation.objects.filter(
-            submission__phase__challenge__id=challenge_pk,
-            submission__phase__id=phase_pk,
-        )
-        if phase_pk
-        else Evaluation.objects.filter(
-            submission__phase__challenge__id=challenge_pk
-        )
+    evals = Evaluation.objects.filter(
+        submission__phase__id__in=phase_pks,
     )
+
     with transaction.atomic():
         for e in evals:
             e.assign_permissions()
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def assign_submission_permissions(*, phase_pk: uuid.UUID):
     Submission = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Submission"

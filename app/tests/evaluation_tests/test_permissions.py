@@ -59,7 +59,7 @@ class TestPhasePermissions(TestCase):
     def test_hiding_phase_updates_perms(self):
         e: Evaluation = EvaluationFactory(
             submission__phase__auto_publish_new_results=True,
-            submission__phase__hidden=False,
+            submission__phase__public=True,
             submission__phase__challenge__hidden=False,
             submission__creator=UserFactory(),
         )
@@ -86,7 +86,7 @@ class TestPhasePermissions(TestCase):
         settings.task_always_eager = (True,)
 
         with capture_on_commit_callbacks(execute=True):
-            e.submission.phase.hidden = True
+            e.submission.phase.public = False
             e.submission.phase.save()
 
         assert get_groups_with_set_perms(e) == {
@@ -102,7 +102,7 @@ class TestPhasePermissions(TestCase):
     def test_unhiding_phase_updates_perms(self):
         e: Evaluation = EvaluationFactory(
             submission__phase__auto_publish_new_results=True,
-            submission__phase__hidden=True,
+            submission__phase__public=False,
             submission__phase__challenge__hidden=False,
             submission__creator=UserFactory(),
         )
@@ -126,7 +126,7 @@ class TestPhasePermissions(TestCase):
         settings.task_always_eager = (True,)
 
         with capture_on_commit_callbacks(execute=True):
-            e.submission.phase.hidden = False
+            e.submission.phase.public = True
             e.submission.phase.save()
 
         assert get_groups_with_set_perms(e) == {

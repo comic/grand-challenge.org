@@ -28,7 +28,7 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
-phase_options = ("title", "hidden")
+phase_options = ("title", "public")
 
 submission_options = (
     "submissions_open_at",

@@ -11,7 +11,7 @@
         Choose a Phase</a>
     <ul class="nav nav-pills col-12 mb-3">
         {% for phase in challenge.phase_set.all %}
-            {% if "change_challenge" in challenge_perms or not phase.hidden %}
+            {% if "change_challenge" in challenge_perms or phase.public %}
                 <li class="nav-item">
                     {% if leaderboard_nav %}
                         <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"

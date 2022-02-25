@@ -378,7 +378,11 @@ class Challenge(ChallengeBase):
         if adding or self.hidden != self._hidden_orig:
             on_commit(
                 lambda: assign_evaluation_permissions.apply_async(
-                    kwargs={"challenge_pk": self.pk}
+                    kwargs={
+                        "phase_pks": list(
+                            self.phase_set.values_list("id", flat=True)
+                        )
+                    }
                 )
             )
             self.update_user_forum_permissions()
@@ -614,7 +618,7 @@ class Challenge(ChallengeBase):
 
     @cached_property
     def visible_phases(self):
-        return self.phase_set.filter(hidden=False)
+        return self.phase_set.filter(public=True)
 
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"

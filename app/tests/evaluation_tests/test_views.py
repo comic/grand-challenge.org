@@ -379,7 +379,7 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
     u = UserFactory()
     ch.add_participant(u)
     visible_phase = ch.phase_set.first()
-    hidden_phase = PhaseFactory(challenge=ch, hidden=True)
+    hidden_phase = PhaseFactory(challenge=ch, public=False)
     e1 = EvaluationFactory(
         submission__phase=visible_phase, submission__creator=u
     )

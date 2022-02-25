@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block content %}
-    {% if phase.hidden %}
+    {% if not phase.public %}
         <div class="alert alert-danger">You cannot create a workspace for this phase. This phase is closed. </div>
     {% else %}
         <h2>Create a Workspace </h2>

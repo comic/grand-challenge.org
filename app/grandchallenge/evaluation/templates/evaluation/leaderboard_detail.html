@@ -20,7 +20,7 @@
 {% block content %}
     <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
-    {% if phase.hidden %}
+    {% if not phase.public %}
         <div class="alert alert-danger">This phase is no longer active. </div>
     {% endif %}
 
