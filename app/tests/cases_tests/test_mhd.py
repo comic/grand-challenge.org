@@ -170,18 +170,6 @@ def test_4d_mh_loader_with_uncompressed_data(tmpdir):
     load_sitk_image(tmp_header_file)
 
 
-def test_4d_mh_loader_with_more_than_4_dimensions_fails(tmpdir):
-    src = RESOURCE_PATH / "image10x11x12x13.mhd"
-    dest = Path(tmpdir) / src.name
-    shutil.copy(str(src), str(dest))
-    with open(str(dest)) as f:
-        modified_header = f.read().replace("NDims = 4", "NDims = 5")
-    with open(str(dest), "w") as f:
-        f.write(modified_header)
-    with pytest.raises(NotImplementedError):
-        load_sitk_image(dest)
-
-
 @pytest.mark.parametrize(
     "test_img",
     ["image10x11x12x13-extra-stuff.mhd", "image3x4-extra-stuff.mhd"],
