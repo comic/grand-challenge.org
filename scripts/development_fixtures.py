@@ -561,13 +561,11 @@ def _create_user_tokens(users):
 
     out = f"{'*' * 80}\n"
     for user, token in user_tokens.items():
-        salt = crypto.create_salt_string()
-        digest = crypto.hash_token(token, salt)
+        digest = crypto.hash_token(token)
 
         AuthToken(
             token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
             digest=digest,
-            salt=salt,
             user=users[user],
             expiry=None,
         ).save()
