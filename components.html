@@ -267,179 +267,179 @@ else as it clobbers the input directory.</p>
 <li><p>Chart</p></li>
 </ul>
 <p>Example json for 2D bounding box annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;2D bounding box&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;corners&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">[</span> <span class="mf">130.80001831054688</span><span class="p">,</span> <span class="mf">148.86666870117188</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-        <span class="p">[</span> <span class="mf">69.73332977294922</span><span class="p">,</span> <span class="mf">148.86666870117188</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-        <span class="p">[</span> <span class="mf">69.73332977294922</span><span class="p">,</span> <span class="mf">73.13333129882812</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-        <span class="p">[</span> <span class="mf">130.80001831054688</span><span class="p">,</span> <span class="mf">73.13333129882812</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">]</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2D bounding box&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">130.80001831054688</span><span class="p">,</span><span class="w"> </span><span class="mf">148.86666870117188</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">69.73332977294922</span><span class="p">,</span><span class="w"> </span><span class="mf">148.86666870117188</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">69.73332977294922</span><span class="p">,</span><span class="w"> </span><span class="mf">73.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">130.80001831054688</span><span class="p">,</span><span class="w"> </span><span class="mf">73.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Multiple 2D bounding boxes annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;boxes&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-        <span class="nt">&quot;corners&quot;</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">[</span> <span class="mf">92.66666412353516</span><span class="p">,</span> <span class="mf">136.06668090820312</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-            <span class="p">[</span> <span class="mf">54.79999923706055</span><span class="p">,</span> <span class="mf">136.06668090820312</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-            <span class="p">[</span> <span class="mf">54.79999923706055</span><span class="p">,</span> <span class="mf">95.53333282470703</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-            <span class="p">[</span> <span class="mf">92.66666412353516</span><span class="p">,</span> <span class="mf">95.53333282470703</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">]</span>
-        <span class="p">]},</span>
-        <span class="p">{</span>
-        <span class="nt">&quot;corners&quot;</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">[</span> <span class="mf">92.66666412353516</span><span class="p">,</span> <span class="mf">136.06668090820312</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-            <span class="p">[</span> <span class="mf">54.79999923706055</span><span class="p">,</span> <span class="mf">136.06668090820312</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-            <span class="p">[</span> <span class="mf">54.79999923706055</span><span class="p">,</span> <span class="mf">95.53333282470703</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">],</span>
-            <span class="p">[</span> <span class="mf">92.66666412353516</span><span class="p">,</span> <span class="mf">95.53333282470703</span><span class="p">,</span> <span class="mf">0.5009999871253967</span><span class="p">]</span>
-        <span class="p">]}</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;boxes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
+<span class="w">        </span><span class="p">]},</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
+<span class="w">        </span><span class="p">]}</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Distance measurement annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Distance measurement&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;start&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">59.79176712036133</span><span class="p">,</span> <span class="mf">78.76753997802734</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-    <span class="nt">&quot;end&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">69.38014221191406</span><span class="p">,</span> <span class="mf">143.75546264648438</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Distance measurement&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">59.79176712036133</span><span class="p">,</span><span class="w"> </span><span class="mf">78.76753997802734</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">69.38014221191406</span><span class="p">,</span><span class="w"> </span><span class="mf">143.75546264648438</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Multiple distance measurement annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;start&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">49.733333587646484</span><span class="p">,</span> <span class="mf">103.26667022705078</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-            <span class="nt">&quot;end&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">55.06666564941406</span><span class="p">,</span> <span class="mf">139.26666259765625</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;start&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">49.733333587646484</span><span class="p">,</span> <span class="mf">103.26667022705078</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-            <span class="nt">&quot;end&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">55.06666564941406</span><span class="p">,</span> <span class="mf">139.26666259765625</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-        <span class="p">}</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">49.733333587646484</span><span class="p">,</span><span class="w"> </span><span class="mf">103.26667022705078</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">139.26666259765625</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">        </span><span class="p">},</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">49.733333587646484</span><span class="p">,</span><span class="w"> </span><span class="mf">103.26667022705078</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">139.26666259765625</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Point annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">152.13333129882812</span><span class="p">,</span> <span class="mf">111.0</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Point&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">152.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">111.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Point&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Multiple points annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple points&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;points&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;point&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="mf">96.0145263671875</span><span class="p">,</span> <span class="mf">79.83292388916016</span><span class="p">,</span> <span class="mf">0.5009999871253967</span>
-            <span class="p">],</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;point&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="mf">130.10653686523438</span><span class="p">,</span> <span class="mf">115.52300262451172</span><span class="p">,</span> <span class="mf">0.5009999871253967</span>
-            <span class="p">],</span>
-        <span class="p">}</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple points&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="mf">96.0145263671875</span><span class="p">,</span><span class="w"> </span><span class="mf">79.83292388916016</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">},</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="mf">130.10653686523438</span><span class="p">,</span><span class="w"> </span><span class="mf">115.52300262451172</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Polygon annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">76.413756408691</span><span class="p">,</span> <span class="mf">124.014717102050</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-    <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">[</span> <span class="mf">76.41375842260106</span><span class="p">,</span> <span class="mf">124.01471710205078</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-        <span class="p">[</span> <span class="mf">76.41694876387268</span><span class="p">,</span> <span class="mf">124.0511828696491</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-        <span class="p">[</span> <span class="mf">76.42642285078242</span><span class="p">,</span> <span class="mf">124.0865406433515</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;sub_type&quot;</span><span class="p">:</span> <span class="s2">&quot;brush&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Polygon&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">76.413756408691</span><span class="p">,</span><span class="w"> </span><span class="mf">124.014717102050</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">76.41375842260106</span><span class="p">,</span><span class="w"> </span><span class="mf">124.01471710205078</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">76.41694876387268</span><span class="p">,</span><span class="w"> </span><span class="mf">124.0511828696491</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">76.42642285078242</span><span class="p">,</span><span class="w"> </span><span class="mf">124.0865406433515</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;sub_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;brush&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Multiple polygon annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple polygons&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;polygons&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">55.82666793823242</span><span class="p">,</span> <span class="mf">90.46666717529297</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-            <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">[</span> <span class="mf">55.82667599387105</span><span class="p">,</span> <span class="mf">90.46666717529297</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">55.93921357544119</span><span class="p">,</span> <span class="mf">90.88666314747366</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">56.246671966051736</span><span class="p">,</span> <span class="mf">91.1941215380842</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">56.66666793823242</span><span class="p">,</span> <span class="mf">91.30665911965434</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-            <span class="p">],</span>
-            <span class="nt">&quot;sub_type&quot;</span><span class="p">:</span> <span class="s2">&quot;brush&quot;</span><span class="p">,</span>
-            <span class="nt">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;manual&quot;</span><span class="p">],</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">90.22666564941406</span><span class="p">,</span> <span class="mf">96.06666564941406</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-            <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">[</span> <span class="mf">90.22667370505269</span><span class="p">,</span> <span class="mf">96.06666564941406</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">90.33921128662283</span><span class="p">,</span> <span class="mf">96.48666162159475</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">90.64666967723338</span><span class="p">,</span> <span class="mf">96.7941200122053</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-            <span class="p">],</span>
-            <span class="nt">&quot;sub_type&quot;</span><span class="p">:</span> <span class="s2">&quot;brush&quot;</span><span class="p">,</span>
-            <span class="nt">&quot;groups&quot;</span><span class="p">:</span> <span class="p">[]</span>
-        <span class="p">}</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple polygons&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;polygons&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.82666793823242</span><span class="p">,</span><span class="w"> </span><span class="mf">90.46666717529297</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">55.82667599387105</span><span class="p">,</span><span class="w"> </span><span class="mf">90.46666717529297</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">55.93921357544119</span><span class="p">,</span><span class="w"> </span><span class="mf">90.88666314747366</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">56.246671966051736</span><span class="p">,</span><span class="w"> </span><span class="mf">91.1941215380842</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">56.66666793823242</span><span class="p">,</span><span class="w"> </span><span class="mf">91.30665911965434</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;sub_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;brush&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">&quot;manual&quot;</span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">},</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">90.22666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">96.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.22667370505269</span><span class="p">,</span><span class="w"> </span><span class="mf">96.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.33921128662283</span><span class="p">,</span><span class="w"> </span><span class="mf">96.48666162159475</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.64666967723338</span><span class="p">,</span><span class="w"> </span><span class="mf">96.7941200122053</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;sub_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;brush&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Line annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Line&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">76.413756408691</span><span class="p">,</span> <span class="mf">124.014717102050</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-    <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">[</span> <span class="mf">76.41375842260106</span><span class="p">,</span> <span class="mf">124.01471710205078</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-        <span class="p">[</span> <span class="mf">76.41694876387268</span><span class="p">,</span> <span class="mf">124.0511828696491</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-        <span class="p">[</span> <span class="mf">76.42642285078242</span><span class="p">,</span> <span class="mf">124.0865406433515</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;closed&quot;</span><span class="p">:</span> <span class="s2">&quot;false&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Line&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">76.413756408691</span><span class="p">,</span><span class="w"> </span><span class="mf">124.014717102050</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">76.41375842260106</span><span class="p">,</span><span class="w"> </span><span class="mf">124.01471710205078</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">76.41694876387268</span><span class="p">,</span><span class="w"> </span><span class="mf">124.0511828696491</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">76.42642285078242</span><span class="p">,</span><span class="w"> </span><span class="mf">124.0865406433515</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;closed&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;false&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Multiple lines annotation</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Multiple lines&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">55.82666793823242</span><span class="p">,</span> <span class="mf">90.46666717529297</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-            <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">[</span> <span class="mf">55.82667599387105</span><span class="p">,</span> <span class="mf">90.46666717529297</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">55.93921357544119</span><span class="p">,</span> <span class="mf">90.88666314747366</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">56.246671966051736</span><span class="p">,</span> <span class="mf">91.1941215380842</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">56.66666793823242</span><span class="p">,</span> <span class="mf">91.30665911965434</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-            <span class="p">],</span>
-            <span class="nt">&quot;closed&quot;</span><span class="p">:</span> <span class="s2">&quot;false&quot;</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="nt">&quot;seed_point&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="mf">90.22666564941406</span><span class="p">,</span> <span class="mf">96.06666564941406</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-            <span class="nt">&quot;path_points&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">[</span> <span class="mf">90.22667370505269</span><span class="p">,</span> <span class="mf">96.06666564941406</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">90.33921128662283</span><span class="p">,</span> <span class="mf">96.48666162159475</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">],</span>
-                <span class="p">[</span> <span class="mf">90.64666967723338</span><span class="p">,</span> <span class="mf">96.7941200122053</span><span class="p">,</span> <span class="mf">0.5009999871253967</span> <span class="p">]</span>
-            <span class="p">],</span>
-            <span class="nt">&quot;closed&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span>
-        <span class="p">}</span>
-    <span class="p">],</span>
-    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&quot;major&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nt">&quot;minor&quot;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple lines&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.82666793823242</span><span class="p">,</span><span class="w"> </span><span class="mf">90.46666717529297</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">55.82667599387105</span><span class="p">,</span><span class="w"> </span><span class="mf">90.46666717529297</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">55.93921357544119</span><span class="p">,</span><span class="w"> </span><span class="mf">90.88666314747366</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">56.246671966051736</span><span class="p">,</span><span class="w"> </span><span class="mf">91.1941215380842</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">56.66666793823242</span><span class="p">,</span><span class="w"> </span><span class="mf">91.30665911965434</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;closed&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;false&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="p">},</span><span class="w"></span>
+<span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">90.22666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">96.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.22667370505269</span><span class="p">,</span><span class="w"> </span><span class="mf">96.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.33921128662283</span><span class="p">,</span><span class="w"> </span><span class="mf">96.48666162159475</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.64666967723338</span><span class="p">,</span><span class="w"> </span><span class="mf">96.7941200122053</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;closed&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;true&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Example json for Chart (for more examples, see <cite>here&lt;https://vega.github.io/vega-lite/examples/&gt;</cite> and <cite>here&lt;https://grand-challenge.org/blogs/visualisations-for-challenges/&gt;</cite>)</p>
