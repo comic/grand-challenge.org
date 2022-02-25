@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Request A Challenge{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Request</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% if not object %}
+        <h2>Request a Challenge</h2>
+        {% crispy form %}
+    {% else %}
+        <h2>Approve or reject the challenge request</h2>
+        {% crispy form %}
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script>
+        function updateForm(){
+            let labels = document.getElementById("budget-fields").querySelectorAll("#budget-fields label");
+            let inputs = document.getElementById("budget-fields").querySelectorAll("#budget-fields input");
+            if (document.getElementById("id_challenge_type").value == "TYPE_1"){
+                document.getElementById("budget-fields").style.display = 'none';
+                for(var i = 0, len = inputs.length; i < len; i++) {
+                    inputs[i].required = false;
+                }
+            }
+            else if (document.getElementById("id_challenge_type").value == "TYPE_2"){
+                document.getElementById("budget-fields").style.display = 'block';
+                for(var i = 0, len = labels.length; i < len; i++) {
+                    labels[i].classList.add('requiredField');
+                    labels[i].innerHTML+="<span class='asteriskField'>*</span>"
+                }
+                for(var i = 0, len = inputs.length; i < len; i++) {
+                    inputs[i].required = true;
+                }
+            }
+        }
+    </script>
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

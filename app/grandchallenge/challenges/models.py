@@ -1,5 +1,6 @@
 import datetime
 import logging
+from functools import cached_property
 from itertools import chain, product
 
 from actstream.actions import follow, unfollow
@@ -16,6 +17,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -30,6 +32,9 @@ from tldextract import extract
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_created_email,
+    send_challenge_requested_email_to_requester,
+    send_challenge_requested_email_to_reviewers,
+    send_challenge_status_update_email,
     send_external_challenge_created_email,
 )
 from grandchallenge.core.storage import (
@@ -664,3 +669,253 @@ def delete_challenge_follows(*_, instance: Challenge, **__):
         app_label=instance._meta.app_label, model=instance._meta.model_name
     ).get()
     Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()
+
+
+class ChallengeRequest(models.Model):
+    class ChallengeTypeChoices(models.TextChoices):
+        """Challenge type choices."""
+
+        T1 = "TYPE_1", _("Type 1 - prediction submission")
+        T2 = "TYPE_2", _("Type 2 - algorithm submission")
+
+    created = models.DateTimeField(auto_now_add=True)
+    status = models.BooleanField(null=True, blank=True)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    title = models.CharField(
+        max_length=64,
+        default="",
+        help_text=("The name of the planned challenge."),
+    )
+    challenge_short_name = CICharField(
+        max_length=50,
+        help_text=(
+            "Short name that will be used in url, specific css, files etc. should "
+            "the challenge be accepted. No spaces and special characters allowed."
+        ),
+        validators=[
+            validate_nounderscores,
+            validate_slug,
+            validate_short_name,
+        ],
+        unique=True,
+    )
+    abstract = models.TextField(
+        help_text="Provide a summary of the challenge purpose. This should "
+        "include a general introduction to the topic from both a "
+        "biomedical as well as from a technical point of view and "
+        "clearly state the envisioned technical and/or biomedical "
+        "impact of the challenge.",
+    )
+    contact_email = models.EmailField(
+        help_text="Please provide an email that our team can use to get in "
+        "touch with you should there be any questions about your request.",
+    )
+    start_date = models.DateField(
+        help_text=("Estimated start date for this challenge."),
+    )
+    end_date = models.DateField(
+        help_text=("Estimated end date for this challenge."),
+    )
+    organizers = models.CharField(
+        max_length=1024,
+        help_text="Provide information about the organizing team (names and affiliations)",
+    )
+    affiliated_event = models.CharField(
+        blank=True,
+        max_length=50,
+        help_text="Is this challenge part of a workshop or conference? If so, which one?",
+    )
+    task_types = models.ManyToManyField(
+        TaskType, blank=True, help_text="What type of task is this challenge?"
+    )
+    modalities = models.ManyToManyField(
+        ImagingModality,
+        blank=True,
+        help_text="What imaging modalities are used in this challenge?",
+    )
+    structures = models.ManyToManyField(
+        BodyStructure,
+        blank=True,
+        help_text="What structures are used in this challenge?",
+    )
+    challenge_type = models.CharField(
+        max_length=10,
+        choices=ChallengeTypeChoices.choices,
+        default=ChallengeTypeChoices.T2,
+        help_text="What type is this challenge?",
+    )
+    challenge_setup = models.TextField(
+        help_text="Describe the challenge set-up."
+        "How many tasks and phases (preliminary, final) does the challenge have?"
+    )
+    data_set = models.TextField(
+        help_text="Describe the training and test datasets you are planning to use."
+    )
+    submission_assessment = models.TextField(
+        help_text="Define the metrics you will use to assess and rank "
+        "participants’ submissions."
+    )
+    challenge_publication = models.TextField(
+        help_text="Please indicate if you plan to coordinate a publication"
+        "of the challenge results."
+    )
+    code_availability = models.TextField(
+        help_text="Will the participants’ code be accessible after the challenge?"
+    )
+    expected_number_of_teams = models.IntegerField(
+        help_text="How many teams do you expect to participate in your challenge?"
+    )
+    average_algorithm_container_size = models.IntegerField(
+        default=10, help_text="Average algorithm container size in GB."
+    )
+    average_number_of_containers_per_team = models.IntegerField(
+        default=10,
+        help_text="Average number of algorithm containers per team.",
+    )
+    inference_time_limit = models.IntegerField(
+        blank=True,
+        null=True,
+        help_text="Time limit per inference job in minutes.",
+    )
+    average_size_of_test_image = models.IntegerField(
+        null=True, blank=True, help_text="Average size of a test image in MB."
+    )
+    phase_1_number_of_submissions_per_team = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="How many submissions will teams be allowed to make to this phase?",
+    )
+    phase_2_number_of_submissions_per_team = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="How many submissions will teams be allowed to make to this phase?",
+    )
+    phase_1_number_of_test_images = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of test images for this phase.",
+    )
+    phase_2_number_of_test_images = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of test images for this phase.",
+    )
+    number_of_tasks = models.IntegerField(
+        default=1,
+        help_text="If your challenge has multiple tasks, we multiply the "
+        "phase 1 and 2 cost estimates by the number of tasks. "
+        "For that to work, please provide the average number of "
+        "test images and the average number of submissions across "
+        "tasks for the two phases below. For examples check here. ",
+    )
+
+    def __str__(self):
+        return self.title
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._orig_status = self.status
+
+    def get_absolute_url(self):
+        return reverse("challenges:request-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+        if adding:
+            send_challenge_requested_email_to_reviewers(self)
+            send_challenge_requested_email_to_requester(self)
+        if self._orig_status != self.status and self.status:
+            challenge = Challenge.objects.create(
+                title=self.title,
+                short_name=self.challenge_short_name,
+                creator=self.creator,
+                hidden=True,
+                contact_email=self.contact_email,
+            )
+            challenge.task_types.set(self.task_types.all())
+            challenge.modalities.set(self.modalities.all())
+            challenge.structures.set(self.structures.all())
+
+            if self.challenge_type == self.ChallengeTypeChoices.T2:
+                phase = challenge.phase_set.get()
+                phase.submission_kind = phase.SubmissionKind.ALGORITHM
+                phase.creator_must_be_verified = True
+                phase.save()
+
+            send_challenge_status_update_email(
+                challengerequest=self, challenge=challenge
+            )
+
+    @cached_property
+    def budget(self):
+        if self.challenge_type == self.ChallengeTypeChoices.T2:
+            compute_costs = settings.AWS_COMPUTE_COSTS
+            storage_costs = settings.AWS_FILE_STORAGE_COSTS
+            docker_storage_costs = settings.AWS_DOCKER_STORAGE_COSTS
+
+            budget = {}
+
+            # calculate budget for phase 1
+            if self.phase_1_number_of_submissions_per_team:
+                budget["Data storage cost for phase 1"] = round(
+                    self.phase_1_number_of_test_images
+                    * self.average_size_of_test_image
+                    * storage_costs
+                )
+                budget["Compute costs for phase 1"] = round(
+                    self.phase_1_number_of_test_images
+                    * self.phase_1_number_of_submissions_per_team
+                    * self.expected_number_of_teams
+                    * self.inference_time_limit
+                    * compute_costs
+                    / 60
+                )
+                budget["Total phase 1"] = round(
+                    (
+                        budget["Data storage cost for phase 1"]
+                        + budget["Compute costs for phase 1"]
+                    )
+                    * self.number_of_tasks
+                )
+
+            # calculate budget for phase 2
+            if self.phase_2_number_of_submissions_per_team:
+                budget["Data storage cost for phase 2"] = round(
+                    self.phase_2_number_of_test_images
+                    * self.average_size_of_test_image
+                    * storage_costs
+                )
+                budget["Compute costs for phase 2"] = round(
+                    self.phase_2_number_of_test_images
+                    * self.phase_2_number_of_submissions_per_team
+                    * self.expected_number_of_teams
+                    * self.inference_time_limit
+                    * compute_costs
+                    / 60
+                )
+                budget["Total phase 2"] = round(
+                    (
+                        budget["Data storage cost for phase 2"]
+                        + budget["Compute costs for phase 2"]
+                    )
+                    * self.number_of_tasks
+                )
+
+            budget["Docker storage cost"] = round(
+                self.average_algorithm_container_size
+                * self.average_number_of_containers_per_team
+                * self.expected_number_of_teams
+                * docker_storage_costs
+            )
+
+            budget["Total"] = (
+                budget["Total phase 1"] + budget["Docker storage cost"]
+            )
+
+            if self.phase_2_number_of_submissions_per_team:
+                budget["Total"] += budget["Total phase 2"]
+
+            return budget

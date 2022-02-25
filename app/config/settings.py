@@ -87,6 +87,7 @@ SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 ANONYMOUS_USER_NAME = "AnonymousUser"
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
+CHALLENGE_REVIEWERS_GROUP_NAME = "ChallengeReviewers"
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -127,6 +128,11 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
 
 # About Flatpage
 FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
+
+# Costs
+AWS_FILE_STORAGE_COSTS = os.environ.get("AWS_FILE_STORAGE_COSTS", 0.00004)
+AWS_DOCKER_STORAGE_COSTS = os.environ.get("AWS_DOCKER_STORAGE_COSTS", 0.04)
+AWS_COMPUTE_COSTS = os.environ.get("AWS_COMPUTE_COSTS", 0.3)
 
 ##############################################################################
 #

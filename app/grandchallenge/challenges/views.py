@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
+    DetailView,
     ListView,
     TemplateView,
     UpdateView,
@@ -20,11 +21,14 @@ from grandchallenge.challenges.filters import (
 )
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
+    ChallengeRequestForm,
+    ChallengeRequestUpdateForm,
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import (
     Challenge,
+    ChallengeRequest,
     ExternalChallenge,
 )
 from grandchallenge.core.filters import FilterMixin
@@ -74,10 +78,10 @@ class ChallengeList(FilterMixin, ListView):
                     (
                         "Here is an overview over the medical image analysis"
                         " challenges that have been hosted on Grand Challenge."
-                        "<br>Please <a href='{}'>contact us</a> if you would like "
-                        "to host your own challenge."
+                        "<br>Please fill in <a href='{}'>this form</a> "
+                        "if you would like to host your own challenge."
                     ),
-                    random_encode("mailto:support@grand-challenge.org"),
+                    random_encode(reverse("challenges:request")),
                 ),
             }
         )
@@ -269,3 +273,73 @@ class ExternalChallengeList(
     model = ExternalChallenge
     raise_exception = True
     permission_required = "challenges.view_externalchallenge"
+
+
+class ChallengeRequestCreate(
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = ChallengeRequest
+    form_class = ChallengeRequestForm
+    success_message = "Your request has been sent to the reviewers."
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"creator": self.request.user})
+        return kwargs
+
+    def get_success_url(self):
+        return reverse("challenges:list")
+
+
+class ChallengeRequestList(
+    LoginRequiredMixin, PermissionRequiredMixin, ListView
+):
+    model = ChallengeRequest
+    permission_required = "challenges.view_challengerequest"
+    paginate_by = 50
+    ordering = ["-created"]
+
+
+class ChallengeRequestDetail(
+    LoginRequiredMixin, PermissionRequiredMixin, DetailView,
+):
+    model = ChallengeRequest
+    permission_required = "challenges.view_challengerequest"
+    detail_view_fields = (
+        "title",
+        "challenge_type",
+        "start_date",
+        "end_date",
+        "organizers",
+        "abstract",
+        "affiliated_event",
+        "task_types",
+        "modalities",
+        "structures",
+        "challenge_setup",
+        "data_set",
+        "submission_assessment",
+        "challenge_publication",
+        "code_availability",
+    )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        fields = {
+            field.verbose_name: field.value_to_string(self.object)
+            for field in self.object._meta.fields
+            if field.name in self.detail_view_fields
+        }
+        context.update({"fields": fields, "budget": self.object.budget})
+        return context
+
+
+class ChallengeRequestUpdate(
+    LoginRequiredMixin, PermissionRequiredMixin, UpdateView,
+):
+    model = ChallengeRequest
+    form_class = ChallengeRequestUpdateForm
+    permission_required = "challenges.change_challengerequest"
