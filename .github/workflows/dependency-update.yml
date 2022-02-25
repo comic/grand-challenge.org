@@ -49,7 +49,7 @@ jobs:
       - name: Run the django tests
         run: |
           docker pull crccheck/hello-world
-          docker-compose run --rm web pytest --cov-report --cov=. --durations 10
+          docker-compose run --rm web pytest --cov-report term --cov=. --durations 10
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
