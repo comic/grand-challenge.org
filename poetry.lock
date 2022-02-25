@@ -1298,7 +1298,6 @@ numpy = [
     {version = ">=1.18.5", markers = "platform_machine != \"aarch64\" and platform_machine != \"arm64\" and python_version < \"3.10\""},
     {version = ">=1.19.2", markers = "platform_machine == \"aarch64\" and python_version < \"3.10\""},
     {version = ">=1.20.0", markers = "platform_machine == \"arm64\" and python_version < \"3.10\""},
-    {version = ">=1.21.0", markers = "python_version >= \"3.10\""},
 ]
 python-dateutil = ">=2.8.1"
 pytz = ">=2020.1"
@@ -1308,16 +1307,16 @@ test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [[package]]
 name = "panimg"
-version = "0.5.3"
+version = "0.6.0"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.7,<3.10"
 
 [package.dependencies]
 click = "*"
 construct = "*"
-numpy = ">=1.21"
+numpy = {version = ">=1.22,<2.0", markers = "python_version >= \"3.8\" and python_version < \"3.10\""}
 openslide-python = "*"
 Pillow = "*"
 pydantic = "*"
@@ -2347,8 +2346,8 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.8,<3.11"
-content-hash = "df896b58b56df264e7cd4998bcdc34e5e80d7b9da1dff26f0221a1f3dd1ccba7"
+python-versions = ">=3.8,<3.10"
+content-hash = "8e36f503048919d307d1f4730d1c520ee6fafc1e8cb36271c52488bcc4683954"
 
 [metadata.files]
 alabaster = [
@@ -3057,8 +3056,8 @@ pandas = [
     {file = "pandas-1.4.1.tar.gz", hash = "sha256:8db93ec98ac7cb5f8ac1420c10f5e3c43533153f253fe7fb6d891cf5aa2b80d2"},
 ]
 panimg = [
-    {file = "panimg-0.5.3-py3-none-any.whl", hash = "sha256:929e1343ca12a566b2487535174eb7987cb155e044a229566827c56e0db94b4d"},
-    {file = "panimg-0.5.3.tar.gz", hash = "sha256:1e17d5d25aa65dd3d1aebf63864913a5781646fca1373e290637f19e9090aa1c"},
+    {file = "panimg-0.6.0-py3-none-any.whl", hash = "sha256:f35ba7d6d3403896feb095c41e637bd59821e64232d11daa153edaba42011363"},
+    {file = "panimg-0.6.0.tar.gz", hash = "sha256:2932a25221c792c63637bd829f6aa974582d04e1572b8a827e0ab8eb62bb6ae9"},
 ]
 pillow = [
     {file = "Pillow-9.0.1-1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:a5d24e1d674dd9d72c66ad3ea9131322819ff86250b30dc5821cbafcfa0b96b4"},

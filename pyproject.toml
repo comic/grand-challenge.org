@@ -31,7 +31,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.8,<3.10"
 "beautifulsoup4" = "*"
 # There is a bug with chords of groups in Celery 5.1, test with a
 # submission using algorithm_evaluation_fixtures to see if it is fixed
