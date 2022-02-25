@@ -41,11 +41,16 @@ from grandchallenge.challenges.emails import (
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
+    get_pdf_path,
     get_social_image_path,
     public_s3_storage,
 )
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
+)
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.evaluation.utils import StatusChoices
@@ -689,7 +694,7 @@ class ChallengeRequest(models.Model):
     title = models.CharField(
         max_length=64,
         default="",
-        help_text=("The name of the planned challenge."),
+        help_text="The name of the planned challenge.",
     )
     challenge_short_name = CICharField(
         max_length=50,
@@ -716,10 +721,10 @@ class ChallengeRequest(models.Model):
         "touch with you should there be any questions about your request.",
     )
     start_date = models.DateField(
-        help_text=("Estimated start date for this challenge."),
+        help_text="Estimated start date for this challenge.",
     )
     end_date = models.DateField(
-        help_text=("Estimated end date for this challenge."),
+        help_text="Estimated end date for this challenge.",
     )
     organizers = models.CharField(
         max_length=1024,
@@ -729,6 +734,16 @@ class ChallengeRequest(models.Model):
         blank=True,
         max_length=50,
         help_text="Is this challenge part of a workshop or conference? If so, which one?",
+    )
+    miccai_submission_form = models.FileField(
+        null=True,
+        blank=True,
+        upload_to=get_pdf_path,
+        storage=public_s3_storage,
+        validators=[
+            ExtensionValidator(allowed_extensions=(".pdf",)),
+            MimeTypeValidator(allowed_types=("application/pdf",)),
+        ],
     )
     task_types = models.ManyToManyField(
         TaskType, blank=True, help_text="What type of task is this challenge?"
@@ -750,7 +765,7 @@ class ChallengeRequest(models.Model):
         help_text="What type is this challenge?",
     )
     challenge_setup = models.TextField(
-        help_text="Describe the challenge set-up."
+        help_text="Describe the challenge set-up. "
         "How many tasks and phases (preliminary, final) does the challenge have?"
     )
     data_set = models.TextField(

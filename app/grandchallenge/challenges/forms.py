@@ -202,6 +202,7 @@ general_information_items = (
     "end_date",
     "organizers",
     "affiliated_event",
+    "miccai_submission_form",
     "task_types",
     "structures",
     "modalities",
@@ -242,20 +243,21 @@ class ChallengeRequestForm(forms.ModelForm):
             ),
         }
         help_texts = {
-            "challenge_type": "What type is this challenge? "
-            "Type I : predictions submission - test data are open, "
+            "challenge_type": "<b>Type I :</b> predictions submission - test data are open, "
             "participants run their algorithms locally and submit "
             "their predictions which are evaluated against a secret "
             "ground truth on the platform<br>"
-            "Type II: docker container submission – test data are "
+            "<b>Type II:</b> docker container submission – test data are "
             "secret, participants submit algorithms as docker "
             "containers, which are run on the secret test set on "
             "our servers and then evaluated against a secret ground "
             "truth. <br>"
-            "We encourage Type II challenges whenever possible. <br>"
-            "For more information see our documentation.",
+            "<b>We strongly encourage Type II challenges.</b> "
+            "For more information see our <a href="
+            "'https://grand-challenge.org/documentation/create-your-own-challenge/'>"
+            "documentation</a>.",
             "code_availability": "Will the participants’ code be accessible after "
-            "the challenge? <br>For Type I challenges, you could "
+            "the challenge? <br>We strongly encourage open science and For Type I challenges, you could "
             "ask participants to submit a Github link to their "
             "algorithm along with their submission. <br>For Type "
             "II challenges, algorithms will be stored on "
@@ -264,10 +266,16 @@ class ChallengeRequestForm(forms.ModelForm):
             "in the form of a linked Github repo with an "
             "appropriate license.",
             "data_set": "Describe the training and test datasets you are planning to "
-            "use. <br>For Type I challenges, think about where you will "
-            "store the data (read about the option here).<br>For Type "
-            "II challenges, the test dataset will need to be uploaded "
-            "to Grand Challenge (read more about that here).",
+            "use. <br>For Type I challenges, indicate where you will "
+            "store the data (read about the options <a href="
+            "'https://grand-challenge.org/documentation/data-storage/'>here</a>)."
+            "<br>For Type II challenges, the test dataset will need to be uploaded "
+            "to Grand Challenge (read more about that <a href="
+            "'https://grand-challenge.org/documentation/data-storage-2/'>here</a>).",
+            "miccai_submission_form": "Have you registered this challenge with "
+            "MICCAI, MIDL or ISBI <a href='https://www.biomedical-challenges.org/'>"
+            "through this website</a>? If so, you can alternatively upload the "
+            "submission PDF here and fill the below text boxes with 'See PDF'.",
         }
 
     def __init__(self, creator, *args, **kwargs):
@@ -287,8 +295,10 @@ class ChallengeRequestForm(forms.ModelForm):
                         "reviewers decide whether or not and in "
                         "what way we can support your challenge.<br><br>"
                         "To learn more about how challenges work on Grand "
-                        "Challenge, take a look at our documentation. Read more "
-                        "about the challenge request procedure here.</p><br>"
+                        "Challenge, take a look at our <a href="
+                        "'https://grand-challenge.org/documentation/create-your-own-challenge/'>"
+                        "documentation</a>. "
+                        "Read more about the challenge request procedure here.</p><br>"
                     ),
                 ),
                 *general_information_items,
@@ -304,8 +314,9 @@ class ChallengeRequestForm(forms.ModelForm):
                         "challenge will require. The below information will "
                         "help us calculate a rough cost estimate.</p>"
                         "<p> If you are unfamiliar with what a Type 2 challenge"
-                        " entails, please first read this part of our "
-                        "documentation.</p> "
+                        " entails, please <a href="
+                        "'https://grand-challenge.org/documentation/type-ii-challenge-setup/'>"
+                        "first read this part of our documentation</a>.</p> "
                         "<p>To help you fill in the below form correctly, "
                         "we have assembled example budgets here. Please take "
                         "a close look at those before proceeding to fill in "
@@ -316,18 +327,20 @@ class ChallengeRequestForm(forms.ModelForm):
                     "average_size_of_test_image",
                     "inference_time_limit",
                     HTML(
-                        "<br><h4>Phase 1</h4><p>As explained here, "
-                        "type 2 challenges usually consist of at least 2 phases. "
-                        "The first of those tends to be a preliminary test phase,"
-                        "and the second the final test phase. The number of test "
-                        "images used for these phases and often the amount of "
-                        "times that users can submit to them differs, which is "
-                        "why we ask for separate estimates for the two phases here."
-                        " Should your phase have only phase, enter 0 in all fields "
-                        "for phase 2. Should your challenge have multiple tasks and "
-                        "hence more than 2 phases, please provide the average numbers "
-                        "across tasks for each phase below and indicate the number of "
-                        "tasks above acccordingly.</p>"
+                        "<br><h4>Phase 1</h4><p>Type 2 challenges usually "
+                        "consist of at least 2 phases. The first of those "
+                        "tends to be a <b>preliminary test phase</b>,"
+                        "and the second the <b>final test phase</b>. The "
+                        "number of test images used for these phases and "
+                        "often the amount of times that users can submit to "
+                        "them differs, which is why we ask for separate "
+                        "estimates for the two phases here."
+                        " Should your challenge have only phase, enter 0 in "
+                        "all fields for phase 2. Should your challenge have "
+                        "multiple tasks and hence more than 2 phases, "
+                        "please provide the average numbers across tasks for "
+                        "each phase below and indicate the number of "
+                        "tasks above accordingly.</p>"
                     ),
                     *phase_1_items,
                     HTML("<br><h4>Phase 2</h4>"),
@@ -338,21 +351,35 @@ class ChallengeRequestForm(forms.ModelForm):
             ),
             ButtonHolder(Submit("save", "Save")),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
         if (
-            self.instance.challenge_type
+            cleaned_data["challenge_type"]
             == self.instance.ChallengeTypeChoices.T2
         ):
-            self.fields["number_of_tasks"].required = True
-            self.fields["average_size_of_test_image"].required = True
-            self.fields["inference_time_limit"].required = True
-            self.fields[
-                "phase_1_number_of_submissions_per_team"
-            ].required = True
-            self.fields[
-                "phase_2_number_of_submissions_per_team"
-            ].required = True
-            self.fields["phase_1_number_of_test_images"].required = True
-            self.fields["phase_2_number_of_test_images"].required = True
+            if not cleaned_data["average_size_of_test_image"]:
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide the average test image size."
+                )
+            if not cleaned_data["inference_time_limit"]:
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide an inference time limit."
+                )
+            if (
+                not cleaned_data["phase_1_number_of_submissions_per_team"]
+                or not cleaned_data["phase_2_number_of_submissions_per_team"]
+            ):
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide the number of submissions per team for each phase. Enter 0 for phase 2 if you only have 1 phase."
+                )
+            if (
+                not cleaned_data["phase_1_number_of_test_images"]
+                or not cleaned_data["phase_1_number_of_test_images"]
+            ):
+                raise ValidationError(
+                    "For a type 2 challenge, You need to provide the number of test images for each phase. Enter 0 for phase 2 if you only have 1 phase."
+                )
 
 
 class ChallengeRequestUpdateForm(forms.ModelForm):
@@ -360,7 +387,12 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
         model = ChallengeRequest
         fields = ("status",)
         widgets = {
-            "status": Select(choices=((True, "Approve"), (False, "Decline"),)),
+            "status": Select(
+                choices=(
+                    (True, "Approve"),
+                    (False, "Decline"),
+                )
+            ),
         }
 
     def __init__(self, *args, **kwargs):

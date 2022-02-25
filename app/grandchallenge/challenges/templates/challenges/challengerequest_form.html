@@ -36,10 +36,6 @@
             }
             else if (document.getElementById("id_challenge_type").value == "TYPE_2"){
                 document.getElementById("budget-fields").style.display = 'block';
-                for(var i = 0, len = labels.length; i < len; i++) {
-                    labels[i].classList.add('requiredField');
-                    labels[i].innerHTML+="<span class='asteriskField'>*</span>"
-                }
                 for(var i = 0, len = inputs.length; i < len; i++) {
                     inputs[i].required = true;
                 }
