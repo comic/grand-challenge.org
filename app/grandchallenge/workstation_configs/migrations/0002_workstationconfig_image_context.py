@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workstation_configs", "0001_squashed_0008_auto_20201001_0758"),
+        ("workstation_configs", "0001_squashed_0008_auto_20201001_0758")
     ]
 
     operations = [
@@ -22,5 +22,5 @@ class Migration(migrations.Migration):
                 ],
                 max_length=6,
             ),
-        ),
+        )
     ]

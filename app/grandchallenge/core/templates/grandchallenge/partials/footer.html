@@ -1,6 +1,7 @@
 {% load flatpages %}
 {% load url %}
 {% load cache %}
+{% load static %}
 
 {% cache 600 grandchallenge-partials-footer %}
     {% get_flatpages as flatpages %}
@@ -8,7 +9,7 @@
         <div class="container">
             <hr class="m-0">
             <div class="row small">
-                <div class="col-sm-6 col-md-4 p-3">
+                <div class="col-sm-6 col-md-3 p-3">
                     <h6>Grand Challenge</h6>
                     <ul class="list-unstyled">
                         {% for page in flatpages %}
@@ -30,7 +31,7 @@
                         </li>
                     </ul>
                 </div>
-                <div class="col-sm-6 col-md-4 p-3">
+                <div class="col-sm-6 col-md-3 p-3">
                     <h6>Policies</h6>
                     <ul class="list-unstyled">
                         {% for policy in policy_pages %}
@@ -40,7 +41,7 @@
                         {% endfor %}
                     </ul>
                 </div>
-                <div class="col-sm-6 col-md-4 p-3">
+                <div class="col-sm-6 col-md-3 p-3">
                     <h6>Developers</h6>
                     <ul class="list-unstyled">
                         <li class="my-1">
@@ -62,6 +63,21 @@
                                href="https://comic.github.io/grand-challenge.org/"
                                title="Read the developer documentation">
                                 Developer Documentation
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-md-3 p-3">
+                    <h6>Sponsors</h6>
+                    <ul class="list-unstyled">
+                        <li class="my-1 text-center">
+                            <a href='https://aws.amazon.com/'>
+                                <img class="w-25 py-2"
+                                     loading="lazy"
+                                     src="{% static 'images/Amazon_Web_Services_Logo.svg' %}"
+                                     alt="Logo of Amazon Web Services"
+                                     title="Grand Challenge is sponsored by Amazon Web Services"
+                                >
                             </a>
                         </li>
                     </ul>

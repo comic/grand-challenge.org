@@ -260,9 +260,7 @@ def test_ecs_unzip(tmp_path, settings, submission_file):
         time_limit=60,
         requires_gpu=False,
     )
-    executor.provision(
-        input_civs=[civ], input_prefixes={},
-    )
+    executor.provision(input_civs=[civ], input_prefixes={})
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
         "algorithms",
@@ -388,7 +386,7 @@ def test_handle_stopped_successful_fast_task():
         "containers": [
             {
                 # No container exit in this case
-                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout"
             },
             {
                 "exitCode": 0,
@@ -421,11 +419,11 @@ def test_handle_stopped_start_failed_task():
         "containers": [
             {
                 # No container exit in this case
-                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout"
             },
             {
                 # No container exit in this case
-                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000"
             },
         ],
         "createdAt": "2021-09-25T10:50:24.248Z",  # No startedAt in this case
@@ -454,11 +452,11 @@ def test_handle_stopped_terminated_task():
         "containers": [
             {
                 # No container exit in this case
-                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout"
             },
             {
                 # No container exit in this case
-                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000"
             },
         ],
         "createdAt": "2021-09-25T10:50:24.248Z",  # No startedAt in this case
@@ -487,11 +485,11 @@ def test_handle_stopped_cancelled_task():
         "containers": [
             {
                 # No container exit in this case
-                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout",
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000-timeout"
             },
             {
                 # No container exit in this case
-                "name": "algorithms-job-00000000-0000-0000-0000-000000000000",
+                "name": "algorithms-job-00000000-0000-0000-0000-000000000000"
             },
         ],
         "createdAt": "2021-09-25T10:50:24.248Z",  # No startedAt in this case

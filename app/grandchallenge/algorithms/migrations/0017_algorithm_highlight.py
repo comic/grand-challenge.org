@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0016_auto_20211001_1128"),
-    ]
+    dependencies = [("algorithms", "0016_auto_20211001_1128")]
 
     operations = [
         migrations.AddField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 default=False,
                 help_text="Should this algorithm be advertised on the home page?",
             ),
-        ),
+        )
     ]

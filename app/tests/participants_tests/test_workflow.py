@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.participants.models import RegistrationRequest

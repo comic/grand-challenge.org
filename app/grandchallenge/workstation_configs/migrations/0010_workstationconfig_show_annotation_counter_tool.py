@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("workstation_configs", "0009_auto_20211005_1329"),
-    ]
+    dependencies = [("workstation_configs", "0009_auto_20211005_1329")]
 
     operations = [
         migrations.AddField(
             model_name="workstationconfig",
             name="show_annotation_counter_tool",
             field=models.BooleanField(default=True),
-        ),
+        )
     ]

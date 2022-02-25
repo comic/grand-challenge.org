@@ -147,7 +147,7 @@ class DockerConnection:
             except (APIError, HTTPError) as _e:
                 num_retries += 1
                 e = _e
-                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
+                sleep((2**num_retries) + (randint(0, 1000) / 1000))
         else:
             raise e
 
@@ -321,9 +321,7 @@ class DockerExecutor(DockerConnection):
                 dest = Path(safe_join(prefix, civ.relative_path))
 
             writer.exec_run(f"mkdir -p {dest.parent}")
-            put_file(
-                container=writer, src=civ.input_file, dest=dest,
-            )
+            put_file(container=writer, src=civ.input_file, dest=dest)
 
             if civ.decompress:
                 # Decompression is legacy for submission evaluations where

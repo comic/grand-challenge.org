@@ -12,13 +12,13 @@ from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 class ImportForm(SaveFormInitMixin, forms.Form):
     products_file = ModelChoiceField(
-        queryset=None, widget=UserUploadSingleWidget(),
+        queryset=None, widget=UserUploadSingleWidget()
     )
     companies_file = ModelChoiceField(
-        queryset=None, widget=UserUploadSingleWidget(),
+        queryset=None, widget=UserUploadSingleWidget()
     )
     images_zip = ModelChoiceField(
-        queryset=None, widget=UserUploadSingleWidget(),
+        queryset=None, widget=UserUploadSingleWidget()
     )
 
     def __init__(self, *args, user, **kwargs):

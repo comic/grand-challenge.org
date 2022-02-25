@@ -4,14 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("verifications", "0001_initial"),
-    ]
+    dependencies = [("verifications", "0001_initial")]
 
     operations = [
         migrations.AlterField(
             model_name="verification",
             name="is_verified",
             field=models.BooleanField(default=None, editable=False, null=True),
-        ),
+        )
     ]

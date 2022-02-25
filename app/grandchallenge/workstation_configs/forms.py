@@ -24,10 +24,13 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_overlay_alpha",
             "overlay_luts",
             "default_overlay_lut",
+            "default_image_interpolation",
             "default_overlay_interpolation",
             "overlay_segments",
             "key_bindings",
             "default_zoom_scale",
+            "auto_jump_center_of_gravity",
+            "link_images",
             "show_image_info_plugin",
             "show_display_plugin",
             "show_image_switcher_plugin",
@@ -41,8 +44,6 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "show_lut_selection_tool",
             "show_annotation_counter_tool",
             "enable_contrast_enhancement",
-            "auto_jump_center_of_gravity",
-            "link_images",
         )
 
         widgets = {
@@ -53,7 +54,8 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
         }
         help_texts = {
             "overlay_segments": (
-                "If an categorical overlay is shown, it is possible to show toggles "
+                model._meta.get_field("overlay_segments").help_text
+                + ". If an categorical overlay is shown, it is possible to show toggles "
                 "to change the visibility of the different overlay categories. To do "
                 "so, configure the categories that should be displayed. Data from the"
                 " algorithm's output.json can be added as an extra label to each "
@@ -61,9 +63,10 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
                 'For example: [{ "voxel_value": 0, "name": "Level 0", "visible": '
                 'false, "metric_template": "{{metrics.volumes[0]}} mm³"},]'
             ),
-            "image_context": "This tells the viewer how to show the images "
-            "defined in the hanging list",
-            "window_presets": "These are the window LUT presets the viewer can choose between. "
-            "By default, none are selected. "
-            "Select multiple presets by holding CTRL or dragging your mouse",
+            "window_presets": model._meta.get_field("window_presets").help_text
+            + ". Select multiple presets by holding CTRL or dragging your mouse",
+            "overlay_luts": model._meta.get_field("overlay_luts").help_text
+            + ". Select multiple presets by holding CTRL or dragging your mouse",
+            "key_bindings": model._meta.get_field("key_bindings").help_text
+            + ". A copy and paste JSON can be obtained from the viewer",
         }

@@ -107,7 +107,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
             civ.full_clean()
         except ValidationError as e:
             evaluation.update_status(
-                status=Evaluation.FAILURE, error_message=str(e),
+                status=Evaluation.FAILURE, error_message=str(e)
             )
             return
 
@@ -390,7 +390,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
             reverse=(phase.score_default_sort == phase.DESCENDING),
         ),
         *[
-            Metric(path=col["path"], reverse=col["order"] == phase.DESCENDING,)
+            Metric(path=col["path"], reverse=col["order"] == phase.DESCENDING)
             for col in phase.extra_results_columns
         ],
     )
@@ -409,7 +409,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
 
     valid_evaluations = (
         Evaluation.objects.filter(
-            submission__phase=phase, published=True, status=Evaluation.SUCCESS,
+            submission__phase=phase, published=True, status=Evaluation.SUCCESS
         )
         .order_by("-created")
         .select_related("submission__creator")

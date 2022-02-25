@@ -3,10 +3,7 @@ from lxml.html.diff import html_escape
 
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.factories import (
-    UserFactory,
-    WorkstationFactory,
-)
+from tests.factories import UserFactory, WorkstationFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
@@ -87,11 +84,9 @@ class TestGroupManagementViews:
 
 @pytest.mark.django_db
 class TestAutocompleteViews:
+    @pytest.mark.parametrize("is_verified", (False, True))
     @pytest.mark.parametrize(
-        "is_verified", (False, True),
-    )
-    @pytest.mark.parametrize(
-        "filter", (("username"), ("email"), ("full_name"),),
+        "filter", (("username"), ("email"), ("full_name"))
     )
     def test_autocomplete_filter_options(self, client, filter, is_verified):
         archive = ArchiveFactory()

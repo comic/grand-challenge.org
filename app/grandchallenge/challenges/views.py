@@ -106,13 +106,13 @@ class CombinedChallengeList(TemplateView):
             .prefetch_related("phase_set", "publications")
             .order_by("-highlight", "-created")
         )
-        self.int_filter = ChallengeFilter(self.request.GET, int_qs,)
+        self.int_filter = ChallengeFilter(self.request.GET, int_qs)
         ext_qs = (
             ExternalChallenge.objects.filter(hidden=False)
             .prefetch_related("publications")
             .order_by("-created")
         )
-        self.ext_filter = ChallengeFilter(self.request.GET, ext_qs,)
+        self.ext_filter = ChallengeFilter(self.request.GET, ext_qs)
 
         total_count = int_qs.count() + ext_qs.count()
 
@@ -171,11 +171,7 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
     model = Challenge
     template_name = "challenges/challenge_users_list.html"
     row_template = "challenges/challenge_users_row.html"
-    search_fields = [
-        "title",
-        "short_name",
-        "description",
-    ]
+    search_fields = ["title", "short_name", "description"]
     columns = [
         Column(title="Name", sort_field="short_name"),
         Column(title="Created", sort_field="created"),
@@ -304,7 +300,9 @@ class ChallengeRequestList(
 
 
 class ChallengeRequestDetail(
-    LoginRequiredMixin, PermissionRequiredMixin, DetailView,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    DetailView,
 ):
     model = ChallengeRequest
     permission_required = "challenges.view_challengerequest"
@@ -338,7 +336,9 @@ class ChallengeRequestDetail(
 
 
 class ChallengeRequestUpdate(
-    LoginRequiredMixin, PermissionRequiredMixin, UpdateView,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UpdateView,
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestUpdateForm

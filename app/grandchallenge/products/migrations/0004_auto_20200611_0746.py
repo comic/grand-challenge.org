@@ -4,9 +4,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("products", "0003_auto_20200309_1329"),
-    ]
+    dependencies = [("products", "0003_auto_20200309_1329")]
 
     operations = [
         migrations.AlterModelOptions(
@@ -14,6 +12,6 @@ class Migration(migrations.Migration):
             options={"ordering": ("pk",), "verbose_name_plural": "companies"},
         ),
         migrations.AlterModelOptions(
-            name="product", options={"ordering": ("pk",)},
+            name="product", options={"ordering": ("pk",)}
         ),
     ]

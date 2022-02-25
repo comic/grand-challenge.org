@@ -6,7 +6,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
 )
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.utils.access_request_utils import (
+from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from tests.algorithms_tests.factories import (

@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("reader_studies", "0014_readerstudy_roll_over_answers_for_n_cases"),
+        ("reader_studies", "0014_readerstudy_roll_over_answers_for_n_cases")
     ]
 
     operations = [
@@ -29,5 +29,5 @@ class Migration(migrations.Migration):
                 help_text="How would you like to handle access requests?",
                 max_length=25,
             ),
-        ),
+        )
     ]

@@ -226,7 +226,7 @@ def test_tiff_image_entry_creation(
 
 # Integration test of all features being accessed through the image builder
 @pytest.mark.django_db
-def test_image_builder_tiff(tmpdir_factory,):
+def test_image_builder_tiff(tmpdir_factory):
     # Copy resource files to writable temp folder
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     output_dir = Path(tmpdir_factory.mktemp("output"))
@@ -242,10 +242,7 @@ def test_image_builder_tiff(tmpdir_factory,):
         builder=image_builder_tiff, files=files, output_directory=output_dir
     )
 
-    expected_files = [
-        temp_dir / "valid_tiff.tif",
-        temp_dir / "no_dzi.tif",
-    ]
+    expected_files = [temp_dir / "valid_tiff.tif", temp_dir / "no_dzi.tif"]
 
     assert sorted(image_builder_result.consumed_files) == sorted(
         expected_files

@@ -114,7 +114,7 @@ def _create_users(usernames):
 
     for username in usernames:
         users[username] = get_user_model().objects.create(
-            username=username, email=f"{username}@example.com", is_active=True,
+            username=username, email=f"{username}@example.com", is_active=True
         )
         users[username].set_password(username)
         users[username].save()
@@ -220,7 +220,7 @@ def _create_demo_challenge(users):
         submission.save()
 
         e = Evaluation.objects.create(
-            submission=submission, method=method, status=Evaluation.SUCCESS,
+            submission=submission, method=method, status=Evaluation.SUCCESS
         )
 
         def create_result(evaluation, result: dict):
@@ -483,7 +483,7 @@ def _create_job_result(users, algorithm_image, cases_image, result, detection):
         )
     )
     civ = ComponentInterfaceValue.objects.create(
-        interface=ComponentInterface.objects.get(slug="detection-results"),
+        interface=ComponentInterface.objects.get(slug="detection-results")
     )
     civ.file.save(
         "detection_results.json",
@@ -496,7 +496,7 @@ def _create_job_result(users, algorithm_image, cases_image, result, detection):
 
 
 def _create_workstation(users):
-    w = Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG,)
+    w = Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG)
     w.add_editor(user=users["workstation"])
 
 

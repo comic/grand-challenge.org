@@ -54,12 +54,8 @@ def navbar(context):
                     },
                 ],
             },
-            {
-                "url": "contact",
-                "active": url == "contact",
-                "title": "Contact",
-            },
-        ],
+            {"url": "contact", "active": url == "contact", "title": "Contact"},
+        ]
     }
 
 

@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("github", "0005_githubusertoken_github_user_id"),
-    ]
+    dependencies = [("github", "0005_githubusertoken_github_user_id")]
 
     operations = [
         migrations.AddField(
@@ -23,5 +21,5 @@ class Migration(migrations.Migration):
                 default="PENDING",
                 max_length=12,
             ),
-        ),
+        )
     ]

@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("profiles", "0007_auto_20210331_1646"),
-    ]
+    dependencies = [("profiles", "0007_auto_20210331_1646")]
 
     operations = [
         migrations.AlterField(
             model_name="userprofile",
             name="notifications_last_read_at",
             field=models.DateTimeField(auto_now_add=True),
-        ),
+        )
     ]

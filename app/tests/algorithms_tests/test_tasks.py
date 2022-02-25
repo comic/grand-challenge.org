@@ -114,7 +114,7 @@ class TestCreateAlgorithmJobs:
             for image in riu.image_set.all()
         ]
         create_algorithm_jobs(
-            algorithm_image=ai, civ_sets=civ_sets, creator=riu.creator,
+            algorithm_image=ai, civ_sets=civ_sets, creator=riu.creator
         )
         j = Job.objects.first()
         assert j.creator == riu.creator
@@ -161,7 +161,7 @@ class TestCreateAlgorithmJobs:
         # Create an upload session as editor; should not be limited
         upload = create_upload(editor)
         create_algorithm_jobs(
-            algorithm_image=algorithm_image, civ_sets=upload, creator=editor,
+            algorithm_image=algorithm_image, civ_sets=upload, creator=editor
         )
 
         assert Job.objects.count() == 3
@@ -169,7 +169,7 @@ class TestCreateAlgorithmJobs:
         # Create an upload session as user; should be limited
         upload_2 = create_upload(user)
         create_algorithm_jobs(
-            algorithm_image=algorithm_image, civ_sets=upload_2, creator=user,
+            algorithm_image=algorithm_image, civ_sets=upload_2, creator=user
         )
 
         # An additional 2 jobs should be created (standard nr of credits is 1000
@@ -181,7 +181,7 @@ class TestCreateAlgorithmJobs:
 
         # The job that was skipped on the previous run should now be accepted
         create_algorithm_jobs(
-            algorithm_image=algorithm_image, civ_sets=upload_2, creator=user,
+            algorithm_image=algorithm_image, civ_sets=upload_2, creator=user
         )
         assert Job.objects.count() == 6
 
@@ -229,7 +229,7 @@ def test_algorithm(client, algorithm_image, settings):
 
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
     civ = ComponentInterfaceValueFactory(
         image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
@@ -417,7 +417,7 @@ def test_algorithm_multiple_inputs(
         output_dict.keys()
     )
     assert sorted(
-        map(lambda x: x if x != {} else "json", output_dict.values(),)
+        map(lambda x: x if x != {} else "json", output_dict.values())
     ) == sorted(expected)
 
 
@@ -571,7 +571,7 @@ class TestJobCreation:
                 ComponentInterfaceValueFactory(
                     interface=ComponentInterfaceFactory()
                 ),
-            },
+            }
         ]
 
         filtered_civ_sets = filter_civs_for_algorithm(

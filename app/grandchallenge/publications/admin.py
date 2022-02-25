@@ -21,11 +21,7 @@ class PublicationAdmin(admin.ModelAdmin):
         "citation",
     ]
     form = PublicationForm
-    search_fields = (
-        "title",
-        "year",
-        "identifier",
-    )
+    search_fields = ("title", "year", "identifier")
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

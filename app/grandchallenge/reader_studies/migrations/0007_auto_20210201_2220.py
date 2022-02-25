@@ -7,9 +7,7 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("reader_studies", "0006_readerstudy_social_image"),
-    ]
+    dependencies = [("reader_studies", "0006_readerstudy_social_image")]
 
     operations = [
         migrations.AlterField(

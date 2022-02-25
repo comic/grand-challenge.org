@@ -69,10 +69,7 @@ class UserUploadPartsSerializer(UserUploadSerializer):
     parts = PartSerializer(source="list_parts", many=True, read_only=True)
 
     class Meta(UserUploadSerializer.Meta):
-        fields = (
-            *UserUploadSerializer.Meta.fields,
-            "parts",
-        )
+        fields = (*UserUploadSerializer.Meta.fields, "parts")
 
 
 class UserUploadPresignedURLsSerializer(UserUploadSerializer):
@@ -103,10 +100,7 @@ class UserUploadCompleteSerializer(UserUploadSerializer):
     parts = PartSerializer(many=True, write_only=True)
 
     class Meta(UserUploadSerializer.Meta):
-        fields = (
-            *UserUploadSerializer.Meta.fields,
-            "parts",
-        )
+        fields = (*UserUploadSerializer.Meta.fields, "parts")
 
     def validate(self, data):
         if "parts" not in data:

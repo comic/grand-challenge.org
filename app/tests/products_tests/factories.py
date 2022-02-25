@@ -1,10 +1,6 @@
 import factory
 
-from grandchallenge.products.models import (
-    Company,
-    Product,
-    ProductImage,
-)
+from grandchallenge.products.models import Company, Product, ProductImage
 
 
 class CompanyFactory(factory.django.DjangoModelFactory):

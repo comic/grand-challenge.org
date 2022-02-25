@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("profiles", "0010_remove_userprofile_notifications_last_read_at"),
+        ("profiles", "0010_remove_userprofile_notifications_last_read_at")
     ]
 
     operations = [
@@ -18,5 +18,5 @@ class Migration(migrations.Migration):
                 help_text="Would you like to be put on our mailing list and receive newsletters about Grand Challenge updates?",
                 null=True,
             ),
-        ),
+        )
     ]

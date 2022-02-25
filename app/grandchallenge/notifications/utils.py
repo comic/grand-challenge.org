@@ -42,7 +42,7 @@ def _get_related_content_type_and_related_object_pk(model, fk):
     """Get related object's pk and content type."""
 
     try:
-        related_content_type = getattr(model, fk.ct_field,)
+        related_content_type = getattr(model, fk.ct_field)
         related_object_id = getattr(model, fk.fk_field)
     except TypeError:
         related_object_id = None

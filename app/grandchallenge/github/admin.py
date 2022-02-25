@@ -11,11 +11,7 @@ class GitHubUserTokenAdmin(admin.ModelAdmin):
         "refresh_token",
         "refresh_token_expires",
     )
-    list_display = (
-        "user",
-        "access_token_expires",
-        "refresh_token_expires",
-    )
+    list_display = ("user", "access_token_expires", "refresh_token_expires")
     search_fields = ("user__username",)
 
 

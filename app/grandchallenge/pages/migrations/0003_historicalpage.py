@@ -113,5 +113,5 @@ class Migration(migrations.Migration):
                 "get_latest_by": "history_date",
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
-        ),
+        )
     ]

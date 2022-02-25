@@ -9,24 +9,14 @@ from grandchallenge.documentation.models import DocPage
 class AdminDocPageForm(ModelForm):
     class Meta:
         model = DocPage
-        fields = (
-            "title",
-            "content",
-            "parent",
-        )
+        fields = ("title", "content", "parent")
         ordering = ("order",)
-        widgets = {
-            "content": MarkdownEditorAdminWidget,
-        }
+        widgets = {"content": MarkdownEditorAdminWidget}
 
 
 class DocPageAdmin(MarkdownxModelAdmin):
     form = AdminDocPageForm
-    list_display = (
-        "pk",
-        "title",
-        "order",
-    )
+    list_display = ("pk", "title", "order")
 
 
 admin.site.register(DocPage, DocPageAdmin)

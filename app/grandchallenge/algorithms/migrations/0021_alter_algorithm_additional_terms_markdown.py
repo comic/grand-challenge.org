@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("algorithms", "0020_auto_20211118_1249"),
-    ]
+    dependencies = [("algorithms", "0020_auto_20211118_1249")]
 
     operations = [
         migrations.AlterField(
@@ -17,5 +15,5 @@ class Migration(migrations.Migration):
                 blank=True,
                 help_text="By using this algorithm, users agree to the site wide terms of service. If your algorithm has any additional terms of usage, define them here.",
             ),
-        ),
+        )
     ]

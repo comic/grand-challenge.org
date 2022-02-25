@@ -81,7 +81,7 @@ urlpatterns = [
     path(
         "verifications/",
         include(
-            "grandchallenge.verifications.urls", namespace="verifications",
+            "grandchallenge.verifications.urls", namespace="verifications"
         ),
     ),
     path(
@@ -125,9 +125,9 @@ urlpatterns = [
     ),
     path("markdownx/", include("markdownx.urls")),
     path(
-        "media/", include("grandchallenge.serving.urls", namespace="serving"),
+        "media/", include("grandchallenge.serving.urls", namespace="serving")
     ),
-    path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
+    path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs")),
     path(
         "organizations/",
         include(

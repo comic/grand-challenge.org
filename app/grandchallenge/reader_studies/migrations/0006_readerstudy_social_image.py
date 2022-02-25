@@ -7,9 +7,7 @@ import grandchallenge.core.storage
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("reader_studies", "0005_auto_20210121_1420"),
-    ]
+    dependencies = [("reader_studies", "0005_auto_20210121_1420")]
 
     operations = [
         migrations.AddField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 storage=grandchallenge.core.storage.PublicS3Storage(),
                 upload_to=grandchallenge.core.storage.get_social_image_path,
             ),
-        ),
+        )
     ]

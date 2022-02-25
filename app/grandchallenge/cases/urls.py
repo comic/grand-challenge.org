@@ -32,8 +32,6 @@ urlpatterns = [
         name="vtk-image-detail",
     ),
     path(
-        "images/<uuid:pk>/cs/",
-        CSImageDetail.as_view(),
-        name="cs-image-detail",
+        "images/<uuid:pk>/cs/", CSImageDetail.as_view(), name="cs-image-detail"
     ),
 ]

@@ -10,7 +10,7 @@ from grandchallenge.profiles.models import UserProfile
 def send_unread_notification_emails():
     profiles = (
         UserProfile.objects.filter(
-            receive_notification_emails=True, user__notification__read=False,
+            receive_notification_emails=True, user__notification__read=False
         )
         .distinct()
         .prefetch_related("user__notification_set")

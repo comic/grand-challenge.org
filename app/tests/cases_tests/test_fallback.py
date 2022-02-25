@@ -4,10 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from panimg.image_builders.fallback import (
-    format_error,
-    image_builder_fallback,
-)
+from panimg.image_builders.fallback import format_error, image_builder_fallback
 from panimg.models import ColorSpace
 from panimg.panimg import _build_files
 
@@ -57,6 +54,6 @@ def test_image_builder_fallback_corrupt_file(tmpdir):
         )
 
     assert result.file_errors == {
-        dest: [format_error("Not a valid image file")],
+        dest: [format_error("Not a valid image file")]
     }
     assert result.consumed_files == set()

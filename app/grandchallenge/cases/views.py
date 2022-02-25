@@ -18,11 +18,7 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.filters import ImageFilterSet
-from grandchallenge.cases.models import (
-    Image,
-    ImageFile,
-    RawImageUploadSession,
-)
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
@@ -33,15 +29,13 @@ from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class RawImageUploadSessionList(
-    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView,
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
 ):
     model = RawImageUploadSession
     permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
     login_url = reverse_lazy("account_login")
     row_template = "cases/rawimageuploadsession_row.html"
-    search_fields = [
-        "pk",
-    ]
+    search_fields = ["pk"]
     columns = [
         Column(title="ID", sort_field="pk"),
         Column(title="Created", sort_field="created"),
@@ -91,10 +85,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
         .select_related("modality")
     )
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (
-        DjangoFilterBackend,
-        ObjectPermissionsFilter,
-    )
+    filter_backends = (DjangoFilterBackend, ObjectPermissionsFilter)
     filterset_class = ImageFilterSet
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,

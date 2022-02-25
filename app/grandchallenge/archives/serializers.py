@@ -17,17 +17,13 @@ from grandchallenge.components.serializers import (
 
 class ArchiveItemSerializer(serializers.ModelSerializer):
     archive = HyperlinkedRelatedField(
-        read_only=True, view_name="api:archive-detail",
+        read_only=True, view_name="api:archive-detail"
     )
     values = ComponentInterfaceValueSerializer(many=True)
 
     class Meta:
         model = ArchiveItem
-        fields = (
-            "id",
-            "archive",
-            "values",
-        )
+        fields = ("id", "archive", "values")
 
 
 class ArchiveSerializer(serializers.ModelSerializer):
@@ -70,7 +66,7 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             user = self.context["request"].user
 
             self.fields["archive"].queryset = get_objects_for_user(
-                user, "archives.use_archive", accept_global_perms=False,
+                user, "archives.use_archive", accept_global_perms=False
             )
 
     def update(self, instance, validated_data):
@@ -106,7 +102,7 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
                     "civ_pks_to_add": list(civ_pks_to_add),
                     "civ_pks_to_remove": list(civ_pks_to_remove),
                     "upload_pks": upload_pks,
-                },
+                }
             ).apply_async
         )
 

@@ -7,10 +7,10 @@ from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
 
 class JobViewsetFilter(FilterSet):
     input_image = filters.ModelMultipleChoiceFilter(
-        field_name="inputs__image", queryset=Image.objects.all(),
+        field_name="inputs__image", queryset=Image.objects.all()
     )
     output_image = filters.ModelMultipleChoiceFilter(
-        field_name="outputs__image", queryset=Image.objects.all(),
+        field_name="outputs__image", queryset=Image.objects.all()
     )
 
     class Meta:
