@@ -2,8 +2,7 @@ import posixpath
 
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
-from django.db.models import Q
-from django.db.transaction import on_commit
+from django.db.models import F, Q
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from guardian.shortcuts import get_objects_for_user
@@ -14,7 +13,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.serving.tasks import create_download
+from grandchallenge.serving.models import Download
 
 
 def protected_storage_redirect(*, name):
@@ -52,7 +51,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         user = request.user
 
     if user.has_perm("view_image", image):
-        create_download(creator_id=user.pk, image_id=image.pk)
+        _create_download(creator_id=user.pk, image_id=image.pk)
         return protected_storage_redirect(name=name)
 
     raise PermissionDenied
@@ -65,13 +64,8 @@ def serve_submissions(request, *, submission_pk, **_):
         raise Http404("Submission not found.")
 
     if request.user.has_perm("view_submission", submission):
-        on_commit(
-            lambda: create_download.apply_async(
-                kwargs={
-                    "creator_id": request.user.pk,
-                    "submission_id": submission.pk,
-                }
-            )
+        _create_download(
+            creator_id=request.user.pk, submission_id=submission.pk
         )
         return protected_storage_redirect(
             name=submission.predictions_file.name
@@ -122,3 +116,18 @@ def serve_component_interface_value(
         return protected_storage_redirect(name=civ.file.name)
 
     raise PermissionDenied
+
+
+def _create_download(*, creator_id, image_id=None, submission_id=None):
+    kwargs = {"creator_id": creator_id}
+
+    if image_id is not None:
+        kwargs["image_id"] = image_id
+
+    if submission_id is not None:
+        kwargs["submission_id"] = submission_id
+
+    n_updated = Download.objects.filter(**kwargs).update(count=F("count") + 1)
+
+    if n_updated == 0:
+        Download.objects.create(**kwargs)
