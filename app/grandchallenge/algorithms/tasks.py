@@ -39,22 +39,26 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
     )
     if upload_pks:
         image_tasks = group(
-            chain(
-                build_images.signature(
-                    kwargs={"upload_session_pk": upload_pk}, immutable=True
-                ),
-                add_images_to_component_interface_value.signature(
-                    kwargs={
-                        "component_interface_value_pk": civ_pk,
-                        "upload_session_pk": upload_pk,
-                    },
-                    immutable=True,
-                ),
-            )
-            for civ_pk, upload_pk in upload_pks.items()
+            # Chords and iterator groups are broken in Celery, send a list
+            # instead, see https://github.com/celery/celery/issues/7285
+            [
+                chain(
+                    build_images.signature(
+                        kwargs={"upload_session_pk": upload_pk}, immutable=True
+                    ),
+                    add_images_to_component_interface_value.signature(
+                        kwargs={
+                            "component_interface_value_pk": civ_pk,
+                            "upload_session_pk": upload_pk,
+                        },
+                        immutable=True,
+                    ),
+                )
+                for civ_pk, upload_pk in upload_pks.items()
+            ]
         )
         start_jobs = chord(image_tasks, start_jobs).on_error(
-            group(on_job_creation_error.s(job_pk=job_pk))
+            on_job_creation_error.s(job_pk=job_pk)
         )
 
     on_commit(start_jobs.apply_async)
