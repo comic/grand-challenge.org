@@ -107,7 +107,12 @@
     <span class="n">JSONValidator</span><span class="p">,</span>
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="n">calculate_ranks</span><span class="p">,</span> <span class="n">create_evaluation</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">assign_evaluation_permissions</span><span class="p">,</span>
+    <span class="n">assign_submission_permissions</span><span class="p">,</span>
+    <span class="n">calculate_ranks</span><span class="p">,</span>
+    <span class="n">create_evaluation</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="n">StatusChoices</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
@@ -502,6 +507,19 @@
             <span class="n">MaxValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mi">4</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">),</span>
         <span class="p">],</span>
     <span class="p">)</span>
+    <span class="n">public</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Uncheck this box to hide this phase&#39;s submission page and &quot;</span>
+            <span class="s2">&quot;leaderboard from participants. Participants will then no longer &quot;</span>
+            <span class="s2">&quot;have access to their previous submissions and evaluations from this &quot;</span>
+            <span class="s2">&quot;phase if they exist, and they will no longer see the &quot;</span>
+            <span class="s2">&quot;respective submit and leaderboard tabs for this phase. &quot;</span>
+            <span class="s2">&quot;For you as admin these tabs remain visible.&quot;</span>
+            <span class="s2">&quot;Note that hiding a phase is only possible if submissions for &quot;</span>
+            <span class="s2">&quot;this phase are closed for participants.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">))</span>
@@ -510,6 +528,10 @@
             <span class="p">(</span><span class="s2">&quot;create_phase_submission&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Submission&quot;</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;create_phase_workspace&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Workspace&quot;</span><span class="p">),</span>
         <span class="p">)</span>
+
+<div class="viewcode-block" id="Phase.__init__"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_orig_public</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span></div>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> Evaluation for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -530,6 +552,18 @@
                         <span class="n">actor_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                         <span class="n">send_action</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                     <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orig_public</span><span class="p">:</span>
+            <span class="n">on_commit</span><span class="p">(</span>
+                <span class="n">assign_evaluation_permissions</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">]}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="p">)</span>
+            <span class="n">on_commit</span><span class="p">(</span>
+                <span class="n">assign_submission_permissions</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="p">)</span>
 
         <span class="n">on_commit</span><span class="p">(</span>
             <span class="k">lambda</span><span class="p">:</span> <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
@@ -561,6 +595,13 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;The submissions close date needs to be after &quot;</span>
                 <span class="s2">&quot;the submissions open date.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_for_submissions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;A phase can only be hidden if it is closed for submissions. &quot;</span>
+                <span class="s2">&quot;To close submissions for this phase, either set &quot;</span>
+                <span class="s2">&quot;submission_limit to 0, or set appropriate phase start / end dates.&quot;</span>
             <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -877,7 +918,11 @@
 
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">public</span><span class="p">:</span>
+            <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
@@ -929,29 +974,32 @@
 
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">admins_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span>
-
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_evaluation&quot;</span><span class="p">,</span> <span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">hidden</span><span class="p">:</span>
-            <span class="n">viewer_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">participants_group</span>
-            <span class="n">non_viewer_group</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">REGISTERED_AND_ANON_USERS_GROUP_NAME</span>
-            <span class="p">)</span>
+        <span class="n">all_user_group</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">REGISTERED_AND_ANON_USERS_GROUP_NAME</span>
+        <span class="p">)</span>
+        <span class="n">all_users_can_view</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">published</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">public</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">hidden</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">all_users_can_view</span><span class="p">:</span>
+            <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">all_user_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">viewer_group</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">REGISTERED_AND_ANON_USERS_GROUP_NAME</span>
-            <span class="p">)</span>
-            <span class="n">non_viewer_group</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">participants_group</span>
-            <span class="p">)</span>
+            <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">all_user_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">published</span><span class="p">:</span>
-            <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">viewer_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">participants_can_view</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">published</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">public</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">hidden</span>
+        <span class="p">)</span>
+        <span class="n">participants_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">participants_group</span>
+        <span class="k">if</span> <span class="n">participants_can_view</span><span class="p">:</span>
+            <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">participants_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">viewer_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-
-        <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">non_viewer_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">participants_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
