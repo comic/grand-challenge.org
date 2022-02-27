@@ -3,7 +3,6 @@ from datetime import timedelta
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from actstream.actions import follow, is_following
-from celery import group
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -437,14 +436,16 @@ class Phase(UUIDModel):
     )
     public = models.BooleanField(
         default=True,
-        help_text="Uncheck this box to hide this phase's submission page and "
-        "leaderboard from participants. Participants will then no longer "
-        "have access to their previous submissions and evaluations from this "
-        "phase if they exist, and they will no longer see the "
-        "respective submit and leaderboard tabs for this phase. "
-        "For you as admin these tabs remain visible."
-        "Note that hiding a phase is only possible if submissions for "
-        "this phase are closed for participants.",
+        help_text=(
+            "Uncheck this box to hide this phase's submission page and "
+            "leaderboard from participants. Participants will then no longer "
+            "have access to their previous submissions and evaluations from this "
+            "phase if they exist, and they will no longer see the "
+            "respective submit and leaderboard tabs for this phase. "
+            "For you as admin these tabs remain visible."
+            "Note that hiding a phase is only possible if submissions for "
+            "this phase are closed for participants."
+        ),
     )
 
     class Meta:
@@ -481,15 +482,13 @@ class Phase(UUIDModel):
 
         if self.public != self._orig_public:
             on_commit(
-                group(
-                    assign_evaluation_permissions.signature(
-                        kwargs={
-                            "phase_pks": [self.pk],
-                        },
-                    ),
-                    assign_submission_permissions.signature(
-                        kwargs={"phase_pk": self.pk},
-                    ),
+                assign_evaluation_permissions.signature(
+                    kwargs={"phase_pks": [self.pk]}
+                ).apply_async
+            )
+            on_commit(
+                assign_submission_permissions.signature(
+                    kwargs={"phase_pk": self.pk}
                 ).apply_async
             )
 
