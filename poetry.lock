@@ -112,14 +112,14 @@ webencodings = "*"
 
 [[package]]
 name = "boto3"
-version = "1.21.7"
+version = "1.21.8"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.6"
 
 [package.dependencies]
-botocore = ">=1.24.7,<1.25.0"
+botocore = ">=1.24.8,<1.25.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.5.0,<0.6.0"
 
@@ -128,7 +128,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.24.7"
+version = "1.24.8"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -152,54 +152,54 @@ python-versions = "*"
 
 [[package]]
 name = "celery"
-version = "5.0.5"
+version = "5.2.3"
 description = "Distributed Task Queue."
 category = "main"
 optional = false
-python-versions = ">=3.6,"
+python-versions = ">=3.7,"
 
 [package.dependencies]
-billiard = ">=3.6.3.0,<4.0"
-boto3 = {version = ">=1.9.125", optional = true, markers = "extra == \"sqs\""}
-click = ">=7.0,<8.0"
+billiard = ">=3.6.4.0,<4.0"
+click = ">=8.0.3,<9.0"
 click-didyoumean = ">=0.0.3"
 click-plugins = ">=1.1.1"
-click-repl = ">=0.1.6"
-kombu = ">=5.0.0,<6.0"
-pycurl = {version = "7.43.0.5", optional = true, markers = "extra == \"sqs\""}
-pytz = ">0.0-dev"
-redis = {version = ">=3.2.0", optional = true, markers = "extra == \"redis\""}
+click-repl = ">=0.2.0"
+kombu = [
+    {version = ">=5.2.3,<6.0"},
+    {version = "*", extras = ["sqs"], optional = true, markers = "extra == \"sqs\""},
+]
+pytz = ">=2021.3"
+redis = {version = ">=3.4.1,<4.0.0 || >4.0.0,<4.0.1 || >4.0.1", optional = true, markers = "extra == \"redis\""}
 vine = ">=5.0.0,<6.0"
 
 [package.extras]
 arangodb = ["pyArango (>=1.3.2)"]
 auth = ["cryptography"]
-azureblockblob = ["azure-storage (==0.36.0)", "azure-common (==1.1.5)", "azure-storage-common (==1.1.0)"]
+azureblockblob = ["azure-storage-blob (==12.9.0)"]
 brotli = ["brotli (>=1.0.0)", "brotlipy (>=0.7.0)"]
 cassandra = ["cassandra-driver (<3.21.0)"]
-consul = ["python-consul"]
+consul = ["python-consul2"]
 cosmosdbsql = ["pydocumentdb (==2.3.2)"]
 couchbase = ["couchbase (>=3.0.0)"]
 couchdb = ["pycouchdb"]
 django = ["Django (>=1.11)"]
 dynamodb = ["boto3 (>=1.9.178)"]
 elasticsearch = ["elasticsearch"]
-eventlet = ["eventlet (>=0.26.1)"]
-gevent = ["gevent (>=1.0.0)"]
+eventlet = ["eventlet (>=0.32.0)"]
+gevent = ["gevent (>=1.5.0)"]
 librabbitmq = ["librabbitmq (>=1.5.0)"]
-lzma = ["backports.lzma"]
 memcache = ["pylibmc"]
-mongodb = ["pymongo[srv] (>=3.3.0)"]
+mongodb = ["pymongo[srv] (>=3.11.1)"]
 msgpack = ["msgpack"]
 pymemcache = ["python-memcached"]
 pyro = ["pyro4"]
 pytest = ["pytest-celery"]
-redis = ["redis (>=3.2.0)"]
+redis = ["redis (>=3.4.1,!=4.0.0,!=4.0.1)"]
 s3 = ["boto3 (>=1.9.125)"]
 slmq = ["softlayer-messaging (>=1.0.3)"]
 solar = ["ephem"]
 sqlalchemy = ["sqlalchemy"]
-sqs = ["boto3 (>=1.9.125)", "pycurl (==7.43.0.5)"]
+sqs = ["kombu"]
 tblib = ["tblib (>=1.3.0)", "tblib (>=1.5.0)"]
 yaml = ["PyYAML (>=3.10)"]
 zookeeper = ["kazoo (>=1.3.1)"]
@@ -248,11 +248,14 @@ lxml = "*"
 
 [[package]]
 name = "click"
-version = "7.1.2"
+version = "8.0.4"
 description = "Composable command line interface toolkit"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.6"
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "click-didyoumean"
@@ -368,7 +371,7 @@ dev = ["tox", "bump2version (<1)", "sphinx (<2)", "importlib-metadata (<3)", "im
 
 [[package]]
 name = "disposable-email-domains"
-version = "0.0.76"
+version = "0.0.77"
 description = "A set of disposable email domains"
 category = "main"
 optional = false
@@ -732,7 +735,7 @@ test = ["pytest", "pytest-cov", "pytest-django", "selenium"]
 
 [[package]]
 name = "django-ses"
-version = "2.5.0"
+version = "2.6.0"
 description = "A Django email backend for Amazon's Simple Email Service"
 category = "main"
 optional = false
@@ -1139,28 +1142,32 @@ format_nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [[package]]
 name = "kombu"
-version = "5.0.2"
+version = "5.2.3"
 description = "Messaging library for Python."
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
-amqp = ">=5.0.0,<6.0.0"
+amqp = ">=5.0.9,<6.0.0"
+boto3 = {version = ">=1.9.12", optional = true, markers = "extra == \"sqs\""}
+pycurl = {version = ">=7.44.1,<7.45.0", optional = true, markers = "extra == \"sqs\""}
+urllib3 = {version = ">=1.26.7", optional = true, markers = "extra == \"sqs\""}
+vine = "*"
 
 [package.extras]
-azureservicebus = ["azure-servicebus (>=0.21.1)"]
+azureservicebus = ["azure-servicebus (>=7.0.0)"]
 azurestoragequeues = ["azure-storage-queue"]
 consul = ["python-consul (>=0.6.0)"]
-librabbitmq = ["librabbitmq (>=1.5.2)"]
-mongodb = ["pymongo (>=3.3.0)"]
+librabbitmq = ["librabbitmq (>=2.0.0)"]
+mongodb = ["pymongo (>=3.3.0,<3.12.1)"]
 msgpack = ["msgpack"]
 pyro = ["pyro4"]
 qpid = ["qpid-python (>=0.26)", "qpid-tools (>=0.26)"]
-redis = ["redis (>=3.3.11)"]
+redis = ["redis (>=3.4.1,!=4.0.0,!=4.0.1)"]
 slmq = ["softlayer-messaging (>=1.0.3)"]
 sqlalchemy = ["sqlalchemy"]
-sqs = ["boto3 (>=1.4.4)", "pycurl (==7.43.0.2)"]
+sqs = ["boto3 (>=1.9.12)", "pycurl (>=7.44.1,<7.45.0)", "urllib3 (>=1.26.7)"]
 yaml = ["PyYAML (>=3.10)"]
 zookeeper = ["kazoo (>=1.3.1)"]
 
@@ -1394,11 +1401,11 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "pycurl"
-version = "7.43.0.5"
+version = "7.44.1"
 description = "PycURL -- A Python Interface To The cURL library"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.5"
 
 [[package]]
 name = "pydantic"
@@ -2280,7 +2287,7 @@ python-versions = "*"
 
 [[package]]
 name = "websocket-client"
-version = "1.2.3"
+version = "1.3.1"
 description = "WebSocket client for Python with low level API options"
 category = "main"
 optional = false
@@ -2347,7 +2354,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "8e36f503048919d307d1f4730d1c520ee6fafc1e8cb36271c52488bcc4683954"
+content-hash = "6c0c6706965fa6ade5b2020b0bad5bc35c7844fb3b96a59ca09b940e74f28dee"
 
 [metadata.files]
 alabaster = [
@@ -2391,12 +2398,12 @@ bleach = [
     {file = "bleach-4.1.0.tar.gz", hash = "sha256:0900d8b37eba61a802ee40ac0061f8c2b5dee29c1927dd1d233e075ebf5a71da"},
 ]
 boto3 = [
-    {file = "boto3-1.21.7-py3-none-any.whl", hash = "sha256:af92931f65e33e7450c3389c6cc6ab6b3e2f619697ea5566aacc0f16f3b21f61"},
-    {file = "boto3-1.21.7.tar.gz", hash = "sha256:8f59383fe578ac9107466a464d7198933e5332d85a4790f2e01cf24a4a7f635b"},
+    {file = "boto3-1.21.8-py3-none-any.whl", hash = "sha256:9b6903fe9cc92d2f6111db28675263f1ab45adbcf1483025c82a304ce7790b71"},
+    {file = "boto3-1.21.8.tar.gz", hash = "sha256:f2ce641957c1782e382548ced4a447189e45851bbe58c1f6752ff2b661527de7"},
 ]
 botocore = [
-    {file = "botocore-1.24.7-py3-none-any.whl", hash = "sha256:a34118bfadc02903ab404148822fe5a6de7a3bb58943f1a6a19cc8b0446d2a50"},
-    {file = "botocore-1.24.7.tar.gz", hash = "sha256:5d1a2a2ac72461bbaa79317b3e4cb72c7ebb315aef184d90f72ec1f6dba0ca6c"},
+    {file = "botocore-1.24.8-py3-none-any.whl", hash = "sha256:9fbc5c57b31850c51c87abc3e166ed4e0f343665bec4e1a0ff814fbc9704642c"},
+    {file = "botocore-1.24.8.tar.gz", hash = "sha256:a5431d806dc75fb1844463d921759fcd8d387674443af8d7fd0867f296b02759"},
 ]
 brotli = [
     {file = "Brotli-1.0.9-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:268fe94547ba25b58ebc724680609c8ee3e5a843202e9a381f6f9c5e8bdb5c70"},
@@ -2405,6 +2412,16 @@ brotli = [
     {file = "Brotli-1.0.9-cp27-cp27m-win32.whl", hash = "sha256:afde17ae04d90fbe53afb628f7f2d4ca022797aa093e809de5c3cf276f61bbfa"},
     {file = "Brotli-1.0.9-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:7cb81373984cc0e4682f31bc3d6be9026006d96eecd07ea49aafb06897746452"},
     {file = "Brotli-1.0.9-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:db844eb158a87ccab83e868a762ea8024ae27337fc7ddcbfcddd157f841fdfe7"},
+    {file = "Brotli-1.0.9-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9744a863b489c79a73aba014df554b0e7a0fc44ef3f8a0ef2a52919c7d155031"},
+    {file = "Brotli-1.0.9-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:a72661af47119a80d82fa583b554095308d6a4c356b2a554fdc2799bc19f2a43"},
+    {file = "Brotli-1.0.9-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7ee83d3e3a024a9618e5be64648d6d11c37047ac48adff25f12fa4226cf23d1c"},
+    {file = "Brotli-1.0.9-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:19598ecddd8a212aedb1ffa15763dd52a388518c4550e615aed88dc3753c0f0c"},
+    {file = "Brotli-1.0.9-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:44bb8ff420c1d19d91d79d8c3574b8954288bdff0273bf788954064d260d7ab0"},
+    {file = "Brotli-1.0.9-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:e23281b9a08ec338469268f98f194658abfb13658ee98e2b7f85ee9dd06caa91"},
+    {file = "Brotli-1.0.9-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:3496fc835370da351d37cada4cf744039616a6db7d13c430035e901443a34daa"},
+    {file = "Brotli-1.0.9-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:b83bb06a0192cccf1eb8d0a28672a1b79c74c3a8a5f2619625aeb6f28b3a82bb"},
+    {file = "Brotli-1.0.9-cp310-cp310-win32.whl", hash = "sha256:26d168aac4aaec9a4394221240e8a5436b5634adc3cd1cdf637f6645cecbf181"},
+    {file = "Brotli-1.0.9-cp310-cp310-win_amd64.whl", hash = "sha256:622a231b08899c864eb87e85f81c75e7b9ce05b001e59bbfbf43d4a71f5f32b2"},
     {file = "Brotli-1.0.9-cp35-cp35m-macosx_10_6_intel.whl", hash = "sha256:c83aa123d56f2e060644427a882a36b3c12db93727ad7a7b9efd7d7f3e9cc2c4"},
     {file = "Brotli-1.0.9-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:6b2ae9f5f67f89aade1fab0f7fd8f2832501311c363a21579d02defa844d9296"},
     {file = "Brotli-1.0.9-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:68715970f16b6e92c574c30747c95cf8cf62804569647386ff032195dc89a430"},
@@ -2413,23 +2430,48 @@ brotli = [
     {file = "Brotli-1.0.9-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:503fa6af7da9f4b5780bb7e4cbe0c639b010f12be85d02c99452825dd0feef3f"},
     {file = "Brotli-1.0.9-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:40d15c79f42e0a2c72892bf407979febd9cf91f36f495ffb333d1d04cebb34e4"},
     {file = "Brotli-1.0.9-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:93130612b837103e15ac3f9cbacb4613f9e348b58b3aad53721d92e57f96d46a"},
+    {file = "Brotli-1.0.9-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:87fdccbb6bb589095f413b1e05734ba492c962b4a45a13ff3408fa44ffe6479b"},
+    {file = "Brotli-1.0.9-cp36-cp36m-musllinux_1_1_aarch64.whl", hash = "sha256:6d847b14f7ea89f6ad3c9e3901d1bc4835f6b390a9c71df999b0162d9bb1e20f"},
+    {file = "Brotli-1.0.9-cp36-cp36m-musllinux_1_1_i686.whl", hash = "sha256:495ba7e49c2db22b046a53b469bbecea802efce200dffb69b93dd47397edc9b6"},
+    {file = "Brotli-1.0.9-cp36-cp36m-musllinux_1_1_x86_64.whl", hash = "sha256:4688c1e42968ba52e57d8670ad2306fe92e0169c6f3af0089be75bbac0c64a3b"},
     {file = "Brotli-1.0.9-cp36-cp36m-win32.whl", hash = "sha256:61a7ee1f13ab913897dac7da44a73c6d44d48a4adff42a5701e3239791c96e14"},
     {file = "Brotli-1.0.9-cp36-cp36m-win_amd64.whl", hash = "sha256:1c48472a6ba3b113452355b9af0a60da5c2ae60477f8feda8346f8fd48e3e87c"},
     {file = "Brotli-1.0.9-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:3b78a24b5fd13c03ee2b7b86290ed20efdc95da75a3557cc06811764d5ad1126"},
     {file = "Brotli-1.0.9-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:9d12cf2851759b8de8ca5fde36a59c08210a97ffca0eb94c532ce7b17c6a3d1d"},
     {file = "Brotli-1.0.9-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:6c772d6c0a79ac0f414a9f8947cc407e119b8598de7621f39cacadae3cf57d12"},
+    {file = "Brotli-1.0.9-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:29d1d350178e5225397e28ea1b7aca3648fcbab546d20e7475805437bfb0a130"},
+    {file = "Brotli-1.0.9-cp37-cp37m-musllinux_1_1_aarch64.whl", hash = "sha256:7bbff90b63328013e1e8cb50650ae0b9bac54ffb4be6104378490193cd60f85a"},
+    {file = "Brotli-1.0.9-cp37-cp37m-musllinux_1_1_i686.whl", hash = "sha256:ec1947eabbaf8e0531e8e899fc1d9876c179fc518989461f5d24e2223395a9e3"},
+    {file = "Brotli-1.0.9-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:12effe280b8ebfd389022aa65114e30407540ccb89b177d3fbc9a4f177c4bd5d"},
     {file = "Brotli-1.0.9-cp37-cp37m-win32.whl", hash = "sha256:f909bbbc433048b499cb9db9e713b5d8d949e8c109a2a548502fb9aa8630f0b1"},
     {file = "Brotli-1.0.9-cp37-cp37m-win_amd64.whl", hash = "sha256:97f715cf371b16ac88b8c19da00029804e20e25f30d80203417255d239f228b5"},
+    {file = "Brotli-1.0.9-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:e16eb9541f3dd1a3e92b89005e37b1257b157b7256df0e36bd7b33b50be73bcb"},
     {file = "Brotli-1.0.9-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:160c78292e98d21e73a4cc7f76a234390e516afcd982fa17e1422f7c6a9ce9c8"},
     {file = "Brotli-1.0.9-cp38-cp38-manylinux1_i686.whl", hash = "sha256:b663f1e02de5d0573610756398e44c130add0eb9a3fc912a09665332942a2efb"},
     {file = "Brotli-1.0.9-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:5b6ef7d9f9c38292df3690fe3e302b5b530999fa90014853dcd0d6902fb59f26"},
+    {file = "Brotli-1.0.9-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8a674ac10e0a87b683f4fa2b6fa41090edfd686a6524bd8dedbd6138b309175c"},
+    {file = "Brotli-1.0.9-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:e2d9e1cbc1b25e22000328702b014227737756f4b5bf5c485ac1d8091ada078b"},
+    {file = "Brotli-1.0.9-cp38-cp38-musllinux_1_1_i686.whl", hash = "sha256:b336c5e9cf03c7be40c47b5fd694c43c9f1358a80ba384a21969e0b4e66a9b17"},
+    {file = "Brotli-1.0.9-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:85f7912459c67eaab2fb854ed2bc1cc25772b300545fe7ed2dc03954da638649"},
     {file = "Brotli-1.0.9-cp38-cp38-win32.whl", hash = "sha256:35a3edbe18e876e596553c4007a087f8bcfd538f19bc116917b3c7522fca0429"},
     {file = "Brotli-1.0.9-cp38-cp38-win_amd64.whl", hash = "sha256:269a5743a393c65db46a7bb982644c67ecba4b8d91b392403ad8a861ba6f495f"},
+    {file = "Brotli-1.0.9-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:2aad0e0baa04517741c9bb5b07586c642302e5fb3e75319cb62087bd0995ab19"},
+    {file = "Brotli-1.0.9-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:5cb1e18167792d7d21e21365d7650b72d5081ed476123ff7b8cac7f45189c0c7"},
+    {file = "Brotli-1.0.9-cp39-cp39-manylinux1_i686.whl", hash = "sha256:16d528a45c2e1909c2798f27f7bf0a3feec1dc9e50948e738b961618e38b6a7b"},
+    {file = "Brotli-1.0.9-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:56d027eace784738457437df7331965473f2c0da2c70e1a1f6fdbae5402e0389"},
+    {file = "Brotli-1.0.9-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9bf919756d25e4114ace16a8ce91eb340eb57a08e2c6950c3cebcbe3dff2a5e7"},
+    {file = "Brotli-1.0.9-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:e4c4e92c14a57c9bd4cb4be678c25369bf7a092d55fd0866f759e425b9660806"},
+    {file = "Brotli-1.0.9-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:e48f4234f2469ed012a98f4b7874e7f7e173c167bed4934912a29e03167cf6b1"},
+    {file = "Brotli-1.0.9-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:9ed4c92a0665002ff8ea852353aeb60d9141eb04109e88928026d3c8a9e5433c"},
+    {file = "Brotli-1.0.9-cp39-cp39-win32.whl", hash = "sha256:cfc391f4429ee0a9370aa93d812a52e1fee0f37a81861f4fdd1f4fb28e8547c3"},
+    {file = "Brotli-1.0.9-cp39-cp39-win_amd64.whl", hash = "sha256:854c33dad5ba0fbd6ab69185fec8dab89e13cda6b7d191ba111987df74f38761"},
+    {file = "Brotli-1.0.9-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:9749a124280a0ada4187a6cfd1ffd35c350fb3af79c706589d98e088c5044267"},
+    {file = "Brotli-1.0.9-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:76ffebb907bec09ff511bb3acc077695e2c32bc2142819491579a695f77ffd4d"},
     {file = "Brotli-1.0.9.zip", hash = "sha256:4d1b810aa0ed773f81dceda2cc7b403d01057458730e309856356d4ef4188438"},
 ]
 celery = [
-    {file = "celery-5.0.5-py3-none-any.whl", hash = "sha256:5e8d364e058554e83bbb116e8377d90c79be254785f357cb2cec026e79febe13"},
-    {file = "celery-5.0.5.tar.gz", hash = "sha256:f4efebe6f8629b0da2b8e529424de376494f5b7a743c321c8a2ddc2b1414921c"},
+    {file = "celery-5.2.3-py3-none-any.whl", hash = "sha256:8aacd02fc23a02760686d63dde1eb0daa9f594e735e73ea8fb15c2ff15cb608c"},
+    {file = "celery-5.2.3.tar.gz", hash = "sha256:e2cd41667ad97d4f6a2f4672d1c6a6ebada194c619253058b5f23704aaadaa82"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -2496,8 +2538,8 @@ citeproc-py = [
     {file = "citeproc_py-0.6.0-py3-none-any.whl", hash = "sha256:ca4c7a5158d6f68cb00a89bb47d9aa0eec7b89b18e574eb08a061b011b602bbe"},
 ]
 click = [
-    {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
-    {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
+    {file = "click-8.0.4-py3-none-any.whl", hash = "sha256:6a7a62563bbfabfda3a38f3023a1db4a35978c0abd76f6c9605ecd6554d6d9b1"},
+    {file = "click-8.0.4.tar.gz", hash = "sha256:8458d7b1287c5fb128c90e23381cf99dcde74beaf6c7ff6384ce84d6fe090adb"},
 ]
 click-didyoumean = [
     {file = "click-didyoumean-0.3.0.tar.gz", hash = "sha256:f184f0d851d96b6d29297354ed981b7dd71df7ff500d82fa6d11f0856bee8035"},
@@ -2592,8 +2634,8 @@ deprecated = [
     {file = "Deprecated-1.2.13.tar.gz", hash = "sha256:43ac5335da90c31c24ba028af536a91d41d53f9e6901ddb021bcc572ce44e38d"},
 ]
 disposable-email-domains = [
-    {file = "disposable-email-domains-0.0.76.tar.gz", hash = "sha256:4bb8bd7df6bbf37fccff29ae454dd7306b78fdbc7cd5572b499481dd43f44ff3"},
-    {file = "disposable_email_domains-0.0.76-py2.py3-none-any.whl", hash = "sha256:a7965be51f98933174106278a68dffff2e2d4d31923b9851edc4928ab73ce495"},
+    {file = "disposable-email-domains-0.0.77.tar.gz", hash = "sha256:840bccd12e4587068e92897b88a8438b1f825e4ba36761d7211c4c2033c95a08"},
+    {file = "disposable_email_domains-0.0.77-py2.py3-none-any.whl", hash = "sha256:2673a20cf96d3df036c52f4acc58d828949a4a956ac8f1060328dcd2ffeeb9ac"},
 ]
 django = [
     {file = "Django-3.2.12-py3-none-any.whl", hash = "sha256:9b06c289f9ba3a8abea16c9c9505f25107809fb933676f6c891ded270039d965"},
@@ -2705,8 +2747,8 @@ django-select2 = [
     {file = "django_select2-7.10.0-py2.py3-none-any.whl", hash = "sha256:fd78095b0eef02f990a56f887ada3d6bc3d0ffa858a73ec29498ec86988dc90d"},
 ]
 django-ses = [
-    {file = "django-ses-2.5.0.tar.gz", hash = "sha256:c76bb7027a15bd1979b958933deb13326225de0e1474f06eead6709b8a8bcbe5"},
-    {file = "django_ses-2.5.0-py2.py3-none-any.whl", hash = "sha256:155c08c0b1fda6e740a01d84384c046148c8b568050c5bd54152bc94e509fe91"},
+    {file = "django-ses-2.6.0.tar.gz", hash = "sha256:84f3f9db35d7fd8429b794245bec6b024d7570ba245aa42a4e78707c4d2ce2a9"},
+    {file = "django_ses-2.6.0-py2.py3-none-any.whl", hash = "sha256:0cbc20c312320c0e7e93badd3dbdb892675f95a4673fb55ee78bdd49729e4fed"},
 ]
 django-simple-history = [
     {file = "django-simple-history-3.0.0.tar.gz", hash = "sha256:66fe76c560054be393c52b1799661e104fbe372918d37d151e5d41c676158118"},
@@ -2778,6 +2820,7 @@ future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
 gunicorn = [
+    {file = "gunicorn-20.1.0-py3-none-any.whl", hash = "sha256:9dcc4547dbb1cb284accfb15ab5667a0e5d1881cc443e0677b4882a4067a807e"},
     {file = "gunicorn-20.1.0.tar.gz", hash = "sha256:e0a968b5ba15f8a328fdfd7ab1fcb5af4470c28aaf7e55df02a99bc13138e6e8"},
 ]
 h11 = [
@@ -2859,8 +2902,8 @@ jsonschema = [
     {file = "jsonschema-4.4.0.tar.gz", hash = "sha256:636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83"},
 ]
 kombu = [
-    {file = "kombu-5.0.2-py2.py3-none-any.whl", hash = "sha256:6dc509178ac4269b0e66ab4881f70a2035c33d3a622e20585f965986a5182006"},
-    {file = "kombu-5.0.2.tar.gz", hash = "sha256:f4965fba0a4718d47d470beeb5d6446e3357a62402b16c510b6a2f251e05ac3c"},
+    {file = "kombu-5.2.3-py3-none-any.whl", hash = "sha256:eeaeb8024f3a5cfc71c9250e45cddb8493f269d74ada2f74909a93c59c4b4179"},
+    {file = "kombu-5.2.3.tar.gz", hash = "sha256:81a90c1de97e08d3db37dbf163eaaf667445e1068c98bfd89f051a40e9f6dbbd"},
 ]
 livereload = [
     {file = "livereload-2.6.3.tar.gz", hash = "sha256:776f2f865e59fde56490a56bcc6773b6917366bce0c267c60ee8aaf1a0959869"},
@@ -3015,6 +3058,8 @@ openslide-python = [
     {file = "openslide-python-1.1.2.tar.gz", hash = "sha256:00f5e34dca56500b598454107a0acf243788ea2072b5468b3fea59f756b832a8"},
     {file = "openslide_python-1.1.2-cp27-cp27m-win32.whl", hash = "sha256:6a614ba40bd6eb1588adf86c90f59d4e4243e14903572015656135313956d557"},
     {file = "openslide_python-1.1.2-cp27-cp27m-win_amd64.whl", hash = "sha256:af671a07c60746180c2b6809d13b0d38f5418824f9c06cd26372aa394816c87f"},
+    {file = "openslide_python-1.1.2-cp310-cp310-win32.whl", hash = "sha256:709bbd5a4835424cea870ac8753753263bfab907a3149c343f43d05fbf7c6061"},
+    {file = "openslide_python-1.1.2-cp310-cp310-win_amd64.whl", hash = "sha256:60993a23b8d0fd43e358bbe1595dcf539f5558bd310c376bae106690a8a0eaac"},
     {file = "openslide_python-1.1.2-cp33-cp33m-win32.whl", hash = "sha256:4d4e618eca48a2b3baa748fbb37c820e8ca326de368a13f4537dc923cd7c9983"},
     {file = "openslide_python-1.1.2-cp33-cp33m-win_amd64.whl", hash = "sha256:b5b6e35f2264b20b0cb2ec73506bfad3f7eaa811d8e4f03bb8824b3954f88a38"},
     {file = "openslide_python-1.1.2-cp34-cp34m-win32.whl", hash = "sha256:9eb95e1f217c0deeaf20540048461e68f549462a67ebb017ed822d8f39f14a52"},
@@ -3027,6 +3072,8 @@ openslide-python = [
     {file = "openslide_python-1.1.2-cp37-cp37m-win_amd64.whl", hash = "sha256:268699fd111d274c57c88f42ee29861e126439b73360de9235a6adb5e58f5e80"},
     {file = "openslide_python-1.1.2-cp38-cp38-win32.whl", hash = "sha256:581067fa547e2e4bf1f81267f190d98311203fe6c84916a69f800a3974152b4f"},
     {file = "openslide_python-1.1.2-cp38-cp38-win_amd64.whl", hash = "sha256:5dcd98f781bc7a75009a06c09d1c9508fc90259db48ac7bcb1a446a9f57ef731"},
+    {file = "openslide_python-1.1.2-cp39-cp39-win32.whl", hash = "sha256:c16d53451f877ff65de73f40e27ca44d7d8e9fb1e5f739d54143e5243e7ebc75"},
+    {file = "openslide_python-1.1.2-cp39-cp39-win_amd64.whl", hash = "sha256:4bf148454b30ced98664c3c3c664190b6b5b373a15eeff0e8043fe1fb41cde54"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
@@ -3130,23 +3177,7 @@ pycparser = [
     {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
 ]
 pycurl = [
-    {file = "pycurl-7.43.0.5-cp35-cp35m-win32.whl", hash = "sha256:beadfa7f052626864d70eb33cec8f2aeece12dfb483c2424cc07b057f83b7d35"},
-    {file = "pycurl-7.43.0.5-cp35-cp35m-win_amd64.whl", hash = "sha256:7cc13d3421cbd31921d77e22d1f57c0e1a8d0fb461938a587689a93162ccef2f"},
-    {file = "pycurl-7.43.0.5-cp36-cp36m-win32.whl", hash = "sha256:50aee0469511a9708a1f1a50d510b5ec2013fc6f5e720c32bbcb3b9c7b0f45b1"},
-    {file = "pycurl-7.43.0.5-cp36-cp36m-win_amd64.whl", hash = "sha256:a0c62dbc66b9b947832307d6cf7bdb5e4da906ce7b3efe6f74292e8f3dc5abe3"},
-    {file = "pycurl-7.43.0.5-cp37-cp37m-win32.whl", hash = "sha256:a6966e8d9ccda31c6d077c4f8673aaa88141cc73d50e110e93e627b816d17fd1"},
-    {file = "pycurl-7.43.0.5-cp37-cp37m-win_amd64.whl", hash = "sha256:c5c379c8cc777dda397f86f0d0049480250ae84a82a9d99d668f461d368fb39c"},
-    {file = "pycurl-7.43.0.5-cp38-cp38-win32.whl", hash = "sha256:667db26516e50ce4a853745906f3b149c24756d85061b9d966eb7ec43a8c48a4"},
-    {file = "pycurl-7.43.0.5-cp38-cp38-win_amd64.whl", hash = "sha256:1957c867e2a341f5526c107c7bbc5014d6e75fdc2a14294fcb8a47663fbd2e15"},
-    {file = "pycurl-7.43.0.5.tar.gz", hash = "sha256:ec7dd291545842295b7b56c12c90ffad2976cc7070c98d7b1517b7b6cd5994b3"},
-    {file = "pycurl-7.43.0.5.win-amd64-py3.5.exe", hash = "sha256:404862665c4e2dbe814c9495d1193a65ae0f291a7074ae1ef1f0bffd93c14ea6"},
-    {file = "pycurl-7.43.0.5.win-amd64-py3.6.exe", hash = "sha256:b651f47c61c051ea93299b0e7a341860d33bfe2cf524237be0fb56399f026d98"},
-    {file = "pycurl-7.43.0.5.win-amd64-py3.7.exe", hash = "sha256:789a76e9265cdb7c947ec0afde2330492ccc0f2cee8e3ca8c0822082b6ae213e"},
-    {file = "pycurl-7.43.0.5.win-amd64-py3.8.exe", hash = "sha256:daa017e8dc887129e4a2cd88b7be8c431e434b89737348eaa12096026020756a"},
-    {file = "pycurl-7.43.0.5.win32-py3.5.exe", hash = "sha256:b393aa90abf07ddd51d750c0c6a801155af07f938af6ec8b89ea00ff3f892887"},
-    {file = "pycurl-7.43.0.5.win32-py3.6.exe", hash = "sha256:e1aea68b1d39dbcafc7298214f51f6ebd5f188c06aa418e9c046dfe419fe7ecf"},
-    {file = "pycurl-7.43.0.5.win32-py3.7.exe", hash = "sha256:b58e4d7888edd74dce40b9481962f0537dc77a44d99b5cc3385c3ffdaf2abf93"},
-    {file = "pycurl-7.43.0.5.win32-py3.8.exe", hash = "sha256:b6512b864466b242ffc3997e982d4590e035d056d37e63136fa137a4044ce2f1"},
+    {file = "pycurl-7.44.1.tar.gz", hash = "sha256:5bcef4d988b74b99653602101e17d8401338d596b9234d263c728a0c3df003e8"},
 ]
 pydantic = [
     {file = "pydantic-1.9.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:cb23bcc093697cdea2708baae4f9ba0e972960a835af22560f6ae4e7e47d33f5"},
@@ -3727,8 +3758,8 @@ webencodings = [
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
 ]
 websocket-client = [
-    {file = "websocket-client-1.2.3.tar.gz", hash = "sha256:1315816c0acc508997eb3ae03b9d3ff619c9d12d544c9a9b553704b1cc4f6af5"},
-    {file = "websocket_client-1.2.3-py3-none-any.whl", hash = "sha256:2eed4cc58e4d65613ed6114af2f380f7910ff416fc8c46947f6e76b6815f56c0"},
+    {file = "websocket-client-1.3.1.tar.gz", hash = "sha256:6278a75065395418283f887de7c3beafb3aa68dada5cacbe4b214e8d26da499b"},
+    {file = "websocket_client-1.3.1-py3-none-any.whl", hash = "sha256:074e2ed575e7c822fc0940d31c3ac9bb2b1142c303eafcf3e304e6ce035522e8"},
 ]
 websockets = [
     {file = "websockets-10.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d5396710f86a306cf52f87fd8ea594a0e894ba0cc5a36059eaca3a477dc332aa"},
