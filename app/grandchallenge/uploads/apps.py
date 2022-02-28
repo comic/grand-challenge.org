@@ -6,6 +6,7 @@ from django.db.models.signals import post_migrate
 def init_upload_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
+
     from grandchallenge.uploads.models import UserUpload
 
     g, _ = Group.objects.get_or_create(

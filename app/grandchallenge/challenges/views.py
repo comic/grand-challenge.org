@@ -4,8 +4,8 @@ from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.utils.html import format_html
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

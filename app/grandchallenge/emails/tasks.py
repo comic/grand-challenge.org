@@ -1,4 +1,5 @@
 from celery import shared_task
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
@@ -6,7 +7,6 @@ from django.core.mail import send_mass_mail
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 
-from config import settings
 from grandchallenge.emails.models import Email
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.subdomains.utils import reverse

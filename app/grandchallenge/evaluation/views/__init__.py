@@ -18,9 +18,8 @@ from django.views.generic import (
     RedirectView,
     UpdateView,
 )
+from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

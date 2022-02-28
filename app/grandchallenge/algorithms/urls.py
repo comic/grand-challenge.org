@@ -20,9 +20,9 @@ from grandchallenge.algorithms.views import (
     EditorsUpdate,
     JobDetail,
     JobExperimentDetail,
+    JobsList,
     JobUpdate,
     JobViewersUpdate,
-    JobsList,
     UsersUpdate,
 )
 

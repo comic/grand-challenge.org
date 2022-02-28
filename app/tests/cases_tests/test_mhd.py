@@ -3,8 +3,8 @@ import zlib
 from pathlib import Path
 from typing import List, Union
 
-import SimpleITK
 import pytest
+import SimpleITK
 from panimg.exceptions import ValidationError
 from panimg.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,

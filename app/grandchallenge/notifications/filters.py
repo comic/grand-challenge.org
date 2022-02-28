@@ -12,7 +12,6 @@ from machina.apps.forum_conversation.models import Topic
 from grandchallenge.core.filters import FilterForm
 from grandchallenge.notifications.models import Notification
 
-
 BOOLEAN_CHOICES = (("1", "Read"), ("0", "Unread"))
 
 

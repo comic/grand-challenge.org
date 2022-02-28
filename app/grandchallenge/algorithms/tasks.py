@@ -11,9 +11,9 @@ from grandchallenge.algorithms.exceptions import (
     TooManyJobsScheduled,
 )
 from grandchallenge.algorithms.models import (
+    DEFAULT_INPUT_INTERFACE_SLUG,
     Algorithm,
     AlgorithmImage,
-    DEFAULT_INPUT_INTERFACE_SLUG,
     Job,
 )
 from grandchallenge.archives.models import Archive
