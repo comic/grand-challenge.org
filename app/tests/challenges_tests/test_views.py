@@ -1,12 +1,21 @@
+import datetime
 from datetime import timedelta
 
 import pytest
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
+from config import settings
+from grandchallenge.challenges.forms import ChallengeRequestForm
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import ChallengeFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    UserFactory,
+)
 from tests.utils import get_view_for_user
 
 
@@ -318,3 +327,79 @@ def test_challenge_card_status(
         assert f"{expected_status} for {title}" in response.rendered_content
     else:
         assert expected_status in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_challenge_request_type_2_budget_fields_required(client):
+    user = UserFactory()
+    Verification.objects.create(user=user, is_verified=True)
+    # request = HttpRequest()
+    data = {
+        "creator": user,
+        "title": "Test request",
+        "challenge_short_name": "example1234",
+        "challenge_type": ChallengeRequest.ChallengeTypeChoices.T2,
+        "start_date": datetime.date.today(),
+        "end_date": datetime.date.today(),
+        "expected_number_of_participants": 10,
+        "abstract": "test",
+        "contact_email": "test@test.com",
+        "organizers": "test",
+        "challenge_setup": "test",
+        "data_set": "test",
+        "submission_assessment": "test",
+        "challenge_publication": "test",
+        "code_availability": "test",
+        "expected_number_of_teams": 10,
+    }
+    form = ChallengeRequestForm(data=data, creator=user)
+    assert not form.is_valid()
+    assert "For a type 2 challenge, you need to provide" in str(form.errors)
+
+
+@pytest.mark.django_db
+def test_challenge_request_budget_calculation(client):
+    user = UserFactory()
+    request = ChallengeRequestFactory(
+        creator=user,
+        challenge_type=ChallengeRequest.ChallengeTypeChoices.T2,
+        expected_number_of_teams=10,
+        inference_time_limit=10,
+        average_size_of_test_image=10,
+        phase_1_number_of_submissions_per_team=10,
+        phase_2_number_of_submissions_per_team=0,
+        phase_1_number_of_test_images=100,
+        phase_2_number_of_test_images=0,
+        number_of_tasks=1,
+    )
+    assert request.budget["Data storage cost for phase 1"] == round(
+        request.phase_1_number_of_test_images
+        * request.average_size_of_test_image
+        * settings.AWS_FILE_STORAGE_COSTS
+    )
+    assert request.budget["Compute costs for phase 1"] == round(
+        request.phase_1_number_of_submissions_per_team
+        * request.expected_number_of_teams
+        * request.phase_1_number_of_test_images
+        * request.inference_time_limit
+        * settings.AWS_COMPUTE_COSTS
+        / 60
+    )
+    assert "Compute costs for phase 2" not in request.budget
+    assert "Data storage cost for phase 2" not in request.budget
+    assert request.budget["Docker storage cost"] == round(
+        request.average_algorithm_container_size
+        * request.average_number_of_containers_per_team
+        * request.expected_number_of_teams
+        * settings.AWS_DOCKER_STORAGE_COSTS
+    )
+    assert (
+        request.budget["Total phase 1"]
+        == request.budget["Data storage cost for phase 1"]
+        + request.budget["Compute costs for phase 1"]
+    )
+    assert (
+        request.budget["Total"]
+        == request.budget["Total phase 1"]
+        + request.budget["Docker storage cost"]
+    )

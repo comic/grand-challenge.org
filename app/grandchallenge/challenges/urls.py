@@ -37,7 +37,7 @@ urlpatterns = [
         name="external-update",
     ),
     path("request/", ChallengeRequestCreate.as_view(), name="request"),
-    path("request/list/", ChallengeRequestList.as_view(), name="request-list"),
+    path("request-list/", ChallengeRequestList.as_view(), name="request-list"),
     path(
         "request/<pk>/",
         ChallengeRequestDetail.as_view(),

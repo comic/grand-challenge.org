@@ -4,9 +4,14 @@ import factory
 import factory.fuzzy
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.utils.timezone import now
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    ExternalChallenge,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -55,6 +60,17 @@ class ChallengeFactory(factory.django.DjangoModelFactory):
 
     short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
     creator = factory.SubFactory(UserFactory)
+
+
+class ChallengeRequestFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ChallengeRequest
+
+    creator = factory.SubFactory(UserFactory)
+    challenge_short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
+    start_date = factory.LazyFunction(now)
+    end_date = factory.LazyFunction(now)
+    expected_number_of_teams = factory.fuzzy.FuzzyInteger(10)
 
 
 class ExternalChallengeFactory(factory.django.DjangoModelFactory):

@@ -845,23 +845,25 @@ class ChallengeRequest(models.Model):
         if adding:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
-        if self._orig_status != self.status and self.status:
-            challenge = Challenge.objects.create(
-                title=self.title,
-                short_name=self.challenge_short_name,
-                creator=self.creator,
-                hidden=True,
-                contact_email=self.contact_email,
-            )
-            challenge.task_types.set(self.task_types.all())
-            challenge.modalities.set(self.modalities.all())
-            challenge.structures.set(self.structures.all())
+        if self._orig_status != self.status:
+            challenge = None
+            if self.status:
+                challenge = Challenge.objects.create(
+                    title=self.title,
+                    short_name=self.challenge_short_name,
+                    creator=self.creator,
+                    hidden=True,
+                    contact_email=self.contact_email,
+                )
+                challenge.task_types.set(self.task_types.all())
+                challenge.modalities.set(self.modalities.all())
+                challenge.structures.set(self.structures.all())
 
-            if self.challenge_type == self.ChallengeTypeChoices.T2:
-                phase = challenge.phase_set.get()
-                phase.submission_kind = phase.SubmissionKind.ALGORITHM
-                phase.creator_must_be_verified = True
-                phase.save()
+                if self.challenge_type == self.ChallengeTypeChoices.T2:
+                    phase = challenge.phase_set.get()
+                    phase.submission_kind = phase.SubmissionKind.ALGORITHM
+                    phase.creator_must_be_verified = True
+                    phase.save()
 
             send_challenge_status_update_email(
                 challengerequest=self, challenge=challenge
