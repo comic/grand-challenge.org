@@ -15,6 +15,7 @@ from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
@@ -377,7 +378,11 @@ class Challenge(ChallengeBase):
         if adding or self.hidden != self._hidden_orig:
             on_commit(
                 lambda: assign_evaluation_permissions.apply_async(
-                    kwargs={"challenge_pk": self.pk}
+                    kwargs={
+                        "phase_pks": list(
+                            self.phase_set.values_list("id", flat=True)
+                        )
+                    }
                 )
             )
             self.update_user_forum_permissions()
@@ -610,6 +615,10 @@ class Challenge(ChallengeBase):
             raise NotImplementedError(f"{self.status} not handled")
 
         return detail[0]
+
+    @cached_property
+    def visible_phases(self):
+        return self.phase_set.filter(public=True)
 
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"

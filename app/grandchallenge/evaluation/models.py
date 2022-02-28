@@ -34,7 +34,12 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
+from grandchallenge.evaluation.tasks import (
+    assign_evaluation_permissions,
+    assign_submission_permissions,
+    calculate_ranks,
+    create_evaluation,
+)
 from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
@@ -429,6 +434,19 @@ class Phase(UUIDModel):
             MaxValueValidator(limit_value=4 * 60 * 60),
         ],
     )
+    public = models.BooleanField(
+        default=True,
+        help_text=(
+            "Uncheck this box to hide this phase's submission page and "
+            "leaderboard from participants. Participants will then no longer "
+            "have access to their previous submissions and evaluations from this "
+            "phase if they exist, and they will no longer see the "
+            "respective submit and leaderboard tabs for this phase. "
+            "For you as admin these tabs remain visible."
+            "Note that hiding a phase is only possible if submissions for "
+            "this phase are closed for participants."
+        ),
+    )
 
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
@@ -437,6 +455,10 @@ class Phase(UUIDModel):
             ("create_phase_submission", "Create Phase Submission"),
             ("create_phase_workspace", "Create Phase Workspace"),
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._orig_public = self.public
 
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
@@ -457,6 +479,18 @@ class Phase(UUIDModel):
                         actor_only=False,
                         send_action=False,
                     )
+
+        if self.public != self._orig_public:
+            on_commit(
+                assign_evaluation_permissions.signature(
+                    kwargs={"phase_pks": [self.pk]}
+                ).apply_async
+            )
+            on_commit(
+                assign_submission_permissions.signature(
+                    kwargs={"phase_pk": self.pk}
+                ).apply_async
+            )
 
         on_commit(
             lambda: calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
@@ -488,6 +522,13 @@ class Phase(UUIDModel):
             raise ValidationError(
                 "The submissions close date needs to be after "
                 "the submissions open date."
+            )
+
+        if not self.public and self.open_for_submissions:
+            raise ValidationError(
+                "A phase can only be hidden if it is closed for submissions. "
+                "To close submissions for this phase, either set "
+                "submission_limit to 0, or set appropriate phase start / end dates."
             )
 
     def set_default_interfaces(self):
@@ -804,7 +845,11 @@ class Submission(UUIDModel):
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
-        assign_perm("view_submission", self.creator, self)
+
+        if self.phase.public:
+            assign_perm("view_submission", self.creator, self)
+        else:
+            remove_perm("view_submission", self.creator, self)
 
     def get_absolute_url(self):
         return reverse(
@@ -856,29 +901,32 @@ class Evaluation(UUIDModel, ComponentJob):
 
     def assign_permissions(self):
         admins_group = self.submission.phase.challenge.admins_group
-
         assign_perm("view_evaluation", admins_group, self)
         assign_perm("change_evaluation", admins_group, self)
 
-        if self.submission.phase.challenge.hidden:
-            viewer_group = self.submission.phase.challenge.participants_group
-            non_viewer_group = Group.objects.get(
-                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-            )
+        all_user_group = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+        all_users_can_view = (
+            self.published
+            and self.submission.phase.public
+            and not self.submission.phase.challenge.hidden
+        )
+        if all_users_can_view:
+            assign_perm("view_evaluation", all_user_group, self)
         else:
-            viewer_group = Group.objects.get(
-                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-            )
-            non_viewer_group = (
-                self.submission.phase.challenge.participants_group
-            )
+            remove_perm("view_evaluation", all_user_group, self)
 
-        if self.published:
-            assign_perm("view_evaluation", viewer_group, self)
+        participants_can_view = (
+            self.published
+            and self.submission.phase.public
+            and self.submission.phase.challenge.hidden
+        )
+        participants_group = self.submission.phase.challenge.participants_group
+        if participants_can_view:
+            assign_perm("view_evaluation", participants_group, self)
         else:
-            remove_perm("view_evaluation", viewer_group, self)
-
-        remove_perm("view_evaluation", non_viewer_group, self)
+            remove_perm("view_evaluation", participants_group, self)
 
     @property
     def container(self):

@@ -23,6 +23,10 @@
 
     <h2>Submissions</h2>
 
+    {% if not challenge.visible_phases %}
+        <span>There are no active submission phases for this challenge.</span>
+    {% endif %}
+
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="submissionsTable">
             <thead class="thead-light">

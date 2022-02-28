@@ -22,6 +22,8 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
+ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 0
+ACCOUNT_RATE_LIMITS = {}
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 CELERY_BROKER = "memory"
