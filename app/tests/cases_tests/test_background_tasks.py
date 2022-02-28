@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from unittest import mock
 
-import SimpleITK
 import pytest
+import SimpleITK
 from actstream.actions import is_following
 from billiard.exceptions import SoftTimeLimitExceeded
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks

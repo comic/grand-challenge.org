@@ -63,11 +63,11 @@ from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
     GroundTruthForm,
     QuestionForm,
+    ReadersForm,
     ReaderStudyCopyForm,
     ReaderStudyCreateForm,
     ReaderStudyPermissionRequestUpdateForm,
     ReaderStudyUpdateForm,
-    ReadersForm,
 )
 from grandchallenge.reader_studies.models import (
     Answer,

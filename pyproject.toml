@@ -6,8 +6,6 @@ build-backend = "poetry.core.masonry.api"
 profile = "black"
 known_first_party = ["config", "grandchallenge", "tests"]
 line_length = 79
-case_sensitive = true
-order_by_type = false
 
 [tool.black]
 line-length = 79

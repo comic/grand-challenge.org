@@ -4,8 +4,8 @@ from random import choice
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
-    ImproperlyConfigured,
     NON_FIELD_ERRORS,
+    ImproperlyConfigured,
     ValidationError,
 )
 from django.forms.utils import ErrorList
