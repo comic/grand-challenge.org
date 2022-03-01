@@ -250,7 +250,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "lines": [
             {
                 "name": "test_name",
-                "seed_points": [0, 0, 0],
+                "seed_points": [[0, 0, 0], [0, 0, 0]],
                 "path_point_lists": [
                     [[0, 0, 0], [0, 0, 0]],
                     [[1, 1, 1], [1, 1, 1]],
@@ -259,7 +259,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
             {
                 "name": "test_name",
-                "seed_points": [0, 0, 0],
+                "seed_points": [[0, 0, 0], [0, 0, 0]],
                 "path_point_lists": [
                     [[0, 0, 0], [0, 0, 0]],
                     [[1, 1, 1], [1, 1, 1]],
