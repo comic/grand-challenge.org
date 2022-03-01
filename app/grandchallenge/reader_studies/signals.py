@@ -1,10 +1,15 @@
+from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.models import Image
-from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    DisplaySet,
+    ReaderStudy,
+)
 from grandchallenge.reader_studies.tasks import add_scores
 
 
@@ -60,3 +65,27 @@ def assign_score(instance, action, reverse, model, pk_set, **_):
             }
         )
     )
+
+
+@receiver(m2m_changed, sender=DisplaySet.values.through)
+def assert_modification_allowed(instance, action, reverse, model, pk_set, **_):
+    if "pre" not in action:
+        return
+
+    if reverse:
+        not_editable = []
+        for ds in DisplaySet.objects.filter(pk__in=pk_set):
+            if not ds.is_editable:
+                not_editable.append(ds.pk)
+        if len(not_editable) > 0:
+            raise ValidationError(
+                "The following display sets cannot be updated, because answers "
+                f"for them already exist: {', '.join(not_editable)}"
+            )
+
+    else:
+        if not instance.is_editable:
+            raise ValidationError(
+                "This display set cannot be updated, because answers for it "
+                "already exist."
+            )

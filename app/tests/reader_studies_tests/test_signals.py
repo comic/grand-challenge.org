@@ -1,10 +1,18 @@
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.reader_studies.models import Question
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
+    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -134,3 +142,35 @@ def test_assign_score(settings):
         a2.images.add(im)
     a2.refresh_from_db()
     assert a2.score == 1.0
+
+
+@pytest.mark.django_db
+def test_assert_modification_allowed():
+    rs = ReaderStudyFactory()
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci, value=True)
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ)
+
+    del ds.is_editable
+
+    civ2 = ComponentInterfaceValueFactory(interface=ci, value=True)
+    ds.values.remove(civ)
+    ds.values.add(civ2)
+
+    assert ds.values.count() == 1
+    assert ds.values.first() == civ2
+
+    q = QuestionFactory(reader_study=rs)
+    AnswerFactory(question=q, display_set=ds)
+
+    del ds.is_editable
+
+    with pytest.raises(ValidationError):
+        with transaction.atomic():
+            ds.values.remove(civ2)
+
+    assert ds.values.count() == 1
+    assert ds.values.first() == civ2
