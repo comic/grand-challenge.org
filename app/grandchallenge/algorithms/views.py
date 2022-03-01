@@ -123,7 +123,6 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
             super()
             .get_queryset()
             .prefetch_related("publications")
-            .order_by("-created")
         )
 
     def get_context_data(self, *args, **kwargs):
