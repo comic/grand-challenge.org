@@ -4,10 +4,11 @@ from django.db.models.signals import post_migrate
 
 
 def init_notification_permissions(*_, **__):
+    from actstream.models import Follow
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
+
     from grandchallenge.notifications.models import Notification
-    from actstream.models import Follow
 
     g, _ = Group.objects.get_or_create(
         name=settings.REGISTERED_USERS_GROUP_NAME

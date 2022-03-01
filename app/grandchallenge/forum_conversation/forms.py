@@ -1,8 +1,6 @@
 from django.forms import BooleanField, HiddenInput
-from machina.apps.forum_conversation.forms import (
-    PostForm as BasePostForm,
-    TopicForm as BaseTopicForm,
-)
+from machina.apps.forum_conversation.forms import PostForm as BasePostForm
+from machina.apps.forum_conversation.forms import TopicForm as BaseTopicForm
 
 
 class PostForm(BasePostForm):

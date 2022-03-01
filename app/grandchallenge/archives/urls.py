@@ -13,8 +13,8 @@ from grandchallenge.archives.views import (
     ArchivePermissionRequestList,
     ArchivePermissionRequestUpdate,
     ArchiveUpdate,
-    ArchiveUploadSessionCreate,
     ArchiveUploadersUpdate,
+    ArchiveUploadSessionCreate,
     ArchiveUsersUpdate,
 )
 

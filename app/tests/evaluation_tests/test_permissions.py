@@ -17,6 +17,7 @@ from tests.evaluation_tests.factories import (
     PhaseFactory,
     SubmissionFactory,
 )
+from tests.factories import UserFactory
 
 
 def get_groups_with_set_perms(*args, **kwargs):
@@ -39,6 +40,7 @@ def get_users_with_set_perms(*args, **kwargs):
     return {k: {*v} for k, v in get_users_with_perms(*args, **kwargs).items()}
 
 
+@pytest.mark.django_db
 class TestPhasePermissions(TestCase):
     def test_phase_permissions(self):
         """Only challenge admins should be able to view and change phases."""
@@ -53,6 +55,92 @@ class TestPhasePermissions(TestCase):
             p.challenge.participants_group: {"create_phase_submission"},
         }
         assert get_users_with_perms(p, with_group_users=False).count() == 0
+
+    def test_hiding_phase_updates_perms(self):
+        e: Evaluation = EvaluationFactory(
+            submission__phase__auto_publish_new_results=True,
+            submission__phase__public=True,
+            submission__phase__challenge__hidden=False,
+            submission__creator=UserFactory(),
+        )
+
+        all_users = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+            all_users: {"view_evaluation"},
+        }
+
+        assert get_groups_with_set_perms(e.submission) == {
+            e.submission.phase.challenge.admins_group: {"view_submission"},
+        }
+        assert e.submission.creator.has_perm("view_submission", e.submission)
+
+        # Override the celery settings
+        settings.task_eager_propagates = (True,)
+        settings.task_always_eager = (True,)
+
+        with capture_on_commit_callbacks(execute=True):
+            e.submission.phase.public = False
+            e.submission.phase.save()
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+        }
+        assert get_groups_with_set_perms(e.submission) == {
+            e.submission.phase.challenge.admins_group: {"view_submission"},
+        }
+
+    def test_unhiding_phase_updates_perms(self):
+        e: Evaluation = EvaluationFactory(
+            submission__phase__auto_publish_new_results=True,
+            submission__phase__public=False,
+            submission__phase__challenge__hidden=False,
+            submission__creator=UserFactory(),
+        )
+
+        all_users = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+        }
+        assert get_groups_with_set_perms(e.submission) == {
+            e.submission.phase.challenge.admins_group: {"view_submission"},
+        }
+
+        # Override the celery settings
+        settings.task_eager_propagates = (True,)
+        settings.task_always_eager = (True,)
+
+        with capture_on_commit_callbacks(execute=True):
+            e.submission.phase.public = True
+            e.submission.phase.save()
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+            all_users: {"view_evaluation"},
+        }
+
+        assert get_groups_with_set_perms(e.submission) == {
+            e.submission.phase.challenge.admins_group: {"view_submission"},
+        }
+        assert e.submission.creator.has_perm("view_submission", e.submission)
 
 
 class TestMethodPermissions(TestCase):

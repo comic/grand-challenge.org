@@ -1,6 +1,5 @@
 from django.urls import path
 
-
 from grandchallenge.flatpages.views import FlatPageCreate, FlatPageUpdate
 
 app_name = "flatpages"

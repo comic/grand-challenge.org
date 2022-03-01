@@ -2,9 +2,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
+from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.mixins import (

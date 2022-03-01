@@ -6,10 +6,10 @@ from io import BytesIO
 from pathlib import Path
 
 import SimpleITK as Sitk
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from config import settings
 from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,

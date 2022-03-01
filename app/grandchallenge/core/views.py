@@ -4,16 +4,16 @@ from random import choice
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
-    ImproperlyConfigured,
     NON_FIELD_ERRORS,
+    ImproperlyConfigured,
     ValidationError,
 )
 from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from django.views.generic import TemplateView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

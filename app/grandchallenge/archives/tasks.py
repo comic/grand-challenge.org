@@ -160,19 +160,23 @@ def start_archive_item_update_tasks(
 
     if len(upload_pks) > 0:
         image_tasks = group(
-            chain(
-                build_images.signature(
-                    kwargs={"upload_session_pk": upload_pk}
-                ),
-                add_images_to_component_interface_value.signature(
-                    kwargs={
-                        "component_interface_value_pk": civ_pk,
-                        "upload_session_pk": upload_pk,
-                    },
-                    immutable=True,
-                ),
-            )
-            for civ_pk, upload_pk in upload_pks.items()
+            # Chords and iterator groups are broken in Celery, send a list
+            # instead, see https://github.com/celery/celery/issues/7285
+            [
+                chain(
+                    build_images.signature(
+                        kwargs={"upload_session_pk": upload_pk}
+                    ),
+                    add_images_to_component_interface_value.signature(
+                        kwargs={
+                            "component_interface_value_pk": civ_pk,
+                            "upload_session_pk": upload_pk,
+                        },
+                        immutable=True,
+                    ),
+                )
+                for civ_pk, upload_pk in upload_pks.items()
+            ]
         )
         tasks = group(image_tasks, tasks)
 

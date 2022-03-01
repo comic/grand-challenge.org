@@ -4,9 +4,9 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.cases.models import Image
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile16Bit,
     ImageFactoryWithImageFile2DGray16Bit,
     ImageFactoryWithImageFile3D,
+    ImageFactoryWithImageFile16Bit,
     ImageFactoryWithoutImageFile,
     RawImageUploadSessionFactory,
 )

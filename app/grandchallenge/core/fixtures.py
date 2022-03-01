@@ -1,7 +1,7 @@
 from io import BytesIO
 
-from PIL import Image as PILImage
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from PIL import Image as PILImage
 
 
 def create_uploaded_image():
