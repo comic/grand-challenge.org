@@ -979,10 +979,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @cached_property
     def values_for_interfaces(self):
-        cache_key = f"{self.slug}-{self.modified.timestamp()}"
+        cache_key = f"{self._meta.app_label}.{self._meta.model_name}-{self.slug}-{self.modified.timestamp()}"
         cached = cache.get(cache_key)
         if cached:
             return cached
+        for key in cache.keys(
+            f"{self._meta.app_label}.{self._meta.model_name}-{self.slug}-*"
+        ):
+            cache.delete(key)
         interfaces = self.display_sets.values_list(
             "values__interface__slug", flat=True
         )
@@ -992,7 +996,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             for ds in self.display_sets.all():
                 values |= ds.values.filter(interface__slug=interface)
             values_for_interfaces[interface] = values
-        cache.set(cache_key, values_for_interfaces)
+        cache.set(cache_key, values_for_interfaces, timeout=0)
         return values_for_interfaces
 
     def values_for_interface(self, interface):
@@ -1052,10 +1056,14 @@ class DisplaySet(UUIDModel):
 
     @cached_property
     def empty_interfaces(self):
-        cache_key = f"{self.pk}-{self.modified.timestamp()}"
+        cache_key = f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-{self.modified.timestamp()}"
         cached = cache.get(cache_key)
         if cached:
             return cached
+        for key in cache.keys(
+            f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-*"
+        ):
+            cache.delete(key)
         interfaces = ComponentInterface.objects.exclude(
             id__in=self.values.values_list("interface_id", flat=True)
         ).filter(
@@ -1067,7 +1075,7 @@ class DisplaySet(UUIDModel):
         for interface in interfaces:
             values = self.reader_study.values_for_interface(interface.slug)
             result.append({"title": interface.title, "values": values})
-        cache.set(cache_key, result)
+        cache.set(cache_key, result, timeout=0)
         return result
 
     @cached_property
