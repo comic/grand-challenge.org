@@ -229,7 +229,7 @@ class AlgorithmForm(
                 reverse_lazy("publications:create"),
             ),
             "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
-            "detail_page_markdown": "<span class='text-danger'><i class='fa fa-exclamation-triangle'></i> This field will be deprecated. Please use the seperate 'Algorithm description' form on the Information page to describe your algorithm instead.</span>",
+            "detail_page_markdown": "<span class='text-danger'><i class='fa fa-exclamation-triangle'></i> This field will be deprecated. Please use the separate 'Algorithm description' form on the Information page to describe your algorithm instead.</span>",
         }
         labels = {
             "workstation": "Viewer",
