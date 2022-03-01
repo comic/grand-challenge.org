@@ -84,6 +84,10 @@ jobs:
   deploy:
     needs: [django-tests]
     runs-on: ubuntu-latest
+    permissions:
+      # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+      id-token: write
+      contents: read
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v1
@@ -95,25 +99,18 @@ jobs:
       - name: Build the distributable containers
         run: |
           make build
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
       - name: Push to ECR
         run: |
-          aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_BASE_REGISTRY_ENDPOINT}
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web-base
           make push_web_base
-          aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_TEST_BASE_REGISTRY_ENDPOINT}
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base
           make push_web_test_base
-          aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT}
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web
           make push_web
-          aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_HTTP_REGISTRY_ENDPOINT}
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/http
           make push_http
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          GRAND_CHALLENGE_HTTP_REGISTRY_ENDPOINT: ${{ secrets.GRAND_CHALLENGE_HTTP_REGISTRY_ENDPOINT }}
-          GRAND_CHALLENGE_HTTP_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_HTTP_REPOSITORY_URI }}
-          GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT: ${{ secrets.GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT }}
-          GRAND_CHALLENGE_WEB_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_WEB_REPOSITORY_URI }}
-          GRAND_CHALLENGE_WEB_BASE_REGISTRY_ENDPOINT: ${{ secrets.GRAND_CHALLENGE_WEB_BASE_REGISTRY_ENDPOINT }}
-          GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI }}
-          GRAND_CHALLENGE_WEB_TEST_BASE_REGISTRY_ENDPOINT: ${{ secrets.GRAND_CHALLENGE_WEB_TEST_BASE_REGISTRY_ENDPOINT }}
-          GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI }}
