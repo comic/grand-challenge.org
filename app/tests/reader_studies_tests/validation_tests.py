@@ -255,6 +255,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
                     [[0, 0, 0], [0, 0, 0]],
                     [[1, 1, 1], [1, 1, 1]],
                 ],
+                "probability": 0.54,
             },
             {
                 "name": "test_name",
@@ -263,7 +264,6 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
                     [[0, 0, 0], [0, 0, 0]],
                     [[1, 1, 1], [1, 1, 1]],
                 ],
-                "closed": False,
                 "probability": 0.54,
             },
         ],
