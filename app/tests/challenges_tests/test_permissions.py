@@ -3,11 +3,10 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, remove_perm
 
 from config import settings
-from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
+from tests.challenges_tests.factories import generate_type_1_challenge_request
 from tests.factories import (
-    ChallengeRequestFactory,
     ExternalChallengeFactory,
     UserFactory,
 )
@@ -105,10 +104,7 @@ def test_request_challenge_only_when_verified(client):
 def test_view_and_update_challenge_request(client):
     user = UserFactory()
     Verification.objects.create(user=user, is_verified=True)
-    request = ChallengeRequestFactory(
-        creator=user,
-        challenge_type=ChallengeRequest.ChallengeTypeChoices.T1,
-    )
+    request = generate_type_1_challenge_request(creator=user)
     response = get_view_for_user(
         client=client,
         viewname="challenges:request-detail",

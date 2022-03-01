@@ -1,16 +1,18 @@
-import datetime
-
 import pytest
 from django.contrib.auth.models import Group
 from django.core import mail
 
 from config import settings
-from grandchallenge.challenges.models import ChallengeRequest
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.challenges.tasks import update_challenge_results_cache
+from grandchallenge.evaluation.models import Phase
 from grandchallenge.verifications.models import Verification
+from tests.challenges_tests.factories import (
+    generate_type_1_challenge_request,
+    generate_type_2_challenge_request,
+)
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ChallengeFactory, UserFactory
-from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -52,38 +54,9 @@ def test_challenge_request_email_workflow(client):
     reviewer_group.user_set.add(reviewer)
 
     assert len(mail.outbox) == 0
+
     # request challenge
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        viewname="challenges:request",
-        data={
-            "title": "Test request",
-            "challenge_short_name": "example1234",
-            "challenge_type": ChallengeRequest.ChallengeTypeChoices.T2,
-            "start_date": datetime.date.today(),
-            "end_date": datetime.date.today(),
-            "expected_number_of_participants": 10,
-            "abstract": "test",
-            "contact_email": "test@test.com",
-            "organizers": "test",
-            "challenge_setup": "test",
-            "data_set": "test",
-            "submission_assessment": "test",
-            "challenge_publication": "test",
-            "code_availability": "test",
-            "expected_number_of_teams": 10,
-            "inference_time_limit": 10,
-            "average_size_of_test_image": 10,
-            "phase_1_number_of_submissions_per_team": 10,
-            "phase_2_number_of_submissions_per_team": 1,
-            "phase_1_number_of_test_images": 100,
-            "phase_2_number_of_test_images": 200,
-            "number_of_tasks": 1,
-        },
-        user=user,
-    )
-    assert response.status_code == 302
+    request = generate_type_2_challenge_request(creator=user)
     assert ChallengeRequest.objects.count() == 1
     assert len(mail.outbox) == 2
     receivers = [address for i in mail.outbox for address in i.to]
@@ -91,25 +64,63 @@ def test_challenge_request_email_workflow(client):
     assert user.email in receivers
     assert reviewer.email in receivers
 
-    request = ChallengeRequest.objects.get()
     # reject request
-    request.status = False
+    mail.outbox.clear()
+    request.status = ChallengeRequest.ChallengeRequestStatusChoices.REJECTED
     request.save()
-    assert len(mail.outbox) == 3
+    assert len(mail.outbox) == 1
     # rejection email to requester
-    assert mail.outbox[2].to == [user.email]
+    assert mail.outbox[0].to == [user.email]
     assert (
         "We are very sorry to have to inform you that we will not be able to host your challenge on our platform"
-        in mail.outbox[2].body
+        in mail.outbox[0].body
     )
 
     # accept request
-    request.status = True
+    mail.outbox.clear()
+    request.status = ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
     request.save()
-    assert len(mail.outbox) == 4
+    assert len(mail.outbox) == 1
     # acceptance email to requester
-    assert mail.outbox[3].to == [user.email]
+    assert mail.outbox[0].to == [user.email]
     assert (
         "We are happy to inform you that your challenge request has been accepted"
-        in mail.outbox[3].body
+        in mail.outbox[0].body
+    )
+
+
+@pytest.mark.django_db
+def test_challenge_created_on_request_acceptance(client):
+    user = UserFactory()
+    Verification.objects.create(user=user, is_verified=True)
+    request = generate_type_2_challenge_request(creator=user)
+    # accept request
+    request.status = ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+    request.save()
+
+    # challenge gets created
+    assert Challenge.objects.count() == 1
+    challenge = Challenge.objects.get()
+    assert challenge.short_name == request.challenge_short_name
+    # requester is admin of challenge
+    assert user in challenge.admins_group.user_set.all()
+    # an algorithm submission phase has been created
+    assert challenge.phase_set.count() == 1
+    assert (
+        challenge.phase_set.get().submission_kind
+        == Phase.SubmissionKind.ALGORITHM
+    )
+
+    request2 = generate_type_1_challenge_request(creator=user)
+    # accept request
+    request2.status = ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+    request2.save()
+    # for a type 1 challenge, a csv submission phase gets created
+    assert Challenge.objects.count() == 2
+    challenge2 = Challenge.objects.last()
+    assert challenge2.short_name == request2.challenge_short_name
+    assert user in challenge2.admins_group.user_set.all()
+    assert challenge2.phase_set.count() == 1
+    assert (
+        challenge2.phase_set.get().submission_kind == Phase.SubmissionKind.CSV
     )

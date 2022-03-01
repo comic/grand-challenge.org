@@ -108,6 +108,7 @@ def send_challenge_requested_email_to_requester(challengerequest):
 
 def send_challenge_status_update_email(challengerequest, challenge=None):
     site = Site.objects.get_current()
+    message = ""
     if (
         challengerequest.status
         == challengerequest.ChallengeRequestStatusChoices.ACCEPTED

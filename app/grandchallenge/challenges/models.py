@@ -853,7 +853,7 @@ class ChallengeRequest(models.Model):
             send_challenge_requested_email_to_requester(self)
         if self._orig_status != self.status:
             challenge = None
-            if self.status:
+            if self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
                 challenge = Challenge.objects.create(
                     title=self.title,
                     short_name=self.challenge_short_name,
@@ -882,53 +882,60 @@ class ChallengeRequest(models.Model):
             storage_costs = settings.AWS_FILE_STORAGE_COSTS
             docker_storage_costs = settings.AWS_DOCKER_STORAGE_COSTS
 
-            budget = {}
+            budget = {
+                "Data storage cost for phase 1": None,
+                "Compute costs for phase 1": None,
+                "Total phase 1": None,
+                "Data storage cost for phase 2": None,
+                "Compute costs for phase 2": None,
+                "Total phase 2": None,
+                "Docker storage cost": None,
+                "Total": None,
+            }
 
             # calculate budget for phase 1
-            if self.phase_1_number_of_submissions_per_team:
-                budget["Data storage cost for phase 1"] = round(
-                    self.phase_1_number_of_test_images
-                    * self.average_size_of_test_image
-                    * storage_costs
+            budget["Data storage cost for phase 1"] = round(
+                self.phase_1_number_of_test_images
+                * self.average_size_of_test_image
+                * storage_costs
+            )
+            budget["Compute costs for phase 1"] = round(
+                self.phase_1_number_of_test_images
+                * self.phase_1_number_of_submissions_per_team
+                * self.expected_number_of_teams
+                * self.inference_time_limit
+                * compute_costs
+                / 60
+            )
+            budget["Total phase 1"] = round(
+                (
+                    budget["Data storage cost for phase 1"]
+                    + budget["Compute costs for phase 1"]
                 )
-                budget["Compute costs for phase 1"] = round(
-                    self.phase_1_number_of_test_images
-                    * self.phase_1_number_of_submissions_per_team
-                    * self.expected_number_of_teams
-                    * self.inference_time_limit
-                    * compute_costs
-                    / 60
-                )
-                budget["Total phase 1"] = round(
-                    (
-                        budget["Data storage cost for phase 1"]
-                        + budget["Compute costs for phase 1"]
-                    )
-                    * self.number_of_tasks
-                )
+                * self.number_of_tasks
+            )
 
             # calculate budget for phase 2
-            if self.phase_2_number_of_submissions_per_team:
-                budget["Data storage cost for phase 2"] = round(
-                    self.phase_2_number_of_test_images
-                    * self.average_size_of_test_image
-                    * storage_costs
+            budget["Data storage cost for phase 2"] = round(
+                self.phase_2_number_of_test_images
+                * self.average_size_of_test_image
+                * storage_costs
+            )
+            budget["Compute costs for phase 2"] = round(
+                self.phase_2_number_of_test_images
+                * self.phase_2_number_of_submissions_per_team
+                * self.expected_number_of_teams
+                * self.inference_time_limit
+                * compute_costs
+                / 60
+            )
+            budget["Total phase 2"] = round(
+                (
+                    budget["Data storage cost for phase 2"]
+                    + budget["Compute costs for phase 2"]
                 )
-                budget["Compute costs for phase 2"] = round(
-                    self.phase_2_number_of_test_images
-                    * self.phase_2_number_of_submissions_per_team
-                    * self.expected_number_of_teams
-                    * self.inference_time_limit
-                    * compute_costs
-                    / 60
-                )
-                budget["Total phase 2"] = round(
-                    (
-                        budget["Data storage cost for phase 2"]
-                        + budget["Compute costs for phase 2"]
-                    )
-                    * self.number_of_tasks
-                )
+                * self.number_of_tasks
+            )
 
             budget["Docker storage cost"] = round(
                 self.average_algorithm_container_size
@@ -937,11 +944,15 @@ class ChallengeRequest(models.Model):
                 * docker_storage_costs
             )
 
-            budget["Total"] = (
-                budget["Total phase 1"] + budget["Docker storage cost"]
+            budget["Total"] = sum(
+                filter(
+                    None,
+                    [
+                        budget["Total phase 1"],
+                        budget["Total phase 2"],
+                        budget["Docker storage cost"],
+                    ],
+                )
             )
-
-            if self.phase_2_number_of_submissions_per_team:
-                budget["Total"] += budget["Total phase 2"]
 
             return budget
