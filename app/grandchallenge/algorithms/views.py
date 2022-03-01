@@ -114,7 +114,7 @@ class AlgorithmCreate(
 class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     model = Algorithm
     permission_required = "algorithms.view_algorithm"
-    ordering = "-created"
+    ordering = ("-highlight", "-created")
     filter_class = AlgorithmFilter
     paginate_by = 40
 
