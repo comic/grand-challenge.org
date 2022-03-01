@@ -236,9 +236,11 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "version": {"major": 1, "minor": 0},
         "type": "Line",
         "name": "test_name",
-        "seed_point": [0, 0, 0],
-        "path_points": [[0, 0, 0], [0, 0, 0]],
-        "closed": True,
+        "seed_points": [[0, 0, 0], [0, 0, 0]],
+        "path_point_lists": [
+            [[0, 0, 0], [0, 0, 0]],
+            [[1, 1, 1], [1, 1, 1]],
+        ],
         "probability": 0.3,
     },
     "MLIN": {
@@ -248,14 +250,19 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "lines": [
             {
                 "name": "test_name",
-                "seed_point": [0, 0, 0],
-                "path_points": [[0, 0, 0], [0, 0, 0]],
-                "closed": True,
+                "seed_points": [0, 0, 0],
+                "path_point_lists": [
+                    [[0, 0, 0], [0, 0, 0]],
+                    [[1, 1, 1], [1, 1, 1]],
+                ],
             },
             {
                 "name": "test_name",
-                "seed_point": [0, 0, 0],
-                "path_points": [[0, 0, 0], [0, 0, 0]],
+                "seed_points": [0, 0, 0],
+                "path_point_lists": [
+                    [[0, 0, 0], [0, 0, 0]],
+                    [[1, 1, 1], [1, 1, 1]],
+                ],
                 "closed": False,
                 "probability": 0.54,
             },
