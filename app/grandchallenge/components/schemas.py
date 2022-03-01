@@ -102,13 +102,7 @@ ANSWER_TYPE_SCHEMA = {
             "properties": {
                 "name": {"type": "string"},
                 "type": {"enum": ["Line"]},
-                "seed_point": {
-                    "type": "array",
-                    "items": {"type": "number"},
-                    "minItems": 3,
-                    "maxItems": 3,
-                },
-                "path_points": {
+                "seed_points": {
                     "type": "array",
                     "items": {
                         "type": "array",
@@ -117,10 +111,21 @@ ANSWER_TYPE_SCHEMA = {
                         "maxItems": 3,
                     },
                 },
-                "closed": {"type": "boolean"},
+                "path_point_lists": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "minItems": 3,
+                            "maxItems": 3,
+                        },
+                    },
+                },
                 "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": ["seed_point", "path_points", "closed"],
+            "required": ["seed_points", "path_point_lists"],
             "additionalProperties": False,
         },
         "DIST": {
@@ -248,13 +253,7 @@ ANSWER_TYPE_SCHEMA = {
             "properties": {
                 "name": {"type": "string"},
                 "type": {"enum": ["Line"]},
-                "seed_point": {
-                    "type": "array",
-                    "items": {"type": "number"},
-                    "minItems": 3,
-                    "maxItems": 3,
-                },
-                "path_points": {
+                "seed_points": {
                     "type": "array",
                     "items": {
                         "type": "array",
@@ -263,11 +262,22 @@ ANSWER_TYPE_SCHEMA = {
                         "maxItems": 3,
                     },
                 },
-                "closed": {"type": "boolean"},
+                "path_point_lists": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "minItems": 3,
+                            "maxItems": 3,
+                        },
+                    },
+                },
                 "version": {"$ref": "#/definitions/version-object"},
                 "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": ["seed_point", "path_points", "closed", "version"],
+            "required": ["seed_points", "path_point_lists", "version"],
             "additionalProperties": False,
         },
         "MLIN": {
