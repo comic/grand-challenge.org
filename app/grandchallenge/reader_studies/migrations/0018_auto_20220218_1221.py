@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("components", "0008_alter_componentinterfacevalue_file"),
-        ("reader_studies", "0016_auto_20220222_1605"),
+        ("reader_studies", "0017_auto_20220228_1443"),
     ]
 
     operations = [
