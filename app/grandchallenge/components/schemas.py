@@ -277,7 +277,7 @@ ANSWER_TYPE_SCHEMA = {
                 "version": {"$ref": "#/definitions/version-object"},
                 "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": ["seed_points", "path_points_lists", "version"],
+            "required": ["seed_points", "path_point_lists", "version"],
             "additionalProperties": False,
         },
         "MLIN": {

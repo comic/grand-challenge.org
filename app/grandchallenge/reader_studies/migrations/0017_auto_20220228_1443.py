@@ -175,7 +175,7 @@ class Migration(migrations.Migration):
                                     },
                                     "required": [
                                         "seed_points",
-                                        "path_points_lists",
+                                        "path_point_lists",
                                         "version",
                                     ],
                                     "type": "object",
@@ -698,7 +698,7 @@ class Migration(migrations.Migration):
                                     },
                                     "required": [
                                         "seed_points",
-                                        "path_points_lists",
+                                        "path_point_lists",
                                         "version",
                                     ],
                                     "type": "object",
