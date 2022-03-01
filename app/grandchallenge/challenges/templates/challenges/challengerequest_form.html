@@ -17,7 +17,7 @@
         <h2>Request a Challenge</h2>
         {% crispy form %}
     {% else %}
-        <h2>Approve or reject the challenge request</h2>
+        <h2>Approve or reject "{{ object.title }}"</h2>
         {% crispy form %}
     {% endif %}
 {% endblock %}
@@ -26,7 +26,6 @@
     {{ block.super }}
     <script>
         function updateForm(){
-            let labels = document.getElementById("budget-fields").querySelectorAll("#budget-fields label");
             let inputs = document.getElementById("budget-fields").querySelectorAll("#budget-fields input");
             if (document.getElementById("id_challenge_type").value == "TYPE_1"){
                 document.getElementById("budget-fields").style.display = 'none';

@@ -394,9 +394,10 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["status"].choices = [
-            ("ACPT", "Accept"),
-            ("RCPT", "Reject"),
-        ]
+        if (
+            self.instance.status
+            != self.instance.ChallengeRequestStatusChoices.PENDING
+        ):
+            self.fields["status"].widget.attrs["disabled"] = True
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
