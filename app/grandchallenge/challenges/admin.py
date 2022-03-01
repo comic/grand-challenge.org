@@ -25,7 +25,7 @@ class ExternalChallengeAdmin(ModelAdmin):
 class ChallengeRequestAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     ordering = ("-created",)
-    list_display = ("short_name", "creator", "created", "approved")
+    list_display = ("short_name", "creator", "created", "status")
 
 
 admin.site.register(Challenge, ChallengeAdmin)

@@ -108,7 +108,10 @@ def send_challenge_requested_email_to_requester(challengerequest):
 
 def send_challenge_status_update_email(challengerequest, challenge=None):
     site = Site.objects.get_current()
-    if challengerequest.status:
+    if (
+        challengerequest.status
+        == challengerequest.ChallengeRequestStatusChoices.ACCEPTED
+    ):
         message = (
             f"Dear {challengerequest.creator.username},\n\n"
             f"We are happy to inform you that your challenge request has been "
@@ -137,7 +140,10 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
             f"{site.name} team\n\n"
             f"This is an automated service email from {site.domain}."
         )
-    else:
+    elif (
+        challengerequest.status
+        == challengerequest.ChallengeRequestStatusChoices.REJECTED
+    ):
         message = (
             f"Dear {challengerequest.creator.username},\n\n"
             "We are very sorry to have to inform you that we will not be able to "

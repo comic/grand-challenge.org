@@ -36,12 +36,12 @@
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
                         <td class="text-center align-middle">{{ object.challenge_type }}</td>
                         <td class="text-center align-middle">
-                            {% if object.status == True %}
-                                <span class="badge badge-success">Approved</span>
-                            {% elif object.status == False %}
-                                <span class="badge badge-danger">Declined</span>
+                            {% if object.status == 'ACPT' %}
+                                <span class="badge badge-success">Accepted</span>
+                            {% elif object.status == 'RJCT' %}
+                                <span class="badge badge-danger">Rejected</span>
                             {% else %}
-                                <a class="btn btn-primary btn-sm {% if object.status %}disabled{% endif %}" href="{% url 'challenges:request-update' pk=object.pk %}">Accept or decline</a>
+                                <a class="btn btn-primary btn-sm" href="{% url 'challenges:request-update' pk=object.pk %}">Accept or decline</a>
                             {% endif %}</td>
                         <td class="text-center"><a class="btn btn-primary btn-sm" href="mailto:{{ object.contact_email }}"><i class="fa fa-envelope"></i> &nbsp;Contact Requester</a></td>
                     </tr>

@@ -87,7 +87,7 @@ SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 ANONYMOUS_USER_NAME = "AnonymousUser"
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
-CHALLENGE_REVIEWERS_GROUP_NAME = "ChallengeReviewers"
+CHALLENGE_REVIEWERS_GROUP_NAME = "challenge_reviewers"
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

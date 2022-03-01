@@ -686,8 +686,17 @@ class ChallengeRequest(models.Model):
         T1 = "TYPE_1", _("Type 1 - prediction submission")
         T2 = "TYPE_2", _("Type 2 - algorithm submission")
 
+    class ChallengeRequestStatusChoices(models.TextChoices):
+        ACCEPTED = "ACPT", _("Accepted")
+        REJECTED = "RJCT", _("Rejected")
+        PENDING = "PEND", _("Pending")
+
     created = models.DateTimeField(auto_now_add=True)
-    status = models.BooleanField(null=True, blank=True)
+    status = models.CharField(
+        max_length=4,
+        choices=ChallengeRequestStatusChoices.choices,
+        default=ChallengeRequestStatusChoices.PENDING,
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -776,7 +785,7 @@ class ChallengeRequest(models.Model):
         "participants’ submissions."
     )
     challenge_publication = models.TextField(
-        help_text="Please indicate if you plan to coordinate a publication"
+        help_text="Please indicate if you plan to coordinate a publication "
         "of the challenge results."
     )
     code_availability = models.TextField(
@@ -823,10 +832,7 @@ class ChallengeRequest(models.Model):
     number_of_tasks = models.IntegerField(
         default=1,
         help_text="If your challenge has multiple tasks, we multiply the "
-        "phase 1 and 2 cost estimates by the number of tasks. "
-        "For that to work, please provide the average number of "
-        "test images and the average number of submissions across "
-        "tasks for the two phases below. For examples check here. ",
+        "phase 1 and 2 cost estimates by the number of tasks.",
     )
 
     def __str__(self):

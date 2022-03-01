@@ -10,7 +10,6 @@ from crispy_forms.layout import (
 )
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import Select
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
@@ -276,6 +275,11 @@ class ChallengeRequestForm(forms.ModelForm):
             "MICCAI, MIDL or ISBI <a href='https://www.biomedical-challenges.org/'>"
             "through this website</a>? If so, you can alternatively upload the "
             "submission PDF here and fill the below text boxes with 'See PDF'.",
+            "number_of_tasks": "If your challenge has multiple tasks, we multiply the "
+            "phase 1 and 2 cost estimates by the number of tasks. "
+            "For that to work, please provide the average number of "
+            "test images and the average number of submissions across "
+            "tasks for the two phases below. For examples check <a href='#'>here</a>.",
         }
 
     def __init__(self, creator, *args, **kwargs):
@@ -288,8 +292,7 @@ class ChallengeRequestForm(forms.ModelForm):
                 Div(
                     HTML(
                         "<br><p>Thank you for considering to host your challenge"
-                        " on our platform! <br><br>To find out if Grand Challenge is "
-                        "a suitable platform for you, please tell us "
+                        " on our platform! <br><br>Please tell us "
                         "more about your planned challenge.<br>"
                         "The answers you provide below will help our team of "
                         "reviewers decide whether or not and in "
@@ -298,7 +301,8 @@ class ChallengeRequestForm(forms.ModelForm):
                         "Challenge, take a look at our <a href="
                         "'https://grand-challenge.org/documentation/create-your-own-challenge/'>"
                         "documentation</a>. "
-                        "Read more about the challenge request procedure here.</p><br>"
+                        "Read more about the challenge request procedure <a href="
+                        ">here</a>.</p><br>"
                     ),
                 ),
                 *general_information_items,
@@ -318,7 +322,8 @@ class ChallengeRequestForm(forms.ModelForm):
                         "'https://grand-challenge.org/documentation/type-ii-challenge-setup/'>"
                         "first read this part of our documentation</a>.</p> "
                         "<p>To help you fill in the below form correctly, "
-                        "we have assembled example budgets here. Please take "
+                        "<a href="
+                        ">we have assembled example budgets here</a>. Please take "
                         "a close look at those before proceeding to fill in "
                         "this form."
                         "</p><br>"
@@ -386,16 +391,12 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
     class Meta:
         model = ChallengeRequest
         fields = ("status",)
-        widgets = {
-            "status": Select(
-                choices=(
-                    (True, "Approve"),
-                    (False, "Decline"),
-                )
-            ),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["status"].choices = [
+            ("ACPT", "Accept"),
+            ("RCPT", "Reject"),
+        ]
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
