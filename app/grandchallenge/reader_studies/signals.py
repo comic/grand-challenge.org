@@ -74,14 +74,13 @@ def assert_modification_allowed(instance, action, reverse, model, pk_set, **_):
         return
 
     if reverse:
-        not_editable = []
-        for ds in DisplaySet.objects.filter(pk__in=pk_set):
-            if not ds.is_editable:
-                not_editable.append(ds.pk)
+        not_editable = DisplaySet.objects.filter(
+            answers__isnull=False
+        ).values_list("pk", flat=True)
         if len(not_editable) > 0:
             raise ValidationError(
                 "The following display sets cannot be updated, because answers "
-                f"for them already exist: {', '.join(not_editable)}"
+                f"for them already exist: {', '.join(map(str, not_editable))}"
             )
 
     else:
