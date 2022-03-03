@@ -182,6 +182,7 @@ as for each case are displayed in the <code class="docutils literal notranslate"
 <li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
 <li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Creator</p></li>
 <li><p><strong>question</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question</p></li>
+<li><p><strong>display_set</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Display set</p></li>
 <li><p><strong>answer</strong> (<em>JSONField</em>) – Answer</p></li>
 <li><p><strong>answer_image</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Image</span></code>) – Answer image</p></li>
 <li><p><strong>is_ground_truth</strong> (<em>BooleanField</em>) – Is ground truth</p></li>
@@ -238,7 +239,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.validate">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_ground_truth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.validate" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">images</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_ground_truth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.validate" title="Permalink to this definition"></a></dt>
 <dd><p>Validates all fields provided for <code class="docutils literal notranslate"><span class="pre">answer</span></code>.</p>
 </dd></dl>
 
@@ -272,6 +273,42 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study</p></li>
+<li><p><strong>values</strong> (<em>ManyToManyField</em>) – Values</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySet.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.save" title="Permalink to this definition"></a></dt>
+<dd><p>Save the current instance. Override this in a subclass if you want to
+control the saving process.</p>
+<p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
+that the “save” must be an SQL insert or update (or equivalent for
+non-SQL backends), respectively. Normally, they should not be set.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -434,6 +471,7 @@ a set of questions on a set of images (cases).</p>
 <li><p><strong>allow_show_all_annotations</strong> (<em>BooleanField</em>) – Allow show all annotations. If true, readers are allowed to show/hide all annotations for a case.</p></li>
 <li><p><strong>roll_over_answers_for_n_cases</strong> (<em>PositiveSmallIntegerField</em>) – Roll over answers for n cases. The number of cases for which answers should roll over. It can be used for repeated readings with slightly different hangings. For instance, if set to 1. Case 2 will start with the answers from case 1; whereas case 3 starts anew but its answers will rollover to case 4.</p></li>
 <li><p><strong>validate_hanging_list</strong> (<em>BooleanField</em>) – Validate hanging list</p></li>
+<li><p><strong>use_display_sets</strong> (<em>BooleanField</em>) – Use display sets</p></li>
 <li><p><strong>images</strong> (<em>ManyToManyField</em>) – Images</p></li>
 <li><p><strong>publications</strong> (<em>ManyToManyField</em>) – Publications. The publications associated with this reader study</p></li>
 <li><p><strong>modalities</strong> (<em>ManyToManyField</em>) – Modalities. The imaging modalities contained in this reader study</p></li>
