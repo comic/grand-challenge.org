@@ -897,7 +897,8 @@ class ChallengeRequest(models.Model):
             budget["Data storage cost for phase 1"] = round(
                 self.phase_1_number_of_test_images
                 * self.average_size_of_test_image
-                * storage_costs
+                * storage_costs,
+                ndigits=2,
             )
             budget["Compute costs for phase 1"] = round(
                 self.phase_1_number_of_test_images
@@ -905,21 +906,24 @@ class ChallengeRequest(models.Model):
                 * self.expected_number_of_teams
                 * self.inference_time_limit
                 * compute_costs
-                / 60
+                / 60,
+                ndigits=2,
             )
             budget["Total phase 1"] = round(
                 (
                     budget["Data storage cost for phase 1"]
                     + budget["Compute costs for phase 1"]
                 )
-                * self.number_of_tasks
+                * self.number_of_tasks,
+                ndigits=2,
             )
 
             # calculate budget for phase 2
             budget["Data storage cost for phase 2"] = round(
                 self.phase_2_number_of_test_images
                 * self.average_size_of_test_image
-                * storage_costs
+                * storage_costs,
+                ndigits=2,
             )
             budget["Compute costs for phase 2"] = round(
                 self.phase_2_number_of_test_images
@@ -927,21 +931,24 @@ class ChallengeRequest(models.Model):
                 * self.expected_number_of_teams
                 * self.inference_time_limit
                 * compute_costs
-                / 60
+                / 60,
+                ndigits=2,
             )
             budget["Total phase 2"] = round(
                 (
                     budget["Data storage cost for phase 2"]
                     + budget["Compute costs for phase 2"]
                 )
-                * self.number_of_tasks
+                * self.number_of_tasks,
+                ndigits=2,
             )
 
             budget["Docker storage cost"] = round(
                 self.average_algorithm_container_size
                 * self.average_number_of_containers_per_team
                 * self.expected_number_of_teams
-                * docker_storage_costs
+                * docker_storage_costs,
+                ndigits=2,
             )
 
             budget["Total"] = sum(
