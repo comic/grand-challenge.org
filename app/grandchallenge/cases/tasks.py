@@ -109,6 +109,7 @@ def build_images(*, upload_session_pk):
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
     """
+
     session_queryset = RawImageUploadSession.objects.filter(
         pk=upload_session_pk
     ).select_for_update(nowait=True)

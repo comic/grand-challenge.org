@@ -3,6 +3,7 @@ import factory
 from grandchallenge.reader_studies.models import (
     Answer,
     CategoricalOption,
+    DisplaySet,
     Question,
     ReaderStudy,
 )
@@ -16,6 +17,13 @@ class ReaderStudyFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: f"test_reader_study_{n:04}")
     logo = factory.django.ImageField()
     workstation = factory.SubFactory(WorkstationFactory)
+
+
+class DisplaySetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = DisplaySet
+
+    reader_study = factory.SubFactory(ReaderStudyFactory)
 
 
 class QuestionFactory(factory.django.DjangoModelFactory):

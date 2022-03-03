@@ -7,7 +7,7 @@ def init_reader_study_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
 
-    from grandchallenge.reader_studies.models import ReaderStudy
+    from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 
     g, _ = Group.objects.get_or_create(
         name=settings.READER_STUDY_CREATORS_GROUP_NAME
@@ -21,6 +21,18 @@ def init_reader_study_permissions(*_, **__):
     )
     assign_perm(
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+        g,
+    )
+    assign_perm(
+        f"{ReaderStudy._meta.app_label}.add_{DisplaySet._meta.model_name}",
+        g,
+    )
+    assign_perm(
+        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}",
+        g,
+    )
+    assign_perm(
+        f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}",
         g,
     )
 

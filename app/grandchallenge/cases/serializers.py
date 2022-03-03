@@ -16,9 +16,14 @@ from grandchallenge.archives.tasks import (
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
-from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    DisplaySet,
+    ReaderStudy,
+)
 from grandchallenge.reader_studies.tasks import (
     add_image_to_answer,
+    add_image_to_display_set,
     add_images_to_reader_study,
 )
 from grandchallenge.uploads.models import UserUpload
@@ -91,6 +96,9 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     archive_item = PrimaryKeyRelatedField(
         queryset=ArchiveItem.objects.none(), required=False
     )
+    display_set = PrimaryKeyRelatedField(
+        queryset=DisplaySet.objects.none(), required=False
+    )
 
     class Meta:
         model = RawImageUploadSession
@@ -107,6 +115,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "answer",
             "interface",
             "archive_item",
+            "display_set",
         )
 
     def __init__(self, *args, **kwargs):
@@ -146,9 +155,21 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 user, "archives.change_archiveitem", accept_global_perms=False
             )
 
+            self.fields["display_set"].queryset = get_objects_for_user(
+                user,
+                "reader_studies.change_displayset",
+                accept_global_perms=False,
+            )
+
     @property
     def targets(self):
-        return ["archive", "archive_item", "reader_study", "answer"]
+        return [
+            "archive",
+            "archive_item",
+            "reader_study",
+            "answer",
+            "display_set",
+        ]
 
     def create(self, validated_data):
         set_targets = {
@@ -187,17 +208,25 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
         if "interface" in attrs and not (
-            "archive" in attrs or "archive_item" in attrs
+            "archive" in attrs
+            or "archive_item" in attrs
+            or "display_set" in attrs
         ):
             raise ValidationError(
-                "An interface can only be defined for archive "
-                "or archive item uploads."
+                "An interface can only be defined for archive, "
+                "archive item or display set uploads."
             )
 
         if "archive_item" in attrs and "interface" not in attrs:
             raise ValidationError(
                 "An interface needs to be defined to upload to an "
                 "archive item."
+            )
+
+        if "display_set" in attrs and "interface" not in attrs:
+            raise ValidationError(
+                "An interface needs to be defined to upload to a "
+                "display set."
             )
 
         return attrs
@@ -242,6 +271,14 @@ def _get_linked_task(*, targets, interface):
     elif "reader_study" in targets:
         return add_images_to_reader_study.signature(
             kwargs={"reader_study_pk": targets["reader_study"].pk},
+            immutable=True,
+        )
+    elif "display_set" in targets:
+        return add_image_to_display_set.signature(
+            kwargs={
+                "display_set_pk": targets["display_set"].pk,
+                "interface_pk": interface.pk,
+            },
             immutable=True,
         )
     elif "answer" in targets:

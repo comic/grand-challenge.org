@@ -3,10 +3,12 @@ import io
 import pytest
 
 from grandchallenge.reader_studies.models import Answer, Question
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
+    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -237,3 +239,42 @@ def test_reader_study_list_view_filter(client):
     assert rs1.get_absolute_url() in response.rendered_content
     assert rs2.get_absolute_url() not in response.rendered_content
     assert pubrs.get_absolute_url() in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_reader_study_display_set_list(client):
+    user = UserFactory()
+    rs = ReaderStudyFactory(use_display_sets=True)
+    rs.add_editor(user)
+
+    civ = ComponentInterfaceValueFactory(image=ImageFactory())
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ)
+
+    response = get_view_for_user(
+        viewname="reader-studies:display_sets",
+        reverse_kwargs={"slug": rs.slug},
+        client=client,
+        user=user,
+    )
+
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="reader-studies:display_sets",
+        reverse_kwargs={"slug": rs.slug},
+        client=client,
+        user=user,
+        method=client.get,
+        follow=True,
+        data={
+            "length": 10,
+            "draw": 1,
+            "order[0][dir]": "desc",
+            "order[0][column]": 0,
+        },
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    resp = response.json()
+    assert str(ds.pk) in resp["data"][0][0]

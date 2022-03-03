@@ -122,7 +122,6 @@ class RawImageUploadSession(UUIDModel):
 
         kwargs = {"upload_session_pk": self.pk}
         workflow = build_images.signature(kwargs=kwargs)
-
         if linked_task is not None:
             linked_task.kwargs.update(kwargs)
             workflow |= linked_task

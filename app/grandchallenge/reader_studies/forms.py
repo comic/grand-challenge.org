@@ -147,6 +147,11 @@ class ReaderStudyCreateForm(
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.use_display_sets:
+            del self.fields["hanging_list"]
+
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
