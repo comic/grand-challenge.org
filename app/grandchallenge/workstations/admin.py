@@ -31,6 +31,7 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
         "auth_token",
     ]
     search_fields = [
+        "logs",
         "creator__username",
         "workstation_image__workstation__title",
     ]
