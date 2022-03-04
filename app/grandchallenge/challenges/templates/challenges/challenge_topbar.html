@@ -37,7 +37,25 @@
                             {% endif %}
                         {% endif %}
 
-                        {% if "change_challenge" in challenge_perms or user_is_participant %}
+                        {% if "change_challenge" in challenge_perms %}
+                            {% if challenge.use_workspaces %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.app_name == "workspaces" %}active{% endif %}"
+                                       href="{% url 'workspaces:create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                        <i class="fas fa-tools fa-fw"></i>&nbsp;Workspaces</a>
+                                </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' %}active{% endif %}"
+                                   href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                    <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
+                            </li>
+                        {% elif user_is_participant and challenge.visible_phases.first %}
                             {% if challenge.use_workspaces %}
                                 <li class="nav-item">
                                     <a class="nav-link {% if request.resolver_match.app_name == "workspaces" %}active{% endif %}"
@@ -55,10 +73,10 @@
                                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.visible_phases.first.slug %}">
                                     <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
-                        {% elif not challenge.hidden %}
+                        {% elif not challenge.hidden and challenge.visible_phases.first %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
-                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.visible_phases.first.slug %}">
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
                                     <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
                         {% endif %}
