@@ -55,6 +55,12 @@ class UserUploadCreateSerializer(UserUploadSerializer):
     def validate(self, data):
         if data.get("creator") is None:
             data["creator"] = self.context["request"].user
+
+        if UserUpload.objects.filter(creator=data["creator"]).count() > 1000:
+            raise ValidationError(
+                "You have created too many uploads. Please try again later."
+            )
+
         return data
 
 
