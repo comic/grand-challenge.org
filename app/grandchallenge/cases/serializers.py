@@ -198,6 +198,12 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         attrs["creator"] = self.context["request"].user
 
         uploads = attrs.get("user_uploads", [])
+
+        if len(uploads) > 100:
+            raise ValidationError(
+                "Too many files uploaded. A maximum of 100 files may be uploaded per session."
+            )
+
         if len({f.filename for f in uploads}) != len(uploads):
             raise ValidationError("Filenames must be unique")
 
