@@ -24,7 +24,7 @@
     <h2>Submissions</h2>
 
     {% if not challenge.visible_phases %}
-        <span>There are no active submission phases for this challenge.</span>
+        <div class="alert alert-danger">There are no active submission phases for this challenge.</div>
     {% endif %}
 
     <div class="table-responsive">
