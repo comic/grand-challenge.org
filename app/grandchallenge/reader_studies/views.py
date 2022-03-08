@@ -10,10 +10,12 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db import transaction
+from django.db.models import Count
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
@@ -31,12 +33,12 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
+from numpy.random.mtrand import RandomState
 from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
@@ -45,8 +47,13 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.serializers import (
+    ComponentInterfaceValuePostSerializer,
+)
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -64,25 +71,31 @@ from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
     GroundTruthForm,
     QuestionForm,
+    ReadersForm,
     ReaderStudyCopyForm,
     ReaderStudyCreateForm,
     ReaderStudyPermissionRequestUpdateForm,
     ReaderStudyUpdateForm,
-    ReadersForm,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
     CategoricalOption,
+    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.reader_studies.serializers import (
     AnswerSerializer,
+    DisplaySetPostSerializer,
+    DisplaySetSerializer,
     QuestionSerializer,
     ReaderStudySerializer,
 )
-from grandchallenge.reader_studies.tasks import add_images_to_reader_study
+from grandchallenge.reader_studies.tasks import (
+    add_images_to_reader_study,
+    create_display_sets_for_upload_session,
+)
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -311,6 +324,39 @@ class ReaderStudyStatistics(
     template_name = "reader_studies/readerstudy_statistics.html"
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
+
+
+class ReaderStudyDisplaySetList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
+):
+    model = DisplaySet
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_images_list.html"
+    row_template = "reader_studies/readerstudy_display_sets_row.html"
+    search_fields = ["pk", "name"]
+    columns = [
+        Column(title="Name", sort_field="id"),
+    ]
+    text_align = "left"
+
+    @cached_property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"reader_study": self.reader_study})
+        return context
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(reader_study=self.reader_study)
+        return qs
 
 
 class ReaderStudyImagesList(
@@ -574,6 +620,26 @@ class ReaderStudyCopy(
 
     def get_success_url(self):
         return self.reader_study.get_absolute_url()
+
+
+class AddDisplaySetsToReaderStudy(AddObjectToReaderStudyMixin):
+    model = RawImageUploadSession
+    form_class = AddCasesForm
+    template_name = "reader_studies/readerstudy_add_object.html"
+    type_to_add = "images"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "linked_task": create_display_sets_for_upload_session.signature(
+                    kwargs={"reader_study_pk": self.reader_study.pk},
+                    immutable=True,
+                ),
+            }
+        )
+        return kwargs
 
 
 class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
@@ -864,6 +930,121 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
                 for answer in answers
             }
         )
+
+
+class DisplaySetViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
+    serializer_class = DisplaySetSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["reader_study"]
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
+
+    @property
+    def reader_study(self):
+        reader_study_pk = self.request.query_params.get("reader_study")
+        if reader_study_pk:
+            return ReaderStudy.objects.get(pk=reader_study_pk)
+
+    def get_serializer_class(self):
+        if self.action in ["partial_update", "update", "create"]:
+            return DisplaySetPostSerializer
+        return DisplaySetSerializer
+
+    def partial_update(self, request, pk=None):
+        instance = self.get_object()
+        if not instance.is_editable:
+            return HttpResponseBadRequest(
+                "This display set cannot be changed, "
+                "as answers for it already exist."
+            )
+        assigned_civs = []
+        if request.data.get("value"):
+            # Get the provided civ from the current reader study's display sets.
+            civs = instance.reader_study.display_sets.values_list(
+                "values", flat=True
+            )
+            civ = ComponentInterfaceValue.objects.filter(id__in=civs).get(
+                id=request.data.get("value")
+            )
+
+            # If there is already a value for the provided civ's interface in
+            # this display set, remove it from this display set. Cast to list
+            # to evaluate immediately.
+            assigned_civs = list(
+                instance.values.filter(interface=civ.interface)
+            )
+
+            # Add the provided civ to the current display set
+            instance.values.add(civ)
+        if request.data.get("values"):
+            serialized_data = ComponentInterfaceValuePostSerializer(
+                many=True, data=request.data.get("values")
+            )
+            if serialized_data.is_valid():
+                civs = serialized_data.create(serialized_data.validated_data)
+                assigned_civs = instance.values.filter(
+                    interface__in=[civ.interface for civ in civs]
+                )
+                instance.values.remove(*assigned_civs)
+                instance.values.add(*civs)
+
+        # Create a new display set for any civs that have been replaced by a
+        # new value in this display set, to ensure it remains connected to
+        # the reader study.
+        for assigned in assigned_civs:
+            if not instance.reader_study.display_sets.filter(
+                values=assigned
+            ).exists():
+                ds = DisplaySet.objects.create(
+                    reader_study=instance.reader_study
+                )
+                ds.values.add(assigned)
+            instance.values.remove(assigned)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        queryset = DisplaySet.objects.all().select_related("reader_study")
+        unanswered_by_user = self.request.query_params.get(
+            "unanswered_by_user"
+        )
+        if unanswered_by_user == "True":
+            reader_study = self.reader_study
+            if reader_study is None:
+                return HttpResponseBadRequest(
+                    "Please provide a reader study when filtering for "
+                    "unanswered display_sets."
+                )
+            answerable_question_count = reader_study.answerable_question_count
+            queryset = queryset.annotate(
+                answer_count=Count("answers")
+            ).exclude(
+                answers__creator=self.request.user,
+                answer_count__gte=answerable_question_count,
+            )
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if self.reader_study and self.reader_study.shuffle_hanging_list:
+            queryset = list(list(queryset))
+            RandomState(seed=int(self.request.user.pk)).shuffle(queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):

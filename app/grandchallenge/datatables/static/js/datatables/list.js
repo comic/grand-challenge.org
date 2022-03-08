@@ -1,4 +1,5 @@
 const defaultSortColumn = JSON.parse(document.getElementById("defaultSortColumn").textContent)
+const textAlign = JSON.parse(document.getElementById("textAlign").textContent)
 
 $(document).ready(function () {
     $('#ajaxDataTable').DataTable({
@@ -31,7 +32,7 @@ $(document).ready(function () {
                 orderable: false,
             },
             {
-                className: "align-middle text-center",
+                className: `align-middle text-${textAlign}`,
                 targets: "_all" ,
             },
         ],

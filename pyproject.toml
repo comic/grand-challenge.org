@@ -2,6 +2,11 @@
 requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.isort]
+profile = "black"
+known_first_party = ["config", "grandchallenge", "tests"]
+line_length = 79
+
 [tool.black]
 line-length = 79
 target-version = ['py38']
@@ -31,14 +36,11 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.10"
 "beautifulsoup4" = "*"
-# There is a bug with chords of groups in Celery 5.1, test with a
-# submission using algorithm_evaluation_fixtures to see if it is fixed
-celery = {extras = ["redis", "sqs"], version = "!=5.0.6,<5.1"}
-# Also pin kombu for Celery 5.1 due to https://github.com/celery/kombu/issues/1358
-# When upgrading kombu to 5.1 remove SQS patch in base container
-kombu = "<5.1"
+celery = {extras = ["redis", "sqs"], version = "!=5.0.6"}
+kombu = "*"
+pycurl = "*"  # Fix poetry dependency resolution for celery
 django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
@@ -94,7 +96,7 @@ Pillow = "*"
 panimg = ">0.5.0"
 django-activity-stream = "*"
 django-stdimage = "*"
-django-permissions-policy = "*"
+django-permissions-policy = "<4.8.0"  # v4.8.0 removes interest-cohort
 aws-xray-sdk = "*"
 django-deprecate-fields = "*"
 django-add-default-value = "*"

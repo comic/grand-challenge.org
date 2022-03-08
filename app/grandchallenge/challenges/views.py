@@ -10,8 +10,8 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

@@ -1,10 +1,16 @@
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models.signals import m2m_changed
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.models import Image
-from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    DisplaySet,
+    ReaderStudy,
+)
 from grandchallenge.reader_studies.tasks import add_scores
 
 
@@ -60,3 +66,44 @@ def assign_score(instance, action, reverse, model, pk_set, **_):
             }
         )
     )
+
+
+@receiver(m2m_changed, sender=DisplaySet.values.through)
+def assert_modification_allowed(instance, action, reverse, model, pk_set, **_):
+    if "pre" not in action:
+        return
+
+    if reverse:
+        not_editable = DisplaySet.objects.filter(
+            answers__isnull=False
+        ).values_list("pk", flat=True)
+        if len(not_editable) > 0:
+            raise ValidationError(
+                "The following display sets cannot be updated, because answers "
+                f"for them already exist: {', '.join(map(str, not_editable))}"
+            )
+
+    else:
+        if not instance.is_editable:
+            raise ValidationError(
+                "This display set cannot be updated, because answers for it "
+                "already exist."
+            )
+
+
+@receiver(m2m_changed, sender=DisplaySet.values.through)
+def update_reader_study_modification_time(
+    instance, action, reverse, model, pk_set, **_
+):
+    """Call save on corresponding reader study to update modified field."""
+    if "post" not in action:
+        return
+
+    if reverse:
+        for ds in DisplaySet.objects.filter(pk__in=pk_set):
+            with transaction.atomic():
+                ds.reader_study.save()
+
+    else:
+        with transaction.atomic():
+            instance.reader_study.save()

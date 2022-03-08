@@ -4,11 +4,11 @@ import itertools
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
+    HTML,
     ButtonHolder,
     Div,
     Field,
     Fieldset,
-    HTML,
     Layout,
     Submit,
 )
@@ -21,8 +21,8 @@ from django.forms import (
     Form,
     ModelChoiceField,
     ModelForm,
-    TextInput,
     Textarea,
+    TextInput,
 )
 from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
@@ -37,10 +37,10 @@ from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.reader_studies.models import (
-    Answer,
     CASE_TEXT_SCHEMA,
-    CategoricalOption,
     HANGING_LIST_SCHEMA,
+    Answer,
+    CategoricalOption,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -147,6 +147,11 @@ class ReaderStudyCreateForm(
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.use_display_sets:
+            del self.fields["hanging_list"]
+
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",

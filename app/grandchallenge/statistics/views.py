@@ -7,14 +7,13 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 from django_countries import countries
 
-from grandchallenge.algorithms.models import Algorithm, Job as AlgorithmJob
+from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import (
-    Evaluation as EvaluationJob,
-    Submission,
-)
+from grandchallenge.evaluation.models import Evaluation as EvaluationJob
+from grandchallenge.evaluation.models import Submission
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation

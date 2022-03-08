@@ -6,11 +6,17 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.reader_studies.models import Answer, Question
+from grandchallenge.components.models import InterfaceKind
+from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
+    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -1189,4 +1195,320 @@ def test_question_accepts_image_type_answers(client, settings):
     assert (
         b"This question does not accept image type answers"
         in response.rendered_content
+    )
+
+
+@pytest.mark.django_db
+def test_display_set_endpoints(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    r = UserFactory()
+
+    rs1, rs2 = (ReaderStudyFactory(use_display_sets=True) for _ in range(2))
+    rs1.add_reader(r)
+    rs2.add_reader(r)
+    q1, q2 = (
+        QuestionFactory(reader_study=rs1, answer_type=Question.AnswerType.BOOL)
+        for _ in range(2)
+    )
+    civ1, civ2 = (
+        ComponentInterfaceValueFactory(image=ImageFactory()) for _ in range(2)
+    )
+    ds1, ds2 = (DisplaySetFactory(reader_study=rs1) for _ in range(2))
+    ds1.values.add(civ1)
+    ds2.values.add(civ2)
+
+    civ3, civ4 = (
+        ComponentInterfaceValueFactory(image=ImageFactory()) for _ in range(2)
+    )
+    ds3, ds4 = (DisplaySetFactory(reader_study=rs2) for _ in range(2))
+    ds3.values.add(civ3)
+    ds4.values.add(civ4)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 4
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk)},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 2
+    rs1.shuffle_hanging_list = True
+    rs1.save()
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 2
+
+    AnswerFactory(question=q1, display_set=ds1, creator=r)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 2
+
+    AnswerFactory(question=q2, display_set=ds1, creator=r)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 1
+
+
+@pytest.mark.django_db
+def test_display_set_shuffling(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    r1, r2 = UserFactory(), UserFactory()
+
+    rs = ReaderStudyFactory(use_display_sets=True)
+    rs.add_reader(r1)
+    rs.add_reader(r2)
+
+    for _ in range(20):
+        civ = ComponentInterfaceValueFactory(image=ImageFactory())
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r1,
+        client=client,
+        method=client.get,
+    )
+
+    r1_unshuffled = response.json()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+
+    r2_unshuffled = response.json()
+
+    assert r1_unshuffled == r2_unshuffled
+
+    rs.shuffle_hanging_list = True
+    rs.save()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r1,
+        client=client,
+        method=client.get,
+    )
+
+    r1_shuffled_1 = response.json()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+
+    r2_shuffled_1 = response.json()
+
+    assert r1_shuffled_1 != r2_shuffled_1
+    assert r1_shuffled_1 != r1_unshuffled
+    assert r2_shuffled_1 != r2_unshuffled
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r1,
+        client=client,
+        method=client.get,
+    )
+
+    r1_shuffled_2 = response.json()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+
+    r2_shuffled_2 = response.json()
+
+    assert r1_shuffled_1 == r1_shuffled_2
+    assert r2_shuffled_1 == r2_shuffled_2
+
+
+@pytest.mark.django_db
+def test_display_set_add_and_edit(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    r1, r2 = UserFactory(), UserFactory()
+
+    rs = ReaderStudyFactory(use_display_sets=True)
+    rs.add_editor(r1)
+    rs.add_reader(r2)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        user=r1,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={"reader_study": rs.slug},
+    )
+
+    ds = DisplaySet.objects.get(pk=response.json()["pk"])
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=r1,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "display_set": ds.pk,
+                "interface": "generic-medical-image",
+                "uploads": [
+                    create_upload_from_file(
+                        file_path=Path(__file__).parent.parent
+                        / "cases_tests"
+                        / "resources"
+                        / "test_grayscale.jpg",
+                        creator=r1,
+                    ).api_url
+                ],
+            },
+        )
+
+    ds.refresh_from_db()
+    assert ds.values.count() == 1
+
+    initial_value = ds.values.first()
+    assert initial_value.interface.slug == "generic-medical-image"
+    assert initial_value.image.name == "test_grayscale.jpg"
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-list",
+            user=r1,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "display_set": ds.pk,
+                "interface": "generic-medical-image",
+                "uploads": [
+                    create_upload_from_file(
+                        file_path=Path(__file__).parent.parent
+                        / "cases_tests"
+                        / "resources"
+                        / "test_grayscale.png",
+                        creator=r1,
+                    ).api_url
+                ],
+            },
+        )
+
+    ds.refresh_from_db()
+    assert ds.values.count() == 1
+
+    new = ds.values.first()
+    assert new != initial_value
+    assert new.interface.slug == "generic-medical-image"
+    assert new.image.name == "test_grayscale.png"
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=r1,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={"values": [{"interface": ci.slug, "value": True}]},
+    )
+
+    assert sorted(
+        val["interface"] for val in response.json()["values"]
+    ) == sorted([ci.slug, "generic-medical-image"])
+    ds.refresh_from_db()
+    assert ds.values.count() == 2
+
+    # Create another display set
+    ds2 = DisplaySetFactory(reader_study=rs)
+    civ = ComponentInterfaceValueFactory(interface=ci, value=False)
+    ds2.values.add(civ)
+
+    assert ds2.values.count() == 1
+
+    # Add the image civ to the new display set
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds2.pk},
+        user=r1,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={"value": new.pk},
+    )
+
+    ds.refresh_from_db()
+    ds2.refresh_from_db()
+
+    # The image civ is now part of both display sets
+    assert ds.values.count() == 2
+    assert ds2.values.count() == 2
+
+    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
+    AnswerFactory(question=q, creator=r2, display_set=ds)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=r1,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={"values": [{"interface": ci.slug, "value": True}]},
+    )
+
+    assert response.status_code == 400
+    assert response.content.decode("utf-8") == (
+        "This display set cannot be changed, as answers for it already exist."
     )

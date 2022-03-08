@@ -7,8 +7,8 @@ from django.core.exceptions import (
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import CreateView, ListView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

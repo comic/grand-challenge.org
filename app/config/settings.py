@@ -549,6 +549,7 @@ GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
+ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 30
 ACCOUNT_AUTHENTICATION_METHOD = "username_email"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"

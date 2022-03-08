@@ -21,7 +21,6 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
 from grandchallenge.github.utils import CloneStatusChoices
 
-
 logger = logging.getLogger(__name__)
 
 

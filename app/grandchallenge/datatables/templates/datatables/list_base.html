@@ -9,6 +9,7 @@
     {{ block.super }}
 
     {{ default_sort_column|json_script:"defaultSortColumn" }}
+    {{ text_align|json_script:"textAlign" }}
 
     <script type="text/javascript" src="{% static 'js/datatables/list.js' %}"></script>
 {% endblock %}

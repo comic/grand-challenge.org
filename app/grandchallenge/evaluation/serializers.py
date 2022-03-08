@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework.fields import CharField
+from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
 from grandchallenge.challenges.models import Challenge
@@ -32,6 +33,10 @@ class PhaseSerializer(ModelSerializer):
 class SubmissionSerializer(ModelSerializer):
     phase = PhaseSerializer()
     creator = UserSerializer()
+    algorithm_image = HyperlinkedRelatedField(
+        read_only=True,
+        view_name="api:algorithms-image-detail",
+    )
 
     class Meta:
         model = Submission
@@ -44,6 +49,7 @@ class SubmissionSerializer(ModelSerializer):
             "predictions_file",
             "supplementary_file",
             "supplementary_url",
+            "algorithm_image",
         )
 
 

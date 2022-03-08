@@ -20,6 +20,10 @@
 {% block content %}
     <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
+    {% if not phase.public %}
+        <div class="alert alert-danger">This phase is no longer active. </div>
+    {% endif %}
+
     {% if phase.evaluation_comparison_observable_url %}
         <div id="compare-warning-alert" class="alert alert-warning d-none" role="alert">
             <h5>Attention</h5>

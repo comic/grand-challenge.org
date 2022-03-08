@@ -46,7 +46,7 @@ def get_sitk_image(*, image):
 
         try:
             hdr_path = Path(tempdirname) / Path(files[0].file.name).name
-            sitk_image = load_sitk_image(mhd_file=hdr_path)
+            sitk_image = load_sitk_image(hdr_path)
         except RuntimeError as e:
             logging.error(f"Failed to load SimpleITK image with error: {e}")
             raise

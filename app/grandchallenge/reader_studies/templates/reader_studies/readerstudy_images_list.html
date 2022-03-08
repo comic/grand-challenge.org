@@ -16,7 +16,7 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'reader-studies:add-images' slug=reader_study.slug %}"
+           href="{% if reader_study.use_display_sets %}{% url 'reader-studies:add-displaysets' slug=reader_study.slug %}{% else %}{% url 'reader-studies:add-images' slug=reader_study.slug %}{% endif %}"
         ><i class="fas fa-plus"></i> Add Cases
         </a>
     </p>
@@ -73,6 +73,19 @@
                     type: 'PATCH',
                     url: "{% url 'api:reader-study-remove-image' pk=reader_study.pk %}",
                     data: JSON.stringify({image: $(e.currentTarget).data("image")}),
+                    contentType: 'application/json',
+                    accept: 'application/json',
+                    complete: (response) => {
+                        window.location.replace(window.location.href);
+                    }
+                })
+            });
+
+             $(document).on('change', '.add-interface', (e) => {
+                $.ajax({
+                    type: 'PATCH',
+                    url:  $(e.currentTarget).data("url"),
+                    data: JSON.stringify({value: $(e.currentTarget).val()}),
                     contentType: 'application/json',
                     accept: 'application/json',
                     complete: (response) => {

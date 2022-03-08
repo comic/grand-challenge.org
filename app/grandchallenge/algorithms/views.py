@@ -27,9 +27,8 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import assign_perm, get_perms
@@ -115,17 +114,12 @@ class AlgorithmCreate(
 class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     model = Algorithm
     permission_required = "algorithms.view_algorithm"
-    ordering = "-created"
+    ordering = ("-highlight", "-created")
     filter_class = AlgorithmFilter
     paginate_by = 40
 
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related("publications")
-            .order_by("-created")
-        )
+        return super().get_queryset().prefetch_related("publications")
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

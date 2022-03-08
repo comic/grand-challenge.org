@@ -6,7 +6,6 @@ from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
 from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.task_categories.models import TaskType
 
-
 STATUS_CHOICES = (
     (StatusChoices.OPEN, "Accepting submissions now"),
     (StatusChoices.OPENING_SOON, "Opening submissions soon"),

@@ -9,9 +9,8 @@ from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.decorators import action

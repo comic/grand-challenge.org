@@ -9,8 +9,8 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
-    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 

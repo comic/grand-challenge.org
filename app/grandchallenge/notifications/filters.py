@@ -12,7 +12,6 @@ from machina.apps.forum_conversation.models import Topic
 from grandchallenge.core.filters import FilterForm
 from grandchallenge.notifications.models import Notification
 
-
 BOOLEAN_CHOICES = (("1", "Read"), ("0", "Unread"))
 
 
@@ -39,8 +38,8 @@ class NotificationFilter(FilterSet):
             ]
 
         search_fields = (
-            "action__target_object_id",
-            "action__action_object_object_id",
+            "target_object_id",
+            "action_object_object_id",
         )
 
         return queryset.filter(

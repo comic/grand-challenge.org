@@ -9,7 +9,6 @@ from tests.factories import UserFactory
 from tests.publications_tests.test_models import TEST_CSL
 from tests.utils import get_view_for_user
 
-
 TEST_DOI = "10.1002/mrm.25227"
 
 

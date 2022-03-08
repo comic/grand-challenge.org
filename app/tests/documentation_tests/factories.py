@@ -3,7 +3,6 @@ from faker import Faker
 
 from grandchallenge.documentation.models import DocPage
 
-
 faker = Faker()
 
 
