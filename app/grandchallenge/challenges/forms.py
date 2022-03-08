@@ -1,10 +1,10 @@
 from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
+    HTML,
     ButtonHolder,
     Div,
     Fieldset,
-    HTML,
     Layout,
     Submit,
 )

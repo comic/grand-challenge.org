@@ -12,10 +12,7 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from tests.challenges_tests.factories import generate_type_2_challenge_request
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import (
-    ChallengeFactory,
-    UserFactory,
-)
+from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
 
 

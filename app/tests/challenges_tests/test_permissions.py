@@ -6,10 +6,7 @@ from config import settings
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from tests.challenges_tests.factories import generate_type_1_challenge_request
-from tests.factories import (
-    ExternalChallengeFactory,
-    UserFactory,
-)
+from tests.factories import ExternalChallengeFactory, UserFactory
 from tests.utils import (
     get_view_for_user,
     validate_admin_only_view,
