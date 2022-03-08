@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils import timezone
@@ -16,6 +16,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmJobFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceFactory
 
 
 @pytest.mark.django_db
@@ -162,3 +163,18 @@ class TestAlgorithmJobGroups(TestCase):
     def test_viewer_group_in_m2m(self):
         j = AlgorithmJobFactory()
         assert {*j.viewer_groups.all()} == {j.viewers}
+
+
+@pytest.mark.django_db
+def test_disjoint_interfaces():
+    # Required for Hanging protocols and linking algorithms to reader studies
+    a = AlgorithmFactory()
+    i = ComponentInterfaceFactory()
+
+    a.inputs.add(i)
+    a.outputs.add(i)
+
+    with pytest.raises(ValidationError) as err:
+        a.clean()
+
+    assert "The sets of Inputs and Outputs must be unique" in str(err)

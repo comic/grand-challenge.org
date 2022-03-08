@@ -59,7 +59,7 @@ from grandchallenge.archives.tasks import (
     update_archive_item_update_kwargs,
 )
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -407,7 +407,7 @@ class ArchiveEditArchiveItem(
 
             ci = ComponentInterface.objects.get(slug=slug)
 
-            if ci.kind in InterfaceKind.interface_type_image():
+            if ci.is_image_kind:
                 if value:
                     upload_session = create_upload(value)
             else:
@@ -416,12 +416,8 @@ class ArchiveEditArchiveItem(
             update_archive_item_update_kwargs(
                 instance=self.archive_item,
                 interface=ci,
-                value=value
-                if ci.kind in InterfaceKind.interface_type_json()
-                else None,
-                user_upload=value
-                if InterfaceKind.interface_type_file()
-                else None,
+                value=value if ci.is_json_kind else None,
+                user_upload=value if ci.is_file_kind else None,
                 upload_session=upload_session,
                 civ_pks_to_add=civ_pks_to_add,
                 civ_pks_to_remove=civ_pks_to_remove,
