@@ -79,3 +79,7 @@ def test_civ_value_to_file():
 
     assert v == {"foo": 1, "bar": None}
     assert civ.value is None
+
+    # Check idempotency
+    with pytest.raises(RuntimeError):
+        civ_value_to_file(civ_pk=civ.pk)

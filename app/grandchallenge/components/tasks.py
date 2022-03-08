@@ -576,6 +576,10 @@ def civ_value_to_file(*, civ_pk):
             app_label="components",
             model_name="componentinterfacevalue",
         )
+
+        if civ.value is None:
+            raise RuntimeError("CIV value is None")
+
         civ.file = ContentFile(
             json.dumps(civ.value).encode("utf-8"),
             name=Path(civ.interface.relative_path).name,
