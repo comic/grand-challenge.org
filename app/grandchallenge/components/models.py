@@ -594,6 +594,10 @@ class ComponentInterface(models.Model):
         return self.kind in InterfaceKind.interface_type_json()
 
     @property
+    def is_file_kind(self):
+        return self.is_file_kind
+
+    @property
     def super_kind(self):
         if self.save_in_object_store:
             if self.is_image_kind:
@@ -605,10 +609,11 @@ class ComponentInterface(models.Model):
 
     @property
     def save_in_object_store(self):
-        # CSV, ZIP, PDF, SQREG and Thumbnail should always be saved to S3, others are optional
+        # CSV, ZIP, PDF, SQREG and Thumbnail should always be saved to S3,
+        # others are optional
         return (
             self.is_image_kind
-            or self.kind in InterfaceKind.interface_type_file()
+            or self.is_file_kind
             or not self.store_in_database
         )
 
@@ -642,9 +647,8 @@ class ComponentInterface(models.Model):
         if self.is_json_kind:
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
-        elif (
-            self.kind in InterfaceKind.interface_type_file()
-            and not self.relative_path.endswith(f".{self.kind.lower()}")
+        elif self.is_file_kind and not self.relative_path.endswith(
+            f".{self.kind.lower()}"
         ):
             raise ValidationError(
                 f"Relative path should end with .{self.kind.lower()}"
@@ -818,7 +822,7 @@ class ComponentInterfaceValue(models.Model):
 
         if self.interface.kind in InterfaceKind.interface_type_image():
             self._validate_image_only()
-        elif self.interface.kind in InterfaceKind.interface_type_file():
+        elif self.interface.is_file_kind:
             self._validate_file_only()
         else:
             self._validate_value()

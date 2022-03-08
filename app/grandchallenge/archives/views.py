@@ -417,9 +417,7 @@ class ArchiveEditArchiveItem(
                 instance=self.archive_item,
                 interface=ci,
                 value=value if ci.is_json_kind else None,
-                user_upload=value
-                if InterfaceKind.interface_type_file()
-                else None,
+                user_upload=value if ci.is_file_kind else None,
                 upload_session=upload_session,
                 civ_pks_to_add=civ_pks_to_add,
                 civ_pks_to_remove=civ_pks_to_remove,

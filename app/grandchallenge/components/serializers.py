@@ -127,7 +127,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             )
             instance.full_clean()
 
-        if interface.kind in InterfaceKind.interface_type_file():
+        if interface.is_file_kind:
             if not attrs.get("user_upload"):
                 raise serializers.ValidationError(
                     f"user_upload is required for interface "

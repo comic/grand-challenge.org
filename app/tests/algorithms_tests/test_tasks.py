@@ -389,7 +389,7 @@ def test_algorithm_multiple_inputs(
                 )
             )
             expected.append("file")
-        elif ci.kind in InterfaceKind.interface_type_file():
+        elif ci.is_file_kind:
             civ = ComponentInterfaceValueFactory(interface=ci)
             civ.file.save("test", File(BytesIO(b"")))
             civ.save()
