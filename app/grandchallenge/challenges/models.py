@@ -719,15 +719,11 @@ class ChallengeRequest(models.Model):
         unique=True,
     )
     abstract = models.TextField(
-        help_text="Provide a summary of the challenge purpose. This should "
-        "include a general introduction to the topic from both a "
-        "biomedical as well as from a technical point of view and "
-        "clearly state the envisioned technical and/or biomedical "
-        "impact of the challenge.",
+        help_text="Provide a summary of the challenge purpose.",
     )
     contact_email = models.EmailField(
-        help_text="Please provide an email that our team can use to get in "
-        "touch with you should there be any questions about your request.",
+        help_text="Please provide an email that our team can use to contact "
+        "you should there be any questions about your request.",
     )
     start_date = models.DateField(
         help_text="Estimated start date for this challenge.",
@@ -735,8 +731,7 @@ class ChallengeRequest(models.Model):
     end_date = models.DateField(
         help_text="Estimated end date for this challenge.",
     )
-    organizers = models.CharField(
-        max_length=1024,
+    organizers = models.TextField(
         help_text="Provide information about the organizing team (names and affiliations)",
     )
     affiliated_event = models.CharField(
@@ -744,7 +739,7 @@ class ChallengeRequest(models.Model):
         max_length=50,
         help_text="Is this challenge part of a workshop or conference? If so, which one?",
     )
-    miccai_submission_form = models.FileField(
+    structured_challenge_submission_form = models.FileField(
         null=True,
         blank=True,
         upload_to=get_pdf_path,
@@ -774,8 +769,7 @@ class ChallengeRequest(models.Model):
         help_text="What type is this challenge?",
     )
     challenge_setup = models.TextField(
-        help_text="Describe the challenge set-up. "
-        "How many tasks and phases (preliminary, final) does the challenge have?"
+        help_text="Describe the challenge set-up."
     )
     data_set = models.TextField(
         help_text="Describe the training and test datasets you are planning to use."

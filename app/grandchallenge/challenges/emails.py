@@ -48,10 +48,14 @@ def send_external_challenge_created_email(challenge):
 
 def send_challenge_requested_email_to_reviewers(challengerequest):
     site = Site.objects.get_current()
+    update_url = reverse(
+        "challenges:request-list",
+    )
     message = (
         f"Dear reviewers,\n\n"
         f"User {challengerequest.creator} has just requested the challenge "
-        f"{challengerequest.title}.\n\n"
+        f"{challengerequest.title}. To review the challenge, go here:"
+        f"{update_url}\n\n"
         f"Regards,\n"
         f"{site.name}\n\n"
         f"This is an automated service email from {site.domain}."
@@ -119,19 +123,21 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
             f"accepted. For your convenience, we have already created the "
             f"challenge page for you at {challenge.get_absolute_url()} "
             f"To get your challenge ready, please have a close look at our "
-            f"documentation: \n\n"
+            f"documentation (https://grand-challenge.org/documentation/"
+            f"create-your-own-challenge/) and the steps below. \n\n"
             f"Next steps:\n"
             f"1. On your challenge page, go to Admin - General Settings and carefully "
             f"review all information there, upload a logo and banner for your "
             f"challenge, optionally enable the forum (recommended) and teams features "
-            f"and choose your preferred access request handling policy. For more "
-            f"information, see here.\n"
+            f"and choose your preferred access request handling policy. All these "
+            f"options are described in our documentation.\n"
             f"2. Add information about your challenge, your submission procedure, "
             f"the challenge timeline etc to your challenge page by editing and adding"
-            f" custom subpages to your challenge. For more information, see here.\n"
+            f" custom subpages to your challenge. For more information, see the tab "
+            f"'Add custom pages' in our documentation.\n"
             f"3. A first phase has been added to your challenge, to add more go "
             f"to Admin - Phases - Add a new Phase. Please carefully read our "
-            f"documentation for details on how to set up your phases for a type 1 "
+            f"documentation for details on how to set up your phases for a type 1"
             f"or a type 2 challenge respectively. \n\n"
             f"Feel free to contact support@grand-challenge.org if you have any "
             f"questions or require assistance in setting up your challenge. \n"

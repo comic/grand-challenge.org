@@ -20,8 +20,8 @@
     <div class="row">
         <p class="col-6">{% if object.status == 'ACPT' %}<span class="badge badge-success">Accepted</span>{% elif object.status == 'RJCT' %}<span class="badge badge-danger">Rejected</span>{% endif %} Challenge request by {{ object.creator|user_profile_link }}, created on {{ object.created }}</p>
         <div class="col-6 text-right">
-            {% if object.miccai_submission_form %}
-                <a class="btn btn-primary mb-3" href="{{ object.miccai_submission_form.url }}">Download Miccai submission PDF</a>
+            {% if object.structured_challenge_submission_form %}
+                <a class="btn btn-primary mb-3" href="{{ object.structured_challenge_submission_form.url }}">Download Miccai submission PDF</a>
             {% endif %}
             <a class="btn btn-primary mb-3" href="mailto:{{ object.contact_email }}"><i class="fa fa-envelope"></i> &nbsp;Contact requester</a>
         </div>
