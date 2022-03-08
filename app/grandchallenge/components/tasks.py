@@ -4,6 +4,7 @@ import logging
 import subprocess
 import tarfile
 import uuid
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import boto3
@@ -13,6 +14,7 @@ from celery.exceptions import MaxRetriesExceededError
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.db.transaction import on_commit
@@ -564,3 +566,19 @@ def add_images_to_component_interface_value(
     civ.save()
 
     civ.image.update_viewer_groups_permissions()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def civ_value_to_file(*, civ_pk):
+    with transaction.atomic():
+        civ = get_model_instance(
+            pk=civ_pk,
+            app_label="components",
+            model_name="componentinterfacevalue",
+        )
+        civ.file = ContentFile(
+            json.dumps(civ.value).encode("utf-8"),
+            name=Path(civ.interface.relative_path).name,
+        )
+        civ.value = None
+        civ.save()
