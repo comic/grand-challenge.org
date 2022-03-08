@@ -245,9 +245,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             {*self.outputs.all()}
         )
 
-        if [interface.slug for interface in duplicate_interfaces] != [
-            "generic-medical-image"
-        ]:
+        if duplicate_interfaces and {
+            interface.slug for interface in duplicate_interfaces
+        } != {"generic-medical-image"}:
             # TODO Temporarily allow gmi until conic is closed on 10/03/2022
             raise ValidationError(
                 f"The sets of Inputs and Outputs must be unique: "
