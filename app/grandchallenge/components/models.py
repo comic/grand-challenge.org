@@ -639,7 +639,7 @@ class ComponentInterface(models.Model):
         self._clean_relative_path()
 
     def _clean_relative_path(self):
-        if self.kind in InterfaceKind.interface_type_json():
+        if self.is_json_kind:
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
         elif (
@@ -665,10 +665,7 @@ class ComponentInterface(models.Model):
                 )
 
     def _clean_store_in_database(self):
-        if (
-            self.kind not in InterfaceKind.interface_type_json()
-            and self.store_in_database
-        ):
+        if not self.is_json_kind and self.store_in_database:
             raise ValidationError(
                 f"Interface {self.kind} objects cannot be stored in the database"
             )

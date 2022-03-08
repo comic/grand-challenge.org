@@ -416,9 +416,7 @@ class ArchiveEditArchiveItem(
             update_archive_item_update_kwargs(
                 instance=self.archive_item,
                 interface=ci,
-                value=value
-                if ci.kind in InterfaceKind.interface_type_json()
-                else None,
+                value=value if ci.is_json_kind else None,
                 user_upload=value
                 if InterfaceKind.interface_type_file()
                 else None,
