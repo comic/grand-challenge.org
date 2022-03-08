@@ -489,7 +489,7 @@
 <span class="sd">            }</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
+        <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span>
@@ -508,7 +508,7 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="p">}</span></div>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_image"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_image</span><span class="p">():</span>
@@ -518,11 +518,11 @@
 <span class="sd">        * Heat Map</span>
 <span class="sd">        * Segmentation</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
+        <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">HEAT_MAP</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="p">}</span></div>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_file"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_file</span><span class="p">():</span>
@@ -535,20 +535,20 @@
 <span class="sd">        * Thumbnail JPG</span>
 <span class="sd">        * Thumbnail PNG</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
+        <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SQREG</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="p">}</span></div>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_default_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span><span class="o">*</span><span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()}:</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">ModelChoiceField</span>
-        <span class="k">elif</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span><span class="o">*</span><span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">()}:</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">ModelMultipleChoiceField</span>
         <span class="k">elif</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
@@ -667,8 +667,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">()</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_file_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_in_object_store</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span>
             <span class="k">else</span><span class="p">:</span>
@@ -677,11 +681,11 @@
             <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">save_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># CSV, ZIP, PDF, SQREG and Thumbnail should always be saved to S3, others are optional</span>
+    <span class="k">def</span> <span class="nf">saved_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># files and images should always be saved to S3, others are optional</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_file_kind</span>
             <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span>
         <span class="p">)</span>
 
@@ -693,7 +697,7 @@
         <span class="k">elif</span> <span class="n">fileobj</span><span class="p">:</span>
             <span class="n">container</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">fileobj</span><span class="p">)</span>
             <span class="n">civ</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">container</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_in_object_store</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
             <span class="n">civ</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">ContentFile</span><span class="p">(</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
                 <span class="n">name</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -712,18 +716,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_relative_path</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_clean_relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">():</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Relative path should end with .json&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_file_kind</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Relative path should end with .</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">():</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;images/&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;Relative path should start with images/&quot;</span>
@@ -738,10 +741,19 @@
                 <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_clean_store_in_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">()</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span>
-        <span class="p">):</span>
+        <span class="n">object_store_required</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">(),</span>
+            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">(),</span>
+            <span class="c1"># These values can be large, so for any new interfaces of this</span>
+            <span class="c1"># type always add them to the object store</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">object_store_required</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2"> objects cannot be stored in the database&quot;</span>
             <span class="p">)</span>
@@ -892,9 +904,9 @@
 <div class="viewcode-block" id="ComponentInterfaceValue.clean"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">():</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_image_only</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">():</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_file_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_only</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_value</span><span class="p">()</span></div>
@@ -924,7 +936,7 @@
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">save_in_object_store</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_only</span><span class="p">()</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
