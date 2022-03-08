@@ -871,6 +871,7 @@ class ChallengeRequest(models.Model):
 
     @cached_property
     def budget(self):
+        budget = None
         if self.challenge_type == self.ChallengeTypeChoices.T2:
             compute_costs = settings.AWS_COMPUTE_COSTS
             storage_costs = settings.AWS_FILE_STORAGE_COSTS
@@ -956,4 +957,4 @@ class ChallengeRequest(models.Model):
                 )
             )
 
-            return budget
+        return budget
