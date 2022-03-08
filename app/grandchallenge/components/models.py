@@ -416,7 +416,7 @@ class InterfaceKind:
             }
 
         """
-        return (
+        return {
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.INTEGER,
             InterfaceKind.InterfaceKindChoices.FLOAT,
@@ -435,7 +435,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.CHART,
             InterfaceKind.InterfaceKindChoices.LINE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-        )
+        }
 
     @staticmethod
     def interface_type_image():
@@ -445,11 +445,11 @@ class InterfaceKind:
         * Heat Map
         * Segmentation
         """
-        return (
+        return {
             InterfaceKind.InterfaceKindChoices.IMAGE,
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
             InterfaceKind.InterfaceKindChoices.SEGMENTATION,
-        )
+        }
 
     @staticmethod
     def interface_type_file():
@@ -462,20 +462,20 @@ class InterfaceKind:
         * Thumbnail JPG
         * Thumbnail PNG
         """
-        return (
+        return {
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.ZIP,
             InterfaceKind.InterfaceKindChoices.PDF,
             InterfaceKind.InterfaceKindChoices.SQREG,
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-        )
+        }
 
     @classmethod
     def get_default_field(cls, *, kind):
-        if kind in {*cls.interface_type_file()}:
+        if kind in cls.interface_type_file():
             return ModelChoiceField
-        elif kind in {*cls.interface_type_image()}:
+        elif kind in cls.interface_type_image():
             return ModelMultipleChoiceField
         elif kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
