@@ -416,7 +416,7 @@ class InterfaceKind:
             }
 
         """
-        return (
+        return {
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.INTEGER,
             InterfaceKind.InterfaceKindChoices.FLOAT,
@@ -435,7 +435,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.CHART,
             InterfaceKind.InterfaceKindChoices.LINE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-        )
+        }
 
     @staticmethod
     def interface_type_image():
@@ -445,11 +445,11 @@ class InterfaceKind:
         * Heat Map
         * Segmentation
         """
-        return (
+        return {
             InterfaceKind.InterfaceKindChoices.IMAGE,
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
             InterfaceKind.InterfaceKindChoices.SEGMENTATION,
-        )
+        }
 
     @staticmethod
     def interface_type_file():
@@ -462,20 +462,20 @@ class InterfaceKind:
         * Thumbnail JPG
         * Thumbnail PNG
         """
-        return (
+        return {
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.ZIP,
             InterfaceKind.InterfaceKindChoices.PDF,
             InterfaceKind.InterfaceKindChoices.SQREG,
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-        )
+        }
 
     @classmethod
     def get_default_field(cls, *, kind):
-        if kind in {*cls.interface_type_file()}:
+        if kind in cls.interface_type_file():
             return ModelChoiceField
-        elif kind in {*cls.interface_type_image()}:
+        elif kind in cls.interface_type_image():
             return ModelMultipleChoiceField
         elif kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -594,8 +594,12 @@ class ComponentInterface(models.Model):
         return self.kind in InterfaceKind.interface_type_json()
 
     @property
+    def is_file_kind(self):
+        return self.kind in InterfaceKind.interface_type_file()
+
+    @property
     def super_kind(self):
-        if self.save_in_object_store:
+        if self.saved_in_object_store:
             if self.is_image_kind:
                 return InterfaceSuperKindChoices.IMAGE
             else:
@@ -604,11 +608,11 @@ class ComponentInterface(models.Model):
             return InterfaceSuperKindChoices.VALUE
 
     @property
-    def save_in_object_store(self):
-        # CSV, ZIP, PDF, SQREG and Thumbnail should always be saved to S3, others are optional
+    def saved_in_object_store(self):
+        # files and images should always be saved to S3, others are optional
         return (
             self.is_image_kind
-            or self.kind in InterfaceKind.interface_type_file()
+            or self.is_file_kind
             or not self.store_in_database
         )
 
@@ -620,7 +624,7 @@ class ComponentInterface(models.Model):
         elif fileobj:
             container = File(fileobj)
             civ.file.save(Path(self.relative_path).name, container)
-        elif self.save_in_object_store:
+        elif self.saved_in_object_store:
             civ.file = ContentFile(
                 json.dumps(value).encode("utf-8"),
                 name=Path(self.relative_path).name,
@@ -639,18 +643,17 @@ class ComponentInterface(models.Model):
         self._clean_relative_path()
 
     def _clean_relative_path(self):
-        if self.kind in InterfaceKind.interface_type_json():
+        if self.is_json_kind:
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
-        elif (
-            self.kind in InterfaceKind.interface_type_file()
-            and not self.relative_path.endswith(f".{self.kind.lower()}")
+        elif self.is_file_kind and not self.relative_path.endswith(
+            f".{self.kind.lower()}"
         ):
             raise ValidationError(
                 f"Relative path should end with .{self.kind.lower()}"
             )
 
-        if self.kind in InterfaceKind.interface_type_image():
+        if self.is_image_kind:
             if not self.relative_path.startswith("images/"):
                 raise ValidationError(
                     "Relative path should start with images/"
@@ -665,10 +668,19 @@ class ComponentInterface(models.Model):
                 )
 
     def _clean_store_in_database(self):
-        if (
-            self.kind not in InterfaceKind.interface_type_json()
-            and self.store_in_database
-        ):
+        object_store_required = self.kind in {
+            *InterfaceKind.interface_type_image(),
+            *InterfaceKind.interface_type_file(),
+            # These values can be large, so for any new interfaces of this
+            # type always add them to the object store
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
+        }
+
+        if object_store_required and self.store_in_database:
             raise ValidationError(
                 f"Interface {self.kind} objects cannot be stored in the database"
             )
@@ -819,9 +831,9 @@ class ComponentInterfaceValue(models.Model):
     def clean(self):
         super().clean()
 
-        if self.interface.kind in InterfaceKind.interface_type_image():
+        if self.interface.is_image_kind:
             self._validate_image_only()
-        elif self.interface.kind in InterfaceKind.interface_type_file():
+        elif self.interface.is_file_kind:
             self._validate_file_only()
         else:
             self._validate_value()
@@ -851,7 +863,7 @@ class ComponentInterfaceValue(models.Model):
             )
 
     def _validate_value(self):
-        if self.interface.save_in_object_store:
+        if self.interface.saved_in_object_store:
             self._validate_file_only()
             with self.file.open("r") as f:
                 value = json.loads(f.read().decode("utf-8"))

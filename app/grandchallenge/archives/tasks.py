@@ -9,7 +9,6 @@ from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.components.tasks import (
     add_images_to_component_interface_value,
@@ -113,7 +112,7 @@ def update_archive_item_update_kwargs(
         )
     else:
         # for images, check if there are any CIVs with the provided image
-        if interface.kind in InterfaceKind.interface_type_image():
+        if interface.is_image_kind:
             if instance.values.filter(image=image).exists():
                 civ_pks_to_remove.add(
                     *instance.values.filter(image=image).values_list(
@@ -122,7 +121,7 @@ def update_archive_item_update_kwargs(
                 )
 
     with transaction.atomic():
-        if interface.kind in InterfaceKind.interface_type_image():
+        if interface.is_image_kind:
             civ = ComponentInterfaceValue.objects.create(interface=interface)
             if image:
                 civ.image = image
@@ -131,7 +130,7 @@ def update_archive_item_update_kwargs(
                 upload_pks[civ.pk] = upload_session.pk
             civ.save()
             civ_pks_to_add.add(civ.pk)
-        elif interface.kind in InterfaceKind.interface_type_file():
+        elif interface.is_file_kind:
             civ = ComponentInterfaceValue.objects.create(interface=interface)
             user_upload.copy_object(to_field=civ.file)
             civ.full_clean()

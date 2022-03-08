@@ -20,7 +20,6 @@ from grandchallenge.algorithms.tasks import (
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.tasks import (
@@ -377,7 +376,7 @@ def test_algorithm_multiple_inputs(
     for ci in ComponentInterface.objects.exclude(
         kind=InterfaceKindChoices.ZIP
     ):
-        if ci.kind in InterfaceKind.interface_type_image():
+        if ci.is_image_kind:
             image_file = ImageFileFactory(
                 file__from_path=Path(__file__).parent
                 / "resources"
@@ -389,7 +388,7 @@ def test_algorithm_multiple_inputs(
                 )
             )
             expected.append("file")
-        elif ci.kind in InterfaceKind.interface_type_file():
+        elif ci.is_file_kind:
             civ = ComponentInterfaceValueFactory(interface=ci)
             civ.file.save("test", File(BytesIO(b"")))
             civ.save()

@@ -86,18 +86,11 @@ def test_average_duration_filtering():
 @pytest.mark.parametrize(
     "kind,object_store_required,is_image",
     (
-        (InterfaceKindChoices.CSV, True, False),
-        (InterfaceKindChoices.ZIP, True, False),
-        (InterfaceKindChoices.ANY, False, False),
-        (InterfaceKindChoices.IMAGE, True, True),
-        (InterfaceKindChoices.HEAT_MAP, True, True),
-        (InterfaceKindChoices.SEGMENTATION, True, True),
+        # JSON types
         (InterfaceKindChoices.STRING, False, False),
         (InterfaceKindChoices.INTEGER, False, False),
         (InterfaceKindChoices.FLOAT, False, False),
         (InterfaceKindChoices.BOOL, False, False),
-        (InterfaceKindChoices.CHOICE, False, False),
-        (InterfaceKindChoices.MULTIPLE_CHOICE, False, False),
         (InterfaceKindChoices.TWO_D_BOUNDING_BOX, False, False),
         (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, False, False),
         (InterfaceKindChoices.DISTANCE_MEASUREMENT, False, False),
@@ -106,36 +99,96 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.MULTIPLE_POINTS, False, False),
         (InterfaceKindChoices.POLYGON, False, False),
         (InterfaceKindChoices.MULTIPLE_POLYGONS, False, False),
-        (InterfaceKindChoices.THUMBNAIL_JPG, True, False),
-        (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
-        (InterfaceKindChoices.SQREG, True, False),
-        (InterfaceKindChoices.PDF, True, False),
+        (InterfaceKindChoices.CHOICE, False, False),
+        (InterfaceKindChoices.MULTIPLE_CHOICE, False, False),
+        (InterfaceKindChoices.ANY, False, False),
         (InterfaceKindChoices.CHART, False, False),
         (InterfaceKindChoices.LINE, False, False),
         (InterfaceKindChoices.MULTIPLE_LINES, False, False),
+        # Image types
+        (InterfaceKindChoices.IMAGE, True, True),
+        (InterfaceKindChoices.HEAT_MAP, True, True),
+        (InterfaceKindChoices.SEGMENTATION, True, True),
+        # File types
+        (InterfaceKindChoices.CSV, True, False),
+        (InterfaceKindChoices.ZIP, True, False),
+        (InterfaceKindChoices.PDF, True, False),
+        (InterfaceKindChoices.SQREG, True, False),
+        (InterfaceKindChoices.THUMBNAIL_JPG, True, False),
+        (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
     ),
 )
-def test_save_in_object_store(kind, object_store_required, is_image):
+def test_saved_in_object_store(kind, object_store_required, is_image):
     ci = ComponentInterface(kind=kind, store_in_database=True)
 
     if object_store_required:
-        assert ci.save_in_object_store is True
+        assert ci.saved_in_object_store is True
         if is_image:
             assert ci.super_kind == InterfaceSuperKindChoices.IMAGE
         else:
             assert ci.super_kind == InterfaceSuperKindChoices.FILE
         ci.store_in_database = False
     else:
-        assert ci.save_in_object_store is False
+        assert ci.saved_in_object_store is False
         assert is_image is False  # Shouldn't happen!
         assert ci.super_kind == InterfaceSuperKindChoices.VALUE
         ci.store_in_database = False
 
-    assert ci.save_in_object_store is True
+    assert ci.saved_in_object_store is True
     if is_image:
         assert ci.super_kind == InterfaceSuperKindChoices.IMAGE
     else:
         assert ci.super_kind == InterfaceSuperKindChoices.FILE
+
+
+@pytest.mark.parametrize(
+    "kind,object_store_required",
+    (
+        # JSON types
+        (InterfaceKindChoices.STRING, False),
+        (InterfaceKindChoices.INTEGER, False),
+        (InterfaceKindChoices.FLOAT, False),
+        (InterfaceKindChoices.BOOL, False),
+        (InterfaceKindChoices.TWO_D_BOUNDING_BOX, False),
+        (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, True),
+        (InterfaceKindChoices.DISTANCE_MEASUREMENT, False),
+        (InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS, True),
+        (InterfaceKindChoices.POINT, False),
+        (InterfaceKindChoices.MULTIPLE_POINTS, True),
+        (InterfaceKindChoices.POLYGON, False),
+        (InterfaceKindChoices.MULTIPLE_POLYGONS, True),
+        (InterfaceKindChoices.CHOICE, False),
+        (InterfaceKindChoices.MULTIPLE_CHOICE, False),
+        (InterfaceKindChoices.ANY, False),
+        (InterfaceKindChoices.CHART, False),
+        (InterfaceKindChoices.LINE, False),
+        (InterfaceKindChoices.MULTIPLE_LINES, True),
+        # Image types
+        (InterfaceKindChoices.IMAGE, True),
+        (InterfaceKindChoices.HEAT_MAP, True),
+        (InterfaceKindChoices.SEGMENTATION, True),
+        # File types
+        (InterfaceKindChoices.CSV, True),
+        (InterfaceKindChoices.ZIP, True),
+        (InterfaceKindChoices.PDF, True),
+        (InterfaceKindChoices.SQREG, True),
+        (InterfaceKindChoices.THUMBNAIL_JPG, True),
+        (InterfaceKindChoices.THUMBNAIL_PNG, True),
+    ),
+)
+def test_clean_store_in_db(kind, object_store_required):
+    ci = ComponentInterface(kind=kind, store_in_database=False)
+    ci._clean_store_in_database()
+    assert ci.saved_in_object_store is True
+
+    ci.store_in_database = True
+
+    if object_store_required:
+        with pytest.raises(ValidationError):
+            ci._clean_store_in_database()
+    else:
+        ci._clean_store_in_database()
+        assert ci.saved_in_object_store is False
 
 
 def test_all_interfaces_in_schema():
@@ -181,7 +234,7 @@ def test_relative_path_file_ending(kind):
     i = ComponentInterfaceFactory(
         kind=kind,
         relative_path=f"foo/bar.{good_suffix}",
-        store_in_database=kind in InterfaceKind.interface_type_json(),
+        store_in_database=False,
     )
     i.full_clean()
 
