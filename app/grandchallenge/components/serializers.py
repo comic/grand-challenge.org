@@ -7,7 +7,6 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.uploads.models import UserUpload
 
@@ -111,7 +110,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 "upload_session should be set."
             )
 
-        if interface.kind in InterfaceKind.interface_type_image():
+        if interface.is_image_kind:
             if not attrs.get("image") and not attrs.get("upload_session"):
                 raise serializers.ValidationError(
                     f"upload_session or image are required for interface "

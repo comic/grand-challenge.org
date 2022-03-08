@@ -595,7 +595,7 @@ class ComponentInterface(models.Model):
 
     @property
     def is_file_kind(self):
-        return self.is_file_kind
+        return self.kind in InterfaceKind.interface_type_file()
 
     @property
     def super_kind(self):
@@ -654,7 +654,7 @@ class ComponentInterface(models.Model):
                 f"Relative path should end with .{self.kind.lower()}"
             )
 
-        if self.kind in InterfaceKind.interface_type_image():
+        if self.is_image_kind:
             if not self.relative_path.startswith("images/"):
                 raise ValidationError(
                     "Relative path should start with images/"
@@ -820,7 +820,7 @@ class ComponentInterfaceValue(models.Model):
     def clean(self):
         super().clean()
 
-        if self.interface.kind in InterfaceKind.interface_type_image():
+        if self.interface.is_image_kind:
             self._validate_image_only()
         elif self.interface.is_file_kind:
             self._validate_file_only()
