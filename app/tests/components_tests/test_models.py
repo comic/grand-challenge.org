@@ -86,18 +86,11 @@ def test_average_duration_filtering():
 @pytest.mark.parametrize(
     "kind,object_store_required,is_image",
     (
-        (InterfaceKindChoices.CSV, True, False),
-        (InterfaceKindChoices.ZIP, True, False),
-        (InterfaceKindChoices.ANY, False, False),
-        (InterfaceKindChoices.IMAGE, True, True),
-        (InterfaceKindChoices.HEAT_MAP, True, True),
-        (InterfaceKindChoices.SEGMENTATION, True, True),
+        # JSON types
         (InterfaceKindChoices.STRING, False, False),
         (InterfaceKindChoices.INTEGER, False, False),
         (InterfaceKindChoices.FLOAT, False, False),
         (InterfaceKindChoices.BOOL, False, False),
-        (InterfaceKindChoices.CHOICE, False, False),
-        (InterfaceKindChoices.MULTIPLE_CHOICE, False, False),
         (InterfaceKindChoices.TWO_D_BOUNDING_BOX, False, False),
         (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, False, False),
         (InterfaceKindChoices.DISTANCE_MEASUREMENT, False, False),
@@ -106,13 +99,23 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.MULTIPLE_POINTS, False, False),
         (InterfaceKindChoices.POLYGON, False, False),
         (InterfaceKindChoices.MULTIPLE_POLYGONS, False, False),
-        (InterfaceKindChoices.THUMBNAIL_JPG, True, False),
-        (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
-        (InterfaceKindChoices.SQREG, True, False),
-        (InterfaceKindChoices.PDF, True, False),
+        (InterfaceKindChoices.CHOICE, False, False),
+        (InterfaceKindChoices.MULTIPLE_CHOICE, False, False),
+        (InterfaceKindChoices.ANY, False, False),
         (InterfaceKindChoices.CHART, False, False),
         (InterfaceKindChoices.LINE, False, False),
         (InterfaceKindChoices.MULTIPLE_LINES, False, False),
+        # Image types
+        (InterfaceKindChoices.IMAGE, True, True),
+        (InterfaceKindChoices.HEAT_MAP, True, True),
+        (InterfaceKindChoices.SEGMENTATION, True, True),
+        # File types
+        (InterfaceKindChoices.CSV, True, False),
+        (InterfaceKindChoices.ZIP, True, False),
+        (InterfaceKindChoices.PDF, True, False),
+        (InterfaceKindChoices.SQREG, True, False),
+        (InterfaceKindChoices.THUMBNAIL_JPG, True, False),
+        (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
     ),
 )
 def test_save_in_object_store(kind, object_store_required, is_image):
