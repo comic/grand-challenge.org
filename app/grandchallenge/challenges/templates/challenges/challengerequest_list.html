@@ -36,9 +36,9 @@
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
                         <td class="text-center align-middle">{{ object.challenge_type }}</td>
                         <td class="text-center align-middle">
-                            {% if object.status == 'ACPT' %}
+                            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
                                 <span class="badge badge-success">Accepted</span>
-                            {% elif object.status == 'RJCT' %}
+                            {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
                                 <span class="badge badge-danger">Rejected</span>
                             {% else %}
                                 <a class="btn btn-primary btn-sm" href="{% url 'challenges:request-update' pk=object.pk %}">Accept or decline</a>

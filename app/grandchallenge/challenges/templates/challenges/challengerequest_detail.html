@@ -18,7 +18,7 @@
     <h2>{{ object.title }}</h2>
     <br>
     <div class="row">
-        <p class="col-6">{% if object.status == 'ACPT' %}<span class="badge badge-success">Accepted</span>{% elif object.status == 'RJCT' %}<span class="badge badge-danger">Rejected</span>{% endif %} Challenge request by {{ object.creator|user_profile_link }}, created on {{ object.created }}</p>
+        <p class="col-6">{% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}<span class="badge badge-success">Accepted</span>{% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}<span class="badge badge-danger">Rejected</span>{% endif %} Challenge request by {{ object.creator|user_profile_link }}, created on {{ object.created }}</p>
         <div class="col-6 text-right">
             {% if object.structured_challenge_submission_form %}
                 <a class="btn btn-primary mb-3" href="{{ object.structured_challenge_submission_form.url }}">Download Miccai submission PDF</a>
