@@ -158,7 +158,7 @@ class AmazonECSExecutor:
 
         # Clamp the file size
         upper_limit = settings.COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE
-        lower_limit = 0
+        lower_limit = 1
         n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
 
         credits_file.parent.mkdir(parents=False, exist_ok=True)
