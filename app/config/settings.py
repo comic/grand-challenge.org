@@ -24,6 +24,10 @@ def strtobool(val) -> bool:
     return bool(strtobool_i(val))
 
 
+MEGABYTE = 1024 * 1024
+GIGABYTE = 1024 * MEGABYTE
+TERABYTE = 1024 * GIGABYTE
+
 DEBUG = strtobool(os.environ.get("DEBUG", "False"))
 
 COMMIT_ID = os.environ.get("COMMIT_ID", "unknown")
@@ -198,10 +202,10 @@ UPLOADS_S3_USE_ACCELERATE_ENDPOINT = strtobool(
     os.environ.get("UPLOADS_S3_USE_ACCELERATE_ENDPOINT", "False")
 )
 UPLOADS_MAX_SIZE_UNVERIFIED = int(
-    os.environ.get("UPLOADS_MAX_SIZE_UNVERIFIED", 2 * 1024 * 1024 * 1024)
+    os.environ.get("UPLOADS_MAX_SIZE_UNVERIFIED", 2 * GIGABYTE)
 )
 UPLOADS_MAX_SIZE_VERIFIED = int(
-    os.environ.get("UPLOADS_MAX_SIZE_VERIFIED", 128 * 1024 * 1024 * 1024)
+    os.environ.get("UPLOADS_MAX_SIZE_VERIFIED", 128 * GIGABYTE)
 )
 UPLOADS_TIMEOUT_DAYS = int(os.environ.get("UPLOADS_TIMEOUT_DAYS", 1))
 
@@ -920,7 +924,9 @@ COMPONENTS_REGISTRY_PREFIX = os.environ.get(
 COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
-COMPONENTS_MAXIMUM_IMAGE_SIZE = 10_737_418_240  # 10 gb
+COMPONENTS_MAXIMUM_IMAGE_SIZE = 10 * GIGABYTE
+COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES = 2 * TERABYTE
+COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE = 100 * GIGABYTE
 COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID = os.environ.get(
     "COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID"
 )
@@ -1188,14 +1194,14 @@ CASES_POST_PROCESSORS = os.environ.get(
 ).split(",")
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases_tests.utils.get_sitk_image()
-MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
+MAX_SITK_FILE_SIZE = 256 * MEGABYTE
 
 # The maximum size of all the files in an upload session in bytes
-UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
+UPLOAD_SESSION_MAX_BYTES = 10 * GIGABYTE
 
 # Some forms have a lot of data, such as a reader study update view
 # that can contain reports about the medical images
-DATA_UPLOAD_MAX_MEMORY_SIZE = 16_777_216  # 16 mb
+DATA_UPLOAD_MAX_MEMORY_SIZE = 16 * MEGABYTE
 
 # Some forms have a lot of fields, such as uploads of images
 # with many slices

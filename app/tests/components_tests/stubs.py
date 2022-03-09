@@ -3,6 +3,7 @@ import shutil
 from datetime import datetime
 
 from dateutil.tz import tzlocal
+from django.conf import settings
 
 from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
 
@@ -58,7 +59,8 @@ class CloudwatchClientStub:
             "Datapoints": [
                 {
                     "Timestamp": "2022-03-09T14:38:00+00:00",
-                    "Maximum": 2199000000000,  # Be careful changing this value, could create a lot of data
+                    "Maximum": settings.COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES
+                    - 10_000_000,
                     "Unit": "Bytes",
                 },
             ],

@@ -75,7 +75,6 @@ class AmazonECSExecutor:
 
         self.__ecs_client = None
         self.__logs_client = None
-        self.__cloudwatch_client = None
 
     @staticmethod
     def get_job_params(*, event):
@@ -110,10 +109,12 @@ class AmazonECSExecutor:
     def _get_desired_credits_file_size(cls):
         n_hours = 24
         credits_per_byte_per_hour = 0.75
-        desired_balance = 2 * 1024 * 1024 * 1024 * 1024  # 2TB
 
         current_balance = cls._get_current_efs_burst_balance_bytes()
-        credits_needed = desired_balance - current_balance
+        credits_needed = (
+            settings.COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES
+            - current_balance
+        )
         desired_bytes = int(
             credits_needed / (credits_per_byte_per_hour * n_hours)
         )
@@ -151,7 +152,7 @@ class AmazonECSExecutor:
         cwd = Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT).resolve()
 
         # Clamp the file size
-        upper_limit = 100 * 1024 * 1024 * 1024  # 100gb
+        upper_limit = settings.COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE
         lower_limit = 0
         n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
 
