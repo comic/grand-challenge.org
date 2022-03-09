@@ -148,17 +148,21 @@ class AmazonECSExecutor:
 
     @staticmethod
     def _update_credits_file(*, n_bytes):
-        filename = "burst_credits_boost.bin"
-        cwd = Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT).resolve()
+        filename = "000.bin"
+        cwd = (
+            Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT)
+            / "burst-credits-boost"
+        )
 
         # Clamp the file size
         upper_limit = settings.COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE
         lower_limit = 0
         n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
 
+        cwd.mkdir(parents=False, exist_ok=True)
         check_call(
             ["truncate", "--size", str(n_bytes), filename],
-            cwd=cwd,
+            cwd=cwd.resolve(),
         )
 
     def provision(self, *, input_civs, input_prefixes):

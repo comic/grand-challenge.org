@@ -554,7 +554,9 @@ def test_update_filesystem(settings, tmp_path):
 
     update_filesystem()
 
-    assert (tmp_path / "burst_credits_boost.bin").stat().st_size == 555_555
+    assert (
+        tmp_path / "burst-credits-boost" / "000.bin"
+    ).stat().st_size == 555_555
 
     # Check idempotency
     update_filesystem()
