@@ -150,10 +150,10 @@ class AmazonECSExecutor:
 
     @staticmethod
     def _update_credits_file(*, n_bytes):
-        filename = "000.bin"
-        cwd = (
+        credits_file = (
             Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT)
             / "burst-credits-boost"
+            / "000.bin"
         )
 
         # Clamp the file size
@@ -161,12 +161,19 @@ class AmazonECSExecutor:
         lower_limit = 0
         n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
 
-        cwd.mkdir(parents=False, exist_ok=True)
-        (cwd / filename).touch()
-        check_call(
-            ["shred", "--iterations", "1", "--size", str(n_bytes), filename],
-            cwd=cwd.resolve(),
-        )
+        credits_file.parent.mkdir(parents=False, exist_ok=True)
+        credits_file.touch()
+
+        if credits_file.stat().st_size != n_bytes:
+            check_call(
+                [
+                    "fallocate",
+                    "--length",
+                    str(n_bytes),
+                    credits_file.name,
+                ],
+                cwd=credits_file.parent.resolve(),
+            )
 
         return {"current_size": n_bytes}
 
