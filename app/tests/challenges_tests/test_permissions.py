@@ -104,14 +104,14 @@ def test_view_and_update_challenge_request(client):
     request = generate_type_1_challenge_request(creator=user)
     response = get_view_for_user(
         client=client,
-        viewname="challenges:request-detail",
+        viewname="challenges:requests-detail",
         reverse_kwargs={"pk": request.pk},
         user=user,
     )
     assert response.status_code == 403
     response = get_view_for_user(
         client=client,
-        viewname="challenges:request-update",
+        viewname="challenges:requests-update",
         reverse_kwargs={"pk": request.pk},
         user=user,
     )
@@ -123,14 +123,14 @@ def test_view_and_update_challenge_request(client):
     reviewer_group.user_set.add(reviewer)
     response = get_view_for_user(
         client=client,
-        viewname="challenges:request-detail",
+        viewname="challenges:requests-detail",
         reverse_kwargs={"pk": request.pk},
         user=reviewer,
     )
     assert response.status_code == 200
     response = get_view_for_user(
         client=client,
-        viewname="challenges:request-update",
+        viewname="challenges:requests-update",
         reverse_kwargs={"pk": request.pk},
         user=reviewer,
     )

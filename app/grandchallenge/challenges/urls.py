@@ -36,16 +36,20 @@ urlpatterns = [
         ExternalChallengeUpdate.as_view(),
         name="external-update",
     ),
-    path("request/", ChallengeRequestCreate.as_view(), name="request"),
-    path("request-list/", ChallengeRequestList.as_view(), name="request-list"),
+    path("requests/", ChallengeRequestList.as_view(), name="requests-list"),
     path(
-        "request/<pk>/",
-        ChallengeRequestDetail.as_view(),
-        name="request-detail",
+        "requests/create",
+        ChallengeRequestCreate.as_view(),
+        name="requests-create",
     ),
     path(
-        "request/<pk>/update/",
+        "requests/<pk>/",
+        ChallengeRequestDetail.as_view(),
+        name="requests-detail",
+    ),
+    path(
+        "requests/<pk>/update/",
         ChallengeRequestUpdate.as_view(),
-        name="request-update",
+        name="requests-update",
     ),
 ]

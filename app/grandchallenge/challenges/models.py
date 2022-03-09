@@ -845,7 +845,7 @@ class ChallengeRequest(models.Model):
         self._orig_status = self.status
 
     def get_absolute_url(self):
-        return reverse("challenges:request-detail", kwargs={"pk": self.pk})
+        return reverse("challenges:requests-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

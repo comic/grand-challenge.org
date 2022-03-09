@@ -9,7 +9,7 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'challenges:request-list' %}">Requests</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'challenges:requests-list' %}">Requests</a></li>
         <li class="breadcrumb-item active">{{ object.title }}</li>
     </ol>
 {% endblock %}

@@ -30,7 +30,7 @@
                 {% for object in page_obj %}
                     <tr>
                         <td class="text-center">
-                            <a class="btn btn-dark btn-sm" href="{% url 'challenges:request-detail' pk=object.pk %}"><i class="fa fa-search"></i></a>
+                            <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}"><i class="fa fa-search"></i></a>
                         </td>
                         <td class="text-center align-middle">{{ object.title }}</td>
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
@@ -41,7 +41,7 @@
                             {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
                                 <span class="badge badge-danger">Rejected</span>
                             {% else %}
-                                <a class="btn btn-primary btn-sm" href="{% url 'challenges:request-update' pk=object.pk %}">Accept or decline</a>
+                                <a class="btn btn-primary btn-sm" href="{% url 'challenges:requests-update' pk=object.pk %}">Accept or decline</a>
                             {% endif %}</td>
                         <td class="text-center"><a class="btn btn-primary btn-sm" href="mailto:{{ object.contact_email }}"><i class="fa fa-envelope"></i> &nbsp;Contact Requester</a></td>
                     </tr>

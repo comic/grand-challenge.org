@@ -58,7 +58,7 @@ def send_external_challenge_created_email(challenge):
 def send_challenge_requested_email_to_reviewers(challengerequest):
     site = Site.objects.get_current()
     update_url = reverse(
-        "challenges:request-list",
+        "challenges:requests-list",
     )
     message = format_html(
         "Dear reviewers,\n\n"
