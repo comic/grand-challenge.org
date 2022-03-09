@@ -1,7 +1,7 @@
 import json
 import logging
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.utils._os import safe_join
+from django.utils.timezone import now
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
@@ -74,6 +75,7 @@ class AmazonECSExecutor:
 
         self.__ecs_client = None
         self.__logs_client = None
+        self.__cloudwatch_client = None
 
     @staticmethod
     def get_job_params(*, event):
@@ -104,9 +106,44 @@ class AmazonECSExecutor:
         """
         cls._update_credits_file(n_bytes=cls._get_desired_credits_file_size())
 
+    @classmethod
+    def _get_desired_credits_file_size(cls):
+        n_hours = 24
+        credits_per_byte_per_hour = 0.75
+        desired_balance = 2 * 1024 * 1024 * 1024 * 1024  # 2TB
+
+        current_balance = cls._get_current_efs_burst_balance_bytes()
+        credits_needed = desired_balance - current_balance
+        desired_bytes = int(
+            credits_needed / (credits_per_byte_per_hour * n_hours)
+        )
+
+        return desired_bytes
+
+    @classmethod
+    def _get_current_efs_burst_balance_bytes(cls):
+        response = cls._get_cloudwatch_client().get_metric_statistics(
+            Namespace="AWS/EFS",
+            MetricName="BurstCreditBalance",
+            Dimensions=[
+                {
+                    "Name": "FileSystemId",
+                    "Value": settings.COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID,
+                }
+            ],
+            StartTime=now() - timedelta(minutes=10),
+            EndTime=now(),
+            Period=60,
+            Statistics=["Maximum"],
+            Unit="Bytes",
+        )
+        return int(max(v["Maximum"] for v in response["Datapoints"]))
+
     @staticmethod
-    def _get_desired_credits_file_size():
-        return 1_000_000
+    def _get_cloudwatch_client():
+        return boto3.client(
+            "cloudwatch", region_name=settings.COMPONENTS_AMAZON_ECS_REGION
+        )
 
     @staticmethod
     def _update_credits_file(*, n_bytes):
