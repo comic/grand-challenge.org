@@ -6,6 +6,7 @@ from zipfile import ZipInfo
 import pytest
 from django.core.files.base import ContentFile, File
 
+from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
 from grandchallenge.components.backends.docker import DockerConnection
 from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
@@ -16,6 +17,7 @@ from grandchallenge.components.backends.utils import (
     user_error,
 )
 from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.tasks import update_filesystem
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -542,3 +544,36 @@ def test_set_duration_fast_task():
     assert executor.duration == datetime.timedelta(
         seconds=726, microseconds=528000
     )
+
+
+def test_update_filesystem(settings, tmp_path):
+    settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = tmp_path
+    settings.COMPONENTS_DEFAULT_BACKEND = (
+        "tests.components_tests.stubs.AmazonECSExecutorStub"
+    )
+
+    update_filesystem()
+
+    assert (
+        tmp_path / "burst-credits-boost" / "000.bin"
+    ).stat().st_size == 1_190_476
+
+    # Check idempotency and that the size is returned
+    assert update_filesystem() == {"current_size": 1_190_476}
+
+
+@pytest.mark.parametrize(
+    "current_size,expected_bytes",
+    (
+        (2 * 1024 * 1024 * 1024 * 1024, 0),
+        (1 * 1024 * 1024 * 1024 * 1024, 130_894_241_401),
+        (3 * 1024 * 1024 * 1024 * 1024, -130_894_241_401),
+    ),
+)
+def test_get_desired_credits_file_size(current_size, expected_bytes):
+    class TestExecutor(AmazonECSExecutor):
+        @classmethod
+        def _get_current_efs_burst_balance_bytes(cls):
+            return current_size
+
+    assert TestExecutor._get_desired_credits_file_size() == expected_bytes
