@@ -556,18 +556,18 @@ def test_update_filesystem(settings, tmp_path):
 
     assert (
         tmp_path / "burst-credits-boost" / "000.bin"
-    ).stat().st_size == 555_555
+    ).stat().st_size == 1_190_476
 
     # Check idempotency and that the size is returned
-    assert update_filesystem() == {"current_size": 555_555}
+    assert update_filesystem() == {"current_size": 1_190_476}
 
 
 @pytest.mark.parametrize(
     "current_size,expected_bytes",
     (
         (2 * 1024 * 1024 * 1024 * 1024, 0),
-        (1 * 1024 * 1024 * 1024 * 1024, 61_083_979_320),
-        (3 * 1024 * 1024 * 1024 * 1024, -61_083_979_320),
+        (1 * 1024 * 1024 * 1024 * 1024, 130_894_241_401),
+        (3 * 1024 * 1024 * 1024 * 1024, -130_894_241_401),
     ),
 )
 def test_get_desired_credits_file_size(current_size, expected_bytes):

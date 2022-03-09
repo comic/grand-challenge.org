@@ -110,7 +110,7 @@ class AmazonECSExecutor:
     @classmethod
     def _get_desired_credits_file_size(cls):
         n_hours = 24
-        credits_per_byte_per_hour = 0.75
+        credits_per_byte_per_hour = 0.35
 
         current_balance = cls._get_current_efs_burst_balance_bytes()
         credits_needed = (
