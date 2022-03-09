@@ -186,6 +186,10 @@ class DockerExecutor(DockerConnection):
     def get_job_params(*, event):
         raise NotImplementedError
 
+    @classmethod
+    def update_filesystem(cls):
+        pass
+
     def provision(self, *, input_civs, input_prefixes):
         self._pull_images()
         self._create_io_volumes()

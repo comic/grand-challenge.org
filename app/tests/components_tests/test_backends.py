@@ -16,6 +16,7 @@ from grandchallenge.components.backends.utils import (
     user_error,
 )
 from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.tasks import update_filesystem
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -542,3 +543,17 @@ def test_set_duration_fast_task():
     assert executor.duration == datetime.timedelta(
         seconds=726, microseconds=528000
     )
+
+
+def test_update_filesystem(settings, tmp_path):
+    settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = tmp_path
+    settings.COMPONENTS_DEFAULT_BACKEND = (
+        "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
+    )
+
+    update_filesystem()
+
+    assert (tmp_path / "burst_credits_boost.bin").stat().st_size == 1000000
+
+    # Check idempotency
+    update_filesystem()

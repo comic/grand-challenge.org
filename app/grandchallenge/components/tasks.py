@@ -505,6 +505,18 @@ def deprovision_job(
     executor.deprovision()
 
 
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_filesystem():
+    """
+    Periodic task that runs to update the underlying filesystem
+
+    Backends could use this for setting throughput limits, cleaning up data,
+    etc.
+    """
+    Backend = import_string(settings.COMPONENTS_DEFAULT_BACKEND)  # noqa: N806
+    Backend.update_filesystem()
+
+
 @shared_task
 def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     session = get_model_instance(

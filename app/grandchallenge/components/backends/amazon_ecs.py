@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
+from subprocess import check_call
 from time import sleep
 
 import boto3
@@ -89,6 +90,38 @@ class AmazonECSExecutor:
         job_app_label, job_model_name, job_pk = job_id.split("-", 2)
 
         return job_app_label, job_model_name, job_pk
+
+    @classmethod
+    def update_filesystem(cls):
+        """
+        Update the EFS burst credits file
+
+        When running EFS in bursting mode the number of burst credits can drop
+        to zero, and the filesystem performance will drop by 1000x. To work
+        around this we create a temporary credits file that only exists to
+        build up the burst credits, so that the high performance mode is always
+        available.
+        """
+        cls._update_credits_file(n_bytes=cls._get_desired_credits_file_size())
+
+    @staticmethod
+    def _get_desired_credits_file_size():
+        return 1_000_000
+
+    @staticmethod
+    def _update_credits_file(*, n_bytes):
+        filename = "burst_credits_boost.bin"
+        cwd = Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT).resolve()
+
+        # Clamp the file size
+        upper_limit = 100 * 1024 * 1024 * 1024  # 100gb
+        lower_limit = 0
+        n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
+
+        check_call(
+            ["truncate", "--size", str(n_bytes), filename],
+            cwd=cwd,
+        )
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()
