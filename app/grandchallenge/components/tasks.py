@@ -514,7 +514,7 @@ def update_filesystem():
     etc.
     """
     Backend = import_string(settings.COMPONENTS_DEFAULT_BACKEND)  # noqa: N806
-    Backend.update_filesystem()
+    return Backend.update_filesystem()
 
 
 @shared_task

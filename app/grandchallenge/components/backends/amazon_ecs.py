@@ -103,7 +103,9 @@ class AmazonECSExecutor:
         build up the burst credits, so that the high performance mode is always
         available.
         """
-        cls._update_credits_file(n_bytes=cls._get_desired_credits_file_size())
+        return cls._update_credits_file(
+            n_bytes=cls._get_desired_credits_file_size()
+        )
 
     @classmethod
     def _get_desired_credits_file_size(cls):
@@ -164,6 +166,8 @@ class AmazonECSExecutor:
             ["truncate", "--size", str(n_bytes), filename],
             cwd=cwd.resolve(),
         )
+
+        return {"current_size": n_bytes}
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()
