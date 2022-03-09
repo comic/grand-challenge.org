@@ -162,8 +162,9 @@ class AmazonECSExecutor:
         n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
 
         cwd.mkdir(parents=False, exist_ok=True)
+        (cwd / filename).touch()
         check_call(
-            ["truncate", "--size", str(n_bytes), filename],
+            ["shred", "--iterations", "1", "--size", str(n_bytes), filename],
             cwd=cwd.resolve(),
         )
 

@@ -1089,7 +1089,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_components_filesystem": {
         "task": "grandchallenge.components.tasks.update_filesystem",
-        "schedule": timedelta(hours=6),
+        "schedule": timedelta(days=1),
     },
     **{
         f"stop_expired_services_{region}": {
