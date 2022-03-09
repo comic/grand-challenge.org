@@ -42,6 +42,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
+from grandchallenge.hanging_protocols.models import ImagePort
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -146,20 +147,6 @@ The scores can then be compared on the ``leaderboard``. Statistics are also avai
 based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
-
-
-class ImagePort(models.TextChoices):
-    MAIN = "M", "Main"
-    SECONDARY = "S", "Secondary"
-    TERTIARY = "TERTIARY", "Tertiary"
-    QUATERNARY = "QUATERNARY", "Quaternary"
-    QUINARY = "QUINARY", "Quinary"
-    SENARY = "SENARY", "Senary"
-    SEPTENARY = "SEPTENARY", "Septenary"
-    OCTONARY = "OCTONARY", "Octonary"
-    NONARY = "NONARY", "Nonary"
-    DENARY = "DENARY", "Denary"
-
 
 #: Supported image-port overlays.
 IMAGE_PORT_OVERLAYS = [f"{port.lower()}-overlay" for port in ImagePort.labels]
