@@ -1,6 +1,5 @@
 import datetime
 import logging
-from functools import cached_property
 from itertools import chain, product
 
 from actstream.actions import follow, unfollow
@@ -16,7 +15,9 @@ from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
@@ -38,11 +39,12 @@ from grandchallenge.challenges.emails import (
     send_challenge_status_update_email,
     send_external_challenge_created_email,
 )
+from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
-    get_pdf_path,
     get_social_image_path,
+    protected_s3_storage,
     public_s3_storage,
 )
 from grandchallenge.core.utils.access_requests import (
@@ -103,16 +105,10 @@ class ChallengeSeries(models.Model):
         )
 
 
-class ChallengeBase(models.Model):
-    CHALLENGE_ACTIVE = "challenge_active"
-    CHALLENGE_INACTIVE = "challenge_inactive"
-    DATA_PUB = "data_pub"
-
+class CommonChallengeFieldsMixin(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
     short_name = CICharField(
         max_length=50,
         blank=False,
@@ -127,12 +123,6 @@ class ChallengeBase(models.Model):
         ],
         unique=True,
     )
-    description = models.CharField(
-        max_length=1024,
-        default="",
-        blank=True,
-        help_text="Short summary of this project, max 1024 characters.",
-    )
     title = models.CharField(
         max_length=64,
         blank=True,
@@ -142,6 +132,37 @@ class ChallengeBase(models.Model):
             " page. If this is blank the short name of the challenge will be "
             "used."
         ),
+    )
+    task_types = models.ManyToManyField(
+        TaskType, blank=True, help_text="What type of task is this challenge?"
+    )
+    modalities = models.ManyToManyField(
+        ImagingModality,
+        blank=True,
+        help_text="What imaging modalities are used in this challenge?",
+    )
+    structures = models.ManyToManyField(
+        BodyStructure,
+        blank=True,
+        help_text="What structures are used in this challenge?",
+    )
+
+    class Meta:
+        abstract = True
+
+
+class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
+    CHALLENGE_ACTIVE = "challenge_active"
+    CHALLENGE_INACTIVE = "challenge_inactive"
+    DATA_PUB = "data_pub"
+
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    description = models.CharField(
+        max_length=1024,
+        default="",
+        blank=True,
+        help_text="Short summary of this project, max 1024 characters.",
     )
     logo = JPEGField(
         upload_to=get_logo_path,
@@ -191,20 +212,6 @@ class ChallengeBase(models.Model):
     data_license_agreement = models.TextField(
         blank=True,
         help_text="What is the data license agreement for this challenge?",
-    )
-
-    task_types = models.ManyToManyField(
-        TaskType, blank=True, help_text="What type of task is this challenge?"
-    )
-    modalities = models.ManyToManyField(
-        ImagingModality,
-        blank=True,
-        help_text="What imaging modalities are used in this challenge?",
-    )
-    structures = models.ManyToManyField(
-        BodyStructure,
-        blank=True,
-        help_text="What structures are used in this challenge?",
     )
     series = models.ManyToManyField(
         ChallengeSeries,
@@ -687,44 +694,31 @@ def delete_challenge_follows(*_, instance: Challenge, **__):
     Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()
 
 
-class ChallengeRequest(models.Model):
-    class ChallengeTypeChoices(models.TextChoices):
+def submission_pdf_path(instance, filename):
+    return (
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
+    class ChallengeTypeChoices(models.IntegerChoices):
         """Challenge type choices."""
 
-        T1 = "TYPE_1", _("Type 1 - prediction submission")
-        T2 = "TYPE_2", _("Type 2 - algorithm submission")
+        T1 = 1, "Type 1 - prediction submission"
+        T2 = 2, "Type 2 - algorithm submission"
 
     class ChallengeRequestStatusChoices(models.TextChoices):
         ACCEPTED = "ACPT", _("Accepted")
         REJECTED = "RJCT", _("Rejected")
         PENDING = "PEND", _("Pending")
 
-    created = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=4,
         choices=ChallengeRequestStatusChoices.choices,
         default=ChallengeRequestStatusChoices.PENDING,
-    )
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
-    title = models.CharField(
-        max_length=64,
-        default="",
-        help_text="The name of the planned challenge.",
-    )
-    challenge_short_name = CICharField(
-        max_length=50,
-        help_text=(
-            "Short name that will be used in url, specific css, files etc. should "
-            "the challenge be accepted. No spaces and special characters allowed."
-        ),
-        validators=[
-            validate_nounderscores,
-            validate_slug,
-            validate_short_name,
-        ],
-        unique=True,
     )
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
@@ -750,28 +744,14 @@ class ChallengeRequest(models.Model):
     structured_challenge_submission_form = models.FileField(
         null=True,
         blank=True,
-        upload_to=get_pdf_path,
-        storage=public_s3_storage,
+        upload_to=submission_pdf_path,
+        storage=protected_s3_storage,
         validators=[
             ExtensionValidator(allowed_extensions=(".pdf",)),
             MimeTypeValidator(allowed_types=("application/pdf",)),
         ],
     )
-    task_types = models.ManyToManyField(
-        TaskType, blank=True, help_text="What type of task is this challenge?"
-    )
-    modalities = models.ManyToManyField(
-        ImagingModality,
-        blank=True,
-        help_text="What imaging modalities are used in this challenge?",
-    )
-    structures = models.ManyToManyField(
-        BodyStructure,
-        blank=True,
-        help_text="What structures are used in this challenge?",
-    )
-    challenge_type = models.CharField(
-        max_length=10,
+    challenge_type = models.PositiveSmallIntegerField(
         choices=ChallengeTypeChoices.choices,
         default=ChallengeTypeChoices.T2,
         help_text="What type is this challenge?",
@@ -796,19 +776,19 @@ class ChallengeRequest(models.Model):
     expected_number_of_teams = models.IntegerField(
         help_text="How many teams do you expect to participate in your challenge?"
     )
-    average_algorithm_container_size = models.IntegerField(
+    average_algorithm_container_size_in_gb = models.IntegerField(
         default=10, help_text="Average algorithm container size in GB."
     )
     average_number_of_containers_per_team = models.IntegerField(
         default=10,
         help_text="Average number of algorithm containers per team.",
     )
-    inference_time_limit = models.IntegerField(
+    inference_time_limit_in_minutes = models.IntegerField(
         blank=True,
         null=True,
         help_text="Time limit per inference job in minutes.",
     )
-    average_size_of_test_image = models.IntegerField(
+    average_size_of_test_image_in_mb = models.IntegerField(
         null=True, blank=True, help_text="Average size of a test image in MB."
     )
     phase_1_number_of_submissions_per_team = models.IntegerField(
@@ -858,7 +838,7 @@ class ChallengeRequest(models.Model):
             if self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
                 challenge = Challenge.objects.create(
                     title=self.title,
-                    short_name=self.challenge_short_name,
+                    short_name=self.short_name,
                     creator=self.creator,
                     hidden=True,
                     contact_email=self.contact_email,
@@ -881,9 +861,10 @@ class ChallengeRequest(models.Model):
     def budget(self):
         budget = None
         if self.challenge_type == self.ChallengeTypeChoices.T2:
-            compute_costs = settings.AWS_COMPUTE_COSTS
-            storage_costs = settings.AWS_FILE_STORAGE_COSTS
-            docker_storage_costs = settings.AWS_DOCKER_STORAGE_COSTS
+            compute_costs = settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+            storage_costs = (
+                settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+            )
 
             budget = {
                 "Data storage cost for phase 1": None,
@@ -899,17 +880,20 @@ class ChallengeRequest(models.Model):
             # calculate budget for phase 1
             budget["Data storage cost for phase 1"] = round(
                 self.phase_1_number_of_test_images
-                * self.average_size_of_test_image
-                * storage_costs,
+                * self.average_size_of_test_image_in_mb
+                * storage_costs
+                / 1000000
+                / 100,
                 ndigits=2,
             )
             budget["Compute costs for phase 1"] = round(
                 self.phase_1_number_of_test_images
                 * self.phase_1_number_of_submissions_per_team
                 * self.expected_number_of_teams
-                * self.inference_time_limit
+                * self.inference_time_limit_in_minutes
                 * compute_costs
-                / 60,
+                / 60
+                / 100,
                 ndigits=2,
             )
             budget["Total phase 1"] = round(
@@ -924,17 +908,20 @@ class ChallengeRequest(models.Model):
             # calculate budget for phase 2
             budget["Data storage cost for phase 2"] = round(
                 self.phase_2_number_of_test_images
-                * self.average_size_of_test_image
-                * storage_costs,
+                * self.average_size_of_test_image_in_mb
+                * storage_costs
+                / 1000000
+                / 100,
                 ndigits=2,
             )
             budget["Compute costs for phase 2"] = round(
                 self.phase_2_number_of_test_images
                 * self.phase_2_number_of_submissions_per_team
                 * self.expected_number_of_teams
-                * self.inference_time_limit
+                * self.inference_time_limit_in_minutes
                 * compute_costs
-                / 60,
+                / 60
+                / 100,
                 ndigits=2,
             )
             budget["Total phase 2"] = round(
@@ -947,10 +934,12 @@ class ChallengeRequest(models.Model):
             )
 
             budget["Docker storage cost"] = round(
-                self.average_algorithm_container_size
+                self.average_algorithm_container_size_in_gb
                 * self.average_number_of_containers_per_team
                 * self.expected_number_of_teams
-                * docker_storage_costs,
+                * storage_costs
+                / 1000
+                / 100,
                 ndigits=2,
             )
 

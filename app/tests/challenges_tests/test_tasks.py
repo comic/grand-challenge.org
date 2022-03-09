@@ -101,7 +101,7 @@ def test_challenge_created_on_request_acceptance(client):
     # challenge gets created
     assert Challenge.objects.count() == 1
     challenge = Challenge.objects.get()
-    assert challenge.short_name == request.challenge_short_name
+    assert challenge.short_name == request.short_name
     # requester is admin of challenge
     assert user in challenge.admins_group.user_set.all()
     # an algorithm submission phase has been created
@@ -118,7 +118,7 @@ def test_challenge_created_on_request_acceptance(client):
     # for a type 1 challenge, a csv submission phase gets created
     assert Challenge.objects.count() == 2
     challenge2 = Challenge.objects.last()
-    assert challenge2.short_name == request2.challenge_short_name
+    assert challenge2.short_name == request2.short_name
     assert user in challenge2.admins_group.user_set.all()
     assert challenge2.phase_set.count() == 1
     assert (

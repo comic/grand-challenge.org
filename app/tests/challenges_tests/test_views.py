@@ -335,7 +335,7 @@ def test_challenge_request_type_2_budget_fields_required(client):
     data = {
         "creator": user,
         "title": "Test request",
-        "challenge_short_name": "example1234",
+        "short_name": "example1234",
         "challenge_type": ChallengeRequest.ChallengeTypeChoices.T1,
         "start_date": datetime.date.today(),
         "end_date": datetime.date.today() + timedelta(days=1),
@@ -358,7 +358,7 @@ def test_challenge_request_type_2_budget_fields_required(client):
     data2 = {
         "creator": user,
         "title": "Test request",
-        "challenge_short_name": "example1234",
+        "short_name": "example1234",
         "challenge_type": ChallengeRequest.ChallengeTypeChoices.T2,
         "start_date": datetime.date.today(),
         "end_date": datetime.date.today() + timedelta(days=1),
@@ -386,32 +386,38 @@ def test_challenge_request_budget_calculation(client):
     request = generate_type_2_challenge_request(creator=user)
     assert request.budget["Data storage cost for phase 1"] == round(
         request.phase_1_number_of_test_images
-        * request.average_size_of_test_image
-        * settings.AWS_FILE_STORAGE_COSTS,
+        * request.average_size_of_test_image_in_mb
+        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+        / 1000000
+        / 100,
         ndigits=2,
     )
     assert request.budget["Compute costs for phase 1"] == round(
         request.phase_1_number_of_submissions_per_team
         * request.expected_number_of_teams
         * request.phase_1_number_of_test_images
-        * request.inference_time_limit
-        * settings.AWS_COMPUTE_COSTS
-        / 60,
+        * request.inference_time_limit_in_minutes
+        * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+        / 60
+        / 100,
         ndigits=2,
     )
     assert request.budget["Compute costs for phase 2"] == round(
         request.phase_2_number_of_submissions_per_team
         * request.expected_number_of_teams
         * request.phase_2_number_of_test_images
-        * request.inference_time_limit
-        * settings.AWS_COMPUTE_COSTS
-        / 60,
+        * request.inference_time_limit_in_minutes
+        * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+        / 60
+        / 100,
         ndigits=2,
     )
     assert request.budget["Data storage cost for phase 2"] == round(
         request.phase_2_number_of_test_images
-        * request.average_size_of_test_image
-        * settings.AWS_FILE_STORAGE_COSTS,
+        * request.average_size_of_test_image_in_mb
+        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+        / 1000000
+        / 100,
         ndigits=2,
     )
     assert (
@@ -420,10 +426,12 @@ def test_challenge_request_budget_calculation(client):
         + request.budget["Compute costs for phase 2"]
     )
     assert request.budget["Docker storage cost"] == round(
-        request.average_algorithm_container_size
+        request.average_algorithm_container_size_in_gb
         * request.average_number_of_containers_per_team
         * request.expected_number_of_teams
-        * settings.AWS_DOCKER_STORAGE_COSTS,
+        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+        / 1000
+        / 100,
         ndigits=2,
     )
     assert (

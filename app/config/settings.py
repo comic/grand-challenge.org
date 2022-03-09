@@ -128,14 +128,13 @@ DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
 # About Flatpage
 FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 
-# Costs
-CHALLENGES_FILE_STORAGE_COSTS = os.environ.get(
-    "AWS_FILE_STORAGE_COSTS", 0.00004
+# Costs (in US dollar cents)
+CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR = os.environ.get(
+    "CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 4000
 )
-CHALLENGES_DOCKER_STORAGE_COSTS = os.environ.get(
-    "AWS_DOCKER_STORAGE_COSTS", 0.04
+CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = os.environ.get(
+    "CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 30
 )
-CHALLENGES_COMPUTE_COSTS = os.environ.get("AWS_COMPUTE_COSTS", 0.3)
 
 ##############################################################################
 #

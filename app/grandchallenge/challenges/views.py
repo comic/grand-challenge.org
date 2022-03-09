@@ -81,7 +81,7 @@ class ChallengeList(FilterMixin, ListView):
                         "<br>Please fill in <a href='{}'>this form</a> "
                         "if you would like to host your own challenge."
                     ),
-                    random_encode(reverse("challenges:request")),
+                    random_encode(reverse("challenges:requests-create")),
                 ),
             }
         )

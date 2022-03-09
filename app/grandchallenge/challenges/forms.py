@@ -194,7 +194,7 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
 
 general_information_items = (
     "title",
-    "challenge_short_name",
+    "short_name",
     "contact_email",
     "abstract",
     "start_date",
@@ -229,8 +229,8 @@ class ChallengeRequestForm(forms.ModelForm):
         fields = (
             *general_information_items,
             "number_of_tasks",
-            "average_size_of_test_image",
-            "inference_time_limit",
+            "average_size_of_test_image_in_mb",
+            "inference_time_limit_in_minutes",
             *phase_1_items,
             *phase_2_items,
         )
@@ -242,7 +242,8 @@ class ChallengeRequestForm(forms.ModelForm):
             ),
         }
         help_texts = {
-            "challenge_short_name": (
+            "title": "The name of the planned challenge.",
+            "short_name": (
                 "Short name that will be used in the URL "
                 "(e.g., https://{short_name}.grand-challenge.org/), specific css "
                 "and files if the challenge is accepted. No spaces and special "
@@ -332,6 +333,7 @@ class ChallengeRequestForm(forms.ModelForm):
     def __init__(self, creator, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.creator = creator
+        self.fields["title"].required = True
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
@@ -374,8 +376,8 @@ class ChallengeRequestForm(forms.ModelForm):
                         "proceeding to fill in this form.</p><br>"
                     ),
                     "number_of_tasks",
-                    "average_size_of_test_image",
-                    "inference_time_limit",
+                    "average_size_of_test_image_in_mb",
+                    "inference_time_limit_in_minutes",
                     HTML(
                         "<br><p>Type 2 challenges usually consist of 2 phases. "
                         "The first of those tends to be a "
@@ -418,12 +420,12 @@ class ChallengeRequestForm(forms.ModelForm):
             cleaned_data["challenge_type"]
             == self.instance.ChallengeTypeChoices.T2
         ):
-            if not cleaned_data["average_size_of_test_image"]:
+            if not cleaned_data["average_size_of_test_image_in_mb"]:
                 raise ValidationError(
                     "For a type 2 challenge, you need to provide the average "
                     "test image size."
                 )
-            if not cleaned_data["inference_time_limit"]:
+            if not cleaned_data["inference_time_limit_in_minutes"]:
                 raise ValidationError(
                     "For a type 2 challenge, you need to provide an inference "
                     "time limit."

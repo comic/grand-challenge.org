@@ -66,7 +66,7 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
         model = ChallengeRequest
 
     creator = factory.SubFactory(UserFactory)
-    challenge_short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
+    short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
 
 
 class ExternalChallengeFactory(factory.django.DjangoModelFactory):

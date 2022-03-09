@@ -15,6 +15,11 @@ class ChallengeAdmin(ModelAdmin):
     ordering = ("-created",)
     list_display = ("short_name", "created")
     search_fields = ("short_name",)
+    fields = [
+        field.name
+        for field in Challenge._meta.fields
+        if field.editable and not field.auto_created
+    ] + ["task_types", "modalities", "structures"]
 
 
 class ExternalChallengeAdmin(ModelAdmin):
@@ -26,9 +31,12 @@ class ChallengeRequestAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     ordering = ("-created",)
     list_display = ("short_name", "creator", "created", "status")
+    fields = [
+        field.name for field in ChallengeRequest._meta.fields if field.editable
+    ] + ["task_types", "modalities", "structures"]
 
 
 admin.site.register(Challenge, ChallengeAdmin)
 admin.site.register(ExternalChallenge, ExternalChallengeAdmin)
 admin.site.register(ChallengeSeries)
-admin.site.register(ChallengeRequest)
+admin.site.register(ChallengeRequest, ChallengeRequestAdmin)
