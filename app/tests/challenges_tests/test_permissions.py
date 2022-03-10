@@ -1,11 +1,8 @@
 import pytest
-from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, remove_perm
 
-from config import settings
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
-from tests.challenges_tests.factories import generate_type_1_challenge_request
 from tests.factories import ExternalChallengeFactory, UserFactory
 from tests.utils import (
     get_view_for_user,
@@ -85,7 +82,6 @@ class TestObjectPermissionRequiredViews:
 def test_request_challenge_only_when_verified(client):
     user = UserFactory()
     assert not Verification.objects.filter(user=user)
-
     response = get_view_for_user(
         client=client, viewname="challenges:requests-create", user=user
     )
@@ -98,40 +94,37 @@ def test_request_challenge_only_when_verified(client):
 
 
 @pytest.mark.django_db
-def test_view_and_update_challenge_request(client):
-    user = UserFactory()
-    Verification.objects.create(user=user, is_verified=True)
-    request = generate_type_1_challenge_request(creator=user)
+def test_view_and_update_challenge_request(
+    client, challenge_reviewer, type_1_challenge_request
+):
+    # challenge request creator cannot view or update the request
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-detail",
-        reverse_kwargs={"pk": request.pk},
-        user=user,
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=type_1_challenge_request.creator,
     )
     assert response.status_code == 403
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-update",
-        reverse_kwargs={"pk": request.pk},
-        user=user,
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=type_1_challenge_request.creator,
     )
     assert response.status_code == 403
-    reviewer = UserFactory()
-    reviewer_group = Group.objects.get(
-        name=settings.CHALLENGE_REVIEWERS_GROUP_NAME
-    )
-    reviewer_group.user_set.add(reviewer)
+
+    # reviewer can view and udpate
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-detail",
-        reverse_kwargs={"pk": request.pk},
-        user=reviewer,
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=challenge_reviewer,
     )
     assert response.status_code == 200
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-update",
-        reverse_kwargs={"pk": request.pk},
-        user=reviewer,
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=challenge_reviewer,
     )
     assert response.status_code == 200

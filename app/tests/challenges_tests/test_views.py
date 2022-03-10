@@ -1,16 +1,12 @@
-import datetime
 from datetime import timedelta
 
 import pytest
+from django.core import mail
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
-from config import settings
-from grandchallenge.challenges.forms import ChallengeRequestForm
-from grandchallenge.challenges.models import ChallengeRequest
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.verifications.models import Verification
-from tests.challenges_tests.factories import generate_type_2_challenge_request
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -327,121 +323,64 @@ def test_challenge_card_status(
 
 
 @pytest.mark.django_db
-def test_challenge_request_type_2_budget_fields_required(client):
-    user = UserFactory()
-    Verification.objects.create(user=user, is_verified=True)
-    # fill all fields except for budget fields
-    # for type 1 this form is valid
-    data = {
-        "creator": user,
-        "title": "Test request",
-        "short_name": "example1234",
-        "challenge_type": ChallengeRequest.ChallengeTypeChoices.T1,
-        "start_date": datetime.date.today(),
-        "end_date": datetime.date.today() + timedelta(days=1),
-        "expected_number_of_participants": 10,
-        "abstract": "test",
-        "contact_email": "test@test.com",
-        "organizers": "test",
-        "challenge_setup": "test",
-        "data_set": "test",
-        "submission_assessment": "test",
-        "challenge_publication": "test",
-        "code_availability": "test",
-        "expected_number_of_teams": 10,
-        "number_of_tasks": 1,
-    }
-    form = ChallengeRequestForm(data=data, creator=user)
-    assert form.is_valid()
+def test_challenge_request_workflow(
+    client,
+    challenge_reviewer,
+    type_1_challenge_request,
+    type_2_challenge_request,
+):
+    # requesting a challenge sends email to requester and reviewer(s)
+    requester1 = type_1_challenge_request.creator
+    requester2 = type_2_challenge_request.creator
+    assert len(mail.outbox) == 4
+    receivers = [address for i in mail.outbox for address in i.to]
+    assert requester1.email in receivers
+    assert requester2.email in receivers
+    assert challenge_reviewer.email in receivers
 
-    # for type 2, the budget fields need to be filled
-    data2 = {
-        "creator": user,
-        "title": "Test request",
-        "short_name": "example1234",
-        "challenge_type": ChallengeRequest.ChallengeTypeChoices.T2,
-        "start_date": datetime.date.today(),
-        "end_date": datetime.date.today() + timedelta(days=1),
-        "expected_number_of_participants": 10,
-        "abstract": "test",
-        "contact_email": "test@test.com",
-        "organizers": "test",
-        "challenge_setup": "test",
-        "data_set": "test",
-        "submission_assessment": "test",
-        "challenge_publication": "test",
-        "code_availability": "test",
-        "expected_number_of_teams": 10,
-        "number_of_tasks": 1,
-    }
-    form2 = ChallengeRequestForm(data=data2, creator=user)
-    assert not form2.is_valid()
-    assert "For a type 2 challenge, you need to provide" in str(form2.errors)
+    # rejecting a request send email to requester
+    mail.outbox.clear()
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=challenge_reviewer,
+        data={
+            "status": ChallengeRequest.ChallengeRequestStatusChoices.REJECTED
+        },
+    )
+    assert response.status_code == 302
+    assert len(mail.outbox) == 1
+    # rejection email to requester
+    assert mail.outbox[0].to == [requester1.email]
+    assert (
+        "We are very sorry to have to inform you that we will not be able to host your challenge on our platform"
+        in mail.outbox[0].body
+    )
 
-
-@pytest.mark.django_db
-def test_challenge_request_budget_calculation(client):
-    user = UserFactory()
-    Verification.objects.create(user=user, is_verified=True)
-    request = generate_type_2_challenge_request(creator=user)
-    assert request.budget["Data storage cost for phase 1"] == round(
-        request.phase_1_number_of_test_images
-        * request.average_size_of_test_image_in_mb
-        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-        / 1000000
-        / 100,
-        ndigits=2,
+    # accepting a request sends an email to the requester and creates the challenge
+    mail.outbox.clear()
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": type_2_challenge_request.pk},
+        user=challenge_reviewer,
+        data={
+            "status": ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+        },
     )
-    assert request.budget["Compute costs for phase 1"] == round(
-        request.phase_1_number_of_submissions_per_team
-        * request.expected_number_of_teams
-        * request.phase_1_number_of_test_images
-        * request.inference_time_limit_in_minutes
-        * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-        / 60
-        / 100,
-        ndigits=2,
-    )
-    assert request.budget["Compute costs for phase 2"] == round(
-        request.phase_2_number_of_submissions_per_team
-        * request.expected_number_of_teams
-        * request.phase_2_number_of_test_images
-        * request.inference_time_limit_in_minutes
-        * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-        / 60
-        / 100,
-        ndigits=2,
-    )
-    assert request.budget["Data storage cost for phase 2"] == round(
-        request.phase_2_number_of_test_images
-        * request.average_size_of_test_image_in_mb
-        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-        / 1000000
-        / 100,
-        ndigits=2,
-    )
+    assert response.status_code == 302
+    assert len(mail.outbox) == 1
+    # acceptance email to requester
+    assert mail.outbox[0].to == [requester2.email]
     assert (
-        request.budget["Total phase 2"]
-        == request.budget["Data storage cost for phase 2"]
-        + request.budget["Compute costs for phase 2"]
+        "We are happy to inform you that your challenge request has been accepted"
+        in mail.outbox[0].body
     )
-    assert request.budget["Docker storage cost"] == round(
-        request.average_algorithm_container_size_in_gb
-        * request.average_number_of_containers_per_team
-        * request.expected_number_of_teams
-        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
-        / 1000
-        / 100,
-        ndigits=2,
-    )
+    assert Challenge.objects.count() == 1
     assert (
-        request.budget["Total phase 1"]
-        == request.budget["Data storage cost for phase 1"]
-        + request.budget["Compute costs for phase 1"]
-    )
-    assert (
-        request.budget["Total"]
-        == request.budget["Total phase 1"]
-        + request.budget["Total phase 2"]
-        + request.budget["Docker storage cost"]
+        Challenge.objects.get().short_name
+        == type_2_challenge_request.short_name
     )
