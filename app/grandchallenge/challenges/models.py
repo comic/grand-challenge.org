@@ -730,7 +730,9 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         help_text="Estimated start date for this challenge.",
     )
     end_date = models.DateField(
-        help_text="Estimated end date for this challenge.",
+        help_text="Estimated end date for this challenge. Please note that we aim to "
+        "keep challenges open for submission for at least 3 years after "
+        "the official end date if possible.",
     )
     organizers = models.TextField(
         help_text="Provide information about the organizing team (names and affiliations)",
@@ -814,6 +816,12 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         default=1,
         help_text="If your challenge has multiple tasks, we multiply the "
         "phase 1 and 2 cost estimates by the number of tasks.",
+    )
+    budget_for_hosting_challenge = models.IntegerField(
+        default=0,
+        null=True,
+        blank=True,
+        help_text="What is your budget for hosting this challenge, if any?",
     )
 
     def __str__(self):

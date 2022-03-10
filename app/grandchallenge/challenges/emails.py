@@ -95,8 +95,10 @@ def send_challenge_requested_email_to_requester(challengerequest):
         for key, value in challengerequest.budget.items():
             budget += f"{key}: {value}\n"
         addition += (
-            f"For your type 2 challenge, we have calculated the following budget estimate "
-            f"based on the information you provided:\n"
+            f"For your type 2 challenge, we have calculated the following "
+            f"budget estimate. This estimate is based on the information "
+            f"you provided in the form and reflects a rough estimation of"
+            f"the costs we expect to incurr:\n"
             f"{budget}\n\n"
         )
 
@@ -136,7 +138,7 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
             "We are happy to inform you that your challenge request has been "
             "accepted. For your convenience, we have already created the "
             "challenge page for you at {} "
-            "Note that your challenge is currently still hidden and is not yet "
+            "Note that your challenge is currently hidden and is not yet "
             "listed on our challenge overview page. Once your challenge is "
             "all set-up, you can make it public by going to Admin - General "
             "Settings and unchecking the 'hidden' box. \n"

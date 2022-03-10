@@ -231,6 +231,7 @@ class ChallengeRequestForm(forms.ModelForm):
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
+            "budget_for_hosting_challenge",
             *phase_1_items,
             *phase_2_items,
         )
@@ -378,6 +379,7 @@ class ChallengeRequestForm(forms.ModelForm):
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
                     "inference_time_limit_in_minutes",
+                    "budget_for_hosting_challenge",
                     HTML(
                         "<br><p>Type 2 challenges usually consist of 2 phases. "
                         "The first of those tends to be a "
