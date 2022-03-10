@@ -36,7 +36,6 @@ from grandchallenge.challenges.emails import (
     send_challenge_created_email,
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
-    send_challenge_status_update_email,
     send_external_challenge_created_email,
 )
 from grandchallenge.core.models import UUIDModel
@@ -830,32 +829,34 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     def save(self, *args, **kwargs):
         adding = self._state.adding
         super().save(*args, **kwargs)
+
         if adding:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
-        if self._orig_status != self.status:
-            challenge = None
-            if self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
-                challenge = Challenge.objects.create(
-                    title=self.title,
-                    short_name=self.short_name,
-                    creator=self.creator,
-                    hidden=True,
-                    contact_email=self.contact_email,
-                )
-                challenge.task_types.set(self.task_types.all())
-                challenge.modalities.set(self.modalities.all())
-                challenge.structures.set(self.structures.all())
 
-                if self.challenge_type == self.ChallengeTypeChoices.T2:
-                    phase = challenge.phase_set.get()
-                    phase.submission_kind = phase.SubmissionKind.ALGORITHM
-                    phase.creator_must_be_verified = True
-                    phase.save()
+    def create_challenge(self):
+        challenge = Challenge(
+            title=self.title,
+            short_name=self.short_name,
+            creator=self.creator,
+            hidden=True,
+            contact_email=self.contact_email,
+        )
+        challenge.full_clean()
+        challenge.save()
+        challenge.task_types.set(self.task_types.all())
+        challenge.modalities.set(self.modalities.all())
+        challenge.structures.set(self.structures.all())
+        challenge.save()
 
-            send_challenge_status_update_email(
-                challengerequest=self, challenge=challenge
-            )
+        if self.challenge_type == self.ChallengeTypeChoices.T2:
+            phase = challenge.phase_set.get()
+            phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.creator_must_be_verified = True
+            phase.full_clean()
+            phase.save()
+
+        return challenge
 
     @cached_property
     def budget(self):
