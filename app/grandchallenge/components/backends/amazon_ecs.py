@@ -167,8 +167,10 @@ class AmazonECSExecutor:
         if credits_file.stat().st_size != n_bytes:
             check_call(
                 [
-                    "fallocate",
-                    "--length",
+                    "shred",
+                    "--iterations",
+                    "1",
+                    "--size",
                     str(n_bytes),
                     credits_file.name,
                 ],
