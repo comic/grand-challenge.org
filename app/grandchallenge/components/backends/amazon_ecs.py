@@ -164,7 +164,7 @@ class AmazonECSExecutor:
         credits_file.parent.mkdir(parents=False, exist_ok=True)
         credits_file.touch()
 
-        if credits_file.stat().st_size != n_bytes:
+        if n_bytes > credits_file.stat().st_size:
             check_call(
                 [
                     "shred",
@@ -176,8 +176,21 @@ class AmazonECSExecutor:
                 ],
                 cwd=credits_file.parent.resolve(),
             )
+        else:
+            check_call(
+                [
+                    "truncate",
+                    "--size",
+                    str(n_bytes),
+                    credits_file.name,
+                ],
+                cwd=credits_file.parent.resolve(),
+            )
 
-        return {"current_size": n_bytes}
+        return {
+            "current_size": credits_file.stat().st_size,
+            "requested_size": n_bytes,
+        }
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()

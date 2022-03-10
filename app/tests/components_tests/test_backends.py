@@ -559,7 +559,10 @@ def test_update_filesystem(settings, tmp_path):
     ).stat().st_size == 1_190_476
 
     # Check idempotency and that the size is returned
-    assert update_filesystem() == {"current_size": 1_190_476}
+    assert update_filesystem() == {
+        "current_size": 1_190_476,
+        "requested_size": 1_190_476,
+    }
 
 
 @pytest.mark.parametrize(
