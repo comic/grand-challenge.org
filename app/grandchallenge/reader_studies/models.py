@@ -218,6 +218,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     public = models.BooleanField(
         default=False,
         help_text=(

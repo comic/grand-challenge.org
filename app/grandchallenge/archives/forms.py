@@ -59,6 +59,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "social_image",
             "workstation",
             "workstation_config",
+            "hanging_protocol",
             "algorithms",
             "public",
             "access_request_handling",
@@ -89,6 +90,14 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                     "and then refresh this page."
                 ),
                 reverse_lazy("publications:create"),
+            ),
+            "hanging_protocol": format_lazy(
+                (
+                    "The hanging protocol to use for this archive. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
             ),
         }
         labels = {

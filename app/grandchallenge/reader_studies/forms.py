@@ -151,6 +151,8 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.use_display_sets:
             del self.fields["hanging_list"]
+        else:
+            del self.fields["hanging_protocol"]
 
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
@@ -164,6 +166,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "organizations",
             "workstation",
             "workstation_config",
+            "hanging_protocol",
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
@@ -209,6 +212,14 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
                 "markdown formatting in the text. Not all images in the "
                 "reader study are required. "
                 'e.g., {"a73512ee-1.2.276.0.542432.3.1.3.3546325986342": "This is *image 1*"}'
+            ),
+            "hanging_protocol": format_lazy(
+                (
+                    "The hanging protocol to use for this reader study. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
             ),
         }
 
