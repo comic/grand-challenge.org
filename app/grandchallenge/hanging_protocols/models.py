@@ -83,6 +83,9 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
         validators=[JSONValidator(schema=HANGING_PROTOCOL_SCHEMA)],
     )
 
+    class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
+        ordering = ("title",)
+
     def __str__(self):
         return f"{self.title} (created by {self.creator})"
 
