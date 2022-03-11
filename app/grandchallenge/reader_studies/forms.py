@@ -151,8 +151,6 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.use_display_sets:
             del self.fields["hanging_list"]
-        else:
-            del self.fields["hanging_protocol"]
 
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
