@@ -1,10 +1,11 @@
 import json
 import logging
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
+from subprocess import check_call
 from time import sleep
 
 import boto3
@@ -14,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.utils._os import safe_join
+from django.utils.timezone import now
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
@@ -89,6 +91,106 @@ class AmazonECSExecutor:
         job_app_label, job_model_name, job_pk = job_id.split("-", 2)
 
         return job_app_label, job_model_name, job_pk
+
+    @classmethod
+    def update_filesystem(cls):
+        """
+        Update the EFS burst credits file
+
+        When running EFS in bursting mode the number of burst credits can drop
+        to zero, and the filesystem performance will drop by 1000x. To work
+        around this we create a temporary credits file that only exists to
+        build up the burst credits, so that the high performance mode is always
+        available.
+        """
+        return cls._update_credits_file(
+            n_bytes=cls._get_desired_credits_file_size()
+        )
+
+    @classmethod
+    def _get_desired_credits_file_size(cls):
+        n_hours = 24
+        credits_per_byte_per_hour = 0.35
+
+        current_balance = cls._get_current_efs_burst_balance_bytes()
+        credits_needed = (
+            settings.COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES
+            - current_balance
+        )
+        desired_bytes = int(
+            credits_needed / (credits_per_byte_per_hour * n_hours)
+        )
+
+        return desired_bytes
+
+    @classmethod
+    def _get_current_efs_burst_balance_bytes(cls):
+        response = cls._get_cloudwatch_client().get_metric_statistics(
+            Namespace="AWS/EFS",
+            MetricName="BurstCreditBalance",
+            Dimensions=[
+                {
+                    "Name": "FileSystemId",
+                    "Value": settings.COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID,
+                }
+            ],
+            StartTime=now() - timedelta(minutes=10),
+            EndTime=now(),
+            Period=60,
+            Statistics=["Maximum"],
+            Unit="Bytes",
+        )
+        return int(max(v["Maximum"] for v in response["Datapoints"]))
+
+    @staticmethod
+    def _get_cloudwatch_client():
+        return boto3.client(
+            "cloudwatch", region_name=settings.COMPONENTS_AMAZON_ECS_REGION
+        )
+
+    @staticmethod
+    def _update_credits_file(*, n_bytes):
+        credits_file = (
+            Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT)
+            / "burst-credits-boost"
+            / "000.bin"
+        )
+
+        # Clamp the file size
+        upper_limit = settings.COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE
+        lower_limit = 1
+        n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
+
+        credits_file.parent.mkdir(parents=False, exist_ok=True)
+        credits_file.touch()
+
+        if n_bytes > credits_file.stat().st_size:
+            check_call(
+                [
+                    "shred",
+                    "--iterations",
+                    "1",
+                    "--size",
+                    str(n_bytes),
+                    credits_file.name,
+                ],
+                cwd=credits_file.parent.resolve(),
+            )
+        else:
+            check_call(
+                [
+                    "truncate",
+                    "--size",
+                    str(n_bytes),
+                    credits_file.name,
+                ],
+                cwd=credits_file.parent.resolve(),
+            )
+
+        return {
+            "current_size": credits_file.stat().st_size,
+            "requested_size": n_bytes,
+        }
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()

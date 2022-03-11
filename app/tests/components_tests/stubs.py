@@ -3,13 +3,15 @@ import shutil
 from datetime import datetime
 
 from dateutil.tz import tzlocal
+from django.conf import settings
 
 from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
 
 
 class AmazonECSExecutorStub(AmazonECSExecutor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @staticmethod
+    def _get_cloudwatch_client():
+        return CloudwatchClientStub()
 
     @property
     def _ecs_client(self):
@@ -48,6 +50,21 @@ class AmazonECSExecutorStub(AmazonECSExecutor):
                 self._output_directory / f"{output_filename}.json", "w"
             ) as f:
                 f.write(json.dumps(res))
+
+
+class CloudwatchClientStub:
+    def get_metric_statistics(self, **__):
+        return {
+            "Label": "BurstCreditBalance",
+            "Datapoints": [
+                {
+                    "Timestamp": "2022-03-09T14:38:00+00:00",
+                    "Maximum": settings.COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES
+                    - 10_000_000,
+                    "Unit": "Bytes",
+                },
+            ],
+        }
 
 
 class LogsClientStub:

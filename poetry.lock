@@ -1317,7 +1317,7 @@ test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [[package]]
 name = "panimg"
-version = "0.6.0"
+version = "0.6.1"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
@@ -1865,7 +1865,7 @@ numpy = ">=1.17.3,<1.25.0"
 
 [[package]]
 name = "sentry-sdk"
-version = "1.5.6"
+version = "1.5.7"
 description = "Python client for Sentry (https://sentry.io)"
 category = "main"
 optional = false
@@ -3106,8 +3106,8 @@ pandas = [
     {file = "pandas-1.4.1.tar.gz", hash = "sha256:8db93ec98ac7cb5f8ac1420c10f5e3c43533153f253fe7fb6d891cf5aa2b80d2"},
 ]
 panimg = [
-    {file = "panimg-0.6.0-py3-none-any.whl", hash = "sha256:f35ba7d6d3403896feb095c41e637bd59821e64232d11daa153edaba42011363"},
-    {file = "panimg-0.6.0.tar.gz", hash = "sha256:2932a25221c792c63637bd829f6aa974582d04e1572b8a827e0ab8eb62bb6ae9"},
+    {file = "panimg-0.6.1-py3-none-any.whl", hash = "sha256:3af9c40e938288dca7f91140d5fd408bf466f51956e5f4d56c4827c4480065b2"},
+    {file = "panimg-0.6.1.tar.gz", hash = "sha256:7784838c9f2b74c07bd9a22c2f260694772f2ae5eaa16a2271b4c329086a3d2b"},
 ]
 pillow = [
     {file = "Pillow-9.0.1-1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:a5d24e1d674dd9d72c66ad3ea9131322819ff86250b30dc5821cbafcfa0b96b4"},
@@ -3529,8 +3529,8 @@ scipy = [
     {file = "scipy-1.8.0.tar.gz", hash = "sha256:31d4f2d6b724bc9a98e527b5849b8a7e589bf1ea630c33aa563eda912c9ff0bd"},
 ]
 sentry-sdk = [
-    {file = "sentry-sdk-1.5.6.tar.gz", hash = "sha256:ac2a50128409d57655279817aedcb7800cace1f76b266f3dd62055d5afd6e098"},
-    {file = "sentry_sdk-1.5.6-py2.py3-none-any.whl", hash = "sha256:1ab34e3851a34aeb3d1af1a0f77cec73978c4e9698e5210d050e4932953cb241"},
+    {file = "sentry-sdk-1.5.7.tar.gz", hash = "sha256:aa52da941c56b5a76fd838f8e9e92a850bf893a9eb1e33ffce6c21431d07ee30"},
+    {file = "sentry_sdk-1.5.7-py2.py3-none-any.whl", hash = "sha256:411a8495bd18cf13038e5749e4710beb4efa53da6351f67b4c2f307c2d9b6d49"},
 ]
 simpleitk = [
     {file = "SimpleITK-2.1.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:e56d5af0bcd27e5572a7b0109759227e7b00556150e734cca1d72823b0fd6ae5"},
