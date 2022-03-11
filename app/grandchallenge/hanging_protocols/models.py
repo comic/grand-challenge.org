@@ -37,6 +37,7 @@ HANGING_PROTOCOL_SCHEMA = {
     "items": {
         "type": "object",
         "title": "The Layout Object Schema",
+        "required": ["viewport_name"],
         "properties": {
             "viewport_name": {
                 "type": "string",
