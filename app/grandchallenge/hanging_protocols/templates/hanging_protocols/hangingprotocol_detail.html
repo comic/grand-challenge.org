@@ -4,6 +4,7 @@
 {% load static %}
 {% load evaluation_extras %}
 {% load profiles %}
+{% load guardian_tags %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -18,6 +19,13 @@
 
 {% block content %}
     <h3>{{ object.title }}</h3>
-    <p>Created by {{ object.creator|user_profile_link }}</p>
+    {% get_obj_perms request.user for object as "user_perms" %}
+    <div class="row col-12 p-0 m-0">
+        <span class="col-10 p-0 d-flex align-items-center">Created by {{ object.creator|user_profile_link }}</span>
+        {% if 'change_hangingprotocol' in user_perms %}
+            <div class="col-2 text-right p-0"><a class="btn btn-primary" href="{% url 'hanging-protocols:update' slug=object.slug %}">Edit</a></div>
+        {% endif %}
+    </div>
+    <br>
     <pre class="bg-light p-3 rounded">{{ object.json|json_dumps }}</pre>
 {% endblock %}

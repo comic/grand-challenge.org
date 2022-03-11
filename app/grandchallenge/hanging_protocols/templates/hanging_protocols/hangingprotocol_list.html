@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load profiles %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -11,12 +12,34 @@
 {% endblock %}
 
 {% block content %}
-    <ul class="list-group">
+    <div class="row col-12 m-0 p-0">
+        <h3 class="col-9 p-0">Hanging Protocols</h3>
+        <div class="col-3 p-0 text-right"><a class="btn btn-primary" href="{% url 'hanging-protocols:create' %}">Add a hanging protocol</a></div>
+    </div>
+    <br>
+    <div class="card-columns">
         {% for protocol in object_list %}
-            <a href="{% url 'hanging-protocols:detail' slug=protocol.slug %}" class="list-group-item list-group-item-action text-primary">
-                {{ protocol.title }} <br>
-                <span class="text-dark">{{ protocol.description }}</span>
-            </a>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ protocol.title }}</h5>
+                    <div class="mb-2">
+                        <span class="text-dark">
+                            Created by {{ protocol.creator|user_profile_link }}
+                            <br>
+                            <p class="py-2">{{ protocol.description }}</p>
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <a href="{% url 'hanging-protocols:detail' slug=protocol.slug %}"
+                           class="btn btn-sm btn-primary "
+                           title="View Hanging Protocol">
+                            <i class="fa fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p>No hanging protocols available.</p>
         {% endfor %}
-    </ul>
+    </div>
 {% endblock %}
