@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'hanging-protocols:list' %}">Hanging Protocols</a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+    </ol>
+{% endblock %}
+
+{% block title %}
+    Hanging Protocol {{ object|yesno:"Update,Create" }} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <h2>Hanging Protocol {{ object|yesno:"Update,Create" }}</h2>
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

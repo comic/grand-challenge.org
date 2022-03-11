@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Hanging Protocols</li>
+    </ol>
+{% endblock %}
+
+{% block title %}
+    Hanging Protocols - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <ul class="list-group">
+        {% for protocol in object_list %}
+            <a href="{% url 'hanging-protocols:detail' slug=protocol.slug %}" class="list-group-item list-group-item-action text-primary">
+                {{ protocol.title }} <br>
+                <span class="text-dark">{{ protocol.description }}</span>
+            </a>
+        {% endfor %}
+    </ul>
+{% endblock %}

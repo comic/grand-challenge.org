@@ -149,6 +149,13 @@ urlpatterns = [
         "flatpages/",
         include("grandchallenge.flatpages.urls", namespace="flatpages"),
     ),
+    path(
+        "hanging-protocols/",
+        include(
+            "grandchallenge.hanging_protocols.urls",
+            namespace="hanging-protocols",
+        ),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

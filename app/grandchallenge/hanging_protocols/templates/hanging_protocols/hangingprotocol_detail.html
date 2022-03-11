@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load evaluation_extras %}
+{% load profiles %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'hanging-protocols:list' %}">Hanging Protocols</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
+    </ol>
+{% endblock %}
+
+{% block title %}
+    Hanging Protocol - {{ object.title }} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <h3>{{ object.title }}</h3>
+    <p>Created by {{ object.creator|user_profile_link }}</p>
+    <pre class="bg-light p-3 rounded">{{ object.json|json_dumps }}</pre>
+{% endblock %}
