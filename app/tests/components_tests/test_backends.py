@@ -552,7 +552,7 @@ def test_update_filesystem(settings, tmp_path):
         "tests.components_tests.stubs.AmazonECSExecutorStub"
     )
     settings.COMPONENTS_AMAZON_EFS_BLOCK_SIZE = 1024
-    expected_size = 1_189_888
+    expected_size = 1_350_656
 
     update_filesystem()
 
@@ -603,8 +603,8 @@ def test_update_credits_file(settings, tmp_path):
     "current_size,expected_bytes",
     (
         (2 * 1024 * 1024 * 1024 * 1024, 0),
-        (1 * 1024 * 1024 * 1024 * 1024, 130_894_241_401),
-        (3 * 1024 * 1024 * 1024 * 1024, -130_894_241_401),
+        (1 * 1024 * 1024 * 1024 * 1024, 148_582_652_402),
+        (3 * 1024 * 1024 * 1024 * 1024, -148_582_652_402),
     ),
 )
 def test_get_desired_credits_file_size(current_size, expected_bytes):
