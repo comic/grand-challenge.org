@@ -580,10 +580,10 @@ def test_update_credits_file(settings, tmp_path):
         "requested_size": 24,
     }
 
-    # Zero size file should be clamped to 1
-    assert AmazonECSExecutor._update_credits_file(n_bytes=0) == {
-        "current_size": 1,
-        "requested_size": 0,
+    # Negative values should be clamped to 0
+    assert AmazonECSExecutor._update_credits_file(n_bytes=-10) == {
+        "current_size": 0,
+        "requested_size": -10,
     }
 
     # Max size should be OK
