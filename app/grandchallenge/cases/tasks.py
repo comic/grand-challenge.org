@@ -2,6 +2,7 @@ import zipfile
 from dataclasses import asdict, dataclass
 from itertools import chain
 from pathlib import Path
+from shutil import rmtree
 from tempfile import TemporaryDirectory
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set
 
@@ -73,7 +74,7 @@ def check_compressed_and_extract(*, src_path: Path, checked_paths: Set[Path]):
     try:
         safe_extract(src=src_path, dest=extracted_dir)
     except (zipfile.BadZipFile, OSError):
-        extracted_dir.unlink()
+        rmtree(extracted_dir)
     else:
         src_path.unlink()
         extracted_dir.rename(src_path)

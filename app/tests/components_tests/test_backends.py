@@ -551,17 +551,51 @@ def test_update_filesystem(settings, tmp_path):
     settings.COMPONENTS_DEFAULT_BACKEND = (
         "tests.components_tests.stubs.AmazonECSExecutorStub"
     )
+    settings.COMPONENTS_AMAZON_EFS_BLOCK_SIZE = 1024
+    expected_size = 1_189_888
 
     update_filesystem()
 
     assert (
         tmp_path / "burst-credits-boost" / "000.bin"
-    ).stat().st_size == 1_190_476
+    ).stat().st_size == expected_size
 
     # Check idempotency and that the size is returned
-    assert update_filesystem() == {
-        "current_size": 1_190_476,
-        "requested_size": 1_190_476,
+    assert update_filesystem()["current_size"] == expected_size
+
+
+def test_update_credits_file(settings, tmp_path):
+    settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = tmp_path
+    settings.COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE = 32
+    settings.COMPONENTS_AMAZON_EFS_BLOCK_SIZE = 16
+
+    assert AmazonECSExecutor._update_credits_file(n_bytes=16) == {
+        "current_size": 16,
+        "requested_size": 16,
+    }
+
+    # Requested size will be rounded down to the block size
+    assert AmazonECSExecutor._update_credits_file(n_bytes=24) == {
+        "current_size": 16,
+        "requested_size": 24,
+    }
+
+    # Zero size file should be clamped to 1
+    assert AmazonECSExecutor._update_credits_file(n_bytes=0) == {
+        "current_size": 1,
+        "requested_size": 0,
+    }
+
+    # Max size should be OK
+    assert AmazonECSExecutor._update_credits_file(n_bytes=32) == {
+        "current_size": 32,
+        "requested_size": 32,
+    }
+
+    # Clamp to the limit
+    assert AmazonECSExecutor._update_credits_file(n_bytes=50) == {
+        "current_size": 32,
+        "requested_size": 50,
     }
 
 
