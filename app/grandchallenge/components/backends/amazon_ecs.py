@@ -109,8 +109,11 @@ class AmazonECSExecutor:
 
     @classmethod
     def _get_desired_credits_file_size(cls):
-        n_hours = 24
         credits_per_byte_per_hour = 0.35
+        # Creating the credits file also consumes credits, so take this into
+        # account when calculating the payback time assuming the current size
+        # of the credits file is zero
+        n_hours = max(24 - (1 / credits_per_byte_per_hour), 1)
 
         current_balance = cls._get_current_efs_burst_balance_bytes()
         credits_needed = (
@@ -150,6 +153,8 @@ class AmazonECSExecutor:
 
     @staticmethod
     def _update_credits_file(*, n_bytes):
+        output = {"requested_size": n_bytes}
+
         credits_file = (
             Path(settings.COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT)
             / "burst-credits-boost"
@@ -158,21 +163,29 @@ class AmazonECSExecutor:
 
         # Clamp the file size
         upper_limit = settings.COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE
-        lower_limit = 1
+        lower_limit = 0
         n_bytes = int(max(min(n_bytes, upper_limit), lower_limit))
 
         credits_file.parent.mkdir(parents=False, exist_ok=True)
         credits_file.touch()
 
-        if n_bytes > credits_file.stat().st_size:
+        current_size = credits_file.stat().st_size
+
+        if n_bytes > current_size:
+            # Using dd here as fallocate is unsupported on EFS(NFS4.1)
+            bs = settings.COMPONENTS_AMAZON_EFS_BLOCK_SIZE
+            seek = current_size // bs
+            count = (n_bytes // bs) - seek
+
             check_call(
                 [
-                    "shred",
-                    "--iterations",
-                    "1",
-                    "--size",
-                    str(n_bytes),
-                    credits_file.name,
+                    "dd",
+                    "if=/dev/zero",
+                    f"of={credits_file.name}",
+                    f"bs={bs}",
+                    f"count={count}",
+                    f"seek={seek}",
+                    "conv=fsync",
                 ],
                 cwd=credits_file.parent.resolve(),
             )
@@ -187,10 +200,9 @@ class AmazonECSExecutor:
                 cwd=credits_file.parent.resolve(),
             )
 
-        return {
-            "current_size": credits_file.stat().st_size,
-            "requested_size": n_bytes,
-        }
+        output["current_size"] = credits_file.stat().st_size
+
+        return output
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()
