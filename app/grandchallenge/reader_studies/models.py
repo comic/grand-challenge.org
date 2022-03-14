@@ -1082,6 +1082,13 @@ class DisplaySet(UUIDModel):
     def is_editable(self):
         return not self.answers.exists()
 
+    @property
+    def api_url(self):
+        """API url for this ``DisplaySet``."""
+        return reverse(
+            "api:reader-studies-display-set-detail", kwargs={"pk": self.pk}
+        )
+
 
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
@@ -1427,6 +1434,7 @@ class Answer(UUIDModel):
         question,
         answer,
         images=None,
+        display_set=None,
         is_ground_truth=False,
         instance=None,
     ):
@@ -1442,11 +1450,15 @@ class Answer(UUIDModel):
                 f"{type(answer)} found."
             )
 
-        if len(images) == 0:
+        if (images is None or len(images) == 0) and display_set is None:
             raise ValidationError(
-                "You must specify the images that this answer corresponds to."
+                "You must specify the images or display sey that this answer "
+                "corresponds to."
             )
-
+        if images is not None and len(images) > 0 and display_set is not None:
+            raise ValidationError(
+                "You can only specify one of these two field: images, display_set."
+            )
         if images is not None:
             reader_study_images = question.reader_study.images.all()
             for im in images:
@@ -1455,22 +1467,43 @@ class Answer(UUIDModel):
                         f"Image {im} does not belong to this reader study."
                     )
 
+        if display_set is not None:
+            if display_set.reader_study != question.reader_study:
+                raise ValidationError(
+                    f"Display set {display_set} does not belong to this reader study."
+                )
         if not is_ground_truth:
             if (
-                Answer.objects.exclude(pk=getattr(instance, "pk", None))
-                .filter(
-                    creator=creator,
-                    question=question,
-                    is_ground_truth=False,
-                    images__in=images,
+                images is not None
+                and len(images) > 0
+                and (
+                    Answer.objects.exclude(pk=getattr(instance, "pk", None))
+                    .filter(
+                        creator=creator,
+                        question=question,
+                        is_ground_truth=False,
+                        images__in=images,
+                    )
+                    .annotate(count_images=Count("images", distinct=True))
+                    .filter(count_images=len(images))
+                    .exists()
                 )
-                .annotate(count_images=Count("images", distinct=True))
-                .filter(count_images=len(images))
-                .exists()
             ):
                 raise ValidationError(
                     f"User {creator} has already answered this question "
                     f"for this set of images."
+                )
+            if display_set is not None and (
+                Answer.objects.filter(
+                    creator=creator,
+                    question=question,
+                    is_ground_truth=False,
+                    display_set=display_set,
+                ).exists()
+            ):
+                raise ValidationError(
+                    f"User {creator} has already answered this question "
+                    f"for this display set."
                 )
 
         if not creator.has_perm("read_readerstudy", question.reader_study):
