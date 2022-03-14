@@ -67,15 +67,16 @@ def check_compressed_and_extract(*, src_path: Path, checked_paths: Set[Path]):
 
     checked_paths.add(src_path)
 
-    if zipfile.is_zipfile(src_path):
-        extracted_dir = src_path.parent / f"{src_path.name}_extracted"
-        extracted_dir.mkdir()
+    extracted_dir = src_path.parent / f"{src_path.name}_extracted"
+    extracted_dir.mkdir()
 
+    try:
         safe_extract(src=src_path, dest=extracted_dir)
-
+    except (zipfile.BadZipFile, OSError):
+        extracted_dir.unlink()
+    else:
         src_path.unlink()
         extracted_dir.rename(src_path)
-
         extract_files(source_path=src_path, checked_paths=checked_paths)
 
 
