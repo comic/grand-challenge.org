@@ -155,6 +155,16 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         read_only=True, view_name="api:image-detail"
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["request"].user
+            self.fields["display_set"].queryset = get_objects_for_user(
+                user,
+                "reader_studies.view_displayset",
+                accept_global_perms=False,
+            )
+
     def validate(self, attrs):
         answer = attrs.get("answer")
         if self.instance:
