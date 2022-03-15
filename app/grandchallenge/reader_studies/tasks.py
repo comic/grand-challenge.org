@@ -46,7 +46,7 @@ def add_scores(*, instance_pk, pk_set):
             add_score(instance, ground_truth.answer)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def add_scores_for_display_set(*, instance_pk, ds_pk):
     instance = Answer.objects.get(pk=instance_pk)
     display_set = DisplaySet.objects.get(pk=ds_pk)
