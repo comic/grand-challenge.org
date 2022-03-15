@@ -40,7 +40,7 @@ python = ">=3.8,<3.10"
 "beautifulsoup4" = "*"
 celery = {extras = ["redis", "sqs"], version = "!=5.0.6"}
 kombu = "*"
-pycurl = "*"  # Fix poetry dependency resolution for celery
+pycurl = ">=7.44.1,<7.45.0"  # Fix poetry dependency resolution for celery
 django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
