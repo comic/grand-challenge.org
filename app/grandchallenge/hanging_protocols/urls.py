@@ -13,7 +13,5 @@ urlpatterns = [
     path("", HangingProtocolList.as_view(), name="list"),
     path("create/", HangingProtocolCreate.as_view(), name="create"),
     path("<slug:slug>/", HangingProtocolDetail.as_view(), name="detail"),
-    path(
-        "<slug:slug>/update/", HangingProtocolUpdate.as_view(), name="update"
-    ),
+    path("<slug>/update/", HangingProtocolUpdate.as_view(), name="update"),
 ]

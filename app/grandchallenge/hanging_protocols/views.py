@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
@@ -16,10 +17,14 @@ class HangingProtocolList(LoginRequiredMixin, ListView):
 
 
 class HangingProtocolCreate(
-    LoginRequiredMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
 ):
     model = HangingProtocol
     form_class = HangingProtocolForm
+    permission_required = f"{HangingProtocol._meta.app_label}.add_{HangingProtocol._meta.model_name}"
     success_message = "Hanging protocol successfully added"
 
     def get_success_url(self):
