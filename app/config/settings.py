@@ -1,12 +1,16 @@
 import os
 import re
+from base64 import b64decode
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 from itertools import product
+from pathlib import Path
+from tempfile import mkdtemp
 
 import sentry_sdk
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -954,12 +958,46 @@ COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN = os.environ.get(
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )
-COMPONENTS_DOCKER_TLSVERIFY = strtobool(
-    os.environ.get("COMPONENTS_DOCKER_TLSVERIFY", "False")
+COMPONENTS_DOCKER_TLS_VERIFY = strtobool(
+    os.environ.get("COMPONENTS_DOCKER_TLS_VERIFY", "False")
 )
-COMPONENTS_DOCKER_TLSCACERT = os.environ.get("COMPONENTS_DOCKER_TLSCACERT", "")
-COMPONENTS_DOCKER_TLSCERT = os.environ.get("COMPONENTS_DOCKER_TLSCERT", "")
-COMPONENTS_DOCKER_TLSKEY = os.environ.get("COMPONENTS_DOCKER_TLSKEY", "")
+
+if COMPONENTS_DOCKER_TLS_VERIFY:
+    # docker-py only works with certificate files so export these
+    docker_certs_directory = Path(mkdtemp(prefix="dockercerts"))
+
+    COMPONENTS_DOCKER_CA_CERT = docker_certs_directory / "ca.pem"
+    COMPONENTS_DOCKER_TLS_CERT = docker_certs_directory / "cert.pem"
+    COMPONENTS_DOCKER_TLS_KEY = docker_certs_directory / "key.pem"
+
+    docker_tls_file_map = {
+        "COMPONENTS_DOCKER_CA_CERT_BASE64": {
+            "file": COMPONENTS_DOCKER_CA_CERT,
+            "mode": 0o444,
+        },
+        "COMPONENTS_DOCKER_TLS_CERT_BASE64": {
+            "file": COMPONENTS_DOCKER_TLS_CERT,
+            "mode": 0o444,
+        },
+        "COMPONENTS_DOCKER_TLS_KEY_BASE64": {
+            "file": COMPONENTS_DOCKER_TLS_KEY,
+            "mode": 0o400,
+        },
+    }
+
+    for env_var, file_config in docker_tls_file_map.items():
+        try:
+            b64_content = os.environ[env_var]
+        except KeyError:
+            raise ImproperlyConfigured(
+                f"{env_var} must be set when using COMPONENTS_DOCKER_TLS_VERIFY"
+            )
+
+        with open(file_config["file"], "wb") as f:
+            f.write(b64decode(b64_content.encode("ascii")))
+
+        file_config["file"].chmod(file_config["mode"])
+
 COMPONENTS_MEMORY_LIMIT = int(os.environ.get("COMPONENTS_MEMORY_LIMIT", "4"))
 COMPONENTS_SHARED_MEMORY_SIZE = int(
     os.environ.get("COMPONENTS_SHARED_MEMORY_SIZE", "64")
