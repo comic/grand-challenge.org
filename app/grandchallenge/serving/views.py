@@ -144,7 +144,9 @@ def serve_structured_challenge_submission_form(
     except ChallengeRequest.DoesNotExist:
         raise Http404("Challenge request not found.")
 
-    if request.user.has_perm("view_challengerequest"):
+    if request.user.has_perm("challenges.view_challengerequest"):
         return protected_storage_redirect(
             name=challenge_request.structured_challenge_submission_form.name
         )
+    else:
+        raise PermissionDenied

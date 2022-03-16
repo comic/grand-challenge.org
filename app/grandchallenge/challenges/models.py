@@ -952,15 +952,18 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
                 ndigits=2,
             )
 
-            budget["Total"] = sum(
-                filter(
-                    None,
-                    [
-                        budget["Total phase 1"],
-                        budget["Total phase 2"],
-                        budget["Docker storage cost"],
-                    ],
-                )
+            budget["Total"] = round(
+                sum(
+                    filter(
+                        None,
+                        [
+                            budget["Total phase 1"],
+                            budget["Total phase 2"],
+                            budget["Docker storage cost"],
+                        ],
+                    )
+                ),
+                ndigits=2,
             )
 
         return budget

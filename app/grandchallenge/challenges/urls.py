@@ -38,7 +38,7 @@ urlpatterns = [
     ),
     path("requests/", ChallengeRequestList.as_view(), name="requests-list"),
     path(
-        "requests/create",
+        "requests/create/",
         ChallengeRequestCreate.as_view(),
         name="requests-create",
     ),

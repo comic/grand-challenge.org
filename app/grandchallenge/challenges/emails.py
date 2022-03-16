@@ -12,14 +12,15 @@ def send_challenge_created_email(challenge):
     site = Site.objects.get_current()
     message = format_html(
         "Dear manager,\n\n"
-        "User {} has just created the challenge {} at {}.\n\n"
-        "Regards,\n{}\n\n"
-        "This is an automated service email from {}.",
-        challenge.creator,
-        challenge.short_name,
-        challenge.get_absolute_url(),
-        site.name,
-        site.domain,
+        "User {user} has just created the challenge {challenge_short_name} "
+        "at {challenge_url}.\n\n"
+        "Regards,\n{site_name}\n\n"
+        "This is an automated service email from {site_domain}.",
+        user=challenge.creator,
+        challenge_short_name=challenge.short_name,
+        challenge_url=challenge.get_absolute_url(),
+        site_name=site.name,
+        site_domain=site.domain,
     )
 
     mail_managers(
@@ -37,16 +38,17 @@ def send_external_challenge_created_email(challenge):
 
     message = format_html(
         "Dear manager,\n\n"
-        "User {} has just created the challenge {}. You need to un-hide it "
+        "User {user} has just created the challenge {challenge_short_name}. "
+        "You need to un-hide it "
         "before it is visible on the all challenges page, you can do that "
-        "here: {}\n\n"
-        "Regards,\n{}\n\n"
-        "This is an automated service email from {}.",
-        challenge.creator,
-        challenge.short_name,
-        update_url,
-        site.name,
-        site.domain,
+        "here: {update_url}\n\n"
+        "Regards,\n{site_name}\n\n"
+        "This is an automated service email from {site_domain}.",
+        user=challenge.creator,
+        challenge_short_name=challenge.short_name,
+        update_url=update_url,
+        site_name=site.name,
+        site_domain=site.domain,
     )
 
     mail_managers(
@@ -62,15 +64,15 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
     )
     message = format_html(
         "Dear reviewers,\n\n"
-        "User {} has just requested the challenge "
-        "{}. To review the challenge, go here: {}\n\n"
-        "Regards,\n{}\n\n"
-        "This is an automated service email from {}.",
-        challengerequest.creator,
-        challengerequest.title,
-        update_url,
-        site.name,
-        site.domain,
+        "User {user} has just requested the challenge "
+        "{request_title}. To review the challenge, go here: {update_url}\n\n"
+        "Regards,\n{site_name}\n\n"
+        "This is an automated service email from {site_domain}.",
+        user=challengerequest.creator,
+        request_title=challengerequest.title,
+        update_url=update_url,
+        site_name=site.name,
+        site_domain=site.domain,
     )
     reviewers = get_user_model().objects.filter(
         Q(groups__permissions__codename="change_challengerequest")
@@ -103,19 +105,19 @@ def send_challenge_requested_email_to_requester(challengerequest):
         )
 
     message = format_html(
-        "Dear {},\n\n"
+        "Dear {user},\n\n"
         "Your challenge request has been sent to the reviewers. You will "
         "receive an email informing you of our decision within the next 4 weeks. "
         "The reviewers might contact you for additional information during "
         "that time.\n"
-        "{}"
+        "{addition}"
         "Regards,\n"
-        "{} team\n\n"
-        "This is an automated service email from {}.",
-        challengerequest.creator.username,
-        addition,
-        site.name,
-        site.domain,
+        "{site_name} team\n\n"
+        "This is an automated service email from {site_domain}.",
+        user=challengerequest.creator.username,
+        addition=addition,
+        site_name=site.name,
+        site_domain=site.domain,
     )
 
     send_mail(
@@ -176,7 +178,7 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
         == challengerequest.ChallengeRequestStatusChoices.REJECTED
     ):
         message = format_html(
-            "Dear {},\n\n"
+            "Dear {user},\n\n"
             "We are very sorry to have to inform you that we will not be able to "
             "host your challenge on our platform. We can only support a limited "
             "number of challenges per year and hence have to be selective in "
@@ -184,11 +186,11 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
             "your submission and wish you the best of luck with organizing and "
             "hosting your challenge elsewhere.\n\n"
             "Regards,\n"
-            "{} team\n\n"
-            "This is an automated service email from {}.",
-            challengerequest.creator.username,
-            site.name,
-            site.domain,
+            "{site_name} team\n\n"
+            "This is an automated service email from {site_domain}.",
+            user=challengerequest.creator.username,
+            site_name=site.name,
+            site_domain=site.domain,
         )
 
     send_mail(
