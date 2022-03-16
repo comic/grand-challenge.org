@@ -29,7 +29,6 @@ HANGING_PROTOCOL_SCHEMA = {
         "properties": {
             "viewport_name": {
                 "type": "string",
-                "enum": [port.lower() for port in ImagePort.labels],
                 "pattern": "^main$",
             },
         },
