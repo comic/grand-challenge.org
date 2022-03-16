@@ -47,6 +47,27 @@ def add_scores(*, instance_pk, pk_set):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def add_scores_for_display_set(*, instance_pk, ds_pk):
+    instance = Answer.objects.get(pk=instance_pk)
+    display_set = DisplaySet.objects.get(pk=ds_pk)
+    if instance.is_ground_truth:
+        answer = Answer.objects.get(
+            question=instance.question,
+            is_ground_truth=False,
+            display_set=display_set,
+        )
+        add_score(answer, instance.answer)
+    else:
+        ground_truth = Answer.objects.get(
+            question=instance.question,
+            is_ground_truth=True,
+            display_set=display_set,
+        )
+        if ground_truth:
+            add_score(instance, ground_truth.answer)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def add_image_to_display_set(
     *, upload_session_pk, display_set_pk, interface_pk
 ):

@@ -97,6 +97,7 @@ def test_answer_create(client):
         data={"answer": True, "images": [im.api_url], "question": q.api_url},
         content_type="application/json",
     )
+
     assert response.status_code == 201
 
     answer = Answer.objects.get(pk=response.data.get("pk"))
@@ -104,6 +105,31 @@ def test_answer_create(client):
     assert answer.creator == reader
     assert answer.images.count() == 1
     assert answer.images.all()[0] == im
+    assert answer.question == q
+    assert answer.answer is True
+
+    civ = ComponentInterfaceValueFactory(image=im)
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=reader,
+        client=client,
+        method=client.post,
+        data={
+            "answer": True,
+            "display_set": ds.api_url,
+            "question": q.api_url,
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    answer = Answer.objects.get(pk=response.data.get("pk"))
+
+    assert answer.creator == reader
+    assert answer.display_set == ds
     assert answer.question == q
     assert answer.answer is True
 
