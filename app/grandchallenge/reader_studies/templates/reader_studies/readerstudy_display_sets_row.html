@@ -19,55 +19,77 @@
 
     <div id="collapse-{{ object.id }}" class="collapse" aria-labelledby="heading-{{ object.id }}" data-parent="#accordion">
       <div class="card-body py-1">
-        <table class="table table-striped table-sm">
-          <tr>
-            <th>Interface</th>
-            <th>Name</th>
-            <th>Created</th>
-            <th>View</th>
-          </tr>
-          {% for value in object.values.all %}
+        <form action="{% url 'api:reader-studies-display-set-detail' object.id %}" method="patch" class="ds-form">
+          <table class="table table-striped table-sm">
             <tr>
-              <td>{{ value.interface.title }}</td>
-              <td>
+              <th>Interface</th>
+              <th>Name</th>
+              <th>Created</th>
+              <th>View</th>
+            </tr>
+            {% for value in object.values.all %}
+              <tr>
+                <td>{{ value.interface.title }}:</td>
+                <td>
+                  {% if object.is_editable %}
+                    <div class="form-group">
+                      <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
+                        <option>---</option>
+                        {% get_values_for_interface object.reader_study value.interface as values %}
+                        {% for val in values %}
+                          <option value="{{ val.id }}" {% if val.id == value.id %}selected{% endif %}>{{ val.image.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  {% else %}
+                    {{ value.image.name }}
+                  {% endif %}
+                </td>
+                <td>{{ value.image.created|naturaltime }}</td>
+                <td>
+                  <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=object config=reader_study.workstation_config %}">
+                    <span class="badge badge-primary">
+                        <i class="fa fa-eye"></i> View Case
+                    </span>
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+            {% for interface in object.empty_interfaces %}
+              <tr>
+                <td>{{ interface.title }}:</td>
+                <td>
+                  {% if object.is_editable %}
+                    <div class="form-group">
+                      <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
+                        <option selected>---</option>
+                        {% for value in interface.values %}
+                          <option value="{{ value.id }}">{{ value.image.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            <tr>
+              <td>Order:</td>
+              <td colspan="3">
                 {% if object.is_editable %}
-                  <select class="form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
-                    <option>---</option>
-                    {% get_values_for_interface object.reader_study value.interface as values %}
-                    {% for val in values %}
-                      <option value="{{ val.id }}" {% if val.id == value.id %}selected{% endif %}>{{ val.image.name }}</option>
-                    {% endfor %}
-                  </select>
+                  <div class="form-group">
+                    <input type="text" class="form-control" aria-describedby="orderHelp" placeholder="10" name="order" value="{{ object.order }}">
+                    <small id="orderHelp" class="form-text text-muted">By default, display sets are shown in the order they are created. Use this field to change the ordering. Lower numbers get presented to the users first.</small>
+                  </div>
                 {% else %}
-                  {{ value.image.name }}
+                  {{ object.order }}
                 {% endif %}
               </td>
-              <td>{{ value.image.created|naturaltime }}</td>
-              <td>
-                <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=object config=reader_study.workstation_config %}">
-                  <span class="badge badge-primary">
-                      <i class="fa fa-eye"></i> View Case
-                  </span>
-                </a>
-              </td>
             </tr>
-          {% endfor %}
-          {% for interface in object.empty_interfaces %}
             <tr>
-              <td>{{ interface.title }}:</td>
-              <td>
-                {% if object.is_editable %}
-                  <select class="form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}">
-                    <option selected>---</option>
-                    {% for value in interface.values %}
-                      <option value="{{ value.id }}">{{ value.image.name }}</option>
-                    {% endfor %}
-                  </select>
-                {% endif %}
-              </td>
+              <td colspan="4"> <button type="submit" class="btn btn-primary">Save</button></td>
             </tr>
-          {% endfor %}
-        </table>
+          </table>
+        </form>
       </div>
     </div>
   </div>

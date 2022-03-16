@@ -967,27 +967,32 @@ class DisplaySetViewSet(
                 "as answers for it already exist."
             )
         assigned_civs = []
-        if request.data.get("value"):
+        civ_values = request.data.pop("civ_values", [])
+        values = request.data.pop("values", None)
+        civs = instance.reader_study.display_sets.values_list(
+            "values", flat=True
+        )
+        assigned_civs = []
+        for value in civ_values:
             # Get the provided civ from the current reader study's display sets.
-            civs = instance.reader_study.display_sets.values_list(
-                "values", flat=True
-            )
             civ = ComponentInterfaceValue.objects.filter(id__in=civs).get(
-                id=request.data.get("value")
+                id=value
             )
 
             # If there is already a value for the provided civ's interface in
             # this display set, remove it from this display set. Cast to list
             # to evaluate immediately.
-            assigned_civs = list(
-                instance.values.filter(interface=civ.interface)
+            assigned_civs += list(
+                instance.values.exclude(pk=civ.pk).filter(
+                    interface=civ.interface
+                )
             )
 
             # Add the provided civ to the current display set
             instance.values.add(civ)
-        if request.data.get("values"):
+        if values:
             serialized_data = ComponentInterfaceValuePostSerializer(
-                many=True, data=request.data.get("values")
+                many=True, data=values
             )
             if serialized_data.is_valid():
                 civs = serialized_data.create(serialized_data.validated_data)
@@ -1009,8 +1014,7 @@ class DisplaySetViewSet(
                 )
                 ds.values.add(assigned)
             instance.values.remove(assigned)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        return super().partial_update(request, pk)
 
     def get_queryset(self):
         queryset = DisplaySet.objects.all().select_related("reader_study")

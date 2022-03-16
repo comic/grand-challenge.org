@@ -391,6 +391,7 @@ class Image(UUIDModel):
             signal is sent.
         """
         from grandchallenge.archives.models import Archive
+        from grandchallenge.reader_studies.models import ReaderStudy
 
         if exclude_jobs is None:
             exclude_jobs = []
@@ -415,6 +416,16 @@ class Image(UUIDModel):
                     archive.editors_group,
                     archive.uploaders_group,
                     archive.users_group,
+                ]
+            )
+
+        for rs in ReaderStudy.objects.filter(
+            display_sets__values__image=self
+        ).select_related("editors_group", "readers_group"):
+            expected_groups.update(
+                [
+                    rs.editors_group,
+                    rs.readers_group,
                 ]
             )
 

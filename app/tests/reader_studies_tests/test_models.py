@@ -7,6 +7,7 @@ from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
+    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -405,3 +406,19 @@ def test_validate_hanging_list():
 
     rs.validate_hanging_list = False
     assert rs.hanging_list_valid is True
+
+
+@pytest.mark.django_db
+def test_display_set_order():
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    assert ds.order == 10
+
+    ds = DisplaySetFactory(reader_study=rs)
+    assert ds.order == 20
+
+    ds.order = 15
+    ds.save()
+
+    ds = DisplaySetFactory(reader_study=rs)
+    assert ds.order == 20

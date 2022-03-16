@@ -1029,6 +1029,7 @@ class DisplaySet(UUIDModel):
     values = models.ManyToManyField(
         ComponentInterfaceValue, blank=True, related_name="display_sets"
     )
+    order = models.PositiveSmallIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -1053,6 +1054,9 @@ class DisplaySet(UUIDModel):
             self.reader_study.readers_group,
             self,
         )
+
+    class Meta:
+        ordering = ("order", "created")
 
     @cached_property
     def empty_interfaces(self):
