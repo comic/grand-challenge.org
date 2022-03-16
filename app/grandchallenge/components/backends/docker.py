@@ -69,14 +69,14 @@ class DockerConnection:
         if self.__client is None:
             client_kwargs = {"base_url": settings.COMPONENTS_DOCKER_BASE_URL}
 
-            if settings.COMPONENTS_DOCKER_TLSVERIFY:
+            if settings.COMPONENTS_DOCKER_TLS_VERIFY:
                 tlsconfig = TLSConfig(
                     verify=True,
                     client_cert=(
-                        settings.COMPONENTS_DOCKER_TLSCERT,
-                        settings.COMPONENTS_DOCKER_TLSKEY,
+                        settings.COMPONENTS_DOCKER_TLS_CERT,
+                        settings.COMPONENTS_DOCKER_TLS_KEY,
                     ),
-                    ca_cert=settings.COMPONENTS_DOCKER_TLSCACERT,
+                    ca_cert=settings.COMPONENTS_DOCKER_CA_CERT,
                 )
                 client_kwargs.update({"tls": tlsconfig})
 
