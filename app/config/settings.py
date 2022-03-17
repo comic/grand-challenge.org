@@ -964,6 +964,7 @@ COMPONENTS_DOCKER_TLS_VERIFY = strtobool(
 COMPONENTS_PUBLISH_PORTS = strtobool(
     os.environ.get("COMPONENTS_PUBLISH_PORTS", "False")
 )
+COMPONENTS_PORT_ADDRESS = os.environ.get("COMPONENTS_PORT_ADDRESS", "0.0.0.0")
 
 if COMPONENTS_DOCKER_TLS_VERIFY:
     # docker-py only works with certificate files so export these

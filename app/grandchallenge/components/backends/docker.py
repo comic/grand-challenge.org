@@ -608,7 +608,10 @@ class Service(DockerConnection):
         }
 
         ports = (
-            {http_port: None, websocket_port: None}
+            {
+                http_port: (settings.COMPONENTS_PORT_ADDRESS, None),
+                websocket_port: (settings.COMPONENTS_PORT_ADDRESS, None),
+            }
             if settings.COMPONENTS_PUBLISH_PORTS
             else {}
         )
