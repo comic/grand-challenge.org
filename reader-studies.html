@@ -278,7 +278,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -286,6 +286,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
 <li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
 <li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study</p></li>
+<li><p><strong>order</strong> (<em>PositiveSmallIntegerField</em>) – Order</p></li>
 <li><p><strong>values</strong> (<em>ManyToManyField</em>) – Values</p></li>
 </ul>
 </dd>
