@@ -2,8 +2,12 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db.models.base import ModelBase
 
-from grandchallenge.hanging_protocols.models import HangingProtocol
+from grandchallenge.hanging_protocols.models import (
+    HangingProtocol,
+    ImagePortMappingMixin,
+)
 from tests.factories import UserFactory
 
 
@@ -105,3 +109,26 @@ def test_hanging_protocol_schema_validation(client, json, expectation):
     with expectation:
         hp = HangingProtocol(title="test", creator=UserFactory(), json=json)
         hp.full_clean()
+
+
+def test_image_ports_mapping_validation():
+    model = ImagePortMappingMixin
+    model = ModelBase(
+        "__TestModel__" + model.__name__,
+        (model,),
+        {"__module__": model.__module__},
+    )
+    with pytest.raises(ValidationError):
+        hp = model(image_port_mapping={"test": []})
+        hp.full_clean()
+
+    with pytest.raises(ValidationError):
+        hp = model(image_port_mapping={"main": []})
+        hp.full_clean()
+
+    with pytest.raises(ValidationError):
+        hp = model(image_port_mapping={"main": "test"})
+        hp.full_clean()
+
+    hp = model(image_port_mapping={"main": ["test"]})
+    hp.full_clean()
