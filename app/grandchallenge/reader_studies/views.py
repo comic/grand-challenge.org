@@ -943,6 +943,7 @@ class DisplaySetViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
     mixins.ListModelMixin,
     GenericViewSet,
 ):

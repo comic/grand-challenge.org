@@ -1049,6 +1049,11 @@ class DisplaySet(UUIDModel):
 
     def assign_permissions(self):
         assign_perm(
+            f"delete_{self._meta.model_name}",
+            self.reader_study.editors_group,
+            self,
+        )
+        assign_perm(
             f"change_{self._meta.model_name}",
             self.reader_study.editors_group,
             self,

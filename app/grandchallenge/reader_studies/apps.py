@@ -35,6 +35,10 @@ def init_reader_study_permissions(*_, **__):
         f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}",
         g,
     )
+    assign_perm(
+        f"{ReaderStudy._meta.app_label}.delete_{DisplaySet._meta.model_name}",
+        g,
+    )
 
 
 def init_answer_permissions(*_, **__):
