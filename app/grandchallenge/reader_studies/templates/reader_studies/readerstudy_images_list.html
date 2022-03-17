@@ -81,11 +81,19 @@
                 })
             });
 
-             $(document).on('change', '.add-interface', (e) => {
+             $(document).on('submit', '.ds-form', (e) => {
+                e.preventDefault();
+                const formdata = $(e.currentTarget).serializeArray();
+                const data = {civ_values: []};
+                $(formdata).each((index, obj) => {
+                    if (obj.name === "civ_values") {
+                        data[obj.name].push(obj.value);
+                    } else data[obj.name] = obj.value;
+                });
                 $.ajax({
                     type: 'PATCH',
-                    url:  $(e.currentTarget).data("url"),
-                    data: JSON.stringify({value: $(e.currentTarget).val()}),
+                    url:  $(e.currentTarget).attr("action"),
+                    data: JSON.stringify(data),
                     contentType: 'application/json',
                     accept: 'application/json',
                     complete: (response) => {

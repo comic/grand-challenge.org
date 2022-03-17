@@ -71,6 +71,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "pk",
             "reader_study",
             "values",
+            "order",
         )
 
 

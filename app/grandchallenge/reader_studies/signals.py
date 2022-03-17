@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
@@ -107,3 +107,15 @@ def update_reader_study_modification_time(
     else:
         with transaction.atomic():
             instance.reader_study.save()
+
+
+@receiver(post_save, sender=DisplaySet)
+def set_display_set_order(sender, instance, created, **_):
+    """Set to first multiple of 10 that is higher than the highest in this rs."""
+    if not created:
+        return
+
+    last = instance.reader_study.display_sets.last()
+    highest = getattr(last, "order", 0)
+    instance.order = (highest + 10) // 10 * 10
+    instance.save()

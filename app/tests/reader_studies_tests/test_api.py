@@ -1511,7 +1511,7 @@ def test_display_set_add_and_edit(client, settings):
         client=client,
         method=client.patch,
         content_type="application/json",
-        data={"value": new.pk},
+        data={"civ_values": [new.pk]},
     )
 
     ds.refresh_from_db()
