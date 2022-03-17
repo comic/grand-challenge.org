@@ -79,6 +79,12 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     algorithms = models.ManyToManyField(
         Algorithm,
         blank=True,

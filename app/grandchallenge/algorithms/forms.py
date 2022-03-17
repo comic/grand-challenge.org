@@ -171,6 +171,7 @@ class AlgorithmForm(
             "outputs",
             "workstation",
             "workstation_config",
+            "hanging_protocol",
             "credits_per_job",
             "detail_page_markdown",
             "job_create_page_markdown",
@@ -230,6 +231,14 @@ class AlgorithmForm(
             ),
             "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
             "detail_page_markdown": "<span class='text-danger'><i class='fa fa-exclamation-triangle'></i> This field will be deprecated. Please use the separate 'Algorithm description' form on the Information page to describe your algorithm instead.</span>",
+            "hanging_protocol": format_lazy(
+                (
+                    "The hanging protocol to use for this algorithm. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
+            ),
         }
         labels = {
             "workstation": "Viewer",
@@ -256,6 +265,7 @@ class AlgorithmForm(
                 "social_image",
                 "workstation",
                 "workstation_config",
+                "hanging_protocol",
                 "inputs",
                 "outputs",
                 "credits_per_job",
