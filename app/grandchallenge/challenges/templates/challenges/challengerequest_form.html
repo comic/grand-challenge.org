@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Request A Challenge{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Request</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% if not object %}
+        <h2>Request a Challenge</h2>
+        {% crispy form %}
+    {% else %}
+        <h2>Approve or reject "{{ object.title }}"</h2>
+        {% crispy form %}
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "js/challenges/budget_fields_display.js" type="module" defer %}"></script>
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

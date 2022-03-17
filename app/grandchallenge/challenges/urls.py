@@ -3,6 +3,10 @@ from django.urls import path
 from grandchallenge.challenges.views import (
     ChallengeCreate,
     ChallengeList,
+    ChallengeRequestCreate,
+    ChallengeRequestDetail,
+    ChallengeRequestList,
+    ChallengeRequestUpdate,
     CombinedChallengeList,
     ExternalChallengeCreate,
     ExternalChallengeList,
@@ -31,5 +35,21 @@ urlpatterns = [
         "external/<slug:short_name>/update/",
         ExternalChallengeUpdate.as_view(),
         name="external-update",
+    ),
+    path("requests/", ChallengeRequestList.as_view(), name="requests-list"),
+    path(
+        "requests/create/",
+        ChallengeRequestCreate.as_view(),
+        name="requests-create",
+    ),
+    path(
+        "requests/<pk>/",
+        ChallengeRequestDetail.as_view(),
+        name="requests-detail",
+    ),
+    path(
+        "requests/<pk>/update/",
+        ChallengeRequestUpdate.as_view(),
+        name="requests-update",
     ),
 ]

@@ -76,3 +76,55 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
 
             remove_perm(permission, u, obj)
+
+
+@pytest.mark.django_db
+def test_request_challenge_only_when_verified(client):
+    user = UserFactory()
+    assert not Verification.objects.filter(user=user)
+    response = get_view_for_user(
+        client=client, viewname="challenges:requests-create", user=user
+    )
+    assert response.status_code == 403
+    Verification.objects.create(user=user, is_verified=True)
+    response = get_view_for_user(
+        client=client, viewname="challenges:create", user=user
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_view_and_update_challenge_request(
+    client, challenge_reviewer, type_1_challenge_request
+):
+    # challenge request creator cannot view or update the request
+    response = get_view_for_user(
+        client=client,
+        viewname="challenges:requests-detail",
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=type_1_challenge_request.creator,
+    )
+    assert response.status_code == 403
+    response = get_view_for_user(
+        client=client,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=type_1_challenge_request.creator,
+    )
+    assert response.status_code == 403
+
+    # reviewer can view and udpate
+    response = get_view_for_user(
+        client=client,
+        viewname="challenges:requests-detail",
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=challenge_reviewer,
+    )
+    assert response.status_code == 200
+    response = get_view_for_user(
+        client=client,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=challenge_reviewer,
+    )
+    assert response.status_code == 200

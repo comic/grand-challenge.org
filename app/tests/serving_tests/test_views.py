@@ -156,3 +156,29 @@ def test_output_download(client):
             url=job.outputs.first().file.url, client=client, user=test[1]
         )
         assert response.status_code == test[0]
+
+
+@pytest.mark.django_db
+def test_structured_challenge_submission_form_download(
+    client, type_1_challenge_request, challenge_reviewer
+):
+    """Only the reviewers should be able to download submission form pdf."""
+    user = UserFactory()
+    type_1_challenge_request.structured_challenge_submission_form.save(
+        "test.pdf", ContentFile(b"foo,\nbar,\n")
+    )
+
+    tests = [
+        (403, None),
+        (403, user),
+        (403, type_1_challenge_request.creator),
+        (302, challenge_reviewer),
+    ]
+
+    for test in tests:
+        response = get_view_for_user(
+            url=type_1_challenge_request.structured_challenge_submission_form.url,
+            client=client,
+            user=test[1],
+        )
+        assert response.status_code == test[0]

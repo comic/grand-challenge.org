@@ -8,19 +8,28 @@
 {% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between mb-3">
-        <a class="btn btn-primary"
-           href="{% url 'challenges:create' %}"
-           title="Add a new challenge">
-            <i class="fas fa-plus mr-1"></i> Add a new challenge
-        </a>
-        <a class="btn btn-primary"
-           href="{% url 'challenges:combined-list' %}"
-           title="All challenges">
-            <i class="fas fa-list mr-1"></i> View all challenges
-        </a>
+    <div class="row">
+        <div class="col-xl-8 col-lg-7 col-md-6 mb-3">
+            <a class="btn btn-primary"
+               href="{% url 'challenges:requests-create' %}"
+               title="Host your own challenge">
+                <i class="fas fa-plus mr-1"></i> Host your own Challenge
+            </a>
+        </div>
+        <div class="col-xl-4 col-lg-5 col-md-6 mb-3 text-md-right">
+            {% if perms.challenges.change_challengerequest %}
+                <a class="btn btn-primary"
+                   href="{% url 'challenges:requests-list' %}">
+                   <i class="fas fa-question mr-1"></i>
+                    Challenge Requests</a>
+            {% endif %}
+            <a class="btn btn-primary"
+               href="{% url 'challenges:combined-list' %}"
+               title="All challenges">
+                <i class="fas fa-list mr-1"></i> View all challenges
+            </a>
+        </div>
     </div>
-
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 
     {% include "grandchallenge/partials/cards.html" with page_obj=page_obj %}

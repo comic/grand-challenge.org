@@ -1,6 +1,7 @@
 import os
 import zipfile
 from collections import namedtuple
+from datetime import timedelta
 from pathlib import Path
 from subprocess import call
 from typing import List, NamedTuple
@@ -10,8 +11,11 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
+from django.utils.timezone import now
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
@@ -33,7 +37,12 @@ from tests.annotations_tests.factories import (
 )
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import MethodFactory
-from tests.factories import ChallengeFactory, ImageFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ChallengeRequestFactory,
+    ImageFactory,
+    UserFactory,
+)
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
@@ -759,3 +768,40 @@ def component_interfaces():
 @pytest.fixture
 def uploaded_image():
     return create_uploaded_image
+
+
+@pytest.fixture
+def type_2_challenge_request():
+    return ChallengeRequestFactory(
+        creator=UserFactory(),
+        start_date=now(),
+        end_date=now() + timedelta(days=1),
+        challenge_type=ChallengeRequest.ChallengeTypeChoices.T2,
+        expected_number_of_teams=10,
+        inference_time_limit_in_minutes=10,
+        average_size_of_test_image_in_mb=10,
+        phase_1_number_of_submissions_per_team=10,
+        phase_2_number_of_submissions_per_team=1,
+        phase_1_number_of_test_images=100,
+        phase_2_number_of_test_images=500,
+        number_of_tasks=1,
+    )
+
+
+@pytest.fixture
+def type_1_challenge_request():
+    return ChallengeRequestFactory(
+        creator=UserFactory(),
+        start_date=now(),
+        end_date=now() + timedelta(days=1),
+        challenge_type=ChallengeRequest.ChallengeTypeChoices.T1,
+        expected_number_of_teams=10,
+    )
+
+
+@pytest.fixture
+def challenge_reviewer():
+    user = UserFactory()
+    assign_perm("challenges.change_challengerequest", user)
+    assign_perm("challenges.view_challengerequest", user)
+    return user

@@ -10,6 +10,7 @@ from knox.auth import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 from grandchallenge.cases.models import Image
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
@@ -131,3 +132,21 @@ def _create_download(*, creator_id, image_id=None, submission_id=None):
 
     if n_updated == 0:
         Download.objects.create(**kwargs)
+
+
+def serve_structured_challenge_submission_form(
+    request, *, challenge_request_pk, **_
+):
+    try:
+        challenge_request = ChallengeRequest.objects.get(
+            pk=challenge_request_pk
+        )
+    except ChallengeRequest.DoesNotExist:
+        raise Http404("Challenge request not found.")
+
+    if request.user.has_perm("challenges.view_challengerequest"):
+        return protected_storage_redirect(
+            name=challenge_request.structured_challenge_submission_form.name
+        )
+    else:
+        raise PermissionDenied

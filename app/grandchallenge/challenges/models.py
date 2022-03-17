@@ -17,6 +17,8 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.text import get_valid_filename
+from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
@@ -32,16 +34,24 @@ from tldextract import extract
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_created_email,
+    send_challenge_requested_email_to_requester,
+    send_challenge_requested_email_to_reviewers,
     send_external_challenge_created_email,
 )
+from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
     get_social_image_path,
+    protected_s3_storage,
     public_s3_storage,
 )
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
+)
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.evaluation.utils import StatusChoices
@@ -94,16 +104,10 @@ class ChallengeSeries(models.Model):
         )
 
 
-class ChallengeBase(models.Model):
-    CHALLENGE_ACTIVE = "challenge_active"
-    CHALLENGE_INACTIVE = "challenge_inactive"
-    DATA_PUB = "data_pub"
-
+class CommonChallengeFieldsMixin(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
     short_name = CICharField(
         max_length=50,
         blank=False,
@@ -118,12 +122,6 @@ class ChallengeBase(models.Model):
         ],
         unique=True,
     )
-    description = models.CharField(
-        max_length=1024,
-        default="",
-        blank=True,
-        help_text="Short summary of this project, max 1024 characters.",
-    )
     title = models.CharField(
         max_length=64,
         blank=True,
@@ -133,6 +131,37 @@ class ChallengeBase(models.Model):
             " page. If this is blank the short name of the challenge will be "
             "used."
         ),
+    )
+    task_types = models.ManyToManyField(
+        TaskType, blank=True, help_text="What type of task is this challenge?"
+    )
+    modalities = models.ManyToManyField(
+        ImagingModality,
+        blank=True,
+        help_text="What imaging modalities are used in this challenge?",
+    )
+    structures = models.ManyToManyField(
+        BodyStructure,
+        blank=True,
+        help_text="What structures are used in this challenge?",
+    )
+
+    class Meta:
+        abstract = True
+
+
+class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
+    CHALLENGE_ACTIVE = "challenge_active"
+    CHALLENGE_INACTIVE = "challenge_inactive"
+    DATA_PUB = "data_pub"
+
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    description = models.CharField(
+        max_length=1024,
+        default="",
+        blank=True,
+        help_text="Short summary of this project, max 1024 characters.",
     )
     logo = JPEGField(
         upload_to=get_logo_path,
@@ -182,20 +211,6 @@ class ChallengeBase(models.Model):
     data_license_agreement = models.TextField(
         blank=True,
         help_text="What is the data license agreement for this challenge?",
-    )
-
-    task_types = models.ManyToManyField(
-        TaskType, blank=True, help_text="What type of task is this challenge?"
-    )
-    modalities = models.ManyToManyField(
-        ImagingModality,
-        blank=True,
-        help_text="What imaging modalities are used in this challenge?",
-    )
-    structures = models.ManyToManyField(
-        BodyStructure,
-        blank=True,
-        help_text="What structures are used in this challenge?",
     )
     series = models.ManyToManyField(
         ChallengeSeries,
@@ -676,3 +691,279 @@ def delete_challenge_follows(*_, instance: Challenge, **__):
         app_label=instance._meta.app_label, model=instance._meta.model_name
     ).get()
     Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()
+
+
+def submission_pdf_path(instance, filename):
+    return (
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
+    class ChallengeTypeChoices(models.IntegerChoices):
+        """Challenge type choices."""
+
+        T1 = 1, "Type 1 - prediction submission"
+        T2 = 2, "Type 2 - algorithm submission"
+
+    class ChallengeRequestStatusChoices(models.TextChoices):
+        ACCEPTED = "ACPT", _("Accepted")
+        REJECTED = "RJCT", _("Rejected")
+        PENDING = "PEND", _("Pending")
+
+    status = models.CharField(
+        max_length=4,
+        choices=ChallengeRequestStatusChoices.choices,
+        default=ChallengeRequestStatusChoices.PENDING,
+    )
+    abstract = models.TextField(
+        help_text="Provide a summary of the challenge purpose.",
+    )
+    contact_email = models.EmailField(
+        help_text="Please provide an email that our team can use to contact "
+        "you should there be any questions about your request.",
+    )
+    start_date = models.DateField(
+        help_text="Estimated start date for this challenge.",
+    )
+    end_date = models.DateField(
+        help_text="Estimated end date for this challenge. Please note that we aim to "
+        "keep challenges open for submission for at least 3 years after "
+        "the official end date if possible.",
+    )
+    organizers = models.TextField(
+        help_text="Provide information about the organizing team (names and affiliations)",
+    )
+    affiliated_event = models.CharField(
+        blank=True,
+        max_length=50,
+        help_text="Is this challenge part of a workshop or conference? If so, which one?",
+    )
+    structured_challenge_submission_form = models.FileField(
+        null=True,
+        blank=True,
+        upload_to=submission_pdf_path,
+        storage=protected_s3_storage,
+        validators=[
+            ExtensionValidator(allowed_extensions=(".pdf",)),
+            MimeTypeValidator(allowed_types=("application/pdf",)),
+        ],
+    )
+    challenge_type = models.PositiveSmallIntegerField(
+        choices=ChallengeTypeChoices.choices,
+        default=ChallengeTypeChoices.T2,
+        help_text="What type is this challenge?",
+    )
+    challenge_setup = models.TextField(
+        help_text="Describe the challenge set-up."
+    )
+    data_set = models.TextField(
+        help_text="Describe the training and test datasets you are planning to use."
+    )
+    submission_assessment = models.TextField(
+        help_text="Define the metrics you will use to assess and rank "
+        "participants’ submissions."
+    )
+    challenge_publication = models.TextField(
+        help_text="Please indicate if you plan to coordinate a publication "
+        "of the challenge results."
+    )
+    code_availability = models.TextField(
+        help_text="Will the participants’ code be accessible after the challenge?"
+    )
+    expected_number_of_teams = models.IntegerField(
+        help_text="How many teams do you expect to participate in your challenge?"
+    )
+    average_algorithm_container_size_in_gb = models.IntegerField(
+        default=10, help_text="Average algorithm container size in GB."
+    )
+    average_number_of_containers_per_team = models.IntegerField(
+        default=10,
+        help_text="Average number of algorithm containers per team.",
+    )
+    inference_time_limit_in_minutes = models.IntegerField(
+        blank=True,
+        null=True,
+        help_text="Time limit per inference job in minutes.",
+    )
+    average_size_of_test_image_in_mb = models.IntegerField(
+        null=True, blank=True, help_text="Average size of a test image in MB."
+    )
+    phase_1_number_of_submissions_per_team = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="How many submissions will teams be allowed to make to this phase?",
+    )
+    phase_2_number_of_submissions_per_team = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="How many submissions will teams be allowed to make to this phase?",
+    )
+    phase_1_number_of_test_images = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of test images for this phase.",
+    )
+    phase_2_number_of_test_images = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of test images for this phase.",
+    )
+    number_of_tasks = models.IntegerField(
+        default=1,
+        help_text="If your challenge has multiple tasks, we multiply the "
+        "phase 1 and 2 cost estimates by the number of tasks.",
+    )
+    budget_for_hosting_challenge = models.IntegerField(
+        default=0,
+        null=True,
+        blank=True,
+        help_text="What is your budget for hosting this challenge, if any?",
+    )
+
+    def __str__(self):
+        return self.title
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._orig_status = self.status
+
+    def get_absolute_url(self):
+        return reverse("challenges:requests-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+
+        if adding:
+            send_challenge_requested_email_to_reviewers(self)
+            send_challenge_requested_email_to_requester(self)
+
+    def create_challenge(self):
+        challenge = Challenge(
+            title=self.title,
+            short_name=self.short_name,
+            creator=self.creator,
+            hidden=True,
+            contact_email=self.contact_email,
+        )
+        challenge.full_clean()
+        challenge.save()
+        challenge.task_types.set(self.task_types.all())
+        challenge.modalities.set(self.modalities.all())
+        challenge.structures.set(self.structures.all())
+        challenge.save()
+
+        if self.challenge_type == self.ChallengeTypeChoices.T2:
+            phase = challenge.phase_set.get()
+            phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.creator_must_be_verified = True
+            phase.full_clean()
+            phase.save()
+
+        return challenge
+
+    @cached_property
+    def budget(self):
+        budget = None
+        if self.challenge_type == self.ChallengeTypeChoices.T2:
+            compute_costs = settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+            storage_costs = (
+                settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+            )
+
+            budget = {
+                "Data storage cost for phase 1": None,
+                "Compute costs for phase 1": None,
+                "Total phase 1": None,
+                "Data storage cost for phase 2": None,
+                "Compute costs for phase 2": None,
+                "Total phase 2": None,
+                "Docker storage cost": None,
+                "Total": None,
+            }
+
+            # calculate budget for phase 1
+            budget["Data storage cost for phase 1"] = round(
+                self.phase_1_number_of_test_images
+                * self.average_size_of_test_image_in_mb
+                * storage_costs
+                / 1000000
+                / 100,
+                ndigits=2,
+            )
+            budget["Compute costs for phase 1"] = round(
+                self.phase_1_number_of_test_images
+                * self.phase_1_number_of_submissions_per_team
+                * self.expected_number_of_teams
+                * self.inference_time_limit_in_minutes
+                * compute_costs
+                / 60
+                / 100,
+                ndigits=2,
+            )
+            budget["Total phase 1"] = round(
+                (
+                    budget["Data storage cost for phase 1"]
+                    + budget["Compute costs for phase 1"]
+                )
+                * self.number_of_tasks,
+                ndigits=2,
+            )
+
+            # calculate budget for phase 2
+            budget["Data storage cost for phase 2"] = round(
+                self.phase_2_number_of_test_images
+                * self.average_size_of_test_image_in_mb
+                * storage_costs
+                / 1000000
+                / 100,
+                ndigits=2,
+            )
+            budget["Compute costs for phase 2"] = round(
+                self.phase_2_number_of_test_images
+                * self.phase_2_number_of_submissions_per_team
+                * self.expected_number_of_teams
+                * self.inference_time_limit_in_minutes
+                * compute_costs
+                / 60
+                / 100,
+                ndigits=2,
+            )
+            budget["Total phase 2"] = round(
+                (
+                    budget["Data storage cost for phase 2"]
+                    + budget["Compute costs for phase 2"]
+                )
+                * self.number_of_tasks,
+                ndigits=2,
+            )
+
+            budget["Docker storage cost"] = round(
+                self.average_algorithm_container_size_in_gb
+                * self.average_number_of_containers_per_team
+                * self.expected_number_of_teams
+                * storage_costs
+                / 1000
+                / 100,
+                ndigits=2,
+            )
+
+            budget["Total"] = round(
+                sum(
+                    filter(
+                        None,
+                        [
+                            budget["Total phase 1"],
+                            budget["Total phase 2"],
+                            budget["Docker storage cost"],
+                        ],
+                    )
+                ),
+                ndigits=2,
+            )
+
+        return budget
