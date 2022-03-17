@@ -4,10 +4,12 @@ import os
 import sys
 import tarfile
 from contextlib import contextmanager
+from ipaddress import ip_address
 from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from shutil import copyfileobj
+from socket import getaddrinfo
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from time import sleep
 
@@ -607,14 +609,19 @@ class Service(DockerConnection):
             ),
         }
 
-        ports = (
-            {
-                http_port: (settings.COMPONENTS_PORT_ADDRESS, None),
-                websocket_port: (settings.COMPONENTS_PORT_ADDRESS, None),
+        if settings.COMPONENTS_PUBLISH_PORTS:
+            bind_address = settings.COMPONENTS_PORT_ADDRESS
+            try:
+                ip_address(bind_address)
+            except ValueError:
+                # Not an IP address, lets look it up
+                bind_address = getaddrinfo(bind_address, None)[0][4][0]
+            ports = {
+                http_port: (bind_address, None),
+                websocket_port: (bind_address, None),
             }
-            if settings.COMPONENTS_PUBLISH_PORTS
-            else {}
-        )
+        else:
+            ports = {}
 
         self._client.containers.run(
             image=self._exec_image_sha256,
