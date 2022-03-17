@@ -607,6 +607,12 @@ class Service(DockerConnection):
             ),
         }
 
+        ports = (
+            {http_port: None, websocket_port: None}
+            if settings.COMPONENTS_PUBLISH_PORTS
+            else {}
+        )
+
         self._client.containers.run(
             image=self._exec_image_sha256,
             name=f"{self._job_id}-service",
@@ -615,6 +621,7 @@ class Service(DockerConnection):
             labels={**self._labels, **traefik_labels},
             environment=environment or {},
             extra_hosts=self.extra_hosts,
+            ports=ports,
             **self._run_kwargs,
         )
 
