@@ -907,15 +907,22 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         reader_study = self.get_object()
         if not (reader_study.is_educational and reader_study.has_ground_truth):
             raise Http404()
-        try:
-            image = reader_study.images.get(pk=case_pk)
-        except Image.DoesNotExist:
-            raise Http404()
-        answers = Answer.objects.filter(
-            images=image,
-            question__reader_study=reader_study,
-            is_ground_truth=True,
-        )
+        if reader_study.use_display_sets:
+            answers = Answer.objects.filter(
+                display_set_id=case_pk,
+                question__reader_study=reader_study,
+                is_ground_truth=True,
+            )
+        else:
+            try:
+                image = reader_study.images.get(pk=case_pk)
+            except Image.DoesNotExist:
+                raise Http404()
+            answers = Answer.objects.filter(
+                images=image,
+                question__reader_study=reader_study,
+                is_ground_truth=True,
+            )
         return JsonResponse(
             {
                 str(answer.question_id): {

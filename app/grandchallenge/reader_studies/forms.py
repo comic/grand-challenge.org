@@ -415,7 +415,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         if sorted(
             filter(lambda x: not x.endswith("__explanation"), headers)
         ) != sorted(
-            ["images"]
+            [self.reader_study.case_field]
             + list(
                 self.reader_study.questions.values_list(
                     "question_text", flat=True
@@ -429,17 +429,21 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 
         values = [x for x in rdr]
 
-        images = sorted(sorted(x["images"].split(";")) for x in values)
-        if images != sorted(self.reader_study.image_groups):
-            diff = self.reader_study.hanging_list_diff(
-                provided=list(itertools.chain(*images))
+        if not self.reader_study.use_display_sets:
+            images = sorted(
+                sorted(x[self.reader_study.case_field].split(";"))
+                for x in values
             )
-            raise ValidationError(
-                f"Images provided do not match hanging protocol. The following "
-                f"images appear in the file, but not in the hanging list: "
-                f"{', '.join(diff['in_provided_list'])}. These images appear "
-                f"in the hanging list, but not in the file: "
-                f"{', '.join(diff['in_hanging_list'])}."
-            )
+            if images != sorted(self.reader_study.image_groups):
+                diff = self.reader_study.hanging_list_diff(
+                    provided=list(itertools.chain(*images))
+                )
+                raise ValidationError(
+                    f"Images provided do not match hanging protocol. The following "
+                    f"images appear in the file, but not in the hanging list: "
+                    f"{', '.join(diff['in_provided_list'])}. These images appear "
+                    f"in the hanging list, but not in the file: "
+                    f"{', '.join(diff['in_hanging_list'])}."
+                )
 
         return values

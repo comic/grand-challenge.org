@@ -361,8 +361,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return f"{self.title}"
 
     @property
+    def case_field(self):
+        return "case" if self.use_display_sets else "images"
+
+    @property
     def ground_truth_file_headers(self):
-        return ["images"] + [
+        return [self.case_field] + [
             q.question_text for q in self.answerable_questions
         ]
 
@@ -376,7 +380,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         }
         for images in self.image_groups:
             _answers = answers.copy()
-            _answers["images"] = (
+            _answers[self.case_field] = (
                 str(images) if self.use_display_sets else ";".join(images)
             )
             result.append(_answers)
@@ -650,13 +654,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         answers = []
         for gt in data:
             if self.use_display_sets:
-                display_set = self.display_sets.get(pk=gt["images"])
+                display_set = self.display_sets.get(pk=gt[self.case_field])
                 images = []
             else:
                 display_set = None
-                images = self.images.filter(name__in=gt["images"].split(";"))
+                images = self.images.filter(
+                    name__in=gt[self.case_field].split(";")
+                )
             for key in gt.keys():
-                if key == "images" or key.endswith("__explanation"):
+                if key == self.case_field or key.endswith("__explanation"):
                     continue
                 question = self.questions.get(question_text=key)
                 _answer = json.loads(gt[key])
@@ -683,22 +689,32 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     "answer": _answer,
                     "is_ground_truth": True,
                 }
-                if not self.use_display_sets:
-                    # validation for display sets is already implicitly handled
-                    # by getting the object
+                if self.use_display_sets:
+                    kwargs["display_set"] = display_set
+                else:
                     kwargs["images"] = images
+
                 Answer.validate(**kwargs)
                 try:
                     explanation = json.loads(gt.get(key + "__explanation", ""))
                 except (json.JSONDecodeError, TypeError):
                     explanation = ""
+                if self.use_display_sets:
+                    answer_obj = Answer.objects.filter(
+                        display_set=display_set,
+                        question=question,
+                        is_ground_truth=True,
+                    ).first()
+
+                else:
+                    answer_obj = Answer.objects.filter(
+                        images__in=images,
+                        question=question,
+                        is_ground_truth=True,
+                    ).first()
                 answers.append(
                     {
-                        "answer_obj": Answer.objects.filter(
-                            images__in=images,
-                            question=question,
-                            is_ground_truth=True,
-                        ).first()
+                        "answer_obj": answer_obj
                         or Answer(
                             creator=user,
                             question=question,
