@@ -113,7 +113,11 @@ class AmazonECSExecutor:
         # Creating the credits file also consumes credits, so take this into
         # account when calculating the payback time assuming the current size
         # of the credits file is zero
-        n_hours = max(24 - (1 / credits_per_byte_per_hour), 1)
+        n_hours = max(
+            settings.COMPONENTS_AMAZON_EFS_TARGET_HOURS
+            - (1 / credits_per_byte_per_hour),
+            1,
+        )
 
         current_balance = cls._get_current_efs_burst_balance_bytes()
         credits_needed = (
