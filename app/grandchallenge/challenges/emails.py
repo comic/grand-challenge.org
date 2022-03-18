@@ -8,27 +8,6 @@ from django.utils.html import format_html
 from grandchallenge.subdomains.utils import reverse
 
 
-def send_challenge_created_email(challenge):
-    site = Site.objects.get_current()
-    message = format_html(
-        "Dear manager,\n\n"
-        "User {user} has just created the challenge {challenge_short_name} "
-        "at {challenge_url}.\n\n"
-        "Regards,\n{site_name}\n\n"
-        "This is an automated service email from {site_domain}.",
-        user=challenge.creator,
-        challenge_short_name=challenge.short_name,
-        challenge_url=challenge.get_absolute_url(),
-        site_name=site.name,
-        site_domain=site.domain,
-    )
-
-    mail_managers(
-        subject=f"[{site.domain.lower()}] New Challenge Created",
-        message=message,
-    )
-
-
 def send_external_challenge_created_email(challenge):
     site = Site.objects.get_current()
     update_url = reverse(

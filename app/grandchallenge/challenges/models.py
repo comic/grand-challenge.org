@@ -33,7 +33,6 @@ from tldextract import extract
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
-    send_challenge_created_email,
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
     send_external_challenge_created_email,
@@ -388,7 +387,6 @@ class Challenge(ChallengeBase):
             self.create_forum_permissions()
             self.create_default_pages()
             self.create_default_phases()
-            send_challenge_created_email(self)
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
