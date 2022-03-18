@@ -1024,6 +1024,15 @@ class DisplaySetViewSet(
             instance.values.remove(assigned)
         return super().partial_update(request, pk)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance.is_editable:
+            raise PermissionDenied(
+                "This display set cannot be removed, as answers for it "
+                "already exist."
+            )
+        return super().destroy(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = DisplaySet.objects.all().select_related("reader_study")
         unanswered_by_user = self.request.query_params.get(
