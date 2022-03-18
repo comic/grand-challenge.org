@@ -1,7 +1,6 @@
 from django.urls import path
 
 from grandchallenge.challenges.views import (
-    ChallengeCreate,
     ChallengeList,
     ChallengeRequestCreate,
     ChallengeRequestDetail,
@@ -24,7 +23,6 @@ urlpatterns = [
         name="combined-list",
     ),
     path("my-challenges/", UsersChallengeList.as_view(), name="users-list"),
-    path("create/", ChallengeCreate.as_view(), name="create"),
     path("external/", ExternalChallengeList.as_view(), name="external-list"),
     path(
         "external/create/",

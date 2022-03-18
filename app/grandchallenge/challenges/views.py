@@ -21,7 +21,6 @@ from grandchallenge.challenges.filters import (
     InternalChallengeFilter,
 )
 from grandchallenge.challenges.forms import (
-    ChallengeCreateForm,
     ChallengeRequestForm,
     ChallengeRequestUpdateForm,
     ChallengeUpdateForm,
@@ -38,26 +37,6 @@ from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
-
-
-class ChallengeCreate(
-    LoginRequiredMixin,
-    VerificationRequiredMixin,
-    SuccessMessageMixin,
-    CreateView,
-):
-    model = Challenge
-    form_class = ChallengeCreateForm
-    success_message = "Challenge successfully created"
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        return super().form_valid(form)
-
-    def get_form_kwargs(self, *args, **kwargs):
-        form_kwargs = super().get_form_kwargs(*args, **kwargs)
-        form_kwargs.update({"creator": self.request.user})
-        return form_kwargs
 
 
 class ChallengeList(FilterMixin, ListView):

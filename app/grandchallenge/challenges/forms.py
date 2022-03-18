@@ -21,25 +21,6 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.subdomains.utils import reverse_lazy
 
-
-class ChallengeCreateForm(forms.ModelForm):
-    def __init__(self, creator, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-        self.fields["contact_email"].required = True
-        self.fields["contact_email"].initial = creator.email
-
-    class Meta:
-        model = Challenge
-        fields = [
-            "short_name",
-            "description",
-            "access_request_handling",
-            "contact_email",
-        ]
-
-
 common_information_items = (
     "title",
     "description",
