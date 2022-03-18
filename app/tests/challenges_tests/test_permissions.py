@@ -20,22 +20,6 @@ def test_challenge_logged_in_permissions(view, client, challenge_set):
 
 
 @pytest.mark.django_db
-def test_create_challenge_only_when_verified(client):
-    user = UserFactory()
-    assert not Verification.objects.filter(user=user)
-
-    response = get_view_for_user(
-        client=client, viewname="challenges:create", user=user
-    )
-    assert response.status_code == 403
-    Verification.objects.create(user=user, is_verified=True)
-    response = get_view_for_user(
-        client=client, viewname="challenges:create", user=user
-    )
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
 def test_challenge_update_permissions(client, two_challenge_sets):
     validate_admin_only_view(
         two_challenge_set=two_challenge_sets, viewname="update", client=client
@@ -88,7 +72,7 @@ def test_request_challenge_only_when_verified(client):
     assert response.status_code == 403
     Verification.objects.create(user=user, is_verified=True)
     response = get_view_for_user(
-        client=client, viewname="challenges:create", user=user
+        client=client, viewname="challenges:requests-create", user=user
     )
     assert response.status_code == 200
 

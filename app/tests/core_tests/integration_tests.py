@@ -1,3 +1,4 @@
+import datetime
 import re
 from random import choice
 
@@ -7,11 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
 
-from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.core.utils.access_requests import (
-    AccessRequestHandlingOptions,
-)
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
@@ -38,113 +35,65 @@ def create_page(
     )
 
 
-def get_first_page(challenge):
-    return Page.objects.filter(challenge=challenge)[0]
-
-
-def extract_form_errors(html):
-    """Extract the list of errors from the form."""
-    errors = re.findall(
-        '<ul class="errorlist"(.*)</ul>', html.decode(), re.IGNORECASE
-    )
-    return errors
-
-
-def find_text_between(start, end, haystack: bytes):
-    """
-    Return text between the first occurrence of string start and string end
-    in haystack.
-    """
-    found = re.search(
-        start + "(.*)" + end, haystack.decode(), re.IGNORECASE | re.DOTALL
-    )
-    if found:
-        return found.group(1).strip()
-
-    else:
-        raise Exception(
-            "There is no substring starting with '{}', ending"
-            " with '{}' in content '{}' ".format(start, end, haystack)
-        )
-
-
-def extract_href_from_anchor(anchor: str):
-    return find_text_between('href="', '">', anchor.encode())
-
-
-def is_subset(a, b):
-    """Determine if a is a subset of b."""
-    all(item in a for item in b)
-
-
 class GrandChallengeFrameworkTestCase(TestCase):
     def setUp(self):
-        self.set_up_base()
-        self.set_up_extra()
-
-    def set_up_base(self):
-        """Function will be run for all subclassed testcases."""
         self._create_root_superuser()
-
-    def set_up_extra(self):
-        """Overwrite this method in child classes."""
-        pass
+        [
+            self.testchallenge,
+            self.root,
+            self.challengeadmin,
+            self.participant,
+            self.registered_user,
+        ] = self._create_dummy_project("test-project")
 
     def _create_root_superuser(self):
-        User = get_user_model()  # noqa: N806
-        try:
-            self.root = User.objects.filter(username="root")[0]
-        except IndexError:
-            self.root = UserFactory(
-                username="root", email="w.s.kerkstra@gmail.com", is_active=True
-            )
-            self.root.set_password("testpassword")
-            self.root.save()
+        self.root = UserFactory(
+            username="root",
+            email="test@test.com",
+            is_active=True,
+            is_superuser=True,
+        )
+        self.root.set_password("testpassword")
+        self.root.save()
 
-            EmailAddress.objects.create(
-                user=self.root, email=self.root.email, verified=True
-            )
+        EmailAddress.objects.create(
+            user=self.root, email=self.root.email, verified=True
+        )
 
     def _create_dummy_project(self, projectname="testproject"):
-        """
-        Create a project with some pages and users.
-
-        In part this is done through admin views, meaning admin views are also
-        tested here.
-        """
-        # Create three types of users that exist: Root, can do anything,
-        # projectadmin, cam do things to a project he or she owns. And logged in
-        # user
-        # created in  _create_main_project_and_root.
+        """Create a test challenge with some pages and some site users."""
+        # Create three types of users:
+        # Root = superuser, can do anything,
         root = self.root
-        # non-root users are created as if they signed up through the project,
-        # to maximize test coverage.
-        # A user who has created a project
-        projectadmin = self._create_random_user("projectadmin")
-        testproject = self._create_challenge_in_admin(
-            projectadmin, projectname
+        # A user who has created a challenge
+        challengeadmin = self._create_random_user("projectadmin")
+        testchallenge = self._create_challenge_in_admin(
+            challengeadmin, projectname
         )
-        create_page(testproject, "testpage1")
-        create_page(testproject, "testpage2")
-        # a user who explicitly signed up to testproject
+        create_page(testchallenge, "testpage1")
+        create_page(testchallenge, "testpage2")
+        # a user who registered for the challenge and was accepted
         participant = self._create_random_user("participant")
-        self._register(participant, testproject)
-        # a user who only signed up but did not register to any project
+        self._register(participant, testchallenge)
+        # a user who only signed up to website but did not register to any challenge
         registered_user = self._create_random_user("registered")
-        # TODO: How to do this gracefully?
-        return [testproject, root, projectadmin, participant, registered_user]
+        return [
+            testchallenge,
+            root,
+            challengeadmin,
+            participant,
+            registered_user,
+        ]
 
-    def _register(self, user, project):
+    def _register(self, user, challenge):
         """
-        Register user for the given project, follow actual signup as closely
+        Register user for the given challenge, follow actual signup as closely
         as possible.
         """
-        RegistrationRequestFactory(challenge=project, user=user)
-        self.assertTrue(
-            project.is_participant(user),
-            "After registering as user %s , user does not "
-            " appear to be registered." % (user.username),
-        )
+        request = RegistrationRequestFactory(challenge=challenge, user=user)
+        request.status = request.ACCEPTED
+        request.save()
+        assert challenge.is_participant(user)
 
     def _test_page_can_be_viewed(self, user, page):
         page_url = reverse(
@@ -331,22 +280,30 @@ class GrandChallengeFrameworkTestCase(TestCase):
         query_result = User.objects.filter(username=username)
         return query_result[0]
 
-    def _try_create_challenge(
-        self, user, short_name, description="test project"
+    def _try_create_challenge_request(
+        self, user, short_name, title="test project"
     ):
-        url = reverse("challenges:create")
+        url = reverse("challenges:requests-create")
         data = {
+            "creator": user,
+            "title": title,
             "short_name": short_name,
-            "description": description,
             "contact_email": user.email,
-            "logo": create_uploaded_image(),
-            "banner": create_uploaded_image(),
-            "prefix": "form",
-            "page_set-TOTAL_FORMS": "0",
-            "page_set-INITIAL_FORMS": "0",
-            "page_set-MAX_NUM_FORMS": "",
-            "access_request_handling": AccessRequestHandlingOptions.ACCEPT_ALL,
+            "challenge_type": ChallengeRequest.ChallengeTypeChoices.T2,
+            "start_date": datetime.date.today(),
+            "end_date": datetime.date.today() + datetime.timedelta(days=1),
+            "expected_number_of_participants": 10,
+            "abstract": "test",
+            "organizers": "test",
+            "challenge_setup": "test",
+            "data_set": "test",
+            "submission_assessment": "test",
+            "challenge_publication": "test",
+            "code_availability": "test",
+            "expected_number_of_teams": 10,
+            "number_of_tasks": 1,
         }
+        Verification.objects.get_or_create(user=user, is_verified=True)
         self._login(user)
         response = self.client.post(url, data)
         return response
@@ -356,15 +313,10 @@ class GrandChallengeFrameworkTestCase(TestCase):
     ):
         """Create a challenge object as if created through django admin interface."""
         Verification.objects.create(user=user, is_verified=True)
-        response = self._try_create_challenge(user, short_name, description)
-        errors = self._find_errors_in_page(response)
-        if errors:
-            self.assertFalse(
-                errors, f"Error creating project '{short_name}':\n {errors}"
-            )
-        # ad.set_base_permissions(request,project)
-        project = Challenge.objects.get(short_name=short_name)
-        return project
+        challenge = Challenge.objects.create(
+            creator=user, short_name=short_name, description=description
+        )
+        return challenge
 
     def _login(self, user, password="testpassword"):
         """
@@ -384,148 +336,72 @@ class GrandChallengeFrameworkTestCase(TestCase):
         )
         return success
 
-    def assert_email(self, email, email_expected):
-        """
-        Convenient way to check subject, content, mailto etc at once for an email.
 
-        email : django.core.mail.message object
-        email_expected : dict like {"subject":"Registration complete","to":"user@email.org" }
-        """
-        for attr in email_expected.keys():
-            try:
-                found = getattr(email, attr)
-            except AttributeError as e:
-                raise AttributeError(
-                    "Could not find attribute '{}' for this email.\
-                                     are you sure it exists? - {}".format(
-                        attr, str(e)
-                    )
-                )
-
-            expected = email_expected[attr]
-            self.assertTrue(
-                expected == found
-                or is_subset(found, expected)
-                or (expected in found),
-                "Expected to find '{}' for email attribute \
-                '{}' but found '{}' instead".format(
-                    expected, attr, found
-                ),
-            )
-
-
-class CreateProjectTest(GrandChallengeFrameworkTestCase):
-    def test_cannot_create_project_with_weird_name(self):
-        """
-        Expose issue #222 : projects can be created with names which are
-        not valid as hostname, for instance containing underscores. Make sure
-        These cannot be created
-        """
-        # non-root users are created as if they signed up through the project,
-        # to maximize test coverage.
+class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):
+    def test_cannot_create_request_with_weird_name(self):
         # A user who has created a project
         self.projectadmin = self._create_random_user("projectadmin")
         challenge_short_name = "under_score"
-        response = self._try_create_challenge(
+        response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
-        self.assertTrue(
-            errors,
-            "Creating a project called '{}' should not be \
-            possible. But is seems to have been created anyway.".format(
-                challenge_short_name
-            ),
-        )
+        assert "Underscores (_) are not allowed." in errors
+
         challenge_short_name = "project with spaces"
-        response = self._try_create_challenge(
+        response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
-        self.assertTrue(
-            errors,
-            "Creating a project called '{}' should not be \
-            possible. But is seems to have been created anyway.".format(
-                challenge_short_name
-            ),
+        assert (
+            "Enter a valid “slug” consisting of letters, numbers, underscores or hyphens"
+            in errors
         )
+
         challenge_short_name = "project-with-w#$%^rd-items"
-        response = self._try_create_challenge(
+        response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
-        self.assertTrue(
-            errors,
-            "Creating a project called '{}' should not be \
-            possible. But is seems to have been created anyway.".format(
-                challenge_short_name
-            ),
+        assert (
+            "Enter a valid “slug” consisting of letters, numbers, underscores or hyphens"
+            in errors
         )
+
         challenge_short_name = "images"
-        response = self._try_create_challenge(
+        response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
-        self.assertTrue(
-            errors,
-            "Creating a project called '{}' should not be \
-            possible. But is seems to have been created anyway.".format(
-                challenge_short_name
-            ),
-        )
+        assert "That name is not allowed." in errors
 
 
 class ViewsTest(GrandChallengeFrameworkTestCase):
-    def set_up_extra(self):
-        """
-        Create some objects to work with, In part this is done through
-        admin views, meaning admin views are also tested here.
-        """
-        # todo: is this ugly? At least there is explicit assignment of vars.
-        # How to do this better?
-        [
-            self.testproject,
-            self.root,
-            self.projectadmin,
-            self.participant,
-            self.registered_user,
-        ] = self._create_dummy_project("view-test")
-
-    def test_registered_user_can_create_project(self):
-        """
-        A user freshly registered through the challenge can immediately create
-        a challenge.
-        """
-        user = self._create_user({"username": "user2", "email": "ab@cd.com"})
-        testproject = self._create_challenge_in_admin(user, "user1project")
-        testpage1 = create_page(testproject, "testpage1")
-        create_page(testproject, "testpage2")
-        self._test_page_can_be_viewed(user, testpage1)
-        self._test_page_can_be_viewed(self.root, testpage1)
-
     def test_page_view_permission(self):
         """
         Check that a page with permissions set can only be viewed by the
         correct users.
         """
         adminonlypage = create_page(
-            self.testproject, "adminonlypage", permission_level=Page.ADMIN_ONLY
+            self.testchallenge,
+            "adminonlypage",
+            permission_level=Page.ADMIN_ONLY,
         )
         registeredonlypage = create_page(
-            self.testproject,
+            self.testchallenge,
             "registeredonlypage",
             permission_level=Page.REGISTERED_ONLY,
         )
         publicpage = create_page(
-            self.testproject, "publicpage", permission_level=Page.ALL
+            self.testchallenge, "publicpage", permission_level=Page.ALL
         )
-        self._test_page_can_be_viewed(self.projectadmin, adminonlypage)
+        self._test_page_can_be_viewed(self.challengeadmin, adminonlypage)
         self._test_page_can_not_be_viewed(self.participant, adminonlypage)
         self._test_page_can_not_be_viewed(self.registered_user, adminonlypage)
         self._test_page_can_not_be_viewed(
             None, adminonlypage
         )  # None = not logged in
-        self._test_page_can_be_viewed(self.projectadmin, registeredonlypage)
+        self._test_page_can_be_viewed(self.challengeadmin, registeredonlypage)
         self._test_page_can_be_viewed(self.participant, registeredonlypage)
         self._test_page_can_not_be_viewed(
             self.registered_user, registeredonlypage
@@ -533,7 +409,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         self._test_page_can_not_be_viewed(
             None, registeredonlypage
         )  # None = not logged in
-        self._test_page_can_be_viewed(self.projectadmin, publicpage)
+        self._test_page_can_be_viewed(self.challengeadmin, publicpage)
         self._test_page_can_be_viewed(self.participant, publicpage)
         self._test_page_can_be_viewed(self.registered_user, publicpage)
         self._test_page_can_be_viewed(None, publicpage)  # None = not logged in
@@ -544,7 +420,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         robots_url = "/robots.txt"
         robots_url_project = reverse(
             "subdomain_robots_txt",
-            kwargs={"challenge_short_name": self.testproject.short_name},
+            kwargs={"challenge_short_name": self.testchallenge.short_name},
         )
         self._test_url_can_be_viewed(None, robots_url)  # None = not logged in
         self._test_url_can_be_viewed(
@@ -556,7 +432,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         page_url = reverse(
             "pages:detail",
             kwargs={
-                "challenge_short_name": self.testproject.short_name,
+                "challenge_short_name": self.testchallenge.short_name,
                 "page_title": "doesnotexistpage",
             },
         )
@@ -588,46 +464,43 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
 
 class ProjectLoginTest(GrandChallengeFrameworkTestCase):
     """
-    Getting login and signup to display inside a project context
-    (with correct banner and pages, sending project-based email etc..) was
-    quite a hassle, not to mention messy. Do all the links still work?
+    Tests the general login and logout views,
+    as well as the challenge specific sign-up view.
     """
 
-    def set_up_extra(self):
-        """
-        Create some objects to work with, In part this is done through admin
-        views, meaning admin views are also tested here.
-        """
-        [
-            self.testproject,
-            self.root,
-            self.projectadmin,
-            self.participant,
-            self.signedup_user,
-        ] = self._create_dummy_project("test-project")
-        self.participant2 = self._create_random_user("participant2")
-        self._register(self.participant2, self.testproject)
-
     def test_project_login(self):
-        # see if login for specific project works. This tests the project
-        # centered signup form.
-        self._create_random_user()
-        # see if views work and all urls can be found
         login_url = reverse("account_login")
         logout_url = reverse("account_logout")
         profile_signup_complete_url = reverse(
-            "profile-detail", kwargs={"username": self.signedup_user.username}
+            "profile-detail",
+            kwargs={"username": self.registered_user.username},
         )
-        self._test_url_can_not_be_viewed(self.signedup_user, login_url)
+        challenge_sign_up_url = reverse(
+            "participants:registration-create",
+            kwargs={"challenge_short_name": self.testchallenge.short_name},
+        )
+
+        # login page
         self._test_url_can_be_viewed(None, login_url)
-        self._test_url_can_be_viewed(self.participant, logout_url)
+        self._test_url_can_not_be_viewed(self.registered_user, login_url)
+
+        # logout page
         self._test_url_can_not_be_viewed(None, logout_url)
+        self._test_url_can_be_viewed(self.registered_user, logout_url)
+
+        # profile sign up complete page
         self._test_url_can_be_viewed(
-            self.signedup_user, profile_signup_complete_url
+            self.registered_user, profile_signup_complete_url
         )
         self._test_url_can_be_viewed(None, profile_signup_complete_url)
-        # password reset is in the "forgot password?" link on the project
-        # based login page. Make sure this works right.
+
+        # password reset is in the "forgot password?" link
         self._test_url_can_be_viewed(
-            self.participant, reverse("account_reset_password")
+            self.registered_user, reverse("account_reset_password")
         )
+
+        # challenge sign up page
+        self._test_url_can_be_viewed(
+            self.registered_user, challenge_sign_up_url
+        )
+        self._test_url_can_not_be_viewed(None, challenge_sign_up_url)
