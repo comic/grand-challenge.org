@@ -938,9 +938,17 @@ COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10 * GIGABYTE
-COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES = 2 * TERABYTE
-COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE = 100 * GIGABYTE
 COMPONENTS_AMAZON_EFS_BLOCK_SIZE = 16 * MEGABYTE
+COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES = int(
+    os.environ.get("COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES", 2 * TERABYTE)
+)
+COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE = int(
+    os.environ.get("COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE", 100 * GIGABYTE)
+)
+# Minimum of 6 as there is no payback below this
+COMPONENTS_AMAZON_EFS_TARGET_HOURS = max(
+    int(os.environ.get("COMPONENTS_AMAZON_EFS_TARGET_HOURS", 24)), 6
+)
 COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID = os.environ.get(
     "COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID"
 )
@@ -1141,7 +1149,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_components_filesystem": {
         "task": "grandchallenge.components.tasks.update_filesystem",
-        "schedule": timedelta(days=1),
+        "schedule": timedelta(hours=COMPONENTS_AMAZON_EFS_TARGET_HOURS),
     },
     **{
         f"stop_expired_services_{region}": {
