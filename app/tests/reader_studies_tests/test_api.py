@@ -1571,23 +1571,13 @@ def test_display_set_delete(client):
     assert response.status_code == 204
 
     ds = DisplaySetFactory(reader_study=rs)
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-detail",
-        reverse_kwargs={"pk": ds.pk},
-        user=reader,
-        client=client,
-        method=client.delete,
-        content_type="application/json",
-    )
-
     q = QuestionFactory(reader_study=rs)
-    AnswerFactory(question=q, display_set=ds)
+    AnswerFactory(question=q, creator=reader, display_set=ds)
 
-    ds = DisplaySetFactory(reader_study=rs)
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
         reverse_kwargs={"pk": ds.pk},
-        user=reader,
+        user=editor,
         client=client,
         method=client.delete,
         content_type="application/json",
