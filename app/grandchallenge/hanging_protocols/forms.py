@@ -60,7 +60,8 @@ class ViewContentMixin:
                 "Indicate which Component Interfaces need to be displayed in "
                 'which image port. E.g. {"main": ["interface1"]}. The first '
                 "item in the list of interfaces will be the main image in "
-                "the image port. All subsequent items will be rendered as "
-                "overlays."
+                "the image port. The first overlay type interface thereafter "
+                "will be rendered as an overlay. For now, any other items "
+                "will be ignored by the viewer."
             )
         }
