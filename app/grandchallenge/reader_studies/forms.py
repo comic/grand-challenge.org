@@ -36,7 +36,7 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ImagePortMappingMixin
+from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     CASE_TEXT_SCHEMA,
     HANGING_LIST_SCHEMA,
@@ -148,7 +148,7 @@ class ReaderStudyCreateForm(
 
 
 class ReaderStudyUpdateForm(
-    ReaderStudyCreateForm, ModelForm, ImagePortMappingMixin
+    ReaderStudyCreateForm, ModelForm, ViewContentMixin
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -168,7 +168,7 @@ class ReaderStudyUpdateForm(
             "workstation",
             "workstation_config",
             "hanging_protocol",
-            "image_port_mapping",
+            "view_content",
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
@@ -191,7 +191,7 @@ class ReaderStudyUpdateForm(
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
         }
-        widgets.update(ImagePortMappingMixin.Meta.widgets)
+        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
             "shuffle_hanging_list": (
@@ -225,7 +225,7 @@ class ReaderStudyUpdateForm(
                 reverse_lazy("hanging-protocols:create"),
             ),
         }
-        help_texts.update(ImagePortMappingMixin.Meta.help_texts)
+        help_texts.update(ViewContentMixin.Meta.help_texts)
 
 
 class ReaderStudyCopyForm(Form):

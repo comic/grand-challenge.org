@@ -4,7 +4,7 @@ from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.hanging_protocols.models import (
-    IMAGE_PORT_MAPPING_SCHEMA,
+    VIEW_CONTENT_SCHEMA,
     HangingProtocol,
 )
 
@@ -16,14 +16,14 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
         widgets = {"json": JSONEditorWidget}
 
 
-class ImagePortMappingMixin:
-    def clean_image_port_mapping(self):
-        mapping = self.cleaned_data["image_port_mapping"]
+class ViewContentMixin:
+    def clean_view_content(self):
+        mapping = self.cleaned_data["view_content"]
         hanging_protocol = self.cleaned_data["hanging_protocol"]
         if mapping and not hanging_protocol:
             self.add_error(
                 error="Please select a hanging protocol before filling this field.",
-                field="image_port_mapping",
+                field="view_content",
             )
 
         if mapping and hanging_protocol:
@@ -32,10 +32,10 @@ class ImagePortMappingMixin:
             }:
                 self.add_error(
                     error=(
-                        "Image ports in image_port_mapping do not match "
+                        "Image ports in view_content do not match "
                         "those in the selected hanging protocol."
                     ),
-                    field="image_port_mapping",
+                    field="view_content",
                 )
 
         slugs = {slug for viewport in mapping.values() for slug in viewport}
@@ -45,20 +45,18 @@ class ImagePortMappingMixin:
                 unknown.append(slug)
         if len(unknown) > 0:
             self.add_error(
-                error=f"Unkown slugs in image_port_mapping: {', '.join(unknown)}",
-                field="image_port_mapping",
+                error=f"Unkown slugs in view_content: {', '.join(unknown)}",
+                field="view_content",
             )
 
         return mapping
 
     class Meta:
         widgets = {
-            "image_port_mapping": JSONEditorWidget(
-                schema=IMAGE_PORT_MAPPING_SCHEMA
-            ),
+            "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
         }
         help_texts = {
-            "image_port_mapping": (
+            "view_content": (
                 "Indicate which Component Interfaces need to be displayed in "
                 'which image port. E.g. {"main": ["interface1"]}. The first '
                 "item in the list of interfaces will be the main image in "

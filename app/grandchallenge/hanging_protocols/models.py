@@ -73,7 +73,7 @@ HANGING_PROTOCOL_SCHEMA = {
 }
 
 
-IMAGE_PORT_MAPPING_SCHEMA = {
+VIEW_CONTENT_SCHEMA = {
     "definitions": {},
     "$schema": "http://json-schema.org/draft-06/schema#",
     "title": "The Display Port Mapping Schema",
@@ -119,11 +119,11 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
             )
 
 
-class ImagePortMappingMixin(models.Model):
-    image_port_mapping = models.JSONField(
+class ViewContentMixin(models.Model):
+    view_content = models.JSONField(
         blank=True,
         default=dict,
-        validators=[JSONValidator(schema=IMAGE_PORT_MAPPING_SCHEMA)],
+        validators=[JSONValidator(schema=VIEW_CONTENT_SCHEMA)],
     )
 
     class Meta:

@@ -42,10 +42,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.hanging_protocols.models import (
-    ImagePort,
-    ImagePortMappingMixin,
-)
+from grandchallenge.hanging_protocols.models import ImagePort, ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -188,7 +185,7 @@ CASE_TEXT_SCHEMA = {
 }
 
 
-class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ImagePortMappingMixin):
+class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     """
     Reader Study model.
 

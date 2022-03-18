@@ -46,7 +46,7 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
-from grandchallenge.hanging_protocols.forms import ImagePortMappingMixin
+from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
@@ -120,7 +120,7 @@ class AlgorithmForm(
     RepoNameValidationMixin,
     WorkstationUserFilterMixin,
     ModelForm,
-    ImagePortMappingMixin,
+    ViewContentMixin,
 ):
     image_requires_memory_gb = IntegerField(
         min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
@@ -202,7 +202,7 @@ class AlgorithmForm(
                 choices=(("", "-----"), (True, "Yes"), (False, "No"))
             ),
         }
-        widgets.update(ImagePortMappingMixin.Meta.widgets)
+        widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
             "repo_name": format_html(
                 (
@@ -245,7 +245,7 @@ class AlgorithmForm(
                 reverse_lazy("hanging-protocols:create"),
             ),
         }
-        help_texts.update(ImagePortMappingMixin.Meta.help_texts)
+        help_texts.update(ViewContentMixin.Meta.help_texts)
         labels = {
             "workstation": "Viewer",
             "workstation_config": "Viewer Configuration",

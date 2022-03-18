@@ -1,55 +1,49 @@
 import pytest
 
-from grandchallenge.hanging_protocols.forms import ImagePortMappingMixin
+from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 
 
-class DummyForm(ImagePortMappingMixin):
+class DummyForm(ViewContentMixin):
     cleaned_data = {"hanging_protocol": None}
-    errors = {"image_port_mapping": []}
+    errors = {"view_content": []}
 
     def add_error(self, *, field, error):
         self.errors[field].append(error)
 
 
 @pytest.mark.django_db
-def test_image_port_mapping_mixin():
+def test_view_content_mixin():
     form = DummyForm()
-    form.cleaned_data["image_port_mapping"] = {"main": ["test"]}
-    form.clean_image_port_mapping()
+    form.cleaned_data["view_content"] = {"main": ["test"]}
+    form.clean_view_content()
 
     assert (
         "Please select a hanging protocol before filling this field."
-        in form.errors["image_port_mapping"]
+        in form.errors["view_content"]
     )
-    assert (
-        "Unkown slugs in image_port_mapping: test"
-        in form.errors["image_port_mapping"]
-    )
+    assert "Unkown slugs in view_content: test" in form.errors["view_content"]
 
-    form.errors = {"image_port_mapping": []}
+    form.errors = {"view_content": []}
     form.cleaned_data["hanging_protocol"] = HangingProtocolFactory(
         json=[{"viewport_name": "main"}]
     )
-    form.cleaned_data["image_port_mapping"] = {"secondary": ["test"]}
-    form.clean_image_port_mapping()
+    form.cleaned_data["view_content"] = {"secondary": ["test"]}
+    form.clean_view_content()
 
     assert (
-        "Image ports in image_port_mapping do not match those in the selected hanging protocol."
-        in form.errors["image_port_mapping"]
+        "Image ports in view_content do not match those in the selected hanging protocol."
+        in form.errors["view_content"]
     )
-    assert (
-        "Unkown slugs in image_port_mapping: test"
-        in form.errors["image_port_mapping"]
-    )
+    assert "Unkown slugs in view_content: test" in form.errors["view_content"]
 
     ComponentInterfaceFactory(title="Test")
-    form.errors = {"image_port_mapping": []}
+    form.errors = {"view_content": []}
     form.cleaned_data["hanging_protocol"] = HangingProtocolFactory(
         json=[{"viewport_name": "main"}]
     )
-    form.cleaned_data["image_port_mapping"] = {"main": ["test"]}
-    form.clean_image_port_mapping()
+    form.cleaned_data["view_content"] = {"main": ["test"]}
+    form.clean_view_content()
 
-    assert form.errors["image_port_mapping"] == []
+    assert form.errors["view_content"] == []

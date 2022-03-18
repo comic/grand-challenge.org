@@ -20,14 +20,14 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.hanging_protocols.models import ImagePortMappingMixin
+from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 
 
-class Archive(UUIDModel, TitleSlugDescriptionModel, ImagePortMappingMixin):
+class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     """Model for archive. Contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
