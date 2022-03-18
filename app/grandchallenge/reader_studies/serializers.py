@@ -13,7 +13,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
-    ComponentInterfaceValueSerializer,
+    HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -63,7 +63,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     reader_study = HyperlinkedRelatedField(
         view_name="api:reader-study-detail", read_only=True
     )
-    values = ComponentInterfaceValueSerializer(many=True)
+    values = HyperlinkedComponentInterfaceValueSerializer(many=True)
 
     class Meta:
         model = DisplaySet
@@ -126,6 +126,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
+            "use_display_sets",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):
