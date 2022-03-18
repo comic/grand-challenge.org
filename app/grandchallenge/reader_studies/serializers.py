@@ -126,6 +126,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
+            "use_display_sets",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):
