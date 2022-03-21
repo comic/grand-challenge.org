@@ -2,6 +2,7 @@ import pytest
 
 from grandchallenge.archives.serializers import ArchiveSerializer
 from tests.archives_tests.factories import ArchiveFactory
+from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.serializer_helpers import (
     do_test_serializer_fields,
     do_test_serializer_valid,
@@ -26,6 +27,7 @@ from tests.serializer_helpers import (
                     "algorithms",
                     "logo",
                     "description",
+                    "hanging_protocol",
                 ),
             },
         )
@@ -33,6 +35,8 @@ from tests.serializer_helpers import (
 )
 class TestSerializers:
     def test_serializer_valid(self, serializer_data, rf):
+        hp = HangingProtocolFactory(json=([{"viewport_name": "main"}]))
+        serializer_data["factory"] = ArchiveFactory(hanging_protocol=hp)
         do_test_serializer_valid(serializer_data, request=rf.get("/foo"))
 
     def test_serializer_fields(self, serializer_data, rf):
