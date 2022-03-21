@@ -4,6 +4,7 @@ from grandchallenge.workstations.templatetags.workstations import (
     workstation_query,
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.archives_tests.factories import ArchiveItemFactory
 from tests.factories import ImageFactory, WorkstationConfigFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
@@ -16,6 +17,7 @@ def test_workstation_query(settings):
     )
     algorithm_job = AlgorithmJobFactory()
     config = WorkstationConfigFactory()
+    archive_item = ArchiveItemFactory()
 
     qs = workstation_query(image=image)
     assert "&" not in qs
@@ -87,3 +89,19 @@ def test_workstation_query(settings):
         in qs
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
+
+    qs = workstation_query(archive_item=archive_item, config=config)
+    assert "&" in qs
+    assert (
+        f"{settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM}={archive_item.pk}"
+        in qs
+    )
+    assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
+
+    qs = workstation_query(archive_item=archive_item)
+    assert "&" not in qs
+    assert (
+        f"{settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM}={archive_item.pk}"
+        in qs
+    )
+    assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}" not in qs
