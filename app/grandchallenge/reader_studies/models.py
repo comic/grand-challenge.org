@@ -42,7 +42,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.hanging_protocols.models import ImagePort
+from grandchallenge.hanging_protocols.models import ImagePort, ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -185,7 +185,7 @@ CASE_TEXT_SCHEMA = {
 }
 
 
-class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
+class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     """
     Reader Study model.
 
@@ -1048,6 +1048,11 @@ class DisplaySet(UUIDModel):
             self.assign_permissions()
 
     def assign_permissions(self):
+        assign_perm(
+            f"delete_{self._meta.model_name}",
+            self.reader_study.editors_group,
+            self,
+        )
         assign_perm(
             f"change_{self._meta.model_name}",
             self.reader_study.editors_group,

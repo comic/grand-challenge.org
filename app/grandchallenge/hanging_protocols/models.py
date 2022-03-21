@@ -73,6 +73,24 @@ HANGING_PROTOCOL_SCHEMA = {
 }
 
 
+VIEW_CONTENT_SCHEMA = {
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "The Display Port Mapping Schema",
+    "type": "object",
+    "properties": {
+        port.lower(): {
+            "type": "array",
+            "contains": {"type": "string"},
+            "minItems": 1,
+            "uniqueItems": True,
+        }
+        for port in ImagePort.labels
+    },
+    "additionalProperties": False,
+}
+
+
 class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
     creator = models.ForeignKey(
         get_user_model(), null=True, on_delete=models.SET_NULL
@@ -99,3 +117,14 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
                 self.creator,
                 self,
             )
+
+
+class ViewContentMixin(models.Model):
+    view_content = models.JSONField(
+        blank=True,
+        default=dict,
+        validators=[JSONValidator(schema=VIEW_CONTENT_SCHEMA)],
+    )
+
+    class Meta:
+        abstract = True

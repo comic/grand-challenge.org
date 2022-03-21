@@ -602,9 +602,9 @@ def test_update_credits_file(settings, tmp_path):
 @pytest.mark.parametrize(
     "current_size,expected_bytes",
     (
-        (2 * 1024 * 1024 * 1024 * 1024, 0),
-        (1 * 1024 * 1024 * 1024 * 1024, 148_582_652_402),
-        (3 * 1024 * 1024 * 1024 * 1024, -148_582_652_402),
+        (2.1 * 1024 * 1024 * 1024 * 1024, 0),
+        (1 * 1024 * 1024 * 1024 * 1024, 163_440_917_642),
+        (3 * 1024 * 1024 * 1024 * 1024, -133_724_387_162),
     ),
 )
 def test_get_desired_credits_file_size(current_size, expected_bytes):
