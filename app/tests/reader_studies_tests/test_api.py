@@ -1538,3 +1538,49 @@ def test_display_set_add_and_edit(client, settings):
     assert response.content.decode("utf-8") == (
         "This display set cannot be changed, as answers for it already exist."
     )
+
+
+@pytest.mark.django_db
+def test_display_set_delete(client):
+    rs = ReaderStudyFactory()
+    reader, editor = UserFactory(), UserFactory()
+    rs.add_reader(reader)
+    rs.add_editor(editor)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=reader,
+        client=client,
+        method=client.delete,
+        content_type="application/json",
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=editor,
+        client=client,
+        method=client.delete,
+        content_type="application/json",
+    )
+
+    assert response.status_code == 204
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(reader_study=rs)
+    AnswerFactory(question=q, creator=reader, display_set=ds)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=editor,
+        client=client,
+        method=client.delete,
+        content_type="application/json",
+    )
+
+    assert response.status_code == 403
