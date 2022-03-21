@@ -310,6 +310,12 @@ class ChallengeRequestForm(forms.ModelForm):
                 "multiple-phases-multiple-leaderboards/' target='_blank'>phases</a>"
                 " does the challenge have?"
             ),
+            "inference_time_limit_in_minutes": (
+                "Time limit for each algorithm job in minutes. "
+                "This time limit should account for everything that needs to happen "
+                "for an algorithm container to process one single image, from "
+                "model loading, i/o, preprocessing to inference."
+            ),
         }
 
     def __init__(self, creator, *args, **kwargs):
