@@ -40,6 +40,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.evaluation.utils import get
+from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -54,7 +55,7 @@ DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
-class Algorithm(UUIDModel, TitleSlugDescriptionModel):
+class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
