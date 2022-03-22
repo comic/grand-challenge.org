@@ -77,6 +77,10 @@ class UserAutocomplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
             is_verified = False
 
         if is_verified:
+            try:
+                email_domain = result.verification.email.split("@")[1]
+            except IndexError:
+                email_domain = ""
             return format_html(
                 '<img class="rounded-circle align-middle" src="{}" width ="20" height ="20"> '
                 "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
@@ -85,7 +89,7 @@ class UserAutocomplete(LoginRequiredMixin, autocomplete.Select2QuerySetView):
                 result.user_profile.get_mugshot_url(),
                 result.get_username(),
                 result.get_full_name().title(),
-                result.verification.email.split("@")[1],
+                email_domain,
             )
         else:
             return format_html(
