@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models.signals import m2m_changed, post_save
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
@@ -53,6 +53,48 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         op("view_image", rs.readers_group, images)
 
 
+@receiver(m2m_changed, sender=DisplaySet.values.through)
+def update_permissions_on_display_set_changed(
+    instance, action, reverse, pk_set, **_
+):
+    if action not in ["post_add", "post_remove", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    if reverse:
+        images = Image.objects.filter(componentinterfacevalue__pk=instance.pk)
+    else:
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
+            images = [
+                civ.image
+                for civ in instance.values.filter(image__isnull=False)
+            ]
+        else:
+            images = Image.objects.filter(
+                componentinterfacevalue__pk__in=pk_set
+            )
+
+    def update_permissions():
+        for image in images:
+            image.update_viewer_groups_permissions()
+
+    on_commit(update_permissions)
+
+
+@receiver(pre_delete, sender=DisplaySet)
+@receiver(post_save, sender=DisplaySet)
+def update_view_image_permissions(*_, instance: DisplaySet, **__):
+    images = [civ.image for civ in instance.values.filter(image__isnull=False)]
+
+    def update_permissions():
+        for image in images:
+            image.update_viewer_groups_permissions()
+
+    on_commit(update_permissions)
+
+
 @receiver(m2m_changed, sender=Answer.images.through)
 def assign_score(instance, action, reverse, model, pk_set, **_):
     if action != "post_add":
@@ -96,7 +138,7 @@ def update_reader_study_modification_time(
     instance, action, reverse, model, pk_set, **_
 ):
     """Call save on corresponding reader study to update modified field."""
-    if "post" not in action:
+    if "post" not in action or "clear" in action:
         return
 
     if reverse:
