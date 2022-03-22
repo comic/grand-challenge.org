@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.archives.serializers import ArchiveSerializer
-from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.factories import ArchiveWithHangingProtocol
 from tests.serializer_helpers import (
     do_test_serializer_fields,
     do_test_serializer_valid,
@@ -15,7 +15,7 @@ from tests.serializer_helpers import (
         (
             {
                 "unique": True,
-                "factory": ArchiveFactory,
+                "factory": ArchiveWithHangingProtocol,
                 "serializer": ArchiveSerializer,
                 "fields": (
                     "id",
@@ -26,6 +26,7 @@ from tests.serializer_helpers import (
                     "algorithms",
                     "logo",
                     "description",
+                    "hanging_protocol",
                 ),
             },
         )

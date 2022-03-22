@@ -6,6 +6,7 @@ from grandchallenge.archives.models import (
     ArchivePermissionRequest,
 )
 from tests.factories import UserFactory
+from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 
 
 class ArchiveFactory(factory.django.DjangoModelFactory):
@@ -20,6 +21,12 @@ class ArchiveFactory(factory.django.DjangoModelFactory):
         # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
         if create and extracted:
             self.algorithms.set([*extracted])
+
+
+class ArchiveWithHangingProtocol(ArchiveFactory):
+    hanging_protocol = factory.SubFactory(
+        HangingProtocolFactory, json=[{"viewport_name": "main"}]
+    )
 
 
 class ArchiveItemFactory(factory.django.DjangoModelFactory):

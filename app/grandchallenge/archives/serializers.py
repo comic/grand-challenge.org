@@ -13,6 +13,9 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
 )
+from grandchallenge.hanging_protocols.serializers import (
+    HangingProtocolSerializer,
+)
 
 
 class ArchiveItemSerializer(serializers.ModelSerializer):
@@ -34,6 +37,7 @@ class ArchiveSerializer(serializers.ModelSerializer):
     url = URLField(source="get_absolute_url", read_only=True)
     # Include the read only name for legacy clients
     name = ReadOnlyField()
+    hanging_protocol = HangingProtocolSerializer()
 
     class Meta:
         model = Archive
@@ -46,6 +50,7 @@ class ArchiveSerializer(serializers.ModelSerializer):
             "description",
             "api_url",
             "url",
+            "hanging_protocol",
         )
 
 
