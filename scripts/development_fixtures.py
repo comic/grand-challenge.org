@@ -113,22 +113,25 @@ def _create_users(usernames):
     users = {}
 
     for username in usernames:
-        users[username] = get_user_model().objects.create(
+        user = get_user_model().objects.create(
             username=username, email=f"{username}@example.com", is_active=True
         )
-        users[username].set_password(username)
-        users[username].save()
+        user.set_password(username)
+        user.save()
 
         EmailAddress.objects.create(
-            user=users[username],
-            email=users[username].email,
+            user=user,
+            email=user.email,
             verified=True,
             primary=True,
         )
 
-        Verification.objects.create(user=users[username], is_verified=True)
-        users[username].user_profile.receive_newsletter = True
-        users[username].user_profile.save()
+        Verification.objects.create(
+            user=user, is_verified=True, email=user.email
+        )
+        user.user_profile.receive_newsletter = True
+        user.user_profile.save()
+        users[username] = user
 
     return users
 
