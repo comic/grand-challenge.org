@@ -11,6 +11,7 @@ def workstation_query(
     overlay=None,
     reader_study=None,
     algorithm_job=None,
+    archive_item=None,
     config=None,
 ):
     """
@@ -39,6 +40,10 @@ def workstation_query(
     elif algorithm_job:
         query = {
             settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM: algorithm_job.pk
+        }
+    elif archive_item:
+        query = {
+            settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM: archive_item.pk
         }
     else:
         query = {}

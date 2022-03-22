@@ -460,6 +460,7 @@ class ArchiveItemsList(
     columns = [
         Column(title="Values", sort_field="created"),
         Column(title="Add", sort_field="pk"),
+        Column(title="View", sort_field="status"),
     ]
 
     @cached_property
