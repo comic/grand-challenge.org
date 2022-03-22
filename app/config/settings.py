@@ -141,7 +141,7 @@ CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR = os.environ.get(
     "CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 4000
 )
 CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = os.environ.get(
-    "CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 30
+    "CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 100
 )
 
 ##############################################################################

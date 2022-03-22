@@ -117,10 +117,10 @@ def test_challenge_request_budget_calculation(type_2_challenge_request):
         / 100,
         ndigits=2,
     )
-    assert (
-        type_2_challenge_request.budget["Total phase 2"]
-        == type_2_challenge_request.budget["Data storage cost for phase 2"]
-        + type_2_challenge_request.budget["Compute costs for phase 2"]
+    assert type_2_challenge_request.budget["Total phase 2"] == round(
+        type_2_challenge_request.budget["Data storage cost for phase 2"]
+        + type_2_challenge_request.budget["Compute costs for phase 2"],
+        ndigits=2,
     )
     assert type_2_challenge_request.budget["Docker storage cost"] == round(
         type_2_challenge_request.average_algorithm_container_size_in_gb
@@ -131,14 +131,14 @@ def test_challenge_request_budget_calculation(type_2_challenge_request):
         / 100,
         ndigits=2,
     )
-    assert (
-        type_2_challenge_request.budget["Total phase 1"]
-        == type_2_challenge_request.budget["Data storage cost for phase 1"]
-        + type_2_challenge_request.budget["Compute costs for phase 1"]
+    assert type_2_challenge_request.budget["Total phase 1"] == round(
+        type_2_challenge_request.budget["Data storage cost for phase 1"]
+        + type_2_challenge_request.budget["Compute costs for phase 1"],
+        ndigits=2,
     )
-    assert (
-        type_2_challenge_request.budget["Total"]
-        == type_2_challenge_request.budget["Total phase 1"]
+    assert type_2_challenge_request.budget["Total"] == round(
+        type_2_challenge_request.budget["Total phase 1"]
         + type_2_challenge_request.budget["Total phase 2"]
-        + type_2_challenge_request.budget["Docker storage cost"]
+        + type_2_challenge_request.budget["Docker storage cost"],
+        ndigits=2,
     )
