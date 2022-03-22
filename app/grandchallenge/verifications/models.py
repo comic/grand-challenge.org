@@ -26,7 +26,7 @@ class Verification(models.Model):
         get_user_model(), unique=True, on_delete=models.CASCADE
     )
 
-    email = models.EmailField(blank=True)
+    email = models.EmailField()
     email_is_verified = models.BooleanField(default=False, editable=False)
     email_verified_at = models.DateTimeField(
         blank=True, null=True, editable=False
