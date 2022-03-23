@@ -1512,12 +1512,14 @@ class Answer(UUIDModel):
                     f"for this set of images."
                 )
             if display_set is not None and (
-                Answer.objects.filter(
+                Answer.objects.exclude(pk=getattr(instance, "pk", None))
+                .filter(
                     creator=creator,
                     question=question,
                     is_ground_truth=False,
                     display_set=display_set,
-                ).exists()
+                )
+                .exists()
             ):
                 raise ValidationError(
                     f"User {creator} has already answered this question "
