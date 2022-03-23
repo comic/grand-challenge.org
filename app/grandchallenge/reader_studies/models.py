@@ -11,7 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
-from django.db.models import Avg, Count, OuterRef, Subquery, Sum
+from django.db.models import Avg, Count, OuterRef, Q, Subquery, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -761,7 +761,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
-        if not self.is_valid or not self.hanging_list:
+        no_cases = (
+            self.use_display_sets
+            and self.display_sets.count() == 0
+            or not self.use_display_sets
+            and not self.hanging_list
+        )
+        if not self.is_valid or no_cases:
             return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
         hanging_list_count = (
@@ -769,7 +775,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             if self.use_display_sets
             else len(self.hanging_list)
         )
-
         expected = hanging_list_count * self.answerable_question_count
 
         answers = Answer.objects.filter(
@@ -786,13 +791,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             completed_hangings = (
                 self.display_sets.annotate(
                     answers_for_user=Count(
-                        Subquery(
-                            Answer.objects.filter(
-                                creator=user,
-                                display_set=OuterRef("pk"),
-                                is_ground_truth=False,
-                            ).values("pk")[:1]
-                        )
+                        "answers",
+                        filter=Q(
+                            answers__creator=user,
+                            answers__is_ground_truth=False,
+                        ),
                     )
                 ).filter(answers_for_user=self.answerable_question_count)
             ).count()
