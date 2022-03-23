@@ -1002,7 +1002,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             )
         )
         values_for_interfaces = {}
-        for interface in interfaces:
+        for interface in sorted(interfaces.keys()):
             values = ComponentInterfaceValue.objects.none()
             for ds in self.display_sets.all():
                 values |= ds.values.filter(interface__slug=interface)
