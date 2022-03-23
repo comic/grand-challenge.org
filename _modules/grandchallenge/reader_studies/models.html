@@ -1585,12 +1585,14 @@
                     <span class="sa">f</span><span class="s2">&quot;for this set of images.&quot;</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">display_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                     <span class="n">creator</span><span class="o">=</span><span class="n">creator</span><span class="p">,</span>
                     <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
                     <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                     <span class="n">display_set</span><span class="o">=</span><span class="n">display_set</span><span class="p">,</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;User </span><span class="si">{</span><span class="n">creator</span><span class="si">}</span><span class="s2"> has already answered this question &quot;</span>
