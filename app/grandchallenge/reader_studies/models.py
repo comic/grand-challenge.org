@@ -1007,7 +1007,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             values = ComponentInterfaceValue.objects.none()
             for ds in self.display_sets.all():
                 values |= ds.values.filter(interface__slug=interface)
-            values_for_interfaces[interface] = values
+            values_for_interfaces[interface] = values.distinct()
         cache.set(cache_key, values_for_interfaces, timeout=0)
         return values_for_interfaces
 
@@ -1085,17 +1085,27 @@ class DisplaySet(UUIDModel):
             f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-*"
         ):
             cache.delete(key)
-        interfaces = ComponentInterface.objects.exclude(
-            id__in=self.values.values_list("interface_id", flat=True)
-        ).filter(
-            id__in=self.reader_study.display_sets.values_list(
-                "values__interface_id", flat=True
+        interfaces = (
+            ComponentInterface.objects.exclude(
+                id__in=self.values.values_list("interface_id", flat=True)
             )
+            .filter(
+                id__in=self.reader_study.display_sets.values_list(
+                    "values__interface_id", flat=True
+                )
+            )
+            .distinct()
         )
         result = []
         for interface in interfaces:
             values = self.reader_study.values_for_interface(interface.slug)
-            result.append({"title": interface.title, "values": values})
+            result.append(
+                {
+                    "title": interface.title,
+                    "values": values,
+                    "id": interface.id,
+                }
+            )
         cache.set(cache_key, result, timeout=0)
         return result
 

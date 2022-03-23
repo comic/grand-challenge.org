@@ -62,9 +62,9 @@
                   {% if object.is_editable %}
                     <div class="form-group">
                       <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
-                        <option selected>---</option>
+                        <option value="{{ interface.id }}::" selected>---</option>
                         {% for value in interface.values %}
-                          <option value="{{ value.id }}">{{ value.image.name }}</option>
+                          <option value="{{ interface.id }}::{{ value.id }}">{{ value.image.name }}</option>
                         {% endfor %}
                       </select>
                     </div>
