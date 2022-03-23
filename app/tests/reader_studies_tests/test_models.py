@@ -3,7 +3,9 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -80,11 +82,12 @@ def test_generate_hanging_list():
 
 
 @pytest.mark.django_db
-def test_progress_for_user(settings):
+@pytest.mark.parametrize("use_display_sets", [True, False])
+def test_progress_for_user(settings, use_display_sets):  # noqa: C901
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=use_display_sets)
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
         QuestionFactory(reader_study=rs),
@@ -103,32 +106,57 @@ def test_progress_for_user(settings):
         "questions": 0.0,
     }
 
-    rs.images.set([im1, im2])
-    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
-    rs.save()
+    if use_display_sets:
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        civ1 = ComponentInterfaceValueFactory(image=im1, interface=ci)
+        civ2 = ComponentInterfaceValueFactory(image=im2, interface=ci)
+        ds1, ds2 = DisplaySetFactory(reader_study=rs), DisplaySetFactory(
+            reader_study=rs
+        )
+        ds1.values.add(civ1)
+        ds2.values.add(civ2)
+
+    else:
+        rs.images.set([im1, im2])
+        rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
+        rs.save()
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
     assert progress["questions"] == 0
 
     a11 = AnswerFactory(question=q1, answer="foo", creator=reader)
-    a11.images.add(im1)
+    if use_display_sets:
+        a11.display_set = ds1
+        a11.save()
+    else:
+        a11.images.add(im1)
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
     assert progress["questions"] == pytest.approx(question_perc)
 
     a21 = AnswerFactory(question=q1, answer="foo", creator=reader)
-    a21.images.add(im2)
+    if use_display_sets:
+        a21.display_set = ds2
+        a21.save()
+    else:
+        a21.images.add(im2)
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
     assert progress["questions"] == pytest.approx(question_perc * 2)
 
     a12 = AnswerFactory(question=q2, answer="foo", creator=reader)
-    a12.images.add(im1)
     a13 = AnswerFactory(question=q3, answer="foo", creator=reader)
-    a13.images.add(im1)
+    if use_display_sets:
+        a12.display_set = ds1
+        a12.save()
+        a13.display_set = ds1
+        a13.save()
+    else:
+        a12.images.add(im1)
+        a13.images.add(im1)
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 50
@@ -139,22 +167,48 @@ def test_progress_for_user(settings):
     rs.add_editor(editor)
 
     for q in [q1, q2, q3]:
-        for im in [im1, im2]:
-            a = AnswerFactory(
-                question=q, answer="foo", creator=editor, is_ground_truth=True
-            )
-            a.images.add(im)
+        if use_display_sets:
+            for ds in [ds1, ds2]:
+                a = AnswerFactory(
+                    question=q,
+                    answer="foo",
+                    creator=editor,
+                    is_ground_truth=True,
+                    display_set=ds,
+                )
+        else:
+            for im in [im1, im2]:
+                a = AnswerFactory(
+                    question=q,
+                    answer="foo",
+                    creator=editor,
+                    is_ground_truth=True,
+                )
+                a.images.add(im)
 
     progress = rs.get_progress_for_user(editor)
     assert progress["hangings"] == 0
     assert progress["questions"] == 0
 
     for q in [q1, q2, q3]:
-        for im in [im1, im2]:
-            a = AnswerFactory(
-                question=q, answer="foo", creator=editor, is_ground_truth=False
-            )
-            a.images.add(im)
+        if use_display_sets:
+            for ds in [ds1, ds2]:
+                a = AnswerFactory(
+                    question=q,
+                    answer="foo",
+                    creator=editor,
+                    is_ground_truth=False,
+                    display_set=ds,
+                )
+        else:
+            for im in [im1, im2]:
+                a = AnswerFactory(
+                    question=q,
+                    answer="foo",
+                    creator=editor,
+                    is_ground_truth=False,
+                )
+                a.images.add(im)
 
     progress = rs.get_progress_for_user(editor)
     assert progress["hangings"] == 100.0
