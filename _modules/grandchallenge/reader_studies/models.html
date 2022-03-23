@@ -84,7 +84,7 @@
 <span class="kn">from</span> <span class="nn">django.core.cache</span> <span class="kn">import</span> <span class="n">cache</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">OuterRef</span><span class="p">,</span> <span class="n">Subquery</span><span class="p">,</span> <span class="n">Sum</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">OuterRef</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Subquery</span><span class="p">,</span> <span class="n">Sum</span>
 <span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="kn">import</span> <span class="n">post_delete</span>
 <span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
@@ -834,7 +834,13 @@
 
 <div class="viewcode-block" id="ReaderStudy.get_progress_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">get_progress_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the percentage of completed hangings and questions for ``user``.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">:</span>
+        <span class="n">no_cases</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="ow">or</span> <span class="n">no_cases</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
 
         <span class="n">hanging_list_count</span> <span class="o">=</span> <span class="p">(</span>
@@ -842,7 +848,6 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
             <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">)</span>
         <span class="p">)</span>
-
         <span class="n">expected</span> <span class="o">=</span> <span class="n">hanging_list_count</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span>
 
         <span class="n">answers</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -859,13 +864,11 @@
             <span class="n">completed_hangings</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
                     <span class="n">answers_for_user</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span>
-                        <span class="n">Subquery</span><span class="p">(</span>
-                            <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                                <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-                                <span class="n">display_set</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">),</span>
-                                <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                            <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">]</span>
-                        <span class="p">)</span>
+                        <span class="s2">&quot;answers&quot;</span><span class="p">,</span>
+                        <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span>
+                            <span class="n">answers__creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                            <span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="p">),</span>
                     <span class="p">)</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">answers_for_user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span><span class="p">)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
