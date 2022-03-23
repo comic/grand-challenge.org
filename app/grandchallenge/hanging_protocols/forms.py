@@ -15,6 +15,15 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
         model = HangingProtocol
         fields = ("title", "description", "json")
         widgets = {"json": JSONEditorWidget(schema=HANGING_PROTOCOL_SCHEMA)}
+        help_texts = {
+            "json": (
+                "To display a single image in full size, define the "
+                "protocol as follows: "
+                '[{"viewport_name": "main", "x": 0,"y": 0,"w": 1,"h": 1,'
+                '"fullsizable": true,"draggable": false,"selectable": true,'
+                '"order": 0}]'
+            )
+        }
 
 
 class ViewContentMixin:

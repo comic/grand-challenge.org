@@ -64,9 +64,11 @@ READER_STUDY_HELP_TEXTS = {
         (
             "The viewer configuration to use for this reader study. "
             "If a suitable configuration does not exist you can "
-            '<a href="{}">create a new one</a>.'
+            '<a href="{}">create a new one</a>. For a list of existing '
+            'configurations, go <a href="{}">here</a>.'
         ),
         reverse_lazy("workstation-configs:create"),
+        reverse_lazy("workstation-configs:list"),
     ),
     "help_text_markdown": (
         "Extra information that will be presented to the reader in the help "
@@ -220,9 +222,11 @@ class ReaderStudyUpdateForm(
                 (
                     "The hanging protocol to use for this reader study. "
                     "If a suitable protocol does not exist you can "
-                    '<a href="{}">create a new one</a>.'
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
                 ),
                 reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
             ),
         }
         help_texts.update(ViewContentMixin.Meta.help_texts)
