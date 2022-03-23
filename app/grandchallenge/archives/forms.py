@@ -66,6 +66,7 @@ class ArchiveForm(
             "workstation",
             "workstation_config",
             "hanging_protocol",
+            "view_content",
             "algorithms",
             "public",
             "access_request_handling",
@@ -86,9 +87,11 @@ class ArchiveForm(
                 (
                     "The viewer configuration to use for this archive. "
                     "If a suitable configuration does not exist you can "
-                    '<a href="{}">create a new one</a>.'
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'configurations, go <a href="{}">here</a>.'
                 ),
                 reverse_lazy("workstation-configs:create"),
+                reverse_lazy("workstation-configs:list"),
             ),
             "publications": format_lazy(
                 (
@@ -102,9 +105,11 @@ class ArchiveForm(
                 (
                     "The hanging protocol to use for this archive. "
                     "If a suitable protocol does not exist you can "
-                    '<a href="{}">create a new one</a>.'
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
                 ),
                 reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
             ),
         }
         help_texts.update(ViewContentMixin.Meta.help_texts)
@@ -195,7 +200,15 @@ class AddCasesForm(UploadRawImagesForm):
     interface = ModelChoiceField(
         queryset=ComponentInterface.objects.filter(
             kind__in=InterfaceKind.interface_type_image()
-        )
+        ),
+        help_text=format_lazy(
+            (
+                'See the <a href="{}">list of interfaces</a> for more '
+                "information about each interface. "
+                "Please contact support if your desired output is missing."
+            ),
+            reverse_lazy("algorithms:component-interface-list"),
+        ),
     )
 
     def save(self, *args, **kwargs):

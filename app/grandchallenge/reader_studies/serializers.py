@@ -133,6 +133,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "roll_over_answers_for_n_cases",
             "use_display_sets",
             "hanging_protocol",
+            "view_content",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):

@@ -176,6 +176,7 @@ class AlgorithmForm(
             "workstation",
             "workstation_config",
             "hanging_protocol",
+            "view_content",
             "credits_per_job",
             "detail_page_markdown",
             "job_create_page_markdown",
@@ -222,9 +223,11 @@ class AlgorithmForm(
                 (
                     "The viewer configuration to use for this algorithm. "
                     "If a suitable configuration does not exist you can "
-                    '<a href="{}">create a new one</a>.'
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'configurations, go <a href="{}">here</a>.'
                 ),
                 reverse_lazy("workstation-configs:create"),
+                reverse_lazy("workstation-configs:list"),
             ),
             "publications": format_lazy(
                 (
@@ -240,9 +243,11 @@ class AlgorithmForm(
                 (
                     "The hanging protocol to use for this algorithm. "
                     "If a suitable protocol does not exist you can "
-                    '<a href="{}">create a new one</a>.'
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
                 ),
                 reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
             ),
         }
         help_texts.update(ViewContentMixin.Meta.help_texts)
@@ -272,6 +277,7 @@ class AlgorithmForm(
                 "workstation",
                 "workstation_config",
                 "hanging_protocol",
+                "view_content",
                 "inputs",
                 "outputs",
                 "credits_per_job",
