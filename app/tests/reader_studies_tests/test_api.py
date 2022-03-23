@@ -1676,7 +1676,7 @@ def test_display_set_add_and_edit(client, settings):
     assert ds.values.count() == 2
     assert ds2.values.count() == 2
 
-    # Remove the civ fromthe new display set again
+    # Remove the civ from the new display set again
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
         reverse_kwargs={"pk": ds2.pk},
