@@ -8,9 +8,3 @@ def get_ground_truth(reader_study, image, question):
     """Get the ground truth value for the image/question combination in reader_study."""
     ground_truths = reader_study.statistics["ground_truths"]
     return ground_truths[image][question]
-
-
-@register.simple_tag
-def get_values_for_interface(reader_study, interface):
-    """Get all values available for `interface` in `display_set`'s reader study."""
-    return reader_study.values_for_interface(interface.slug)
