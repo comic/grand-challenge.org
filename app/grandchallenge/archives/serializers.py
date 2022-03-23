@@ -51,6 +51,7 @@ class ArchiveSerializer(serializers.ModelSerializer):
             "api_url",
             "url",
             "hanging_protocol",
+            "view_content",
         )
 
 
