@@ -27,6 +27,7 @@ from tests.serializer_helpers import (
                     "logo",
                     "description",
                     "hanging_protocol",
+                    "view_content",
                 ),
             },
         )

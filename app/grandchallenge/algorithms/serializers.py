@@ -46,6 +46,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "inputs",
             "outputs",
             "hanging_protocol",
+            "view_content",
         ]
 
     def get_average_duration(self, obj: Algorithm) -> Optional[float]:
