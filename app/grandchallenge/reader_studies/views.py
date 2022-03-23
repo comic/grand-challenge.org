@@ -982,18 +982,24 @@ class DisplaySetViewSet(
         )
         assigned_civs = []
         for value in civ_values:
+            ci, civ = value.split("::")
+            if civ == "":
+                current_value = instance.values.filter(interface=ci).first()
+                if current_value:
+                    assigned_civs.append(current_value)
+                    instance.values.remove(current_value)
+                continue
+
             # Get the provided civ from the current reader study's display sets.
             civ = ComponentInterfaceValue.objects.filter(id__in=civs).get(
-                id=value
+                id=civ
             )
 
             # If there is already a value for the provided civ's interface in
             # this display set, remove it from this display set. Cast to list
             # to evaluate immediately.
             assigned_civs += list(
-                instance.values.exclude(pk=civ.pk).filter(
-                    interface=civ.interface
-                )
+                instance.values.exclude(pk=civ.pk).filter(interface=ci)
             )
 
             # Add the provided civ to the current display set
