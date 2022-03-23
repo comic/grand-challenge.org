@@ -338,9 +338,10 @@ class ReaderStudyDisplaySetList(
     row_template = "reader_studies/readerstudy_display_sets_row.html"
     search_fields = ["pk", "name"]
     columns = [
-        Column(title="Name", sort_field="id"),
+        Column(title="Name", sort_field="order"),
     ]
     text_align = "left"
+    default_sort_order = "asc"
 
     @cached_property
     def reader_study(self):
