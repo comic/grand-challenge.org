@@ -34,10 +34,10 @@
                   {% if object.is_editable %}
                     <div class="form-group">
                       <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
-                        <option>---</option>
+                        <option value="{{ value.interface.id }}::">---</option>
                         {% get_values_for_interface object.reader_study value.interface as values %}
                         {% for val in values %}
-                          <option value="{{ val.id }}" {% if val.id == value.id %}selected{% endif %}>{{ val.image.name }}</option>
+                          <option value="{{ value.interface.id }}::{{ val.id }}" {% if val.id == value.id %}selected{% endif %}>{{ val.image.name }}</option>
                         {% endfor %}
                       </select>
                     </div>
