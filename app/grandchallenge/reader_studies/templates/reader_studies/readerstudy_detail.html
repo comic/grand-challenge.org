@@ -201,15 +201,20 @@
                         with its default configuration.
                     {% endif %}
 
-                    There are {{ object.images.all.count }}
-                    image{{ object.images.all.count|pluralize }} arranged
-                    in {{ object.hanging_list|length }}
-                    hanging{{ object.hanging_list|pluralize }}.
+
+                    {% if object.use_display_sets %}
+                        There are {{ object.display_sets.count }} case{{ object.display_sets.count|pluralize }}.
+                    {% else %}
+                        There are {{ object.images.all.count }}
+                        image{{ object.images.all.count|pluralize }} arranged
+                        in {{ object.hanging_list|length }}
+                        hanging{{ object.hanging_list|pluralize }}.
+                    {% endif %}
 
                     {% if object.shuffle_hanging_list %}
-                        Each reader will read the hangings in a unique order.
+                        Each reader will read the {% if object.use_display_sets %}cases{% else %}hangings{% endif %} in a unique order.
                     {% else %}
-                        Each reader will read the hangings in the same order.
+                        Each reader will read the {% if object.use_display_sets %}cases{% else %}hangings{% endif %} in the same order.
                     {% endif %}
                 </p>
                 <p>
