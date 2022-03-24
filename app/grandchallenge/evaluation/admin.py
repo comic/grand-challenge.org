@@ -12,6 +12,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.evaluation.tasks import create_evaluation
 
 
 class PhaseAdmin(admin.ModelAdmin):
@@ -20,17 +21,30 @@ class PhaseAdmin(admin.ModelAdmin):
     search_fields = ("pk", "title", "challenge__short_name")
 
 
+def reevaluate_submissions(modeladmin, request, queryset):
+    """Creates a new evaluation for an existing submission"""
+    for submission in queryset:
+        create_evaluation.apply_async(
+            kwargs={"submission_pk": str(submission.pk)}
+        )
+
+
+reevaluate_submissions.short_description = "Reevaluate selected submissions"
+reevaluate_submissions.allowed_permissions = ("change",)
+
+
 class SubmissionAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "phase", "creator")
     list_filter = ("phase__challenge__short_name",)
-    search_fields = ("pk", "creator__username")
+    search_fields = ("pk", "creator__username", "phase__slug")
     readonly_fields = (
         "creator",
         "phase",
         "predictions_file",
         "algorithm_image",
     )
+    actions = (reevaluate_submissions,)
 
 
 class EvaluationAdmin(admin.ModelAdmin):

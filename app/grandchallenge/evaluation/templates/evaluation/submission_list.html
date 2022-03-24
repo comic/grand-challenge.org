@@ -48,27 +48,34 @@
                     </td>
                     <td>{{ submission.comment }}</td>
                     <td>
-                        {% for evaluation in submission.evaluation_set.all %}
-                            <span class="badge badge-{{ evaluation.status_context }}">
-                                {% if evaluation.animate %}
-                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                {% endif %}
-                                {{ evaluation.get_status_display }}
-                            </span>
-                            {% if evaluation.status == evaluation.SUCCESS %}
-                                {% if evaluation.published %}
-                                    <a href="{{ evaluation.get_absolute_url }}">Result</a>
-                                {% else %}
-                                    Evaluation is under review by the challenge admins.
-                                {% endif %}
-                            {% elif evaluation.status == evaluation.FAILURE %}
-                                {% firstof evaluation.error_message evaluation.get_status_display %}
-                            {% endif %}
-                        {% empty %}
-                            {% if submission.user_upload and not submission.predictions_file %}
-                                <span class="badge badge-info">Preparing</span>
-                            {% endif %}
-                        {% endfor %}
+                        <ul class="list-unstyled">
+                            {% for evaluation in submission.evaluation_set.all %}
+                                <li>
+                                    <span class="badge badge-{{ evaluation.status_context }}">
+                                    {% if evaluation.animate %}
+                                        <span class="spinner-border spinner-border-sm" role="status"
+                                              aria-hidden="true"></span>
+                                    {% endif %}
+                                    {{ evaluation.get_status_display }}
+                                    </span>
+                                    {% if evaluation.status == evaluation.SUCCESS %}
+                                        {% if evaluation.published %}
+                                            <a href="{{ evaluation.get_absolute_url }}">Result</a>
+                                        {% else %}
+                                            Evaluation is under review by the challenge admins.
+                                        {% endif %}
+                                    {% elif evaluation.status == evaluation.FAILURE %}
+                                        {% firstof evaluation.error_message evaluation.get_status_display %}
+                                    {% endif %}
+                                </li>
+                            {% empty %}
+                                <li>
+                                    {% if submission.user_upload and not submission.predictions_file %}
+                                        <span class="badge badge-info">Preparing</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
                     </td>
                 </tr>
             {% endfor %}
