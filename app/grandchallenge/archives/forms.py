@@ -11,7 +11,11 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from guardian.shortcuts import get_objects_for_user
 
-from grandchallenge.archives.models import Archive, ArchivePermissionRequest
+from grandchallenge.archives.models import (
+    Archive,
+    ArchiveItem,
+    ArchivePermissionRequest,
+)
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image
 from grandchallenge.components.form_fields import InterfaceFormField
@@ -151,6 +155,40 @@ class ArchivePermissionRequestUpdateForm(PermissionRequestUpdateForm):
         model = ArchivePermissionRequest
 
 
+class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
+    reader_study = ModelChoiceField(
+        queryset=ReaderStudy.objects.none(), required=True
+    )
+    items = ModelMultipleChoiceField(
+        queryset=ArchiveItem.objects.none(),
+        required=True,
+        widget=Select2MultipleWidget,
+    )
+
+    def __init__(self, *args, user, archive, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.archive = archive
+
+        self.fields["reader_study"].queryset = (
+            get_objects_for_user(
+                self.user,
+                "reader_studies.change_readerstudy",
+                accept_global_perms=False,
+            )
+            .filter(use_display_sets=True)
+            .order_by("title")
+        )
+
+        self.fields["items"].queryset = self.archive.items.all()
+        self.fields["items"].initial = self.fields["items"].queryset
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        return cleaned_data
+
+
 class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
     reader_study = ModelChoiceField(
         queryset=ReaderStudy.objects.none(), required=True
@@ -165,7 +203,6 @@ class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
         super().__init__(*args, **kwargs)
         self.user = user
         self.archive = archive
-
         self.fields["reader_study"].queryset = (
             get_objects_for_user(
                 self.user,
