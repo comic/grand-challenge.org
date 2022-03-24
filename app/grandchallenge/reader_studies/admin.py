@@ -3,6 +3,7 @@ from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.reader_studies.models import (
     Answer,
+    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -64,9 +65,20 @@ class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
     readonly_fields = ("user", "reader_study")
 
 
+class DisplaySetAdmin(GuardedModelAdmin):
+    list_filter = ("reader_study__slug",)
+    readonly_fields = ("reader_study",)
+    list_display = (
+        "reader_study",
+        "order",
+    )
+    list_select_related = ("reader_study",)
+
+
 admin.site.register(ReaderStudy, ReaderStudyAdmin)
 admin.site.register(Question, QuestionsAdmin)
 admin.site.register(Answer, AnswersAdmin)
 admin.site.register(
     ReaderStudyPermissionRequest, ReaderStudyPermissionRequestAdmin
 )
+admin.site.register(DisplaySet, DisplaySetAdmin)

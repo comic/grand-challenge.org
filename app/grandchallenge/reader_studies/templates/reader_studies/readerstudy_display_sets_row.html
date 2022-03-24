@@ -24,20 +24,18 @@
             <tr>
               <th>Interface</th>
               <th>Name</th>
-              <th>Created</th>
               <th>View</th>
             </tr>
-            {% for value in object.values.all %}
+            {% for interface, content in object.value_list.items %}
               <tr>
-                <td>{{ value.interface.title }}:</td>
+                <td>{{ interface }}:</td>
                 <td>
                   {% if object.is_editable %}
                     <div class="form-group">
                       <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
-                        <option value="{{ value.interface.id }}::">---</option>
-                        {% get_values_for_interface object.reader_study value.interface as values %}
-                        {% for val in values %}
-                          <option value="{{ value.interface.id }}::{{ val.id }}" {% if val.id == value.id %}selected{% endif %}>{{ val.image.name }}</option>
+                        <option value="{{ content.id }}::" {% if content.selected == "" %}selected{% endif %}>---</option>
+                        {% for value in content.values %}
+                          <option value="{{ content.id }}::{{ value.id }}" {% if content.selected == value.id %}selected{% endif %}>{{ value.image.name }}</option>
                         {% endfor %}
                       </select>
                     </div>
@@ -45,29 +43,13 @@
                     {{ value.image.name }}
                   {% endif %}
                 </td>
-                <td>{{ value.image.created|naturaltime }}</td>
                 <td>
-                  <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=object config=reader_study.workstation_config %}">
-                    <span class="badge badge-primary">
-                        <i class="fa fa-eye"></i> View Case
-                    </span>
-                  </a>
-                </td>
-              </tr>
-            {% endfor %}
-            {% for interface in object.empty_interfaces %}
-              <tr>
-                <td>{{ interface.title }}:</td>
-                <td>
-                  {% if object.is_editable %}
-                    <div class="form-group">
-                      <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
-                        <option selected>---</option>
-                        {% for value in interface.values %}
-                          <option value="{{ value.id }}">{{ value.image.name }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
+                  {% if content.selected_image %}
+                    <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=content.selected_image config=reader_study.workstation_config %}">
+                      <span class="badge badge-primary">
+                          <i class="fa fa-eye"></i> View Case
+                      </span>
+                    </a>
                   {% endif %}
                 </td>
               </tr>
@@ -85,14 +67,16 @@
                 {% endif %}
               </td>
             </tr>
-            <tr>
-              <td colspan="4">
-                <div class="d-flex justify-content-between">
-                  <button type="submit" class="btn btn-primary">Save</button>
-                  <button type="button" class="btn btn-danger" onclick="removeCase('{% url 'api:reader-studies-display-set-detail' object.id %}', true)">Remove</button>
-                </div>
-              </td>
-            </tr>
+            {% if object.is_editable %}
+              <tr>
+                <td colspan="4">
+                  <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-danger" onclick="removeCase('{% url 'api:reader-studies-display-set-detail' object.id %}', true)">Remove</button>
+                  </div>
+                </td>
+              </tr>
+            {% endif %}
           </table>
         </form>
       </div>
