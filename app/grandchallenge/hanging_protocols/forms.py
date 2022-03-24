@@ -28,7 +28,7 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
 
 class ViewContentMixin:
     def clean_view_content(self):
-        mapping = self.cleaned_data["view_content"]
+        mapping = self.cleaned_data["view_content"] or {}
         hanging_protocol = self.cleaned_data["hanging_protocol"]
         if mapping and not hanging_protocol:
             self.add_error(
