@@ -98,10 +98,7 @@
 
 <span class="kn">from</span> <span class="nn">grandchallenge.anatomy.models</span> <span class="kn">import</span> <span class="n">BodyStructure</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ComponentInterface</span><span class="p">,</span>
-    <span class="n">ComponentInterfaceValue</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="n">ComponentInterfaceValue</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
@@ -1072,20 +1069,24 @@
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="si">}</span><span class="s2">-*&quot;</span>
         <span class="p">):</span>
             <span class="n">cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="n">interfaces</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
-            <span class="s2">&quot;values__interface__slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">interfaces</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
+                <span class="s2">&quot;values__interface__slug&quot;</span><span class="p">,</span> <span class="s2">&quot;values__interface&quot;</span>
+            <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">values_for_interfaces</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">interfaces</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">interfaces</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="n">values</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
                 <span class="n">values</span> <span class="o">|=</span> <span class="n">ds</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface__slug</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span>
-            <span class="n">values_for_interfaces</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
+            <span class="n">values_for_interfaces</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">interfaces</span><span class="p">[</span><span class="n">interface</span><span class="p">],</span>
+                <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">values</span><span class="o">.</span><span class="n">distinct</span><span class="p">(),</span>
+                <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;selected_image&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
         <span class="n">cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">values_for_interfaces</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">values_for_interfaces</span>
-
-    <span class="k">def</span> <span class="nf">values_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values_for_interfaces</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">values_for_interfaces</span></div>
 
 
 <div class="viewcode-block" id="delete_reader_study_groups_hook"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.delete_reader_study_groups_hook">[docs]</a><span class="nd">@receiver</span><span class="p">(</span><span class="n">post_delete</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">ReaderStudy</span><span class="p">)</span>
@@ -1149,7 +1150,7 @@
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">empty_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">value_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">modified</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">cached</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cached</span><span class="p">:</span>
@@ -1158,19 +1159,13 @@
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">-*&quot;</span>
         <span class="p">):</span>
             <span class="n">cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="n">interfaces</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
-            <span class="n">id__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;interface_id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">id__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
-                <span class="s2">&quot;values__interface_id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">interfaces</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">values_for_interface</span><span class="p">(</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span><span class="p">)</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">interface</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">values</span><span class="p">})</span>
-        <span class="n">cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;interface__slug&quot;</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;image_id&quot;</span><span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">values_for_interfaces</span>
+        <span class="k">for</span> <span class="n">slug</span><span class="p">,</span> <span class="n">civ</span><span class="p">,</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">options</span><span class="p">[</span><span class="n">slug</span><span class="p">][</span><span class="s2">&quot;selected&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">civ</span>
+            <span class="n">options</span><span class="p">[</span><span class="n">slug</span><span class="p">][</span><span class="s2">&quot;selected_image&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">options</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">is_editable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
