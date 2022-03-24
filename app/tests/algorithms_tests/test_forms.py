@@ -136,6 +136,7 @@ def test_algorithm_create(client, uploaded_image):
                 "contact_email": creator.email,
                 "display_editors": True,
                 "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
+                "view_content": "{}",
             },
             follow=True,
             user=creator,

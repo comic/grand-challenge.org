@@ -187,6 +187,7 @@ def test_social_image_meta_tag(client, uploaded_image):
                 "social_image": uploaded_image(),
                 "workstation": ws.pk,
                 "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
+                "view_content": "{}",
             },
             follow=True,
             user=creator,
