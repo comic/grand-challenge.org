@@ -13,3 +13,7 @@ function updateForm(){
         }
     }
 }
+
+$(document).ready(function() {
+    updateForm();
+});

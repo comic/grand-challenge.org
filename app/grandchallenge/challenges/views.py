@@ -302,7 +302,6 @@ class ChallengeRequestDetail(
         "submission_assessment",
         "challenge_publication",
         "code_availability",
-        "budget_for_hosting_challenge",
     )
 
     def get_context_data(self, **kwargs):
