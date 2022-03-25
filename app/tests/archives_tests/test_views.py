@@ -450,7 +450,7 @@ def test_api_archive_item_add_and_update_non_image_file(client, settings):
             HTTP_X_FORWARDED_PROTO="https",
         )
     assert response.status_code == 200
-    assert response.json()["id"] == str(item.pk)
+    assert response.json()["pk"] == str(item.pk)
     item.refresh_from_db()
     assert item.values.count() == 1
     new_civ = item.values.get()
