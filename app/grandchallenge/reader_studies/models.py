@@ -622,7 +622,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def ds_images(self):
         return sorted(
             list(
-                self.display_sets.values_list("values__image__name", flat=True)
+                self.display_sets.filter(
+                    values__image__isnull=False
+                ).values_list("values__image__name", flat=True)
             )
         )
 

@@ -2,7 +2,7 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
 from tests.archives_tests.factories import (
     ArchiveFactory,
@@ -18,6 +18,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 
@@ -456,3 +457,78 @@ def test_api_archive_item_add_and_update_non_image_file(client, settings):
     new_civ = item.values.get()
     assert new_civ.interface.slug == ci.slug
     assert new_civ != civ
+
+
+@pytest.mark.django_db
+def test_archive_items_to_reader_study_update(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    archive = ArchiveFactory()
+    rs1 = ReaderStudyFactory(use_display_sets=True)
+    rs2 = ReaderStudyFactory(use_display_sets=False)
+
+    editor, user = UserFactory(), UserFactory()
+    archive.add_user(user)
+    archive.add_editor(editor)
+    rs1.add_editor(editor)
+    rs2.add_editor(editor)
+
+    im1, im2, im3, im4 = ImageFactory.create_batch(4)
+    overlay = ComponentInterface.objects.get(slug="generic-overlay")
+    image = ComponentInterface.objects.get(slug="generic-medical-image")
+
+    civ1, civ2, civ3, civ4 = (
+        ComponentInterfaceValueFactory(interface=image, image=im1),
+        ComponentInterfaceValueFactory(interface=image, image=im2),
+        ComponentInterfaceValueFactory(interface=overlay, image=im3),
+        ComponentInterfaceValueFactory(interface=overlay, image=im4),
+    )
+
+    ai1 = ArchiveItemFactory(archive=archive)
+    ai2 = ArchiveItemFactory(archive=archive)
+
+    ai1.values.add(civ1)
+    ai2.values.add(civ2)
+
+    response = get_view_for_user(
+        viewname="archives:items-reader-study-update",
+        client=client,
+        reverse_kwargs={"slug": archive.slug},
+        user=user,
+    )
+    assert response.status_code == 200
+    assert str(rs1.pk) not in response.rendered_content
+    assert str(rs2.pk) not in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="archives:items-reader-study-update",
+        client=client,
+        reverse_kwargs={"slug": archive.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert str(rs1.pk) in response.rendered_content
+    assert str(rs2.pk) not in response.rendered_content
+
+    assert im1.name in response.rendered_content
+    assert im2.name in response.rendered_content
+    assert im3.name not in response.rendered_content
+    assert im4.name not in response.rendered_content
+
+    ai1.values.add(civ3)
+    ai2.values.add(civ4)
+
+    response = get_view_for_user(
+        viewname="archives:items-reader-study-update",
+        client=client,
+        reverse_kwargs={"slug": archive.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+
+    assert f"{im1.name}, {im3.name}" in response.rendered_content
+    assert f"{im2.name}, {im4.name}" in response.rendered_content

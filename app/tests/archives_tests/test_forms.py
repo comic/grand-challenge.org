@@ -6,6 +6,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.components.models import (
+    ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
 )
@@ -25,7 +26,8 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import UserFactory, WorkstationFactory
+from tests.factories import ImageFactory, UserFactory, WorkstationFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
 
@@ -325,3 +327,102 @@ def test_archive_item_form(client, settings):
     # New jobs should be created as there is a new CIV
     assert Job.objects.count() == 3
     assert ComponentInterfaceValue.objects.count() == civ_count + 2
+
+
+@pytest.mark.django_db
+def test_archive_items_to_reader_study_update_form(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    archive = ArchiveFactory()
+    rs1, rs2 = ReaderStudyFactory(use_display_sets=True), ReaderStudyFactory(
+        use_display_sets=False
+    )
+
+    editor, reader = UserFactory(), UserFactory()
+    archive.editors_group.user_set.add(editor)
+    rs1.add_editor(editor)
+    rs1.add_reader(reader)
+
+    rs2.add_editor(editor)
+
+    im1, im2, im3, im4 = ImageFactory.create_batch(4)
+    overlay = ComponentInterface.objects.get(slug="generic-overlay")
+    image = ComponentInterface.objects.get(slug="generic-medical-image")
+
+    civ1, civ2, civ3, civ4 = (
+        ComponentInterfaceValueFactory(interface=image, image=im1),
+        ComponentInterfaceValueFactory(interface=image, image=im2),
+        ComponentInterfaceValueFactory(interface=overlay, image=im3),
+        ComponentInterfaceValueFactory(interface=overlay, image=im4),
+    )
+
+    ai1 = ArchiveItemFactory(archive=archive)
+    ai2 = ArchiveItemFactory(archive=archive)
+
+    ai1.values.add(civ1)
+    ai2.values.add(civ2)
+
+    assert rs1.display_sets.count() == 0
+
+    response = get_view_for_user(
+        viewname="archives:items-reader-study-update",
+        client=client,
+        method=client.post,
+        data={"items": [ai1.pk, ai2.pk], "reader_study": rs1.pk},
+        reverse_kwargs={"slug": archive.slug},
+        follow=True,
+        user=reader,
+    )
+
+    assert response.status_code == 403
+    assert rs1.display_sets.count() == 0
+
+    response = get_view_for_user(
+        viewname="archives:items-reader-study-update",
+        client=client,
+        method=client.post,
+        data={"items": [ai1.pk, ai2.pk], "reader_study": rs1.pk},
+        reverse_kwargs={"slug": archive.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert rs1.display_sets.count() == 2
+    assert sorted(
+        list(rs1.display_sets.values_list("values", flat=True))
+    ) == sorted([civ1.pk, civ2.pk])
+
+    assert rs2.display_sets.count() == 0
+    response = get_view_for_user(
+        viewname="archives:items-reader-study-update",
+        client=client,
+        method=client.post,
+        data={"items": [ai1.pk, ai2.pk], "reader_study": rs2.pk},
+        reverse_kwargs={"slug": archive.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert rs2.display_sets.count() == 0
+
+    ai1.values.add(civ3)
+    ai2.values.add(civ4)
+
+    response = get_view_for_user(
+        viewname="archives:items-reader-study-update",
+        client=client,
+        method=client.post,
+        data={"items": [ai1.pk, ai2.pk], "reader_study": rs1.pk},
+        reverse_kwargs={"slug": archive.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert rs1.display_sets.count() == 4
+    assert sorted(
+        sorted(list(ds.values.values_list("pk", flat=True)))
+        for ds in rs1.display_sets.all()
+    ) == sorted([[civ1.pk], [civ2.pk], [civ1.pk, civ3.pk], [civ2.pk, civ4.pk]])

@@ -39,6 +39,7 @@ from grandchallenge.archives.forms import (
     ArchiveCasesToReaderStudyForm,
     ArchiveForm,
     ArchiveItemForm,
+    ArchiveItemsToReaderStudyForm,
     ArchivePermissionRequestUpdateForm,
     UploadersForm,
     UsersForm,
@@ -68,7 +69,7 @@ from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -647,6 +648,51 @@ class ArchiveCasesToReaderStudyUpdate(
 
         self.success_url = reader_study.get_absolute_url()
         self.success_message = f"Added {len(images)} cases to {reader_study}."
+
+        return super().form_valid(form)
+
+
+class ArchiveItemsToReaderStudyUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = ArchiveItemsToReaderStudyForm
+    permission_required = (
+        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "archives/archive_cases_to_reader_study_form.html"
+
+    @cached_property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user, "archive": self.archive})
+        return kwargs
+
+    def form_valid(self, form):
+        reader_study: ReaderStudy = form.cleaned_data["reader_study"]
+        items = form.cleaned_data["items"]
+
+        for item in items:
+            values = item.values.all()
+            ds = DisplaySet.objects.create(reader_study=reader_study)
+            ds.values.set(values)
+
+        self.success_url = reader_study.get_absolute_url()
+        self.success_message = f"Added {len(items)} cases to {reader_study}."
 
         return super().form_valid(form)
 

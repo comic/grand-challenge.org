@@ -8,6 +8,7 @@ from grandchallenge.archives.views import (
     ArchiveEditArchiveItem,
     ArchiveEditorsUpdate,
     ArchiveItemsList,
+    ArchiveItemsToReaderStudyUpdate,
     ArchiveList,
     ArchivePermissionRequestCreate,
     ArchivePermissionRequestList,
@@ -71,5 +72,10 @@ urlpatterns = [
         "<slug>/cases/reader-study/update/",
         ArchiveCasesToReaderStudyUpdate.as_view(),
         name="cases-reader-study-update",
+    ),
+    path(
+        "<slug>/items/reader-study/update/",
+        ArchiveItemsToReaderStudyUpdate.as_view(),
+        name="items-reader-study-update",
     ),
 ]
