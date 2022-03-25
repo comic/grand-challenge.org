@@ -243,8 +243,8 @@ def test_api_archive_item_list_is_filtered(client):
     assert response.status_code == 200
     assert response.json()["count"] == 2
     assert i3.id not in (
-        response.json()["results"][0]["id"],
-        response.json()["results"][1]["id"],
+        response.json()["results"][0]["pk"],
+        response.json()["results"][1]["pk"],
     )
 
 
@@ -263,7 +263,7 @@ def test_api_archive_item_retrieve_permissions(client):
         client=client,
     )
     assert response.status_code == 200
-    assert response.json()["id"] == str(i1.pk)
+    assert response.json()["pk"] == str(i1.pk)
 
     # user cannot retrieve archive item
     response = get_view_for_user(
@@ -283,7 +283,7 @@ def test_api_archive_item_retrieve_permissions(client):
         client=client,
     )
     assert response.status_code == 200
-    assert response.json()["id"] == str(i1.pk)
+    assert response.json()["pk"] == str(i1.pk)
 
 
 @pytest.mark.django_db
@@ -328,7 +328,7 @@ def test_api_archive_item_interface_type_update(client, settings):
             HTTP_X_FORWARDED_PROTO="https",
         )
     assert response.status_code == 200
-    assert response.json()["id"] == str(item.pk)
+    assert response.json()["pk"] == str(item.pk)
     item.refresh_from_db()
     # check that the old item was removed and a new one was added with the same
     # image but the new interface type
@@ -365,7 +365,7 @@ def test_api_archive_item_add_and_update_value(client, settings):
             HTTP_X_FORWARDED_PROTO="https",
         )
     assert response.status_code == 200
-    assert response.json()["id"] == str(item.pk)
+    assert response.json()["pk"] == str(item.pk)
     item.refresh_from_db()
     assert item.values.count() == 1
     civ = item.values.get()
@@ -384,7 +384,7 @@ def test_api_archive_item_add_and_update_value(client, settings):
             HTTP_X_FORWARDED_PROTO="https",
         )
     assert response.status_code == 200
-    assert response.json()["id"] == str(item.pk)
+    assert response.json()["pk"] == str(item.pk)
     item.refresh_from_db()
     assert item.values.count() == 1
     new_civ = item.values.get()
@@ -424,7 +424,7 @@ def test_api_archive_item_add_and_update_non_image_file(client, settings):
             HTTP_X_FORWARDED_PROTO="https",
         )
     assert response.status_code == 200
-    assert response.json()["id"] == str(item.pk)
+    assert response.json()["pk"] == str(item.pk)
     item.refresh_from_db()
     assert item.values.count() == 1
     civ = item.values.get()
