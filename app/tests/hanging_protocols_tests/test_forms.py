@@ -18,11 +18,6 @@ def test_view_content_mixin():
     form = DummyForm()
     form.cleaned_data["view_content"] = {"main": ["test"]}
     form.clean_view_content()
-
-    assert (
-        "Please select a hanging protocol before filling this field."
-        in form.errors["view_content"]
-    )
     assert "Unkown slugs in view_content: test" in form.errors["view_content"]
 
     form.errors = {"view_content": []}

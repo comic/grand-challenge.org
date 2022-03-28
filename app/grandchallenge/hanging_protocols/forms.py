@@ -30,12 +30,6 @@ class ViewContentMixin:
     def clean_view_content(self):
         mapping = self.cleaned_data["view_content"] or {}
         hanging_protocol = self.cleaned_data["hanging_protocol"]
-        if mapping and not hanging_protocol:
-            self.add_error(
-                error="Please select a hanging protocol before filling this field.",
-                field="view_content",
-            )
-
         if mapping and hanging_protocol:
             if set(mapping.keys()) != {
                 x["viewport_name"] for x in hanging_protocol.json
