@@ -18,7 +18,7 @@ from tests.serializer_helpers import (
                 "factory": ArchiveWithHangingProtocol,
                 "serializer": ArchiveSerializer,
                 "fields": (
-                    "id",
+                    "pk",
                     "name",
                     "title",
                     "api_url",

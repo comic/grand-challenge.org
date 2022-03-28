@@ -11,7 +11,7 @@ from grandchallenge.archives.tasks import (
 )
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
-    ComponentInterfaceValueSerializer,
+    HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
@@ -22,11 +22,11 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
     archive = HyperlinkedRelatedField(
         read_only=True, view_name="api:archive-detail"
     )
-    values = ComponentInterfaceValueSerializer(many=True)
+    values = HyperlinkedComponentInterfaceValueSerializer(many=True)
 
     class Meta:
         model = ArchiveItem
-        fields = ("id", "archive", "values")
+        fields = ("pk", "archive", "values")
 
 
 class ArchiveSerializer(serializers.ModelSerializer):
@@ -42,7 +42,7 @@ class ArchiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Archive
         fields = (
-            "id",
+            "pk",
             "name",
             "title",
             "algorithms",
