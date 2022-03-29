@@ -1014,7 +1014,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 "selected": "",
                 "selected_image": "",
             }
-        cache.set(cache_key, values_for_interfaces, timeout=0)
+        cache.set(cache_key, values_for_interfaces, timeout=None)
         return values_for_interfaces
 
 
@@ -1093,7 +1093,7 @@ class DisplaySet(UUIDModel):
         for slug, civ, image in values:
             options[slug]["selected"] = civ
             options[slug]["selected_image"] = image or ""
-        cache.set(cache_key, options, timeout=0)
+        cache.set(cache_key, options, timeout=None)
         return options
 
     @cached_property
