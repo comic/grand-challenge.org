@@ -303,6 +303,16 @@ class ChallengeRequestDetail(
         "challenge_publication",
         "code_availability",
     )
+    budget_fields = (
+        "expected_number_of_teams",
+        "number_of_tasks",
+        "inference_time_limit_in_minutes",
+        "average_size_of_test_image_in_mb",
+        "phase_1_number_of_submissions_per_team",
+        "phase_1_number_of_test_images",
+        "phase_2_number_of_submissions_per_team",
+        "phase_2_number_of_test_images",
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
@@ -311,7 +321,18 @@ class ChallengeRequestDetail(
             for field in self.object._meta.fields
             if field.name in self.detail_view_fields
         }
-        context.update({"fields": fields, "budget": self.object.budget})
+        budget_fields = {
+            field.verbose_name: field.value_to_string(self.object)
+            for field in self.object._meta.fields
+            if field.name in self.budget_fields
+        }
+        context.update(
+            {
+                "fields": fields,
+                "budget": self.object.budget,
+                "budget_fields": budget_fields,
+            }
+        )
         return context
 
 

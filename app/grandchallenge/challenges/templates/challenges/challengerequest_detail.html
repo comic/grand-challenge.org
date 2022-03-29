@@ -38,6 +38,14 @@
     {% if budget %}
         <h2>Budget estimate</h2>
         <br>
+        Based on the following information provided by the challenge requester:
+        <br><br>
+        <ul>
+            {% for field, value in budget_fields.items %}
+                <li><span class="font-weight-bold">{{ field|capfirst }}</span>: {{ value }} </li>
+            {% endfor %}
+        </ul>
+        <br>
         <div class="table-responsive">
             <table class="table table-hover table-sm">
             {% for field, value in budget.items %}
