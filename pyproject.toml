@@ -114,7 +114,7 @@ sphinx = "*"
 pyupgrade = "*"
 pytest-xdist = "*"
 sphinx-autodoc-typehints = "*"
-werkzeug = {extras = ["watchdog"], version = "*"}
+werkzeug = {extras = ["watchdog"], version = "<2.1"}
 sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
