@@ -25,6 +25,15 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             )
         }
 
+    def clean_json(self):
+        value = self.cleaned_data["json"]
+        viewports = [x["viewport_name"] for x in value]
+        if len(set(viewports)) != len(viewports):
+            self.add_error(
+                error="Each viewport can only be used once.", field="json"
+            )
+        return value
+
 
 class ViewContentMixin:
     def clean_view_content(self):

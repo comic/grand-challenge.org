@@ -1,8 +1,12 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.models import HangingProtocol
 from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.factories import UserFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
+from tests.utils import get_view_for_user
 
 
 class DummyForm(ViewContentMixin):
@@ -42,3 +46,59 @@ def test_view_content_mixin():
     form.clean_view_content()
 
     assert form.errors["view_content"] == []
+
+
+@pytest.mark.django_db
+def test_hanging_protocol_form(client):
+    user = UserFactory()
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main"}, {"viewport_name": "main"}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 403
+    assign_perm("hanging_protocols.add_hangingprotocol", user)
+
+    assert HangingProtocol.objects.count() == 0
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main"}, {"viewport_name": "main"}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert "Each viewport can only be used once." in response.rendered_content
+    assert HangingProtocol.objects.count() == 0
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main"}, {"viewport_name": "secondary"}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Each viewport can only be used once." not in response.rendered_content
+    )
+    assert HangingProtocol.objects.count() == 1
