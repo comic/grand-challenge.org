@@ -32,6 +32,16 @@
         {% for field, value in fields.items %}
             <tr><td class="col-3 font-weight-bold">{{ field|title }}</td> <td class="col-9">{{ value|linebreaks }}</td></tr>
         {% endfor %}
+        {% if object.long_term_commitment %}
+            <tr><td class="col-3 font-weight-bold">Long-term support</td> <td class="col-9"><i class="fas fa-check-circle text-success pr-2"></i> The organizers agree to support this challenge for up to 5 years.</td></tr>
+        {% else %}
+            <tr><td class="col-3 font-weight-bold">Long-term support</td> <td class="col-9"><i class="fas fa-exclamation-circle text-danger pr-2"></i>  The organizers do not agree to support this challenge for up to 5 years for the following reason: <br><span class="ml-4">{{ object.long_term_commitment_extra }}</span></td></tr>
+        {% endif %}
+        {% if object.data_license %}
+            <tr><td class="col-3 font-weight-bold">Public data license</td> <td class="col-9"><i class="fas fa-check-circle text-success pr-2"></i>  The organizers agree to publish their public data set under a CC-BY license.</td></tr>
+        {% else %}
+            <tr><td class="col-3 font-weight-bold">Public data license</td> <td class="col-9"><i class="fas fa-exclamation-circle text-danger pr-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ml-4">{{ object.data_license_extra }}</span></td></tr>
+        {% endif %}
         </table>
     </div>
     <br>

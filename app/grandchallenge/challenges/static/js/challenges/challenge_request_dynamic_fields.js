@@ -14,18 +14,6 @@ function updateBudgetFields(){
     }
 }
 
-function updateLongTermCommitmentField(){
-    let checkbox = document.getElementById("id_long_term_commitment");
-    if (checkbox.checked) {
-        document.getElementById("div_id_long_term_commitment_extra").style.display = 'none';
-    } else {
-        document.getElementById("div_id_long_term_commitment_extra").style.display = 'block';
-        document.getElementById("div_id_long_term_commitment_extra").classList.add('ml-3');
-        document.getElementById("id_long_term_commitment_extra").required = true;
-        document.getElementById("div_id_long_term_commitment_extra").querySelector('label').innerHTML = "Why are you not willing/able to support this challenge long-term? *"
-    }
-}
-
 function updateExtraField(fieldName, helpText){
     let checkboxFieldId = 'id_' + fieldName
     let extraFieldDiv = 'div_id_' + fieldName + '_extra'
@@ -33,16 +21,17 @@ function updateExtraField(fieldName, helpText){
     let checkbox = document.getElementById(checkboxFieldId);
     if (checkbox.checked) {
         document.getElementById(extraFieldDiv).style.display = 'none';
+        document.getElementById(extraFieldId).required = false;
     } else {
         document.getElementById(extraFieldDiv).style.display = 'block';
         document.getElementById(extraFieldDiv).classList.add('ml-3');
         document.getElementById(extraFieldId).required = true;
-        document.getElementById(extraFieldDiv).querySelector('label').innerHTML = "Why are you not willing/able to" + helpText + "? *"
+        document.getElementById(extraFieldDiv).querySelector('label').innerHTML = "Why are you not willing/able to " + helpText + "? *"
     }
 }
 
 $(document).ready(function() {
     updateBudgetFields();
-    updateLongTermCommitmentField();
-    updateExtraField();
+    updateExtraField('long_term_commitment', 'support this challenge long-term');
+    updateExtraField('data_license', 'use a CC-BY license for your data');
 });

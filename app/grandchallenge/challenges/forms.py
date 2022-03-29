@@ -227,7 +227,9 @@ class ChallengeRequestForm(forms.ModelForm):
                 attrs={"onchange": "updateBudgetFields();"}
             ),
             "long_term_commitment": forms.CheckboxInput(
-                attrs={"onchange": "updateLongTermCommitmentField();"}
+                attrs={
+                    "onchange": "updateExtraField('long_term_commitment', 'support this challenge long-term');"
+                }
             ),
             "data_license": forms.CheckboxInput(
                 attrs={
@@ -236,8 +238,8 @@ class ChallengeRequestForm(forms.ModelForm):
             ),
         }
         labels = {
-            "long_term_commitment": "I agree to support this challenge for up to 5 years. ",
-            "data_license": "I agree to publish the data set for this challenge under a CC-BY license.",
+            "long_term_commitment": "We agree to support this challenge for up to 5 years. ",
+            "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
@@ -343,9 +345,11 @@ class ChallengeRequestForm(forms.ModelForm):
                 "responsive, and answers questions and queries in the forum. "
             ),
             "data_license": (
-                "In the spirit of open science, we ask that challenge data are "
-                "released under a <a href='https://creativecommons.org/licenses/' "
-                "target='_blank'>CC-BY license</a>."
+                "In the spirit of open science, we ask that the <b>public training "
+                "data</b> for type 1 and type 2 challenges are released under a "
+                "<a href='https://creativecommons.org/licenses/' target='_blank'>"
+                "CC-BY license</a>. Note that this does not apply to the secret test "
+                "data used to evaluate algorithm submissions in Type 2 challenges."
             ),
         }
 
@@ -353,7 +357,8 @@ class ChallengeRequestForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.instance.creator = creator
         self.fields["title"].required = True
-        self.fields["data_license"].required = True
+        self.fields["data_license"].initial = True
+        self.fields["long_term_commitment"].initial = True
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
