@@ -255,6 +255,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     hanging_list = models.JSONField(
         default=list,
         blank=True,
+        null=True,
         validators=[JSONValidator(schema=HANGING_LIST_SCHEMA)],
     )
     shuffle_hanging_list = models.BooleanField(default=False)
