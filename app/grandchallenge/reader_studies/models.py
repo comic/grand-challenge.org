@@ -1088,13 +1088,25 @@ class DisplaySet(UUIDModel):
             f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-*"
         ):
             cache.delete(key)
-        values = self.values.values_list("interface__slug", "id", "image_id")
-        options = self.reader_study.values_for_interfaces
-        for slug, civ, image in values:
-            options[slug]["selected"] = civ
-            options[slug]["selected_image"] = image or ""
-        cache.set(cache_key, options, timeout=None)
-        return options
+
+        if self.is_editable:
+            values = self.values.values_list(
+                "interface__slug", "id", "image_id"
+            )
+            items = self.reader_study.values_for_interfaces
+            for slug, civ, image in values:
+                items[slug]["selected"] = civ
+                items[slug]["selected_image"] = image or ""
+        else:
+            items = {
+                val.interface.slug: {
+                    "title": val.title,
+                    "selected_image": val.image_id,
+                }
+                for val in self.values.all()
+            }
+        cache.set(cache_key, items, timeout=None)
+        return items
 
     @cached_property
     def is_editable(self):
