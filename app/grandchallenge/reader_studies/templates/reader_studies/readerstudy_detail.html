@@ -96,6 +96,14 @@
 {% block content %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
 
+    {% if not object.use_display_sets %}
+        <div class="alert alert-danger">
+            This reader study is using a deprecated setup that is no longer
+            suported by the viewer. Please use an old version of the viewer
+            and contact support to migrate to the new setup.
+        </div>
+    {% endif %}
+
     {% if not object.is_valid and "change_readerstudy" in readerstudy_perms %}
         <div class="alert alert-danger">
             This reader study is not ready to be used. Please update the
