@@ -1014,8 +1014,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         values_for_interfaces = {}
         for interface in sorted(interfaces.keys()):
             values = ComponentInterfaceValue.objects.none()
-            for ds in self.display_sets.all():
-                values |= ds.values.filter(interface__slug=interface)
+            values = self.display_sets.filter(
+                values__interface=interfaces[interface]
+            ).values(
+                "values__id",
+                "values__image__name",
+                "values__file",
+                "values__value",
+            )
             values_for_interfaces[interface] = {
                 "id": interfaces[interface],
                 "values": values.distinct(),
@@ -1096,7 +1102,6 @@ class DisplaySet(UUIDModel):
             f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-*"
         ):
             cache.delete(key)
-
         if self.is_editable:
             values = self.values.values_list(
                 "interface__slug", "id", "image_id"
@@ -1118,7 +1123,17 @@ class DisplaySet(UUIDModel):
 
     @cached_property
     def is_editable(self):
-        return not self.answers.exists()
+        cache_key = f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-editable-{self.modified.timestamp()}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+        for key in cache.keys(
+            f"{self._meta.app_label}.{self._meta.model_name}-editable-{self.pk}-*"
+        ):
+            cache.delete(key)
+        is_editable = not self.answers.exists()
+        cache.set(cache_key, is_editable, timeout=None)
+        return is_editable
 
     @property
     def api_url(self):

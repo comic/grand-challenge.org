@@ -14,4 +14,4 @@ def get_ground_truth(reader_study, image, question):
 
 @register.filter
 def filename(value):
-    return os.path.basename(value.file.name)
+    return os.path.basename(value)

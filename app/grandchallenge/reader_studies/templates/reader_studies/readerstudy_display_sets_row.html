@@ -35,13 +35,14 @@
                       <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
                         <option value="{{ content.id }}::" {% if content.selected == "" %}selected{% endif %}>---</option>
                         {% for value in content.values %}
-                          <option value="{{ content.id }}::{{ value.id }}" {% if content.selected == value.id %}selected{% endif %}>
-                            {% if value.image %}
-                              {{ value.image.name }}
-                            {% elif value.file %}
-                              {{ value.file|filename }}
-                            {% elif file.value %}
-                              {{ value.value|slice:24 }}
+                          {{value}}
+                          <option value="{{ content.id }}::{{ value.values__id }}" {% if content.selected == value.values__id %}selected{% endif %}>
+                            {% if value.values__image__name %}
+                              {{ value.values__image__name }}
+                            {% elif value.values__file %}
+                              {{ value.values__file|filename }}
+                            {% elif value.values__value %}
+                              {{ value.values__value|slice:24 }}
                             {% endif %}
                           </option>
                         {% endfor %}
