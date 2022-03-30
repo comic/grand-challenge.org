@@ -1006,22 +1006,38 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             f"{self._meta.app_label}.{self._meta.model_name}-{self.slug}-*"
         ):
             cache.delete(key)
-        interfaces = dict(
-            self.display_sets.values_list(
-                "values__interface__slug", "values__interface"
+        vals = (
+            self.display_sets.prefetch_related(
+                "values", "values__interface", "values__image"
             )
+            .values(
+                "values__interface",
+                "values__interface__slug",
+                "values__id",
+                "values__image__name",
+                "values__file",
+                "values__value",
+            )
+            .order_by("values__id")
+            .distinct()
         )
-        values_for_interfaces = {}
-        for interface in sorted(interfaces.keys()):
-            values = ComponentInterfaceValue.objects.none()
-            for ds in self.display_sets.all():
-                values |= ds.values.filter(interface__slug=interface)
-            values_for_interfaces[interface] = {
+        interfaces = {
+            x["values__interface__slug"]: x["values__interface"] for x in vals
+        }
+        values_for_interfaces = {
+            interface: {
                 "id": interfaces[interface],
-                "values": values.distinct(),
+                "values": [
+                    x
+                    for x in vals
+                    if x["values__interface__slug"] == interface
+                ],
                 "selected": "",
                 "selected_image": "",
             }
+            for interface in sorted(interfaces.keys())
+        }
+
         cache.set(cache_key, values_for_interfaces, timeout=None)
         return values_for_interfaces
 
@@ -1096,7 +1112,6 @@ class DisplaySet(UUIDModel):
             f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-*"
         ):
             cache.delete(key)
-
         if self.is_editable:
             values = self.values.values_list(
                 "interface__slug", "id", "image_id"
@@ -1118,7 +1133,17 @@ class DisplaySet(UUIDModel):
 
     @cached_property
     def is_editable(self):
-        return not self.answers.exists()
+        cache_key = f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-editable-{self.modified.timestamp()}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+        for key in cache.keys(
+            f"{self._meta.app_label}.{self._meta.model_name}-editable-{self.pk}-*"
+        ):
+            cache.delete(key)
+        is_editable = not self.answers.exists()
+        cache.set(cache_key, is_editable, timeout=None)
+        return is_editable
 
     @property
     def api_url(self):

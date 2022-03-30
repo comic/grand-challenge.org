@@ -155,7 +155,9 @@ def test_assert_modification_allowed():
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ)
 
+    # clear cache (saving updates modification time)
     del ds.is_editable
+    ds.save()
 
     civ2 = ComponentInterfaceValueFactory(interface=ci, value=True)
     ds.values.remove(civ)
@@ -168,6 +170,7 @@ def test_assert_modification_allowed():
     AnswerFactory(question=q, display_set=ds)
 
     del ds.is_editable
+    ds.save()
 
     with pytest.raises(ValidationError):
         with transaction.atomic():
