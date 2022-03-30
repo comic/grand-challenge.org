@@ -1006,28 +1006,38 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             f"{self._meta.app_label}.{self._meta.model_name}-{self.slug}-*"
         ):
             cache.delete(key)
-        interfaces = dict(
-            self.display_sets.values_list(
-                "values__interface__slug", "values__interface"
+        vals = (
+            self.display_sets.prefetch_related(
+                "values", "values__interface", "values__image"
             )
-        )
-        values_for_interfaces = {}
-        for interface in sorted(interfaces.keys()):
-            values = ComponentInterfaceValue.objects.none()
-            values = self.display_sets.filter(
-                values__interface=interfaces[interface]
-            ).values(
+            .values(
+                "values__interface",
+                "values__interface__slug",
                 "values__id",
                 "values__image__name",
                 "values__file",
                 "values__value",
             )
-            values_for_interfaces[interface] = {
+            .order_by("values__id")
+            .distinct()
+        )
+        interfaces = {
+            x["values__interface__slug"]: x["values__interface"] for x in vals
+        }
+        values_for_interfaces = {
+            interface: {
                 "id": interfaces[interface],
-                "values": values.distinct(),
+                "values": [
+                    x
+                    for x in vals
+                    if x["values__interface__slug"] == interface
+                ],
                 "selected": "",
                 "selected_image": "",
             }
+            for interface in sorted(interfaces.keys())
+        }
+
         cache.set(cache_key, values_for_interfaces, timeout=None)
         return values_for_interfaces
 
