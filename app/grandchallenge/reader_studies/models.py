@@ -460,6 +460,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                     perm=perm, user_or_group=group, obj=self.workstation
                 )
 
+    def clean(self):
+        if self.hanging_list is None:
+            self.hanging_list = []
+        if self.case_text is None:
+            self.case_text = {}
+        if self.view_content is None:
+            self.view_content = {}
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
