@@ -821,6 +821,22 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         blank=True,
         help_text="What is your budget for hosting this challenge, if any?",
     )
+    long_term_commitment = models.BooleanField(
+        null=True,
+        blank=True,
+    )
+    long_term_commitment_extra = models.CharField(
+        max_length=2000,
+        blank=True,
+    )
+    data_license = models.BooleanField(
+        null=True,
+        blank=True,
+    )
+    data_license_extra = models.CharField(
+        max_length=2000,
+        blank=True,
+    )
 
     def __str__(self):
         return self.title

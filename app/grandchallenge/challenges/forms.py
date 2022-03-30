@@ -180,6 +180,8 @@ general_information_items = (
     "abstract",
     "start_date",
     "end_date",
+    "long_term_commitment",
+    "long_term_commitment_extra",
     "organizers",
     "affiliated_event",
     "structured_challenge_submission_form",
@@ -189,6 +191,8 @@ general_information_items = (
     "challenge_type",
     "challenge_setup",
     "data_set",
+    "data_license",
+    "data_license_extra",
     "submission_assessment",
     "challenge_publication",
     "code_availability",
@@ -220,8 +224,22 @@ class ChallengeRequestForm(forms.ModelForm):
             "start_date": forms.TextInput(attrs={"type": "date"}),
             "end_date": forms.TextInput(attrs={"type": "date"}),
             "challenge_type": forms.Select(
-                attrs={"onchange": "updateForm();"}
+                attrs={"onchange": "updateBudgetFields();"}
             ),
+            "long_term_commitment": forms.CheckboxInput(
+                attrs={
+                    "onchange": "updateExtraField('long_term_commitment', 'support this challenge long-term');"
+                }
+            ),
+            "data_license": forms.CheckboxInput(
+                attrs={
+                    "onchange": "updateExtraField('data_license', 'use a CC-BY license for your data');"
+                }
+            ),
+        }
+        labels = {
+            "long_term_commitment": "We agree to support this challenge for up to 5 years. ",
+            "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
@@ -278,9 +296,7 @@ class ChallengeRequestForm(forms.ModelForm):
             ),
             "data_set": (
                 "Describe the training and test datasets you are planning to "
-                "use and provide information on the "
-                "<a href='https://creativecommons.org/licenses/' target='_blank'>"
-                "license</a> of the data. <br>For Type 1 challenges, indicate where "
+                "use. <br>For Type 1 challenges, indicate where "
                 "you will store the data (read about the options <a href="
                 "'https://grand-challenge.org/documentation/data-storage/' "
                 "target='_blank'>here</a>).<br>For Type 2 challenges, the test "
@@ -316,12 +332,33 @@ class ChallengeRequestForm(forms.ModelForm):
                 "for an algorithm container to process one single image, including "
                 "model loading, i/o, preprocessing and inference."
             ),
+            "long_term_commitment": (
+                "High-quality challenges typically remain relevant for years. "
+                "Only when the submitted results to a challenge are hard to improve "
+                "upon, or when a new challenge has been set up for a similar task "
+                "that is more attractive to the research community, may it make sense "
+                "to close a challenge. We have designed grand-challenge.org to keep "
+                "algorithms and challenges long-term available. We expect the life "
+                "cycle of a challenge to last between 3-5 years. Would you be willing "
+                "to commit support for such a period? The amount of work would be "
+                "minimal, but it would require that the organizing team remains "
+                "responsive, and answers questions and queries in the forum. "
+            ),
+            "data_license": (
+                "In the spirit of open science, we ask that the <b>public training "
+                "data</b> for type 1 and type 2 challenges are released under a "
+                "<a href='https://creativecommons.org/licenses/' target='_blank'>"
+                "CC-BY license</a>. Note that this does not apply to the secret test "
+                "data used to evaluate algorithm submissions in Type 2 challenges."
+            ),
         }
 
     def __init__(self, creator, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.creator = creator
         self.fields["title"].required = True
+        self.fields["data_license"].initial = True
+        self.fields["long_term_commitment"].initial = True
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
