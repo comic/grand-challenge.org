@@ -1133,17 +1133,7 @@ class DisplaySet(UUIDModel):
 
     @cached_property
     def is_editable(self):
-        cache_key = f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-editable-{self.modified.timestamp()}"
-        cached = cache.get(cache_key)
-        if cached:
-            return cached
-        for key in cache.keys(
-            f"{self._meta.app_label}.{self._meta.model_name}-editable-{self.pk}-*"
-        ):
-            cache.delete(key)
-        is_editable = not self.answers.exists()
-        cache.set(cache_key, is_editable, timeout=None)
-        return is_editable
+        return not self.answers.exists()
 
     @property
     def api_url(self):
