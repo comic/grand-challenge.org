@@ -67,7 +67,7 @@ class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
 
 class DisplaySetAdmin(GuardedModelAdmin):
     list_filter = ("reader_study__slug",)
-    readonly_fields = ("reader_study",)
+    readonly_fields = ("reader_study", "values")
     list_display = (
         "reader_study",
         "order",
