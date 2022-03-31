@@ -84,7 +84,7 @@ def add_image_to_display_set(
         display_set.values.add(civ)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def create_display_sets_for_upload_session(
     *, upload_session_pk, reader_study_pk, interface_pk
 ):
