@@ -1104,7 +1104,11 @@ class DisplaySet(UUIDModel):
 
     @cached_property
     def value_list(self):
-        cache_key = f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-{self.modified.timestamp()}"
+        cache_key = (
+            f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-"
+            f"{self.reader_study.modified.timestamp()}-"
+            f"{self.modified.timestamp()}"
+        )
         cached = cache.get(cache_key)
         if cached:
             return cached
