@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
 from django import forms
 
 from grandchallenge.components.models import ComponentInterface
@@ -24,6 +26,23 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
                 '"order": 0}]'
             )
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            Div(
+                "title",
+                "description",
+                "json",
+                Div(
+                    id="hpVisualization",
+                    css_class="container-fluid m-1 mb-3 position-relative",
+                    style="height: 250px",
+                ),
+            ),
+            ButtonHolder(Submit("save", "Save")),
+        )
 
     def clean_json(self):
         value = self.cleaned_data["json"]

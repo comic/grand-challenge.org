@@ -27,5 +27,8 @@
 {% block script %}
     {{ block.super }}
     <script type="text/javascript"
+            src="{% static "js/hanging_protocols/hanging_protocol_visualization.js" type="module" defer %}">
+    </script>
+    <script type="text/javascript"
             src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

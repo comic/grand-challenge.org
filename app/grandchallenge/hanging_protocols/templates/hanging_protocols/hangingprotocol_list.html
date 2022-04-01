@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% load profiles %}
+{% load static %}
+{% load evaluation_extras %}
+
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -27,6 +30,8 @@
                             Created by {{ protocol.creator|user_profile_link }}
                             <br>
                             <p class="py-2">{{ protocol.description }}</p>
+                            <div id="id_json" class="d-none">{{ protocol.json|json_dumps }}</div>
+                            <div id="hpVisualization" class="container-fluid m-1 mb-3 position-relative" style="height: 100px; width:100%"></div>
                         </span>
                     </div>
                     <div class="text-right">
@@ -42,4 +47,11 @@
             <p>No hanging protocols available.</p>
         {% endfor %}
     </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/hanging_protocols/hanging_protocol_visualization.js" type="module" defer %}">
+    </script>
 {% endblock %}
