@@ -14,7 +14,7 @@ from grandchallenge.reader_studies.models import (
 
 
 class Command(BaseCommand):
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901
         not_migrated = []
         for rs in ReaderStudy.objects.filter(use_display_sets=False):
             if not (
@@ -68,6 +68,24 @@ class Command(BaseCommand):
                 rs.images.clear()
                 rs.hanging_list = []
                 rs.save()
+
+            # Check of any new answers have been created during the migration
+            # and add them to the proper display set
+            for answer in Answer.objects.filter(
+                question__reader_study=rs, images__isnull=False
+            ):
+                ds = DisplaySet.objects.filter(reader_study=rs)
+                for im in answer.images.all():
+                    ds.filter(values__image=im)
+                ds = ds.first()
+                if ds:
+                    answer.display_set = ds
+                    answer.save()
+                    answer.images.clear()
+                else:
+                    self.stdout.write(
+                        f"Could not find a display set for answer {answer.pk}."
+                    )
 
         pk_str = "\n".join(not_migrated)
         self.stdout.write(
