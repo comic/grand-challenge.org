@@ -342,6 +342,7 @@ class ReaderStudyDisplaySetList(
     ]
     text_align = "left"
     default_sort_order = "asc"
+    page_size = 10
 
     @cached_property
     def reader_study(self):

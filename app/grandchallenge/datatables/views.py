@@ -15,6 +15,7 @@ class PaginatedTableListView(ListView):
     default_sort_column = 0
     text_align = "center"
     default_sort_order = "desc"
+    page_size = None
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
@@ -44,7 +45,7 @@ class PaginatedTableListView(ListView):
         response = super().get(request, *args, **kwargs)
         if request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
             start = int(request.GET.get("start", 0))
-            page_size = int(request.GET.get("length"))
+            page_size = self.page_size or int(request.GET.get("length"))
             search = request.GET.get("search[value]")
             page = start // page_size + 1
             order_by = request.GET.get("order[0][column]")
