@@ -16,7 +16,12 @@ from grandchallenge.reader_studies.models import (
 class Command(BaseCommand):
     def handle(self, *args, **options):  # noqa: C901
         not_migrated = []
-        for rs in ReaderStudy.objects.filter(use_display_sets=False):
+        reader_studies = ReaderStudy.objects.filter(use_display_sets=False)
+        n_studies = len(reader_studies)
+        self.stdout.write(f"Found {n_studies} objects to migrate.")
+        count = 0
+        for rs in reader_studies:
+            count += 1
             if not (
                 {x for item in rs.hanging_list for x in item}
                 in [{"main"}, {"main", "main-overlay"}]
@@ -24,6 +29,11 @@ class Command(BaseCommand):
                 # Multiple viewports require more interfaces, this needs
                 # to be handled manually
                 not_migrated.append(str(rs.pk))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Cannot migrate {rs}. ({count}/{n_studies})"
+                    )
+                )
                 continue
             with transaction.atomic():
                 image_interface = ComponentInterface.objects.get(
@@ -68,6 +78,11 @@ class Command(BaseCommand):
                 rs.images.clear()
                 rs.hanging_list = []
                 rs.save()
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"Successfully migrated {rs}. ({count}/{n_studies})"
+                    )
+                )
 
             # Check of any new answers have been created during the migration
             # and add them to the proper display set
@@ -84,7 +99,10 @@ class Command(BaseCommand):
                     answer.images.clear()
                 else:
                     self.stdout.write(
-                        f"Could not find a display set for answer {answer.pk}."
+                        self.style.ERROR(
+                            f"Could not find a display set for answer "
+                            f"{answer.pk}."
+                        )
                     )
 
         pk_str = "\n".join(not_migrated)
