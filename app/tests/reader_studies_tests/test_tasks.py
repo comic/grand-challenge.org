@@ -11,7 +11,7 @@ from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 @pytest.mark.django_db
 def test_add_images_is_idempotent():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     image = ImageFactory()
 
     assert rs.images.count() == 0
@@ -31,7 +31,7 @@ def test_add_images_is_idempotent():
 
 @pytest.mark.django_db
 def test_create_display_sets_for_upload_session():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     image = ImageFactory()
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
 

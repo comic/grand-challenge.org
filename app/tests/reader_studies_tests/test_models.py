@@ -18,7 +18,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_group_deletion():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -37,7 +37,7 @@ def test_group_deletion():
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ["readers_group", "editors_group"])
 def test_group_deletion_reverse(group):
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -50,7 +50,7 @@ def test_group_deletion_reverse(group):
 
 @pytest.mark.django_db
 def test_read_only_fields():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     q = QuestionFactory(reader_study=rs)
 
     assert q.is_fully_editable is True
@@ -69,7 +69,7 @@ def test_read_only_fields():
 
 @pytest.mark.django_db
 def test_generate_hanging_list():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     im1 = ImageFactory(name="im1")
     im2 = ImageFactory(name="im2")
 
@@ -464,7 +464,7 @@ def test_validate_hanging_list():
 
 @pytest.mark.django_db
 def test_display_set_order():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     ds = DisplaySetFactory(reader_study=rs)
     assert ds.order == 10
 

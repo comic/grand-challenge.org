@@ -69,7 +69,7 @@ def test_hanging_list_validation(hanging_list, expected):
     ),
 )
 def test_non_unique_images(image_names, expected):
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     images = [ImageFactory(name=name) for name in image_names]
     rs.images.set(images)
     rs.save()
