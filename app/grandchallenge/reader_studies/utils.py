@@ -6,6 +6,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.reader_studies.models import Answer, DisplaySet
+from grandchallenge.workstations.models import Workstation
 
 
 def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
@@ -46,6 +47,9 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
         rs.use_display_sets = True
         rs.images.clear()
         rs.hanging_list = []
+        if rs.workstation.slug == "cirrus-core-previous-release":
+            new_ws = Workstation.objects.get(slug="cirrus-core")
+            rs.workstation = new_ws
         rs.save()
 
 
