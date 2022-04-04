@@ -96,6 +96,16 @@
 {% block content %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
 
+    {% if not object.use_display_sets %}
+        <div class="alert alert-danger">
+            This reader study is using a deprecated setup that is no longer
+            suported by the viewer. Please define your view_content and
+            <button type="button" class="btn btn-sm btn-primary" id="migrateToDS">
+                upgrade
+            </button>
+        </div>
+    {% endif %}
+
     {% if not object.is_valid and "change_readerstudy" in readerstudy_perms %}
         <div class="alert alert-danger">
             This reader study is not ready to be used. Please update the
@@ -523,6 +533,23 @@
                 $.ajax({
                     type: 'PATCH',
                     url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
+                    data: {},
+                    contentType: 'application/json',
+                    complete: (response) => {
+                        $('#page').prepend(
+                            '<div class="alert alert-success" role="alert">' +
+                            `${response.responseJSON.status}` +
+                            '</div>'
+                        );
+                        window.location.replace(window.location.href);
+                    }
+                })
+            });
+
+            $('#migrateToDS').on('click', () => {
+                $.ajax({
+                    type: 'PATCH',
+                    url: "{% url 'api:reader-study-migrate-to-display-sets' pk=object.pk %}",
                     data: {},
                     contentType: 'application/json',
                     complete: (response) => {

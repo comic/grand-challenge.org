@@ -7,6 +7,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.reader_studies import utils
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
@@ -124,3 +125,12 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
         add_image(answer, image)
     else:
         raise ValueError("Upload session for answer does not match")
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def migrate_reader_study_to_display_sets(*, reader_study_pk):
+    reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
+    utils.migrate_reader_study_to_display_sets(
+        reader_study, reader_study.view_content
+    )
+    utils.check_for_new_answers(reader_study)
