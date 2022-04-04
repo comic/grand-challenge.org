@@ -30,7 +30,9 @@ def test_rs_list_permissions(client):
     assert response.status_code == 200
     assert "Add a new reader study" in response.rendered_content
 
-    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+    rs1, rs2 = ReaderStudyFactory(use_display_sets=False), ReaderStudyFactory(
+        use_display_sets=False
+    )
     reader1 = UserFactory()
 
     # Readers should only be able to see the studies they have access to
@@ -443,7 +445,7 @@ def test_workstation_changes(client):
     ws1, ws2 = WorkstationFactory(), WorkstationFactory()
     reader = UserFactory()
 
-    rs = ReaderStudyFactory(workstation=ws1)
+    rs = ReaderStudyFactory(workstation=ws1, use_display_sets=False)
 
     assert "view_workstation" not in get_perms(reader, ws1)
     assert "view_workstation" not in get_perms(reader, ws2)
@@ -476,7 +478,7 @@ def test_visible_to_public_group_permissions():
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
 
     assert "view_readerstudy" not in get_perms(g_reg_anon, rs)
 

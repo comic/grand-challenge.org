@@ -264,7 +264,7 @@ def test_session_with_user_upload_to_readerstudy(client, settings):
     settings.task_always_eager = (True,)
 
     user = UserFactory()
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.add_editor(user=user)
 
     upload = create_upload_from_file(
@@ -533,7 +533,7 @@ def test_user_upload_to_display_set_without_interface(client, settings):
     settings.task_always_eager = (True,)
 
     user = UserFactory()
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.add_editor(user=user)
     ci = ComponentInterface.objects.filter(slug="generic-overlay").get()
     civ = ComponentInterfaceValueFactory(interface=ci)
