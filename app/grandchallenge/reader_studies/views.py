@@ -356,7 +356,15 @@ class ReaderStudyDisplaySetList(
         return context
 
     def get_queryset(self):
-        qs = super().get_queryset().filter(reader_study=self.reader_study)
+        qs = (
+            super()
+            .get_queryset()
+            .filter(reader_study=self.reader_study)
+            .select_related("reader_study")
+            .prefetch_related(
+                "values", "answers", "values__image", "values__interface"
+            )
+        )
         return qs
 
 

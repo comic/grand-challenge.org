@@ -1006,8 +1006,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             f"{self._meta.app_label}.{self._meta.model_name}-{self.slug}-*"
         ):
             cache.delete(key)
-        vals = (
-            self.display_sets.prefetch_related(
+        vals = list(
+            self.display_sets.select_related(
                 "values", "values__interface", "values__image"
             )
             .values(
@@ -1117,13 +1117,12 @@ class DisplaySet(UUIDModel):
         ):
             cache.delete(key)
         if self.is_editable:
-            values = self.values.values_list(
-                "interface__slug", "id", "image_id"
-            )
             items = self.reader_study.values_for_interfaces
-            for slug, civ, image in values:
-                items[slug]["selected"] = civ
-                items[slug]["selected_image"] = image or ""
+            for civ in self.values.all():
+                items[civ.interface.slug]["selected"] = civ.id
+                items[civ.interface.slug]["selected_image"] = (
+                    civ.image_id or ""
+                )
         else:
             items = {
                 val.interface.slug: {
