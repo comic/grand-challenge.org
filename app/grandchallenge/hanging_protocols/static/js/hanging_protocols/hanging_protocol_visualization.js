@@ -46,9 +46,13 @@ function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalW
     viewportDiv.style.top = isNaN(viewportSpec.y) ? "0%" : (viewportSpec.y / parseFloat(totalHeight).toFixed(2))*100 + '%';
     document.getElementById(divId).appendChild(viewportDiv).classList.add('bg-dark', 'rounded', 'border', 'border-2', 'd-flex', 'flex-column', 'justify-content-center', 'align-items-center');
 
-    viewportDiv.innerHTML += '<p style="font-size: 1.5em">'+ viewportSpec.viewport_name + '</p>';
-    if (viewportSpec.fullsizable == true) {
-        viewportDiv.innerHTML += '<i class="fas fa-expand m-1"></i>'
+    if (/\d/.test(divId)) {
+        viewportDiv.innerHTML += '<p class="mb-0" style="font-size: 0.9em">'+ viewportSpec.viewport_name + '</p>';
+    } else {
+        viewportDiv.innerHTML += '<p style="font-size: 1.5em">' + viewportSpec.viewport_name + '</p>';
+        if (viewportSpec.fullsizable == true) {
+            viewportDiv.innerHTML += '<i class="fas fa-expand m-1"></i>'
+        }
     }
 }
 
@@ -59,7 +63,6 @@ function updateHangingProtocolVisualization(parentDivId, jsonString){
     try {
         let jsonSpec = JSON.parse(jsonString);
         [totalHeight, totalWidth] = getGridDimensions(jsonSpec);
-        console.log(totalWidth, totalHeight)
         removeAllChildNodes(document.getElementById(parentDivId));
         for (let i = 0; i < jsonSpec.length; i++) {
             createViewportDiv(parentDivId, i, jsonSpec[i], totalHeight, totalWidth);
@@ -74,7 +77,6 @@ $(document).ready(function () {
         showOrHideVisualizationDiv("hpVisualization", jsonString);
         updateHangingProtocolVisualization("hpVisualization", jsonString);
         document.getElementById('jsoneditor_id_json').addEventListener('input', function(){updateHangingProtocolVisualization()});
-        document.getElementById('jsoneditor_id_json').addEventListener('keyup', function(){updateHangingProtocolVisualization()});
         document.getElementById('jsoneditor_id_json').addEventListener('paste', function(){updateHangingProtocolVisualization()});
     } else {
         let jsonDivs = document.querySelectorAll("[id^='id_json']");
