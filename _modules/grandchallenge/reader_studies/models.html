@@ -1079,8 +1079,8 @@
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="si">}</span><span class="s2">-*&quot;</span>
         <span class="p">):</span>
             <span class="n">cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="n">vals</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
                 <span class="s2">&quot;values&quot;</span><span class="p">,</span> <span class="s2">&quot;values__interface&quot;</span><span class="p">,</span> <span class="s2">&quot;values__image&quot;</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">values</span><span class="p">(</span>
@@ -1190,13 +1190,12 @@
         <span class="p">):</span>
             <span class="n">cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
-                <span class="s2">&quot;interface__slug&quot;</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;image_id&quot;</span>
-            <span class="p">)</span>
             <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">values_for_interfaces</span>
-            <span class="k">for</span> <span class="n">slug</span><span class="p">,</span> <span class="n">civ</span><span class="p">,</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-                <span class="n">items</span><span class="p">[</span><span class="n">slug</span><span class="p">][</span><span class="s2">&quot;selected&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">civ</span>
-                <span class="n">items</span><span class="p">[</span><span class="n">slug</span><span class="p">][</span><span class="s2">&quot;selected_image&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">civ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="n">items</span><span class="p">[</span><span class="n">civ</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span><span class="p">][</span><span class="s2">&quot;selected&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">civ</span><span class="o">.</span><span class="n">id</span>
+                <span class="n">items</span><span class="p">[</span><span class="n">civ</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span><span class="p">][</span><span class="s2">&quot;selected_image&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">civ</span><span class="o">.</span><span class="n">image_id</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+                <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">items</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">val</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span><span class="p">:</span> <span class="p">{</span>
