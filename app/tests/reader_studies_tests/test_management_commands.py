@@ -14,7 +14,7 @@ from tests.reader_studies_tests.factories import (
 def test_migrate_to_display_sets():
     reader = UserFactory()
 
-    rs_only_main = ReaderStudyFactory()
+    rs_only_main = ReaderStudyFactory(use_display_sets=False)
     q = QuestionFactory(reader_study=rs_only_main)
     rs_only_main.add_reader(reader)
     rs_only_main_images = [ImageFactory() for _ in range(6)]
@@ -24,7 +24,7 @@ def test_migrate_to_display_sets():
         a.images.add(im)
     rs_only_main.generate_hanging_list()
 
-    rs_main_overlay = ReaderStudyFactory()
+    rs_main_overlay = ReaderStudyFactory(use_display_sets=False)
     rs_main_overlay.add_reader(reader)
     rs_main_overlay_images = [ImageFactory() for _ in range(6)]
     rs_main_overlay.images.set(rs_main_overlay_images)
@@ -44,7 +44,7 @@ def test_migrate_to_display_sets():
     rs_main_overlay.hanging_list = hanging_list
     rs_main_overlay.save()
 
-    rs_main_secondary = ReaderStudyFactory()
+    rs_main_secondary = ReaderStudyFactory(use_display_sets=False)
     rs_main_secondary.add_reader(reader)
     rs_main_secondary_images = [ImageFactory() for _ in range(6)]
     rs_main_secondary.images.set(rs_main_secondary_images)
