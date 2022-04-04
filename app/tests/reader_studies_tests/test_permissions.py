@@ -445,7 +445,7 @@ def test_workstation_changes(client):
     ws1, ws2 = WorkstationFactory(), WorkstationFactory()
     reader = UserFactory()
 
-    rs = ReaderStudyFactory(workstation=ws1)
+    rs = ReaderStudyFactory(workstation=ws1, use_display_sets=False)
 
     assert "view_workstation" not in get_perms(reader, ws1)
     assert "view_workstation" not in get_perms(reader, ws2)

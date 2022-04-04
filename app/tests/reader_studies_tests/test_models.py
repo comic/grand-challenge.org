@@ -376,7 +376,8 @@ def test_score_for_user(reader_study_with_gt, settings):
 @pytest.mark.django_db
 def test_help_markdown_is_scrubbed(client):
     rs = ReaderStudyFactory(
-        help_text_markdown="<b>My Help Text</b><script>naughty</script>"
+        help_text_markdown="<b>My Help Text</b><script>naughty</script>",
+        use_display_sets=False,
     )
     u = UserFactory()
     rs.add_reader(u)
@@ -396,7 +397,8 @@ def test_case_text_is_scrubbed(client):
             im.name: "<b>My Help Text</b><script>naughty</script>",
             "not an image name": "Shouldn't appear in result",
             im1.name: "Doesn't belong to this study so ignore",
-        }
+        },
+        use_display_sets=False,
     )
     rs.images.add(im)
     rs.add_reader(u)
@@ -418,7 +420,8 @@ def test_validate_answer():
         hanging_list=[
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
-        ]
+        ],
+        use_display_sets=False,
     )
     rs.images.set([im1, im2, im3])
     rs.add_reader(u)
@@ -452,7 +455,8 @@ def test_validate_hanging_list():
         hanging_list=[
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
-        ]
+        ],
+        use_display_sets=False,
     )
     rs.images.set([im1, im2, im3])
 

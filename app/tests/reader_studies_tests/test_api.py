@@ -1180,7 +1180,7 @@ def test_remove_image_api_view(client):
 
 @pytest.mark.django_db
 def test_ground_truth(client):
-    rs = ReaderStudyFactory(is_educational=True)
+    rs = ReaderStudyFactory(is_educational=True, use_display_sets=False)
     reader = UserFactory()
     rs.add_reader(reader)
 

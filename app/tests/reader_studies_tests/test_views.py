@@ -227,7 +227,7 @@ def test_reader_study_list_view_filter(client):
     rs1, rs2, pubrs = (
         ReaderStudyFactory(use_display_sets=False),
         ReaderStudyFactory(use_display_sets=False),
-        ReaderStudyFactory(public=True),
+        ReaderStudyFactory(public=True, use_display_sets=False),
     )
     rs1.add_reader(user)
 
