@@ -1,6 +1,5 @@
 from django.db import transaction
 
-from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -15,9 +14,8 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
             ds = DisplaySet.objects.create(reader_study=rs)
             images = []
             for key in item:
-                try:
-                    image = Image.objects.get(name=item[key])
-                except Image.DoesNotExist:
+                image = rs.images.filter(name=item[key]).first()
+                if image is None:
                     continue
                 images.append(image.pk)
                 try:
