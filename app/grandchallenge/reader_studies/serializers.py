@@ -68,9 +68,11 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     )
     values = HyperlinkedComponentInterfaceValueSerializer(many=True)
     hanging_protocol = HangingProtocolSerializer(
-        source="archive.hanging_protocol", read_only=True
+        source="reader_study.hanging_protocol", read_only=True
     )
-    view_content = JSONField(source="archive.view_content", read_only=True)
+    view_content = JSONField(
+        source="reader_study.view_content", read_only=True
+    )
 
     class Meta:
         model = DisplaySet
