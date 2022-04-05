@@ -16,6 +16,7 @@ class Command(BaseCommand):
         count = 0
         for rs in reader_studies:
             count += 1
+
             content_keys = {x for item in rs.hanging_list for x in item}
             if not (content_keys in [{"main"}, {"main", "main-overlay"}]):
                 # Multiple viewports require more interfaces, this needs
@@ -27,16 +28,26 @@ class Command(BaseCommand):
                     )
                 )
                 continue
+
             view_content = {"main": "generic-medical-image"}
             if "main-overlay" in content_keys:
                 view_content["main-overlay"] = "generic-overlay"
 
-            migrate_reader_study_to_display_sets(rs, view_content)
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Successfully migrated {rs}. ({count}/{n_studies})"
+            try:
+                migrate_reader_study_to_display_sets(rs, view_content)
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"Successfully migrated {rs}. ({count}/{n_studies})"
+                    )
                 )
-            )
+            except Exception:
+                not_migrated.append(str(rs.pk))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Cannot migrate {rs}. ({count}/{n_studies})"
+                    )
+                )
+                continue
 
             try:
                 check_for_new_answers(rs)

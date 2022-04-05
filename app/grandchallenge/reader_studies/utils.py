@@ -1,6 +1,5 @@
 from django.db import transaction
 
-from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -15,23 +14,23 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
             ds = DisplaySet.objects.create(reader_study=rs)
             images = []
             for key in item:
-                try:
-                    image = Image.objects.get(name=item[key])
-                except Image.DoesNotExist:
-                    continue
+                image = rs.images.get(name=item[key])
                 images.append(image.pk)
+
                 try:
                     slug = view_content[key]
                 except KeyError:
                     raise ValueError(
                         f"No ComponentInterface provided for {key}."
                     )
+
                 try:
                     ci = ComponentInterface.objects.get(slug=slug)
                 except ComponentInterfaceValue.DoesNotExist:
                     raise ValueError(
                         f"ComponentInterface {slug} does not exist."
                     )
+
                 civ, _ = ComponentInterfaceValue.objects.get_or_create(
                     image=image, interface=ci
                 )
