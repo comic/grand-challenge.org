@@ -1,7 +1,7 @@
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
-from rest_framework.fields import ReadOnlyField, URLField
+from rest_framework.fields import JSONField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.archives.models import Archive, ArchiveItem
@@ -23,10 +23,20 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
         read_only=True, view_name="api:archive-detail"
     )
     values = HyperlinkedComponentInterfaceValueSerializer(many=True)
+    hanging_protocol = HangingProtocolSerializer(
+        source="archive.hanging_protocol", read_only=True
+    )
+    view_content = JSONField(source="archive.view_content", read_only=True)
 
     class Meta:
         model = ArchiveItem
-        fields = ("pk", "archive", "values")
+        fields = (
+            "pk",
+            "archive",
+            "values",
+            "hanging_protocol",
+            "view_content",
+        )
 
 
 class ArchiveSerializer(serializers.ModelSerializer):

@@ -1070,7 +1070,9 @@ class DisplaySetViewSet(
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = DisplaySet.objects.all().select_related("reader_study")
+        queryset = DisplaySet.objects.all().select_related(
+            "reader_study__hanging_protocol"
+        )
         unanswered_by_user = self.request.query_params.get(
             "unanswered_by_user"
         )

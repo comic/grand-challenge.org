@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
-from rest_framework.fields import CharField, ReadOnlyField, URLField
+from rest_framework.fields import CharField, JSONField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
@@ -67,6 +67,10 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         view_name="api:reader-study-detail", read_only=True
     )
     values = HyperlinkedComponentInterfaceValueSerializer(many=True)
+    hanging_protocol = HangingProtocolSerializer(
+        source="archive.hanging_protocol", read_only=True
+    )
+    view_content = JSONField(source="archive.view_content", read_only=True)
 
     class Meta:
         model = DisplaySet
@@ -76,6 +80,8 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "values",
             "order",
             "api_url",
+            "hanging_protocol",
+            "view_content",
         )
 
 
