@@ -325,7 +325,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
-    use_display_sets = models.BooleanField(default=False)
+    use_display_sets = models.BooleanField(default=True)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
