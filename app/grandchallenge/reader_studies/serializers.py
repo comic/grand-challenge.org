@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
-from rest_framework.fields import CharField, ReadOnlyField, URLField
+from rest_framework.fields import CharField, JSONField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
@@ -67,6 +67,12 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         view_name="api:reader-study-detail", read_only=True
     )
     values = HyperlinkedComponentInterfaceValueSerializer(many=True)
+    hanging_protocol = HangingProtocolSerializer(
+        source="reader_study.hanging_protocol", read_only=True
+    )
+    view_content = JSONField(
+        source="reader_study.view_content", read_only=True
+    )
 
     class Meta:
         model = DisplaySet
@@ -76,6 +82,8 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "values",
             "order",
             "api_url",
+            "hanging_protocol",
+            "view_content",
         )
 
 
@@ -108,7 +116,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     case_text = ReadOnlyField(source="cleaned_case_text")
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
-    hanging_protocol = HangingProtocolSerializer()
 
     class Meta:
         model = ReaderStudy
@@ -132,8 +139,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
             "use_display_sets",
-            "hanging_protocol",
-            "view_content",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):

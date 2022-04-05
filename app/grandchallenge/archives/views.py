@@ -741,7 +741,9 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
 
 
 class ArchiveItemViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
-    queryset = ArchiveItem.objects.all().prefetch_related("archive")
+    queryset = ArchiveItem.objects.all().prefetch_related(
+        "archive__hanging_protocol"
+    )
     serializer_class = ArchiveItemSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
