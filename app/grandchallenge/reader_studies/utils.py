@@ -65,26 +65,27 @@ def check_for_new_answers(rs):
     # Check of any new answers have been created during the migration
     # and add them to the proper display set
     errors = []
-    for answer in Answer.objects.filter(
-        question__reader_study=rs, images__isnull=False
-    ):
-        ds = DisplaySet.objects.filter(reader_study=rs)
-        for im in answer.images.all():
-            ds.filter(values__image=im)
-        ds = ds.first()
-        if ds:
-            if ds.values.count() != answer.images.count():
-                raise RuntimeError(
-                    "The number of ds values and answer images does not match"
-                )
+    with transaction.atomic():
+        for answer in Answer.objects.filter(
+            question__reader_study=rs, images__isnull=False
+        ):
+            ds = DisplaySet.objects.filter(reader_study=rs)
+            for im in answer.images.all():
+                ds.filter(values__image=im)
+            ds = ds.first()
+            if ds:
+                if ds.values.count() != answer.images.count():
+                    raise RuntimeError(
+                        "The number of ds values and answer images does not match"
+                    )
 
-            answer.display_set = ds
-            answer.save()
-            answer.images.clear()
-        else:
-            errors.append(str(answer.pk))
+                answer.display_set = ds
+                answer.save()
+                answer.images.clear()
+            else:
+                errors.append(str(answer.pk))
 
-    if errors:
-        raise ValueError(
-            f"Could not find a display set for answers {', '.join(errors)}."
-        )
+        if errors:
+            raise ValueError(
+                f"Could not find a display set for answers {', '.join(errors)}."
+            )
