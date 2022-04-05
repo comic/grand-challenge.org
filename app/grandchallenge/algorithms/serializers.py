@@ -83,9 +83,6 @@ class JobSerializer(serializers.ModelSerializer):
     algorithm_title = CharField(
         source="algorithm_image.algorithm.title", read_only=True
     )
-    algorithm_title = CharField(
-        source="algorithm_image.algorithm.title", read_only=True
-    )
     algorithm_hanging_protocol = HangingProtocolSerializer(
         source="algorithm_image.algorithm.hanging_protocol", read_only=True
     )
