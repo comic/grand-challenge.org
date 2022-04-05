@@ -37,12 +37,21 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
                 ds.values.add(civ)
 
             answers = Answer.objects.filter(question__reader_study=rs)
+
             for image in images:
                 answers = answers.filter(images=image)
+
             for answer in answers:
+
+                if ds.values.count() != answer.images.count():
+                    raise RuntimeError(
+                        "The number of ds values and answer images does not match"
+                    )
+
                 answer.display_set = ds
                 answer.save()
                 answer.images.clear()
+
         rs.use_display_sets = True
         rs.images.clear()
         rs.hanging_list = []
@@ -64,6 +73,11 @@ def check_for_new_answers(rs):
             ds.filter(values__image=im)
         ds = ds.first()
         if ds:
+            if ds.values.count() != answer.images.count():
+                raise RuntimeError(
+                    "The number of ds values and answer images does not match"
+                )
+
             answer.display_set = ds
             answer.save()
             answer.images.clear()
