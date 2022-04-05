@@ -518,14 +518,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @property
     def cleaned_case_text(self):
         if self.use_display_sets:
-            study_images = {im.name: im.api_url for im in self.ds_images}
+            return {
+                str(ds.pk): md2html(self.case_text[str(ds.pk)])
+                for ds in self.display_sets.all()
+            }
         else:
             study_images = {im.name: im.api_url for im in self.images.all()}
-        return {
-            study_images.get(k): md2html(v)
-            for k, v in self.case_text.items()
-            if k in study_images
-        }
+            return {
+                study_images.get(k): md2html(v)
+                for k, v in self.case_text.items()
+                if k in study_images
+            }
 
     @property
     def study_image_names(self):
