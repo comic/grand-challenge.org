@@ -762,7 +762,6 @@ class JobViewSet(
         Job.objects.all()
         .prefetch_related("outputs__interface", "inputs__interface")
         .select_related(
-            "algorithm_image__algorithm",
             "algorithm_image__algorithm__hanging_protocol",
         )
     )
