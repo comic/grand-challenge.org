@@ -2,7 +2,12 @@ from typing import Optional
 
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import serializers
-from rest_framework.fields import CharField, SerializerMethodField, URLField
+from rest_framework.fields import (
+    CharField,
+    JSONField,
+    SerializerMethodField,
+    URLField,
+)
 from rest_framework.relations import (
     HyperlinkedRelatedField,
     StringRelatedField,
@@ -78,6 +83,12 @@ class JobSerializer(serializers.ModelSerializer):
     algorithm_title = CharField(
         source="algorithm_image.algorithm.title", read_only=True
     )
+    algorithm_hanging_protocol = HangingProtocolSerializer(
+        source="algorithm_image.algorithm.hanging_protocol", read_only=True
+    )
+    algorithm_view_content = JSONField(
+        source="algorithm_image.algorithm.view_content", read_only=True
+    )
 
     class Meta:
         model = Job
@@ -92,6 +103,8 @@ class JobSerializer(serializers.ModelSerializer):
             "algorithm_title",
             "started_at",
             "completed_at",
+            "algorithm_hanging_protocol",
+            "algorithm_view_content",
         ]
 
 
