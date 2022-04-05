@@ -591,14 +591,17 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">cleaned_case_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="n">study_images</span> <span class="o">=</span> <span class="p">{</span><span class="n">im</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">im</span><span class="o">.</span><span class="n">api_url</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ds_images</span><span class="p">}</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">pk</span><span class="p">):</span> <span class="n">md2html</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_text</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">pk</span><span class="p">)])</span>
+                <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">study_images</span> <span class="o">=</span> <span class="p">{</span><span class="n">im</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">im</span><span class="o">.</span><span class="n">api_url</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">study_images</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">md2html</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">study_images</span>
-        <span class="p">}</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="n">study_images</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">md2html</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">study_images</span>
+            <span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">study_image_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
