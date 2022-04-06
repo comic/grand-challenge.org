@@ -97,6 +97,7 @@
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
 
     {% if not object.use_display_sets %}
+        {% comment %}
         <div class="alert alert-danger">
             This reader study is using a deprecated setup that is no longer
             suported by the viewer. Please define your view_content and
@@ -104,6 +105,7 @@
                 upgrade
             </button>
         </div>
+        {% endcomment %}
     {% endif %}
 
     {% if not object.is_valid and "change_readerstudy" in readerstudy_perms %}
