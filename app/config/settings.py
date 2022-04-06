@@ -1220,6 +1220,8 @@ DISALLOWED_EMAIL_DOMAINS = {
     "comcast.net",
     "nudt.edu.cn",
     "ihpc.a-star.edu.sg",
+    "raysightmed.com",
+    "csu.edu.cn",
     *blocklist,
 }
 
