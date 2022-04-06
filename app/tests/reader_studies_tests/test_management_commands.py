@@ -68,7 +68,7 @@ def test_migrate_to_display_sets():
 
     rs_only_main.refresh_from_db()
     assert rs_only_main.use_display_sets is True
-    assert rs_only_main.images.count() == 0
+    # assert rs_only_main.images.count() == 0
     assert rs_only_main.display_sets.count() == 6
     assert all(
         [
@@ -86,7 +86,7 @@ def test_migrate_to_display_sets():
 
     rs_main_overlay.refresh_from_db()
     assert rs_main_overlay.use_display_sets is True
-    assert rs_main_overlay.images.count() == 0
+    # assert rs_main_overlay.images.count() == 0
     assert rs_main_overlay.display_sets.count() == 3
     assert all(
         [
