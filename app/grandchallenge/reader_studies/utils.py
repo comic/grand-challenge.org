@@ -53,7 +53,6 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
                 answer.images.clear()
 
         rs.use_display_sets = True
-        rs.images.clear()
         rs.hanging_list = []
         if rs.workstation.slug == "cirrus-core-previous-release":
             new_ws = Workstation.objects.get(slug="cirrus-core")
