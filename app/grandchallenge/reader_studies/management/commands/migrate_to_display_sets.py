@@ -21,10 +21,10 @@ class Command(BaseCommand):
             if not (content_keys in [{"main"}, {"main", "main-overlay"}]):
                 # Multiple viewports require more interfaces, this needs
                 # to be handled manually
-                not_migrated.append(str(rs.pk))
+                not_migrated.append(str(rs.slug))
                 self.stdout.write(
                     self.style.WARNING(
-                        f"Cannot migrate {rs}. ({count}/{n_studies})"
+                        f"Cannot migrate {rs.slug}, multiple views found. ({count}/{n_studies})"
                     )
                 )
                 continue
@@ -37,22 +37,24 @@ class Command(BaseCommand):
                 migrate_reader_study_to_display_sets(rs, view_content)
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"Successfully migrated {rs}. ({count}/{n_studies})"
+                        f"Successfully migrated {rs.slug}. ({count}/{n_studies})"
                     )
                 )
-            except Exception:
+            except Exception as e:
                 not_migrated.append(str(rs.pk))
                 self.stdout.write(
                     self.style.WARNING(
-                        f"Cannot migrate {rs}. ({count}/{n_studies})"
+                        f"Cannot migrate {rs.slug}. ({count}/{n_studies}): {e}"
                     )
                 )
                 continue
 
             try:
                 check_for_new_answers(rs)
-            except ValueError as e:
-                self.stdout.write(self.style.ERROR(str(e)))
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(f"Final step failed for {rs.slug}: {e}")
+                )
 
         pk_str = "\n".join(not_migrated)
         self.stdout.write(
