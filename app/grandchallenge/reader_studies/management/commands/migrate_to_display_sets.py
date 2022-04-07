@@ -17,15 +17,6 @@ class Command(BaseCommand):
         for rs in reader_studies:
             count += 1
 
-            if rs.images.count() > 900:
-                not_migrated.append(str(rs.slug))
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"Cannot migrate {rs.slug}, too many images. ({count}/{n_studies})"
-                    )
-                )
-                continue
-
             content_keys = {x for item in rs.hanging_list for x in item}
             if not (content_keys in [{"main"}, {"main", "main-overlay"}]):
                 # Multiple viewports require more interfaces, this needs
