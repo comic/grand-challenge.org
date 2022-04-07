@@ -521,6 +521,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             return {
                 str(ds.pk): md2html(self.case_text[str(ds.pk)])
                 for ds in self.display_sets.all()
+                if str(ds.pk) in self.case_text
             }
         else:
             study_images = {im.name: im.api_url for im in self.images.all()}
