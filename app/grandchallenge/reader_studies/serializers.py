@@ -15,7 +15,6 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
-from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -74,17 +73,6 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     view_content = JSONField(
         source="reader_study.view_content", read_only=True
     )
-    description = SerializerMethodField()
-
-    def get_description(self, obj):
-        case_text = obj.reader_study.case_text
-        return "".join(
-            [
-                md2html(case_text[val.image.name])
-                for val in obj.values.filter(image__isnull=False)
-                if val.image.name in case_text
-            ]
-        )
 
     class Meta:
         model = DisplaySet
