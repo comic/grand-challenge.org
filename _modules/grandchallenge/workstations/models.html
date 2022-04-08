@@ -457,6 +457,7 @@
 <span class="sd">            The environment variables that should be set on the container.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">env</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;NGINX_RESOLVER&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATIONS_DNS_RESOLVER</span><span class="p">,</span>
             <span class="s2">&quot;GRAND_CHALLENGE_API_ROOT&quot;</span><span class="p">:</span> <span class="n">unquote</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;api:api-root&quot;</span><span class="p">)),</span>
             <span class="s2">&quot;WORKSTATION_SENTRY_DSN&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATION_SENTRY_DSN</span><span class="p">,</span>
             <span class="s2">&quot;WORKSTATION_SESSION_ID&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
