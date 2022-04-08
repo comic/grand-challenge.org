@@ -521,7 +521,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             images = {}
             for ds in self.display_sets.all():
                 images.update(
-                    {val.image.name: str(ds.pk) for val in ds.values.all()}
+                    {
+                        val.image.name: str(ds.pk)
+                        for val in ds.values.filter(image__isnull=False)
+                    }
                 )
             return {
                 images[k]: md2html(v)
