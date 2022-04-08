@@ -480,3 +480,22 @@ def test_display_set_order():
 
     ds = DisplaySetFactory(reader_study=rs)
     assert ds.order == 20
+
+
+@pytest.mark.django_db
+def test_cleaned_case_text():
+    rs = ReaderStudyFactory()
+    images = [ImageFactory() for _ in range(6)]
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
+    cleaned_case_text = {}
+    for image in images:
+        ds = DisplaySetFactory(reader_study=rs)
+        cleaned_case_text[str(ds.pk)] = f"<p>{str(image.pk)}</p>"
+        civ = ComponentInterfaceValueFactory(interface=ci, image=image)
+        ds.values.add(civ)
+
+    rs.case_text = {im.name: str(im.pk) for im in images}
+    rs.case_text["no_image"] = "not an image"
+    rs.save()
+
+    assert rs.cleaned_case_text == cleaned_case_text

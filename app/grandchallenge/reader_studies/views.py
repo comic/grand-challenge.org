@@ -866,7 +866,11 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
-        "images", "questions__options"
+        "images",
+        "questions__options",
+        "display_sets",
+        "display_sets__values",
+        "display_sets__values__image",
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
