@@ -29,9 +29,9 @@ class Command(BaseCommand):
                 )
                 continue
 
-            view_content = {"main": "generic-medical-image"}
+            view_content = {"main": ["generic-medical-image"]}
             if "main-overlay" in content_keys:
-                view_content["main-overlay"] = "generic-overlay"
+                view_content["main"].append("generic-overlay")
 
             try:
                 migrate_reader_study_to_display_sets(rs, view_content)

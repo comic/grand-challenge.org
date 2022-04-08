@@ -1791,10 +1791,7 @@ def test_migrate_to_display_sets(client, settings):
     rs.refresh_from_db()
     assert rs.use_display_sets is False
 
-    rs.view_content = {
-        "main": "generic-medical-image",
-        "main-overlay": "generic-overlay",
-    }
+    rs.view_content = {"main": ["generic-medical-image", "generic-overlay"]}
     images = [ImageFactory() for _ in range(6)]
     rs.images.set(images)
     q = QuestionFactory(reader_study=rs)
@@ -1842,8 +1839,8 @@ def test_migrate_to_display_sets(client, settings):
     rs.add_editor(editor)
     rs.add_reader(reader)
     rs.view_content = {
-        "main": "generic-medical-image",
-        "secondary": "generic-overlay",
+        "main": ["generic-medical-image"],
+        "secondary": ["generic-overlay"],
     }
     images = [ImageFactory() for _ in range(6)]
     rs.images.set(images)
