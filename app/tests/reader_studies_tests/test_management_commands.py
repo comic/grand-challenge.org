@@ -1,15 +1,10 @@
-import io
-
 import pytest
 from django.core.management import call_command
 
-from grandchallenge.components.models import ComponentInterface
 from grandchallenge.reader_studies.models import Answer
-from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
-    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -127,41 +122,3 @@ def test_migrate_to_display_sets():
         .count()
         == 3
     )
-
-
-@pytest.mark.django_db
-def test_migrate_case_texts():
-    rs = ReaderStudyFactory()
-    images = [ImageFactory() for _ in range(6)]
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
-    new_case_text = {}
-    for image in images:
-        ds = DisplaySetFactory(reader_study=rs)
-        new_case_text[str(ds.pk)] = str(image.pk)
-        civ = ComponentInterfaceValueFactory(interface=ci, image=image)
-        ds.values.add(civ)
-
-    out = io.StringIO()
-    call_command("migrate_case_texts", stdout=out)
-    assert "Found 0 objects to migrate." in out.getvalue()
-
-    rs.use_display_sets = False
-    rs.case_text = {im.name: str(im.pk) for im in images}
-    rs.case_text["no_image"] = "not an image"
-    new_case_text["no_image"] = "not an image"
-    rs.save()
-
-    out = io.StringIO()
-    call_command("migrate_case_texts", stdout=out)
-    assert "Found 0 objects to migrate." in out.getvalue()
-
-    rs.use_display_sets = True
-    rs.save()
-
-    out = io.StringIO()
-    call_command("migrate_case_texts", stdout=out)
-    assert "Found 1 objects to migrate." in out.getvalue()
-    assert "Could not find a display set for key no_image" in out.getvalue()
-
-    rs.refresh_from_db()
-    assert rs.case_text == new_case_text
