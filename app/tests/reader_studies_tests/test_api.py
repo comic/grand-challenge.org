@@ -6,7 +6,7 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -1887,33 +1887,3 @@ def test_migrate_to_display_sets(client, settings):
     assert set(
         rs.display_sets.values_list("values__interface__slug", flat=True)
     ) == {"generic-overlay", "generic-medical-image"}
-
-
-@pytest.mark.django_db
-def test_display_set_description(client):
-    rs = ReaderStudyFactory()
-    reader = UserFactory()
-    rs.add_reader(reader)
-    images = [ImageFactory() for _ in range(6)]
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
-    result = {}
-    for image in images:
-        ds = DisplaySetFactory(reader_study=rs)
-        result[ds.pk] = f"<p>{str(image.pk)}</p>"
-        civ = ComponentInterfaceValueFactory(interface=ci, image=image)
-        ds.values.add(civ)
-
-    rs.case_text = {im.name: str(im.pk) for im in images}
-    rs.case_text["no_image"] = "not an image"
-    rs.save()
-
-    for ds in rs.display_sets.all():
-        response = get_view_for_user(
-            viewname="api:reader-studies-display-set-detail",
-            reverse_kwargs={"pk": ds.pk},
-            user=reader,
-            client=client,
-            content_type="application/json",
-        )
-
-        assert response.json()["description"] == result[ds.pk]
