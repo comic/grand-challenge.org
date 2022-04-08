@@ -591,11 +591,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">cleaned_case_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">pk</span><span class="p">):</span> <span class="n">md2html</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_text</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">pk</span><span class="p">)])</span>
-                <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span>
-            <span class="p">}</span>
+            <span class="k">return</span> <span class="p">{}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">study_images</span> <span class="o">=</span> <span class="p">{</span><span class="n">im</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">im</span><span class="o">.</span><span class="n">api_url</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
             <span class="k">return</span> <span class="p">{</span>
@@ -1220,6 +1216,17 @@
         <span class="sd">&quot;&quot;&quot;API url for this ``DisplaySet``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;api:reader-studies-display-set-detail&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">case_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">case_text</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">md2html</span><span class="p">(</span><span class="n">case_text</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">image__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">case_text</span>
+            <span class="p">]</span>
         <span class="p">)</span></div>
 
 
