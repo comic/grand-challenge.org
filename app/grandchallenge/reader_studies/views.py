@@ -23,6 +23,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
@@ -121,7 +122,9 @@ class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
                         "Please <a href='{}'>contact us</a> if you would like "
                         "to set up your own reader study."
                     ),
-                    random_encode("mailto:support@grand-challenge.org"),
+                    mark_safe(
+                        random_encode("mailto:support@grand-challenge.org")
+                    ),
                 ),
             }
         )

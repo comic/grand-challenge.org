@@ -19,6 +19,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -135,7 +136,9 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
                         "Please <a href='{}'>contact us</a> if you would like "
                         "to make your own algorithm available here."
                     ),
-                    random_encode("mailto:support@grand-challenge.org"),
+                    mark_safe(
+                        random_encode("mailto:support@grand-challenge.org")
+                    ),
                 ),
                 "challenges_for_algorithms": cache.get(
                     "challenges_for_algorithms"
