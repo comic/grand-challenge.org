@@ -866,7 +866,8 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
-        "images", "questions__options"
+        "images",
+        "questions__options",
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -1070,8 +1071,10 @@ class DisplaySetViewSet(
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = DisplaySet.objects.all().select_related(
-            "reader_study__hanging_protocol"
+        queryset = (
+            DisplaySet.objects.all()
+            .select_related("reader_study__hanging_protocol")
+            .prefetch_related("values__image")
         )
         unanswered_by_user = self.request.query_params.get(
             "unanswered_by_user"

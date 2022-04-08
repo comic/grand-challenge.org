@@ -76,6 +76,12 @@
                 {% endif %}
               </td>
             </tr>
+            <tr>
+              <td>Description:</td>
+              <td colspan="3">
+                {{ object.description|safe }}
+              </td>
+            </tr>
             {% if object.is_editable %}
               <tr>
                 <td colspan="4">

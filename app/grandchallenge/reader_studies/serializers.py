@@ -84,6 +84,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "api_url",
             "hanging_protocol",
             "view_content",
+            "description",
         )
 
 

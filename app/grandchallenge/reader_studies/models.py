@@ -518,11 +518,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @property
     def cleaned_case_text(self):
         if self.use_display_sets:
-            return {
-                str(ds.pk): md2html(self.case_text[str(ds.pk)])
-                for ds in self.display_sets.all()
-                if str(ds.pk) in self.case_text
-            }
+            return {}
         else:
             study_images = {im.name: im.api_url for im in self.images.all()}
             return {
@@ -1147,6 +1143,17 @@ class DisplaySet(UUIDModel):
         """API url for this ``DisplaySet``."""
         return reverse(
             "api:reader-studies-display-set-detail", kwargs={"pk": self.pk}
+        )
+
+    @property
+    def description(self):
+        case_text = self.reader_study.case_text
+        return "".join(
+            [
+                md2html(case_text[val.image.name])
+                for val in self.values.filter(image__isnull=False)
+                if val.image.name in case_text
+            ]
         )
 
 
