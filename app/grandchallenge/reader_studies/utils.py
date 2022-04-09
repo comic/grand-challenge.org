@@ -1,5 +1,3 @@
-import logging
-
 from django.db import transaction
 
 from grandchallenge.components.models import (
@@ -8,8 +6,6 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.reader_studies.models import Answer, DisplaySet
 from grandchallenge.workstations.models import Workstation
-
-logger = logging.getLogger(__name__)
 
 
 def _get_civ(image, slug):
@@ -47,9 +43,9 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
                     )
                 else:
                     if len(slugs) > 2:
-                        logger.warning(
+                        raise ValueError(
                             f"More than two interface slugs provided for {key} "
-                            f"in {rs.slug}. Ignoring all values after the second."
+                            f"in {rs.slug}."
                         )
                     image = rs.images.get(name=item[key])
                     ds.values.add(_get_civ(image, slugs[0]))
