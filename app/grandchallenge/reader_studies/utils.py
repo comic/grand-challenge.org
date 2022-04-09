@@ -14,7 +14,9 @@ def _get_civ(image, slug):
     except ComponentInterfaceValue.DoesNotExist:
         raise ValueError(f"ComponentInterface {slug} does not exist.")
 
-    civ = ComponentInterfaceValue.objects.filter(image=image, interface=ci)
+    civ = ComponentInterfaceValue.objects.filter(
+        image=image, interface=ci
+    ).first()
     if civ is None:
         civ = ComponentInterfaceValue.objects.create(image=image, interface=ci)
     return civ
