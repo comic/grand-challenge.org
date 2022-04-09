@@ -29,6 +29,9 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
             ds = DisplaySet.objects.create(reader_study=rs)
             images = []
             for key in item:
+                # view_content does not contain *-overlay keys, the second
+                # value in the lit of slugs should be the overlay. This is
+                # handled in the else clause here.
                 if "overlay" in key:
                     continue
                 try:
