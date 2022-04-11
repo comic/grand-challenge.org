@@ -115,6 +115,16 @@ def serve_component_interface_value(
         .exists()
     ):
         return protected_storage_redirect(name=civ.file.name)
+    elif (
+        get_objects_for_user(
+            user=user,
+            perms="archives.view_archive",
+            accept_global_perms=False,
+        )
+        .filter(items__values__pk=component_interface_value_pk)
+        .exists()
+    ):
+        return protected_storage_redirect(name=civ.file.name)
 
     raise PermissionDenied
 
