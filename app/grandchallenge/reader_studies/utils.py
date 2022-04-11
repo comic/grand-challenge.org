@@ -8,6 +8,20 @@ from grandchallenge.reader_studies.models import Answer, DisplaySet
 from grandchallenge.workstations.models import Workstation
 
 
+def _get_civ(image, slug):
+    try:
+        ci = ComponentInterface.objects.get(slug=slug)
+    except ComponentInterfaceValue.DoesNotExist:
+        raise ValueError(f"ComponentInterface {slug} does not exist.")
+
+    civ = ComponentInterfaceValue.objects.filter(
+        image=image, interface=ci
+    ).first()
+    if civ is None:
+        civ = ComponentInterfaceValue.objects.create(image=image, interface=ci)
+    return civ
+
+
 def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
     if not rs.is_valid:
         raise ValueError("Reader study is not valid")
@@ -17,27 +31,37 @@ def migrate_reader_study_to_display_sets(rs, view_content):  # noqa: C901
             ds = DisplaySet.objects.create(reader_study=rs)
             images = []
             for key in item:
-                image = rs.images.get(name=item[key])
-                images.append(image.pk)
-
+                # view_content does not contain *-overlay keys, the second
+                # value in the lit of slugs should be the overlay. This is
+                # handled in the else clause here.
+                if "overlay" in key:
+                    continue
                 try:
-                    slug = view_content[key]
+                    slugs = view_content[key]
                 except KeyError:
                     raise ValueError(
                         f"No ComponentInterface provided for {key}."
                     )
-
-                try:
-                    ci = ComponentInterface.objects.get(slug=slug)
-                except ComponentInterfaceValue.DoesNotExist:
+                if len(slugs) == 0:
                     raise ValueError(
-                        f"ComponentInterface {slug} does not exist."
+                        f"No ComponentInterface provided for {key}."
                     )
+                else:
+                    if len(slugs) > 2:
+                        raise ValueError(
+                            f"More than two interface slugs provided for {key} "
+                            f"in {rs.slug}."
+                        )
+                    image = rs.images.get(name=item[key])
+                    ds.values.add(_get_civ(image, slugs[0]))
+                    images.append(image.pk)
 
-                civ, _ = ComponentInterfaceValue.objects.get_or_create(
-                    image=image, interface=ci
-                )
-                ds.values.add(civ)
+                    overlay = item.get(f"{key}-overlay")
+                    if overlay is None:
+                        continue
+                    overlay = rs.images.get(name=overlay)
+                    ds.values.add(_get_civ(overlay, slugs[1]))
+                    images.append(overlay.pk)
 
             answers = Answer.objects.filter(
                 question__reader_study=rs

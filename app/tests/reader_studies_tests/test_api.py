@@ -8,6 +8,9 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from grandchallenge.reader_studies.utils import (
+    migrate_reader_study_to_display_sets,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1792,8 +1795,7 @@ def test_migrate_to_display_sets(client, settings):
     assert rs.use_display_sets is False
 
     rs.view_content = {
-        "main": "generic-medical-image",
-        "main-overlay": "generic-overlay",
+        "main": ["generic-medical-image", "generic-overlay", "extra-key"]
     }
     images = [ImageFactory() for _ in range(6)]
     rs.images.set(images)
@@ -1811,6 +1813,17 @@ def test_migrate_to_display_sets(client, settings):
         a.images.set([im, overlay])
 
     rs.hanging_list = hanging_list
+    rs.save()
+
+    with pytest.raises(ValueError) as e:
+        # Call utility function directly to capture the error
+        migrate_reader_study_to_display_sets(rs, rs.view_content)
+    assert (
+        str(e.value)
+        == f"More than two interface slugs provided for main in {rs.slug}."
+    )
+
+    rs.view_content = {"main": ["generic-medical-image", "generic-overlay"]}
     rs.save()
 
     response = get_view_for_user(
@@ -1842,8 +1855,8 @@ def test_migrate_to_display_sets(client, settings):
     rs.add_editor(editor)
     rs.add_reader(reader)
     rs.view_content = {
-        "main": "generic-medical-image",
-        "secondary": "generic-overlay",
+        "main": ["generic-medical-image"],
+        "secondary": ["generic-overlay"],
     }
     images = [ImageFactory() for _ in range(6)]
     rs.images.set(images)
