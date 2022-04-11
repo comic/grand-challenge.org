@@ -51,6 +51,18 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             self.add_error(
                 error="Each viewport can only be used once.", field="json"
             )
+
+        dims = ["x", "y", "w", "h"]
+        viewport_defs = [viewport.keys() for viewport in value]
+        for viewport_keys in viewport_defs:
+            if any(d in viewport_keys for d in dims) and not all(
+                d in viewport_keys for d in dims
+            ):
+                self.add_error(
+                    error="Viewport definition must contain all or none of x, y, w, and h",
+                    field="json",
+                )
+
         return value
 
 

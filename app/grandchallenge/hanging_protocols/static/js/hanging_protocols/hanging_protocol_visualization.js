@@ -1,3 +1,5 @@
+possibleViewPorts =  JSON.parse(document.getElementById('possibleViewPorts').textContent);
+
 function insertAfter(newNode, existingNode) {
     existingNode.parentNode.insertBefore(newNode, existingNode.nextSibling);
 }
@@ -17,19 +19,18 @@ function showOrHideVisualizationDiv(divId, jsonString) {
 }
 
 function getGridDimensions(json) {
-    let allX = [];
-    let allY = [];
-    let allW = [];
-    let allH = [];
+    const dims = { x: [], y: [], w: [], h: [] };
 
-    for (let i = 0; i < json.length; i++) {
-        json[i].x == undefined ? undefined : allX.push(json[i].x);
-        json[i].y == undefined ? undefined : allY.push(json[i].y);
-        json[i].w == undefined ? undefined : allW.push(json[i].w);
-        json[i].h == undefined ? undefined : allH.push(json[i].h);
+    for (const viewport of json) {
+      for (const d of Object.keys(dims)) {
+        if (d in viewport) {
+          dims[d].push(viewport[d]);
+        }
+      }
     }
-    let totalWidth = (allX.length != json.length | allW.length != json.length) ? json.length : Math.max(...allX.map(function(num, idx) {return num+allW[idx]}));
-    let totalHeight = (allY.length != json.length | allH.length != json.length) ? 1 : Math.max(...allY.map(function(num, idx) {return num+allH[idx]}));
+
+    let totalWidth = (dims.x.length != json.length || dims.w.length != json.length) ? json.length : Math.max(...dims.x.map(function(num, idx) {return num+dims.w[idx]}));
+    let totalHeight = (dims.y.length != json.length || dims.h.length != json.length) ? 1 : Math.max(...dims.y.map(function(num, idx) {return num+dims.h[idx]}));
 
     return [totalHeight, totalWidth]
 }
@@ -37,21 +38,27 @@ function getGridDimensions(json) {
 function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalWidth) {
     let viewportDiv = document.createElement("div");
     viewportDiv.setAttribute('id', viewportSpec.viewport_name);
+    if (possibleViewPorts.includes(viewportSpec.viewport_name)) {
+        viewportDiv.style.background = '#7b8a8b';
+    } else {
+        viewportDiv.style.background = '#e74c3c';
+    }
     viewportDiv.style.opacity = '0.5';
     viewportDiv.style.position = 'absolute';
+    viewportDiv.style.fontSize = '1.5em';
     viewportDiv.style.zIndex = '-' + viewportSpec.order;
-    viewportDiv.style.width = isNaN(viewportSpec.w) ? (1 / parseFloat(totalWidth).toFixed(2))*100 + '%' : (viewportSpec.w / parseFloat(totalWidth).toFixed(2))*100 + '%';
-    viewportDiv.style.height = isNaN(viewportSpec.h) ? "100%" : (viewportSpec.h / parseFloat(totalHeight).toFixed(2))*100 + '%';
-    viewportDiv.style.left = isNaN(viewportSpec.x) ? (viewportNum / parseFloat(totalWidth).toFixed(2))*100 + '%' : (viewportSpec.x / parseFloat(totalWidth).toFixed(2))*100 + '%';
-    viewportDiv.style.top = isNaN(viewportSpec.y) ? "0%" : (viewportSpec.y / parseFloat(totalHeight).toFixed(2))*100 + '%';
-    document.getElementById(divId).appendChild(viewportDiv).classList.add('bg-dark', 'rounded', 'border', 'border-2', 'd-flex', 'flex-column', 'justify-content-center', 'align-items-center');
+    viewportDiv.style.width = isNaN(viewportSpec.w) ? (1 / parseFloat(totalWidth) * 100).toFixed(2) + '%' : (viewportSpec.w / parseFloat(totalWidth) * 100).toFixed(2) + '%';
+    viewportDiv.style.height = isNaN(viewportSpec.h) ? "100%" : (viewportSpec.h / parseFloat(totalHeight) * 100).toFixed(2) + '%';
+    viewportDiv.style.left = isNaN(viewportSpec.x) ? (viewportNum / parseFloat(totalWidth) * 100).toFixed(2) + '%' : (viewportSpec.x / parseFloat(totalWidth) * 100).toFixed(2) + '%';
+    viewportDiv.style.top = isNaN(viewportSpec.y) ? "0%" : (viewportSpec.y / parseFloat(totalHeight) * 100).toFixed(2) + '%';
+    document.getElementById(divId).appendChild(viewportDiv).classList.add('rounded', 'border', 'border-2', 'd-flex', 'flex-column', 'justify-content-center', 'align-items-center');
 
-    if (/\d/.test(divId)) {
-        viewportDiv.innerHTML += '<p class="mb-0" style="font-size: 0.9em">'+ viewportSpec.viewport_name + '</p>';
+    if (!possibleViewPorts.includes(viewportSpec.viewport_name)) {
+        viewportDiv.innerHTML += '<p class="mb-0" style="color: #fff">Invalid viewport name</p>';
     } else {
-        viewportDiv.innerHTML += '<p style="font-size: 1.5em">' + viewportSpec.viewport_name + '</p>';
+        viewportDiv.innerHTML += '<p class="mb-0">' + viewportSpec.viewport_name + '</p>';
         if (viewportSpec.fullsizable == true) {
-            viewportDiv.innerHTML += '<i class="fas fa-expand m-1"></i>'
+            viewportDiv.innerHTML += '<i class="fas fa-expand"></i>'
         }
     }
 }
@@ -62,29 +69,12 @@ function updateHangingProtocolVisualization(parentDivId, jsonString){
     showOrHideVisualizationDiv(parentDivId, jsonString);
     try {
         let jsonSpec = JSON.parse(jsonString);
-        [totalHeight, totalWidth] = getGridDimensions(jsonSpec);
+        let validJsonSpec = jsonSpec.filter(viewPort => viewPort.viewport_name != undefined);
+        [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
         removeAllChildNodes(document.getElementById(parentDivId));
-        for (let i = 0; i < jsonSpec.length; i++) {
-            createViewportDiv(parentDivId, i, jsonSpec[i], totalHeight, totalWidth);
+        for (let i = 0; i < validJsonSpec.length; i++) {
+            createViewportDiv(parentDivId, i, validJsonSpec[i], totalHeight, totalWidth);
         }
     } catch (err) {
     }
 }
-
-$(document).ready(function () {
-    if (window.location.href.includes("update") | window.location.href.includes("create")) {
-        let jsonString = document.getElementById("id_json").value;
-        showOrHideVisualizationDiv("hpVisualization", jsonString);
-        updateHangingProtocolVisualization("hpVisualization", jsonString);
-        document.getElementById('jsoneditor_id_json').addEventListener('input', function(){updateHangingProtocolVisualization()});
-        document.getElementById('jsoneditor_id_json').addEventListener('paste', function(){updateHangingProtocolVisualization()});
-    } else {
-        let jsonDivs = document.querySelectorAll("[id^='id_json']");
-        let hpVizDivs = document.querySelectorAll("[id^='hpVisualization']");
-        for (let i = 0; i < jsonDivs.length; i++) {
-            let jsonString = jsonDivs[i].innerHTML;
-            showOrHideVisualizationDiv(hpVizDivs[i].id, jsonString);
-            updateHangingProtocolVisualization(hpVizDivs[i].id, jsonString);
-        }
-    }
-});

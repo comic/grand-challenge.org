@@ -32,7 +32,7 @@
                             <p class="py-2">{{ protocol.description }}</p>
                         </span>
                         <div id="id_json-{{ forloop.counter }}" class="d-none">{{ protocol.json|json_dumps }}</div>
-                        <div id="hpVisualization-{{ forloop.counter }}" class="container-fluid m-1 mb-3 position-relative" style="height: 100px; width:100%"></div>
+                        <div id="hpVisualization-{{ forloop.counter }}" class="container-fluid m-1 mb-3 position-relative" style="height: 100px; width:100%; font-size:10px"></div>
                     </div>
                     <div class="text-right">
                         <a href="{% url 'hanging-protocols:detail' slug=protocol.slug %}"
@@ -51,6 +51,10 @@
 
 {% block script %}
     {{ block.super }}
+    {{ viewport_names|json_script:"possibleViewPorts" }}
+    <script type="text/javascript"
+            src="{% static "js/hanging_protocols/hanging_protocol_static_views_add_on.js" type="module" defer %}">
+    </script>
     <script type="text/javascript"
             src="{% static "js/hanging_protocols/hanging_protocol_visualization.js" type="module" defer %}">
     </script>

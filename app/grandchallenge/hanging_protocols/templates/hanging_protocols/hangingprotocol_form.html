@@ -26,6 +26,10 @@
 
 {% block script %}
     {{ block.super }}
+    {{ viewport_names|json_script:"possibleViewPorts" }}
+    <script type="text/javascript"
+            src="{% static "js/hanging_protocols/hanging_protocol_form_add_on.js" type="module" defer %}">
+    </script>
     <script type="text/javascript"
             src="{% static "js/hanging_protocols/hanging_protocol_visualization.js" type="module" defer %}">
     </script>
