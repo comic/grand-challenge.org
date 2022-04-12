@@ -216,6 +216,7 @@ class UnsupportedBrowserWarningMixin:
         unsupported_browser = user_agent["family"].lower() not in [
             "firefox",
             "chrome",
+            "edge",
         ]
 
         unsupported_chrome_version = (
