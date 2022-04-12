@@ -340,7 +340,7 @@ class ReaderStudyDisplaySetList(
     raise_exception = True
     template_name = "reader_studies/readerstudy_images_list.html"
     row_template = "reader_studies/readerstudy_display_sets_row.html"
-    search_fields = ["pk", "name"]
+    search_fields = ["pk", "values__image__name", "values__file"]
     columns = [
         Column(title="Name", sort_field="order"),
     ]
