@@ -1,6 +1,7 @@
 from typing import Union
 
 import bleach
+from bleach.css_sanitizer import CSSSanitizer
 from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -18,7 +19,9 @@ def clean(html: str):
         html,
         tags=settings.BLEACH_ALLOWED_TAGS,
         attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
-        styles=settings.BLEACH_ALLOWED_STYLES,
+        css_sanitizer=CSSSanitizer(
+            allowed_css_properties=settings.BLEACH_ALLOWED_STYLES
+        ),
         protocols=settings.BLEACH_ALLOWED_PROTOCOLS,
         strip=settings.BLEACH_STRIP,
     )

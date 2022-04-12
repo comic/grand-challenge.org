@@ -38,7 +38,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
 "beautifulsoup4" = "*"
-celery = {extras = ["redis", "sqs"], version = "!=5.0.6"}
+celery = { extras = ["redis", "sqs"], version = "!=5.0.6" }
 kombu = "*"
 pycurl = ">=7.44.1,<7.45.0"  # Fix poetry dependency resolution for celery
 django = "<3.3"
@@ -56,7 +56,7 @@ django-celery-email = "*"
 "django-select2" = "*"
 django-celery-results = "*"
 django-summernote = "*"
-bleach = "*"
+bleach = { extras = ["css"], version = "*" }
 jsonschema = "*"
 tldextract = "*"
 django-autocomplete-light = "*"
