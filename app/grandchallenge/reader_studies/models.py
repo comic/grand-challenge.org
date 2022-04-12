@@ -1445,6 +1445,8 @@ class Answer(UUIDModel):
         ]
     )
 
+    answer_time = models.FloatField(default=None, blank=False, null=True)
+
     _csv_headers = Question.csv_headers + [
         "Created",
         "Answer",

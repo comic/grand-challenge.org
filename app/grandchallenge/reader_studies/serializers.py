@@ -180,8 +180,11 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                 accept_global_perms=False,
             )
 
-    def validate(self, attrs):
-        answer = attrs.get("answer")
+    def __validate_answer_entry(self, attrs):
+        if "answer" not in attrs:
+            raise ValidationError("Answer field not present.")
+
+        answer = attrs["answer"]
         if self.instance:
             if (
                 not self.instance.question.reader_study.allow_answer_modification
@@ -189,8 +192,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                 raise ValidationError(
                     "This reader study does not allow answer modification."
                 )
-            if list(attrs.keys()) != ["answer"]:
-                raise ValidationError("Only the answer field can be modified.")
             question = self.instance.question
             images = self.instance.images.all()
             display_set = self.instance.display_set
@@ -232,6 +233,18 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                 )
         return attrs if not self.instance else {"answer": answer}
 
+    def validate(self, attrs):
+        result = {}
+        if "answer_time" in attrs:
+            result = {
+                **result,
+                # TODO: Validation!??
+                "answer_time": attrs["answer_time"],
+            }
+        if "answer" in attrs:
+            result = {**result, **self.__validate_answer_entry(attrs)}
+        return result
+
     class Meta:
         model = Answer
         fields = (
@@ -245,6 +258,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "question",
             "modified",
             "answer_image",
+            "answer_time",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}
