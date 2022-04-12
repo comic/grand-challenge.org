@@ -59,7 +59,7 @@
         <br><br>
         <ul>
             {% for field, value in budget_fields.items %}
-                <li><span class="font-weight-bold">{% if field == "inference_time_limit_in_minutes" %}Average algorithm job run time in minutes{% else %}{{ field|capfirst }}{% endif %}</span>: {{ value }}</li>
+                <li><span class="font-weight-bold">{% if field == "inference time limit in minutes" %}Average algorithm job run time in minutes{% else %}{{ field|capfirst }}{% endif %}</span>: {{ value }}</li>
             {% endfor %}
         </ul>
         <br>
