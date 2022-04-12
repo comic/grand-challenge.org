@@ -23,7 +23,8 @@ from grandchallenge.notifications.models import Notification, NotificationType
 logger = logging.getLogger(__name__)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@transaction.atomic
 def create_evaluation(*, submission_pk, max_initial_jobs=1):
     """
     Creates an Evaluation for a Submission
@@ -45,11 +46,10 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
     submission = Submission.objects.get(pk=submission_pk)
 
     if not submission.predictions_file and submission.user_upload:
-        with transaction.atomic():
-            submission.user_upload.copy_object(
-                to_field=submission.predictions_file
-            )
-            submission.user_upload.delete()
+        submission.user_upload.copy_object(
+            to_field=submission.predictions_file
+        )
+        submission.user_upload.delete()
 
     # TODO - move this to the form and make it an input here
     method = submission.phase.latest_ready_method
@@ -200,7 +200,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         ).apply_async()
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
 def handle_failed_jobs(*, evaluation_pk):
     # Set the evaluation to failed
     Evaluation = apps.get_model(  # noqa: N806
@@ -371,7 +372,9 @@ def filter_by_creators_best(*, evaluations, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-@shared_task
+# Use 2xlarge for memory use
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@transaction.atomic
 def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Phase"
@@ -469,6 +472,7 @@ def _update_evaluations(*, evaluations, final_positions):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@transaction.atomic
 def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
@@ -477,16 +481,15 @@ def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
         submission__phase__id__in=phase_pks,
     )
 
-    with transaction.atomic():
-        for e in evals:
-            e.assign_permissions()
+    for e in evals:
+        e.assign_permissions()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@transaction.atomic
 def assign_submission_permissions(*, phase_pk: uuid.UUID):
     Submission = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Submission"
     )
-    with transaction.atomic():
-        for sub in Submission.objects.filter(phase__id=phase_pk):
-            sub.assign_permissions()
+    for sub in Submission.objects.filter(phase__id=phase_pk):
+        sub.assign_permissions()
