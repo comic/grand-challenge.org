@@ -196,11 +196,8 @@ def docker_image(
         for chunk in image:
             f.write(chunk)
 
-    docker_client.images.remove(image=im.id)
-
     call(["gzip", outfile])
 
-    assert im.id not in [x.id for x in docker_client.images.list()]
     return f"{outfile}.gz", im.id
 
 
