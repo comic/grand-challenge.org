@@ -119,7 +119,7 @@ You will need to install pre-commit so that the code is correctly formatted
 
     $ python3 -m pip install pre-commit
 
-Please do all development on a branch and make a pull request to master, this will need to be reviewed before it is integrated.
+Please do all development on a branch and make a pull request to main, this will need to be reviewed before it is integrated.
 
 We recommend using Pycharm for development.
 
