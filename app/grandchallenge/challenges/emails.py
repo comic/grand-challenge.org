@@ -74,12 +74,12 @@ def send_challenge_requested_email_to_requester(challengerequest):
     ):
         budget = ""
         for key, value in challengerequest.budget.items():
-            budget += f"{key}: {value}\n"
+            budget += f"{key}: {value} €\n"
         addition += (
             f"For your type 2 challenge, we have calculated the following "
             f"budget estimate. This estimate is based on the information "
             f"you provided in the form and reflects a rough estimation of"
-            f"the costs we expect to incurr:\n"
+            f"the costs we expect to incur:\n"
             f"{budget}\n\n"
         )
 

@@ -785,7 +785,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     inference_time_limit_in_minutes = models.IntegerField(
         blank=True,
         null=True,
-        help_text="Time limit per inference job in minutes.",
+        help_text="Average run time per algorithm job in minutes.",
     )
     average_size_of_test_image_in_mb = models.IntegerField(
         null=True, blank=True, help_text="Average size of a test image in MB."
@@ -793,12 +793,12 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     phase_1_number_of_submissions_per_team = models.IntegerField(
         null=True,
         blank=True,
-        help_text="How many submissions will teams be allowed to make to this phase?",
+        help_text="How many submissions do you expect per team in this phase?",
     )
     phase_2_number_of_submissions_per_team = models.IntegerField(
         null=True,
         blank=True,
-        help_text="How many submissions will teams be allowed to make to this phase?",
+        help_text="How many submissions do you expect per team in this phase?",
     )
     phase_1_number_of_test_images = models.IntegerField(
         null=True,
@@ -836,6 +836,10 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     data_license_extra = models.CharField(
         max_length=2000,
         blank=True,
+    )
+    comments = models.TextField(
+        blank=True,
+        help_text="If you have any comments, remarks or questions, please leave them here.",
     )
 
     def __str__(self):
