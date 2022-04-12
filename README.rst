@@ -2,9 +2,9 @@ grand-challenge.org
 ===================
 
 .. image:: https://github.com/comic/grand-challenge.org/workflows/CI/badge.svg
-   :target: https://github.com/comic/grand-challenge.org/actions?query=workflow%3ACI+branch%3Amaster
+   :target: https://github.com/comic/grand-challenge.org/actions?query=workflow%3ACI+branch%3Amain
    :alt: Build Status
-.. image:: https://codecov.io/gh/comic/grand-challenge.org/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/comic/grand-challenge.org/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/comic/grand-challenge.org
    :alt: Code Coverage Status
 .. image:: https://img.shields.io/badge/docs-published-success

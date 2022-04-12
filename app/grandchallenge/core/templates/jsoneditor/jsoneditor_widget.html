@@ -1,7 +1,7 @@
 <div id="jsoneditor_{{ widget.attrs.id }}"
      style="width: 100%"></div>
 
-{# taken from https://github.com/django/django/blob/master/django/forms/widgets.py #}
+{# taken from https://github.com/django/django/blob/main/django/forms/widgets.py #}
 <textarea style="display: none"
           name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
 {% if widget.value %}{{ widget.value }}{% endif %}</textarea>

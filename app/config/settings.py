@@ -88,7 +88,7 @@ CELERY_EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
 )
 DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL", "webmaster@localhost"
+    "DEFAULT_FROM_EMAIL", "grandchallenge@localhost"
 )
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 

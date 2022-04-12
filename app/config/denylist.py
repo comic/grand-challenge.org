@@ -310,6 +310,7 @@ USERNAME_DENYLIST = {
     "mail9",
     "mailer-daemon",
     "mailerdaemon",
+    "main",
     "map",
     "marketing",
     "marketplace",
