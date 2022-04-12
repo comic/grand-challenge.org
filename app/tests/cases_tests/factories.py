@@ -34,42 +34,6 @@ class ImageFileFactoryWithMHAFile2DGray16Bit(ImageFileFactory):
     file = factory.django.FileField(from_path=RESOURCE_PATH / "1x2int16.mha")
 
 
-class ImageFileFactoryWithMHDFile2DLarge(ImageFileFactory):
-    file = factory.django.FileField(
-        from_path=RESOURCE_PATH / "image128x256RGB.mhd"
-    )
-
-
-class ImageFileFactoryWithRAWFile2DLarge(ImageFileFactory):
-    file = factory.django.FileField(
-        from_path=RESOURCE_PATH / "image128x256RGB.zraw"
-    )
-
-
-class ImageFileFactoryWithMHDFile3DLarge3Slices(ImageFileFactory):
-    file = factory.django.FileField(
-        from_path=RESOURCE_PATH / "image128x256x3RGB.mhd"
-    )
-
-
-class ImageFileFactoryWithRAWFile3DLarge3Slices(ImageFileFactory):
-    file = factory.django.FileField(
-        from_path=RESOURCE_PATH / "image128x256x3RGB.zraw"
-    )
-
-
-class ImageFileFactoryWithMHDFile3DLarge4Slices(ImageFileFactory):
-    file = factory.django.FileField(
-        from_path=RESOURCE_PATH / "image128x256x4RGB.mhd"
-    )
-
-
-class ImageFileFactoryWithRAWFile3DLarge4Slices(ImageFileFactory):
-    file = factory.django.FileField(
-        from_path=RESOURCE_PATH / "image128x256x4RGB.zraw"
-    )
-
-
 class ImageFileFactoryWithMHDFile4D(ImageFileFactory):
     file = factory.django.FileField(
         from_path=RESOURCE_PATH / "image10x11x12x13.mhd"
@@ -177,20 +141,6 @@ class ImageFactoryWithImageFile4D(ImageFactoryWithImageFile):
             ImageFileFactoryWithRAWFile4D(image=self)
 
 
-class ImageFactoryWithImageFile2DLarge(ImageFactoryWithImageFile):
-    @factory.post_generation
-    def files(self, create, extracted, **kwargs):
-        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
-        if not create:
-            return
-        if extracted:
-            for image in extracted:
-                self.files.add(image)
-        if create and not extracted:
-            ImageFileFactoryWithMHDFile2DLarge(image=self)
-            ImageFileFactoryWithRAWFile2DLarge(image=self)
-
-
 class ImageFactoryWithImageFile16Bit(ImageFactoryWithImageFile):
     @factory.post_generation
     def files(self, create, extracted, **kwargs):
@@ -202,34 +152,6 @@ class ImageFactoryWithImageFile16Bit(ImageFactoryWithImageFile):
                 self.files.add(image)
         if create and not extracted:
             ImageFileFactoryWithMHA16Bit(image=self)
-
-
-class ImageFactoryWithImageFile3DLarge3Slices(ImageFactoryWithImageFile3D):
-    @factory.post_generation
-    def files(self, create, extracted, **kwargs):
-        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
-        if not create:
-            return
-        if extracted:
-            for image in extracted:
-                self.files.add(image)
-        if create and not extracted:
-            ImageFileFactoryWithMHDFile3DLarge3Slices(image=self)
-            ImageFileFactoryWithRAWFile3DLarge3Slices(image=self)
-
-
-class ImageFactoryWithImageFile3DLarge4Slices(ImageFactoryWithImageFile3D):
-    @factory.post_generation
-    def files(self, create, extracted, **kwargs):
-        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
-        if not create:
-            return
-        if extracted:
-            for image in extracted:
-                self.files.add(image)
-        if create and not extracted:
-            ImageFileFactoryWithMHDFile3DLarge4Slices(image=self)
-            ImageFileFactoryWithRAWFile3DLarge4Slices(image=self)
 
 
 class RawImageUploadSessionFactory(factory.django.DjangoModelFactory):
