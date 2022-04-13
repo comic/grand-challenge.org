@@ -8,7 +8,6 @@ from ipaddress import ip_address
 from json import JSONDecodeError
 from pathlib import Path
 from random import randint
-from shutil import copyfileobj
 from socket import getaddrinfo
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from time import sleep
@@ -30,6 +29,7 @@ from requests import HTTPError
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import LOGLINES, user_error
+from grandchallenge.components.registry import _get_registry_auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,6 @@ class DockerConnection:
         job_id: str,
         exec_image_sha256: str,
         exec_image_repo_tag: str,
-        exec_image_file: File,
         memory_limit: int,
         time_limit: int,
         requires_gpu: bool,
@@ -57,7 +56,6 @@ class DockerConnection:
         self._job_id = job_id
         self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
-        self._exec_image_file = exec_image_file
         self._memory_limit = memory_limit
         self._requires_gpu = requires_gpu
 
@@ -171,12 +169,10 @@ class DockerConnection:
             old_timeout = self._client.api.timeout
             self._client.api.timeout = 600  # 10 minutes
 
-            with SpooledTemporaryFile(
-                max_size=MAX_SPOOL_SIZE
-            ) as fdst, self._exec_image_file.open("rb") as fsrc:
-                copyfileobj(fsrc=fsrc, fdst=fdst)
-                fdst.seek(0)
-                self._client.images.load(fdst)
+            self._client.images.pull(
+                repository=self._exec_image_repo_tag,
+                auth_config=_get_registry_auth_config(),
+            )
 
             self._client.api.timeout = old_timeout
 

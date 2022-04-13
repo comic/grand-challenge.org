@@ -1018,7 +1018,6 @@ class ComponentJob(models.Model):
             "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             "exec_image_sha256": self.container.image_sha256,
             "exec_image_repo_tag": self.container.repo_tag,
-            "exec_image_file": self.container.image,
             "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,
             "requires_gpu": self.container.requires_gpu,

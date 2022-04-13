@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 import subprocess
@@ -7,7 +6,6 @@ import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
@@ -32,6 +30,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
+from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 
 logger = logging.getLogger(__name__)
@@ -99,23 +98,8 @@ def _get_repo_login_cmd():
         # Do not login to insecure registries
         return ""
     else:
-        user, token = _get_ecr_user_and_token()
-        return f"crane auth login {settings.COMPONENTS_REGISTRY_URL} -u {user} -p {token}"
-
-
-def _get_ecr_user_and_token():
-    client = boto3.client(
-        "ecr", region_name=settings.COMPONENTS_AMAZON_ECR_REGION
-    )
-    auth = client.get_authorization_token()
-
-    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecr.html#ECR.Client.get_authorization_token
-    b64_user_token = auth["authorizationData"][0]["authorizationToken"]
-    b64_user_token_bytes = b64_user_token.encode("ascii")
-    user_token = base64.b64decode(b64_user_token_bytes).decode("ascii")
-    user, token = user_token.split(":")
-
-    return user, token
+        auth_config = _get_registry_auth_config()
+        return f"crane auth login {settings.COMPONENTS_REGISTRY_URL} -u {auth_config['username']} -p {auth_config['token']}"
 
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):

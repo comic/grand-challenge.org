@@ -12,7 +12,6 @@ import boto3
 from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files import File
 from django.db import transaction
 from django.utils._os import safe_join
 from django.utils.timezone import now
@@ -49,7 +48,6 @@ class AmazonECSExecutor:
         job_id: str,
         exec_image_sha256: str,
         exec_image_repo_tag: str,
-        exec_image_file: File,
         memory_limit: int,
         time_limit: int,
         requires_gpu: bool,
@@ -57,7 +55,6 @@ class AmazonECSExecutor:
         self._job_id = job_id
         self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
-        self._exec_image_file = exec_image_file
         self._memory_limit = memory_limit
         self._time_limit = time_limit
         self._requires_gpu = requires_gpu
