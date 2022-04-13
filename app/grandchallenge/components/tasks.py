@@ -99,7 +99,7 @@ def _get_repo_login_cmd():
         return ""
     else:
         auth_config = _get_registry_auth_config()
-        return f"crane auth login {settings.COMPONENTS_REGISTRY_URL} -u {auth_config['username']} -p {auth_config['token']}"
+        return f"crane auth login {settings.COMPONENTS_REGISTRY_URL} -u {auth_config['username']} -p {auth_config['password']}"
 
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
