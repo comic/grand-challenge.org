@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block title %}
+    Interface Options - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Interface Options</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Algorithm Interface Options</h2>
+
+    <p>
+        You will need to define the inputs to, and the outputs from, your algorithm.
+        The set of inputs and outputs that your algorithm uses is known as its interface.
+        You can build up your algorithms interface by selecting from the current set of interface options.
+        Use the links below to see the options that are available for your algorithms interface.
+    </p>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'algorithms:component-interface-list-input' %}">
+            Input options for your algorithm
+        </a>
+    </p>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'algorithms:component-interface-list-output' %}">
+            Output options for your algorithm
+        </a>
+    </p>
+
+    <p>
+        You can select multiple options for your algorithms interface.
+        However, the same option cannot be used for both input to and output from your algorithm.
+        If an option does not exist for your use case please contact support with the title, description, and
+        kind
+        for your new interface option.
+    </p>
+
+{% endblock %}
