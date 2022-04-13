@@ -401,9 +401,9 @@ class ArchiveEditArchiveItem(
             upload_session.user_uploads.set(image_files)
             return upload_session
 
-        upload_pks = {}
-        civ_pks_to_remove = set()
-        civ_pks_to_add = set()
+        all_upload_pks = {}
+        all_civ_pks_to_remove = set()
+        all_civ_pks_to_add = set()
 
         for slug, value in form.cleaned_data.items():
             if value is None:
@@ -417,16 +417,20 @@ class ArchiveEditArchiveItem(
             else:
                 upload_session = None
 
-            update_archive_item_update_kwargs(
+            (
+                civ_pks_to_add,
+                civ_pks_to_remove,
+                upload_pks,
+            ) = update_archive_item_update_kwargs(
                 instance=self.archive_item,
                 interface=ci,
                 value=value if ci.is_json_kind else None,
                 user_upload=value if ci.is_file_kind else None,
                 upload_session=upload_session,
-                civ_pks_to_add=civ_pks_to_add,
-                civ_pks_to_remove=civ_pks_to_remove,
-                upload_pks=upload_pks,
             )
+            all_upload_pks.update(upload_pks)
+            all_civ_pks_to_add.update(civ_pks_to_add)
+            all_civ_pks_to_remove.update(civ_pks_to_remove)
 
         on_commit(
             start_archive_item_update_tasks.signature(

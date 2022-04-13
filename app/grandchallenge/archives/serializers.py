@@ -85,9 +85,9 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
     def update(self, instance, validated_data):
         civs = validated_data.pop("values")
 
-        civ_pks_to_remove = set()
-        civ_pks_to_add = set()
-        upload_pks = {}
+        all_civ_pks_to_remove = set()
+        all_civ_pks_to_add = set()
+        all_upload_pks = {}
 
         for civ in civs:
             interface = civ.pop("interface", None)
@@ -96,17 +96,21 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             image = civ.pop("image", None)
             user_upload = civ.pop("user_upload", None)
 
-            update_archive_item_update_kwargs(
+            (
+                civ_pks_to_add,
+                civ_pks_to_remove,
+                upload_pks,
+            ) = update_archive_item_update_kwargs(
                 instance=instance,
                 interface=interface,
                 value=value,
                 image=image,
                 user_upload=user_upload,
                 upload_session=upload_session,
-                civ_pks_to_add=civ_pks_to_add,
-                civ_pks_to_remove=civ_pks_to_remove,
-                upload_pks=upload_pks,
             )
+            all_civ_pks_to_add.update(civ_pks_to_add)
+            all_civ_pks_to_remove.update(civ_pks_to_remove)
+            all_upload_pks.update(upload_pks)
 
         on_commit(
             start_archive_item_update_tasks.signature(

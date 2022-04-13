@@ -87,9 +87,9 @@ def update_archive_item_values(
 def update_archive_item_update_kwargs(
     instance,
     interface,
-    civ_pks_to_add,
-    civ_pks_to_remove,
-    upload_pks,
+    # civ_pks_to_add,
+    # civ_pks_to_remove,
+    # upload_pks,
     value=None,
     image=None,
     user_upload=None,
@@ -104,6 +104,10 @@ def update_archive_item_update_kwargs(
     it also appends the session pk together with the new civ pk to the list of
     to be processed images.
     """
+    civ_pks_to_add = set()
+    civ_pks_to_remove = set()
+    upload_pks = {}
+
     if instance.values.filter(interface=interface.pk).exists():
         for civ_pk in instance.values.filter(
             interface=interface.pk
