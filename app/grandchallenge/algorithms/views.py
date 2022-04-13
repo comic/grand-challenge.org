@@ -45,6 +45,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
+    NON_ALGORITHM_INTERFACES,
     AlgorithmDescriptionForm,
     AlgorithmForm,
     AlgorithmImageForm,
@@ -103,6 +104,9 @@ class InterfaceListTypeOptions(TextChoices):
 
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
+    queryset = ComponentInterface.objects.exclude(
+        slug__in=NON_ALGORITHM_INTERFACES
+    )
     list_type = None
 
     def get_context_data(self, *args, **kwargs):
