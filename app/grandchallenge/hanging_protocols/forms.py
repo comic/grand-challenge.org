@@ -53,15 +53,22 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             )
 
         dims = ["x", "y", "w", "h"]
-        viewport_defs = [viewport.keys() for viewport in value]
-        for viewport_keys in viewport_defs:
-            if any(d in viewport_keys for d in dims) and not all(
-                d in viewport_keys for d in dims
-            ):
-                self.add_error(
-                    error="Viewport definition must contain all or none of x, y, w, and h",
-                    field="json",
-                )
+        if any(d in [k for v in value for k in v.keys()] for d in dims):
+            for viewport in value:
+                if not all(d in viewport for d in dims):
+                    missing_dims = [d for d in dims if d not in viewport]
+                    self.add_error(
+                        error=f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}.",
+                        field="json",
+                    )
+        else:
+            for viewport in value:
+                if any(d in viewport for d in dims):
+                    missing_dims = [d for d in dims if d not in viewport]
+                    self.add_error(
+                        error=f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}.",
+                        field="json",
+                    )
 
         return value
 

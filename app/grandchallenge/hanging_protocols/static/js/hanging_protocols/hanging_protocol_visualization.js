@@ -57,7 +57,7 @@ function createViewportDiv(divId, viewportNum, viewportSpec, totalHeight, totalW
         viewportDiv.innerHTML += '<p class="mb-0" style="color: #fff">Invalid viewport name</p>';
     } else {
         viewportDiv.innerHTML += '<p class="mb-0">' + viewportSpec.viewport_name + '</p>';
-        if (viewportSpec.fullsizable == true) {
+        if (viewportSpec.fullsizable) {
             viewportDiv.innerHTML += '<i class="fas fa-expand"></i>'
         }
     }
@@ -69,7 +69,7 @@ function updateHangingProtocolVisualization(parentDivId, jsonString){
     showOrHideVisualizationDiv(parentDivId, jsonString);
     try {
         let jsonSpec = JSON.parse(jsonString);
-        let validJsonSpec = jsonSpec.filter(viewPort => viewPort.viewport_name != undefined);
+        let validJsonSpec = jsonSpec.filter(viewPort => viewPort.viewport_name !== undefined);
         [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
         removeAllChildNodes(document.getElementById(parentDivId));
         for (let i = 0; i < validJsonSpec.length; i++) {
