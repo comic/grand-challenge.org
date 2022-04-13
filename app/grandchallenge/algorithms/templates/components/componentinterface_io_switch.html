@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load static %}
 
 {% block title %}
     Interface Options - {{ block.super }}
@@ -23,6 +24,25 @@
     </p>
 
     <p>
+        For example, lets say that you are developing an algorithm that predicts COVID-19 from a CT scan,
+        which also produces a segmentation of COVID-19 lesions.
+        You would look in the list of interface options and select the ones to use.
+        You would then define an algorithm that has one input, a <code>ct-image</code>,
+        and two outputs, <code>probability-covid-19</code> (a number)
+        and <code>covid-19-lesion-segementation</code> (a segmentation of covid 19 lesions).
+    </p>
+
+    <img src="{% static 'components/images/example-algorithm.drawio.svg' %}" class="mx-auto d-block" alt="Example algorithm with one input interface and two output interfaces">
+
+    <p>
+        You can select as many inputs and outputs as your algorithm needs.
+        However, the same interface option cannot be used for both input to and output from your algorithm.
+        All inputs and outputs are required to be set when your algorithm runs.
+        The inputs will be set by the user running your algorithm.
+        Your algorithm must write valid data to all the outputs you set.
+    </p>
+
+    <p>
         <a class="btn btn-primary"
            href="{% url 'algorithms:component-interface-list-input' %}">
             Input options for your algorithm
@@ -37,11 +57,8 @@
     </p>
 
     <p>
-        You can select multiple options for your algorithms interface.
-        However, the same option cannot be used for both input to and output from your algorithm.
         If an option does not exist for your use case please contact support with the title, description, and
-        kind
-        for your new interface option.
+        kind for your new interface option.
     </p>
 
 {% endblock %}
