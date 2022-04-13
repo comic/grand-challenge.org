@@ -6,9 +6,7 @@
 {% load random_encode %}
 
 {% block title %}
-    {% filter title %}
-        {% firstof currentpage.display_title currentpage.title %}
-    {% endfilter %}
+    {{ currentpage|title }}
     - {{ block.super }}
 {% endblock %}
 
@@ -19,9 +17,7 @@
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
             aria-current="page">
-            {% filter title %}
-                {% firstof currentpage.display_title currentpage.title %}
-            {% endfilter %}
+            {{ currentpage|title }}
         </li>
     </ol>
 {% endblock %}
@@ -41,9 +37,7 @@
                             {% else %}
                                 <i class="fa fa-fw"></i>
                             {% endif %}
-                            {% filter title %}
-                                {% firstof page.display_title page.title %}
-                            {% endfilter %}
+                            {{ page|title }}
                         </a>
                     </li>
                 {% endif %}
@@ -78,7 +72,7 @@
             {% if "change_challenge" in challenge_perms %}
                 <br>
                 <a class="btn btn-primary"
-                   href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}"
+                   href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name slug=currentpage.slug %}"
                    title="Edit this page"
                 >
                     <i class="fas fa-edit"></i>

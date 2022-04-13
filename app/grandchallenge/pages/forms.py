@@ -1,47 +1,21 @@
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from django import forms
-from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
-from django.utils.translation import gettext
 from django_summernote.widgets import SummernoteInplaceWidget
 
+from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.pages.models import Page
 
 
-class PageCreateForm(forms.ModelForm):
+class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
     def __init__(self, *args, challenge, **kwargs):
-        super().__init__(*args, **kwargs)
         self.challenge = challenge
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-
-    def clean_title(self):
-        """Ensure that page titles are not duplicated for a challenge."""
-        title = self.cleaned_data["title"]
-        queryset = Page.objects.filter(
-            challenge=self.challenge, title__iexact=title
-        )
-
-        if self.instance is not None:
-            queryset = queryset.exclude(pk=self.instance.pk)
-
-        if queryset.exists():
-            raise ValidationError(
-                gettext(
-                    "A page with that title already exists for this challenge"
-                ),
-                code="duplicate",
-            )
-
-        return title
+        super().__init__(*args, **kwargs)
 
     class Meta:
         model = Page
         fields = (
-            "title",
-            "permission_level",
             "display_title",
+            "permission_level",
             "hidden",
             "html",
         )

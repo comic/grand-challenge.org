@@ -28,7 +28,7 @@ def create_page(
     if permission_level is None:
         permission_level = Page.ALL
     return PageFactory(
-        title=title,
+        display_title=title,
         challenge=challenge,
         html=content,
         permission_level=permission_level,
@@ -100,7 +100,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "pages:detail",
             kwargs={
                 "challenge_short_name": page.challenge.short_name,
-                "page_title": page.title,
+                "slug": page.slug,
             },
         )
         return self._test_url_can_be_viewed(user, page_url)
@@ -110,7 +110,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "pages:detail",
             kwargs={
                 "challenge_short_name": page.challenge.short_name,
-                "page_title": page.title,
+                "slug": page.slug,
             },
         )
         return self._test_url_can_not_be_viewed(user, page_url)
@@ -433,7 +433,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
             "pages:detail",
             kwargs={
                 "challenge_short_name": self.testchallenge.short_name,
-                "page_title": "doesnotexistpage",
+                "slug": "doesnotexistpage",
             },
         )
         response, username = self._view_url(None, page_url)

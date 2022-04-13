@@ -6,8 +6,18 @@ from grandchallenge.pages.models import Page
 
 class PageAdmin(SimpleHistoryAdmin):
     list_filter = ("challenge", "permission_level", "hidden")
-    list_display = ("title", "challenge", "permission_level", "hidden")
-    search_fields = ("html",)
+    list_display = (
+        "slug",
+        "display_title",
+        "challenge",
+        "permission_level",
+        "hidden",
+    )
+    search_fields = (
+        "slug",
+        "display_title",
+        "html",
+    )
 
 
 admin.site.register(Page, PageAdmin)

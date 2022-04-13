@@ -516,7 +516,7 @@ class Challenge(ChallengeBase):
 
     def create_default_pages(self):
         Page.objects.create(
-            title=self.short_name,
+            display_title=self.short_name,
             html=render_to_string(
                 "pages/defaults/home.html", {"challenge": self}
             ),
