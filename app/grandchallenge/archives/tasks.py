@@ -87,9 +87,6 @@ def update_archive_item_values(
 def update_archive_item_update_kwargs(
     instance,
     interface,
-    # civ_pks_to_add,
-    # civ_pks_to_remove,
-    # upload_pks,
     value=None,
     image=None,
     user_upload=None,
@@ -99,10 +96,9 @@ def update_archive_item_update_kwargs(
     Given an interface and a value/image/user_upload/upload_session, this task
     determines whether to create a new CIV for the specified archive item instance
     with those values, and whether to delete any existing CIVs from the archive item.
-    It appends the respective CIV pk(s) to the set of to be added and removed
-    civs and returns those. If an upload_session is specified,
-    it also appends the session pk together with the new civ pk to the list of
-    to be processed images.
+    It returns the respective CIV pk(s) to the set of to be added and removed civs
+    If an upload_session is specified, it also returns the session pk together with
+    the new civ pk.
     """
     civ_pks_to_add = set()
     civ_pks_to_remove = set()
