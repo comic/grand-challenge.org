@@ -2,7 +2,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
-from django.utils.html import format_html
 from django_countries import countries
 from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
@@ -158,7 +157,7 @@ class Page(models.Model):
 
         s = Substitution(
             tag_name="project_statistics",
-            replacement=format_html("<h1>Statistics</h1>{}", content),
+            replacement=content,
         )
         return s.sub(html)
 
