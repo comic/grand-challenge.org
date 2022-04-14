@@ -1,5 +1,5 @@
 from crispy_forms.helper import FormHelper
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms import (
     Form,
     ModelChoiceField,
@@ -17,7 +17,6 @@ from grandchallenge.archives.models import (
     ArchivePermissionRequest,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import Image
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -185,50 +184,6 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
 
     def clean(self):
         cleaned_data = super().clean()
-
-        return cleaned_data
-
-
-class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
-    reader_study = ModelChoiceField(
-        queryset=ReaderStudy.objects.none(), required=True
-    )
-    images = ModelMultipleChoiceField(
-        queryset=Image.objects.none(),
-        required=True,
-        widget=Select2MultipleWidget,
-    )
-
-    def __init__(self, *args, user, archive, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user = user
-        self.archive = archive
-        self.fields["reader_study"].queryset = (
-            get_objects_for_user(
-                self.user,
-                "reader_studies.change_readerstudy",
-                accept_global_perms=False,
-            )
-            .exclude(use_display_sets=True)
-            .order_by("title")
-        )
-
-        self.fields["images"].queryset = Image.objects.filter(
-            componentinterfacevalue__archive_items__archive=self.archive
-        ).distinct()
-        self.fields["images"].initial = self.fields["images"].queryset
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        cleaned_data["images"] = cleaned_data["images"].exclude(
-            readerstudies__in=[cleaned_data["reader_study"]]
-        )
-
-        if len(cleaned_data["images"]) == 0:
-            raise ValidationError(
-                "All of the selected images already exist in that reader study"
-            )
 
         return cleaned_data
 
