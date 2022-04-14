@@ -1436,6 +1436,18 @@ def test_display_set_endpoints(client, settings):
     rs1.save()
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
+        data={"unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.status_code == 400
+    assert response.json() == [
+        "Please provide a reader study when filtering for unanswered display_sets."
+    ]
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
         data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
         user=r,
         client=client,

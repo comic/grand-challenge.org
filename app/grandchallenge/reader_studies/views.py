@@ -42,6 +42,7 @@ from guardian.shortcuts import get_perms
 from numpy.random.mtrand import RandomState
 from rest_framework import mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -1085,7 +1086,7 @@ class DisplaySetViewSet(
         if unanswered_by_user == "True":
             reader_study = self.reader_study
             if reader_study is None:
-                return HttpResponseBadRequest(
+                raise DRFValidationError(
                     "Please provide a reader study when filtering for "
                     "unanswered display_sets."
                 )
