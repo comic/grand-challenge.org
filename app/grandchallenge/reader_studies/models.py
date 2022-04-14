@@ -325,7 +325,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
-    use_display_sets = models.BooleanField(default=True)
+    use_display_sets = models.BooleanField(default=True, editable=False)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -753,18 +753,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             RandomState(seed=int(user.pk)).shuffle(hanging_list)
 
         return hanging_list
-
-    def generate_hanging_list(self):
-        """
-        Generates a new hanging list.
-
-        Each image in the ``ReaderStudy`` is assigned to the primary port of its
-        own hanging.
-        """
-        image_names = self.images.values_list("name", flat=True)
-        hanging_list = [{"main": name} for name in image_names]
-        self.hanging_list = hanging_list
-        self.save()
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""

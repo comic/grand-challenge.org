@@ -1,6 +1,5 @@
 import re
 from pathlib import Path
-from unittest import mock
 
 import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
@@ -1096,86 +1095,6 @@ def test_csv_export(client, answer_type, answer):
     assert "Content-Type: text/csv" in headers
 
     assert im.name in content
-
-
-@pytest.mark.django_db
-@mock.patch(
-    "grandchallenge.reader_studies.models.ReaderStudy.generate_hanging_list"
-)
-def test_generate_hanging_list_api_view(generate_hanging_list, client):
-    rs = ReaderStudyFactory(use_display_sets=False)
-    editor = UserFactory()
-    rs.add_editor(editor)
-
-    response = get_view_for_user(
-        viewname="api:reader-study-generate-hanging-list",
-        reverse_kwargs={"pk": rs.pk},
-        user=editor,
-        client=client,
-        method=client.patch,
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert "Hanging list generated." in str(response.content)
-    generate_hanging_list.assert_called_once()
-
-
-@pytest.mark.django_db
-def test_remove_image_api_view(client):
-    rs = ReaderStudyFactory(use_display_sets=False)
-    reader, editor = UserFactory(), UserFactory()
-    rs.add_reader(reader)
-    rs.add_editor(editor)
-
-    response = get_view_for_user(
-        viewname="api:reader-study-remove-image",
-        reverse_kwargs={"pk": rs.pk},
-        user=reader,
-        client=client,
-        method=client.patch,
-        data={"image": 1},
-        content_type="application/json",
-        follow=True,
-    )
-
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname="api:reader-study-remove-image",
-        reverse_kwargs={"pk": rs.pk},
-        user=editor,
-        client=client,
-        method=client.patch,
-        data={"image": 1},
-        content_type="application/json",
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert "Image could not be removed from reader study." in str(
-        response.content
-    )
-
-    im = ImageFactory()
-    rs.images.add(im)
-
-    assert im in rs.images.all()
-
-    response = get_view_for_user(
-        viewname="api:reader-study-remove-image",
-        reverse_kwargs={"pk": rs.pk},
-        user=editor,
-        client=client,
-        method=client.patch,
-        data={"image": im.pk},
-        content_type="application/json",
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert "Image removed from reader study." in str(response.content)
-    assert im not in rs.images.all()
 
 
 @pytest.mark.django_db

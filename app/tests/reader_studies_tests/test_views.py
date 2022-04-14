@@ -41,7 +41,12 @@ def test_example_ground_truth(client, tmpdir):
     rs.images.set([im1, im2, im3])
     rs.add_reader(reader)
     rs.add_editor(editor)
-    rs.generate_hanging_list()
+    rs.hanging_list = [
+        {"main": im1.name},
+        {"main": im2.name},
+        {"main": im3.name},
+    ]
+    rs.save()
 
     response = get_view_for_user(
         viewname="reader-studies:example-ground-truth",

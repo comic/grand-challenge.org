@@ -68,20 +68,6 @@ def test_read_only_fields():
 
 
 @pytest.mark.django_db
-def test_generate_hanging_list():
-    rs = ReaderStudyFactory(use_display_sets=False)
-    im1 = ImageFactory(name="im1")
-    im2 = ImageFactory(name="im2")
-
-    rs.generate_hanging_list()
-    assert rs.hanging_list == []
-
-    rs.images.set([im1, im2])
-    rs.generate_hanging_list()
-    assert rs.hanging_list == [{"main": "im1"}, {"main": "im2"}]
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize("use_display_sets", [True, False])
 def test_progress_for_user(settings, use_display_sets):  # noqa: C901
     settings.task_eager_propagates = (True,)

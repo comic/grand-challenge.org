@@ -886,35 +886,6 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
 
-    @action(detail=True, methods=["patch"])
-    def generate_hanging_list(self, request, pk=None):
-        reader_study = self.get_object()
-        reader_study.generate_hanging_list()
-        messages.add_message(
-            request, messages.SUCCESS, "Hanging list re-generated."
-        )
-        return Response({"status": "Hanging list generated."})
-
-    @action(detail=True, methods=["patch"])
-    def remove_image(self, request, pk=None):
-        image_id = request.data.get("image")
-        reader_study = self.get_object()
-        try:
-            reader_study.images.remove(Image.objects.get(id=image_id))
-            messages.add_message(
-                request, messages.SUCCESS, "Image removed from reader study."
-            )
-            return Response({"status": "Image removed from reader study."})
-        except Image.DoesNotExist:
-            messages.add_message(
-                request,
-                messages.ERROR,
-                "Image could not be removed from reader study.",
-            )
-        return Response(
-            {"status": "Image could not be removed from reader study."}
-        )
-
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
     def ground_truth(self, request, pk=None, case_pk=None):
         reader_study = self.get_object()
