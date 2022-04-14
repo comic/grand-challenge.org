@@ -1225,6 +1225,7 @@ DISALLOWED_EMAIL_DOMAINS = {
     "ihpc.a-star.edu.sg",
     "raysightmed.com",
     "csu.edu.cn",
+    "cerist.dz",
     *blocklist,
 }
 
