@@ -1454,6 +1454,9 @@ class Answer(UUIDModel):
 
     class Meta:
         ordering = ("created",)
+        unique_together = (
+            ("creator", "display_set", "question", "is_ground_truth"),
+        )
 
     def __str__(self):
         return f"{self.question.question_text} {self.answer} ({self.creator})"
