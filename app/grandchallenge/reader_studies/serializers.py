@@ -127,8 +127,8 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "logo",
             "description",
             "help_text",
-            "hanging_list_images",
-            "is_valid",
+            "hanging_list_images",  # Note: required in gcapi
+            "is_valid",  # Note: required in gcapi
             "pk",
             "questions",
             "title",
@@ -139,7 +139,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
-            "use_display_sets",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):

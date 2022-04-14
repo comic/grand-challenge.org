@@ -399,7 +399,7 @@ def test_reader_study_copy(client):
     im1, im2 = ImageFactory(), ImageFactory()
 
     rs.images.set([im1, im2])
-    rs.generate_hanging_list()
+    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
     rs.case_text = {im1.name: "test", im2.name: "test2"}
     rs.save()
 

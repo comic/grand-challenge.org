@@ -97,7 +97,6 @@ from grandchallenge.reader_studies.serializers import (
 from grandchallenge.reader_studies.tasks import (
     add_images_to_reader_study,
     create_display_sets_for_upload_session,
-    migrate_reader_study_to_display_sets,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -887,55 +886,6 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     def _check_change_perms(self, user, obj):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
-
-    @action(detail=True, methods=["patch"])
-    def migrate_to_display_sets(self, request, pk=None):
-        reader_study = self.get_object()
-        if not reader_study.view_content:
-            messages.add_message(
-                request,
-                messages.ERROR,
-                "Please define your view_content before migrating.",
-            )
-            return Response(
-                {"status": "Please define your view_content before migrating."}
-            )
-        migrate_reader_study_to_display_sets.apply_async(
-            kwargs={
-                "reader_study_pk": str(reader_study.pk),
-            }
-        )
-        messages.add_message(request, messages.SUCCESS, "Migration started.")
-        return Response({"status": "Migration started."})
-
-    @action(detail=True, methods=["patch"])
-    def generate_hanging_list(self, request, pk=None):
-        reader_study = self.get_object()
-        reader_study.generate_hanging_list()
-        messages.add_message(
-            request, messages.SUCCESS, "Hanging list re-generated."
-        )
-        return Response({"status": "Hanging list generated."})
-
-    @action(detail=True, methods=["patch"])
-    def remove_image(self, request, pk=None):
-        image_id = request.data.get("image")
-        reader_study = self.get_object()
-        try:
-            reader_study.images.remove(Image.objects.get(id=image_id))
-            messages.add_message(
-                request, messages.SUCCESS, "Image removed from reader study."
-            )
-            return Response({"status": "Image removed from reader study."})
-        except Image.DoesNotExist:
-            messages.add_message(
-                request,
-                messages.ERROR,
-                "Image could not be removed from reader study.",
-            )
-        return Response(
-            {"status": "Image could not be removed from reader study."}
-        )
 
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
     def ground_truth(self, request, pk=None, case_pk=None):
