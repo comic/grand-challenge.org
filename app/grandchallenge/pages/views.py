@@ -71,8 +71,6 @@ class PageDetail(
     UserPassesTestMixin, ChallengeFilteredQuerysetMixin, DetailView
 ):
     model = Page
-    slug_url_kwarg = "page_title"
-    slug_field = "title__iexact"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -109,8 +107,6 @@ class PageUpdate(
 ):
     model = Page
     form_class = PageUpdateForm
-    slug_url_kwarg = "page_title"
-    slug_field = "title__iexact"
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
@@ -131,8 +127,6 @@ class PageDelete(
     DeleteView,
 ):
     model = Page
-    slug_url_kwarg = "page_title"
-    slug_field = "title__iexact"
     success_message = "Page was successfully deleted"
     permission_required = "change_challenge"
     raise_exception = True

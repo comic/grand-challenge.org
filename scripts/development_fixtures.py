@@ -184,9 +184,15 @@ def _create_demo_challenge(users):
     )
     demo.add_participant(users["demop"])
 
-    Page.objects.create(challenge=demo, title="all", permission_level="ALL")
-    Page.objects.create(challenge=demo, title="reg", permission_level="REG")
-    Page.objects.create(challenge=demo, title="adm", permission_level="ADM")
+    Page.objects.create(
+        challenge=demo, display_title="all", permission_level="ALL"
+    )
+    Page.objects.create(
+        challenge=demo, display_title="reg", permission_level="REG"
+    )
+    Page.objects.create(
+        challenge=demo, display_title="adm", permission_level="ADM"
+    )
 
     Phase.objects.create(challenge=demo, title="Phase 2")
 

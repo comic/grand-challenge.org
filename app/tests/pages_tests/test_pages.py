@@ -16,9 +16,9 @@ def test_page_admin_permissions(view, client, two_challenge_sets):
     if view == "pages:delete":
         PageFactory(
             challenge=two_challenge_sets.challenge_set_1.challenge,
-            title="challenge1pagepermtest",
+            display_title="challenge1pagepermtest",
         )
-        reverse_kwargs = {"page_title": "challenge1pagepermtest"}
+        reverse_kwargs = {"slug": "challenge1pagepermtest"}
     else:
         reverse_kwargs = None
     validate_admin_only_view(
@@ -33,13 +33,13 @@ def test_page_admin_permissions(view, client, two_challenge_sets):
 def test_page_update_permissions(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
-        title="challenge1page1permissiontest",
+        display_title="challenge1page1permissiontest",
     )
     validate_admin_only_view(
         viewname="pages:update",
         two_challenge_set=two_challenge_sets,
         client=client,
-        reverse_kwargs={"page_title": p1.title},
+        reverse_kwargs={"slug": p1.slug},
     )
 
 
@@ -48,11 +48,11 @@ def test_page_list_filter(client, two_challenge_sets):
     """Check that only pages related to this challenge are listed."""
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
-        title="challenge1page1",
+        display_title="challenge1page1",
     )
     p2 = PageFactory(
         challenge=two_challenge_sets.challenge_set_2.challenge,
-        title="challenge2page1",
+        display_title="challenge2page1",
     )
     response = get_view_for_user(
         viewname="pages:list",
@@ -60,16 +60,16 @@ def test_page_list_filter(client, two_challenge_sets):
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
     )
-    assert p1.title in response.rendered_content
-    assert p2.title not in response.rendered_content
+    assert p1.display_title in response.rendered_content
+    assert p2.display_title not in response.rendered_content
     response = get_view_for_user(
         viewname="pages:list",
         client=client,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=two_challenge_sets.admin12,
     )
-    assert p1.title not in response.rendered_content
-    assert p2.title in response.rendered_content
+    assert p1.display_title not in response.rendered_content
+    assert p2.display_title in response.rendered_content
 
 
 @pytest.mark.django_db
@@ -83,7 +83,7 @@ def test_page_create(client, two_challenge_sets):
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.challenge_set_1.admin,
         data={
-            "title": page_title,
+            "display_title": page_title,
             "html": page_html,
             "permission_level": Page.ALL,
         },
@@ -97,14 +97,14 @@ def test_page_create(client, two_challenge_sets):
         viewname="pages:detail",
         client=client,
         challenge=two_challenge_sets.challenge_set_1.challenge,
-        reverse_kwargs={"page_title": page_title},
+        reverse_kwargs={"slug": page_title},
     )
     assert response.status_code == 200
     response = get_view_for_user(
         viewname="pages:detail",
         client=client,
         challenge=two_challenge_sets.challenge_set_2.challenge,
-        reverse_kwargs={"page_title": page_title},
+        reverse_kwargs={"slug": page_title},
     )
     assert response.status_code == 404
 
@@ -113,13 +113,13 @@ def test_page_create(client, two_challenge_sets):
 def test_page_update(client, two_challenge_sets):
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
-        title="page1updatetest",
+        display_title="page1updatetest",
         html="oldhtml",
     )
     # page with the same name in another challenge to check selection
     PageFactory(
         challenge=two_challenge_sets.challenge_set_2.challenge,
-        title="page1updatetest",
+        display_title="page1updatetest",
         html="oldhtml",
     )
     response = get_view_for_user(
@@ -127,7 +127,7 @@ def test_page_update(client, two_challenge_sets):
         client=client,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
-        reverse_kwargs={"page_title": p1.title},
+        reverse_kwargs={"slug": p1.slug},
     )
     assert response.status_code == 200
     assert 'value="page1updatetest"' in response.rendered_content
@@ -137,30 +137,33 @@ def test_page_update(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
-        reverse_kwargs={"page_title": p1.title},
+        reverse_kwargs={"slug": p1.slug},
         data={
-            "title": "editedtitle",
+            "display_title": "editedtitle",
             "permission_level": Page.ALL,
             "html": "newhtml",
         },
     )
     assert response.status_code == 302
+
+    # The slug shouldn't change
     response = get_view_for_user(
         viewname="pages:detail",
         client=client,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
-        reverse_kwargs={"page_title": "editedtitle"},
+        reverse_kwargs={"slug": "page1updatetest"},
     )
     assert response.status_code == 200
     assert "newhtml" in str(response.content)
+
     # check that the other page is unaffected
     response = get_view_for_user(
         viewname="pages:detail",
         client=client,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=two_challenge_sets.admin12,
-        reverse_kwargs={"page_title": "page1updatetest"},
+        reverse_kwargs={"slug": "page1updatetest"},
     )
     assert response.status_code == 200
     assert "oldhtml" in str(response.content)
@@ -170,10 +173,12 @@ def test_page_update(client, two_challenge_sets):
 def test_page_delete(client, two_challenge_sets):
     # Two pages with the same title, make sure the right one is deleted
     c1p1 = PageFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge, title="page1"
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        display_title="page1",
     )
     c2p1 = PageFactory(
-        challenge=two_challenge_sets.challenge_set_2.challenge, title="page1"
+        challenge=two_challenge_sets.challenge_set_2.challenge,
+        display_title="page1",
     )
     assert Page.objects.filter(pk=c1p1.pk).exists()
     assert Page.objects.filter(pk=c2p1.pk).exists()
@@ -183,7 +188,7 @@ def test_page_delete(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
-        reverse_kwargs={"page_title": "page1"},
+        reverse_kwargs={"slug": "page1"},
     )
     assert response.status_code == 302
     assert not Page.objects.filter(pk=c1p1.pk).exists()
@@ -219,7 +224,7 @@ def test_page_move(
         c2_pages.append(
             PageFactory(
                 challenge=two_challenge_sets.challenge_set_2.challenge,
-                title=pages[i + 1].title,
+                display_title=pages[i + 1].display_title,
             )
         )
 
@@ -232,9 +237,9 @@ def test_page_move(
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
-        reverse_kwargs={"page_title": pages[page_to_move].title},
+        reverse_kwargs={"slug": pages[page_to_move].slug},
         data={
-            "title": pages[page_to_move].title,
+            "display_title": pages[page_to_move].display_title,
             "permission_level": pages[page_to_move].permission_level,
             "html": pages[page_to_move].html,
             "move": move_op,
@@ -252,19 +257,33 @@ def test_page_move(
 @pytest.mark.django_db
 def test_create_page_with_same_title(client, two_challenge_sets):
     PageFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge, title="page1"
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        display_title="page1",
     )
-    # Creating a page with the same title should be denied
+
+    # Creating a page with the same title should be created with a different slug
     response = get_view_for_user(
         viewname="pages:create",
         client=client,
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.challenge_set_1.admin,
-        data={"title": "page1", "html": "hello", "permission_level": Page.ALL},
+        data={
+            "display_title": "page1",
+            "html": "hello",
+            "permission_level": Page.ALL,
+        },
     )
-    assert response.status_code == 200
-    assert "A page with that title already exists" in response.rendered_content
+    assert response.status_code == 302
+
+    challenge_pages = Page.objects.filter(
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        display_title="page1",
+    )
+    assert len(challenge_pages) == 2
+    assert challenge_pages[0].slug == "page1"
+    assert challenge_pages[1].slug == "page1-2"
+
     # Creating one in another challenge should work
     response = get_view_for_user(
         viewname="pages:create",
@@ -272,26 +291,17 @@ def test_create_page_with_same_title(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=two_challenge_sets.challenge_set_2.admin,
-        data={"title": "page1", "html": "hello", "permission_level": Page.ALL},
-    )
-    assert response.status_code == 302
-    # Check the updating
-    PageFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge, title="page2"
-    )
-    response = get_view_for_user(
-        viewname="pages:update",
-        client=client,
-        method=client.post,
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        user=two_challenge_sets.admin12,
-        reverse_kwargs={"page_title": "page2"},
         data={
-            "title": "page1",
-            "html": " ",
+            "display_title": "page1",
+            "html": "hello",
             "permission_level": Page.ALL,
-            "move": BLANK_CHOICE_DASH[0],
         },
     )
-    assert response.status_code == 200
-    assert "A page with that title already exists" in response.rendered_content
+    assert response.status_code == 302
+    assert (
+        Page.objects.get(
+            challenge=two_challenge_sets.challenge_set_2.challenge,
+            display_title="page1",
+        ).slug
+        == "page1"
+    )

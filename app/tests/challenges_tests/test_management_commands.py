@@ -62,7 +62,7 @@ def test_copy_challenge():
 
     dest = Challenge.objects.get(short_name="bar")
 
-    for page in dest.page_set.exclude(title="foo"):
+    for page in dest.page_set.exclude(display_title="foo"):
         assert page.html == (
             '<p><a href="https://bar.foo.bar/test">test1</a>'
             '<a href="https://bar.foo.bar/test">test2</a>'

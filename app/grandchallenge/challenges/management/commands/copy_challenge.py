@@ -53,10 +53,10 @@ class Command(BaseCommand):
     ]
 
     page_fields = [
-        "title",
+        "display_title",
         "permission_level",
         "order",
-        "display_title",
+        "slug",
         "hidden",
     ]
 
