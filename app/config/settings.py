@@ -387,6 +387,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.help_forum",
                 "grandchallenge.core.context_processors.about_page",
                 "grandchallenge.core.context_processors.newsletter_signup",
+                "grandchallenge.core.context_processors.viewport_names",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
