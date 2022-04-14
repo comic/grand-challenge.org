@@ -76,15 +76,13 @@ def test_email_content(settings):
         )
         assert "Test content" in m.body
         if m.to == [u1.email]:
-            assert (
-                reverse("profile-update", kwargs={"username": u1.username})
-                in m.body
-            )
+            assert reverse(
+                "profile-update", kwargs={"username": u1.username}
+            ) in str(m.alternatives)
         else:
-            assert (
-                reverse("profile-update", kwargs={"username": u2.username})
-                in m.body
-            )
+            assert reverse(
+                "profile-update", kwargs={"username": u2.username}
+            ) in str(m.alternatives)
 
     # check that email sending task is idempotent
     mail.outbox.clear()
