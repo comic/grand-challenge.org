@@ -69,7 +69,7 @@ function updateHangingProtocolVisualization(parentDivId, jsonString){
     showOrHideVisualizationDiv(parentDivId, jsonString);
     try {
         let jsonSpec = JSON.parse(jsonString);
-        let validJsonSpec = jsonSpec.filter(viewPort => viewPort.viewport_name !== undefined);
+        let validJsonSpec = jsonSpec.filter(viewPort => typeof viewPort.viewport_name !== "undefined");
         [totalHeight, totalWidth] = getGridDimensions(validJsonSpec);
         removeAllChildNodes(document.getElementById(parentDivId));
         for (let i = 0; i < validJsonSpec.length; i++) {
