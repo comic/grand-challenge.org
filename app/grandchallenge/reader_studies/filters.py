@@ -15,4 +15,8 @@ class AnswerFilter(FilterSet):
 
     class Meta:
         model = Answer
-        fields = ("creator", "question__reader_study")
+        fields = (
+            "creator",
+            "question__reader_study",
+            "display_set",
+        )

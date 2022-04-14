@@ -1134,7 +1134,11 @@ class AnswerViewSet(
     serializer_class = AnswerSerializer
     queryset = (
         Answer.objects.all()
-        .select_related("creator", "question__reader_study")
+        .select_related(
+            "creator",
+            "question__reader_study",
+            "display_set",
+        )
         .prefetch_related("images")
     )
     permission_classes = [DjangoObjectPermissions]
