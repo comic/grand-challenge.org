@@ -2,25 +2,31 @@
 {% load url %}
 
 {% block title %}
-    Interfaces - {{ block.super }}
+    {{ list_type|title }} Interface Options - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Interfaces</li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:component-interface-list' %}">Interface Options</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ list_type|title }}</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Interfaces</h2>
+    <h2>Algorithm {{ list_type|title }} Options</h2>
 
     <p>
-        Here is a list of all of the interfaces that you can select to use in your algorithm.
-        The input column shows the file that your algorithm must read if that interface is selected as an input
-        interface.
-        The output column shows the file that your algorithm must write if that interface is selected as an output
-        interface.
+        Here is a list of the existing options that you can to use as
+        {% if list_type == list_type_options.INPUT %}
+            input to
+        {% elif list_type == list_type_options.OUTPUT %}
+            output from
+        {% endif %} your algorithm.
+        You can select multiple options for your algorithms {{ list_type|lower }}.
+        However, the same option cannot be used for both input to and output from your algorithm.
+        If an option does not exist for your use case please contact support with the title, description, and kind
+        for your new interface option.
     </p>
 
     <div class="table-responsive">
@@ -31,8 +37,11 @@
                 <th>Description</th>
                 <th>Kind</th>
                 <th>Slug</th>
-                <th>Input</th>
-                <th>Output</th>
+                {% if list_type == list_type_options.INPUT %}
+                    <th>You algorithm would read this from</th>
+                {% elif list_type == list_type_options.OUTPUT %}
+                    <th>Your algorithm would write this to</th>
+                {% endif %}
             </tr>
             </thead>
             <tbody>
@@ -43,22 +52,27 @@
                     <td>{{ interface.description }}</td>
                     <td>{{ interface.get_kind_display }}</td>
                     <td><code>{{ interface.slug }}</code></td>
-                    <td>
-                        {% if interface.is_image_kind %}
-                            <code>/input/{{ interface.relative_path }}/&lt;uuid&gt;.mha</code> or
-                            <code>/input/{{ interface.relative_path }}/&lt;uuid&gt;.tif</code>
-                        {% else %}
-                            <code>/input/{{ interface.relative_path }}</code>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if interface.is_image_kind %}
-                            <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.mha</code> or
-                            <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.tif</code>
-                        {% else %}
-                            <code>/output/{{ interface.relative_path }}</code>
-                        {% endif %}
-                    </td>
+                    {% if list_type == list_type_options.INPUT %}
+                        <td>
+                            {% if interface.is_image_kind %}
+                                <code>/input/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.mha</code>
+                                or
+                                <code>/input/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
+                            {% else %}
+                                <code>/input/{{ interface.relative_path }}</code>
+                            {% endif %}
+                        </td>
+                    {% elif list_type == list_type_options.OUTPUT %}
+                        <td>
+                            {% if interface.is_image_kind %}
+                                <code>/output/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.mha</code>
+                                or
+                                <code>/output/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
+                            {% else %}
+                                <code>/output/{{ interface.relative_path }}</code>
+                            {% endif %}
+                        </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
             </tbody>

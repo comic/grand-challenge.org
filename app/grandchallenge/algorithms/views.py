@@ -12,7 +12,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, TextChoices
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -25,6 +25,7 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
@@ -44,6 +45,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
+    NON_ALGORITHM_INTERFACES,
     AlgorithmDescriptionForm,
     AlgorithmForm,
     AlgorithmImageForm,
@@ -91,8 +93,31 @@ from grandchallenge.verifications.views import VerificationRequiredMixin
 logger = logging.getLogger(__name__)
 
 
+class ComponentInterfaceIOSwitch(LoginRequiredMixin, TemplateView):
+    template_name = "components/componentinterface_io_switch.html"
+
+
+class InterfaceListTypeOptions(TextChoices):
+    INPUT = "INPUT"
+    OUTPUT = "OUTPUT"
+
+
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
+    queryset = ComponentInterface.objects.exclude(
+        slug__in=NON_ALGORITHM_INTERFACES
+    )
+    list_type = None
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "list_type": self.list_type,
+                "list_type_options": InterfaceListTypeOptions,
+            }
+        )
+        return context
 
 
 class AlgorithmCreate(
