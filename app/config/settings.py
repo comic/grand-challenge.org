@@ -717,6 +717,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.tables",
     "markdown.extensions.sane_lists",
     "markdown.extensions.codehilite",
+    "markdown.extensions.attr_list",
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
