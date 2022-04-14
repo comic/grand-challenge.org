@@ -5,7 +5,6 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.paginator import Paginator
-from django.template.defaultfilters import safe
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.timezone import now
@@ -100,7 +99,7 @@ def send_bulk_email(action, email_pk):
                 "vendor/mailgun_transactional_emails/action.html",
                 {
                     "title": subject,
-                    "content": safe(html_body),
+                    "content": html_body,
                     "link": link,
                 },
             )
