@@ -1,0 +1,31 @@
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: black
+    }
+
+    .module {
+        background-color: black
+    }
+
+    h2 {
+        color:white
+    }
+
+    i {
+        color: white
+    }
+
+    .nav-tabs {
+        border-bottom-color: black
+    }
+
+    .markdownx-preview {
+        overflow: hidden !important;
+        background-color: white;
+        padding: 1.5rem 1.5rem;
+    }
+
+    .help {
+        margin: 0 !important;
+    }
+}
