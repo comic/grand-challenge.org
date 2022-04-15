@@ -291,6 +291,7 @@ class ChallengeRequestDetail(
     permission_required = "challenges.view_challengerequest"
     detail_view_fields = (
         "title",
+        "short_name",
         "challenge_type",
         "start_date",
         "end_date",
@@ -305,6 +306,8 @@ class ChallengeRequestDetail(
         "submission_assessment",
         "challenge_publication",
         "code_availability",
+        "algorithm_inputs",
+        "algorithm_outputs",
     )
     budget_fields = (
         "expected_number_of_teams",
