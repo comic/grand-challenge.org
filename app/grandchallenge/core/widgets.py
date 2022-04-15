@@ -37,6 +37,8 @@ class MarkdownEditorWidget(MarkdownxWidget):
 
 
 class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
+    template_name = "markdownx/widget-admin.html"
+
     @property
     def media(self):
         return forms.Media(
