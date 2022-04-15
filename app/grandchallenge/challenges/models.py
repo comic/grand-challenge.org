@@ -37,6 +37,7 @@ from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_reviewers,
     send_external_challenge_created_email,
 )
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -594,6 +595,17 @@ class Challenge(ChallengeBase):
         return status
 
     @property
+    def type(self):
+        phase_type = {phase.submission_kind for phase in self.phase_set.all()}
+        # as long as one of the phases is type 2,
+        # the challenge is classified as type 2
+        if 3 in phase_type:
+            challenge_type = ChallengeTypeChoices.T2
+        else:
+            challenge_type = ChallengeTypeChoices.T1
+        return challenge_type
+
+    @property
     def status_badge_string(self):
         if self.status == StatusChoices.OPEN:
             detail = [
@@ -701,12 +713,6 @@ def submission_pdf_path(instance, filename):
 
 
 class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
-    class ChallengeTypeChoices(models.IntegerChoices):
-        """Challenge type choices."""
-
-        T1 = 1, "Type 1 - prediction submission"
-        T2 = 2, "Type 2 - algorithm submission"
-
     class ChallengeRequestStatusChoices(models.TextChoices):
         ACCEPTED = "ACPT", _("Accepted")
         REJECTED = "RJCT", _("Rejected")
@@ -875,7 +881,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         challenge.structures.set(self.structures.all())
         challenge.save()
 
-        if self.challenge_type == self.ChallengeTypeChoices.T2:
+        if self.challenge_type == ChallengeTypeChoices.T2:
             phase = challenge.phase_set.get()
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
             phase.creator_must_be_verified = True
@@ -887,7 +893,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     @cached_property
     def budget(self):
         budget = None
-        if self.challenge_type == self.ChallengeTypeChoices.T2:
+        if self.challenge_type == ChallengeTypeChoices.T2:
             compute_costs = settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
             storage_costs = (
                 settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR

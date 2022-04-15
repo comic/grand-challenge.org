@@ -5,6 +5,7 @@ from django.core.mail import mail_managers, send_mail
 from django.db.models import Q
 from django.utils.html import format_html
 
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -68,10 +69,7 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
 def send_challenge_requested_email_to_requester(challengerequest):
     site = Site.objects.get_current()
     addition = ""
-    if (
-        challengerequest.challenge_type
-        == challengerequest.ChallengeTypeChoices.T2
-    ):
+    if challengerequest.challenge_type == ChallengeTypeChoices.T2:
         budget = ""
         for key, value in challengerequest.budget.items():
             budget += f"{key}: {value} €\n"

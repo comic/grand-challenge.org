@@ -244,3 +244,20 @@ ul.socialaccount_providers > li {
 .box-shadow {
     box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .1);
 }
+
+.ribbon {
+    position: absolute;
+    top: 16px;
+    left: -13px;
+    border-bottom-right-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    font-size: 1rem;
+}
+
+.ribbon-2 {
+    position: absolute;
+    top: 30px;
+    left: -13px;
+    transform-origin: left top;
+    transform: skewY(25deg);
+}

@@ -19,6 +19,7 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     ExternalChallenge,
 )
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse_lazy
 
 common_information_items = (
@@ -473,10 +474,7 @@ class ChallengeRequestForm(forms.ModelForm):
                 "The start date needs to be before the end date."
             )
 
-        if (
-            cleaned_data["challenge_type"]
-            == self.instance.ChallengeTypeChoices.T2
-        ):
+        if cleaned_data["challenge_type"] == ChallengeTypeChoices.T2:
             if not cleaned_data["average_size_of_test_image_in_mb"]:
                 raise ValidationError(
                     "For a type 2 challenge, you need to provide the average "
