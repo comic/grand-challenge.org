@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load url %}
+{% load profiles %}
+{% load bleach %}
+{% load guardian_tags %}
+
+{% block title %}{{ object.subject }} - Emails - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Emails</li>
+        <li class="breadcrumb-item active">{{ object.subject }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-3">
+        <h2 class="ml-3">{{ object.subject }}</h2>
+        {% if object.sent %}
+            <p>Sent on {{ object.sent_at|date:"j N Y" }}</p>
+        {% endif %}
+    </div>
+    <div class="row">
+        <div class="col-8">
+            <div style="max-width:600px;">
+                <p>Dear user, </p>
+                {{ object.body|md2html }}
+                <p>&mdash; Your Grand Challenge Team</p>
+            </div>
+        </div>
+        <div class="col-4">
+            {% if not object.sent and "change_email" in perms %}
+                <div class="alert alert-warning ml-3" role="alert">
+                        This email has not been sent yet.
+                        Please bookmark this URL in case you want to come back to edit it.
+                </div>
+                <div class="text-right">
+                    {% if "change_email" in perms and not object.sent %}
+                        <a href="{% url "emails:update" pk=object.pk %}"
+                           class="btn btn-primary">
+                            <i class="fa fa-edit"></i> Edit email
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

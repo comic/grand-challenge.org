@@ -1,0 +1,31 @@
+from django.views.generic import CreateView, DetailView, UpdateView
+from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin
+
+from grandchallenge.emails.forms import EmailForm
+from grandchallenge.emails.models import Email
+
+
+class EmailCreate(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    CreateView,
+):
+    model = Email
+    form_class = EmailForm
+    permission_required = "emails.add_email"
+    raise_exception = True
+
+
+class EmailUpdate(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UpdateView,
+):
+    model = Email
+    form_class = EmailForm
+    permission_required = "emails.change_email"
+    raise_exception = True
+
+
+class EmailDetail(DetailView):
+    model = Email
