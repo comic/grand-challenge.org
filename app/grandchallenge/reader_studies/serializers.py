@@ -1,7 +1,13 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
-from rest_framework.fields import CharField, JSONField, ReadOnlyField, URLField
+from rest_framework.fields import (
+    CharField,
+    DurationField,
+    JSONField,
+    ReadOnlyField,
+    URLField,
+)
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
@@ -168,6 +174,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     answer_image = HyperlinkedRelatedField(
         read_only=True, view_name="api:image-detail"
     )
+    total_edit_duration = DurationField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -244,6 +251,8 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "question",
             "modified",
             "answer_image",
+            "last_edit_duration",
+            "total_edit_duration",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}
