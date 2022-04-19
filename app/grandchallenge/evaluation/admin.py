@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms import ModelForm
 
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
@@ -6,6 +8,7 @@ from grandchallenge.components.admin import (
     deprovision_jobs,
     requeue_jobs,
 )
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
     Evaluation,
     Method,
@@ -15,10 +18,32 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.evaluation.tasks import create_evaluation
 
 
+class PhaseAdminForm(ModelForm):
+    class Meta:
+        model = Phase
+        fields = "__all__"
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        duplicate_interfaces = {
+            *cleaned_data.get("algorithm_inputs", [])
+        }.intersection({*cleaned_data.get("algorithm_outputs", [])})
+
+        if duplicate_interfaces:
+            raise ValidationError(
+                f"The sets of Algorithm Inputs and Algorithm Outputs must be unique: "
+                f"{oxford_comma(duplicate_interfaces)} present in both"
+            )
+
+        return cleaned_data
+
+
 class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
     list_display = ("pk", "challenge", "title", "slug", "modified")
     search_fields = ("pk", "title", "challenge__short_name")
+    form = PhaseAdminForm
 
 
 def reevaluate_submissions(modeladmin, request, queryset):
