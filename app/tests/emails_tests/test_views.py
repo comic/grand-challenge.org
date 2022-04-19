@@ -64,6 +64,22 @@ def test_email_update(client):
     assert email.subject == "Updated subject"
     assert email.body == "Updated content"
 
+    # but not when the email has been sent
+    email.sent = True
+    email.save()
+    response = get_view_for_user(
+        viewname="emails:update",
+        client=client,
+        method=client.post,
+        data={"subject": "Updated again", "body": "New content"},
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 403
+    email.refresh_from_db()
+    assert email.subject != "Updated again"
+    assert email.body != "New content"
+
 
 @pytest.mark.django_db
 def test_email_detail_permission(client):
