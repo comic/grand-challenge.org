@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 {% load url %}
-{% load profiles %}
 {% load bleach %}
-{% load guardian_tags %}
 
 {% block title %}{{ object.subject }} - Emails - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item active">Emails</li>
+        <li class="breadcrumb-item text-light">Emails</li>
         <li class="breadcrumb-item active">{{ object.subject }}</li>
     </ol>
 {% endblock %}
