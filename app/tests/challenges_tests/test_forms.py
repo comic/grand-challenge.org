@@ -8,9 +8,9 @@ from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_challenge_request_type_2_budget_fields_required():
+def test_challenge_request_type_2_fields_required():
     user = UserFactory.build()
-    # fill all fields except for budget fields
+    # fill all fields except for budget and input / output fields
     # for type 1 this form is valid
     data = {
         "creator": user,
@@ -34,7 +34,7 @@ def test_challenge_request_type_2_budget_fields_required():
     form = ChallengeRequestForm(data=data, creator=user)
     assert form.is_valid()
 
-    # for type 2, the budget fields need to be filled
+    # for type 2, these fields need to be filled
     data2 = {
         "creator": user,
         "title": "Test request",
