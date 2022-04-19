@@ -63,3 +63,26 @@ def test_email_update(client):
     email.refresh_from_db()
     assert email.subject == "Updated subject"
     assert email.body == "Updated content"
+
+
+@pytest.mark.django_db
+def test_email_detail_permission(client):
+    user = UserFactory()
+    email = EmailFactory(subject="Test email", body="Test content")
+    response = get_view_for_user(
+        viewname="emails:detail",
+        client=client,
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    # only users with permission can create emails
+    assign_perm("emails.view_email", user)
+    response = get_view_for_user(
+        viewname="emails:detail",
+        client=client,
+        reverse_kwargs={"pk": email.pk},
+        user=user,
+    )
+    assert response.status_code == 200

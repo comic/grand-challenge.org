@@ -28,5 +28,7 @@ class EmailUpdate(
     raise_exception = True
 
 
-class EmailDetail(DetailView):
+class EmailDetail(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     model = Email
+    permission_required = "emails.view_email"
+    raise_exception = True

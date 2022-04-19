@@ -22,6 +22,7 @@
     </div>
     <div class="row">
         <div class="col-8">
+            {# The html email body is set to max-width:600px #}
             <div style="max-width:600px;">
                 <p>Dear user, </p>
                 {{ object.body|md2html }}
