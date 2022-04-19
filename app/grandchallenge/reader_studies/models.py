@@ -1,7 +1,6 @@
 import itertools
 import json
 from collections import Counter
-from datetime import timedelta
 
 import numpy as np
 from actstream.models import Follow
@@ -1423,6 +1422,7 @@ class Answer(UUIDModel):
     score = models.FloatField(null=True)
     explanation = models.TextField(blank=True, default="")
     last_edit_duration = models.DurationField(null=True)
+    total_edit_duration = models.DurationField(null=True)
 
     history = HistoricalRecords(
         excluded_fields=[
@@ -1458,15 +1458,6 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
-
-    @property
-    def total_edit_duration(self):
-        if self.history.filter(last_edit_duration__isnull=True).exists():
-            return None
-        total = timedelta()
-        for entry in self.history.all():
-            total += entry.last_edit_duration
-        return total
 
     @cached_property
     def history_values(self):

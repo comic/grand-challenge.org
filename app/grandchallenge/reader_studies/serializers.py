@@ -188,6 +188,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
 
     def validate(self, attrs):
         answer = attrs.get("answer")
+        last_edit_duration = attrs.get("last_edit_duration")
         if self.instance:
             if (
                 not self.instance.question.reader_study.allow_answer_modification
@@ -195,8 +196,12 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                 raise ValidationError(
                     "This reader study does not allow answer modification."
                 )
-            if list(attrs.keys()) != ["answer"]:
-                raise ValidationError("Only the answer field can be modified.")
+            if not set(attrs.keys()).issubset(
+                {"answer", "last_edit_duration"}
+            ):
+                raise ValidationError(
+                    "Only the answer and last_edit_duration field can be modified."
+                )
             question = self.instance.question
             images = self.instance.images.all()
             display_set = self.instance.display_set
@@ -236,7 +241,11 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                         }
                     )
                 )
-        return attrs if not self.instance else {"answer": answer}
+        return (
+            attrs
+            if not self.instance
+            else {"answer": answer, "last_edit_duration": last_edit_duration}
+        )
 
     class Meta:
         model = Answer

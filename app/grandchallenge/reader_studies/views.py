@@ -1097,7 +1097,28 @@ class AnswerViewSet(
     )
 
     def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
+        last_edit_duration = serializer.validated_data.get(
+            "last_edit_duration"
+        )
+        serializer.save(
+            creator=self.request.user, total_edit_duration=last_edit_duration
+        )
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        last_edit_duration = serializer.validated_data.get(
+            "last_edit_duration"
+        )
+        total_edit_duration = None
+        if (
+            instance.total_edit_duration is not None
+            and last_edit_duration is not None
+        ):
+            total_edit_duration = (
+                instance.total_edit_duration + last_edit_duration
+            )
+
+        serializer.save(total_edit_duration=total_edit_duration)
 
     @action(detail=False)
     def mine(self, request):
