@@ -1137,7 +1137,6 @@ class AnswerViewSet(
         .select_related(
             "creator",
             "question__reader_study",
-            "display_set",
         )
         .prefetch_related("images")
     )
