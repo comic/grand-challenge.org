@@ -27,19 +27,17 @@
             </div>
         </div>
         <div class="col-4">
-            {% if not object.sent and "change_email" in perms %}
+            {% if not object.sent and "emails.change_email" in perms %}
                 <div class="alert alert-warning ml-3" role="alert">
                         This email has not been sent yet.
                         You can come back and edit it. When it's ready to be sent,
                         please contact support@grand-challenge.org to send it for you.
                 </div>
                 <div class="text-right">
-                    {% if "change_email" in perms and not object.sent %}
-                        <a href="{% url "emails:update" pk=object.pk %}"
-                           class="btn btn-primary">
-                            <i class="fa fa-edit"></i> Edit email
-                        </a>
-                    {% endif %}
+                    <a href="{% url "emails:update" pk=object.pk %}"
+                       class="btn btn-primary">
+                        <i class="fa fa-edit"></i> Edit email
+                    </a>
                 </div>
             {% endif %}
         </div>
