@@ -5,7 +5,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item text-light">Emails</li>
+        <li class="breadcrumb-item"><a href="{% url 'emails:list' %}">Emails</a></li>
         {% if object %}
             <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
         {% endif %}

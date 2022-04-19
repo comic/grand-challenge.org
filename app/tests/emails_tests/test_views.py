@@ -86,3 +86,26 @@ def test_email_detail_permission(client):
         user=user,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_email_list_permission(client):
+    user = UserFactory()
+    email1, email2 = EmailFactory.create_batch(2)
+    response = get_view_for_user(
+        viewname="emails:list",
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 403
+
+    # only users with permission can create emails
+    assign_perm("emails.view_email", user)
+    response = get_view_for_user(
+        viewname="emails:list",
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 200
+    assert email1.subject in response.rendered_content
+    assert email2.subject in response.rendered_content
