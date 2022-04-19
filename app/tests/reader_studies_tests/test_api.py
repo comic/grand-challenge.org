@@ -257,7 +257,9 @@ def test_answer_update_display_sets(client):
 
     answer.refresh_from_db()
     assert response.json() == {
-        "non_field_errors": ["Only the answer field can be modified."]
+        "non_field_errors": [
+            "Only the answer and last_edit_duration field can be modified."
+        ]
     }
     assert answer.answer is True
     assert answer.display_set == ds
@@ -363,7 +365,9 @@ def test_answer_update(client):
 
     answer.refresh_from_db()
     assert response.json() == {
-        "non_field_errors": ["Only the answer field can be modified."]
+        "non_field_errors": [
+            "Only the answer and last_edit_duration field can be modified."
+        ]
     }
     assert answer.answer is True
     assert answer.images.first() == im1
