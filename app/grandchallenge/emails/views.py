@@ -1,5 +1,6 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import CreateView, DetailView, UpdateView
-from guardian.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.emails.forms import EmailForm
 from grandchallenge.emails.models import Email
