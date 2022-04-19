@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Update{% else %}Create{% endif %} Email - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'emails:list' %}">Emails</a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">{% if object %}Update{% else %}Create{% endif %}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>{% if object %}Update{% else %}Create{% endif %} Email</h2>
+    {% crispy form %}
+{% endblock %}

@@ -99,6 +99,7 @@ def send_bulk_email(action, email_pk):
                 "vendor/mailgun_transactional_emails/action.html",
                 {
                     "title": subject,
+                    "username": user.username,
                     "content": html_body,
                     "link": link,
                 },
