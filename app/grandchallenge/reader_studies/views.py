@@ -39,7 +39,6 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
-from numpy.random.mtrand import RandomState
 from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -60,6 +59,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
+from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
@@ -933,6 +933,13 @@ class DisplaySetViewSet(
     GenericViewSet,
 ):
     serializer_class = DisplaySetSerializer
+    queryset = (
+        DisplaySet.objects.all()
+        .select_related("reader_study__hanging_protocol")
+        .prefetch_related(
+            "values__image", "values__interface", "reader_study__display_sets"
+        )
+    )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["reader_study"]
@@ -1024,17 +1031,21 @@ class DisplaySetViewSet(
             )
         return super().destroy(request, *args, **kwargs)
 
-    def get_queryset(self):
-        queryset = (
-            DisplaySet.objects.all()
-            .select_related("reader_study__hanging_protocol")
-            .prefetch_related("values__image")
-        )
+    def filter_queryset(self, queryset):
+        # Note: if more fields besides 'reader_study' are added to the
+        # filter_set fields, we cannot call super anymore before randomizing
+        # as we only want to filter out the display sets for a specific
+        # reader study.
+        reader_study = self.reader_study
+        queryset = super().filter_queryset(queryset)
+        if reader_study and reader_study.shuffle_hanging_list:
+            set_seed(1 / int(self.request.user.pk))
+            queryset = queryset.order_by("?")
+
         unanswered_by_user = self.request.query_params.get(
             "unanswered_by_user"
         )
         if unanswered_by_user == "True":
-            reader_study = self.reader_study
             if reader_study is None:
                 raise DRFValidationError(
                     "Please provide a reader study when filtering for "
@@ -1048,19 +1059,6 @@ class DisplaySetViewSet(
                 answer_count__gte=answerable_question_count,
             )
         return queryset
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        if self.reader_study and self.reader_study.shuffle_hanging_list:
-            queryset = list(list(queryset))
-            RandomState(seed=int(self.request.user.pk)).shuffle(queryset)
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):
