@@ -1421,6 +1421,9 @@ class Answer(UUIDModel):
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
     explanation = models.TextField(blank=True, default="")
+    last_edit_duration = models.DurationField(null=True)
+    total_edit_duration = models.DurationField(null=True)
+
     history = HistoricalRecords(
         excluded_fields=[
             "created",

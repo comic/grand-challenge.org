@@ -6,7 +6,12 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKind
-from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from grandchallenge.reader_studies.models import (
+    Answer,
+    AnswerType,
+    DisplaySet,
+    Question,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -252,7 +257,9 @@ def test_answer_update_display_sets(client):
 
     answer.refresh_from_db()
     assert response.json() == {
-        "non_field_errors": ["Only the answer field can be modified."]
+        "non_field_errors": [
+            "Only the answer and last_edit_duration field can be modified."
+        ]
     }
     assert answer.answer is True
     assert answer.display_set == ds
@@ -358,7 +365,9 @@ def test_answer_update(client):
 
     answer.refresh_from_db()
     assert response.json() == {
-        "non_field_errors": ["Only the answer field can be modified."]
+        "non_field_errors": [
+            "Only the answer and last_edit_duration field can be modified."
+        ]
     }
     assert answer.answer is True
     assert answer.images.first() == im1
@@ -1692,3 +1701,111 @@ def test_display_set_delete(client):
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_total_edit_duration(client):
+    rs = ReaderStudyFactory(allow_answer_modification=True)
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(
+        reader_study=rs, answer_type=AnswerType.SINGLE_LINE_TEXT
+    )
+    u = UserFactory()
+
+    rs.add_reader(u)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=u,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={
+            "question": q.api_url,
+            "display_set": ds.api_url,
+            "answer": "foo",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["last_edit_duration"] is None
+    assert response.json()["total_edit_duration"] is None
+
+    pk = response.json()["pk"]
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar", "last_edit_duration": "00:30"},
+    )
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] is None
+
+    Answer.objects.all().delete()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=u,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={
+            "question": q.api_url,
+            "display_set": ds.api_url,
+            "answer": "foo",
+            "last_edit_duration": "00:30",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] == "00:00:30"
+
+    pk = response.json()["pk"]
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar", "last_edit_duration": "00:30"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] == "00:01:00"
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] is None
+    assert response.json()["total_edit_duration"] is None
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar", "last_edit_duration": "00:30"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] is None
