@@ -64,7 +64,7 @@ class ProductList(ListView):
     fda_classes = ["All", "Class I", "Class II", "Class III", "No FDA"]
 
     def get_sort_by(self):
-        self.sort_query = self.request.GET.get("sort_by", "ce certification")
+        self.sort_query = self.request.GET.get("sort_by", "last modified")
         self.sort_bys = {
             "ce certification": "-ce_under",
             "last modified": "-modified",
@@ -85,7 +85,6 @@ class ProductList(ListView):
         ce_class_query = self.request.GET.get("ce_class")
         fda_class_query = self.request.GET.get("fda_class")
         search_query = self.request.GET.get("search")
-        # sort_query = self.request.GET.get("sort_by")
         self.product_total_all = queryset.count()
 
         if search_query:

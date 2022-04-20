@@ -99,9 +99,9 @@ class Product(models.Model):
     diseases = models.TextField()
     population = models.TextField()
 
-    input_data = models.CharField(max_length=250)
+    input_data = models.CharField(max_length=300)
     file_format_input = models.TextField()
-    output_data = models.CharField(max_length=250)
+    output_data = models.CharField(max_length=300)
     file_format_output = models.TextField()
     key_features = models.TextField()
     key_features_short = models.CharField(max_length=120)
@@ -130,7 +130,7 @@ class Product(models.Model):
 
     market_since = models.TextField()
     countries = models.TextField()
-    distribution = models.CharField(max_length=150, blank=True)
+    distribution = models.CharField(max_length=250, blank=True)
     institutes_research = models.TextField()
     institutes_clinic = models.TextField()
 
