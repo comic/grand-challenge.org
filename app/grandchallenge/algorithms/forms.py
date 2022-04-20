@@ -44,6 +44,7 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
@@ -116,8 +117,26 @@ class RepoNameValidationMixin:
         return repo_name
 
 
+class AlgorithmIOValidationMixin:
+    def clean(self):
+        cleaned_data = super().clean()
+
+        duplicate_interfaces = {*cleaned_data.get("inputs", [])}.intersection(
+            {*cleaned_data.get("outputs", [])}
+        )
+
+        if duplicate_interfaces:
+            raise ValidationError(
+                f"The sets of Inputs and Outputs must be unique: "
+                f"{oxford_comma(duplicate_interfaces)} present in both"
+            )
+
+        return cleaned_data
+
+
 class AlgorithmForm(
     RepoNameValidationMixin,
+    AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     ModelForm,
     ViewContentMixin,

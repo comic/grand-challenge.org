@@ -218,6 +218,8 @@ class ChallengeRequestForm(forms.ModelForm):
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
             "budget_for_hosting_challenge",
+            "algorithm_inputs",
+            "algorithm_outputs",
             *phase_1_items,
             *phase_2_items,
             "comments",
@@ -410,6 +412,11 @@ class ChallengeRequestForm(forms.ModelForm):
                     ),
                 ),
                 *general_information_items,
+                Div(
+                    "algorithm_inputs",
+                    "algorithm_outputs",
+                    id="type-2-fields",
+                ),
                 Div(
                     HTML(
                         "<h3 class='d-flex justify-content-center'>Type 2 challenge cost estimation</h3><br>"

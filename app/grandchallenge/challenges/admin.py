@@ -27,8 +27,22 @@ class ExternalChallengeAdmin(ModelAdmin):
 class ChallengeRequestAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     ordering = ("-created",)
-    list_display = ("title", "short_name", "creator", "created", "status")
+    list_display = (
+        "title",
+        "short_name",
+        "creator",
+        "created",
+        "status",
+        "challenge_type",
+        "total_cost",
+        "budget_for_hosting_challenge",
+    )
     actions = ["create_challenge", "send_status_update_email"]
+    list_filter = ["status", "challenge_type"]
+
+    @admin.display(description="Total cost")
+    def total_cost(self, obj):
+        return "%s" % (obj.budget["Total"])
 
     @admin.action(description="Create challenge for this request")
     def create_challenge(self, request, queryset):
