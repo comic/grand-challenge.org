@@ -1148,7 +1148,7 @@ class DisplaySet(UUIDModel):
             return ""
 
     @property
-    def index(self):
+    def standard_index(self):
         return len(
             [
                 x

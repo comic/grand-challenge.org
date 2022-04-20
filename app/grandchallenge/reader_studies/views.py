@@ -947,6 +947,7 @@ class DisplaySetViewSet(
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+    randomized_qs = []
 
     @property
     def reader_study(self):
@@ -1041,6 +1042,7 @@ class DisplaySetViewSet(
         if reader_study and reader_study.shuffle_hanging_list:
             set_seed(1 / int(self.request.user.pk))
             queryset = queryset.order_by("?")
+            self.randomized_qs = list(queryset)
 
         unanswered_by_user = self.request.query_params.get(
             "unanswered_by_user"
@@ -1058,6 +1060,10 @@ class DisplaySetViewSet(
                 answers__creator=self.request.user,
                 answer_count__gte=answerable_question_count,
             )
+            if reader_study and reader_study.shuffle_hanging_list:
+                pks = queryset.values_list("pk", flat=True)
+                queryset = [x for x in self.randomized_qs if x.pk in pks]
+
         return queryset
 
 
