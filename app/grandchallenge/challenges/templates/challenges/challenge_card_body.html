@@ -5,10 +5,6 @@
 <div>
     {% if challenge.is_self_hosted %}
         <span class="badge {% if challenge.status.name == 'OPEN' %}badge-success {% elif challenge.status.name == 'OPENING_SOON' %} badge-warning {% else %} badge-danger {% endif %}mt-2 above-stretched-link text-wrap" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.status_badge_string }}</span><br>
-        {% if challenge.type == 2 %}
-            <div class="ribbon bg-success text-white py-1 px-2 above-stretched-link text-wrap" data-toggle="tooltip" data-placement="top">Algorithm submission</div><br>
-            <div class="ribbon-2 bg-success text-success" style="z-index: -1" data-toggle="tooltip" data-placement="top"> xxx </div><br>
-        {% endif %}
     {% endif %}
     {% if challenge.description %}
         <a href="#InfoModal"

@@ -8,8 +8,11 @@
             <div class="card gc-card">
                 <a class="stretched-link" href="{{ object.get_absolute_url }}"
                    title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
+                {% if 'challenge' in object|meta_attr:'model_name' and object.type == 2 %}
+                    <div class="bg-success text-center p-1 card-img-top"> Algorithm submission challenge </div>
+                {% endif %}
                 <div class="embed-responsive embed-responsive-1by1">
-                        <img class="card-img-top embed-responsive-item"
+                        <img class="{% if not 'challenge' in object|meta_attr:'model_name' or not object.type == 2 %}card-img-top{% endif %} embed-responsive-item"
                              loading="lazy"
                              {% if object.logo and 'challenge' in object|meta_attr:'model_name' %}
                                  alt="{{ object.short_name }} logo"
