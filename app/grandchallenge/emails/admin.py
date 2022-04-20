@@ -1,7 +1,9 @@
 from django.contrib import admin, messages
 from django.db.transaction import on_commit
+from django.forms import ModelForm
 from markdownx.admin import MarkdownxModelAdmin
 
+from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 from grandchallenge.emails.models import Email
 from grandchallenge.emails.tasks import send_bulk_email
 from grandchallenge.emails.utils import SendActionChoices
@@ -23,9 +25,17 @@ def schedule_emails(modeladmin, queryset, request, action):
         )
 
 
+class EmailAdminForm(ModelForm):
+    class Meta:
+        model = Email
+        widgets = {"body": MarkdownEditorAdminWidget}
+        exclude = ()
+
+
 class EmailAdmin(MarkdownxModelAdmin):
     list_display = ("subject", "sent", "sent_at")
     actions = [*SendActionChoices]
+    form = EmailAdminForm
 
     @admin.action(description="Send to mailing list", permissions=["change"])
     def send_to_mailing_list(self, request, queryset):

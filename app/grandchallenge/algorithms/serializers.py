@@ -2,7 +2,12 @@ from typing import Optional
 
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import serializers
-from rest_framework.fields import CharField, SerializerMethodField, URLField
+from rest_framework.fields import (
+    CharField,
+    JSONField,
+    SerializerMethodField,
+    URLField,
+)
 from rest_framework.relations import (
     HyperlinkedRelatedField,
     StringRelatedField,
@@ -30,7 +35,6 @@ class AlgorithmSerializer(serializers.ModelSerializer):
     outputs = ComponentInterfaceSerializer(many=True)
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
-    hanging_protocol = HangingProtocolSerializer()
 
     class Meta:
         model = Algorithm
@@ -45,8 +49,6 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "average_duration",
             "inputs",
             "outputs",
-            "hanging_protocol",
-            "view_content",
         ]
 
     def get_average_duration(self, obj: Algorithm) -> Optional[float]:
@@ -78,6 +80,12 @@ class JobSerializer(serializers.ModelSerializer):
     algorithm_title = CharField(
         source="algorithm_image.algorithm.title", read_only=True
     )
+    hanging_protocol = HangingProtocolSerializer(
+        source="algorithm_image.algorithm.hanging_protocol", read_only=True
+    )
+    view_content = JSONField(
+        source="algorithm_image.algorithm.view_content", read_only=True
+    )
 
     class Meta:
         model = Job
@@ -92,6 +100,8 @@ class JobSerializer(serializers.ModelSerializer):
             "algorithm_title",
             "started_at",
             "completed_at",
+            "hanging_protocol",
+            "view_content",
         ]
 
 

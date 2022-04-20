@@ -1,5 +1,6 @@
 {% load url %}
 {% load random_encode %}
+{% load bleach %}
 
 <li class="nav-item dropdown pr-1 my-1">
     <a href="#" class="nav-link dropdown-toggle"
@@ -20,7 +21,7 @@
             {% endif %}
             {% if challenge.contact_email %}
                 <a class="dropdown-item"
-                   href="mailto:{{ challenge.contact_email|random_encode }}">
+                   href="mailto:{{ challenge.contact_email|random_encode|clean }}">
                     <i class="fas fa-envelope fa-fw"></i>
                     &nbsp;Email {% firstof challenge.title challenge.short_name %} Organizers
                 </a>
@@ -77,6 +78,12 @@
             <a class="dropdown-item"
                href="{% url 'cases:raw-image-upload-session-list' %}">
                 Your Uploads</a>
+            {% if 'emails.view_email' in perms %}
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item"
+                   href="{% url 'emails:list' %}">
+                    Emails</a>
+            {% endif %}
             <div class="dropdown-divider"></div>
             <a class="dropdown-item"
                href="{% url 'account_logout' %}?next=/">

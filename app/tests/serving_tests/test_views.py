@@ -9,7 +9,11 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.evaluation_tests.factories import SubmissionFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    SubmissionFactory,
+)
 from tests.factories import ImageFileFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -118,11 +122,8 @@ def test_submission_download(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_output_download(client):
+def test_civ_file_download(client):
     """Only viewers of the job should be allowed to download result files."""
-    user1, user2 = UserFactory(), UserFactory()
-    job = AlgorithmJobFactory(creator=user1)
-
     detection_interface = ComponentInterface(
         store_in_database=False,
         relative_path="detection_results.json",
@@ -131,8 +132,6 @@ def test_output_download(client):
         kind=ComponentInterface.Kind.ANY,
     )
     detection_interface.save()
-    job.algorithm_image.algorithm.outputs.add(detection_interface)
-
     output_civ = ComponentInterfaceValue.objects.create(
         interface=detection_interface
     )
@@ -147,15 +146,41 @@ def test_output_download(client):
             bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
         ),
     )
+    user1, user2 = UserFactory(), UserFactory()
+
+    def has_correct_access(user_allowed, user_denied, url):
+        tests = [(403, None), (302, user_allowed), (403, user_denied)]
+
+        for test in tests:
+            response = get_view_for_user(url=url, client=client, user=test[1])
+            assert response.status_code == test[0]
+
+    # test algorithm
+    job = AlgorithmJobFactory(creator=user1)
+    job.algorithm_image.algorithm.outputs.add(detection_interface)
     job.outputs.add(output_civ)
 
-    tests = [(403, None), (302, user1), (403, user2)]
+    has_correct_access(user1, user2, job.outputs.first().file.url)
+    job.outputs.remove(output_civ)
 
-    for test in tests:
-        response = get_view_for_user(
-            url=job.outputs.first().file.url, client=client, user=test[1]
-        )
-        assert response.status_code == test[0]
+    # test evaluation
+    evaluation = EvaluationFactory()
+    evaluation.output_interfaces.add(detection_interface)
+    evaluation.outputs.add(output_civ)
+    assign_perm("view_evaluation", user1, evaluation)
+    has_correct_access(user1, user2, evaluation.outputs.first().file.url)
+    evaluation.outputs.remove(output_civ)
+
+    # test archive
+    archive = ArchiveFactory()
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(output_civ)
+    archive.add_editor(user1)
+    has_correct_access(user1, user2, archive_item.values.first().file.url)
+    archive.remove_editor(user1)
+    archive.add_user(user1)
+    has_correct_access(user1, user2, archive_item.values.first().file.url)
+    archive.remove_user(user1)
 
 
 @pytest.mark.django_db

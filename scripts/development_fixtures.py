@@ -46,7 +46,12 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    DisplaySet,
+    Question,
+    ReaderStudy,
+)
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.verifications.models import Verification
 from grandchallenge.workstations.models import Workstation
@@ -184,9 +189,15 @@ def _create_demo_challenge(users):
     )
     demo.add_participant(users["demop"])
 
-    Page.objects.create(challenge=demo, title="all", permission_level="ALL")
-    Page.objects.create(challenge=demo, title="reg", permission_level="REG")
-    Page.objects.create(challenge=demo, title="adm", permission_level="ADM")
+    Page.objects.create(
+        challenge=demo, display_title="all", permission_level="ALL"
+    )
+    Page.objects.create(
+        challenge=demo, display_title="reg", permission_level="REG"
+    )
+    Page.objects.create(
+        challenge=demo, display_title="adm", permission_level="ADM"
+    )
 
     Phase.objects.create(challenge=demo, title="Phase 2")
 
@@ -509,6 +520,7 @@ def _create_reader_studies(users):
         workstation=Workstation.objects.last(),
         logo=create_uploaded_image(),
         description="Test reader study",
+        view_content={"main": ["generic-medical-image"]},
     )
     reader_study.editors_group.user_set.add(users["readerstudy"])
     reader_study.readers_group.user_set.add(users["demo"])
@@ -519,10 +531,27 @@ def _create_reader_studies(users):
         answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
     )
 
-    answer = Answer.objects.create(
-        creator=users["readerstudy"], question=question, answer="foo"
+    display_set = DisplaySet.objects.create(reader_study=reader_study)
+    image = Image(
+        name="test_image2.mha",
+        modality=ImagingModality.objects.get(modality="MR"),
+        width=128,
+        height=128,
+        color_space="RGB",
     )
-    answer.images.add(Image.objects.first())
+    image.save()
+    civ = ComponentInterfaceValue.objects.create(
+        interface=ComponentInterface.objects.get(slug="generic-medical-image"),
+        image=image,
+    )
+    display_set.values.set([civ])
+
+    answer = Answer.objects.create(
+        creator=users["readerstudy"],
+        question=question,
+        answer="foo",
+        display_set=display_set,
+    )
     answer.save()
 
 

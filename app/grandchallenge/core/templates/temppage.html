@@ -7,9 +7,7 @@
 {% load clean from bleach %}
 
 {% block title %}
-    {% filter title %}
-        {% firstof currentpage.display_title currentpage.title %}
-    {% endfilter %}
+    {{ currentpage|title }}
     - {{ block.super }}
 {% endblock %}
 

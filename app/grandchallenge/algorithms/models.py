@@ -6,7 +6,7 @@ from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Min, Q, Sum
 from django.db.models.signals import post_delete
@@ -34,7 +34,6 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
@@ -134,10 +133,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         ),
     )
     inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_inputs"
+        to=ComponentInterface, related_name="algorithm_inputs", blank=False
     )
     outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_outputs"
+        to=ComponentInterface, related_name="algorithm_outputs", blank=False
     )
     publications = models.ManyToManyField(
         Publication,
@@ -244,22 +243,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def supports_batch_upload(self):
         inputs = {inpt.slug for inpt in self.inputs.all()}
         return inputs == {"generic-medical-image"}
-
-    def clean(self):
-        super().clean()
-
-        duplicate_interfaces = {*self.inputs.all()}.intersection(
-            {*self.outputs.all()}
-        )
-
-        if duplicate_interfaces and {
-            interface.slug for interface in duplicate_interfaces
-        } != {"generic-medical-image"}:
-            # TODO Temporarily allow gmi until conic is closed on 10/03/2022
-            raise ValidationError(
-                f"The sets of Inputs and Outputs must be unique: "
-                f"{oxford_comma(duplicate_interfaces)} present in both"
-            )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

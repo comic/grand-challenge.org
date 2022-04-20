@@ -384,6 +384,7 @@ class Session(UUIDModel):
             The environment variables that should be set on the container.
         """
         env = {
+            "NGINX_RESOLVER": settings.WORKSTATIONS_DNS_RESOLVER,
             "GRAND_CHALLENGE_API_ROOT": unquote(reverse("api:api-root")),
             "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
             "WORKSTATION_SESSION_ID": str(self.pk),
@@ -422,7 +423,6 @@ class Session(UUIDModel):
             job_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image_sha256=self.workstation_image.image_sha256,
             exec_image_repo_tag=self.workstation_image.repo_tag,
-            exec_image_file=self.workstation_image.image,
             memory_limit=settings.COMPONENTS_MEMORY_LIMIT,
             requires_gpu=False,
             time_limit=settings.WORKSTATIONS_SESSION_DURATION_LIMIT,

@@ -196,11 +196,8 @@ def docker_image(
         for chunk in image:
             f.write(chunk)
 
-    docker_client.images.remove(image=im.id)
-
     call(["gzip", outfile])
 
-    assert im.id not in [x.id for x in docker_client.images.list()]
     return f"{outfile}.gz", im.id
 
 
@@ -591,7 +588,7 @@ def multiple_etdrs_annotations():
 
 @pytest.fixture
 def reader_study_with_gt():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
         QuestionFactory(

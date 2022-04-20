@@ -1,4 +1,4 @@
-.. grand-challenge.org documentation master file, created by
+.. grand-challenge.org documentation main file, created by
    sphinx-quickstart on Fri Jan  5 16:19:37 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.

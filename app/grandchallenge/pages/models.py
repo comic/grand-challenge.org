@@ -2,8 +2,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
-from django.utils.html import format_html
 from django_countries import countries
+from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
 
@@ -31,7 +31,11 @@ class Page(models.Model):
         (ADMIN_ONLY, "Administrators only"),
     )
 
-    title = models.SlugField(max_length=64, blank=False)
+    display_title = models.CharField(
+        max_length=255,
+        blank=False,
+    )
+    slug = AutoSlugField(populate_from="display_title", max_length=64)
     challenge = models.ForeignKey(
         "challenges.Challenge",
         help_text="Which challenge does this page belong to?",
@@ -45,15 +49,6 @@ class Page(models.Model):
         default=1,
         help_text="Determines order in which page appear in site menu",
     )
-    display_title = models.CharField(
-        max_length=255,
-        default="",
-        blank=True,
-        help_text=(
-            "On pages and in menu items, use this text. Spaces and special "
-            "chars allowed here. Optional field. If emtpy, title is used"
-        ),
-    )
     hidden = models.BooleanField(
         default=False, help_text="Do not display this page in site menu"
     )
@@ -61,7 +56,10 @@ class Page(models.Model):
     history = HistoricalRecords()
 
     def __str__(self):
-        return self.title
+        if self.display_title:
+            return self.display_title
+        else:
+            return self.slug
 
     def save(self, *args, **kwargs):
         # when saving for the first time only, put this page last in order
@@ -158,7 +156,7 @@ class Page(models.Model):
 
         s = Substitution(
             tag_name="project_statistics",
-            replacement=format_html("<h1>Statistics</h1>{}", content),
+            replacement=content,
         )
         return s.sub(html)
 
@@ -207,7 +205,7 @@ class Page(models.Model):
             "pages:detail",
             kwargs={
                 "challenge_short_name": self.challenge.short_name,
-                "page_title": self.title,
+                "slug": self.slug,
             },
         )
         return url
@@ -215,6 +213,6 @@ class Page(models.Model):
     class Meta:
         # make sure a single site never has two pages with the same name
         # because page names are used as keys in urls
-        unique_together = (("challenge", "title"),)
+        unique_together = (("challenge", "slug"),)
         # when getting a list of these objects this ordering is used
         ordering = ["challenge", "order"]

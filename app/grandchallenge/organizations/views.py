@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.views.generic import DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
@@ -31,7 +32,9 @@ class OrganizationList(ListView):
                         "algorithm on this site. Please <a href='{}'>contact "
                         "us</a> if you would like to add your organization."
                     ),
-                    random_encode("mailto:support@grand-challenge.org"),
+                    mark_safe(
+                        random_encode("mailto:support@grand-challenge.org")
+                    ),
                 ),
             }
         )

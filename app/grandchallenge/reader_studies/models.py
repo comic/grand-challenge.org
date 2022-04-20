@@ -325,7 +325,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
-    use_display_sets = models.BooleanField(default=False)
+    use_display_sets = models.BooleanField(default=True, editable=False)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -518,14 +518,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @property
     def cleaned_case_text(self):
         if self.use_display_sets:
-            study_images = {im.name: im.api_url for im in self.ds_images}
+            return {}
         else:
             study_images = {im.name: im.api_url for im in self.images.all()}
-        return {
-            study_images.get(k): md2html(v)
-            for k, v in self.case_text.items()
-            if k in study_images
-        }
+            return {
+                study_images.get(k): md2html(v)
+                for k, v in self.case_text.items()
+                if k in study_images
+            }
 
     @property
     def study_image_names(self):
@@ -753,18 +753,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             RandomState(seed=int(user.pk)).shuffle(hanging_list)
 
         return hanging_list
-
-    def generate_hanging_list(self):
-        """
-        Generates a new hanging list.
-
-        Each image in the ``ReaderStudy`` is assigned to the primary port of its
-        own hanging.
-        """
-        image_names = self.images.values_list("name", flat=True)
-        hanging_list = [{"main": name} for name in image_names]
-        self.hanging_list = hanging_list
-        self.save()
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
@@ -1145,6 +1133,17 @@ class DisplaySet(UUIDModel):
             "api:reader-studies-display-set-detail", kwargs={"pk": self.pk}
         )
 
+    @property
+    def description(self):
+        case_text = self.reader_study.case_text
+        return "".join(
+            [
+                md2html(case_text[val.image.name])
+                for val in self.values.filter(image__isnull=False)
+                if val.image.name in case_text
+            ]
+        )
+
 
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
@@ -1422,6 +1421,9 @@ class Answer(UUIDModel):
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
     explanation = models.TextField(blank=True, default="")
+    last_edit_duration = models.DurationField(null=True)
+    total_edit_duration = models.DurationField(null=True)
+
     history = HistoricalRecords(
         excluded_fields=[
             "created",
@@ -1443,6 +1445,9 @@ class Answer(UUIDModel):
 
     class Meta:
         ordering = ("created",)
+        unique_together = (
+            ("creator", "display_set", "question", "is_ground_truth"),
+        )
 
     def __str__(self):
         return f"{self.question.question_text} {self.answer} ({self.creator})"

@@ -45,6 +45,7 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
                     *AdminMarkdownxWidget.Media.css["all"],
                     "vendor/css/base.min.css",
                     "vendor/fa/css/all.css",
+                    "css/markdown.css",
                 ]
             },
             js=[

@@ -64,12 +64,12 @@ class Command(BaseCommand):
         if go == "yes":
             for dest_user in dest_users:
                 for src_answer in creators_answers:
-                    answer = Answer.objects.create(
+                    Answer.objects.create(
                         creator=dest_user,
                         question=src_answer.question,
                         answer=src_answer.answer,
+                        display_set=src_answer.display_set,
                     )
-                    answer.images.set(src_answer.images.all())
         else:
             raise RuntimeError(
                 f"Aborting, only 'yes' is accepted, '{go}' was input"

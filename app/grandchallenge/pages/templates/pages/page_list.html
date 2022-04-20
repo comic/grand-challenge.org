@@ -42,13 +42,11 @@
                         {{ page.order }}
                     </td>
                     <td>
-                        <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
+                        <a href="{{ page.get_absolute_url }}">{{ page.slug }}</a>
                     </td>
                     <td>
                         <a href="{{ page.get_absolute_url }}">
-                            {% filter title %}
-                                {% firstof page.display_title page.title %}
-                            {% endfilter %}
+                            {{ page|title }}
                         </a>
                     </td>
                     <td data-order="{{ page.hidden }}">
@@ -68,12 +66,12 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{% url 'pages:update' challenge_short_name=challenge.short_name page_title=page.title %}">
+                        <a href="{% url 'pages:update' challenge_short_name=challenge.short_name slug=page.slug %}">
                             <i class="fa fa-edit" title="Edit Page"></i>
                         </a>
                     </td>
                     <td>
-                        <a href="{% url 'pages:delete' challenge_short_name=challenge.short_name page_title=page.title %}">
+                        <a href="{% url 'pages:delete' challenge_short_name=challenge.short_name slug=page.slug %}">
                             <i class="fa fa-trash text-danger"
                                title="Delete Page"></i>
                         </a>

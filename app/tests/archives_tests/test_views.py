@@ -56,7 +56,7 @@ class TestObjectPermissionRequiredViews:
             ("cases-list", {"slug": a.slug}, "use_archive", a, None),
             ("cases-create", {"slug": a.slug}, "upload_archive", a, None),
             (
-                "cases-reader-study-update",
+                "items-reader-study-update",
                 {"slug": a.slug},
                 "use_archive",
                 a,

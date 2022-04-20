@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.forms import ModelForm
 from guardian.admin import GuardedModelAdmin
 
+from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
@@ -16,6 +18,12 @@ from grandchallenge.components.admin import (
 )
 
 
+class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
+    class Meta:
+        model = Algorithm
+        fields = "__all__"
+
+
 class AlgorithmAdmin(GuardedModelAdmin):
     list_display = (
         "title",
@@ -26,6 +34,7 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "container_count",
     )
     list_filter = ("public",)
+    form = AlgorithmAdminForm
 
     def container_count(self, obj):
         return obj.container_count

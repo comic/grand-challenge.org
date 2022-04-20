@@ -3,6 +3,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -139,7 +140,9 @@ class CombinedChallengeList(TemplateView):
                         "us</a> if you want to advertise your challenge or "
                         "know of any study that would fit in this overview."
                     ),
-                    random_encode("mailto:support@grand-challenge.org"),
+                    mark_safe(
+                        random_encode("mailto:support@grand-challenge.org")
+                    ),
                 ),
             }
         )
@@ -288,6 +291,7 @@ class ChallengeRequestDetail(
     permission_required = "challenges.view_challengerequest"
     detail_view_fields = (
         "title",
+        "short_name",
         "challenge_type",
         "start_date",
         "end_date",
@@ -302,6 +306,8 @@ class ChallengeRequestDetail(
         "submission_assessment",
         "challenge_publication",
         "code_availability",
+        "algorithm_inputs",
+        "algorithm_outputs",
     )
     budget_fields = (
         "expected_number_of_teams",

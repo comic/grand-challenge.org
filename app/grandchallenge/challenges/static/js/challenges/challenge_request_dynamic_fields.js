@@ -1,13 +1,15 @@
 function updateBudgetFields(){
-    let inputs = document.getElementById("budget-fields").querySelectorAll("#budget-fields input");
+    let inputs = document.querySelectorAll("#budget-fields input, #type-2-fields textarea");
     if (document.getElementById("id_challenge_type").value == "1"){
         document.getElementById("budget-fields").style.display = 'none';
+        document.getElementById("type-2-fields").style.display = 'none';
         for(var i = 0, len = inputs.length; i < len; i++) {
             inputs[i].required = false;
         }
     }
     else if (document.getElementById("id_challenge_type").value == "2"){
         document.getElementById("budget-fields").style.display = 'block';
+        document.getElementById("type-2-fields").style.display = 'block';
         for(var i = 0, len = inputs.length; i < len; i++) {
             inputs[i].required = true;
         }

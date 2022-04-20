@@ -88,7 +88,7 @@ CELERY_EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
 )
 DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL", "webmaster@localhost"
+    "DEFAULT_FROM_EMAIL", "grandchallenge@localhost"
 )
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 
@@ -387,6 +387,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.help_forum",
                 "grandchallenge.core.context_processors.about_page",
                 "grandchallenge.core.context_processors.newsletter_signup",
+                "grandchallenge.core.context_processors.viewport_names",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
@@ -717,6 +718,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.tables",
     "markdown.extensions.sane_lists",
     "markdown.extensions.codehilite",
+    "markdown.extensions.attr_list",
     BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
@@ -1067,6 +1069,9 @@ WORKBENCH_ADMIN_USERNAME = os.environ.get("WORKBENCH_ADMIN_USERNAME", "demo")
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
     "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
 )
+WORKSTATIONS_DNS_RESOLVER = os.environ.get(
+    "WORKSTATIONS_DNS_RESOLVER", "1.1.1.1"
+)
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
 WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
@@ -1220,6 +1225,9 @@ DISALLOWED_EMAIL_DOMAINS = {
     "comcast.net",
     "nudt.edu.cn",
     "ihpc.a-star.edu.sg",
+    "raysightmed.com",
+    "csu.edu.cn",
+    "cerist.dz",
     *blocklist,
 }
 

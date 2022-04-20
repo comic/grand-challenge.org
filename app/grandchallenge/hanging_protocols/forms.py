@@ -1,3 +1,5 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
 from django import forms
 
 from grandchallenge.components.models import ComponentInterface
@@ -25,6 +27,23 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             )
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            Div(
+                "title",
+                "description",
+                "json",
+                Div(
+                    id="hpVisualization",
+                    css_class="container-fluid m-1 mb-3 position-relative",
+                    style="height: 250px",
+                ),
+            ),
+            ButtonHolder(Submit("save", "Save")),
+        )
+
     def clean_json(self):
         value = self.cleaned_data["json"]
         viewports = [x["viewport_name"] for x in value]
@@ -32,6 +51,25 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             self.add_error(
                 error="Each viewport can only be used once.", field="json"
             )
+
+        dims = ["x", "y", "w", "h"]
+        if any(d in [k for v in value for k in v.keys()] for d in dims):
+            for viewport in value:
+                if not all(d in viewport for d in dims):
+                    missing_dims = [d for d in dims if d not in viewport]
+                    self.add_error(
+                        error=f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}.",
+                        field="json",
+                    )
+        else:
+            for viewport in value:
+                if any(d in viewport for d in dims):
+                    missing_dims = [d for d in dims if d not in viewport]
+                    self.add_error(
+                        error=f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}.",
+                        field="json",
+                    )
+
         return value
 
 

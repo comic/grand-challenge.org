@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block title %}Emails - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Emails</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-3">
+        <h2 class="col-10">Emails</h2>
+        <div class="col-2 text-right"><a class="btn btn-primary" href="{% url 'emails:create' %}"><i class="fas fa-plus"></i> &nbsp; Write new email</a></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm">
+            <thead class="thead-light">
+            <tr>
+                <th></th>
+                <th class="text-center">Subject</th>
+                <th class="text-center">Status</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for object in object_list %}
+                    <tr>
+                        <td class="text-center">
+                            <a class="btn btn-dark btn-sm" href="{% url 'emails:detail' pk=object.pk %}"><i class="fa fa-search"></i> View</a>
+                        </td>
+                        <td class="text-center align-middle">{{ object.subject }}</td>
+                        <td class="text-center align-middle">
+                            {% if object.sent %}
+                                <span class="badge badge-success p-2">Sent on {{ object.sent_at|date:"j N Y" }}</span>
+                            {% else %}
+                                <a class="btn btn-primary btn-sm" href="{% url 'emails:update' pk=object.pk %}">Edit</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

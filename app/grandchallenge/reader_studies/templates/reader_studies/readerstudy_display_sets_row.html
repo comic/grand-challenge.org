@@ -3,6 +3,7 @@
 {% load workstations %}
 {% load pathlib %}
 {% load reader_study_tags %}
+{% load bleach %}
 
 <div id="accordion">
   <div class="card">
@@ -74,6 +75,12 @@
                 {% else %}
                   {{ object.order }}
                 {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <td>Description:</td>
+              <td colspan="3">
+                {{ object.description|clean }}
               </td>
             </tr>
             {% if object.is_editable %}

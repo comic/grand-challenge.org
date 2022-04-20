@@ -156,6 +156,7 @@ urlpatterns = [
             namespace="hanging-protocols",
         ),
     ),
+    path("emails/", include("grandchallenge.emails.urls", namespace="emails")),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

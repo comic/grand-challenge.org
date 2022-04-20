@@ -43,6 +43,7 @@ class AnswersAdmin(GuardedModelAdmin):
         "answer_image",
         "question",
         "score",
+        "display_set",
     )
     search_fields = ("creator__username",)
 

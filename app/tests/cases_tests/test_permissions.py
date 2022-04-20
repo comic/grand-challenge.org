@@ -144,7 +144,7 @@ def test_view_permission_when_reused(in_archive, in_rs, in_job):
     im = ImageFactory()
 
     job = AlgorithmJobFactory()
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     archive = ArchiveFactory()
 
     if in_archive:

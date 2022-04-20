@@ -217,8 +217,11 @@ class ChallengeRequestForm(forms.ModelForm):
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
             "budget_for_hosting_challenge",
+            "algorithm_inputs",
+            "algorithm_outputs",
             *phase_1_items,
             *phase_2_items,
+            "comments",
         )
         widgets = {
             "start_date": forms.TextInput(attrs={"type": "date"}),
@@ -240,6 +243,10 @@ class ChallengeRequestForm(forms.ModelForm):
         labels = {
             "long_term_commitment": "We agree to support this challenge for up to 5 years. ",
             "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
+            "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
+            "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
+            "budget_for_hosting_challenge": "Budget for hosting challenge in Euros",
+            "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
@@ -327,10 +334,10 @@ class ChallengeRequestForm(forms.ModelForm):
                 " does the challenge have?"
             ),
             "inference_time_limit_in_minutes": (
-                "Time limit for each algorithm job in minutes. "
-                "This time limit should account for everything that needs to happen "
-                "for an algorithm container to process one single image, including "
-                "model loading, i/o, preprocessing and inference."
+                "The average time that you expect an algorithm job to take in minutes. "
+                "This time estimate should account for everything that needs to happen "
+                "for an algorithm container to process <u>one single image, including "
+                "model loading, i/o, preprocessing and inference.</u>"
             ),
             "long_term_commitment": (
                 "High-quality challenges typically remain relevant for years. "
@@ -350,6 +357,31 @@ class ChallengeRequestForm(forms.ModelForm):
                 "<a href='https://creativecommons.org/licenses/' target='_blank'>"
                 "CC-BY license</a>. Note that this does not apply to the secret test "
                 "data used to evaluate algorithm submissions in Type 2 challenges."
+            ),
+            "phase_1_number_of_test_images": (
+                "Number of test images for this phase. If you're <a href="
+                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+                "bundling images</a>, enter the number of batches (not the number of single images)."
+            ),
+            "phase_2_number_of_test_images": (
+                "Number of test images for this phase. If you're <a href="
+                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+                "bundling images</a>, enter the number of batches (not the number of single images)."
+            ),
+            "average_size_of_test_image_in_mb": (
+                "Average size of test image in MB. If you're <a href="
+                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+                "bundling images</a>, provide the size of the batch (not the size of a single image)."
+            ),
+            "phase_1_number_of_submissions_per_team": (
+                "How many submissions do you expect per team to this phase? "
+                "You can enforce a submission limit in the settings for each phase "
+                "to control this."
+            ),
+            "phase_2_number_of_submissions_per_team": (
+                "How many submissions do you expect per team to this phase? "
+                "You can enforce a submission limit in the settings for each phase "
+                "to control this."
             ),
         }
 
@@ -379,6 +411,11 @@ class ChallengeRequestForm(forms.ModelForm):
                     ),
                 ),
                 *general_information_items,
+                Div(
+                    "algorithm_inputs",
+                    "algorithm_outputs",
+                    id="type-2-fields",
+                ),
                 Div(
                     HTML(
                         "<h3 class='d-flex justify-content-center'>Type 2 challenge cost estimation</h3><br>"
@@ -430,6 +467,7 @@ class ChallengeRequestForm(forms.ModelForm):
                     id="budget-fields",
                     css_class="border rounded px-4 pt-4 my-5",
                 ),
+                "comments",
             ),
             ButtonHolder(Submit("save", "Save")),
         )

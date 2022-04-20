@@ -563,7 +563,9 @@ class ObservableDetail(LeaderboardDetail):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        evaluations = EvaluationSerializer(self.object_list, many=True).data
+        evaluations = EvaluationSerializer(
+            self.object_list, many=True, context={"request": self.request}
+        ).data
 
         kind = self.kwargs.get("kind", "").lower()
 

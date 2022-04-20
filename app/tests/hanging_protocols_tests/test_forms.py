@@ -102,3 +102,67 @@ def test_hanging_protocol_form(client):
         "Each viewport can only be used once." not in response.rendered_content
     )
     assert HangingProtocol.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_hanging_protocol_dimension_validation(client):
+    user = UserFactory()
+    assign_perm("hanging_protocols.add_hangingprotocol", user)
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main", "x": 0, "y": 0}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert HangingProtocol.objects.count() == 0
+    assert (
+        "Either none or all viewports must have x, y, w, and h keys. Viewport main missing w, h."
+        in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main", "x": 0, "y": 0, "w": 1, "h": 1}, '
+            '{"viewport_name": "secondary"}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert HangingProtocol.objects.count() == 0
+    assert (
+        "Either none or all viewports must have x, y, w, and h keys. Viewport secondary missing x, y, w, h."
+        in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main", "x": 0, "y": 0, "w": 1, "h": 1}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert HangingProtocol.objects.count() == 1
+    assert (
+        "Either none or all viewports must have x, y, w, and h keys."
+        not in response.rendered_content
+    )

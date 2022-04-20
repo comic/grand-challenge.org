@@ -18,7 +18,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_group_deletion():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -37,7 +37,7 @@ def test_group_deletion():
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ["readers_group", "editors_group"])
 def test_group_deletion_reverse(group):
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -50,7 +50,7 @@ def test_group_deletion_reverse(group):
 
 @pytest.mark.django_db
 def test_read_only_fields():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     q = QuestionFactory(reader_study=rs)
 
     assert q.is_fully_editable is True
@@ -65,20 +65,6 @@ def test_read_only_fields():
         "image_port",
         "required",
     ]
-
-
-@pytest.mark.django_db
-def test_generate_hanging_list():
-    rs = ReaderStudyFactory()
-    im1 = ImageFactory(name="im1")
-    im2 = ImageFactory(name="im2")
-
-    rs.generate_hanging_list()
-    assert rs.hanging_list == []
-
-    rs.images.set([im1, im2])
-    rs.generate_hanging_list()
-    assert rs.hanging_list == [{"main": "im1"}, {"main": "im2"}]
 
 
 @pytest.mark.django_db
@@ -376,7 +362,8 @@ def test_score_for_user(reader_study_with_gt, settings):
 @pytest.mark.django_db
 def test_help_markdown_is_scrubbed(client):
     rs = ReaderStudyFactory(
-        help_text_markdown="<b>My Help Text</b><script>naughty</script>"
+        help_text_markdown="<b>My Help Text</b><script>naughty</script>",
+        use_display_sets=False,
     )
     u = UserFactory()
     rs.add_reader(u)
@@ -396,7 +383,8 @@ def test_case_text_is_scrubbed(client):
             im.name: "<b>My Help Text</b><script>naughty</script>",
             "not an image name": "Shouldn't appear in result",
             im1.name: "Doesn't belong to this study so ignore",
-        }
+        },
+        use_display_sets=False,
     )
     rs.images.add(im)
     rs.add_reader(u)
@@ -418,7 +406,8 @@ def test_validate_answer():
         hanging_list=[
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
-        ]
+        ],
+        use_display_sets=False,
     )
     rs.images.set([im1, im2, im3])
     rs.add_reader(u)
@@ -452,7 +441,8 @@ def test_validate_hanging_list():
         hanging_list=[
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
-        ]
+        ],
+        use_display_sets=False,
     )
     rs.images.set([im1, im2, im3])
 
@@ -464,7 +454,7 @@ def test_validate_hanging_list():
 
 @pytest.mark.django_db
 def test_display_set_order():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     ds = DisplaySetFactory(reader_study=rs)
     assert ds.order == 10
 
@@ -476,3 +466,25 @@ def test_display_set_order():
 
     ds = DisplaySetFactory(reader_study=rs)
     assert ds.order == 20
+
+
+@pytest.mark.django_db
+def test_display_set_description():
+    rs = ReaderStudyFactory()
+    reader = UserFactory()
+    rs.add_reader(reader)
+    images = [ImageFactory() for _ in range(6)]
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
+    result = {}
+    for image in images:
+        ds = DisplaySetFactory(reader_study=rs)
+        result[ds.pk] = f"<p>{str(image.pk)}</p>"
+        civ = ComponentInterfaceValueFactory(interface=ci, image=image)
+        ds.values.add(civ)
+
+    rs.case_text = {im.name: str(im.pk) for im in images}
+    rs.case_text["no_image"] = "not an image"
+    rs.save()
+
+    for ds in rs.display_sets.all():
+        assert ds.description == result[ds.pk]

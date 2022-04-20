@@ -197,10 +197,10 @@ class ReaderStudyUpdateForm(
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
             "shuffle_hanging_list": (
-                "If true, each reader will read the images in a unique "
+                "If true, each reader will read the cases in a unique "
                 "order. The ordering for each user will be consistent over "
-                "time. If false, the readers will all read the images in the "
-                "order that you define in the hanging_list field."
+                "time. If false, the readers will all read the cases in the "
+                "order that you define."
             ),
             "hanging_list": (
                 "A list of hangings. "

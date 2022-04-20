@@ -1,6 +1,7 @@
 import pytest
 from actstream.actions import is_following
 
+from grandchallenge.algorithms.forms import AlgorithmForm
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmPermissionRequest,
@@ -14,6 +15,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
@@ -132,7 +134,7 @@ def test_algorithm_create(client, uploaded_image):
                 "image_requires_gpu": False,
                 "image_requires_memory_gb": 4,
                 "inputs": [ci.pk],
-                "outputs": [ci.pk],
+                "outputs": [ComponentInterfaceFactory().pk],
                 "contact_email": creator.email,
                 "display_editors": True,
                 "access_request_handling": AccessRequestHandlingOptions.MANUAL_REVIEW,
@@ -370,3 +372,13 @@ def create_algorithm_with_input(slug):
     if slug:
         alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
     return alg, creator
+
+
+@pytest.mark.django_db
+def test_disjoint_interfaces():
+    i = ComponentInterfaceFactory()
+    form = AlgorithmForm(
+        user=UserFactory(), data={"inputs": [i.pk], "outputs": [i.pk]}
+    )
+    assert form.is_valid() is False
+    assert "The sets of Inputs and Outputs must be unique" in str(form.errors)

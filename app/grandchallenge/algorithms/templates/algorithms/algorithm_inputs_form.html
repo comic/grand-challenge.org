@@ -59,7 +59,7 @@
             <p>
                 You have run out of credits to try this algorithm. You can try again on {{ next_job_at }}.
                 You can request more credits by sending an e-mail to
-                <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}" class="text-radboud">
+                <a href="{{ 'mailto:support@grand-challenge.org'|random_encode|safe }}" class="text-radboud">
                     support@grand-challenge.org</a>.
             </p>
         {% else %}

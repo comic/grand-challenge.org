@@ -64,8 +64,8 @@ templates_path = ["_templates"]
 # source_suffix = ['.rst', '.md']
 source_suffix = ".rst"
 
-# The master toctree document.
-master_doc = "index"
+# The main toctree document.
+main_doc = "index"
 
 # General information about the project.
 project = "grand-challenge.org"
@@ -167,7 +167,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (
-        master_doc,
+        main_doc,
         "grand-challenge.org.tex",
         "grand-challenge.org Documentation",
         "James Meakin",
@@ -182,7 +182,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (
-        master_doc,
+        main_doc,
         "grand-challenge.org",
         "grand-challenge.org Documentation",
         [author],
@@ -198,7 +198,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc,
+        main_doc,
         "grand-challenge.org",
         "grand-challenge.org Documentation",
         author,

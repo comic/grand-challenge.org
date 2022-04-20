@@ -1,13 +1,17 @@
 import re
 from pathlib import Path
-from unittest import mock
 
 import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKind
-from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from grandchallenge.reader_studies.models import (
+    Answer,
+    AnswerType,
+    DisplaySet,
+    Question,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -30,7 +34,9 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_api_list_is_filtered(client):
-    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+    rs1, rs2 = ReaderStudyFactory(use_display_sets=False), ReaderStudyFactory(
+        use_display_sets=False
+    )
     rs1_editor = UserFactory()
     rs1.add_editor(rs1_editor)
     q1, q2 = (
@@ -80,7 +86,7 @@ def test_api_list_is_filtered(client):
 def test_answer_create(client):
     im = ImageFactory()
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.images.add(im)
     rs.save()
 
@@ -138,7 +144,7 @@ def test_answer_create(client):
 def test_answer_create_display_set(client):
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.use_display_sets = True
 
     ds = DisplaySetFactory(reader_study=rs)
@@ -178,7 +184,7 @@ def test_answer_create_display_set(client):
 def test_answer_update_display_sets(client):
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.use_display_sets = True
 
     ds = DisplaySetFactory(reader_study=rs)
@@ -251,7 +257,9 @@ def test_answer_update_display_sets(client):
 
     answer.refresh_from_db()
     assert response.json() == {
-        "non_field_errors": ["Only the answer field can be modified."]
+        "non_field_errors": [
+            "Only the answer and last_edit_duration field can be modified."
+        ]
     }
     assert answer.answer is True
     assert answer.display_set == ds
@@ -293,7 +301,7 @@ def test_answer_update_display_sets(client):
 def test_answer_update(client):
     im1, im2 = ImageFactory(), ImageFactory()
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.images.add(im1, im2)
     rs.save()
 
@@ -357,7 +365,9 @@ def test_answer_update(client):
 
     answer.refresh_from_db()
     assert response.json() == {
-        "non_field_errors": ["Only the answer field can be modified."]
+        "non_field_errors": [
+            "Only the answer and last_edit_duration field can be modified."
+        ]
     }
     assert answer.answer is True
     assert answer.images.first() == im1
@@ -818,7 +828,7 @@ def test_answer_creator_is_reader(client):
 def test_answer_is_correct_type(client, answer_type, answer, expected):
     im = ImageFactory()
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.images.add(im)
     rs.save()
 
@@ -844,7 +854,7 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 )
 def test_only_non_required_can_be_null(client, answer_type):
     im = ImageFactory()
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.images.add(im)
     rs.save()
     reader = UserFactory()
@@ -882,7 +892,9 @@ def test_only_non_required_can_be_null(client, answer_type):
 @pytest.mark.django_db
 def test_mine(client):
     im1, im2 = ImageFactory(), ImageFactory()
-    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+    rs1, rs2 = ReaderStudyFactory(use_display_sets=False), ReaderStudyFactory(
+        use_display_sets=False
+    )
     rs1.images.add(im1)
     rs2.images.add(im2)
 
@@ -941,7 +953,7 @@ def test_mine(client):
 @pytest.mark.django_db
 def test_ground_truth_is_excluded(client):
     im = ImageFactory()
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.images.add(im)
 
     editor = UserFactory()
@@ -1016,7 +1028,7 @@ def test_ground_truth_is_excluded(client):
 def test_csv_export(client, answer_type, answer):
     im = ImageFactory()
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     rs.images.add(im)
     rs.save()
 
@@ -1095,88 +1107,8 @@ def test_csv_export(client, answer_type, answer):
 
 
 @pytest.mark.django_db
-@mock.patch(
-    "grandchallenge.reader_studies.models.ReaderStudy.generate_hanging_list"
-)
-def test_generate_hanging_list_api_view(generate_hanging_list, client):
-    rs = ReaderStudyFactory()
-    editor = UserFactory()
-    rs.add_editor(editor)
-
-    response = get_view_for_user(
-        viewname="api:reader-study-generate-hanging-list",
-        reverse_kwargs={"pk": rs.pk},
-        user=editor,
-        client=client,
-        method=client.patch,
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert "Hanging list generated." in str(response.content)
-    generate_hanging_list.assert_called_once()
-
-
-@pytest.mark.django_db
-def test_remove_image_api_view(client):
-    rs = ReaderStudyFactory()
-    reader, editor = UserFactory(), UserFactory()
-    rs.add_reader(reader)
-    rs.add_editor(editor)
-
-    response = get_view_for_user(
-        viewname="api:reader-study-remove-image",
-        reverse_kwargs={"pk": rs.pk},
-        user=reader,
-        client=client,
-        method=client.patch,
-        data={"image": 1},
-        content_type="application/json",
-        follow=True,
-    )
-
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname="api:reader-study-remove-image",
-        reverse_kwargs={"pk": rs.pk},
-        user=editor,
-        client=client,
-        method=client.patch,
-        data={"image": 1},
-        content_type="application/json",
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert "Image could not be removed from reader study." in str(
-        response.content
-    )
-
-    im = ImageFactory()
-    rs.images.add(im)
-
-    assert im in rs.images.all()
-
-    response = get_view_for_user(
-        viewname="api:reader-study-remove-image",
-        reverse_kwargs={"pk": rs.pk},
-        user=editor,
-        client=client,
-        method=client.patch,
-        data={"image": im.pk},
-        content_type="application/json",
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert "Image removed from reader study." in str(response.content)
-    assert im not in rs.images.all()
-
-
-@pytest.mark.django_db
 def test_ground_truth(client):
-    rs = ReaderStudyFactory(is_educational=True)
+    rs = ReaderStudyFactory(is_educational=True, use_display_sets=False)
     reader = UserFactory()
     rs.add_reader(reader)
 
@@ -1252,7 +1184,7 @@ def test_ground_truth(client):
 def test_assign_answer_image(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     im = ImageFactory()
     editor, reader = UserFactory(), UserFactory()
 
@@ -1314,7 +1246,7 @@ def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     im = ImageFactory()
     editor, reader = UserFactory(), UserFactory()
 
@@ -1347,7 +1279,7 @@ def test_question_accepts_image_type_answers(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     im = ImageFactory()
     reader = UserFactory()
 
@@ -1427,6 +1359,18 @@ def test_display_set_endpoints(client, settings):
     assert response.json()["count"] == 2
     rs1.shuffle_hanging_list = True
     rs1.save()
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.status_code == 400
+    assert response.json() == [
+        "Please provide a reader study when filtering for unanswered display_sets."
+    ]
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
@@ -1715,7 +1659,7 @@ def test_display_set_add_and_edit(client, settings):
 
 @pytest.mark.django_db
 def test_display_set_delete(client):
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(use_display_sets=False)
     reader, editor = UserFactory(), UserFactory()
     rs.add_reader(reader)
     rs.add_editor(editor)
@@ -1757,3 +1701,111 @@ def test_display_set_delete(client):
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_total_edit_duration(client):
+    rs = ReaderStudyFactory(allow_answer_modification=True)
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(
+        reader_study=rs, answer_type=AnswerType.SINGLE_LINE_TEXT
+    )
+    u = UserFactory()
+
+    rs.add_reader(u)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=u,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={
+            "question": q.api_url,
+            "display_set": ds.api_url,
+            "answer": "foo",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["last_edit_duration"] is None
+    assert response.json()["total_edit_duration"] is None
+
+    pk = response.json()["pk"]
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar", "last_edit_duration": "00:30"},
+    )
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] is None
+
+    Answer.objects.all().delete()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=u,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={
+            "question": q.api_url,
+            "display_set": ds.api_url,
+            "answer": "foo",
+            "last_edit_duration": "00:30",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] == "00:00:30"
+
+    pk = response.json()["pk"]
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar", "last_edit_duration": "00:30"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] == "00:01:00"
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] is None
+    assert response.json()["total_edit_duration"] is None
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        user=u,
+        client=client,
+        method=client.patch,
+        reverse_kwargs={"pk": pk},
+        content_type="application/json",
+        data={"answer": "bar", "last_edit_duration": "00:30"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["total_edit_duration"] is None

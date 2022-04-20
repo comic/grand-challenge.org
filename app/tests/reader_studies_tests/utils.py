@@ -15,7 +15,9 @@ def get_rs_creator():
 class TwoReaderStudies:
     def __init__(self):
         self.creator = get_rs_creator()
-        self.rs1, self.rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+        self.rs1, self.rs2 = ReaderStudyFactory(
+            use_display_sets=False
+        ), ReaderStudyFactory(use_display_sets=False)
         self.editor1, self.reader1, self.editor2, self.reader2 = (
             UserFactory(),
             UserFactory(),

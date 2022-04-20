@@ -27,5 +27,26 @@
         {% endif %}
     </div>
     <br>
-    <pre class="bg-light p-3 rounded">{{ object.json|json_dumps }}</pre>
+    <div>
+        {% if object.description %}
+            <h5>Description</h5>
+            {{ object.description }}
+            <br><br>
+        {% endif %}
+        <h5>Schematic sketch of hanging protocol</h5>
+        <div id="hpVisualization" class="container-fluid m-1 mb-3 position-relative w-100" style="height: 300px"></div>
+        <h5>Json schema</h5>
+        <pre id="id_json" class="bg-light p-3 rounded">{{ object.json|json_dumps }}</pre>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ viewport_names|json_script:"possibleViewPorts" }}
+    <script type="text/javascript"
+            src="{% static "js/hanging_protocols/hanging_protocol_static_views_add_on.js" type="module" defer %}">
+    </script>
+    <script type="text/javascript"
+            src="{% static "js/hanging_protocols/hanging_protocol_visualization.js" type="module" defer %}">
+    </script>
 {% endblock %}

@@ -105,20 +105,18 @@ def update_archive_item_update_kwargs(
     to be processed images.
     """
     if instance.values.filter(interface=interface.pk).exists():
-        civ_pks_to_remove.add(
-            *instance.values.filter(interface=interface.pk).values_list(
-                "pk", flat=True
-            )
-        )
+        for civ_pk in instance.values.filter(
+            interface=interface.pk
+        ).values_list("pk", flat=True):
+            civ_pks_to_remove.add(civ_pk)
     else:
         # for images, check if there are any CIVs with the provided image
         if interface.is_image_kind:
             if instance.values.filter(image=image).exists():
-                civ_pks_to_remove.add(
-                    *instance.values.filter(image=image).values_list(
-                        "pk", flat=True
-                    )
-                )
+                for civ_pk in instance.values.filter(image=image).values_list(
+                    "pk", flat=True
+                ):
+                    civ_pks_to_remove.add(civ_pk)
 
     with transaction.atomic():
         if interface.is_image_kind:

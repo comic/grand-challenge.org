@@ -15,9 +15,7 @@
         {% if object %}
             <li class="breadcrumb-item"><a
                     href="{{ object.get_absolute_url }}">
-                {% filter title %}
-                    {% firstof object.display_title object.title %}
-                {% endfilter %}
+                {{ object|title }}
             </a></li>
         {% endif %}
         <li class="breadcrumb-item active"

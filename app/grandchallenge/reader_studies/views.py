@@ -23,6 +23,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
@@ -41,6 +42,7 @@ from guardian.shortcuts import get_perms
 from numpy.random.mtrand import RandomState
 from rest_framework import mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -120,7 +122,9 @@ class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
                         "Please <a href='{}'>contact us</a> if you would like "
                         "to set up your own reader study."
                     ),
-                    random_encode("mailto:support@grand-challenge.org"),
+                    mark_safe(
+                        random_encode("mailto:support@grand-challenge.org")
+                    ),
                 ),
             }
         )
@@ -336,7 +340,7 @@ class ReaderStudyDisplaySetList(
     raise_exception = True
     template_name = "reader_studies/readerstudy_images_list.html"
     row_template = "reader_studies/readerstudy_display_sets_row.html"
-    search_fields = ["pk", "name"]
+    search_fields = ["pk", "values__image__name", "values__file"]
     columns = [
         Column(title="Name", sort_field="order"),
     ]
@@ -865,7 +869,8 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
-        "images", "questions__options"
+        "images",
+        "questions__options",
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -881,35 +886,6 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     def _check_change_perms(self, user, obj):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
-
-    @action(detail=True, methods=["patch"])
-    def generate_hanging_list(self, request, pk=None):
-        reader_study = self.get_object()
-        reader_study.generate_hanging_list()
-        messages.add_message(
-            request, messages.SUCCESS, "Hanging list re-generated."
-        )
-        return Response({"status": "Hanging list generated."})
-
-    @action(detail=True, methods=["patch"])
-    def remove_image(self, request, pk=None):
-        image_id = request.data.get("image")
-        reader_study = self.get_object()
-        try:
-            reader_study.images.remove(Image.objects.get(id=image_id))
-            messages.add_message(
-                request, messages.SUCCESS, "Image removed from reader study."
-            )
-            return Response({"status": "Image removed from reader study."})
-        except Image.DoesNotExist:
-            messages.add_message(
-                request,
-                messages.ERROR,
-                "Image could not be removed from reader study.",
-            )
-        return Response(
-            {"status": "Image could not be removed from reader study."}
-        )
 
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
     def ground_truth(self, request, pk=None, case_pk=None):
@@ -1049,14 +1025,18 @@ class DisplaySetViewSet(
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = DisplaySet.objects.all().select_related("reader_study")
+        queryset = (
+            DisplaySet.objects.all()
+            .select_related("reader_study__hanging_protocol")
+            .prefetch_related("values__image")
+        )
         unanswered_by_user = self.request.query_params.get(
             "unanswered_by_user"
         )
         if unanswered_by_user == "True":
             reader_study = self.reader_study
             if reader_study is None:
-                return HttpResponseBadRequest(
+                raise DRFValidationError(
                     "Please provide a reader study when filtering for "
                     "unanswered display_sets."
                 )
@@ -1105,7 +1085,10 @@ class AnswerViewSet(
     serializer_class = AnswerSerializer
     queryset = (
         Answer.objects.all()
-        .select_related("creator", "question__reader_study")
+        .select_related(
+            "creator",
+            "question__reader_study",
+        )
         .prefetch_related("images")
     )
     permission_classes = [DjangoObjectPermissions]
@@ -1117,7 +1100,28 @@ class AnswerViewSet(
     )
 
     def perform_create(self, serializer):
-        serializer.save(creator=self.request.user)
+        last_edit_duration = serializer.validated_data.get(
+            "last_edit_duration"
+        )
+        serializer.save(
+            creator=self.request.user, total_edit_duration=last_edit_duration
+        )
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        last_edit_duration = serializer.validated_data.get(
+            "last_edit_duration"
+        )
+        total_edit_duration = None
+        if (
+            instance.total_edit_duration is not None
+            and last_edit_duration is not None
+        ):
+            total_edit_duration = (
+                instance.total_edit_duration + last_edit_duration
+            )
+
+        serializer.save(total_edit_duration=total_edit_duration)
 
     @action(detail=False)
     def mine(self, request):

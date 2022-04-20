@@ -516,7 +516,7 @@ class Challenge(ChallengeBase):
 
     def create_default_pages(self):
         Page.objects.create(
-            title=self.short_name,
+            display_title=self.short_name,
             html=render_to_string(
                 "pages/defaults/home.html", {"challenge": self}
             ),
@@ -785,7 +785,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     inference_time_limit_in_minutes = models.IntegerField(
         blank=True,
         null=True,
-        help_text="Time limit per inference job in minutes.",
+        help_text="Average run time per algorithm job in minutes.",
     )
     average_size_of_test_image_in_mb = models.IntegerField(
         null=True, blank=True, help_text="Average size of a test image in MB."
@@ -793,12 +793,12 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     phase_1_number_of_submissions_per_team = models.IntegerField(
         null=True,
         blank=True,
-        help_text="How many submissions will teams be allowed to make to this phase?",
+        help_text="How many submissions do you expect per team in this phase?",
     )
     phase_2_number_of_submissions_per_team = models.IntegerField(
         null=True,
         blank=True,
-        help_text="How many submissions will teams be allowed to make to this phase?",
+        help_text="How many submissions do you expect per team in this phase?",
     )
     phase_1_number_of_test_images = models.IntegerField(
         null=True,
@@ -836,6 +836,27 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     data_license_extra = models.CharField(
         max_length=2000,
         blank=True,
+    )
+    comments = models.TextField(
+        blank=True,
+        help_text="If you have any comments, remarks or questions, please leave them here.",
+    )
+    algorithm_inputs = models.TextField(
+        blank=True,
+        help_text="What are the inputs to the algorithms submitted as solutions to "
+        "your Type 2 challenge going to be? "
+        "Please describe in detail "
+        "what the input(s) reflect(s), for example, "
+        "MRI scan of the brain, or chest X-ray. Grand Challenge only "
+        "supports .mha and .tiff image files and json files for algorithms.",
+    )
+    algorithm_outputs = models.TextField(
+        blank=True,
+        help_text="What are the outputs to the algorithms submitted as solutions to "
+        "your Type 2 challenge going to be? "
+        "Please describe in detail what the output(s) "
+        "reflect(s), for example, probability of a positive PCR result, or "
+        "stroke lesion segmentation. ",
     )
 
     def __str__(self):
