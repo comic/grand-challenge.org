@@ -91,6 +91,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "hanging_protocol",
             "view_content",
             "description",
+            "index",
         )
 
 

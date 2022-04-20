@@ -1144,6 +1144,16 @@ class DisplaySet(UUIDModel):
             ]
         )
 
+    @property
+    def index(self):
+        return len(
+            [
+                x
+                for x in self.reader_study.display_sets.all()
+                if x.order < self.order
+            ]
+        )
+
 
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
