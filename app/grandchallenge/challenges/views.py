@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.utils.html import format_html
@@ -361,7 +362,14 @@ class ChallengeRequestUpdate(
                 form.instance.status
                 == form.instance.ChallengeRequestStatusChoices.ACCEPTED
             ):
-                challenge = form.instance.create_challenge()
+                try:
+                    challenge = form.instance.create_challenge()
+                except ValidationError:
+                    raise ValidationError(
+                        f"There already is a challenge with short "
+                        f"name: {form.instance.short_name}. Contact "
+                        f"support@grand-challenge.org for help.",
+                    )
             else:
                 challenge = None
             send_challenge_status_update_email(
