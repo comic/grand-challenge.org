@@ -1664,7 +1664,7 @@ def test_display_set_index(client):
     r = UserFactory()
     rs.add_reader(r)
 
-    DisplaySetFactory.create_batch(20, reader_study=rs)
+    DisplaySetFactory.create_batch(5, reader_study=rs)
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
@@ -1674,9 +1674,9 @@ def test_display_set_index(client):
         method=client.get,
     )
 
-    assert [x["index"] for x in response.json()["results"]] == list(range(20))
+    assert [x["index"] for x in response.json()["results"]] == list(range(5))
     assert [x["order"] for x in response.json()["results"]] == list(
-        range(10, 210, 10)
+        range(10, 60, 10)
     )
 
     response = get_view_for_user(
@@ -1705,9 +1705,9 @@ def test_display_set_index(client):
         for x in response.json()["results"]
         if x["pk"] == str(DisplaySet.objects.last().pk)
     ][0]
-    assert [x["index"] for x in response.json()["results"]] == list(range(20))
+    assert [x["index"] for x in response.json()["results"]] == list(range(5))
     shuffled_order = [x["order"] for x in response.json()["results"]]
-    assert shuffled_order != list(range(10, 210, 10))
+    assert shuffled_order != list(range(10, 60, 10))
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
@@ -1733,9 +1733,9 @@ def test_display_set_index(client):
         method=client.get,
     )
 
-    assert [x["index"] for x in response.json()["results"]] == list(range(19))
+    assert [x["index"] for x in response.json()["results"]] == list(range(4))
     assert [x["order"] for x in response.json()["results"]] == list(
-        range(10, 200, 10)
+        range(10, 50, 10)
     )
 
     rs.shuffle_hanging_list = True
@@ -1750,7 +1750,7 @@ def test_display_set_index(client):
     )
 
     assert [x["index"] for x in response.json()["results"]] == list(
-        set(range(20)) - {last["index"]}
+        set(range(5)) - {last["index"]}
     )
     assert [x["order"] for x in response.json()["results"]] == [
         x for x in shuffled_order if x != last["order"]
