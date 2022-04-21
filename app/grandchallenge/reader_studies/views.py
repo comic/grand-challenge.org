@@ -1042,6 +1042,7 @@ class DisplaySetViewSet(
         if reader_study and reader_study.shuffle_hanging_list:
             set_seed(1 / int(self.request.user.pk))
             queryset = queryset.order_by("?")
+            # Save the queryset to determine each item's index in the serializer
             self.randomized_qs = list(queryset)
 
         unanswered_by_user = self.request.query_params.get(
@@ -1062,6 +1063,11 @@ class DisplaySetViewSet(
                 )
                 .order_by("order", "created")
             )
+            # Because the filtering has changed the list, we can no longer
+            # reapply .order_by("?"), as the ordering would not be consistent
+            # with the ordering of the full list. Instead, we use the
+            # previously saved randomized_qs and filter the proper items
+            # out of it.
             if reader_study and reader_study.shuffle_hanging_list:
                 pks = queryset.values_list("pk", flat=True)
                 queryset = [x for x in self.randomized_qs if x.pk in pks]
