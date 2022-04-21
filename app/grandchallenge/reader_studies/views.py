@@ -1054,11 +1054,13 @@ class DisplaySetViewSet(
                     "unanswered display_sets."
                 )
             answerable_question_count = reader_study.answerable_question_count
-            queryset = queryset.annotate(
-                answer_count=Count("answers")
-            ).exclude(
-                answers__creator=self.request.user,
-                answer_count__gte=answerable_question_count,
+            queryset = (
+                queryset.annotate(answer_count=Count("answers"))
+                .exclude(
+                    answers__creator=self.request.user,
+                    answer_count__gte=answerable_question_count,
+                )
+                .order_by("order", "created")
             )
             if reader_study and reader_study.shuffle_hanging_list:
                 pks = queryset.values_list("pk", flat=True)

@@ -85,7 +85,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         if obj.reader_study.shuffle_hanging_list:
             try:
                 return self.context["view"].randomized_qs.index(obj)
-            except IndexError:
+            except ValueError:
                 return obj.standard_index
         else:
             return obj.standard_index

@@ -1658,6 +1658,88 @@ def test_display_set_add_and_edit(client, settings):
 
 
 @pytest.mark.django_db
+def test_display_set_index(client):
+    rs = ReaderStudyFactory()
+    r = UserFactory()
+    rs.add_reader(r)
+
+    for _ in range(20):
+        civ = ComponentInterfaceValueFactory(image=ImageFactory())
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert [x["index"] for x in response.json()["results"]] == list(range(20))
+    assert [x["order"] for x in response.json()["results"]] == list(
+        range(10, 210, 10)
+    )
+
+    rs.shuffle_hanging_list = True
+    rs.save()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk)},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    last = [
+        x
+        for x in response.json()["results"]
+        if x["pk"] == str(DisplaySet.objects.last().pk)
+    ][0]
+    assert [x["index"] for x in response.json()["results"]] == list(range(20))
+    shuffled_order = [x["order"] for x in response.json()["results"]]
+    assert shuffled_order != list(range(10, 210, 10))
+
+    rs.shuffle_hanging_list = False
+    rs.save()
+
+    q = QuestionFactory(reader_study=rs)
+    AnswerFactory(question=q, display_set=DisplaySet.objects.last(), creator=r)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk), "unanswered_by_user": "True"},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert [x["index"] for x in response.json()["results"]] == list(range(19))
+    assert [x["order"] for x in response.json()["results"]] == list(
+        range(10, 200, 10)
+    )
+
+    rs.shuffle_hanging_list = True
+    rs.save()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs.pk), "unanswered_by_user": "True"},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert [x["index"] for x in response.json()["results"]] == list(
+        set(range(20)) - {last["index"]}
+    )
+    assert [x["order"] for x in response.json()["results"]] == [
+        x for x in shuffled_order if x != last["order"]
+    ]
+
+
+@pytest.mark.django_db
 def test_display_set_delete(client):
     rs = ReaderStudyFactory(use_display_sets=False)
     reader, editor = UserFactory(), UserFactory()
