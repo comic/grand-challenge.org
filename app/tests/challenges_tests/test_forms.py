@@ -1,12 +1,13 @@
 import datetime
 
 import pytest
-from django.core.exceptions import ValidationError
 
-from grandchallenge.challenges.forms import ChallengeRequestForm
+from grandchallenge.challenges.forms import (
+    ChallengeRequestForm,
+    ChallengeRequestUpdateForm,
+)
 from grandchallenge.challenges.models import ChallengeRequest
 from tests.factories import ChallengeFactory, UserFactory
-from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -66,18 +67,14 @@ def test_accept_challenge_request(
     client, challenge_reviewer, type_1_challenge_request
 ):
     _ = ChallengeFactory(short_name=type_1_challenge_request.short_name)
-
-    with pytest.raises(
-        ValidationError,
-        match=f"There already is a challenge with short name: {type_1_challenge_request.short_name}",
-    ):
-        _ = get_view_for_user(
-            client=client,
-            method=client.post,
-            viewname="challenges:requests-update",
-            reverse_kwargs={"pk": type_1_challenge_request.pk},
-            data={
-                "status": type_1_challenge_request.ChallengeRequestStatusChoices.ACCEPTED
-            },
-            user=challenge_reviewer,
-        )
+    form = ChallengeRequestUpdateForm(
+        data={
+            "status": type_1_challenge_request.ChallengeRequestStatusChoices.ACCEPTED
+        },
+        instance=type_1_challenge_request,
+    )
+    assert not form.is_valid()
+    assert (
+        f"There already is a challenge with short name: {type_1_challenge_request.short_name}"
+        in str(form.errors)
+    )

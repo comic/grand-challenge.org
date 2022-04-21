@@ -1,6 +1,5 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.utils.html import format_html
@@ -17,7 +16,6 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.filters import (
     ChallengeFilter,
     InternalChallengeFilter,
@@ -351,28 +349,3 @@ class ChallengeRequestUpdate(
     model = ChallengeRequest
     form_class = ChallengeRequestUpdateForm
     permission_required = "challenges.change_challengerequest"
-
-    def form_valid(self, form):
-        if (
-            form.instance._orig_status
-            == form.instance.ChallengeRequestStatusChoices.PENDING
-            and form.instance._orig_status != form.instance.status
-        ):
-            if (
-                form.instance.status
-                == form.instance.ChallengeRequestStatusChoices.ACCEPTED
-            ):
-                try:
-                    challenge = form.instance.create_challenge()
-                except ValidationError:
-                    raise ValidationError(
-                        f"There already is a challenge with short "
-                        f"name: {form.instance.short_name}. Contact "
-                        f"support@grand-challenge.org for help.",
-                    )
-            else:
-                challenge = None
-            send_challenge_status_update_email(
-                challengerequest=form.instance, challenge=challenge
-            )
-        return super().form_valid(form)
