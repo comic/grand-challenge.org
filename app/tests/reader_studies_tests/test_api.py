@@ -12,6 +12,7 @@ from grandchallenge.reader_studies.models import (
     DisplaySet,
     Question,
 )
+from grandchallenge.reader_studies.views import DisplaySetViewSet
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1891,3 +1892,11 @@ def test_total_edit_duration(client):
     assert response.status_code == 200
     assert response.json()["last_edit_duration"] == "00:00:30"
     assert response.json()["total_edit_duration"] is None
+
+
+def test_display_set_filterset_fields_is_only_reader_sudy():
+    ds_viewset = DisplaySetViewSet()
+    assert ds_viewset.filterset_fields == ["reader_study"], (
+        "Please check DisplaySetViewSet's filter_queryset method and "
+        "ensure shuffle order and index consistency are still intact."
+    )
