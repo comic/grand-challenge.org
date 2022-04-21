@@ -86,7 +86,10 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             try:
                 return self.context["view"].randomized_qs.index(obj)
             except ValueError:
-                return obj.standard_index
+                # The list is empty in the detail view. Return None to
+                # indicate that the value is invalid for shuffled lists
+                # in this case.
+                return None
         else:
             return obj.standard_index
 
