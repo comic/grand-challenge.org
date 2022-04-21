@@ -14,7 +14,6 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
-from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.models import (
     Challenge,
     ChallengeRequest,
@@ -539,22 +538,14 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
     def clean_status(self):
         status = self.cleaned_data.get("status")
         if (
-            self.instance._orig_status
-            == self.instance.ChallengeRequestStatusChoices.PENDING
-            and self.instance._orig_status != status
+            status == self.instance.ChallengeRequestStatusChoices.ACCEPTED
+            and Challenge.objects.filter(
+                short_name=self.instance.short_name
+            ).exists()
         ):
-            if status == self.instance.ChallengeRequestStatusChoices.ACCEPTED:
-                try:
-                    challenge = self.instance.create_challenge()
-                except ValidationError:
-                    raise ValidationError(
-                        f"There already is a challenge with short "
-                        f"name: {self.instance.short_name}. Contact "
-                        f"support@grand-challenge.org to accept this request.",
-                    )
-            else:
-                challenge = None
-            send_challenge_status_update_email(
-                challengerequest=self.instance, challenge=challenge
+            raise ValidationError(
+                f"There already is a challenge with short "
+                f"name: {self.instance.short_name}. Contact "
+                f"support@grand-challenge.org to accept this request.",
             )
         return status

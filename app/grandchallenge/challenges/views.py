@@ -16,6 +16,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.filters import (
     ChallengeFilter,
     InternalChallengeFilter,
@@ -349,3 +350,22 @@ class ChallengeRequestUpdate(
     model = ChallengeRequest
     form_class = ChallengeRequestUpdateForm
     permission_required = "challenges.change_challengerequest"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if (
+            form.instance._orig_status
+            == form.instance.ChallengeRequestStatusChoices.PENDING
+            and form.instance._orig_status != form.instance.status
+        ):
+            if (
+                form.instance.status
+                == form.instance.ChallengeRequestStatusChoices.ACCEPTED
+            ):
+                challenge = form.instance.create_challenge()
+            else:
+                challenge = None
+            send_challenge_status_update_email(
+                challengerequest=form.instance, challenge=challenge
+            )
+        return response
