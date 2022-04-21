@@ -1664,10 +1664,7 @@ def test_display_set_index(client):
     r = UserFactory()
     rs.add_reader(r)
 
-    for _ in range(20):
-        civ = ComponentInterfaceValueFactory(image=ImageFactory())
-        ds = DisplaySetFactory(reader_study=rs)
-        ds.values.add(civ)
+    DisplaySetFactory.create_batch(20, reader_study=rs)
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
@@ -1681,6 +1678,16 @@ def test_display_set_index(client):
     assert [x["order"] for x in response.json()["results"]] == list(
         range(10, 210, 10)
     )
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        user=r,
+        client=client,
+        reverse_kwargs={"pk": str(DisplaySet.objects.first().pk)},
+        method=client.get,
+    )
+
+    assert response.json()["index"] == 0
 
     rs.shuffle_hanging_list = True
     rs.save()
@@ -1701,6 +1708,16 @@ def test_display_set_index(client):
     assert [x["index"] for x in response.json()["results"]] == list(range(20))
     shuffled_order = [x["order"] for x in response.json()["results"]]
     assert shuffled_order != list(range(10, 210, 10))
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        user=r,
+        client=client,
+        reverse_kwargs={"pk": str(DisplaySet.objects.first().pk)},
+        method=client.get,
+    )
+
+    assert response.json()["index"] is None
 
     rs.shuffle_hanging_list = False
     rs.save()
