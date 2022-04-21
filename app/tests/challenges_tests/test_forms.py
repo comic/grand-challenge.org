@@ -2,9 +2,12 @@ import datetime
 
 import pytest
 
-from grandchallenge.challenges.forms import ChallengeRequestForm
+from grandchallenge.challenges.forms import (
+    ChallengeRequestForm,
+    ChallengeRequestUpdateForm,
+)
 from grandchallenge.challenges.models import ChallengeRequest
-from tests.factories import UserFactory
+from tests.factories import ChallengeFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -57,3 +60,21 @@ def test_challenge_request_type_2_fields_required():
     form2 = ChallengeRequestForm(data=data2, creator=user)
     assert not form2.is_valid()
     assert "For a type 2 challenge, you need to provide" in str(form2.errors)
+
+
+@pytest.mark.django_db
+def test_accept_challenge_request(
+    client, challenge_reviewer, type_1_challenge_request
+):
+    _ = ChallengeFactory(short_name=type_1_challenge_request.short_name)
+    form = ChallengeRequestUpdateForm(
+        data={
+            "status": type_1_challenge_request.ChallengeRequestStatusChoices.ACCEPTED
+        },
+        instance=type_1_challenge_request,
+    )
+    assert not form.is_valid()
+    assert (
+        f"There already is a challenge with short name: {type_1_challenge_request.short_name}"
+        in str(form.errors)
+    )
