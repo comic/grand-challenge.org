@@ -1023,7 +1023,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 "selected": "",
                 "selected_image": "",
             }
-            for interface in sorted(interfaces.keys())
+            for interface in sorted(
+                x for x in interfaces.keys() if x is not None
+            )
         }
 
         cache.set(cache_key, values_for_interfaces, timeout=None)
