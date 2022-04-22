@@ -1136,11 +1136,24 @@ class DisplaySet(UUIDModel):
     @property
     def description(self):
         case_text = self.reader_study.case_text
-        return "".join(
+        if case_text:
+            return "".join(
+                [
+                    md2html(case_text[val.image.name])
+                    for val in self.values.all()
+                    if val.image.name in case_text
+                ]
+            )
+        else:
+            return ""
+
+    @property
+    def standard_index(self):
+        return len(
             [
-                md2html(case_text[val.image.name])
-                for val in self.values.filter(image__isnull=False)
-                if val.image.name in case_text
+                x
+                for x in self.reader_study.display_sets.all()
+                if x.order < self.order
             ]
         )
 
