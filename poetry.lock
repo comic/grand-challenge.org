@@ -90,11 +90,11 @@ wrapt = "*"
 
 [[package]]
 name = "babel"
-version = "2.9.1"
+version = "2.10.1"
 description = "Internationalization utilities"
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.6"
 
 [package.dependencies]
 pytz = ">=2015.7"
@@ -141,14 +141,14 @@ dev = ["pip-tools (==6.5.1)", "pytest (==7.1.1)", "flake8 (==4.0.1)", "tox (==3.
 
 [[package]]
 name = "boto3"
-version = "1.21.42"
+version = "1.22.0"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.6"
 
 [package.dependencies]
-botocore = ">=1.24.42,<1.25.0"
+botocore = ">=1.25.0,<1.26.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.5.0,<0.6.0"
 
@@ -157,7 +157,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.24.42"
+version = "1.25.0"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -977,7 +977,7 @@ doc = ["sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [[package]]
 name = "faker"
-version = "13.3.4"
+version = "13.4.0"
 description = "Faker is a Python package that generates fake data for you."
 category = "dev"
 optional = false
@@ -1345,16 +1345,16 @@ test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [[package]]
 name = "panimg"
-version = "0.8.0"
+version = "0.8.1"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
-python-versions = ">=3.7,<3.10"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 click = "*"
 construct = "*"
-numpy = {version = ">=1.22,<2.0", markers = "python_version >= \"3.8\" and python_version < \"3.10\""}
+numpy = {version = ">=1.22,<2.0", markers = "python_version >= \"3.8\" and python_version < \"4.0\""}
 openslide-python = "*"
 Pillow = "*"
 pydantic = "*"
@@ -1470,11 +1470,11 @@ docs = ["numpy", "numpydoc", "matplotlib", "pillow", "sphinx", "sphinx-rtd-theme
 
 [[package]]
 name = "pygments"
-version = "2.11.2"
+version = "2.12.0"
 description = "Pygments is a syntax highlighting package written in Python."
 category = "main"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [[package]]
 name = "pyjwt"
@@ -1576,7 +1576,7 @@ python-versions = ">=3.7,<3.11"
 
 [[package]]
 name = "pytest"
-version = "7.1.1"
+version = "7.1.2"
 description = "pytest: simple powerful testing with Python"
 category = "dev"
 optional = false
@@ -2158,7 +2158,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "tifffile"
-version = "2022.4.8"
+version = "2022.4.26"
 description = "Read and write TIFF files"
 category = "main"
 optional = false
@@ -2455,8 +2455,8 @@ aws-xray-sdk = [
     {file = "aws_xray_sdk-2.9.0-py2.py3-none-any.whl", hash = "sha256:98216b3ac8281b51b59a8703f8ec561c460807d9d0679838f5c0179d381d7e58"},
 ]
 babel = [
-    {file = "Babel-2.9.1-py2.py3-none-any.whl", hash = "sha256:ab49e12b91d937cd11f0b67cb259a57ab4ad2b59ac7a3b41d6c06c0ac5b0def9"},
-    {file = "Babel-2.9.1.tar.gz", hash = "sha256:bc0c176f9f6a994582230df350aa6e05ba2ebe4b3ac317eab29d9be5d2768da0"},
+    {file = "Babel-2.10.1-py3-none-any.whl", hash = "sha256:3f349e85ad3154559ac4930c3918247d319f21910d5ce4b25d439ed8693b98d2"},
+    {file = "Babel-2.10.1.tar.gz", hash = "sha256:98aeaca086133efb3e1e2aad0396987490c8425929ddbcfe0550184fdc54cd13"},
 ]
 beautifulsoup4 = [
     {file = "beautifulsoup4-4.11.1-py3-none-any.whl", hash = "sha256:58d5c3d29f5a36ffeb94f02f0d786cd53014cf9b3b3951d42e0080d8a9498d30"},
@@ -2471,12 +2471,12 @@ bleach = [
     {file = "bleach-5.0.0.tar.gz", hash = "sha256:c6d6cc054bdc9c83b48b8083e236e5f00f238428666d2ce2e083eaa5fd568565"},
 ]
 boto3 = [
-    {file = "boto3-1.21.42-py3-none-any.whl", hash = "sha256:895fb88c69be78f82cfee58a79c97a3ad8d4a2a1209041a411d7d6b9fc5393e4"},
-    {file = "boto3-1.21.42.tar.gz", hash = "sha256:bcb541175a7d190dd919a0af0e807ee6e9d26f135551e741b10d94343f2d7588"},
+    {file = "boto3-1.22.0-py3-none-any.whl", hash = "sha256:75310f5bb2af8f51f15f790d95dc4a4725bcec286f83458980ee2c3286cc0a03"},
+    {file = "boto3-1.22.0.tar.gz", hash = "sha256:733a651e76b37b10c1f7ccba53deae43e47ada8ae64128042632373c5d266cf7"},
 ]
 botocore = [
-    {file = "botocore-1.24.42-py3-none-any.whl", hash = "sha256:14aee41c8bf59d2dd2d89e8751fa37d3c95dcb92707d1966aa02697e914c1417"},
-    {file = "botocore-1.24.42.tar.gz", hash = "sha256:a2baa9484bbaee96ef312c049b8e360badcab58329e487b57567644a571b5f4a"},
+    {file = "botocore-1.25.0-py3-none-any.whl", hash = "sha256:38c04682e7554dbccb33cd37863d76eaff97922dfb72677d0b7a49f8dbadc373"},
+    {file = "botocore-1.25.0.tar.gz", hash = "sha256:646f0631c4ee46928be2dbb4b44e10f5f184e70ed6efddb24bc7328d81d7a175"},
 ]
 brotli = [
     {file = "Brotli-1.0.9-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:268fe94547ba25b58ebc724680609c8ee3e5a843202e9a381f6f9c5e8bdb5c70"},
@@ -2882,8 +2882,8 @@ factory-boy = [
     {file = "factory_boy-3.2.1.tar.gz", hash = "sha256:a98d277b0c047c75eb6e4ab8508a7f81fb03d2cb21986f627913546ef7a2a55e"},
 ]
 faker = [
-    {file = "Faker-13.3.4-py3-none-any.whl", hash = "sha256:7758ece2593ce603db117db3d27393c31f4af03f783e176f3f0e14839a4f3426"},
-    {file = "Faker-13.3.4.tar.gz", hash = "sha256:188961065fb5c78ea639f42176f55100f72c90c3a3179ac6c955c4bd712b0511"},
+    {file = "Faker-13.4.0-py3-none-any.whl", hash = "sha256:2d4139254c1cc69f2b5203f4a9aaab33a9e65f7994059856300ef6e21ac93f39"},
+    {file = "Faker-13.4.0.tar.gz", hash = "sha256:2a9716f2c409224121144f0d2fdc7105e978e2e266deb4d8216061d9668951fc"},
 ]
 filelock = [
     {file = "filelock-3.6.0-py3-none-any.whl", hash = "sha256:f8314284bfffbdcfa0ff3d7992b023d4c628ced6feb957351d4c48d059f56bc0"},
@@ -3187,8 +3187,8 @@ pandas = [
     {file = "pandas-1.4.2.tar.gz", hash = "sha256:92bc1fc585f1463ca827b45535957815b7deb218c549b7c18402c322c7549a12"},
 ]
 panimg = [
-    {file = "panimg-0.8.0-py3-none-any.whl", hash = "sha256:876879237a4be2c7a5f98896ceae33386f9e25b320efff402df9a580e7c599f0"},
-    {file = "panimg-0.8.0.tar.gz", hash = "sha256:61a50fc6e50355efb4ea524e8770fbd0d5608f8f31dc58b72c659a961b6ea8c3"},
+    {file = "panimg-0.8.1-py3-none-any.whl", hash = "sha256:63892474ab23fb065fef9322a0fecbf578fc5536a1fe86826e810bbc7d4a87e0"},
+    {file = "panimg-0.8.1.tar.gz", hash = "sha256:15789c8d70cf02ea132ed42c1ef00ea213aa6b66084a7799d6a9440f25d2bfd6"},
 ]
 pillow = [
     {file = "Pillow-9.1.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:af79d3fde1fc2e33561166d62e3b63f0cc3e47b5a3a2e5fea40d4917754734ea"},
@@ -3308,8 +3308,8 @@ pydicom = [
     {file = "pydicom-2.3.0.tar.gz", hash = "sha256:dbfa081c9ad9ac8ff8a8efbd71784104db9eecf02fd775f7d7773f2183f89386"},
 ]
 pygments = [
-    {file = "Pygments-2.11.2-py3-none-any.whl", hash = "sha256:44238f1b60a76d78fc8ca0528ee429702aae011c265fe6a8dd8b63049ae41c65"},
-    {file = "Pygments-2.11.2.tar.gz", hash = "sha256:4e426f72023d88d03b2fa258de560726ce890ff3b630f88c21cbb8b2503b8c6a"},
+    {file = "Pygments-2.12.0-py3-none-any.whl", hash = "sha256:dc9c10fb40944260f6ed4c688ece0cd2048414940f1cea51b8b226318411c519"},
+    {file = "Pygments-2.12.0.tar.gz", hash = "sha256:5eb116118f9612ff1ee89ac96437bb6b49e8f04d8a13b514ba26f620208e26eb"},
 ]
 pyjwt = [
     {file = "PyJWT-2.3.0-py3-none-any.whl", hash = "sha256:e0c4bb8d9f0af0c7f5b1ec4c5036309617d03d56932877f2f7a0beeb5318322f"},
@@ -3427,8 +3427,8 @@ pyswot = [
     {file = "pyswot-0.2.1.tar.gz", hash = "sha256:97d22edb73ed86d697a37003a26b06f7dc83337100eba84535995d48774fe9a6"},
 ]
 pytest = [
-    {file = "pytest-7.1.1-py3-none-any.whl", hash = "sha256:92f723789a8fdd7180b6b06483874feca4c48a5c76968e03bb3e7f806a1869ea"},
-    {file = "pytest-7.1.1.tar.gz", hash = "sha256:841132caef6b1ad17a9afde46dc4f6cfa59a05f9555aae5151f73bdf2820ca63"},
+    {file = "pytest-7.1.2-py3-none-any.whl", hash = "sha256:13d0e3ccfc2b6e26be000cb6568c832ba67ba32e719443bfe725814d3c42433c"},
+    {file = "pytest-7.1.2.tar.gz", hash = "sha256:a06a0425453864a270bc45e71f783330a7428defb4230fb5e6a731fde06ecd45"},
 ]
 pytest-cov = [
     {file = "pytest-cov-3.0.0.tar.gz", hash = "sha256:e7f0f5b1617d2210a2cabc266dfe2f4c75a8d32fb89eafb7ad9d06f6d076d470"},
@@ -3620,25 +3620,20 @@ simpleitk = [
     {file = "SimpleITK-2.1.1.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:8270c8f0d9223ab34f4f2a1be7f7851e440f3b07a6f6e8d2daa6cdfa5db6d8ff"},
     {file = "SimpleITK-2.1.1.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e1e6c7580dd1e34e57c12c1808025692d491f2e41244008ae2677f959ca145b2"},
     {file = "SimpleITK-2.1.1.2-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:aeed26691815edc0205dc8045a41c71123715d57ca3ca99e8093e7f54d74d658"},
-    {file = "SimpleITK-2.1.1.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d988f40d2e7cb92d33c033f84749e4f44af9eb96bae11203cef5ef652f7acc8a"},
     {file = "SimpleITK-2.1.1.2-cp310-cp310-win_amd64.whl", hash = "sha256:d90f255cc1b12b69b4a01d73ae230b6176f181c7ad5369ad78629c4ce7420647"},
     {file = "SimpleITK-2.1.1.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:0fab7720118b9fa2047bd57bef9a05a034545c043a9d32d7d19b31be48c499f5"},
     {file = "SimpleITK-2.1.1.2-cp36-cp36m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:7e0f9fce88943259408c6136e2ddf864079bde5c0320f76092879090e67c2d72"},
-    {file = "SimpleITK-2.1.1.2-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d6388dfe2206f7e0df7073a55571b5c31e8252353c0ead86dcc093f64f118e4d"},
     {file = "SimpleITK-2.1.1.2-cp36-cp36m-win_amd64.whl", hash = "sha256:3d861c39d61ede9b413abca8b9107eed594e9ed7cc9c2d1e78be55c7d0e9b8d7"},
     {file = "SimpleITK-2.1.1.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:93dce9f56c8a83b3d785de965e81d2ba97485efdbe251929d12e7f2a9834df1c"},
     {file = "SimpleITK-2.1.1.2-cp37-cp37m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:77df01035a17bea5306e1b27398238b4eea9cc77fdda242f6558fbeebc481209"},
-    {file = "SimpleITK-2.1.1.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c91cc2799309f1b66c23bda9ca846ae554fe8ed39c72a579d2f7d6c9889cca1a"},
     {file = "SimpleITK-2.1.1.2-cp37-cp37m-win_amd64.whl", hash = "sha256:348dac099e0da89f68c59fa4cc1fb103748b17d457495552b279ee6fb0d4d717"},
     {file = "SimpleITK-2.1.1.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:0e47deea6062bec10de049539556e7ac494dabdc58ce3ad24d4a3dd8b5a4fb5d"},
     {file = "SimpleITK-2.1.1.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:8af26153c0fa248bc63f6adb0aaa9a56941bcae9d2ff34b0bee6d461986aa086"},
     {file = "SimpleITK-2.1.1.2-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:b0ff10b78a17f78cee4cf44f2cf50eed13842c142699ffd7cfad45a04b43a5e3"},
-    {file = "SimpleITK-2.1.1.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5587c80c70e91a9a8817e70a2d3551728aa9ea700412f5cbfe33709e4f1d0712"},
     {file = "SimpleITK-2.1.1.2-cp38-cp38-win_amd64.whl", hash = "sha256:fca92a9547411a09e781deb30ec8c7e7d9ce840e1e1300084fbf24fe0ba76d41"},
     {file = "SimpleITK-2.1.1.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:e45711c618702df970e5bf7d468d5154e23bf04a861f06ce1f96406df35bde7d"},
     {file = "SimpleITK-2.1.1.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:14d04ff5343dbca12c44d61905292e14aaa523d8cb6a18aff2fcea6beefc28a8"},
     {file = "SimpleITK-2.1.1.2-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:f895061d351cb9810ad5231e7cf78c7b5ce2ed8039e6e31446db7557f6f99c46"},
-    {file = "SimpleITK-2.1.1.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bbe4a43208ebc486d7abfdd838730f7d4943da84fad0198a14d561d3342a00ad"},
     {file = "SimpleITK-2.1.1.2-cp39-cp39-win_amd64.whl", hash = "sha256:7b71062e52ac39b638d0619e6d5885124454c7c0569d00ce3e0cd2f293bc956f"},
     {file = "SimpleITK-2.1.1.2.tar.gz", hash = "sha256:5c0689b007d449ce0ce17a9ea322152315fb17ed32949005a974d3d9c2f58da3"},
 ]
@@ -3714,8 +3709,8 @@ threadpoolctl = [
     {file = "threadpoolctl-3.1.0.tar.gz", hash = "sha256:a335baacfaa4400ae1f0d8e3a58d6674d2f8828e3716bb2802c44955ad391380"},
 ]
 tifffile = [
-    {file = "tifffile-2022.4.8-py3-none-any.whl", hash = "sha256:00795738af6ebaf98da456eca2c637febde4fd467477c4ef2e09482883d44aed"},
-    {file = "tifffile-2022.4.8.tar.gz", hash = "sha256:d4a4057e5cb7afe6e24cf7bde42a163970b593afe44c17249894ede755cf3faa"},
+    {file = "tifffile-2022.4.26-py3-none-any.whl", hash = "sha256:e36b4e4a04e62f374893ddc91927bb1a8524a6aea0534fc23fe4d318b24a6573"},
+    {file = "tifffile-2022.4.26.tar.gz", hash = "sha256:018054f54b3c2fc06842b224077d059340309addfcd94263988c05d7f19724e9"},
 ]
 tinycss2 = [
     {file = "tinycss2-1.1.1-py3-none-any.whl", hash = "sha256:fe794ceaadfe3cf3e686b22155d0da5780dd0e273471a51846d0a02bc204fec8"},
