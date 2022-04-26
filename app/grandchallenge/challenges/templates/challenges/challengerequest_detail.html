@@ -4,6 +4,7 @@
 {% load static %}
 {% load bleach %}
 {% load user_profile_link from profiles %}
+{% load naturaldelta %}
 
 {% block title %}Challenge request: {{ object.title }}{% endblock %}
 
@@ -16,15 +17,30 @@
 {% endblock %}
 
 {% block content %}
-    <h2>{{ object.title }}</h2>
+    <h2>[{{ object.short_name }}] {{ object.title  }}</h2>
     <br>
-    <div class="row">
-        <p class="col-6">{% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}<span class="badge badge-success">Accepted</span>{% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}<span class="badge badge-danger">Rejected</span>{% endif %} Challenge request by {{ object.creator|user_profile_link }}, created on {{ object.created }}</p>
-        <div class="col-6 text-right">
-            {% if object.structured_challenge_submission_form %}
-                <a class="btn btn-primary mb-3" href="{{ object.structured_challenge_submission_form.url }}">Download Miccai submission PDF</a>
+    <div class="row mb-4 ml-1 bg-light rounded p-3">
+        <div class="col-6">
+            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
+                <span class="badge badge-success">Accepted</span><br>
+            {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
+                <span class="badge badge-danger">Rejected</span><br>
             {% endif %}
-            <a class="btn btn-primary mb-3" href="mailto:{{ object.contact_email }}"><i class="fa fa-envelope"></i> &nbsp;Contact requester</a>
+            <i class="fa fa-user text-primary pr-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
+            <i class="fa fa-envelope text-primary pr-3"></i> <a href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
+            <i class="fa fa-calendar text-primary pr-3"></i> Submitted on &nbsp;<span class="badge px-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created }}</span><br>
+            <i class="fa fa-cog text-primary pr-3"></i>Type {{ object.challenge_type }}<br>
+        </div>
+        <div class="col-6">
+            {% if object.structured_challenge_submission_doi %}
+                <i class="fa fa-paperclip text-primary pr-3"></i> Structured challenge submission form available at <br><a class="ml-4 pl-2" href="{{ object.structured_challenge_submission_url }}">{{ object.structured_challenge_submission_url }}</a><br>
+            {% endif %}
+            {% if object.structured_challenge_submission_form %}
+                <i class="fa fa-file text-primary pr-3 mt-3"></i> <a href="{{ object.structured_challenge_submission_form.url }}">Challenge submission form PDF</a>
+            {% endif %}
+            {% if not object.structured_challenge_submission_form and not object.structured_challenge_submission_doi %}
+                <i class="fa fa-paperclip text-primary pr-3"></i> No structured challenge submission form available
+            {% endif %}
         </div>
     </div>
     <div class="table-responsive">

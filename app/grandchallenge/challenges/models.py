@@ -57,7 +57,12 @@ from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
-from grandchallenge.publications.models import Publication
+from grandchallenge.publications.models import (
+    Publication,
+    PublicationType,
+    get_publication_type,
+    identifier_validator,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
 
@@ -858,6 +863,13 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
     )
+    structured_challenge_submission_doi = models.CharField(
+        max_length=255,
+        validators=[identifier_validator],
+        unique=True,
+        blank=True,
+        help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
+    )
 
     def __str__(self):
         return self.title
@@ -1002,3 +1014,17 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             )
 
         return budget
+
+    @property
+    def structured_challenge_submission_url(self):
+        pub_type = get_publication_type(
+            identifier=self.structured_challenge_submission_doi
+        )
+        if pub_type == PublicationType.ARXIV:
+            return f"https://arxiv.org/abs/{self.structured_challenge_submission_doi}"
+        elif pub_type == PublicationType.DOI:
+            return (
+                f"https://doi.org/{self.structured_challenge_submission_doi}"
+            )
+        else:
+            return "#"

@@ -173,7 +173,7 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
         }
 
 
-general_information_items = (
+general_information_items_1 = (
     "title",
     "short_name",
     "contact_email",
@@ -184,7 +184,8 @@ general_information_items = (
     "long_term_commitment_extra",
     "organizers",
     "affiliated_event",
-    "structured_challenge_submission_form",
+)
+general_information_items_2 = (
     "task_types",
     "structures",
     "modalities",
@@ -212,7 +213,10 @@ class ChallengeRequestForm(forms.ModelForm):
     class Meta:
         model = ChallengeRequest
         fields = (
-            *general_information_items,
+            *general_information_items_1,
+            "structured_challenge_submission_form",
+            "structured_challenge_submission_doi",
+            *general_information_items_2,
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
@@ -241,18 +245,21 @@ class ChallengeRequestForm(forms.ModelForm):
             ),
         }
         labels = {
+            "short_name": "Acronym",
             "long_term_commitment": "We agree to support this challenge for up to 5 years. ",
             "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
             "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
             "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
             "budget_for_hosting_challenge": "Budget for hosting challenge in Euros",
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
+            "structured_challenge_submission_doi": "DOI",
+            "structured_challenge_submission_form": "PDF",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
             "short_name": (
-                "Short name that will be used in the URL "
-                "(e.g., https://{short_name}.grand-challenge.org/), specific css "
+                "Acronym of your challenge title that will be used in the URL "
+                "(e.g., https://{acronym}.grand-challenge.org/), specific css "
                 "and files if the challenge is accepted. No spaces and special "
                 "characters allowed. We prefer a single word with two digits at "
                 "the end indicating the year (e.g. LUNA16). See "
@@ -276,17 +283,18 @@ class ChallengeRequestForm(forms.ModelForm):
             "challenge_type": (
                 "<b>Type 1 :</b> Prediction submission - "
                 "test data are open, participants run their algorithms locally "
-                "and submit their predictions which are evaluated against a secret "
-                "ground truth on the platform.<br>"
+                "and submit their predictions on the website which are evaluated "
+                "against a secret ground truth on our servers.<br>"
                 "<b>Type 2:</b> Docker container submission – test data are "
                 "secret, participants submit algorithms as docker "
-                "containers, which are run on the secret test set on "
+                "containers on our website, which are run on the secret test set on "
                 "our servers and then evaluated against a secret ground "
                 "truth. <br>"
                 "<b>We strongly encourage Type 2 challenges.</b> "
-                "For more information on both types see our <a href="
-                "'https://grand-challenge.org/documentation/create-your-own-challenge/' "
-                "target='_blank'> documentation</a>."
+                "Please read our <a href="
+                "'https://grand-challenge.org/documentation/challenges/' "
+                "target='_blank'> challenge documentation</a> before making your "
+                "choice."
             ),
             "code_availability": (
                 "Will the participants’ code be accessible after "
@@ -310,13 +318,6 @@ class ChallengeRequestForm(forms.ModelForm):
                 "dataset will need to be uploaded to Grand Challenge (read more "
                 "about that <a href='https://grand-challenge.org/documentation/"
                 "data-storage-2/' target='_blank'>here</a>)."
-            ),
-            "structured_challenge_submission_form": (
-                "Have you registered this challenge"
-                " for a conference (e.g., MICCAI, MIDL, ISBI) "
-                "<a href='https://www.biomedical-challenges.org/' target='_blank'> "
-                "through this website</a>? If so, you can alternatively upload the "
-                "submission PDF here and fill the below text boxes with 'See PDF'."
             ),
             "number_of_tasks": (
                 "If your challenge has multiple tasks, we multiply"
@@ -403,14 +404,35 @@ class ChallengeRequestForm(forms.ModelForm):
                         "The answers you provide below will help our team of "
                         "reviewers decide whether and in what way we can "
                         "support your challenge.</p>"
-                        "<p>To learn more about how challenges work on Grand "
-                        "Challenge and how the request procedure is set up, "
-                        "take a look at our <a href="
-                        "'https://grand-challenge.org/documentation/create-your-own-challenge/'"
-                        "target='_blank'>documentation</a>.</p><br>"
+                        "<p>Before you fill out this form, please read our <a href="
+                        "'https://grand-challenge.org/documentation/challenges/'"
+                        "target='_blank'>challenge documentation</a>.</p><br>"
                     ),
                 ),
-                *general_information_items,
+                *general_information_items_1,
+                Div(
+                    HTML(
+                        "<p class='mb-0'>Structured challenge submission form </p>"
+                        "<small class='text-muted mb-2'> Have you registered this challenge "
+                        "for a conference (e.g., MICCAI, MIDL, ISBI) <a href='https://www.biomedical-challenges.org/' target='_blank'> "
+                        "through this website</a>? If so, you can alternatively provide the DOI for your submission form, or"
+                        " upload the submission PDF here and fill the below text boxes with 'See PDF'.</small>"
+                    ),
+                    Div(
+                        "structured_challenge_submission_doi",
+                        css_class="col-5 pl-0",
+                    ),
+                    Div(
+                        HTML("<p>or</p>"),
+                        css_class="col-1 pl-0 d-flex align-items-center justify-content-center",
+                    ),
+                    Div(
+                        "structured_challenge_submission_form",
+                        css_class="col-5 pl-0",
+                    ),
+                    css_class="container row m-0 p-0 justify-content-between",
+                ),
+                *general_information_items_2,
                 Div(
                     "algorithm_inputs",
                     "algorithm_outputs",
@@ -430,7 +452,7 @@ class ChallengeRequestForm(forms.ModelForm):
                         "<p> If you are unfamiliar with what a Type 2 challenge"
                         " entails, please <a href="
                         "'https://grand-challenge.org/documentation/type-ii-challenge-setup/'"
-                        "target='_blank'> first read our documentation</a>.</p> "
+                        "target='_blank'> first read our Type 2 challenge documentation</a>.</p> "
                         "<p>To help you fill in the below form correctly, "
                         "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
                         "target='_blank'> we have assembled example budgets "
