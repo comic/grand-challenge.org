@@ -866,7 +866,6 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     structured_challenge_submission_doi = models.CharField(
         max_length=255,
         validators=[identifier_validator],
-        unique=True,
         blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
     )
