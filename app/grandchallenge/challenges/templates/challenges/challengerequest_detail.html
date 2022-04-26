@@ -17,29 +17,31 @@
 {% endblock %}
 
 {% block content %}
-    <h2>[{{ object.short_name }}] {{ object.title  }}</h2>
+    <div class="row d-flex align-items-center ml-2">
+        {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
+            <div class="badge badge-success h-50 p-2 mr-1">Accepted</div>
+        {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
+            <div class="badge badge-danger h-50 p-2 mr-1">Rejected</div>
+        {% endif %}
+        <h3>[{{ object.short_name }}] {{ object.title  }}</h3>
+    </div>
     <br>
-    <div class="row mb-4 ml-1 bg-light rounded p-3">
-        <div class="col-6">
-            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
-                <span class="badge badge-success">Accepted</span><br>
-            {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
-                <span class="badge badge-danger">Rejected</span><br>
-            {% endif %}
+    <div class="container-fluid row mb-4 ml-1 bg-light rounded p-3">
+        <div class="col-lg-6">
             <i class="fa fa-user text-primary pr-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
             <i class="fa fa-envelope text-primary pr-3"></i> <a href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
-            <i class="fa fa-calendar text-primary pr-3"></i> Submitted on &nbsp;<span class="badge px-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created }}</span><br>
+            <i class="fa fa-calendar text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created }}</span><br>
             <i class="fa fa-cog text-primary pr-3"></i>Type {{ object.challenge_type }}<br>
         </div>
-        <div class="col-6">
+        <div class="col-lg-6">
             {% if object.structured_challenge_submission_doi %}
-                <i class="fa fa-paperclip text-primary pr-3"></i> Structured challenge submission form available at <br><a class="ml-4 pl-2" href="{{ object.structured_challenge_submission_url }}">{{ object.structured_challenge_submission_url }}</a><br>
+                <i class="fa fa-paperclip text-primary pr-3"></i> Challenge submission form available at <a class="ml-lg-4 pl-lg-2" href="{{ object.structured_challenge_submission_url }}">{{ object.structured_challenge_submission_url }}</a><br>
             {% endif %}
             {% if object.structured_challenge_submission_form %}
-                <i class="fa fa-file text-primary pr-3 mt-3"></i> <a href="{{ object.structured_challenge_submission_form.url }}">Challenge submission form PDF</a>
+                <i class="fa fa-file text-primary pr-3"></i> <a href="{{ object.structured_challenge_submission_form.url }}">Challenge submission form PDF</a>
             {% endif %}
             {% if not object.structured_challenge_submission_form and not object.structured_challenge_submission_doi %}
-                <i class="fa fa-paperclip text-primary pr-3"></i> No structured challenge submission form available
+                <i class="fa fa-paperclip text-primary pr-3"></i> No challenge submission form available
             {% endif %}
         </div>
     </div>
