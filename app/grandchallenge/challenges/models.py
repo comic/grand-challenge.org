@@ -59,8 +59,8 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
 from grandchallenge.publications.models import (
     Publication,
-    PublicationType,
     get_publication_type,
+    get_publication_url,
     identifier_validator,
 )
 from grandchallenge.subdomains.utils import reverse
@@ -1020,11 +1020,8 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         pub_type = get_publication_type(
             identifier=self.structured_challenge_submission_doi
         )
-        if pub_type == PublicationType.ARXIV:
-            return f"https://arxiv.org/abs/{self.structured_challenge_submission_doi}"
-        elif pub_type == PublicationType.DOI:
-            return (
-                f"https://doi.org/{self.structured_challenge_submission_doi}"
-            )
-        else:
-            return "#"
+        pub_url = get_publication_url(
+            identifier=self.structured_challenge_submission_doi,
+            pub_type=pub_type,
+        )
+        return pub_url
