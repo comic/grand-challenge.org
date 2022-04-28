@@ -1048,7 +1048,7 @@ class DisplaySetViewSet(
         unanswered_by_user = self.request.query_params.get(
             "unanswered_by_user"
         )
-        if unanswered_by_user == "True":
+        if str(unanswered_by_user).lower() == "true":
             if reader_study is None:
                 raise DRFValidationError(
                     "Please provide a reader study when filtering for "
