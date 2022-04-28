@@ -27,7 +27,7 @@
 {% block content %}
 
     {% if not object.submission.phase.public %}
-        <div class="alert alert-danger">The phase that this evaluation belongs to, is no longer active. </div>
+        <div class="alert alert-danger">The phase that this evaluation belongs to, is no longer active.</div>
     {% endif %}
 
     <h2>Evaluation</h2>
@@ -239,6 +239,18 @@
                     </form>
                 {% endif %}
             </div>
+
+            {% if predictions %}
+                <div class="card-body">
+                    <h3 class="card-title">Predictions</h3>
+                    <a href="data:text/plain;charset=utf-8,{{ predictions|json_dumps|urlencode }}"
+                        download="predictions.json"
+                        class="btn btn-primary">
+                        <i class="fa fa-download"></i>
+                        Download the predictions.json file for this evaluation
+                    </a>
+                </div>
+            {% endif %}
 
             {% if object.submission.predictions_file %}
                 <div class="card-body">

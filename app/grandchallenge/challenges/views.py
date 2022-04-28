@@ -352,6 +352,7 @@ class ChallengeRequestUpdate(
     permission_required = "challenges.change_challengerequest"
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         if (
             form.instance._orig_status
             == form.instance.ChallengeRequestStatusChoices.PENDING
@@ -367,4 +368,4 @@ class ChallengeRequestUpdate(
             send_challenge_status_update_email(
                 challengerequest=form.instance, challenge=challenge
             )
-        return super().form_valid(form)
+        return response

@@ -79,6 +79,19 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     view_content = JSONField(
         source="reader_study.view_content", read_only=True
     )
+    index = SerializerMethodField()
+
+    def get_index(self, obj):
+        if obj.reader_study.shuffle_hanging_list:
+            try:
+                return self.context["view"].randomized_qs.index(obj)
+            except ValueError:
+                # The list is empty in the detail view. Return None to
+                # indicate that the value is invalid for shuffled lists
+                # in this case.
+                return None
+        else:
+            return obj.standard_index
 
     class Meta:
         model = DisplaySet
@@ -91,6 +104,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "hanging_protocol",
             "view_content",
             "description",
+            "index",
         )
 
 

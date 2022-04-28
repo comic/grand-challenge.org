@@ -534,3 +534,18 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             self.fields["status"].widget.attrs["disabled"] = True
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
+
+    def clean_status(self):
+        status = self.cleaned_data.get("status")
+        if (
+            status == self.instance.ChallengeRequestStatusChoices.ACCEPTED
+            and Challenge.objects.filter(
+                short_name=self.instance.short_name
+            ).exists()
+        ):
+            raise ValidationError(
+                f"There already is a challenge with short "
+                f"name: {self.instance.short_name}. Contact "
+                f"support@grand-challenge.org to accept this request.",
+            )
+        return status

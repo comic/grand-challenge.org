@@ -320,6 +320,13 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         except ObjectDoesNotExist:
             metrics = None
 
+        try:
+            predictions = self.object.inputs.get(
+                interface__slug="predictions-json-file"
+            ).value
+        except ObjectDoesNotExist:
+            predictions = None
+
         files = []
         thumbnails = []
         charts = []
@@ -360,6 +367,7 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
                 "files": files,
                 "thumbnails": thumbnails,
                 "json": json,
+                "predictions": predictions,
             }
         )
 
