@@ -176,7 +176,7 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
 
 class ChallengeRequestBudgetFieldValidationMixin:
     def clean(self):
-        cleaned_data = self.cleaned_data
+        cleaned_data = super().clean()
         challenge_type = (
             cleaned_data["challenge_type"]
             if "challenge_type" in cleaned_data
@@ -212,6 +212,7 @@ class ChallengeRequestBudgetFieldValidationMixin:
                     "test images for each phase. Enter 0 for phase 2 if you "
                     "only have 1 phase."
                 )
+        return cleaned_data
 
 
 general_information_items = (
@@ -516,11 +517,12 @@ class ChallengeRequestForm(
         )
 
     def clean(self):
-        if self.cleaned_data["start_date"] >= self.cleaned_data["end_date"]:
+        cleaned_data = super().clean()
+        if cleaned_data["start_date"] >= cleaned_data["end_date"]:
             raise ValidationError(
                 "The start date needs to be before the end date."
             )
-        return super().clean()
+        return cleaned_data
 
 
 class ChallengeRequestStatusUpdateForm(forms.ModelForm):
