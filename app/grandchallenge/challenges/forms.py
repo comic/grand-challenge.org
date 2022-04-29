@@ -541,12 +541,14 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Div(
-                Div("status", css_class="col-8 pr-0 mt-3"),
+                Div("status", css_class="col-lg-8 px-0 mt-3"),
                 Div(
-                    ButtonHolder(Submit("save", "Save", css_class="btn-sm")),
-                    css_class="col-4 pb-0 mt-3",
+                    ButtonHolder(
+                        Submit("save", "Save", css_class="btn-sm mt-lg-1")
+                    ),
+                    css_class="col-lg-4 pb-0 mt-lg-3 pl-lg-2",
                 ),
-                css_class="row",
+                css_class="row container m-0 p-0",
             )
         )
         self.helper.attrs.update(

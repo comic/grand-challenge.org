@@ -350,7 +350,7 @@ def test_challenge_request_workflow(
             "status": ChallengeRequest.ChallengeRequestStatusChoices.REJECTED
         },
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert len(mail.outbox) == 1
     # rejection email to requester
     assert mail.outbox[0].to == [requester1.email]
@@ -371,7 +371,7 @@ def test_challenge_request_workflow(
             "status": ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
         },
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert len(mail.outbox) == 1
     # acceptance email to requester
     assert mail.outbox[0].to == [requester2.email]
