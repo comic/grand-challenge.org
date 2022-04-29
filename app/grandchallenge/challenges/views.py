@@ -22,8 +22,9 @@ from grandchallenge.challenges.filters import (
     InternalChallengeFilter,
 )
 from grandchallenge.challenges.forms import (
+    ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
-    ChallengeRequestUpdateForm,
+    ChallengeRequestStatusUpdateForm,
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
@@ -342,14 +343,18 @@ class ChallengeRequestDetail(
         return context
 
 
-class ChallengeRequestUpdate(
+class ChallengeRequestStatusUpdate(
     LoginRequiredMixin,
     PermissionRequiredMixin,
     UpdateView,
 ):
     model = ChallengeRequest
-    form_class = ChallengeRequestUpdateForm
+    form_class = ChallengeRequestStatusUpdateForm
     permission_required = "challenges.change_challengerequest"
+    template_name = "challenges/challengerequest_status_form.html"
+
+    def get_success_url(self):
+        return reverse("challenges:requests-list")
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -369,3 +374,14 @@ class ChallengeRequestUpdate(
                 challengerequest=form.instance, challenge=challenge
             )
         return response
+
+
+class ChallengeRequestBudgetUpdate(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UpdateView,
+):
+    model = ChallengeRequest
+    form_class = ChallengeRequestBudgetUpdateForm
+    permission_required = "challenges.change_challengerequest"
+    template_name = "challenges/challengerequest_budget_form.html"

@@ -343,7 +343,7 @@ def test_challenge_request_workflow(
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-update",
+        viewname="challenges:requests-status-update",
         reverse_kwargs={"pk": type_1_challenge_request.pk},
         user=challenge_reviewer,
         data={
@@ -364,7 +364,7 @@ def test_challenge_request_workflow(
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-update",
+        viewname="challenges:requests-status-update",
         reverse_kwargs={"pk": type_2_challenge_request.pk},
         user=challenge_reviewer,
         data={

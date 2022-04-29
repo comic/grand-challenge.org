@@ -10,6 +10,7 @@ from crispy_forms.layout import (
 )
 from django import forms
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
@@ -173,6 +174,46 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
         }
 
 
+class ChallengeRequestBudgetFieldValidationMixin:
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        challenge_type = (
+            cleaned_data["challenge_type"]
+            if "challenge_type" in cleaned_data
+            else self.instance.challenge_type
+        )
+        if challenge_type == self.instance.ChallengeTypeChoices.T2:
+            if not cleaned_data["average_size_of_test_image_in_mb"]:
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide the average "
+                    "test image size."
+                )
+            if not cleaned_data["inference_time_limit_in_minutes"]:
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide an inference "
+                    "time limit."
+                )
+            if (
+                cleaned_data["phase_1_number_of_submissions_per_team"] is None
+                or cleaned_data["phase_2_number_of_submissions_per_team"]
+                is None
+            ):
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide the number of "
+                    "submissions per team for each phase. Enter 0 for phase 2 "
+                    "if you only have 1 phase."
+                )
+            if (
+                cleaned_data["phase_1_number_of_test_images"] is None
+                or cleaned_data["phase_2_number_of_test_images"] is None
+            ):
+                raise ValidationError(
+                    "For a type 2 challenge, You need to provide the number of "
+                    "test images for each phase. Enter 0 for phase 2 if you "
+                    "only have 1 phase."
+                )
+
+
 general_information_items = (
     "title",
     "short_name",
@@ -208,7 +249,9 @@ phase_2_items = (
 )
 
 
-class ChallengeRequestForm(forms.ModelForm):
+class ChallengeRequestForm(
+    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
+):
     class Meta:
         model = ChallengeRequest
         fields = (
@@ -473,67 +516,55 @@ class ChallengeRequestForm(forms.ModelForm):
         )
 
     def clean(self):
-        cleaned_data = super().clean()
-
-        if cleaned_data["start_date"] >= cleaned_data["end_date"]:
+        if self.cleaned_data["start_date"] >= self.cleaned_data["end_date"]:
             raise ValidationError(
                 "The start date needs to be before the end date."
             )
-
-        if (
-            cleaned_data["challenge_type"]
-            == self.instance.ChallengeTypeChoices.T2
-        ):
-            if not cleaned_data["average_size_of_test_image_in_mb"]:
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide the average "
-                    "test image size."
-                )
-            if not cleaned_data["inference_time_limit_in_minutes"]:
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide an inference "
-                    "time limit."
-                )
-            if (
-                cleaned_data["phase_1_number_of_submissions_per_team"] is None
-                or cleaned_data["phase_2_number_of_submissions_per_team"]
-                is None
-            ):
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide the number of "
-                    "submissions per team for each phase. Enter 0 for phase 2 "
-                    "if you only have 1 phase."
-                )
-            if (
-                cleaned_data["phase_1_number_of_test_images"] is None
-                or cleaned_data["phase_2_number_of_test_images"] is None
-            ):
-                raise ValidationError(
-                    "For a type 2 challenge, You need to provide the number of "
-                    "test images for each phase. Enter 0 for phase 2 if you "
-                    "only have 1 phase."
-                )
+        return super().clean()
 
 
-class ChallengeRequestUpdateForm(forms.ModelForm):
+class ChallengeRequestStatusUpdateForm(forms.ModelForm):
     class Meta:
         model = ChallengeRequest
         fields = ("status",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["status"].label = False
         self.fields["status"].choices = [
             c
             for c in self.Meta.model.ChallengeRequestStatusChoices.choices
             if c[0] != self.Meta.model.ChallengeRequestStatusChoices.PENDING
         ]
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            Div(
+                Div("status", css_class="col-8 pr-0 mt-3"),
+                Div(
+                    ButtonHolder(Submit("save", "Save", css_class="btn-sm")),
+                    css_class="col-4 pb-0 mt-3",
+                ),
+                css_class="row",
+            )
+        )
+        self.helper.attrs.update(
+            {
+                "hx-post": reverse(
+                    "challenges:requests-status-update",
+                    kwargs={"pk": self.instance.pk},
+                ),
+                # use 'this' to display form errors in place, when the form is valid,
+                # the hx-target property will be set to "body" by
+                # 'js/htmx_full_page_return.js'
+                "hx-target": "this",
+                "hx-swap": "outerHTML",
+            }
+        )
         if (
             self.instance.status
             != self.instance.ChallengeRequestStatusChoices.PENDING
         ):
-            self.fields["status"].widget.attrs["disabled"] = True
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
+            self.fields["status"].disabled = True
 
     def clean_status(self):
         status = self.cleaned_data.get("status")
@@ -549,3 +580,36 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                 f"support@grand-challenge.org to accept this request.",
             )
         return status
+
+
+class ChallengeRequestBudgetUpdateForm(
+    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
+):
+    class Meta:
+        model = ChallengeRequest
+        fields = (
+            "expected_number_of_teams",
+            "number_of_tasks",
+            "inference_time_limit_in_minutes",
+            "average_size_of_test_image_in_mb",
+            "phase_1_number_of_submissions_per_team",
+            "phase_1_number_of_test_images",
+            "phase_2_number_of_submissions_per_team",
+            "phase_2_number_of_test_images",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = "budget"
+        self.helper.attrs.update(
+            {
+                "hx-post": reverse(
+                    "challenges:requests-budget-update",
+                    kwargs={"pk": self.instance.pk},
+                ),
+                "hx-target": "#budget",
+                "hx-swap": "outerHTML",
+            }
+        )
+        self.helper.layout.append(Submit("save", "Save"))

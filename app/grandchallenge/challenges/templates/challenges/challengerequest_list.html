@@ -44,7 +44,7 @@
                             {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
                                 <span class="badge p-2 badge-danger">Rejected</span>
                             {% else %}
-                                <a class="btn btn-primary btn-sm" hx-get="{% url 'challenges:requests-update' pk=object.pk %}" hx-swap="outerHTML" hx-target="this">Accept or decline</a>
+                                <a class="btn btn-primary btn-sm" hx-get="{% url 'challenges:requests-status-update' pk=object.pk %}" hx-swap="outerHTML">Accept or decline</a>
                             {% endif %}</td>
                         <td class="text-center align-middle"><a class="btn btn-primary btn-sm" href="mailto:{{ object.contact_email }}"><i class="fa fa-envelope"></i> &nbsp;Contact Requester</a></td>
                     </tr>
