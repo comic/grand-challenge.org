@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
+from django.http import HttpResponse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import (
@@ -353,11 +354,8 @@ class ChallengeRequestStatusUpdate(
     permission_required = "challenges.change_challengerequest"
     template_name = "challenges/challengerequest_status_form.html"
 
-    def get_success_url(self):
-        return reverse("challenges:requests-list")
-
     def form_valid(self, form):
-        response = super().form_valid(form)
+        super().form_valid(form)
         if (
             form.instance._orig_status
             == form.instance.ChallengeRequestStatusChoices.PENDING
@@ -373,6 +371,9 @@ class ChallengeRequestStatusUpdate(
             send_challenge_status_update_email(
                 challengerequest=form.instance, challenge=challenge
             )
+
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
         return response
 
 
@@ -385,3 +386,9 @@ class ChallengeRequestBudgetUpdate(
     form_class = ChallengeRequestBudgetUpdateForm
     permission_required = "challenges.change_challengerequest"
     template_name = "challenges/challengerequest_budget_form.html"
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response

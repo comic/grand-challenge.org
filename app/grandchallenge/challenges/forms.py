@@ -556,8 +556,7 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
                     kwargs={"pk": self.instance.pk},
                 ),
                 # use 'this' to display form errors in place, when the form is valid,
-                # the hx-target property will be set to "body" by
-                # 'js/htmx_full_page_return.js'
+                # a page refresh will be triggered (by setting HX-Refresh to true)
                 "hx-target": "this",
                 "hx-swap": "outerHTML",
             }
