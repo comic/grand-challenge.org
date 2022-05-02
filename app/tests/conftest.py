@@ -782,6 +782,7 @@ def type_2_challenge_request():
         phase_1_number_of_test_images=100,
         phase_2_number_of_test_images=500,
         number_of_tasks=1,
+        structured_challenge_submission_doi="10.5281/zenodo.6362337",
     )
 
 
