@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:5391b8eddbd13023339d61df66e21e0b74a32696b4d0caf99eae1f8064a8f13a",
+  "content_hash": "sha256:7d89395a7ba9f0fc82df10f1e69e1dc85bdd6094ce2a6bf5a5bd0485b3f5f4d8",
   "dependencies": [
     {
       "name": "htmx",
@@ -27,6 +27,64 @@
         {
           "name": "moment.js/2.24.0/moment.min.js",
           "sri": "sha512-i2CVnAiguN6SnJ3d2ChOOddMWQyvgQTzm0qSgiKhOqBMGCx4fGU5BtzXEybnKatWPDkXPFyCI0lbG42BnVjr/Q=="
+        }
+      ]
+    },
+    {
+      "name": "vega",
+      "version": "5.20.2",
+      "assets": [
+        {
+          "name": "vega/5.20.2/vega.js",
+          "sri": "sha512-NUL0H+1cUkPGBvLAmsK0WmDwgXYINObyyw/Jj8fBwu6sIl+12iSZr0+/TAQ8wCaj2XzAaFX5XQRjx8Z/1E8qTA=="
+        },
+        {
+          "name": "vega/5.20.2/vega.min.js",
+          "sri": "sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
+        }
+      ]
+    },
+    {
+      "name": "vega-embed",
+      "version": "6.17.0",
+      "assets": [
+        {
+          "name": "vega-embed/6.17.0/vega-embed.js",
+          "sri": "sha512-on9nfuMR+qroRvIZgDlfWK09LLuVIIzazSQHves4boFFtHulHUM7XnDg6e0xdFAXgiwtZHfBRR5xT3xu0gkhZg=="
+        },
+        {
+          "name": "vega-embed/6.17.0/vega-embed.js.map",
+          "sri": null
+        },
+        {
+          "name": "vega-embed/6.17.0/vega-embed.min.js",
+          "sri": "sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
+        },
+        {
+          "name": "vega-embed/6.17.0/vega-embed.min.js.map",
+          "sri": null
+        }
+      ]
+    },
+    {
+      "name": "vega-lite",
+      "version": "5.1.0",
+      "assets": [
+        {
+          "name": "vega-lite/5.1.0/vega-lite.js",
+          "sri": "sha512-Z5O5U8QvBmxsHZiQfvqu2+UERgL7K7tVJ8XwAlnP5Q+U4oG6bLeMn53GMBB9M2aBm0GKeXFcWPOW0mjm2kPTFg=="
+        },
+        {
+          "name": "vega-lite/5.1.0/vega-lite.js.map",
+          "sri": null
+        },
+        {
+          "name": "vega-lite/5.1.0/vega-lite.min.js",
+          "sri": "sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
+        },
+        {
+          "name": "vega-lite/5.1.0/vega-lite.min.js.map",
+          "sri": null
         }
       ]
     }
