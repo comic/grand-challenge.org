@@ -1,0 +1,20 @@
+{
+  "lock_version": "1.0",
+  "content_hash": "sha256:be4afdfe82ac25ccfccb0c4e1e3b6fde1b5637f3727778516822820c4013006b",
+  "dependencies": [
+    {
+      "name": "htmx",
+      "version": "1.7.0",
+      "assets": [
+        {
+          "name": "htmx/1.7.0/htmx.js",
+          "sri": "sha512-wJXYT7RzKp/dxju83CCCATupp32GQvko0KrJVK3zTgTMkVWiLiHnupKKgOUt+87t+oe/Rm2Q2p+pOpiD+IR0lQ=="
+        },
+        {
+          "name": "htmx/1.7.0/htmx.min.js",
+          "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
+        }
+      ]
+    }
+  ]
+}
