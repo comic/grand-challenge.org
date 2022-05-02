@@ -1046,10 +1046,10 @@ class DisplaySetViewSet(
             # Save the queryset to determine each item's index in the serializer
             self.randomized_qs = list(queryset)
 
-        unanswered_by_user = self.request.query_params.get(
-            "unanswered_by_user"
+        unanswered_by_user = strtobool(
+            self.request.query_params.get("unanswered_by_user", "False")
         )
-        if strtobool(unanswered_by_user) is True:
+        if unanswered_by_user is True:
             if reader_study is None:
                 raise DRFValidationError(
                     "Please provide a reader study when filtering for "
