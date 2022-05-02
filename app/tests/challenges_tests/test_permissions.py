@@ -96,6 +96,13 @@ def test_view_and_update_challenge_request(
         user=type_1_challenge_request.creator,
     )
     assert response.status_code == 403
+    response = get_view_for_user(
+        client=client,
+        viewname="challenges:requests-budget-update",
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=type_1_challenge_request.creator,
+    )
+    assert response.status_code == 403
 
     # reviewer can view and udpate
     response = get_view_for_user(
@@ -108,6 +115,13 @@ def test_view_and_update_challenge_request(
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-status-update",
+        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        user=challenge_reviewer,
+    )
+    assert response.status_code == 200
+    response = get_view_for_user(
+        client=client,
+        viewname="challenges:requests-budget-update",
         reverse_kwargs={"pk": type_1_challenge_request.pk},
         user=challenge_reviewer,
     )

@@ -384,3 +384,30 @@ def test_challenge_request_workflow(
         Challenge.objects.get().short_name
         == type_2_challenge_request.short_name
     )
+
+
+@pytest.mark.django_db
+def test_budget_field_update(
+    client, type_2_challenge_request, challenge_reviewer
+):
+    assert type_2_challenge_request.expected_number_of_teams == 10
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-budget-update",
+        reverse_kwargs={"pk": type_2_challenge_request.pk},
+        user=challenge_reviewer,
+        data={
+            "expected_number_of_teams": 500,
+            "inference_time_limit_in_minutes": 10,
+            "average_size_of_test_image_in_mb": 10,
+            "phase_1_number_of_submissions_per_team": 10,
+            "phase_2_number_of_submissions_per_team": 1,
+            "phase_1_number_of_test_images": 100,
+            "phase_2_number_of_test_images": 500,
+            "number_of_tasks": 1,
+        },
+    )
+    assert response.status_code == 200
+    type_2_challenge_request.refresh_from_db()
+    assert type_2_challenge_request.expected_number_of_teams == 500

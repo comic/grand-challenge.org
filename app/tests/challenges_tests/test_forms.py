@@ -85,7 +85,7 @@ def test_accept_challenge_request(
 def test_budget_update_form(type_2_challenge_request):
     # all budget fields need to be filled
     data = {
-        "expected_number_of_teams": 10,
+        "expected_number_of_teams": 100,
         "average_size_of_test_image_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
         "phase_2_number_of_submissions_per_team": 1,
@@ -100,7 +100,7 @@ def test_budget_update_form(type_2_challenge_request):
     assert "For a type 2 challenge, you need to provide" in str(form.errors)
 
     data2 = {
-        "expected_number_of_teams": 10,
+        "expected_number_of_teams": 100,
         "inference_time_limit_in_minutes": 10,
         "average_size_of_test_image_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
