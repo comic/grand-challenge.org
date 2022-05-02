@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:94d791ff2453e590827fa39c3608a51defdf63d7713c585869ee0d03c2c5fdfb",
+  "content_hash": "sha256:6369f2e33a98ea663b2bc8c510499c17090ce194b7a0e443a13aa2da2666dd29",
   "dependencies": [
     {
       "name": "htmx",
@@ -35,6 +35,124 @@
         {
           "name": "jsoneditor/9.5.2/jsoneditor.min.js",
           "sri": "sha512-sWWNHrucAGzw6+kdky+SP1jIqkzY+bYzZRFn6H0aRw/jyaBKvj4A8hvze0bhSplOtAzY1YZyar8KrK8lDRtUdQ=="
+        }
+      ]
+    },
+    {
+      "name": "mathjax",
+      "version": "2.7.5",
+      "assets": [
+        {
+          "name": "mathjax/2.7.5/MathJax.js",
+          "sri": "sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A=="
+        },
+        {
+          "name": "mathjax/2.7.5/config/Safe.js",
+          "sri": "sha512-NC88m9kAL+yAt7NKRLov+QbarDeAzH/rUN589en2orZMlN8ZQku5N9x9bjnnE3m57UYAoHz2ZNsHeHxyrkDmLw=="
+        },
+        {
+          "name": "mathjax/2.7.5/config/TeX-MML-AM_CHTML.js",
+          "sri": "sha512-sRJwTwSmIAJfESgwGDn84X0s72u/n6qBjPShCGXi307x3ZFynu/u2A8652KZhmvjP0U0zeOFCxoMtj9imy9nOQ=="
+        },
+        {
+          "name": "mathjax/2.7.5/extensions/Safe.js",
+          "sri": "sha512-ablCopiICcgJMIY2AkrV3zjJ4g2kl4azSock5PmTYWDVJM8cc+l2vBBU9eO6rZ5BKibr57qRAThWpnsUBsncVQ=="
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_AMS-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Caligraphic-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Caligraphic-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Fraktur-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Fraktur-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Main-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Main-Italic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Main-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Math-BoldItalic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Math-Italic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Math-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Italic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Script-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size1-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size2-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size3-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size4-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Typewriter-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Vector-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Vector-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/jax/output/CommonHTML/fonts/TeX/fontdata.js",
+          "sri": "sha512-B2yhjMR9qXY47n4PScxfpUhAW8pvRGL2ahofuVru8cKlzMxTVei7aLnLXvtUDjz4N0qm469ewzwTVDni0qFO+A=="
+        },
+        {
+          "name": "mathjax/2.7.5/jax/output/CommonHTML/jax.js",
+          "sri": "sha512-3KXN7mp9ZULs9X2nzP5nSiQYTVEbDSn1oB9PyjBV9k14NI2Fofaag20pUfHLkN5/qR6oPZPvlS9lFqP6/7ez3w=="
         }
       ]
     },
