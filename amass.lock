@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:15c860dbbd0bb39224b7932ec686392cc3f55d674573306b7233987587d537e3",
+  "content_hash": "sha256:573ad853c7be9b9ada03a7a5d5263a969a27d0d436e07127ecb99088a258615b",
   "dependencies": [
     {
       "name": "hammer.js",
@@ -34,6 +34,10 @@
       "name": "jsoneditor",
       "version": "9.5.2",
       "assets": [
+        {
+          "name": "jsoneditor/9.5.2/img/jsoneditor-icons.svg",
+          "sri": null
+        },
         {
           "name": "jsoneditor/9.5.2/jsoneditor.css",
           "sri": "sha512-7BNBvfwEnG/+oK7PTxRr4I5f7SQQjYdnGjLe1F4kjNU9m4sXSOxcld4x2NRtgYiYkO+ltKQ1foU5Eau7kSnkVA=="
