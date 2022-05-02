@@ -73,9 +73,7 @@
 
     {{ algorithm.average_duration|json_script:"averageJobDuration" }}
     {{ job_list_api_url|json_script:"jobListApiUrl" }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"
-            integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ="
-            crossorigin="anonymous"></script>
+    <script src="{% static 'vendored/moment.js/moment.min.js' %}"></script>
     <script src="{% static 'algorithms/js/session.js' %}"
             type="text/javascript">
     </script>

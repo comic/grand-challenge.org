@@ -127,3 +127,4 @@ output = "app/grandchallenge/core/static/vendored"
 
 [tool.amass.dependencies]
 htmx = { version = "*", include = ["htmx.min.js", "htmx.js"]}
+"moment.js" = { version = "==2.24.0", include = ["moment.min.js", "moment.js"]}

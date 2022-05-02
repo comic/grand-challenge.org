@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:be4afdfe82ac25ccfccb0c4e1e3b6fde1b5637f3727778516822820c4013006b",
+  "content_hash": "sha256:5391b8eddbd13023339d61df66e21e0b74a32696b4d0caf99eae1f8064a8f13a",
   "dependencies": [
     {
       "name": "htmx",
@@ -13,6 +13,20 @@
         {
           "name": "htmx/1.7.0/htmx.min.js",
           "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
+        }
+      ]
+    },
+    {
+      "name": "moment.js",
+      "version": "2.24.0",
+      "assets": [
+        {
+          "name": "moment.js/2.24.0/moment.js",
+          "sri": "sha512-Wv3kTSwLkL+/MpK3lOgKtsTn5lO1nmdesv7k9kWcIu0joAJo4KxIsB4/rQPUX/1M/MNeMCbRb7/2S/f2FIhBLQ=="
+        },
+        {
+          "name": "moment.js/2.24.0/moment.min.js",
+          "sri": "sha512-i2CVnAiguN6SnJ3d2ChOOddMWQyvgQTzm0qSgiKhOqBMGCx4fGU5BtzXEybnKatWPDkXPFyCI0lbG42BnVjr/Q=="
         }
       ]
     }
