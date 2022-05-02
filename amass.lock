@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:6369f2e33a98ea663b2bc8c510499c17090ce194b7a0e443a13aa2da2666dd29",
+  "content_hash": "sha256:f391ec9b7ab8ba72c89e51ec0e6693502780f617cad03a7025f1f4e99fb50413",
   "dependencies": [
     {
       "name": "htmx",
@@ -341,6 +341,20 @@
         {
           "name": "openseadragon/2.4.1/openseadragon.min.js",
           "sri": "sha512-ydnIgG69uS1sVDFa1ki6qvOVkc47BmyW3RGoMwn9jATwDIFdIZ8Yuoy/w3IQEv8xzUwqFPs/yNoD2bSaQTGXYg=="
+        }
+      ]
+    },
+    {
+      "name": "sentry-browser",
+      "version": "6.19.7",
+      "assets": [
+        {
+          "name": "sentry-browser/6.19.7/bundle.js",
+          "sri": "sha512-YFAdK/3y/z0eEiGVH4jEbdHQM9CDBO6XV5oX5NkhlC4UlZLV9we7Sqog57K2FDBDbGQUWfkEilpByTPJwQ8Atg=="
+        },
+        {
+          "name": "sentry-browser/6.19.7/bundle.min.js",
+          "sri": "sha512-bfZoCIl6netdQQ4kWQ5HZaKOS24IohehpiEjuOu2sVpY3XaheFE/n0+bqJCwt4CDEP+nN+90sQwIOl1II1pLjA=="
         }
       ]
     },
