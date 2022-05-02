@@ -7,6 +7,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -411,3 +412,68 @@ def test_budget_field_update(
     assert response.status_code == 200
     type_2_challenge_request.refresh_from_db()
     assert type_2_challenge_request.expected_number_of_teams == 500
+
+
+@pytest.mark.django_db
+def test_challenge_request_date_check(client):
+    user = UserFactory()
+    Verification.objects.create(user=user, is_verified=True)
+
+    # start and end dates are required
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-create",
+        user=user,
+        data={
+            "title": "Some title",
+            "short_name": "acr6789",
+            "contact_email": "test@test.com",
+            "abstract": "test",
+            "organizers": "test",
+            "challenge_setup": "test",
+            "data_set": "test",
+            "submission_assessment": "test",
+            "challenge_publication": "test",
+            "code_availability": "test",
+            "challenge_type": ChallengeRequest.ChallengeTypeChoices.T1,
+            "expected_number_of_teams": 10,
+        },
+    )
+    assert response.status_code == 200
+    assert (
+        '<span id="error_1_id_start_date" class="invalid-feedback"><strong>This field is required.</strong></span>'
+        in response.rendered_content
+    )
+    assert (
+        '<span id="error_1_id_end_date" class="invalid-feedback"><strong>This field is required.</strong></span>'
+        in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-create",
+        user=user,
+        data={
+            "title": "Some title",
+            "short_name": "acr6789",
+            "contact_email": "test@test.com",
+            "abstract": "test",
+            "start_date": (now() + timedelta(days=1)).date(),
+            "end_date": now().date(),
+            "organizers": "test",
+            "challenge_setup": "test",
+            "data_set": "test",
+            "submission_assessment": "test",
+            "challenge_publication": "test",
+            "code_availability": "test",
+            "challenge_type": ChallengeRequest.ChallengeTypeChoices.T1,
+            "expected_number_of_teams": 10,
+        },
+    )
+    assert response.status_code == 200
+    assert (
+        "The start date needs to be before the end date"
+        in response.rendered_content
+    )

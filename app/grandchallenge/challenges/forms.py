@@ -540,7 +540,9 @@ class ChallengeRequestForm(
 
     def clean(self):
         cleaned_data = super().clean()
-        if cleaned_data["start_date"] >= cleaned_data["end_date"]:
+        start = cleaned_data.get("start_date")
+        end = cleaned_data.get("end_date")
+        if start and end and start >= end:
             raise ValidationError(
                 "The start date needs to be before the end date."
             )
