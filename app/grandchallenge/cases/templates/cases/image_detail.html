@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,14 +10,12 @@
 
 <div id="openseadragonview" style="height: 100vh;"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.1/openseadragon.min.js"
-        integrity="sha256-qIiBj8XqCj196KLyEX8fBJ0HiHUZmXYmYFciVQZ7nls="
-        crossorigin="anonymous"></script>
+<script src="{% static 'vendored/openseadragon/openseadragon.min.js' %}"></script>
 
 <script type="text/javascript">
     let viewer = OpenSeadragon({
         id: "openseadragonview",
-        prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.1/images/",
+        prefixUrl: "{% static 'vendored/openseadragon/images/' %}",
         tileSources: "{{ dzi_url }}",
         debugMode: false,
         gestureSettingsMouse: {

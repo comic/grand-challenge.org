@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:7d89395a7ba9f0fc82df10f1e69e1dc85bdd6094ce2a6bf5a5bd0485b3f5f4d8",
+  "content_hash": "sha256:c81caae9f3ec5affb1595356d10f74305ceacf17d39c2d46ad7f742ea914bde1",
   "dependencies": [
     {
       "name": "htmx",
@@ -27,6 +27,188 @@
         {
           "name": "moment.js/2.24.0/moment.min.js",
           "sri": "sha512-i2CVnAiguN6SnJ3d2ChOOddMWQyvgQTzm0qSgiKhOqBMGCx4fGU5BtzXEybnKatWPDkXPFyCI0lbG42BnVjr/Q=="
+        }
+      ]
+    },
+    {
+      "name": "openseadragon",
+      "version": "2.4.1",
+      "assets": [
+        {
+          "name": "openseadragon/2.4.1/images/button_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/button_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/button_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/button_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/openseadragon.js",
+          "sri": "sha512-wLveiqffVDS+4JWoWKHUFKCw2zUjqsG8dHN8Q72zgGWTed/fLP4NePfxQ3nw1Ewe3hd7mvUIjO3owmLWvZyf2Q=="
+        },
+        {
+          "name": "openseadragon/2.4.1/openseadragon.js.map",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/openseadragon.min.js",
+          "sri": "sha512-ydnIgG69uS1sVDFa1ki6qvOVkc47BmyW3RGoMwn9jATwDIFdIZ8Yuoy/w3IQEv8xzUwqFPs/yNoD2bSaQTGXYg=="
+        },
+        {
+          "name": "openseadragon/2.4.1/openseadragon.min.js.map",
+          "sri": null
         }
       ]
     },

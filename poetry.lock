@@ -39,7 +39,7 @@ python-versions = "*"
 
 [[package]]
 name = "amass"
-version = "0.1.1"
+version = "0.1.2"
 description = "Vendor libraries from cdnjs"
 category = "dev"
 optional = false
@@ -2500,7 +2500,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "1e92f187877d3f8aefaa8a9e3638f140c34c3e020ed5eecef9357cb63b5df2f0"
+content-hash = "604b539e46d5385fae3bcca141c6add7c94ce7f0bf7c2c86915fa56cf649e46f"
 
 [metadata.files]
 aiohttp = [
@@ -2586,8 +2586,8 @@ alabaster = [
     {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
 ]
 amass = [
-    {file = "amass-0.1.1-py3-none-any.whl", hash = "sha256:205b25e57392cc6755e2348e7eb7d46a076a289a21c157073066dd034e90c3f4"},
-    {file = "amass-0.1.1.tar.gz", hash = "sha256:08fd7c2e42ba3aecc795ed87e87d5569e85225eca09624a61c9028c4f6a77943"},
+    {file = "amass-0.1.2-py3-none-any.whl", hash = "sha256:60467a4602414530d3d6c60696d1ab2971ff44a98d7de235a809d12f163924a3"},
+    {file = "amass-0.1.2.tar.gz", hash = "sha256:1e3c2aea101b75a0bd532051fb6dae9d05465888fe9dfd10bec521b34f55b73e"},
 ]
 amqp = [
     {file = "amqp-5.1.1-py3-none-any.whl", hash = "sha256:6f0956d2c23d8fa6e7691934d8c3930eadb44972cbbd1a7ae3a520f735d43359"},
