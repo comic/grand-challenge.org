@@ -82,9 +82,7 @@ def test_accept_challenge_request(
 
 
 @pytest.mark.django_db
-def test_budget_update_form(
-    client, challenge_reviewer, type_2_challenge_request
-):
+def test_budget_update_form(type_2_challenge_request):
     # all budget fields need to be filled
     data = {
         "expected_number_of_teams": 10,

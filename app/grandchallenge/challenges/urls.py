@@ -47,12 +47,12 @@ urlpatterns = [
         name="requests-detail",
     ),
     path(
-        "requests/<pk>/update/status",
+        "requests/<pk>/update/status/",
         ChallengeRequestStatusUpdate.as_view(),
         name="requests-status-update",
     ),
     path(
-        "requests/<pk>/update/budget",
+        "requests/<pk>/update/budget/",
         ChallengeRequestBudgetUpdate.as_view(),
         name="requests-budget-update",
     ),
