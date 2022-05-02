@@ -2,7 +2,6 @@ import os
 import re
 from base64 import b64decode
 from datetime import datetime, timedelta
-from distutils.util import strtobool as strtobool_i
 from itertools import product
 from pathlib import Path
 from tempfile import mkdtemp
@@ -20,13 +19,8 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.components.exceptions import PriorStepFailed
+from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.markdown import BS4Extension
-
-
-def strtobool(val) -> bool:
-    """Return disutils.util.strtobool as a boolean."""
-    return bool(strtobool_i(val))
-
 
 MEGABYTE = 1024 * 1024
 GIGABYTE = 1024 * MEGABYTE

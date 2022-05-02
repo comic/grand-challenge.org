@@ -59,6 +59,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
+from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -1048,7 +1049,7 @@ class DisplaySetViewSet(
         unanswered_by_user = self.request.query_params.get(
             "unanswered_by_user"
         )
-        if str(unanswered_by_user).lower() == "true":
+        if strtobool(unanswered_by_user) is True:
             if reader_study is None:
                 raise DRFValidationError(
                     "Please provide a reader study when filtering for "
