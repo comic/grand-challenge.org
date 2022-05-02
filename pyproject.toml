@@ -135,3 +135,4 @@ openseadragon = { version = "==2.4.1", include = ["openseadragon(.min)?.js$", "i
 jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js", "jsoneditor(.min)?.css"]}
 mathjax = { version = "==2.7.5", include = ["MathJax(.min)?.js", "config/Safe(.min)?.js", "extensions/Safe(.min)?.js", "config/TeX-MML-AM_CHTML(.min)?.js", "jax/output/CommonHTML/jax(.min)?.js", "jax/output/CommonHTML/fonts/TeX/fontdata(.min)?.js", "fonts/HTML-CSS/TeX/woff/*"]}
 "sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js"]}
+"hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js$"]}

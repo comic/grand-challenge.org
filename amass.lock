@@ -1,7 +1,21 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:f391ec9b7ab8ba72c89e51ec0e6693502780f617cad03a7025f1f4e99fb50413",
+  "content_hash": "sha256:15c860dbbd0bb39224b7932ec686392cc3f55d674573306b7233987587d537e3",
   "dependencies": [
+    {
+      "name": "hammer.js",
+      "version": "2.0.8",
+      "assets": [
+        {
+          "name": "hammer.js/2.0.8/hammer.js",
+          "sri": "sha512-qRj8N7fxOHxPkKjnQ9EJgLJ8Ng1OK7seBn1uk8wkqaXpa7OA13LO6txQ7+ajZonyc9Ts4K/ugXljevkFTUGBcw=="
+        },
+        {
+          "name": "hammer.js/2.0.8/hammer.min.js",
+          "sri": "sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g=="
+        }
+      ]
+    },
     {
       "name": "htmx",
       "version": "1.7.0",
