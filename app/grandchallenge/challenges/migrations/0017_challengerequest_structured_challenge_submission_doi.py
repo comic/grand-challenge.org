@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
                 blank=True,
                 help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
                 max_length=255,
-                unique=True,
                 validators=[
                     django.core.validators.RegexValidator(
                         regex="^10\\.\\d{4,9}/[-._;()/:a-z0-9]+$|^\\d{4}\\.\\d{4,5}$"
