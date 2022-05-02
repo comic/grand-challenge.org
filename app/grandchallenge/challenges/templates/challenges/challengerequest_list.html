@@ -31,7 +31,7 @@
             <tbody>
                 {% for object in page_obj %}
                     <tr>
-                        <td class="text-center">
+                        <td class="text-center align-middle">
                             <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}"><i class="fa fa-search"></i></a>
                         </td>
                         <td class="text-center align-middle">{{ object.short_name }}</td>
@@ -44,9 +44,9 @@
                             {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
                                 <span class="badge p-2 badge-danger">Rejected</span>
                             {% else %}
-                                <a class="btn btn-primary btn-sm" href="{% url 'challenges:requests-update' pk=object.pk %}">Accept or decline</a>
+                                <a class="btn btn-primary btn-sm" hx-get="{% url 'challenges:requests-status-update' pk=object.pk %}" hx-swap="outerHTML">Accept or decline</a>
                             {% endif %}</td>
-                        <td class="text-center"><a href="mailto:{{ object.contact_email }}"> {{ object.contact_email }}</a></td>
+                        <td class="text-center align-middle"><a href="mailto:{{ object.contact_email }}"> {{ object.contact_email }}</a></td>
                     </tr>
                 {% endfor %}
             </tbody>

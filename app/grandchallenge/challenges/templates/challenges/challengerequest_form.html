@@ -13,13 +13,8 @@
 {% endblock %}
 
 {% block content %}
-    {% if not object %}
-        <h2>Request a Challenge</h2>
-        {% crispy form %}
-    {% else %}
-        <h2>Approve or reject "{{ object.title }}"</h2>
-        {% crispy form %}
-    {% endif %}
+    <h2>Request a Challenge</h2>
+    {% crispy form %}
 {% endblock %}
 
 {% block script %}
