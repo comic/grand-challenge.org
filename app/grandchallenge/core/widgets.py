@@ -15,14 +15,8 @@ class JSONEditorWidget(forms.Textarea):
         return context
 
     class Media:
-        css = {
-            "all": (
-                "https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.5.2/jsoneditor.min.css",
-            )
-        }
-        js = (
-            "https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.5.2/jsoneditor.min.js",
-        )
+        css = {"all": ("vendored/jsoneditor/jsoneditor.min.css",)}
+        js = ("vendored/jsoneditor/jsoneditor.min.js",)
 
 
 class MarkdownEditorWidget(MarkdownxWidget):

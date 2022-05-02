@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:c17ab675c776354c48fd19bfd644b22c2d495d7fe87a7c72c4edc1a96f13ed2e",
+  "content_hash": "sha256:94d791ff2453e590827fa39c3608a51defdf63d7713c585869ee0d03c2c5fdfb",
   "dependencies": [
     {
       "name": "htmx",
@@ -13,6 +13,28 @@
         {
           "name": "htmx/1.7.0/htmx.min.js",
           "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
+        }
+      ]
+    },
+    {
+      "name": "jsoneditor",
+      "version": "9.5.2",
+      "assets": [
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.css",
+          "sri": "sha512-7BNBvfwEnG/+oK7PTxRr4I5f7SQQjYdnGjLe1F4kjNU9m4sXSOxcld4x2NRtgYiYkO+ltKQ1foU5Eau7kSnkVA=="
+        },
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.js",
+          "sri": "sha512-L0Ev5uNLTNswQjWgk65iN2z2q5TvDwe3qf5YYLROgs/SrVNfhqs6nwpfo+RXJ/+QM9bh/Acd7x03XvogdX5XFQ=="
+        },
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.min.css",
+          "sri": "sha512-oEH5lcAN+ZIIBvRXjo3cI689oL9c7HGoLxEkPnzRskQ8lSkKh2aZ/wd6rx//5+dI1eY20mPQPQTEx69UuHBu3Q=="
+        },
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.min.js",
+          "sri": "sha512-sWWNHrucAGzw6+kdky+SP1jIqkzY+bYzZRFn6H0aRw/jyaBKvj4A8hvze0bhSplOtAzY1YZyar8KrK8lDRtUdQ=="
         }
       ]
     },

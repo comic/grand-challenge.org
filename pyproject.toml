@@ -132,3 +132,4 @@ vega = { version = "==5.20.2", include = ["vega.min.js", "vega.js"]}
 vega-lite = { version = "==5.1.0", include = ["vega-lite.min.js$", "vega-lite.js$"]}
 vega-embed = { version = "==6.17.0", include = ["vega-embed.min.js$", "vega-embed.js$"]}
 openseadragon = { version = "==2.4.1", include = ["openseadragon.min.js$", "openseadragon.js$", "images/*"]}
+jsoneditor = { version = "==9.5.2", include = ["jsoneditor.min.js", "jsoneditor.js", "jsoneditor.min.css", "jsoneditor.css"]}
