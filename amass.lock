@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:c81caae9f3ec5affb1595356d10f74305ceacf17d39c2d46ad7f742ea914bde1",
+  "content_hash": "sha256:c17ab675c776354c48fd19bfd644b22c2d495d7fe87a7c72c4edc1a96f13ed2e",
   "dependencies": [
     {
       "name": "htmx",
@@ -199,16 +199,8 @@
           "sri": "sha512-wLveiqffVDS+4JWoWKHUFKCw2zUjqsG8dHN8Q72zgGWTed/fLP4NePfxQ3nw1Ewe3hd7mvUIjO3owmLWvZyf2Q=="
         },
         {
-          "name": "openseadragon/2.4.1/openseadragon.js.map",
-          "sri": null
-        },
-        {
           "name": "openseadragon/2.4.1/openseadragon.min.js",
           "sri": "sha512-ydnIgG69uS1sVDFa1ki6qvOVkc47BmyW3RGoMwn9jATwDIFdIZ8Yuoy/w3IQEv8xzUwqFPs/yNoD2bSaQTGXYg=="
-        },
-        {
-          "name": "openseadragon/2.4.1/openseadragon.min.js.map",
-          "sri": null
         }
       ]
     },
@@ -235,16 +227,8 @@
           "sri": "sha512-on9nfuMR+qroRvIZgDlfWK09LLuVIIzazSQHves4boFFtHulHUM7XnDg6e0xdFAXgiwtZHfBRR5xT3xu0gkhZg=="
         },
         {
-          "name": "vega-embed/6.17.0/vega-embed.js.map",
-          "sri": null
-        },
-        {
           "name": "vega-embed/6.17.0/vega-embed.min.js",
           "sri": "sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
-        },
-        {
-          "name": "vega-embed/6.17.0/vega-embed.min.js.map",
-          "sri": null
         }
       ]
     },
@@ -257,16 +241,8 @@
           "sri": "sha512-Z5O5U8QvBmxsHZiQfvqu2+UERgL7K7tVJ8XwAlnP5Q+U4oG6bLeMn53GMBB9M2aBm0GKeXFcWPOW0mjm2kPTFg=="
         },
         {
-          "name": "vega-lite/5.1.0/vega-lite.js.map",
-          "sri": null
-        },
-        {
           "name": "vega-lite/5.1.0/vega-lite.min.js",
           "sri": "sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
-        },
-        {
-          "name": "vega-lite/5.1.0/vega-lite.min.js.map",
-          "sri": null
         }
       ]
     }
