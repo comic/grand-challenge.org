@@ -85,9 +85,6 @@
 
 {% block script %}
     {{ block.super }}
-    {# For displaying equations on the site, the safe config is important #}
-    <script src="{% static 'vendored/mathjax/MathJax.js' %}?config=TeX-MML-AM_CHTML,Safe"
-            async></script>
     {# make the tables sortable #}
     <script type="module"
             src="{% static "js/sort_tables.js" %}"></script>
