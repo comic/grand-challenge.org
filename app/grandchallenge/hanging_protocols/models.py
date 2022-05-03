@@ -89,6 +89,7 @@ HANGING_PROTOCOL_SCHEMA = {
                 "type": "string",
             },
         },
+        "additionalProperties": False,
     },
     "minItems": 1,
     "uniqueItems": True,
