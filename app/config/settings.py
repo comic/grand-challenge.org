@@ -1141,10 +1141,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": timedelta(minutes=5),
     },
-    "validate_external_challenges": {
-        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
-        "schedule": timedelta(days=1),
-    },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": timedelta(days=1),
