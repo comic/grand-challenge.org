@@ -1,0 +1,422 @@
+{
+  "lock_version": "1.0",
+  "content_hash": "sha256:573ad853c7be9b9ada03a7a5d5263a969a27d0d436e07127ecb99088a258615b",
+  "dependencies": [
+    {
+      "name": "hammer.js",
+      "version": "2.0.8",
+      "assets": [
+        {
+          "name": "hammer.js/2.0.8/hammer.js",
+          "sri": "sha512-qRj8N7fxOHxPkKjnQ9EJgLJ8Ng1OK7seBn1uk8wkqaXpa7OA13LO6txQ7+ajZonyc9Ts4K/ugXljevkFTUGBcw=="
+        },
+        {
+          "name": "hammer.js/2.0.8/hammer.min.js",
+          "sri": "sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g=="
+        }
+      ]
+    },
+    {
+      "name": "htmx",
+      "version": "1.7.0",
+      "assets": [
+        {
+          "name": "htmx/1.7.0/htmx.js",
+          "sri": "sha512-wJXYT7RzKp/dxju83CCCATupp32GQvko0KrJVK3zTgTMkVWiLiHnupKKgOUt+87t+oe/Rm2Q2p+pOpiD+IR0lQ=="
+        },
+        {
+          "name": "htmx/1.7.0/htmx.min.js",
+          "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
+        }
+      ]
+    },
+    {
+      "name": "jsoneditor",
+      "version": "9.5.2",
+      "assets": [
+        {
+          "name": "jsoneditor/9.5.2/img/jsoneditor-icons.svg",
+          "sri": null
+        },
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.css",
+          "sri": "sha512-7BNBvfwEnG/+oK7PTxRr4I5f7SQQjYdnGjLe1F4kjNU9m4sXSOxcld4x2NRtgYiYkO+ltKQ1foU5Eau7kSnkVA=="
+        },
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.js",
+          "sri": "sha512-L0Ev5uNLTNswQjWgk65iN2z2q5TvDwe3qf5YYLROgs/SrVNfhqs6nwpfo+RXJ/+QM9bh/Acd7x03XvogdX5XFQ=="
+        },
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.min.css",
+          "sri": "sha512-oEH5lcAN+ZIIBvRXjo3cI689oL9c7HGoLxEkPnzRskQ8lSkKh2aZ/wd6rx//5+dI1eY20mPQPQTEx69UuHBu3Q=="
+        },
+        {
+          "name": "jsoneditor/9.5.2/jsoneditor.min.js",
+          "sri": "sha512-sWWNHrucAGzw6+kdky+SP1jIqkzY+bYzZRFn6H0aRw/jyaBKvj4A8hvze0bhSplOtAzY1YZyar8KrK8lDRtUdQ=="
+        }
+      ]
+    },
+    {
+      "name": "mathjax",
+      "version": "2.7.5",
+      "assets": [
+        {
+          "name": "mathjax/2.7.5/MathJax.js",
+          "sri": "sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A=="
+        },
+        {
+          "name": "mathjax/2.7.5/config/Safe.js",
+          "sri": "sha512-NC88m9kAL+yAt7NKRLov+QbarDeAzH/rUN589en2orZMlN8ZQku5N9x9bjnnE3m57UYAoHz2ZNsHeHxyrkDmLw=="
+        },
+        {
+          "name": "mathjax/2.7.5/config/TeX-MML-AM_CHTML.js",
+          "sri": "sha512-sRJwTwSmIAJfESgwGDn84X0s72u/n6qBjPShCGXi307x3ZFynu/u2A8652KZhmvjP0U0zeOFCxoMtj9imy9nOQ=="
+        },
+        {
+          "name": "mathjax/2.7.5/extensions/Safe.js",
+          "sri": "sha512-ablCopiICcgJMIY2AkrV3zjJ4g2kl4azSock5PmTYWDVJM8cc+l2vBBU9eO6rZ5BKibr57qRAThWpnsUBsncVQ=="
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_AMS-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Caligraphic-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Caligraphic-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Fraktur-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Fraktur-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Main-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Main-Italic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Main-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Math-BoldItalic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Math-Italic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Math-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Italic.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Script-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size1-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size2-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size3-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Size4-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Typewriter-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Vector-Bold.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/fonts/HTML-CSS/TeX/woff/MathJax_Vector-Regular.woff",
+          "sri": null
+        },
+        {
+          "name": "mathjax/2.7.5/jax/output/CommonHTML/fonts/TeX/fontdata.js",
+          "sri": "sha512-B2yhjMR9qXY47n4PScxfpUhAW8pvRGL2ahofuVru8cKlzMxTVei7aLnLXvtUDjz4N0qm469ewzwTVDni0qFO+A=="
+        },
+        {
+          "name": "mathjax/2.7.5/jax/output/CommonHTML/jax.js",
+          "sri": "sha512-3KXN7mp9ZULs9X2nzP5nSiQYTVEbDSn1oB9PyjBV9k14NI2Fofaag20pUfHLkN5/qR6oPZPvlS9lFqP6/7ez3w=="
+        }
+      ]
+    },
+    {
+      "name": "moment.js",
+      "version": "2.24.0",
+      "assets": [
+        {
+          "name": "moment.js/2.24.0/moment.js",
+          "sri": "sha512-Wv3kTSwLkL+/MpK3lOgKtsTn5lO1nmdesv7k9kWcIu0joAJo4KxIsB4/rQPUX/1M/MNeMCbRb7/2S/f2FIhBLQ=="
+        },
+        {
+          "name": "moment.js/2.24.0/moment.min.js",
+          "sri": "sha512-i2CVnAiguN6SnJ3d2ChOOddMWQyvgQTzm0qSgiKhOqBMGCx4fGU5BtzXEybnKatWPDkXPFyCI0lbG42BnVjr/Q=="
+        }
+      ]
+    },
+    {
+      "name": "openseadragon",
+      "version": "2.4.1",
+      "assets": [
+        {
+          "name": "openseadragon/2.4.1/images/button_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/button_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/button_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/button_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/flip_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/fullpage_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/home_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/next_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/previous_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateleft_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/rotateright_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomin_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_grouphover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_hover.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_pressed.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/images/zoomout_rest.png",
+          "sri": null
+        },
+        {
+          "name": "openseadragon/2.4.1/openseadragon.js",
+          "sri": "sha512-wLveiqffVDS+4JWoWKHUFKCw2zUjqsG8dHN8Q72zgGWTed/fLP4NePfxQ3nw1Ewe3hd7mvUIjO3owmLWvZyf2Q=="
+        },
+        {
+          "name": "openseadragon/2.4.1/openseadragon.min.js",
+          "sri": "sha512-ydnIgG69uS1sVDFa1ki6qvOVkc47BmyW3RGoMwn9jATwDIFdIZ8Yuoy/w3IQEv8xzUwqFPs/yNoD2bSaQTGXYg=="
+        }
+      ]
+    },
+    {
+      "name": "sentry-browser",
+      "version": "6.19.7",
+      "assets": [
+        {
+          "name": "sentry-browser/6.19.7/bundle.js",
+          "sri": "sha512-YFAdK/3y/z0eEiGVH4jEbdHQM9CDBO6XV5oX5NkhlC4UlZLV9we7Sqog57K2FDBDbGQUWfkEilpByTPJwQ8Atg=="
+        },
+        {
+          "name": "sentry-browser/6.19.7/bundle.min.js",
+          "sri": "sha512-bfZoCIl6netdQQ4kWQ5HZaKOS24IohehpiEjuOu2sVpY3XaheFE/n0+bqJCwt4CDEP+nN+90sQwIOl1II1pLjA=="
+        }
+      ]
+    },
+    {
+      "name": "vega",
+      "version": "5.20.2",
+      "assets": [
+        {
+          "name": "vega/5.20.2/vega.js",
+          "sri": "sha512-NUL0H+1cUkPGBvLAmsK0WmDwgXYINObyyw/Jj8fBwu6sIl+12iSZr0+/TAQ8wCaj2XzAaFX5XQRjx8Z/1E8qTA=="
+        },
+        {
+          "name": "vega/5.20.2/vega.min.js",
+          "sri": "sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
+        }
+      ]
+    },
+    {
+      "name": "vega-embed",
+      "version": "6.17.0",
+      "assets": [
+        {
+          "name": "vega-embed/6.17.0/vega-embed.js",
+          "sri": "sha512-on9nfuMR+qroRvIZgDlfWK09LLuVIIzazSQHves4boFFtHulHUM7XnDg6e0xdFAXgiwtZHfBRR5xT3xu0gkhZg=="
+        },
+        {
+          "name": "vega-embed/6.17.0/vega-embed.min.js",
+          "sri": "sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
+        }
+      ]
+    },
+    {
+      "name": "vega-lite",
+      "version": "5.1.0",
+      "assets": [
+        {
+          "name": "vega-lite/5.1.0/vega-lite.js",
+          "sri": "sha512-Z5O5U8QvBmxsHZiQfvqu2+UERgL7K7tVJ8XwAlnP5Q+U4oG6bLeMn53GMBB9M2aBm0GKeXFcWPOW0mjm2kPTFg=="
+        },
+        {
+          "name": "vega-lite/5.1.0/vega-lite.min.js",
+          "sri": "sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
+        }
+      ]
+    }
+  ]
+}

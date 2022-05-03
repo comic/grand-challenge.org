@@ -86,22 +86,16 @@
 {% block script %}
     {{ block.super }}
     {# For displaying equations on the site, the safe config is important #}
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
+    <script src="{% static 'vendored/mathjax/MathJax.js' %}?config=TeX-MML-AM_CHTML,Safe"
             async></script>
     {# make the tables sortable #}
     <script type="module"
             src="{% static "js/sort_tables.js" %}"></script>
     {# geocharts #}
     {% if includes_geochart %}
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"
-                integrity="sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
-                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-lite/5.1.0/vega-lite.min.js"
-                integrity="sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
-                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"
-                integrity="sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
-                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
         <script type="module"
                 src="{% static "js/render_geocharts.js" %}"></script>
     {% endif %}
