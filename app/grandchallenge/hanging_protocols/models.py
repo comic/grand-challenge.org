@@ -17,6 +17,16 @@ class ImagePort(models.TextChoices):
     OCTONARY = "OCTONARY", "Octonary"
     NONARY = "NONARY", "Nonary"
     DENARY = "DENARY", "Denary"
+    UNDENARY = "UNDENARY", "Undenary"
+    DUODENARY = "DUODENARY", "Duodenary"
+    TREDENARY = "TREDENARY", "Tredenary"
+    QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
+    QUINDENARY = "QUINDENARY", "Quindenary"
+    SEXDENARY = "SEXDENARY", "Sexdenary"
+    SEPTENDENARY = "SEPTENDENARY", "Septendenary"
+    OCTODENARY = "OCTODENARY", "Octodenary"
+    NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
+    VIGINTENARY = "VIGINTENARY", "Vigintenary"
 
 
 HANGING_PROTOCOL_SCHEMA = {
