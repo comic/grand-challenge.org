@@ -49,8 +49,3 @@ def update_challenge_results_cache():
             "cached_latest_result",
         ],
     )
-
-
-@shared_task
-def check_external_challenge_urls():
-    pass
