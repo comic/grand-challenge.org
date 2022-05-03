@@ -599,10 +599,14 @@ class ReaderStudyCopy(
             },
         )
         rs.add_editor(self.request.user)
-        if form.cleaned_data["copy_images"]:
-            rs.images.set(reader_study.images.all())
-        if form.cleaned_data["copy_hanging_list"]:
-            rs.hanging_list = reader_study.hanging_list
+        if form.cleaned_data["copy_display_sets"]:
+            for ds in reader_study.display_sets.all():
+                new_ds = DisplaySet.objects.create(reader_study=rs)
+                new_ds.values.set(ds.values.all())
+        if form.cleaned_data["copy_view_content"]:
+            rs.view_content = reader_study.view_content
+        if form.cleaned_data["copy_hanging_protocol"]:
+            rs.hanging_protocol = reader_study.hanging_protocol
         if form.cleaned_data["copy_case_text"]:
             rs.case_text = reader_study.case_text
         if form.cleaned_data["copy_readers"]:

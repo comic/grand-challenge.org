@@ -12,6 +12,7 @@ from grandchallenge.core.utils.access_requests import (
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
+from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -405,9 +406,14 @@ def test_reader_study_copy(client):
     )
 
     im1, im2 = ImageFactory(), ImageFactory()
-
-    rs.images.set([im1, im2])
-    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
+    interfaces = []
+    for im in [im1, im2]:
+        civ = ComponentInterfaceValueFactory(image=im)
+        interfaces.append(civ.interface.slug)
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+    rs.view_content = {"main": interfaces[0], "secondary": interfaces[1]}
+    rs.hanging_protocol = HangingProtocolFactory()
     rs.case_text = {im1.name: "test", im2.name: "test2"}
     rs.save()
 
@@ -459,11 +465,12 @@ def test_reader_study_copy(client):
 
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "1"
-    assert _rs.images.count() == 0
+    assert _rs.display_sets.count() == 0
     assert _rs.questions.count() == 0
+    assert _rs.view_content == {}
+    assert _rs.hanging_protocol is None
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
-    assert _rs.hanging_list == []
     assert _rs.case_text == {}
 
     response = get_view_for_user(
@@ -482,8 +489,9 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "2"
     assert _rs.questions.count() == 2
-    assert _rs.images.count() == 0
-    assert _rs.hanging_list == []
+    assert _rs.display_sets.count() == 0
+    assert _rs.view_content == {}
+    assert _rs.hanging_protocol is None
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
@@ -493,7 +501,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"title": "3", "copy_images": True},
+        data={"title": "3", "copy_display_sets": True},
         user=editor,
         follow=True,
     )
@@ -504,8 +512,9 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "3"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 2
-    assert _rs.hanging_list == []
+    assert _rs.display_sets.count() == 2
+    assert _rs.view_content == {}
+    assert _rs.hanging_protocol is None
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
@@ -515,24 +524,12 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"title": "4", "copy_hanging_list": True},
-        user=editor,
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert (
-        "Hanging list and case text can only be copied if the images are copied as well"
-        in response.rendered_content
-    )
-    assert ReaderStudy.objects.count() == 4
-
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "4", "copy_images": True, "copy_hanging_list": True},
+        data={
+            "title": "4",
+            "copy_display_sets": True,
+            "copy_view_content": True,
+            "copy_hanging_protocol": True,
+        },
         user=editor,
         follow=True,
     )
@@ -543,8 +540,9 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "4"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 2
-    assert _rs.hanging_list == rs.hanging_list
+    assert _rs.display_sets.count() == 2
+    assert _rs.view_content == rs.view_content
+    assert _rs.hanging_protocol == rs.hanging_protocol
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
@@ -554,7 +552,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"title": "5", "copy_images": True, "copy_case_text": True},
+        data={"title": "5", "copy_display_sets": True, "copy_case_text": True},
         user=editor,
         follow=True,
     )
@@ -565,8 +563,9 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "5"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 2
-    assert _rs.hanging_list == []
+    assert _rs.display_sets.count() == 2
+    assert _rs.view_content == {}
+    assert _rs.hanging_protocol is None
     assert _rs.case_text == rs.case_text
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
@@ -587,8 +586,9 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "6"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 0
-    assert _rs.hanging_list == []
+    assert _rs.display_sets.count() == 0
+    assert _rs.view_content == {}
+    assert _rs.hanging_protocol is None
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 1
     assert _rs.editors_group.user_set.count() == 1
@@ -609,8 +609,9 @@ def test_reader_study_copy(client):
     _rs = ReaderStudy.objects.order_by("created").last()
     assert _rs.title == "7"
     assert _rs.questions.count() == 0
-    assert _rs.images.count() == 0
-    assert _rs.hanging_list == []
+    assert _rs.display_sets.count() == 0
+    assert _rs.view_content == {}
+    assert _rs.hanging_protocol is None
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 2

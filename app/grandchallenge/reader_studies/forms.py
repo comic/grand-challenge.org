@@ -247,8 +247,9 @@ class ReaderStudyUpdateForm(
 class ReaderStudyCopyForm(Form):
     title = CharField(required=True)
     description = CharField(required=False, widget=Textarea())
-    copy_images = BooleanField(required=False, initial=True)
-    copy_hanging_list = BooleanField(required=False, initial=True)
+    copy_display_sets = BooleanField(required=False, initial=True)
+    copy_hanging_protocol = BooleanField(required=False, initial=True)
+    copy_view_content = BooleanField(required=False, initial=True)
     copy_case_text = BooleanField(required=False, initial=True)
     copy_questions = BooleanField(required=False, initial=True)
     copy_readers = BooleanField(required=False, initial=True)
@@ -258,16 +259,6 @@ class ReaderStudyCopyForm(Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Copy"))
-
-    def clean(self, *args, **kwargs):
-        if (
-            self.cleaned_data["copy_hanging_list"]
-            or self.cleaned_data["copy_case_text"]
-        ) and not self.cleaned_data["copy_images"]:
-            self.add_error(
-                error="Hanging list and case text can only be copied if the images are copied as well",
-                field=None,
-            )
 
 
 class QuestionForm(SaveFormInitMixin, ModelForm):
