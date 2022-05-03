@@ -218,9 +218,6 @@ def _create_demo_challenge(users):
         ]
         if phase_num == 0:
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
-        phase.evaluation_detail_observable_url = (
-            phase.evaluation_comparison_observable_url
-        ) = "https://observablehq.com/embed/@grand-challenge/data-fetch-example?cell=*"
         phase.save()
 
         method = Method(phase=phase, creator=users["demo"])

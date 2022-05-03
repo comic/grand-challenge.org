@@ -7,10 +7,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -39,7 +37,6 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from grandchallenge.evaluation.serializers import EvaluationSerializer
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -414,16 +411,6 @@ class LeaderboardDetail(
     def columns(self):
         columns = []
 
-        if self.phase.evaluation_comparison_observable_url:
-            columns.append(
-                Column(
-                    title="",
-                    sort_field="",
-                    classes=("nonSortable",),
-                    identifier="compareEvaluationsHeader",
-                )
-            )
-
         columns.extend(
             [
                 Column(
@@ -550,48 +537,6 @@ class LeaderboardDetail(
             return queryset.filter(submission__created__lt=before)
         else:
             return queryset
-
-
-@method_decorator(xframe_options_sameorigin, name="dispatch")
-class ObservableDetail(LeaderboardDetail):
-    template_name = "evaluation/observable_detail.html"
-
-    @property
-    def pk_filter(self):
-        return self.request.GET.getlist("pk")
-
-    def get_queryset(self, *args, **kwargs):
-        queryset = super().get_queryset(*args, **kwargs).order_by("rank")
-
-        if self.pk_filter:
-            return queryset.filter(pk__in=self.pk_filter)
-        else:
-            return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        evaluations = EvaluationSerializer(
-            self.object_list, many=True, context={"request": self.request}
-        ).data
-
-        kind = self.kwargs.get("kind", "").lower()
-
-        try:
-            js_url, cells = self.phase.get_observable_url(
-                view_kind=kind, url_kind="js"
-            )
-        except ValueError:
-            raise Http404()
-
-        context.update(
-            {
-                "observable_notebook_js": js_url,
-                "observable_cells": cells,
-                "evaluations": evaluations,
-            }
-        )
-        return context
 
 
 class EvaluationUpdate(
