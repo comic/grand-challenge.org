@@ -76,6 +76,18 @@ HANGING_PROTOCOL_SCHEMA = {
             "order": {
                 "type": "integer",
             },
+            "show_current_slice": {
+                "type": "boolean",
+            },
+            "show_mouse_coordinate": {
+                "type": "boolean",
+            },
+            "show_mouse_voxel_value": {
+                "type": "boolean",
+            },
+            "label": {
+                "type": "string",
+            },
         },
     },
     "minItems": 1,
