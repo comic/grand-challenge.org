@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:573ad853c7be9b9ada03a7a5d5263a969a27d0d436e07127ecb99088a258615b",
+  "content_hash": "sha256:6a774d921368cf4f6473459e9fd838f6b7b427f33ca541e453c9e53e2d1672a1",
   "dependencies": [
     {
       "name": "hammer.js",
@@ -71,6 +71,14 @@
         {
           "name": "mathjax/2.7.5/config/TeX-MML-AM_CHTML.js",
           "sri": "sha512-sRJwTwSmIAJfESgwGDn84X0s72u/n6qBjPShCGXi307x3ZFynu/u2A8652KZhmvjP0U0zeOFCxoMtj9imy9nOQ=="
+        },
+        {
+          "name": "mathjax/2.7.5/extensions/MathMenu.js",
+          "sri": "sha512-KXRBQLfSOMisQz+BbMLKHXoQut2QFHKHdhOUWRGm8bbUbxy/Xb7ySsTjkHvx78BKKAsaiBFYN4KfMUvjEWLI4Q=="
+        },
+        {
+          "name": "mathjax/2.7.5/extensions/MathZoom.js",
+          "sri": "sha512-BihD4Zko7UnnNUuJmQeLA+ri6y3A+BmJr9bh2MlIv5INT7V/bDOiiwAbDwtFZGCOk1DwTZwd3KCEAgzSxB4/wQ=="
         },
         {
           "name": "mathjax/2.7.5/extensions/Safe.js",
@@ -373,6 +381,28 @@
         {
           "name": "sentry-browser/6.19.7/bundle.min.js",
           "sri": "sha512-bfZoCIl6netdQQ4kWQ5HZaKOS24IohehpiEjuOu2sVpY3XaheFE/n0+bqJCwt4CDEP+nN+90sQwIOl1II1pLjA=="
+        }
+      ]
+    },
+    {
+      "name": "uppy",
+      "version": "2.2.0",
+      "assets": [
+        {
+          "name": "uppy/2.2.0/uppy.css",
+          "sri": "sha512-Ku+niwTGeWDTIMq36s+0/Z5/J2+Dzv+oPX+VK6IdKD3Zgd08xmNR4l7UWeMc3pXNMMvqX3N0SBUytoL75/WMCw=="
+        },
+        {
+          "name": "uppy/2.2.0/uppy.js",
+          "sri": "sha512-KbZ6k6pqdpS1TyYdfB9iJAwBv20Hktdz/6BTVd/eEHgKraMflq9F8/tOUlAyf1gAFBon6d6nC8L+pP27zeLZOw=="
+        },
+        {
+          "name": "uppy/2.2.0/uppy.min.css",
+          "sri": "sha512-gD1Tjv/Dd8ZppRVxEh9BEgWgh6tUyXzcKb69dBn+JD5Ci5XYEj41jXBMacn3BmAbFFt/Wb1thylExLdwHR2kDA=="
+        },
+        {
+          "name": "uppy/2.2.0/uppy.min.js",
+          "sri": "sha512-NqPGg/p+/2QB/u22DwP2WutK3gpmglXIWLLuj2m67Kn6o+DU4qXopBHsQzJ7vSZMDx8wJ3fXbo526oSFLhCwkA=="
         }
       ]
     },
