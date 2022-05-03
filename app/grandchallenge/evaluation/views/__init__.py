@@ -447,7 +447,9 @@ class LeaderboardDetail(
                 )
             )
 
-        columns.append(Column(title="Created", sort_field="created"))
+        columns.append(
+            Column(title="Created", sort_field="submission__created")
+        )
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
