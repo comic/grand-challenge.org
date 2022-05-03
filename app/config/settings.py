@@ -847,7 +847,6 @@ REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
     rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
-    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}.static.observableusercontent.com$",
 ]
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api

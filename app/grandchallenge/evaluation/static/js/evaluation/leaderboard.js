@@ -1,30 +1,18 @@
-const SELECT_TEXT = `Select 2 or more results for comparison`
-const MAX_NUM_RESULTS_WARNING = 6
-
-const allowEvaluationComparison = JSON.parse(document.getElementById("allowEvaluationComparison").textContent)
-const observableComparisonURL = JSON.parse(document.getElementById("observableComparisonURL").textContent)
-const allowEvaluationNavigation = JSON.parse(document.getElementById("allowEvaluationNavigation").textContent)
-const observableDetailURL = JSON.parse(document.getElementById("observableDetailURL").textContent)
 const allowMetricsToggling = JSON.parse(document.getElementById("allowMetricsToggling").textContent)
 const displayLeaderboardDateButton = JSON.parse(document.getElementById("displayLeaderboardDateButton").textContent)
 
-const observableDetailEditURL = JSON.parse(document.getElementById("observableDetailEditURL").textContent)
-const observableComparisonEditURL = JSON.parse(document.getElementById("observableComparisonEditURL").textContent)
-
 let resultsTable = $('#ajaxDataTable')
-let selectedResults = {}
 
 
 $(document).ready(function () {
     let table = resultsTable.DataTable({
         // The column index of the default sort, must match the table set up.
-        order: [[allowEvaluationComparison === true ? 1 : 0, "asc"]],
+        order: [[0, "asc"]],
         lengthChange: false,
         pageLength: 50,
         serverSide: true,
         ajax: {
             url: "",
-            complete: updateCompareCheckBoxes,
         },
         columnDefs: [
             {
@@ -65,81 +53,6 @@ $(document).ready(function () {
         });
     }
 
-    if (allowEvaluationComparison === true) {
-        document.getElementById('compare-buttons-group').innerHTML = `
-            <button type="button" id="compare-results-button" class="btn btn-secondary"
-                    onclick="updateEvaluationComparisonModal()" data-toggle="modal" data-target="#observableModal"
-                    disabled title="${SELECT_TEXT}">
-                <i class="fas fa-balance-scale-right"></i>
-            </button>
-        `;
-
-        document.getElementById('compareEvaluationsHeader').innerHTML = `
-            <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
-                <input type="checkbox" id="compareAllEvaluationsCheckbox"/>
-            </span>
-        `;
-
-        let compareAllEvaluationsCheckbox = $('#compareAllEvaluationsCheckbox')
-        compareAllEvaluationsCheckbox.prop('indeterminate', true).hide()
-
-        // On click on General checkbox
-        compareAllEvaluationsCheckbox.on("click", function () {
-            compareAllEvaluationsCheckbox.hide()
-            selectedResults = {};
-            $(`.compareEvaluationCheckbox`).prop("checked", false)
-            $('#compare-results-button').prop("disabled", true).prop("title", SELECT_TEXT)
-            $('#compare-warning-alert').addClass("d-none");
-        })
-
-        // On click on the table checkboxes
-        resultsTable.on('click', function (e) {
-            if ($(e.target).is(':checkbox')) {
-                const resultId = $(e.target).val()
-                const compareResultsButton = $("#compare-results-button")
-
-                // Add or remove data to the object
-                if ($(e.target).is(':checked')) {
-                    selectedResults[resultId] = true
-                    compareAllEvaluationsCheckbox.prop('indeterminate', true).show()
-                } else {
-                    delete selectedResults[resultId];
-                }
-
-                const numSelectedResults = Object.entries(selectedResults).length
-
-                // Modify compare results button
-                if (numSelectedResults > 1) {
-                    compareResultsButton.prop("disabled", false)
-                        .prop("title", `Compare ${numSelectedResults} results`)
-                } else {
-                    compareResultsButton.prop("disabled", true)
-                        .prop("title", SELECT_TEXT)
-                }
-
-                if (numSelectedResults === 0) {
-                    compareAllEvaluationsCheckbox.hide()
-                }
-
-                // Toggle alert too many results
-                let entriesAlert = $('#compare-warning-alert')
-                numSelectedResults >= MAX_NUM_RESULTS_WARNING
-                    ? entriesAlert.removeClass("d-none")
-                    : entriesAlert.addClass("d-none")
-            }
-        })
-    }
-
-    if (allowEvaluationNavigation === true) {
-        document.getElementById('compare-buttons-group').innerHTML += `
-            <button type="button" id="browse-evaluations-button" class="btn btn-secondary"
-                    onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal"
-                    title="Browse through these results">
-                <i class="fas fa-chart-bar"></i>
-            </button>
-        `;
-    }
-
     if (displayLeaderboardDateButton === true) {
         document.getElementById('compare-buttons-group').innerHTML += `
             <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#leaderboardDateModal"
@@ -154,39 +67,11 @@ $(window).resize(function () {
     resultsTable.DataTable().columns.adjust()
 });
 
-function updateEvaluationComparisonModal() {
-    const search = new URLSearchParams(Object.keys(selectedResults).map(pk => ["pk", pk]))
-    const notebook = document.getElementById('observableNotebook')
-    const modelLabel = document.getElementById('observableModalLabel')
-
-    modelLabel.textContent = "Compare Results"
-    notebook.src = `${observableComparisonURL}?${search.toString()}`;
-
-    const observableEditLink = document.getElementById("observableEditLink")
-    if (observableEditLink !== null) {
-        observableEditLink.href = `${observableComparisonEditURL}?${search.toString()}`;
-    }
-}
-
-function updateEvaluationNavigationModal() {
-    const pkElements = Array.from(document.getElementsByClassName("browseEvaluationPK"))
-    const search = new URLSearchParams(pkElements.map(e => ["pk", e.value]))
-    const notebook = document.getElementById('observableNotebook')
-    const modelLabel = document.getElementById('observableModalLabel')
-
-    modelLabel.textContent = "Browse Results"
-    notebook.src = `${observableDetailURL}?${search.toString()}`;
-
-    const observableEditLink = document.getElementById("observableEditLink")
-    if (observableEditLink !== null) {
-        observableEditLink.href = `${observableDetailEditURL}?${search.toString()}`;
-    }
-}
 
 function getDataTablesDOMTemplate() {
     let DOM = "<'row'<'col-12'f>>"
 
-    if (allowMetricsToggling === true || allowEvaluationComparison === true || allowEvaluationNavigation === true || displayLeaderboardDateButton === true) {
+    if (allowMetricsToggling === true || displayLeaderboardDateButton === true) {
         DOM += "<'row'<'#compare-buttons-group.col-md-6'><'col px-0 text-right'B>>"
     }
 
@@ -220,14 +105,4 @@ function getDataTablesButtons() {
     } else {
         return []
     }
-}
-
-function updateCompareCheckBoxes() {
-    if (allowEvaluationNavigation === true) {
-        document.getElementById("browse-evaluations-button").disabled = document.getElementsByClassName("browseEvaluationPK").length === 0;
-    }
-
-    $(".compareEvaluationCheckbox").filter(function () {
-        return $(this).attr("value") in selectedResults
-    }).prop('checked', true);
 }

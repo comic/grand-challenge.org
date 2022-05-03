@@ -5,20 +5,7 @@
 {% load remove_whitespace %}
 {% load url %}
 
-{% if object.submission.phase.evaluation_comparison_observable_url %}
-    <div class="form-check">
-        <input type="checkbox"
-               class="form-check-input position-static compareEvaluationCheckbox"
-               title="Select for comparison"
-               value="{{ object.pk }}">
-    </div>
-    <split></split>
-{% endif %}
-
 {{ object.rank|ordinal }}
-{% if object.submission.phase.evaluation_detail_observable_url %}
-    <input type="hidden" class="browseEvaluationPK" value="{{ object.pk }}">
-{% endif %}
 <split></split>
 
 {{ object.submission.creator|user_profile_link }}
