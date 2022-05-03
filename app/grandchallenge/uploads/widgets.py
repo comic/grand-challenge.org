@@ -18,13 +18,9 @@ class UserUploadWidgetMixin:
         return context
 
     class Media:
-        css = {
-            "all": (
-                "https://releases.transloadit.com/uppy/v2.2.0/uppy.min.css",
-            )
-        }
+        css = {"all": ("vendored/uppy/uppy.min.css",)}
         js = (
-            "https://releases.transloadit.com/uppy/v2.2.0/uppy.min.js",
+            "vendored/uppy/uppy.min.js",
             "js/user_upload.js",
         )
 
