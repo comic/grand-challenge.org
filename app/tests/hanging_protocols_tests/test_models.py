@@ -56,6 +56,10 @@ from tests.factories import UserFactory
                     "draggable": False,
                     "selectable": True,
                     "order": 0,
+                    "show_current_slice": True,
+                    "show_mouse_coordinate": True,
+                    "show_mouse_voxel_value": True,
+                    "label": "Test label",
                 }
             ],
             nullcontext(),
@@ -99,6 +103,16 @@ from tests.factories import UserFactory
                     "draggable": False,
                     "selectable": True,
                     "order": 0,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid json containing undefined additional properties
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "undefined_property": 0,
                 }
             ],
             pytest.raises(ValidationError),

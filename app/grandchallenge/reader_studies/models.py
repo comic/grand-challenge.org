@@ -1216,7 +1216,7 @@ class Question(UUIDModel):
     )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
-        max_length=10, choices=ImagePort.choices, blank=True, default=""
+        max_length=14, choices=ImagePort.choices, blank=True, default=""
     )
     required = models.BooleanField(default=True)
     direction = models.CharField(
