@@ -610,6 +610,11 @@ class ReaderStudyCopy(
             },
         )
         rs.add_editor(self.request.user)
+
+        if form.cleaned_data["copy_display_sets"]:
+            for ds in reader_study.display_sets.all():
+                new_ds = DisplaySet.objects.create(reader_study=rs)
+                new_ds.values.set(ds.values.all())
         if form.cleaned_data["copy_view_content"]:
             rs.view_content = reader_study.view_content
         if form.cleaned_data["copy_hanging_protocol"]:
