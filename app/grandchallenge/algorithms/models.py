@@ -14,7 +14,6 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
@@ -171,7 +170,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         editable=False,
         help_text="The average duration of successful jobs.",
     )
-    use_flexible_inputs = deprecate_field(models.BooleanField(default=True))
     repo_name = models.CharField(blank=True, max_length=512)
     image_requires_gpu = models.BooleanField(default=True)
     image_requires_memory_gb = models.PositiveIntegerField(default=15)

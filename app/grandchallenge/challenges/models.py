@@ -19,7 +19,6 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -302,16 +301,6 @@ class Challenge(ChallengeBase):
             "Optional text to show on each page in the project. "
             "For showing 'under construction' type messages"
         ),
-    )
-    require_participant_review = deprecate_field(
-        models.BooleanField(
-            default=False,
-            help_text=(
-                "If ticked, new participants need to be approved by project "
-                "admins before they can access restricted pages. If not ticked, "
-                "new users are allowed access immediately"
-            ),
-        )
     )
     access_request_handling = models.CharField(
         max_length=25,
