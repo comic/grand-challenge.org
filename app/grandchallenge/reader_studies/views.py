@@ -97,7 +97,6 @@ from grandchallenge.reader_studies.serializers import (
     ReaderStudySerializer,
 )
 from grandchallenge.reader_studies.tasks import (
-    add_images_to_reader_study,
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
@@ -693,10 +692,6 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
         kwargs.update(
             {
                 "user": self.request.user,
-                "linked_task": add_images_to_reader_study.signature(
-                    kwargs={"reader_study_pk": self.reader_study.pk},
-                    immutable=True,
-                ),
             }
         )
         return kwargs
