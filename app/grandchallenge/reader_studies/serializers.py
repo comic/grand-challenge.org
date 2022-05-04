@@ -134,7 +134,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     hanging_list_images = SerializerMethodField()
     help_text = ReadOnlyField()
-    case_text = ReadOnlyField(source="cleaned_case_text")
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
 
@@ -154,7 +153,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "title",
             "is_educational",
             "has_ground_truth",
-            "case_text",
             "allow_answer_modification",
             "allow_case_navigation",
             "allow_show_all_annotations",
