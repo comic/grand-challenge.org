@@ -28,9 +28,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_editor_update_form(client):
-    rs, _ = ReaderStudyFactory(use_display_sets=False), ReaderStudyFactory(
-        use_display_sets=False
-    )
+    rs, _ = ReaderStudyFactory(), ReaderStudyFactory()
 
     editor = UserFactory()
     rs.editors_group.user_set.add(editor)
@@ -72,9 +70,7 @@ def test_editor_update_form(client):
 
 @pytest.mark.django_db
 def test_reader_update_form(client):
-    rs, _ = ReaderStudyFactory(use_display_sets=False), ReaderStudyFactory(
-        use_display_sets=False
-    )
+    rs, _ = ReaderStudyFactory(), ReaderStudyFactory()
 
     editor = UserFactory()
     rs.editors_group.user_set.add(editor)
@@ -238,7 +234,7 @@ def test_question_create(client):
 
 @pytest.mark.django_db
 def test_question_update(client):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     editor = UserFactory()
     reader = UserFactory()
     rs.editors_group.user_set.add(editor)
@@ -630,7 +626,7 @@ def test_reader_study_copy(client, settings):
 
 @pytest.mark.django_db
 def test_reader_study_delete(client):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     editor = UserFactory()
     reader = UserFactory()
     rs.add_editor(editor)
@@ -682,7 +678,7 @@ def test_reader_study_add_ground_truth(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     q = QuestionFactory(
         reader_study=rs,
         question_text="bar",

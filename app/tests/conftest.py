@@ -588,7 +588,7 @@ def multiple_etdrs_annotations():
 
 @pytest.fixture
 def reader_study_with_gt():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
         QuestionFactory(

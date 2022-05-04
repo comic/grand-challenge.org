@@ -17,7 +17,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_example_ground_truth(client, tmpdir):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     reader, editor = UserFactory(), UserFactory()
     q1, q2, q3 = (
         QuestionFactory(
@@ -92,7 +92,7 @@ def test_example_ground_truth(client, tmpdir):
 
 @pytest.mark.django_db
 def test_answer_remove(client):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
     rs.add_reader(r1)
     rs.add_reader(r2)
@@ -139,7 +139,7 @@ def test_answer_remove(client):
 
 @pytest.mark.django_db
 def test_question_delete(client):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     r1, editor = UserFactory(), UserFactory()
     rs.add_reader(r1)
     rs.add_editor(editor)
@@ -176,7 +176,7 @@ def test_question_delete(client):
 
 @pytest.mark.django_db
 def test_question_delete_disabled_for_questions_with_answers(client):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     r1, editor = UserFactory(), UserFactory()
     rs.add_reader(r1)
     rs.add_editor(editor)
@@ -230,9 +230,11 @@ def test_question_delete_disabled_for_questions_with_answers(client):
 def test_reader_study_list_view_filter(client):
     user = UserFactory()
     rs1, rs2, pubrs = (
-        ReaderStudyFactory(use_display_sets=False),
-        ReaderStudyFactory(use_display_sets=False),
-        ReaderStudyFactory(public=True, use_display_sets=False),
+        ReaderStudyFactory(),
+        ReaderStudyFactory(),
+        ReaderStudyFactory(
+            public=True,
+        ),
     )
     rs1.add_reader(user)
 

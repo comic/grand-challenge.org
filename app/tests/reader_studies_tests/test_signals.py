@@ -92,7 +92,7 @@ def test_assign_score(settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     im = ImageFactory()
     q1 = QuestionFactory(reader_study=rs)
     q2 = QuestionFactory(
@@ -147,7 +147,7 @@ def test_assign_score(settings):
 
 @pytest.mark.django_db
 def test_assert_modification_allowed():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.BOOL
     )
@@ -267,7 +267,7 @@ def test_changing_reader_study_updates_permissions():
         ds.reader_study.readers_group: {"view_image"},
     }
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
 
     ds.reader_study = rs
 

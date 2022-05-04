@@ -18,7 +18,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_group_deletion():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -37,7 +37,7 @@ def test_group_deletion():
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ["readers_group", "editors_group"])
 def test_group_deletion_reverse(group):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -50,7 +50,7 @@ def test_group_deletion_reverse(group):
 
 @pytest.mark.django_db
 def test_read_only_fields():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     q = QuestionFactory(reader_study=rs)
 
     assert q.is_fully_editable is True
@@ -363,7 +363,6 @@ def test_score_for_user(reader_study_with_gt, settings):
 def test_help_markdown_is_scrubbed(client):
     rs = ReaderStudyFactory(
         help_text_markdown="<b>My Help Text</b><script>naughty</script>",
-        use_display_sets=False,
     )
     u = UserFactory()
     rs.add_reader(u)
@@ -384,7 +383,6 @@ def test_case_text_is_scrubbed(client):
             "not an image name": "Shouldn't appear in result",
             im1.name: "Doesn't belong to this study so ignore",
         },
-        use_display_sets=False,
     )
     rs.images.add(im)
     rs.add_reader(u)
@@ -407,7 +405,6 @@ def test_validate_answer():
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
         ],
-        use_display_sets=False,
     )
     rs.images.set([im1, im2, im3])
     rs.add_reader(u)
@@ -442,7 +439,6 @@ def test_validate_hanging_list():
             {"main": im1.name, "main-overlay": im3.name},
             {"main": im2.name, "main-overlay": im3.name},
         ],
-        use_display_sets=False,
     )
     rs.images.set([im1, im2, im3])
 
@@ -454,7 +450,7 @@ def test_validate_hanging_list():
 
 @pytest.mark.django_db
 def test_display_set_order():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     assert ds.order == 10
 

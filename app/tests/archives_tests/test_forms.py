@@ -334,9 +334,7 @@ def test_archive_items_to_reader_study_update_form(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
     archive = ArchiveFactory()
-    rs1, rs2 = ReaderStudyFactory(use_display_sets=True), ReaderStudyFactory(
-        use_display_sets=False
-    )
+    rs1, rs2 = ReaderStudyFactory(use_display_sets=True), ReaderStudyFactory()
 
     editor, reader = UserFactory(), UserFactory()
     archive.editors_group.user_set.add(editor)

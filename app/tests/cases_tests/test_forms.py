@@ -19,7 +19,7 @@ def test_upload_some_images(client: Client, challenge_set, settings):
     user = UserFactory()
 
     # Use reader studies as this uses UploadRawImagesForm
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.add_editor(user)
 
     response = get_view_for_user(

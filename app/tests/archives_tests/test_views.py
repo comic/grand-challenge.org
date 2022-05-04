@@ -465,7 +465,7 @@ def test_archive_items_to_reader_study_update(client, settings):
     settings.task_always_eager = (True,)
     archive = ArchiveFactory()
     rs1 = ReaderStudyFactory(use_display_sets=True)
-    rs2 = ReaderStudyFactory(use_display_sets=False)
+    rs2 = ReaderStudyFactory()
 
     editor, user = UserFactory(), UserFactory()
     archive.add_user(user)

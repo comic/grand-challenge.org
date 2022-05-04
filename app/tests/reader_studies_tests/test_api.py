@@ -35,9 +35,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_api_list_is_filtered(client):
-    rs1, rs2 = ReaderStudyFactory(use_display_sets=False), ReaderStudyFactory(
-        use_display_sets=False
-    )
+    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
     rs1_editor = UserFactory()
     rs1.add_editor(rs1_editor)
     q1, q2 = (
@@ -87,7 +85,7 @@ def test_api_list_is_filtered(client):
 def test_answer_create(client):
     im = ImageFactory()
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.images.add(im)
     rs.save()
 
@@ -145,7 +143,7 @@ def test_answer_create(client):
 def test_answer_create_display_set(client):
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.use_display_sets = True
 
     ds = DisplaySetFactory(reader_study=rs)
@@ -185,7 +183,7 @@ def test_answer_create_display_set(client):
 def test_answer_update_display_sets(client):
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.use_display_sets = True
 
     ds = DisplaySetFactory(reader_study=rs)
@@ -302,7 +300,7 @@ def test_answer_update_display_sets(client):
 def test_answer_update(client):
     im1, im2 = ImageFactory(), ImageFactory()
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.images.add(im1, im2)
     rs.save()
 
@@ -829,7 +827,7 @@ def test_answer_creator_is_reader(client):
 def test_answer_is_correct_type(client, answer_type, answer, expected):
     im = ImageFactory()
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.images.add(im)
     rs.save()
 
@@ -855,7 +853,7 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 )
 def test_only_non_required_can_be_null(client, answer_type):
     im = ImageFactory()
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.images.add(im)
     rs.save()
     reader = UserFactory()
@@ -893,9 +891,7 @@ def test_only_non_required_can_be_null(client, answer_type):
 @pytest.mark.django_db
 def test_mine(client):
     im1, im2 = ImageFactory(), ImageFactory()
-    rs1, rs2 = ReaderStudyFactory(use_display_sets=False), ReaderStudyFactory(
-        use_display_sets=False
-    )
+    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
     rs1.images.add(im1)
     rs2.images.add(im2)
 
@@ -954,7 +950,7 @@ def test_mine(client):
 @pytest.mark.django_db
 def test_ground_truth_is_excluded(client):
     im = ImageFactory()
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.images.add(im)
 
     editor = UserFactory()
@@ -1029,7 +1025,7 @@ def test_ground_truth_is_excluded(client):
 def test_csv_export(client, answer_type, answer):
     im = ImageFactory()
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     rs.images.add(im)
     rs.save()
 
@@ -1109,7 +1105,9 @@ def test_csv_export(client, answer_type, answer):
 
 @pytest.mark.django_db
 def test_ground_truth(client):
-    rs = ReaderStudyFactory(is_educational=True, use_display_sets=False)
+    rs = ReaderStudyFactory(
+        is_educational=True,
+    )
     reader = UserFactory()
     rs.add_reader(reader)
 
@@ -1185,7 +1183,7 @@ def test_ground_truth(client):
 def test_assign_answer_image(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     im = ImageFactory()
     editor, reader = UserFactory(), UserFactory()
 
@@ -1247,7 +1245,7 @@ def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     im = ImageFactory()
     editor, reader = UserFactory(), UserFactory()
 
@@ -1280,7 +1278,7 @@ def test_question_accepts_image_type_answers(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     im = ImageFactory()
     reader = UserFactory()
 
@@ -1759,7 +1757,7 @@ def test_display_set_index(client):
 
 @pytest.mark.django_db
 def test_display_set_delete(client):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     reader, editor = UserFactory(), UserFactory()
     rs.add_reader(reader)
     rs.add_editor(editor)
