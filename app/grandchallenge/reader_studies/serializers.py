@@ -31,10 +31,7 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
-from grandchallenge.reader_studies.tasks import (
-    add_scores,
-    add_scores_for_display_set,
-)
+from grandchallenge.reader_studies.tasks import add_scores_for_display_set
 
 
 class CategoricalOptionSerializer(ModelSerializer):
@@ -215,35 +212,21 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                     "Only the answer and last_edit_duration field can be modified."
                 )
             question = self.instance.question
-            images = self.instance.images.all()
             display_set = self.instance.display_set
             creator = self.instance.creator
         else:
             question = attrs.get("question")
-            images = attrs.get("images")
             display_set = attrs.get("display_set")
             creator = self.context.get("request").user
         Answer.validate(
             creator=creator,
             question=question,
             answer=answer,
-            images=images,
             display_set=display_set,
             instance=self.instance,
         )
 
         if self.instance:
-            if images is not None and images.count() > 0:
-                on_commit(
-                    lambda: add_scores.apply_async(
-                        kwargs={
-                            "instance_pk": str(self.instance.pk),
-                            "pk_set": list(
-                                map(str, images.values_list("pk", flat=True))
-                            ),
-                        }
-                    )
-                )
             if display_set is not None:
                 on_commit(
                     lambda: add_scores_for_display_set.apply_async(

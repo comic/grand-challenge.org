@@ -14,6 +14,7 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
@@ -200,8 +201,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         editable=False,
         related_name="readers_of_readerstudy",
     )
-    images = models.ManyToManyField(
-        "cases.Image", related_name="readerstudies"
+    images = deprecate_field(
+        models.ManyToManyField("cases.Image", related_name="readerstudies")
     )
 
     workstation = models.ForeignKey(
@@ -250,10 +251,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     # A hanging_list is a list of dictionaries where the keys are the
     # view names, and the values are the filenames to place there.
-    hanging_list = models.JSONField(
-        default=list,
-        blank=True,
-        validators=[JSONValidator(schema=HANGING_LIST_SCHEMA)],
+    hanging_list = deprecate_field(
+        models.JSONField(
+            default=list,
+            blank=True,
+            validators=[JSONValidator(schema=HANGING_LIST_SCHEMA)],
+        )
     )
     shuffle_hanging_list = models.BooleanField(default=False)
     is_educational = models.BooleanField(
@@ -301,7 +304,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             "whereas case 3 starts anew but its answers will rollover to case 4."
         ),
     )
-    validate_hanging_list = models.BooleanField(default=True)
+    validate_hanging_list = deprecate_field(models.BooleanField(default=True))
     publications = models.ManyToManyField(
         Publication,
         blank=True,
@@ -323,7 +326,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
-    use_display_sets = models.BooleanField(default=True, editable=False)
+    use_display_sets = deprecate_field(
+        models.BooleanField(default=True, editable=False)
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -1295,7 +1300,9 @@ class Answer(UUIDModel):
 
     creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
-    images = models.ManyToManyField("cases.Image", related_name="answers")
+    images = deprecate_field(
+        models.ManyToManyField("cases.Image", related_name="answers")
+    )
     display_set = models.ForeignKey(
         DisplaySet, related_name="answers", on_delete=models.PROTECT, null=True
     )
@@ -1381,7 +1388,6 @@ class Answer(UUIDModel):
         creator,
         question,
         answer,
-        images=None,
         display_set=None,
         is_ground_truth=False,
         instance=None,
@@ -1398,50 +1404,18 @@ class Answer(UUIDModel):
                 f"{type(answer)} found."
             )
 
-        if (images is None or len(images) == 0) and display_set is None:
+        if display_set is None:
             raise ValidationError(
-                "You must specify the images or display sey that this answer "
+                "You must specify display sey that this answer "
                 "corresponds to."
             )
-        if images is not None and len(images) > 0 and display_set is not None:
-            raise ValidationError(
-                "You can only specify one of these two field: images, display_set."
-            )
-        if images is not None:
-            reader_study_images = question.reader_study.images.all()
-            for im in images:
-                if im not in reader_study_images:
-                    raise ValidationError(
-                        f"Image {im} does not belong to this reader study."
-                    )
 
-        if display_set is not None:
-            if display_set.reader_study != question.reader_study:
-                raise ValidationError(
-                    f"Display set {display_set} does not belong to this reader study."
-                )
+        if display_set.reader_study != question.reader_study:
+            raise ValidationError(
+                f"Display set {display_set} does not belong to this reader study."
+            )
         if not is_ground_truth:
             if (
-                images is not None
-                and len(images) > 0
-                and (
-                    Answer.objects.exclude(pk=getattr(instance, "pk", None))
-                    .filter(
-                        creator=creator,
-                        question=question,
-                        is_ground_truth=False,
-                        images__in=images,
-                    )
-                    .annotate(count_images=Count("images", distinct=True))
-                    .filter(count_images=len(images))
-                    .exists()
-                )
-            ):
-                raise ValidationError(
-                    f"User {creator} has already answered this question "
-                    f"for this set of images."
-                )
-            if display_set is not None and (
                 Answer.objects.exclude(pk=getattr(instance, "pk", None))
                 .filter(
                     creator=creator,

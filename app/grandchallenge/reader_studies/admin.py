@@ -26,7 +26,6 @@ class ReaderStudyAdmin(GuardedModelAdmin):
         "is_educational",
         "allow_answer_modification",
         "allow_case_navigation",
-        "validate_hanging_list",
     )
     search_fields = ("title", "slug", "pk")
 

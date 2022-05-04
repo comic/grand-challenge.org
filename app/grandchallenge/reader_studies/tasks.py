@@ -105,14 +105,6 @@ def create_display_sets_for_upload_session(
 
 
 @shared_task
-def add_images_to_reader_study(*, upload_session_pk, reader_study_pk):
-    images = Image.objects.filter(origin_id=upload_session_pk)
-    reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
-
-    reader_study.images.add(*images.all())
-
-
-@shared_task
 def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
