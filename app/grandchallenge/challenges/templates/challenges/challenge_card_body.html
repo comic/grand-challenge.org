@@ -3,6 +3,12 @@
 {% load humanize %}
 
 <div>
+    {% if challenge.type == 2 %}
+{#        <div class="bg-dark text-center mt-1 p-2 text-white w-100"> <i class="fa fa-sm fa-code mr-1"></i> Algorithm submission </div>#}
+        <div class="ribbon bg-dark text-white py-1 px-2 above-stretched-link text-wrap" data-toggle="tooltip" data-placement="top">Algorithm submission</div><br>
+        <div class="ribbon-2 bg-dark text-success" style="z-index: -1" data-toggle="tooltip" data-placement="top"> xxx </div>
+{#    </div>#}
+    {% endif %}
     {% if challenge.is_self_hosted %}
         <span class="badge {% if challenge.status.name == 'OPEN' %}badge-success {% elif challenge.status.name == 'OPENING_SOON' %} badge-warning {% else %} badge-danger {% endif %}mt-2 above-stretched-link text-wrap" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.status_badge_string }}</span><br>
     {% endif %}
