@@ -2,19 +2,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from grandchallenge.publications.models import Publication
-from grandchallenge.publications.utils import (
-    get_identifier_csl,
-    identifier_validator,
-)
+from grandchallenge.publications.utils import get_identifier_csl
 
 
 class PublicationForm(forms.ModelForm):
-    def clean_identifier(self):
-        identifier = self.cleaned_data["identifier"]
-        identifier = identifier.lower()
-        identifier_validator(identifier)
-        return identifier
-
     def clean(self):
         self.cleaned_data = super().clean()
 

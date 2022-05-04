@@ -3,6 +3,7 @@ import re
 import requests
 from django.core.validators import RegexValidator
 from django.db import models
+from django.forms import CharField
 
 from grandchallenge.publications.utils.manubot import get_arxiv_csl
 
@@ -39,6 +40,15 @@ class IdentifierField(models.CharField):
         del kwargs["help_text"]
         del kwargs["validators"]
         return name, path, args, kwargs
+
+    def formfield(self, **kwargs):
+        defaults = {"form_class": IdentifierFormField}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)
+
+
+class IdentifierFormField(CharField):
+    default_validators = [identifier_validator]
 
 
 def get_publication_type(*, identifier: str) -> PublicationType:
