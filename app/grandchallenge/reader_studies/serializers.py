@@ -158,9 +158,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
 
     def get_hanging_list_images(self, obj: ReaderStudy):
         """Used by hanging_list_images serializer field."""
-        return obj.get_hanging_list_images_for_user(
-            user=self.context["request"].user
-        )
+        return []
 
 
 class AnswerSerializer(HyperlinkedModelSerializer):

@@ -14,7 +14,7 @@ def test_create_display_sets_for_upload_session():
     image = ImageFactory()
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
 
-    assert rs.images.count() == 0
+    assert rs.display_sets.count() == 0
 
     create_display_sets_for_upload_session(
         upload_session_pk=image.origin.pk,

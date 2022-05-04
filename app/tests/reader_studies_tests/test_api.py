@@ -83,35 +83,14 @@ def test_api_list_is_filtered(client):
 
 @pytest.mark.django_db
 def test_answer_create(client):
-    im = ImageFactory()
-
     rs = ReaderStudyFactory()
-    rs.images.add(im)
+    im = ImageFactory()
     rs.save()
 
     reader = UserFactory()
     rs.add_reader(reader)
 
     q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-list",
-        user=reader,
-        client=client,
-        method=client.post,
-        data={"answer": True, "images": [im.api_url], "question": q.api_url},
-        content_type="application/json",
-    )
-
-    assert response.status_code == 201
-
-    answer = Answer.objects.get(pk=response.data.get("pk"))
-
-    assert answer.creator == reader
-    assert answer.images.count() == 1
-    assert answer.images.all()[0] == im
-    assert answer.question == q
-    assert answer.answer is True
 
     civ = ComponentInterfaceValueFactory(image=im)
     ds = DisplaySetFactory(reader_study=rs)
@@ -144,7 +123,6 @@ def test_answer_create_display_set(client):
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
     rs = ReaderStudyFactory()
-    rs.use_display_sets = True
 
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ)
@@ -184,7 +162,6 @@ def test_answer_update_display_sets(client):
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
     rs = ReaderStudyFactory()
-    rs.use_display_sets = True
 
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ)
@@ -297,119 +274,9 @@ def test_answer_update_display_sets(client):
 
 
 @pytest.mark.django_db
-def test_answer_update(client):
-    im1, im2 = ImageFactory(), ImageFactory()
-
-    rs = ReaderStudyFactory()
-    rs.images.add(im1, im2)
-    rs.save()
-
-    reader = UserFactory()
-    rs.add_reader(reader)
-
-    editor = UserFactory()
-    rs.add_editor(editor)
-
-    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-list",
-        user=reader,
-        client=client,
-        method=client.post,
-        data={"answer": True, "images": [im1.api_url], "question": q.api_url},
-        content_type="application/json",
-    )
-    assert response.status_code == 201
-
-    answer = Answer.objects.get(pk=response.data.get("pk"))
-    assert answer.answer is True
-    assert answer.images.first() == im1
-    assert answer.history.count() == 1
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-detail",
-        reverse_kwargs={"pk": answer.pk},
-        user=reader,
-        client=client,
-        method=client.patch,
-        data={"answer": False, "images": [im2.api_url]},
-        content_type="application/json",
-    )
-    assert response.status_code == 400
-
-    answer.refresh_from_db()
-    assert response.json() == {
-        "non_field_errors": [
-            "This reader study does not allow answer modification."
-        ]
-    }
-    assert answer.answer is True
-    assert answer.images.first() == im1
-    assert answer.history.count() == 1
-
-    rs.allow_answer_modification = True
-    rs.save()
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-detail",
-        reverse_kwargs={"pk": answer.pk},
-        user=reader,
-        client=client,
-        method=client.patch,
-        data={"answer": False, "images": [im2.api_url]},
-        content_type="application/json",
-    )
-    assert response.status_code == 400
-
-    answer.refresh_from_db()
-    assert response.json() == {
-        "non_field_errors": [
-            "Only the answer and last_edit_duration field can be modified."
-        ]
-    }
-    assert answer.answer is True
-    assert answer.images.first() == im1
-    assert answer.history.count() == 1
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-detail",
-        reverse_kwargs={"pk": answer.pk},
-        user=reader,
-        client=client,
-        method=client.patch,
-        data={"answer": False},
-        content_type="application/json",
-    )
-    assert response.status_code == 200
-
-    answer.refresh_from_db()
-    assert answer.answer is False
-    assert answer.images.first() == im1
-    assert answer.history.count() == 2
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-detail",
-        reverse_kwargs={"pk": answer.pk},
-        user=editor,
-        client=client,
-        method=client.patch,
-        data={"answer": False},
-        content_type="application/json",
-    )
-    assert response.status_code == 403
-
-    answer.refresh_from_db()
-    assert answer.answer is False
-    assert answer.history.count() == 2
-
-
-@pytest.mark.django_db
 def test_answer_creator_is_reader(client):
     rs_set = TwoReaderStudies()
-
-    im = ImageFactory()
-    rs_set.rs1.images.add(im)
+    ds = DisplaySetFactory(reader_study=rs_set.rs1)
 
     q = QuestionFactory(
         reader_study=rs_set.rs1, answer_type=Question.AnswerType.BOOL
@@ -431,7 +298,7 @@ def test_answer_creator_is_reader(client):
             method=client.post,
             data={
                 "answer": True,
-                "images": [im.api_url],
+                "display_set": ds.api_url,
                 "question": q.api_url,
             },
             content_type="application/json",
@@ -825,11 +692,8 @@ def test_answer_creator_is_reader(client):
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):
-    im = ImageFactory()
-
     rs = ReaderStudyFactory()
-    rs.images.add(im)
-    rs.save()
+    ds = DisplaySetFactory(reader_study=rs)
 
     reader = UserFactory()
     rs.add_reader(reader)
@@ -841,7 +705,11 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
         user=reader,
         client=client,
         method=client.post,
-        data={"answer": answer, "images": [im.api_url], "question": q.api_url},
+        data={
+            "answer": answer,
+            "display_set": ds.api_url,
+            "question": q.api_url,
+        },
         content_type="application/json",
     )
     assert response.status_code == expected
@@ -852,10 +720,8 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
     "answer_type", (Question.AnswerType.CHOICE, Question.AnswerType.NUMBER)
 )
 def test_only_non_required_can_be_null(client, answer_type):
-    im = ImageFactory()
     rs = ReaderStudyFactory()
-    rs.images.add(im)
-    rs.save()
+    ds = DisplaySetFactory(reader_study=rs)
     reader = UserFactory()
     rs.add_reader(reader)
 
@@ -868,7 +734,11 @@ def test_only_non_required_can_be_null(client, answer_type):
         user=reader,
         client=client,
         method=client.post,
-        data={"answer": None, "images": [im.api_url], "question": q.api_url},
+        data={
+            "answer": None,
+            "display_set": ds.api_url,
+            "question": q.api_url,
+        },
         content_type="application/json",
     )
     assert response.status_code == 400
@@ -882,7 +752,11 @@ def test_only_non_required_can_be_null(client, answer_type):
         user=reader,
         client=client,
         method=client.post,
-        data={"answer": None, "images": [im.api_url], "question": q.api_url},
+        data={
+            "answer": None,
+            "display_set": ds.api_url,
+            "question": q.api_url,
+        },
         content_type="application/json",
     )
     assert response.status_code == 201
@@ -890,10 +764,9 @@ def test_only_non_required_can_be_null(client, answer_type):
 
 @pytest.mark.django_db
 def test_mine(client):
-    im1, im2 = ImageFactory(), ImageFactory()
     rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
-    rs1.images.add(im1)
-    rs2.images.add(im2)
+    ds1 = DisplaySetFactory(reader_study=rs1)
+    ds2 = DisplaySetFactory(reader_study=rs2)
 
     reader = UserFactory()
     rs1.add_reader(reader)
@@ -906,11 +779,13 @@ def test_mine(client):
         reader_study=rs2, answer_type=Question.AnswerType.BOOL
     )
 
-    a1 = AnswerFactory(question=q1, creator=reader, answer=True)
-    a1.images.add(im1)
+    a1 = AnswerFactory(
+        question=q1, creator=reader, answer=True, display_set=ds1
+    )
 
-    a2 = AnswerFactory(question=q2, creator=reader, answer=True)
-    a2.images.add(im2)
+    a2 = AnswerFactory(
+        question=q2, creator=reader, answer=True, display_set=ds2
+    )
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-mine",
@@ -949,25 +824,29 @@ def test_mine(client):
 
 @pytest.mark.django_db
 def test_ground_truth_is_excluded(client):
-    im = ImageFactory()
     rs = ReaderStudyFactory()
-    rs.images.add(im)
-
+    ds = DisplaySetFactory(reader_study=rs)
     editor = UserFactory()
     rs.add_editor(editor)
     rs.add_reader(editor)
 
     q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
 
-    a1 = AnswerFactory(
-        question=q, creator=editor, answer=True, is_ground_truth=True
+    AnswerFactory(
+        question=q,
+        creator=editor,
+        answer=True,
+        is_ground_truth=True,
+        display_set=ds,
     )
-    a1.images.add(im)
 
     a2 = AnswerFactory(
-        question=q, creator=editor, answer=True, is_ground_truth=False
+        question=q,
+        creator=editor,
+        answer=True,
+        is_ground_truth=False,
+        display_set=ds,
     )
-    a2.images.add(im)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-mine",

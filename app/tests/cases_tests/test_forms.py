@@ -3,6 +3,7 @@ from django.test import Client
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
@@ -24,13 +25,13 @@ def test_upload_some_images(client: Client, challenge_set, settings):
 
     response = get_view_for_user(
         client=client,
-        viewname="reader-studies:add-images",
+        viewname="reader-studies:add-displaysets",
         user=user,
         reverse_kwargs={"slug": rs.slug},
     )
     assert response.status_code == 200
 
-    assert rs.images.count() == 0
+    assert rs.display_sets.count() == 0
     assert RawImageUploadSession.objects.count() == 0
 
     user_upload = create_upload_from_file(
@@ -39,16 +40,19 @@ def test_upload_some_images(client: Client, challenge_set, settings):
 
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
-            data={"user_uploads": [user_upload.pk]},
+            data={
+                "user_uploads": [user_upload.pk],
+                "interface": ComponentInterface.objects.get().pk,
+            },
             client=client,
-            viewname="reader-studies:add-images",
+            viewname="reader-studies:add-displaysets",
             user=user,
             reverse_kwargs={"slug": rs.slug},
             method=client.post,
         )
 
     assert response.status_code == 302
-    assert rs.images.count() == 1
+    assert rs.display_sets.count() == 1
     sessions = RawImageUploadSession.objects.all()
     assert len(sessions) == 1
 

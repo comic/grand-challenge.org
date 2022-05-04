@@ -251,7 +251,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                         self.request.user
                     ),
                     "answerable_questions": self.object.answerable_question_count
-                    * len(self.object.hanging_list),
+                    * self.object.display_sets.count(),
                 }
             )
 
@@ -270,7 +270,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 ).count(),
                 limit,
             ),
-            "image_offsets": range(0, self.object.images.count(), limit),
+            "image_offsets": range(0, self.object.display_sets.count(), limit),
         }
 
 

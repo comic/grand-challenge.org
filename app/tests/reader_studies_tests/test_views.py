@@ -37,15 +37,9 @@ def test_example_ground_truth(client, tmpdir):
         ),
     )
     CategoricalOptionFactory(question=q2, title="option")
-    im1, im2, im3 = (ImageFactory(), ImageFactory(), ImageFactory())
-    rs.images.set([im1, im2, im3])
+    ds = DisplaySetFactory.create_batch(3, reader_study=rs)
     rs.add_reader(reader)
     rs.add_editor(editor)
-    rs.hanging_list = [
-        {"main": im1.name},
-        {"main": im2.name},
-        {"main": im3.name},
-    ]
     rs.save()
 
     response = get_view_for_user(
@@ -82,11 +76,14 @@ def test_example_ground_truth(client, tmpdir):
         user=editor,
     )
     assert response.status_code == 200
-    assert Answer.objects.count() == rs.images.count() * rs.questions.count()
-    for image in [im1, im2, im3]:
+    assert (
+        Answer.objects.count()
+        == rs.display_sets.count() * rs.questions.count()
+    )
+    for ds in rs.display_sets.all():
         for question in [q1, q2, q3]:
             assert Answer.objects.filter(
-                images=image, question=question, is_ground_truth=True
+                display_set=ds, question=question, is_ground_truth=True
             ).exists()
 
 
@@ -102,11 +99,9 @@ def test_answer_remove(client):
         question_text="q1",
         answer_type=Question.AnswerType.BOOL,
     )
-    im = ImageFactory()
-    a1 = AnswerFactory(creator=r1, question=q, answer=True)
-    a1.images.set([im])
-    a2 = AnswerFactory(creator=r2, question=q, answer=True)
-    a2.images.set([im])
+    ds = DisplaySetFactory(reader_study=rs)
+    AnswerFactory(creator=r1, question=q, answer=True, display_set=ds)
+    AnswerFactory(creator=r2, question=q, answer=True, display_set=ds)
     assert Answer.objects.count() == 2
 
     response = get_view_for_user(

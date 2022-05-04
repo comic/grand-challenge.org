@@ -18,7 +18,6 @@ from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
-from numpy.random.mtrand import RandomState
 from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
 from stdimage import JPEGField
@@ -559,32 +558,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @property
     def is_valid(self):
-        """
-        Returns ``True`` if the hanging list is valid and there are no
-        duplicate image names in this ``ReaderStudy`` and ``False`` otherwise.
-        """
-        return (
-            self.hanging_list_valid
-            and len(self.non_unique_study_image_names) == 0
-        )
-
-    @property
-    def hanging_list_images(self):
-        """
-        Substitutes the image name for the image detail api url for each image
-        defined in the hanging list.
-        """
-        if not self.is_valid:
-            return None
-
-        study_images = {im.name: im.api_url for im in self.images.all()}
-
-        hanging_list_images = [
-            {view: study_images.get(name) for view, name in hanging.items()}
-            for hanging in self.hanging_list
-        ]
-
-        return hanging_list_images
+        """Deprecated."""
+        return True
 
     @property
     def image_groups(self):
@@ -625,7 +600,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         answers = []
         for gt in data:
             display_set = self.display_sets.get(pk=gt[self.case_field])
-            images = []
             for key in gt.keys():
                 if key == self.case_field or key.endswith("__explanation"):
                     continue
@@ -679,7 +653,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                         ),
                         "answer": _answer,
                         "explanation": explanation,
-                        "images": images,
                         "display_set": display_set,
                     }
                 )
@@ -688,27 +661,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             answer["answer_obj"].answer = answer["answer"]
             answer["answer_obj"].explanation = answer["explanation"]
             answer["answer_obj"].save()
-            answer["answer_obj"].images.set(answer["images"])
             answer["answer_obj"].display_set = answer["display_set"]
             answer["answer_obj"].save()
-
-    def get_hanging_list_images_for_user(self, *, user):
-        """
-        Returns a shuffled list of the hanging list images for a particular
-        user.
-
-        The shuffle is seeded with the users pk, and using ``RandomState``
-        from numpy guarantees that the ordering will be consistent across
-        python/library versions. Returns the normal list if
-        ``shuffle_hanging_list`` is ``False``.
-        """
-        hanging_list = self.hanging_list_images
-
-        if self.shuffle_hanging_list and hanging_list is not None:
-            # In place shuffle
-            RandomState(seed=int(user.pk)).shuffle(hanging_list)
-
-        return hanging_list
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
@@ -1406,7 +1360,7 @@ class Answer(UUIDModel):
 
         if display_set is None:
             raise ValidationError(
-                "You must specify display sey that this answer "
+                "You must specify display set that this answer "
                 "corresponds to."
             )
 
