@@ -41,22 +41,26 @@ RUN mkdir -p /opt/git-lfs \
     && rm -r /opt/git-lfs
 
 ENV PYTHONUNBUFFERED=1\
-    AWS_XRAY_SDK_ENABLED=false
+    AWS_XRAY_SDK_ENABLED=false\
+    PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
 RUN mkdir -p /opt/poetry /app /static /opt/static \
-    && python -m pip install -U pip \
-    && python -m pip install -U poetry \
     && groupadd -r django && useradd -m -r -g django django \
     && chown django:django /opt/poetry /app /static /opt/static
 
-# Install base python packages
-COPY poetry.toml /opt/poetry
-COPY pyproject.toml /opt/poetry
-COPY poetry.lock /opt/poetry
+USER django:django
 
 WORKDIR /opt/poetry
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-root
+
+# Install base python packages
+COPY --chown=django:django poetry.toml /opt/poetry
+COPY --chown=django:django pyproject.toml /opt/poetry
+COPY --chown=django:django poetry.lock /opt/poetry
+
+RUN python -m pip install -U pip \
+    && python -m pip install -U poetry \
+    && poetry config virtualenvs.in-project true \
+    && poetry install --no-interaction --no-ansi --no-root --no-dev
 
 ##################
 # TEST CONTAINER #
@@ -64,5 +68,8 @@ RUN poetry config virtualenvs.create false \
 FROM base as test-base
 
 # Add java and graphviz for plantuml documentation
+USER root
 RUN apt-get update && apt-get install -y default-jre graphviz
-RUN poetry install --no-root
+USER django:django
+
+RUN poetry install --no-interaction --no-ansi --no-root

@@ -120,3 +120,20 @@ sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
 sphinxcontrib-django = "*"
 django-capture-on-commit-callbacks = "*"  # Backport from Django 4.0, can be removed
+amass = "^0.1.3"
+
+[tool.amass]
+output = "app/grandchallenge/core/static/vendored"
+
+[tool.amass.dependencies]
+htmx = { version = "==1.7.0", include = ["htmx(.min)?.js"] }
+"moment.js" = { version = "==2.24.0", include = ["moment(.min)?.js"] }
+vega = { version = "==5.20.2", include = ["vega(.min)?.js"] }
+vega-lite = { version = "==5.1.0", include = ["vega-lite(.min)?.js$"] }
+vega-embed = { version = "==6.17.0", include = ["vega-embed(.min)?.js$"] }
+openseadragon = { version = "==2.4.1", include = ["openseadragon(.min)?.js$", "images/*"] }
+jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js", "jsoneditor(.min)?.css", "img/*"] }
+mathjax = { version = "==2.7.5", include = ["MathJax(.min)?.js", "config/Safe(.min)?.js", "extensions/Safe(.min)?.js", "extensions/MathMenu(.min)?.js", "extensions/MathZoom(.min)?.js", "config/TeX-MML-AM_CHTML(.min)?.js", "jax/output/CommonHTML/jax(.min)?.js", "jax/output/CommonHTML/fonts/TeX/fontdata(.min)?.js", "fonts/HTML-CSS/TeX/woff/*"] }
+"sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js"] }
+"hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js$"] }
+uppy = { version = "==2.2.0", include = ["uppy(.min)?.css$", "uppy(.min)?.js$"] }

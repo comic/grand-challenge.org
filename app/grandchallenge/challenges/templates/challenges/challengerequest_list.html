@@ -20,21 +20,21 @@
             <thead class="thead-light">
             <tr>
                 <th></th>
-                <th class="text-center">Title</th>
+                <th class="text-center">Acronym</th>
                 <th class="text-center">Creator</th>
-                <th class="text-center">Challenge type</th>
+                <th class="text-center">Type</th>
                 <th class="text-center">Submission date</th>
                 <th class="text-center">Status</th>
-                <th class="text-center">Contact requester</th>
+                <th class="text-center">Contact</th>
             </tr>
             </thead>
             <tbody>
                 {% for object in page_obj %}
                     <tr>
-                        <td class="text-center">
+                        <td class="text-center align-middle">
                             <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}"><i class="fa fa-search"></i></a>
                         </td>
-                        <td class="text-center align-middle">{{ object.title }}</td>
+                        <td class="text-center align-middle">{{ object.short_name }}</td>
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
                         <td class="text-center align-middle">{{ object.challenge_type }}</td>
                         <td class="text-center align-middle"><span class="badge p-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created|date:'F j, Y' }}</span></td>
@@ -44,9 +44,9 @@
                             {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
                                 <span class="badge p-2 badge-danger">Rejected</span>
                             {% else %}
-                                <a class="btn btn-primary btn-sm" href="{% url 'challenges:requests-update' pk=object.pk %}">Accept or decline</a>
+                                <a class="btn btn-primary btn-sm" hx-get="{% url 'challenges:requests-status-update' pk=object.pk %}" hx-swap="outerHTML">Accept or decline</a>
                             {% endif %}</td>
-                        <td class="text-center"><a class="btn btn-primary btn-sm" href="mailto:{{ object.contact_email }}"><i class="fa fa-envelope"></i> &nbsp;Contact Requester</a></td>
+                        <td class="text-center align-middle"><a href="mailto:{{ object.contact_email }}"> {{ object.contact_email }}</a></td>
                     </tr>
                 {% endfor %}
             </tbody>

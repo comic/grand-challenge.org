@@ -42,7 +42,10 @@ class ChallengeRequestAdmin(ModelAdmin):
 
     @admin.display(description="Total cost")
     def total_cost(self, obj):
-        return "%s" % (obj.budget["Total"])
+        if obj.budget:
+            return obj.budget.get("Total")
+        else:
+            return None
 
     @admin.action(description="Create challenge for this request")
     def create_challenge(self, request, queryset):

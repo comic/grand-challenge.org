@@ -53,7 +53,11 @@ class Page(models.Model):
         default=False, help_text="Do not display this page in site menu"
     )
     html = models.TextField(blank=True, default="")
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=[
+            "slug",
+        ]
+    )
 
     def __str__(self):
         if self.display_title:

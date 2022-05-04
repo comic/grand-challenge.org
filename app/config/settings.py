@@ -2,7 +2,6 @@ import os
 import re
 from base64 import b64decode
 from datetime import datetime, timedelta
-from distutils.util import strtobool as strtobool_i
 from itertools import product
 from pathlib import Path
 from tempfile import mkdtemp
@@ -20,13 +19,8 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.components.exceptions import PriorStepFailed
+from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.markdown import BS4Extension
-
-
-def strtobool(val) -> bool:
-    """Return disutils.util.strtobool as a boolean."""
-    return bool(strtobool_i(val))
-
 
 MEGABYTE = 1024 * 1024
 GIGABYTE = 1024 * MEGABYTE
@@ -853,7 +847,6 @@ REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
     rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
-    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}.static.observableusercontent.com$",
 ]
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api
@@ -1146,10 +1139,6 @@ CELERY_BEAT_SCHEDULE = {
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": timedelta(minutes=5),
-    },
-    "validate_external_challenges": {
-        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
-        "schedule": timedelta(days=1),
     },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",

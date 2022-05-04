@@ -1,21 +1,17 @@
 import logging
 from datetime import timedelta
-from urllib.parse import parse_qs, urljoin, urlparse
 
 from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.core.validators import (
-    MaxValueValidator,
-    MinValueValidator,
-    RegexValidator,
-)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -95,11 +91,6 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
-
-OBSERVABLE_URL_VALIDATOR = RegexValidator(
-    r"^https\:\/\/observablehq\.com\/embed\/\@[^\/]+\/[^\?\.]+\?cell\=.*$",
-    "URL must be of the form https://observablehq.com/embed/@user/notebook?cell=*",
-)
 
 
 class Phase(UUIDModel):
@@ -386,26 +377,27 @@ class Phase(UUIDModel):
             "Should all of the metrics be displayed on the Result detail page?"
         ),
     )
-
-    evaluation_detail_observable_url = models.URLField(
-        blank=True,
-        validators=[OBSERVABLE_URL_VALIDATOR],
-        max_length=2000,
-        help_text=(
-            "The URL of the embeddable observable notebook for viewing "
-            "individual results. Must be of the form "
-            "https://observablehq.com/embed/@user/notebook?cell=..."
-        ),
+    evaluation_detail_observable_url = deprecate_field(
+        models.URLField(
+            blank=True,
+            max_length=2000,
+            help_text=(
+                "The URL of the embeddable observable notebook for viewing "
+                "individual results. Must be of the form "
+                "https://observablehq.com/embed/@user/notebook?cell=..."
+            ),
+        )
     )
-    evaluation_comparison_observable_url = models.URLField(
-        blank=True,
-        validators=[OBSERVABLE_URL_VALIDATOR],
-        max_length=2000,
-        help_text=(
-            "The URL of the embeddable observable notebook for comparing"
-            "results. Must be of the form "
-            "https://observablehq.com/embed/@user/notebook?cell=..."
-        ),
+    evaluation_comparison_observable_url = deprecate_field(
+        models.URLField(
+            blank=True,
+            max_length=2000,
+            help_text=(
+                "The URL of the embeddable observable notebook for comparing"
+                "results. Must be of the form "
+                "https://observablehq.com/embed/@user/notebook?cell=..."
+            ),
+        )
     )
 
     inputs = models.ManyToManyField(
@@ -554,48 +546,6 @@ class Phase(UUIDModel):
             "pages:home",
             kwargs={"challenge_short_name": self.challenge.short_name},
         )
-
-    def get_observable_url(self, view_kind, url_kind):
-        if view_kind == "detail":
-            url = self.evaluation_detail_observable_url
-        elif view_kind == "comparison":
-            url = self.evaluation_comparison_observable_url
-        else:
-            raise ValueError("View or notebook not found")
-
-        if not url:
-            return "", []
-
-        parsed_url = urlparse(url)
-        cells = parse_qs(parsed_url.query)["cell"]
-        url = f"{urljoin(url, parsed_url.path)}"
-
-        if url_kind == "js":
-            url = url.replace(
-                "https://observablehq.com/embed/",
-                "https://api.observablehq.com/",
-            )
-            url += ".js?v=3"
-        elif url_kind == "edit":
-            url = url.replace(
-                "https://observablehq.com/embed/", "https://observablehq.com/"
-            )
-        else:
-            raise ValueError("URL kind must be one of edit or js")
-
-        return url, cells
-
-    @property
-    def observable_detail_edit_url(self):
-        url, _ = self.get_observable_url(view_kind="detail", url_kind="edit")
-        return url
-
-    @property
-    def observable_comparison_edit_url(self):
-        url, _ = self.get_observable_url(
-            view_kind="comparison", url_kind="edit"
-        )
-        return url
 
     @property
     def submission_limit_period_timedelta(self):

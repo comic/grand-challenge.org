@@ -40,6 +40,15 @@ def get_publication_type(*, identifier: str) -> PublicationType:
         )
 
 
+def get_publication_url(*, identifier: str, pub_type: PublicationType):
+    if pub_type == PublicationType.ARXIV:
+        return f"https://arxiv.org/abs/{identifier}"
+    elif pub_type == PublicationType.DOI:
+        return f"https://doi.org/{identifier}"
+    else:
+        return "#"
+
+
 class ConsortiumNameCiteProcJSON(CiteProcJSON):
     """CiteProcJSON, but handles consortium names"""
 
@@ -105,13 +114,10 @@ class Publication(models.Model):
     @property
     def url(self):
         pub_type = get_publication_type(identifier=self.identifier)
-
-        if pub_type == PublicationType.ARXIV:
-            return f"https://arxiv.org/abs/{self.identifier}"
-        elif pub_type == PublicationType.DOI:
-            return f"https://doi.org/{self.identifier}"
-        else:
-            return "#"
+        pub_url = get_publication_url(
+            identifier=self.identifier, pub_type=pub_type
+        )
+        return pub_url
 
     @property
     def bib_id(self):

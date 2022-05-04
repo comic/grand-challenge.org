@@ -1,10 +1,7 @@
 {% load static %}
 
 {% if SENTRY_ENABLE_JS_REPORTING %}
-    <script src="https://browser.sentry-cdn.com/6.13.3/bundle.min.js"
-            integrity="sha384-sGMbmxgVprpEFMz6afNDyADd4Kav86v5Tvo2Y6w5t8tHUn1P1at3lCjN7IQo2c7E"
-            crossorigin="anonymous"
-    ></script>
+    <script src="{% static 'vendored/sentry-browser/bundle.min.js' %}"></script>
     <script>
         {# Setup sentry before anything else loads #}
         Sentry.init({dsn: '{{ SENTRY_DSN }}', release: '{{ COMMIT_ID }}'});

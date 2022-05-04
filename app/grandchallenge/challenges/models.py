@@ -19,7 +19,6 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -58,7 +57,12 @@ from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
-from grandchallenge.publications.models import Publication
+from grandchallenge.publications.models import (
+    Publication,
+    get_publication_type,
+    get_publication_url,
+    identifier_validator,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
 
@@ -298,16 +302,6 @@ class Challenge(ChallengeBase):
             "Optional text to show on each page in the project. "
             "For showing 'under construction' type messages"
         ),
-    )
-    require_participant_review = deprecate_field(
-        models.BooleanField(
-            default=False,
-            help_text=(
-                "If ticked, new participants need to be approved by project "
-                "admins before they can access restricted pages. If not ticked, "
-                "new users are allowed access immediately"
-            ),
-        )
     )
     access_request_handling = models.CharField(
         max_length=25,
@@ -864,6 +858,12 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
     )
+    structured_challenge_submission_doi = models.CharField(
+        max_length=255,
+        validators=[identifier_validator],
+        blank=True,
+        help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
+    )
 
     def __str__(self):
         return self.title
@@ -1008,3 +1008,14 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             )
 
         return budget
+
+    @property
+    def structured_challenge_submission_url(self):
+        pub_type = get_publication_type(
+            identifier=self.structured_challenge_submission_doi
+        )
+        pub_url = get_publication_url(
+            identifier=self.structured_challenge_submission_doi,
+            pub_type=pub_type,
+        )
+        return pub_url

@@ -24,13 +24,6 @@
         <div class="alert alert-danger">This phase is no longer active. </div>
     {% endif %}
 
-    {% if phase.evaluation_comparison_observable_url %}
-        <div id="compare-warning-alert" class="alert alert-warning d-none" role="alert">
-            <h5>Attention</h5>
-            Selecting more than 6 results may affect the performance of the visualization
-        </div>
-    {% endif %}
-
     {% include "datatables/partials/datatable.html" with columns=columns %}
 
     {% if phase.result_display_choice == phase.BEST %}
@@ -82,57 +75,11 @@
             </p>
         {% endfor %}
     {% endif %}
-
-    {% if phase.evaluation_comparison_observable_url or phase.evaluation_detail_observable_url %}
-        <div class="modal fade" id="observableModal" tabindex="-1" role="dialog" aria-labelledby="observableModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="observableModalLabel">Compare Results</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <iframe id="observableNotebook"
-                                class="border-0"
-                                style="height: 75vh; min-width: 100%;"
-                                sandbox="allow-scripts">
-                        </iframe>
-
-                        {% if "change_challenge" in challenge_perms %}
-                            <p>
-                                <a id="observableEditLink"
-                                   class="btn btn-primary"
-                                   title="Edit notebook in observable"
-                                   target="_blank">
-                                    <i class="fa fa-edit"></i>
-                                </a>
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
 
-    <script id="allowEvaluationComparison" type="application/json">
-        {% if phase.evaluation_comparison_observable_url %}true{% else %}false{% endif %}
-    </script>
-    <script id="observableComparisonURL" type="application/json">
-        "{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug kind="comparison" %}"
-    </script>
-    <script id="allowEvaluationNavigation" type="application/json">
-        {% if phase.evaluation_detail_observable_url %}true{% else %}false{% endif %}
-    </script>
-    <script id="observableDetailURL" type="application/json">
-        "{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug kind="detail" %}"
-    </script>
     <script id="allowMetricsToggling" type="application/json">
         {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
             true
@@ -143,8 +90,6 @@
     <script id="displayLeaderboardDateButton" type="application/json">
         {% if phase.result_display_choice == phase.ALL %}true{% else %}false{% endif %}
     </script>
-    {{ phase.observable_detail_edit_url|json_script:"observableDetailEditURL" }}
-    {{ phase.observable_comparison_edit_url|json_script:"observableComparisonEditURL" }}
 
     <script type="text/javascript" src="{% static 'js/evaluation/leaderboard.js' %}"></script>
 {% endblock %}

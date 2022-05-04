@@ -10,6 +10,7 @@ from crispy_forms.layout import (
 )
 from django import forms
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
@@ -19,7 +20,6 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     ExternalChallenge,
 )
-from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse_lazy
 
 common_information_items = (
@@ -174,7 +174,48 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
         }
 
 
-general_information_items = (
+class ChallengeRequestBudgetFieldValidationMixin:
+    def clean(self):
+        cleaned_data = super().clean()
+        challenge_type = (
+            cleaned_data["challenge_type"]
+            if "challenge_type" in cleaned_data
+            else self.instance.challenge_type
+        )
+        if challenge_type == self.instance.ChallengeTypeChoices.T2:
+            if not cleaned_data["average_size_of_test_image_in_mb"]:
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide the average "
+                    "test image size."
+                )
+            if not cleaned_data["inference_time_limit_in_minutes"]:
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide an inference "
+                    "time limit."
+                )
+            if (
+                cleaned_data["phase_1_number_of_submissions_per_team"] is None
+                or cleaned_data["phase_2_number_of_submissions_per_team"]
+                is None
+            ):
+                raise ValidationError(
+                    "For a type 2 challenge, you need to provide the number of "
+                    "submissions per team for each phase. Enter 0 for phase 2 "
+                    "if you only have 1 phase."
+                )
+            if (
+                cleaned_data["phase_1_number_of_test_images"] is None
+                or cleaned_data["phase_2_number_of_test_images"] is None
+            ):
+                raise ValidationError(
+                    "For a type 2 challenge, You need to provide the number of "
+                    "test images for each phase. Enter 0 for phase 2 if you "
+                    "only have 1 phase."
+                )
+        return cleaned_data
+
+
+general_information_items_1 = (
     "title",
     "short_name",
     "contact_email",
@@ -185,7 +226,8 @@ general_information_items = (
     "long_term_commitment_extra",
     "organizers",
     "affiliated_event",
-    "structured_challenge_submission_form",
+)
+general_information_items_2 = (
     "task_types",
     "structures",
     "modalities",
@@ -209,11 +251,16 @@ phase_2_items = (
 )
 
 
-class ChallengeRequestForm(forms.ModelForm):
+class ChallengeRequestForm(
+    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
+):
     class Meta:
         model = ChallengeRequest
         fields = (
-            *general_information_items,
+            *general_information_items_1,
+            "structured_challenge_submission_form",
+            "structured_challenge_submission_doi",
+            *general_information_items_2,
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
@@ -242,18 +289,21 @@ class ChallengeRequestForm(forms.ModelForm):
             ),
         }
         labels = {
+            "short_name": "Acronym",
             "long_term_commitment": "We agree to support this challenge for up to 5 years. ",
             "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
             "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
             "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
             "budget_for_hosting_challenge": "Budget for hosting challenge in Euros",
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
+            "structured_challenge_submission_doi": "DOI",
+            "structured_challenge_submission_form": "PDF",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
             "short_name": (
-                "Short name that will be used in the URL "
-                "(e.g., https://{short_name}.grand-challenge.org/), specific css "
+                "Acronym of your challenge title that will be used in the URL "
+                "(e.g., https://{acronym}.grand-challenge.org/), specific css "
                 "and files if the challenge is accepted. No spaces and special "
                 "characters allowed. We prefer a single word with two digits at "
                 "the end indicating the year (e.g. LUNA16). See "
@@ -277,17 +327,18 @@ class ChallengeRequestForm(forms.ModelForm):
             "challenge_type": (
                 "<b>Type 1 :</b> Prediction submission - "
                 "test data are open, participants run their algorithms locally "
-                "and submit their predictions which are evaluated against a secret "
-                "ground truth on the platform.<br>"
+                "and submit their predictions on the website which are evaluated "
+                "against a secret ground truth on our servers.<br>"
                 "<b>Type 2:</b> Docker container submission – test data are "
                 "secret, participants submit algorithms as docker "
-                "containers, which are run on the secret test set on "
+                "containers on our website, which are run on the secret test set on "
                 "our servers and then evaluated against a secret ground "
                 "truth. <br>"
                 "<b>We strongly encourage Type 2 challenges.</b> "
-                "For more information on both types see our <a href="
-                "'https://grand-challenge.org/documentation/create-your-own-challenge/' "
-                "target='_blank'> documentation</a>."
+                "Please read our <a href="
+                "'https://grand-challenge.org/documentation/challenges/' "
+                "target='_blank'> challenge documentation</a> before making your "
+                "choice."
             ),
             "code_availability": (
                 "Will the participants’ code be accessible after "
@@ -311,13 +362,6 @@ class ChallengeRequestForm(forms.ModelForm):
                 "dataset will need to be uploaded to Grand Challenge (read more "
                 "about that <a href='https://grand-challenge.org/documentation/"
                 "data-storage-2/' target='_blank'>here</a>)."
-            ),
-            "structured_challenge_submission_form": (
-                "Have you registered this challenge"
-                " for a conference (e.g., MICCAI, MIDL, ISBI) "
-                "<a href='https://www.biomedical-challenges.org/' target='_blank'> "
-                "through this website</a>? If so, you can alternatively upload the "
-                "submission PDF here and fill the below text boxes with 'See PDF'."
             ),
             "number_of_tasks": (
                 "If your challenge has multiple tasks, we multiply"
@@ -404,14 +448,35 @@ class ChallengeRequestForm(forms.ModelForm):
                         "The answers you provide below will help our team of "
                         "reviewers decide whether and in what way we can "
                         "support your challenge.</p>"
-                        "<p>To learn more about how challenges work on Grand "
-                        "Challenge and how the request procedure is set up, "
-                        "take a look at our <a href="
-                        "'https://grand-challenge.org/documentation/create-your-own-challenge/'"
-                        "target='_blank'>documentation</a>.</p><br>"
+                        "<p>Before you fill out this form, please read our <a href="
+                        "'https://grand-challenge.org/documentation/challenges/'"
+                        "target='_blank'>challenge documentation</a>.</p><br>"
                     ),
                 ),
-                *general_information_items,
+                *general_information_items_1,
+                Div(
+                    HTML(
+                        "<p class='mb-0'>Structured challenge submission form </p>"
+                        "<small class='text-muted mb-2'> Have you registered this challenge "
+                        "for a conference (e.g., MICCAI, MIDL, ISBI) <a href='https://www.biomedical-challenges.org/' target='_blank'> "
+                        "through this website</a>? If so, you can alternatively provide the DOI for your submission form, or"
+                        " upload the submission PDF here and fill the below text boxes with 'See PDF'.</small>"
+                    ),
+                    Div(
+                        "structured_challenge_submission_doi",
+                        css_class="col-5 pl-0",
+                    ),
+                    Div(
+                        HTML("<p>or</p>"),
+                        css_class="col-1 pl-0 d-flex align-items-center justify-content-center",
+                    ),
+                    Div(
+                        "structured_challenge_submission_form",
+                        css_class="col-5 pl-0",
+                    ),
+                    css_class="container row m-0 p-0 justify-content-between",
+                ),
+                *general_information_items_2,
                 Div(
                     "algorithm_inputs",
                     "algorithm_outputs",
@@ -431,7 +496,7 @@ class ChallengeRequestForm(forms.ModelForm):
                         "<p> If you are unfamiliar with what a Type 2 challenge"
                         " entails, please <a href="
                         "'https://grand-challenge.org/documentation/type-ii-challenge-setup/'"
-                        "target='_blank'> first read our documentation</a>.</p> "
+                        "target='_blank'> first read our Type 2 challenge documentation</a>.</p> "
                         "<p>To help you fill in the below form correctly, "
                         "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
                         "target='_blank'> we have assembled example budgets "
@@ -475,60 +540,103 @@ class ChallengeRequestForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
-        if cleaned_data["start_date"] >= cleaned_data["end_date"]:
+        start = cleaned_data.get("start_date")
+        end = cleaned_data.get("end_date")
+        if start and end and start >= end:
             raise ValidationError(
                 "The start date needs to be before the end date."
             )
-
-        if cleaned_data["challenge_type"] == ChallengeTypeChoices.T2:
-            if not cleaned_data["average_size_of_test_image_in_mb"]:
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide the average "
-                    "test image size."
-                )
-            if not cleaned_data["inference_time_limit_in_minutes"]:
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide an inference "
-                    "time limit."
-                )
-            if (
-                cleaned_data["phase_1_number_of_submissions_per_team"] is None
-                or cleaned_data["phase_2_number_of_submissions_per_team"]
-                is None
-            ):
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide the number of "
-                    "submissions per team for each phase. Enter 0 for phase 2 "
-                    "if you only have 1 phase."
-                )
-            if (
-                cleaned_data["phase_1_number_of_test_images"] is None
-                or cleaned_data["phase_2_number_of_test_images"] is None
-            ):
-                raise ValidationError(
-                    "For a type 2 challenge, You need to provide the number of "
-                    "test images for each phase. Enter 0 for phase 2 if you "
-                    "only have 1 phase."
-                )
+        return cleaned_data
 
 
-class ChallengeRequestUpdateForm(forms.ModelForm):
+class ChallengeRequestStatusUpdateForm(forms.ModelForm):
     class Meta:
         model = ChallengeRequest
         fields = ("status",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["status"].label = False
         self.fields["status"].choices = [
             c
             for c in self.Meta.model.ChallengeRequestStatusChoices.choices
             if c[0] != self.Meta.model.ChallengeRequestStatusChoices.PENDING
         ]
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            Div(
+                Div("status", css_class="col-lg-8 px-0 mt-3"),
+                Div(
+                    ButtonHolder(
+                        Submit("save", "Save", css_class="btn-sm mt-lg-1")
+                    ),
+                    css_class="col-lg-4 pb-0 mt-lg-3 pl-lg-2",
+                ),
+                css_class="row container m-0 p-0",
+            )
+        )
+        self.helper.attrs.update(
+            {
+                "hx-post": reverse(
+                    "challenges:requests-status-update",
+                    kwargs={"pk": self.instance.pk},
+                ),
+                # use 'this' to display form errors in place, when the form is valid,
+                # a page refresh will be triggered (by setting HX-Refresh to true)
+                "hx-target": "this",
+                "hx-swap": "outerHTML",
+            }
+        )
         if (
             self.instance.status
             != self.instance.ChallengeRequestStatusChoices.PENDING
         ):
-            self.fields["status"].widget.attrs["disabled"] = True
+            self.fields["status"].disabled = True
+
+    def clean_status(self):
+        status = self.cleaned_data.get("status")
+        if (
+            status == self.instance.ChallengeRequestStatusChoices.ACCEPTED
+            and Challenge.objects.filter(
+                short_name=self.instance.short_name
+            ).exists()
+        ):
+            raise ValidationError(
+                f"There already is a challenge with short "
+                f"name: {self.instance.short_name}. Contact "
+                f"support@grand-challenge.org to accept this request.",
+            )
+        return status
+
+
+class ChallengeRequestBudgetUpdateForm(
+    ChallengeRequestBudgetFieldValidationMixin, forms.ModelForm
+):
+    class Meta:
+        model = ChallengeRequest
+        fields = (
+            "expected_number_of_teams",
+            "number_of_tasks",
+            "inference_time_limit_in_minutes",
+            "average_size_of_test_image_in_mb",
+            "phase_1_number_of_submissions_per_team",
+            "phase_1_number_of_test_images",
+            "phase_2_number_of_submissions_per_team",
+            "phase_2_number_of_test_images",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        self.helper.form_id = "budget"
+        self.helper.attrs.update(
+            {
+                "hx-post": reverse(
+                    "challenges:requests-budget-update",
+                    kwargs={"pk": self.instance.pk},
+                ),
+                "hx-target": "#budget",
+                "hx-swap": "outerHTML",
+            }
+        )
         self.helper.layout.append(Submit("save", "Save"))

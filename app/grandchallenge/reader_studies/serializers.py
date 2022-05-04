@@ -1,7 +1,13 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
-from rest_framework.fields import CharField, JSONField, ReadOnlyField, URLField
+from rest_framework.fields import (
+    CharField,
+    DurationField,
+    JSONField,
+    ReadOnlyField,
+    URLField,
+)
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
@@ -73,6 +79,19 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     view_content = JSONField(
         source="reader_study.view_content", read_only=True
     )
+    index = SerializerMethodField()
+
+    def get_index(self, obj):
+        if obj.reader_study.shuffle_hanging_list:
+            try:
+                return self.context["view"].randomized_qs.index(obj)
+            except ValueError:
+                # The list is empty in the detail view. Return None to
+                # indicate that the value is invalid for shuffled lists
+                # in this case.
+                return None
+        else:
+            return obj.standard_index
 
     class Meta:
         model = DisplaySet
@@ -85,6 +104,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "hanging_protocol",
             "view_content",
             "description",
+            "index",
         )
 
 
@@ -168,6 +188,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     answer_image = HyperlinkedRelatedField(
         read_only=True, view_name="api:image-detail"
     )
+    total_edit_duration = DurationField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -181,6 +202,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
 
     def validate(self, attrs):
         answer = attrs.get("answer")
+        last_edit_duration = attrs.get("last_edit_duration")
         if self.instance:
             if (
                 not self.instance.question.reader_study.allow_answer_modification
@@ -188,8 +210,12 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                 raise ValidationError(
                     "This reader study does not allow answer modification."
                 )
-            if list(attrs.keys()) != ["answer"]:
-                raise ValidationError("Only the answer field can be modified.")
+            if not set(attrs.keys()).issubset(
+                {"answer", "last_edit_duration"}
+            ):
+                raise ValidationError(
+                    "Only the answer and last_edit_duration field can be modified."
+                )
             question = self.instance.question
             images = self.instance.images.all()
             display_set = self.instance.display_set
@@ -229,7 +255,11 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                         }
                     )
                 )
-        return attrs if not self.instance else {"answer": answer}
+        return (
+            attrs
+            if not self.instance
+            else {"answer": answer, "last_edit_duration": last_edit_duration}
+        )
 
     class Meta:
         model = Answer
@@ -244,6 +274,8 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "question",
             "modified",
             "answer_image",
+            "last_edit_duration",
+            "total_edit_duration",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}

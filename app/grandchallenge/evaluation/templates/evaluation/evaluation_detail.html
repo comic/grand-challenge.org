@@ -27,77 +27,68 @@
 {% block content %}
 
     {% if not object.submission.phase.public %}
-        <div class="alert alert-danger">The phase that this evaluation belongs to, is no longer active. </div>
+        <div class="alert alert-danger">The phase that this evaluation belongs to, is no longer active.</div>
     {% endif %}
 
     <h2>Evaluation</h2>
 
     <dl>
 
-        {% if object.status == object.SUCCESS and object.submission.phase.evaluation_detail_observable_url %}
-            <iframe id="observableNotebook"
-                    class="border-0"
-                    style="height: 75vh; min-width: 100%;"
-                    sandbox="allow-scripts"
-                    src="{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug kind='detail' %}?pk={{ object.pk }}">
-            </iframe>
-        {% else %}
-            <dt>ID</dt>
-            <dd>{{ object.pk }}</dd>
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
 
-            <dt>Submission ID</dt>
-            <dd>{{ object.submission.id }}</dd>
+        <dt>Submission ID</dt>
+        <dd>{{ object.submission.id }}</dd>
 
-            <dt>Method ID</dt>
-            <dd>{{ object.method.pk }}</dd>
+        <dt>Method ID</dt>
+        <dd>{{ object.method.pk }}</dd>
 
-            <dt>Status</dt>
+        <dt>Status</dt>
+        <dd>
+            <span class="badge badge-{{ evaluation.status_context }}">
+                {% if evaluation.animate %}
+                    <span class="spinner-border spinner-border-sm" role="status"
+                          aria-hidden="true"></span>
+                {% endif %}
+                {{ evaluation.get_status_display }}
+            </span>
+        </dd>
+
+        <dt>User</dt>
+        <dd>
+            {{ object.submission.creator|user_profile_link }}
+        </dd>
+
+        <dt>Challenge</dt>
+        <dd><a href="{{ object.submission.phase.challenge.get_absolute_url }}">
+            {{ object.submission.phase.challenge.short_name }}</a></dd>
+
+        <dt>Phase</dt>
+        <dd>
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
+                {{ object.submission.phase.title }}</a></dd>
+
+        {% if object.submission.algorithm_image %}
+            <dt>Algorithm</dt>
             <dd>
-                <span class="badge badge-{{ evaluation.status_context }}">
-                    {% if evaluation.animate %}
-                        <span class="spinner-border spinner-border-sm" role="status"
-                              aria-hidden="true"></span>
-                    {% endif %}
-                    {{ evaluation.get_status_display }}
-                </span>
+                <a href="{{ object.submission.algorithm_image.algorithm.get_absolute_url }}">
+                    {{ object.submission.algorithm_image.algorithm.title }}
+                    (Version {{ object.submission.algorithm_image.pk }})
+                </a>
             </dd>
+        {% endif %}
 
-            <dt>User</dt>
+        <dt>Submission created</dt>
+        <dd>{{ object.submission.created }}</dd>
+
+        <dt>Result created</dt>
+        <dd>{{ object.created }}</dd>
+
+        {% if object.published and object.rank > 0 %}
+            <dt>Position on leaderboard</dt>
             <dd>
-                {{ object.submission.creator|user_profile_link }}
+                {{ object.rank }}
             </dd>
-
-            <dt>Challenge</dt>
-            <dd><a href="{{ object.submission.phase.challenge.get_absolute_url }}">
-                {{ object.submission.phase.challenge.short_name }}</a></dd>
-
-            <dt>Phase</dt>
-            <dd>
-                <a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
-                    {{ object.submission.phase.title }}</a></dd>
-
-            {% if object.submission.algorithm_image %}
-                <dt>Algorithm</dt>
-                <dd>
-                    <a href="{{ object.submission.algorithm_image.algorithm.get_absolute_url }}">
-                        {{ object.submission.algorithm_image.algorithm.title }}
-                        (Version {{ object.submission.algorithm_image.pk }})
-                    </a>
-                </dd>
-            {% endif %}
-
-            <dt>Submission created</dt>
-            <dd>{{ object.submission.created }}</dd>
-
-            <dt>Result created</dt>
-            <dd>{{ object.created }}</dd>
-
-            {% if object.published and object.rank > 0 %}
-                <dt>Position on leaderboard</dt>
-                <dd>
-                    {{ object.rank }}
-                </dd>
-            {% endif %}
         {% endif %}
 
         {% if object.submission.phase.show_supplementary_file_link %}
@@ -240,6 +231,18 @@
                 {% endif %}
             </div>
 
+            {% if predictions %}
+                <div class="card-body">
+                    <h3 class="card-title">Predictions</h3>
+                    <a href="data:text/plain;charset=utf-8,{{ predictions|json_dumps|urlencode }}"
+                        download="predictions.json"
+                        class="btn btn-primary">
+                        <i class="fa fa-download"></i>
+                        Download the predictions.json file for this evaluation
+                    </a>
+                </div>
+            {% endif %}
+
             {% if object.submission.predictions_file %}
                 <div class="card-body">
                     <h3 class="card-title">Submission File</h3>
@@ -247,20 +250,6 @@
                        class="btn btn-primary">
                         <i class="fa fa-download"></i>
                         Download the submission file for this result
-                    </a>
-                </div>
-            {% endif %}
-
-            {% if object.submission.phase.evaluation_detail_observable_url %}
-                <div class="card-body">
-                    <h3 class="card-title">Observable Notebook</h3>
-                    <a id="observableEditLink"
-                       class="btn btn-primary"
-                       title="Edit notebook in observable"
-                       target="_blank"
-                       href="{{ object.submission.phase.observable_detail_edit_url }}?pk={{ object.pk }}">
-                        <i class="fa fa-edit"></i>
-                        Edit the observable notebook
                     </a>
                 </div>
             {% endif %}
@@ -284,15 +273,9 @@
 
 {% block script %}
     {{ block.super }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"
-            integrity="sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
-            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-lite/5.1.0/vega-lite.min.js"
-            integrity="sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
-            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"
-            integrity="sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
-            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
     {{ charts_data|json_script:"allCharts" }}
     <script type="module" src="{% static "algorithms/js/render_resultschart.js" %}"></script>
 {% endblock %}

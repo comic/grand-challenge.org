@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
+from django.http import HttpResponse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import (
@@ -22,8 +23,9 @@ from grandchallenge.challenges.filters import (
     InternalChallengeFilter,
 )
 from grandchallenge.challenges.forms import (
+    ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
-    ChallengeRequestUpdateForm,
+    ChallengeRequestStatusUpdateForm,
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
@@ -342,16 +344,18 @@ class ChallengeRequestDetail(
         return context
 
 
-class ChallengeRequestUpdate(
+class ChallengeRequestStatusUpdate(
     LoginRequiredMixin,
     PermissionRequiredMixin,
     UpdateView,
 ):
     model = ChallengeRequest
-    form_class = ChallengeRequestUpdateForm
+    form_class = ChallengeRequestStatusUpdateForm
     permission_required = "challenges.change_challengerequest"
+    template_name = "challenges/challengerequest_status_form.html"
 
     def form_valid(self, form):
+        super().form_valid(form)
         if (
             form.instance._orig_status
             == form.instance.ChallengeRequestStatusChoices.PENDING
@@ -367,4 +371,24 @@ class ChallengeRequestUpdate(
             send_challenge_status_update_email(
                 challengerequest=form.instance, challenge=challenge
             )
-        return super().form_valid(form)
+
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response
+
+
+class ChallengeRequestBudgetUpdate(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UpdateView,
+):
+    model = ChallengeRequest
+    form_class = ChallengeRequestBudgetUpdateForm
+    permission_required = "challenges.change_challengerequest"
+    template_name = "challenges/challengerequest_budget_form.html"
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response

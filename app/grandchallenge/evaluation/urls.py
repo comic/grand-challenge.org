@@ -10,7 +10,6 @@ from grandchallenge.evaluation.views import (
     MethodCreate,
     MethodDetail,
     MethodList,
-    ObservableDetail,
     PhaseCreate,
     PhaseUpdate,
     SubmissionCreate,
@@ -28,11 +27,6 @@ urlpatterns = [
     path("phase/create/", PhaseCreate.as_view(), name="phase-create"),
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
-    ),
-    path(
-        "<slug>/observable/<slug:kind>/",
-        ObservableDetail.as_view(),
-        name="observable-detail",
     ),
     path("<slug>/update/", PhaseUpdate.as_view(), name="phase-update"),
     path(
