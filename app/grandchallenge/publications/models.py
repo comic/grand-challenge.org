@@ -11,42 +11,14 @@ from citeproc import (
 )
 from citeproc.source import Name
 from citeproc.source.json import CiteProcJSON
-from django.core.validators import RegexValidator
 from django.db import models
 
 from grandchallenge.core.templatetags.bleach import clean
-
-# regex modified for python syntax from
-# https://www.crossref.org/blog/dois-and-matching-regular-expressions/
-DOI_REGEX = r"^10\.\d{4,9}/[-._;()/:a-z0-9]+$"
-ARXIV_REGEX = r"^\d{4}\.\d{4,5}$"
-
-identifier_validator = RegexValidator(regex=f"{DOI_REGEX}|{ARXIV_REGEX}")
-
-
-class PublicationType(models.TextChoices):
-    DOI = "D"
-    ARXIV = "A"
-
-
-def get_publication_type(*, identifier: str) -> PublicationType:
-    if re.match(DOI_REGEX, identifier):
-        return PublicationType.DOI
-    elif re.match(ARXIV_REGEX, identifier):
-        return PublicationType.ARXIV
-    else:
-        raise ValueError(
-            f"Could not determine publication type from {identifier}"
-        )
-
-
-def get_publication_url(*, identifier: str, pub_type: PublicationType):
-    if pub_type == PublicationType.ARXIV:
-        return f"https://arxiv.org/abs/{identifier}"
-    elif pub_type == PublicationType.DOI:
-        return f"https://doi.org/{identifier}"
-    else:
-        return "#"
+from grandchallenge.publications.utils import (
+    IdentifierField,
+    get_publication_type,
+    get_publication_url,
+)
 
 
 class ConsortiumNameCiteProcJSON(CiteProcJSON):
@@ -67,12 +39,7 @@ class Publication(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
-    identifier = models.CharField(
-        max_length=255,
-        validators=[identifier_validator],
-        unique=True,
-        help_text="The DOI, e.g., 10.1002/mrm.25227, or the arXiv id, e.g., 2006.12449",
-    )
+    identifier = IdentifierField(unique=True)
 
     csl = models.JSONField(editable=False)
 

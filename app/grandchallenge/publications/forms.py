@@ -1,11 +1,11 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from grandchallenge.publications.models import (
-    Publication,
+from grandchallenge.publications.models import Publication
+from grandchallenge.publications.utils import (
+    get_identifier_csl,
     identifier_validator,
 )
-from grandchallenge.publications.utils import get_identifier_csl
 
 
 class PublicationForm(forms.ModelForm):
