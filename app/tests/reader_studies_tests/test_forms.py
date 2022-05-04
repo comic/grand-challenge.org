@@ -500,15 +500,16 @@ def test_reader_study_copy(client, settings):
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
 
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "3", "copy_display_sets": True},
-        user=editor,
-        follow=True,
-    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:copy",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"title": "3", "copy_display_sets": True},
+            user=editor,
+            follow=True,
+        )
 
     assert response.status_code == 200
     assert ReaderStudy.objects.count() == 4
@@ -523,20 +524,21 @@ def test_reader_study_copy(client, settings):
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
 
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={
-            "title": "4",
-            "copy_display_sets": True,
-            "copy_view_content": True,
-            "copy_hanging_protocol": True,
-        },
-        user=editor,
-        follow=True,
-    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:copy",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={
+                "title": "4",
+                "copy_display_sets": True,
+                "copy_view_content": True,
+                "copy_hanging_protocol": True,
+            },
+            user=editor,
+            follow=True,
+        )
 
     assert response.status_code == 200
     assert ReaderStudy.objects.count() == 5
@@ -551,15 +553,20 @@ def test_reader_study_copy(client, settings):
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
 
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "5", "copy_display_sets": True, "copy_case_text": True},
-        user=editor,
-        follow=True,
-    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:copy",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={
+                "title": "5",
+                "copy_display_sets": True,
+                "copy_case_text": True,
+            },
+            user=editor,
+            follow=True,
+        )
 
     assert response.status_code == 200
     assert ReaderStudy.objects.count() == 6

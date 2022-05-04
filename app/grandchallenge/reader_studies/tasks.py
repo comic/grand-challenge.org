@@ -130,6 +130,9 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
 def copy_reader_study_display_sets(*, orig_pk, new_pk):
     orig = ReaderStudy.objects.get(pk=orig_pk)
     new = ReaderStudy.objects.get(pk=new_pk)
+
+    if orig.display_sets.count() == new.display_sets.count():
+        return
     with transaction.atomic():
         for ds in orig.display_sets.all():
             new_ds = DisplaySet.objects.create(reader_study=new)
