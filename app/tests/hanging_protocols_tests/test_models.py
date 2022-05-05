@@ -60,6 +60,7 @@ from tests.factories import UserFactory
                     "show_mouse_coordinate": True,
                     "show_mouse_voxel_value": True,
                     "label": "Test label",
+                    "opacity": 0.5,
                 }
             ],
             nullcontext(),
@@ -113,6 +114,36 @@ from tests.factories import UserFactory
                 {
                     "viewport_name": "main",
                     "undefined_property": 0,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid json containing opacity < 0
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "opacity": -0.1,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid json containing opacity > 1.0
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "opacity": 1.1,
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid json containing non viewport name parent_id
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "parent_id": "invalid",
                 }
             ],
             pytest.raises(ValidationError),

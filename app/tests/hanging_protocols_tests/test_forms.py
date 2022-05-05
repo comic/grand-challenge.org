@@ -166,3 +166,93 @@ def test_hanging_protocol_dimension_validation(client):
         "Either none or all viewports must have x, y, w, and h keys."
         not in response.rendered_content
     )
+
+
+@pytest.mark.django_db
+def test_hanging_protocol_parent_id_draggable(client):
+    user = UserFactory()
+    assign_perm("hanging_protocols.add_hangingprotocol", user)
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "foo", "draggable": true}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert HangingProtocol.objects.count() == 0
+    assert (
+        "Viewport main has a parent_id that does not exist."
+        in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "secondary"}, {"viewport_name": "secondary"}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert HangingProtocol.objects.count() == 0
+    assert (
+        "Viewport main has a parent_id but is not draggable."
+        in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "foo"}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert HangingProtocol.objects.count() == 0
+    assert (
+        "Viewport main has a parent_id that does not exist."
+        in response.rendered_content
+    )
+    assert (
+        "Viewport main has a parent_id but is not draggable."
+        in response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="hanging-protocols:create",
+        client=client,
+        method=client.post,
+        data={
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "secondary", "draggable": true}, {"viewport_name": "secondary"}]',
+        },
+        follow=True,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert HangingProtocol.objects.count() == 1
+    assert (
+        "Viewport main has a parent_id that does not exist."
+        not in response.rendered_content
+    )
+    assert (
+        "Viewport main has a parent_id but is not draggable."
+        not in response.rendered_content
+    )
