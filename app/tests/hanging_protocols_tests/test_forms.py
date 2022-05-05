@@ -171,7 +171,7 @@ def test_hanging_protocol_dimension_validation(client):
     )
 
 
-def test_hanging_protocol_parent_id_draggable(client):
+def test_hanging_protocol_parent_id_draggable():
     form = HangingProtocolForm(
         {
             "title": "main",
