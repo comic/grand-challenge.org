@@ -1,7 +1,10 @@
 import pytest
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.hanging_protocols.forms import (
+    HangingProtocolForm,
+    ViewContentMixin,
+)
 from grandchallenge.hanging_protocols.models import HangingProtocol
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import UserFactory
@@ -166,3 +169,51 @@ def test_hanging_protocol_dimension_validation(client):
         "Either none or all viewports must have x, y, w, and h keys."
         not in response.rendered_content
     )
+
+
+def test_hanging_protocol_parent_id_draggable():
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "foo", "draggable": true}]',
+        }
+    )
+    assert (
+        form.errors["json"][0]
+        == "Viewport main has a parent_id that does not exist."
+    )
+
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "secondary"}, {"viewport_name": "secondary"}]',
+        }
+    )
+    assert (
+        form.errors["json"][0]
+        == "Viewport main has a parent_id but is not draggable."
+    )
+
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "foo"}]',
+        }
+    )
+    assert len(form.errors["json"]) == 2
+    assert (
+        "Viewport main has a parent_id that does not exist."
+        in form.errors["json"]
+    )
+    assert (
+        "Viewport main has a parent_id but is not draggable."
+        in form.errors["json"]
+    )
+
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "secondary", "draggable": true}, {"viewport_name": "secondary"}]',
+        }
+    )
+    assert form.is_valid()
