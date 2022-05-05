@@ -56,12 +56,8 @@ from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
+from grandchallenge.publications.fields import IdentifierField
 from grandchallenge.publications.models import Publication
-from grandchallenge.publications.utils import (
-    IdentifierField,
-    get_publication_type,
-    get_publication_url,
-)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
 
@@ -854,6 +850,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     )
     structured_challenge_submission_doi = IdentifierField(
         blank=True,
+        help_text="The DOI, e.g., 10.1002/mrm.25227, or the arXiv id, e.g., 2006.12449",
     )
 
     def __str__(self):
@@ -999,14 +996,3 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             )
 
         return budget
-
-    @property
-    def structured_challenge_submission_url(self):
-        pub_type = get_publication_type(
-            identifier=self.structured_challenge_submission_doi
-        )
-        pub_url = get_publication_url(
-            identifier=self.structured_challenge_submission_doi,
-            pub_type=pub_type,
-        )
-        return pub_url

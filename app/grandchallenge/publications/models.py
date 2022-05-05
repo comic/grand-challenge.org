@@ -14,11 +14,7 @@ from citeproc.source.json import CiteProcJSON
 from django.db import models
 
 from grandchallenge.core.templatetags.bleach import clean
-from grandchallenge.publications.utils import (
-    IdentifierField,
-    get_publication_type,
-    get_publication_url,
-)
+from grandchallenge.publications.fields import IdentifierField
 
 
 class ConsortiumNameCiteProcJSON(CiteProcJSON):
@@ -39,7 +35,10 @@ class Publication(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
-    identifier = IdentifierField(unique=True)
+    identifier = IdentifierField(
+        unique=True,
+        help_text="The DOI, e.g., 10.1002/mrm.25227, or the arXiv id, e.g., 2006.12449",
+    )
 
     csl = models.JSONField(editable=False)
 
@@ -77,14 +76,6 @@ class Publication(models.Model):
             )
         except ValueError:
             self.referenced_by_count = None
-
-    @property
-    def url(self):
-        pub_type = get_publication_type(identifier=self.identifier)
-        pub_url = get_publication_url(
-            identifier=self.identifier, pub_type=pub_type
-        )
-        return pub_url
 
     @property
     def bib_id(self):
