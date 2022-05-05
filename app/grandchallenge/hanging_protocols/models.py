@@ -88,6 +88,15 @@ HANGING_PROTOCOL_SCHEMA = {
             "label": {
                 "type": "string",
             },
+            "parent_id": {
+                "type": "string",
+                "enum": [port.lower() for port in ImagePort.labels],
+            },
+            "opacity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+            },
         },
         "additionalProperties": False,
     },
