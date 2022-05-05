@@ -97,6 +97,7 @@ from grandchallenge.reader_studies.serializers import (
 )
 from grandchallenge.reader_studies.tasks import (
     add_images_to_reader_study,
+    copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
 from grandchallenge.subdomains.utils import reverse
@@ -599,10 +600,10 @@ class ReaderStudyCopy(
             },
         )
         rs.add_editor(self.request.user)
-        if form.cleaned_data["copy_images"]:
-            rs.images.set(reader_study.images.all())
-        if form.cleaned_data["copy_hanging_list"]:
-            rs.hanging_list = reader_study.hanging_list
+        if form.cleaned_data["copy_view_content"]:
+            rs.view_content = reader_study.view_content
+        if form.cleaned_data["copy_hanging_protocol"]:
+            rs.hanging_protocol = reader_study.hanging_protocol
         if form.cleaned_data["copy_case_text"]:
             rs.case_text = reader_study.case_text
         if form.cleaned_data["copy_readers"]:
@@ -630,6 +631,20 @@ class ReaderStudyCopy(
                     )
         rs.save()
         self.reader_study = rs
+        if form.cleaned_data["copy_display_sets"]:
+            transaction.on_commit(
+                lambda: copy_reader_study_display_sets.apply_async(
+                    kwargs={
+                        "orig_pk": str(reader_study.pk),
+                        "new_pk": str(rs.pk),
+                    }
+                )
+            )
+            messages.add_message(
+                self.request,
+                messages.INFO,
+                "Display sets will be copied asynchronously.",
+            )
         return super().form_valid(form)
 
     def get_success_url(self):
