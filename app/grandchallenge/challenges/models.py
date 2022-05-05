@@ -850,7 +850,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     )
     structured_challenge_submission_doi = IdentifierField(
         blank=True,
-        help_text="The DOI, e.g., 10.1002/mrm.25227, or the arXiv id, e.g., 2006.12449",
+        help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
     )
 
     def __str__(self):

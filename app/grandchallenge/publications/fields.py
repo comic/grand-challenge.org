@@ -4,7 +4,8 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.forms import CharField
 
-from grandchallenge.publications.utils import get_arxiv_csl, get_doi_csl
+from grandchallenge.publications.utils import get_doi_csl
+from grandchallenge.publications.utils.manubot import get_arxiv_csl
 
 # regex modified for python syntax from
 # https://www.crossref.org/blog/dois-and-matching-regular-expressions/
