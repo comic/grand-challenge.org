@@ -57,12 +57,8 @@ from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
-from grandchallenge.publications.models import (
-    Publication,
-    get_publication_type,
-    get_publication_url,
-    identifier_validator,
-)
+from grandchallenge.publications.fields import IdentifierField
+from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
 
@@ -858,9 +854,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
     )
-    structured_challenge_submission_doi = models.CharField(
-        max_length=255,
-        validators=[identifier_validator],
+    structured_challenge_submission_doi = IdentifierField(
         blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
     )
@@ -1008,14 +1002,3 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             )
 
         return budget
-
-    @property
-    def structured_challenge_submission_url(self):
-        pub_type = get_publication_type(
-            identifier=self.structured_challenge_submission_doi
-        )
-        pub_url = get_publication_url(
-            identifier=self.structured_challenge_submission_doi,
-            pub_type=pub_type,
-        )
-        return pub_url

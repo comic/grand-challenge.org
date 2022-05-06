@@ -70,6 +70,18 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
                         field="json",
                     )
 
+        for viewport in [v for v in value if "parent_id" in v]:
+            if viewport["parent_id"] not in viewports:
+                self.add_error(
+                    error=f"Viewport {viewport['viewport_name']} has a parent_id that does not exist.",
+                    field="json",
+                )
+            if "draggable" not in viewport or not viewport["draggable"]:
+                self.add_error(
+                    error=f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable.",
+                    field="json",
+                )
+
         return value
 
 

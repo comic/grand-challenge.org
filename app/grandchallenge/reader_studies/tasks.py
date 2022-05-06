@@ -124,3 +124,13 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
         add_image(answer, image)
     else:
         raise ValueError("Upload session for answer does not match")
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def copy_reader_study_display_sets(*, orig_pk, new_pk):
+    orig = ReaderStudy.objects.get(pk=orig_pk)
+    new = ReaderStudy.objects.get(pk=new_pk)
+    with transaction.atomic():
+        for ds in orig.display_sets.all():
+            new_ds = DisplaySet.objects.create(reader_study=new)
+            new_ds.values.set(ds.values.all())

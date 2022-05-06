@@ -64,7 +64,7 @@
 
     {% for publication in challenge.publications.all %}
         <a class="badge badge-info above-stretched-link"
-           href="{{ publication.url }}"
+           href="{{ publication.identifier.url }}"
            title="{{ publication.title }}">
             <i class="fas fa-file fa-fw"></i>&nbsp;Article
         </a>
