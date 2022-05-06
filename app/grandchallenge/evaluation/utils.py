@@ -3,6 +3,7 @@ from collections import OrderedDict
 from typing import Callable, Dict, Iterable, List, NamedTuple, Tuple
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.db import models
 
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
@@ -153,3 +154,9 @@ class StatusChoices(enum.Enum):
     OPEN = ("OPEN",)
     OPENING_SOON = ("OPEN_SOON",)
     COMPLETED = ("COMPLETED",)
+
+
+class SubmissionKindChoices(models.IntegerChoices):
+    CSV = 1, "CSV"
+    ZIP = 2, "ZIP"
+    ALGORITHM = 3, "Algorithm"

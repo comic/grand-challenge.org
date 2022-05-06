@@ -7,7 +7,7 @@ from grandchallenge.challenges.forms import (
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
 )
-from grandchallenge.challenges.models import ChallengeRequest
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from tests.factories import ChallengeFactory, UserFactory
 
 
@@ -20,7 +20,7 @@ def test_challenge_request_type_2_fields_required():
         "creator": user,
         "title": "Test request",
         "short_name": "example1234",
-        "challenge_type": ChallengeRequest.ChallengeTypeChoices.T1,
+        "challenge_type": ChallengeTypeChoices.T1,
         "start_date": datetime.date.today(),
         "end_date": datetime.date.today() + datetime.timedelta(days=1),
         "expected_number_of_participants": 10,
@@ -43,7 +43,7 @@ def test_challenge_request_type_2_fields_required():
         "creator": user,
         "title": "Test request",
         "short_name": "example1234",
-        "challenge_type": ChallengeRequest.ChallengeTypeChoices.T2,
+        "challenge_type": ChallengeTypeChoices.T2,
         "start_date": datetime.date.today(),
         "end_date": datetime.date.today() + datetime.timedelta(days=1),
         "expected_number_of_participants": 10,

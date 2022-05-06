@@ -15,7 +15,7 @@ from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import ChallengeRequest
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
@@ -773,7 +773,7 @@ def type_2_challenge_request():
         creator=UserFactory(),
         start_date=now(),
         end_date=now() + timedelta(days=1),
-        challenge_type=ChallengeRequest.ChallengeTypeChoices.T2,
+        challenge_type=ChallengeTypeChoices.T2,
         expected_number_of_teams=10,
         inference_time_limit_in_minutes=10,
         average_size_of_test_image_in_mb=10,
@@ -792,7 +792,7 @@ def type_1_challenge_request():
         creator=UserFactory(),
         start_date=now(),
         end_date=now() + timedelta(days=1),
-        challenge_type=ChallengeRequest.ChallengeTypeChoices.T1,
+        challenge_type=ChallengeTypeChoices.T1,
         expected_number_of_teams=10,
     )
 

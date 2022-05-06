@@ -101,7 +101,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if evaluation.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKind.ALGORITHM %}
+                            {% if evaluation.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM %}
                                 <a href="{% url 'algorithms:job-list' slug=evaluation.submission.algorithm_image.algorithm.slug %}">{{ evaluation.submission.algorithm_image.algorithm.title }}</a>
                             {% endif %}
                         </td>

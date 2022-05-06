@@ -2,6 +2,7 @@ import pytest
 
 from grandchallenge.evaluation.forms import SubmissionForm
 from grandchallenge.evaluation.models import Phase
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -17,7 +18,7 @@ class TestSubmissionForm:
     def test_setting_predictions_file(self):
         form = SubmissionForm(
             user=UserFactory(),
-            phase=PhaseFactory(submission_kind=Phase.SubmissionKind.CSV),
+            phase=PhaseFactory(submission_kind=SubmissionKindChoices.CSV),
         )
 
         assert "algorithm" not in form.fields
@@ -26,7 +27,9 @@ class TestSubmissionForm:
     def test_setting_algorithm(self):
         form = SubmissionForm(
             user=UserFactory(),
-            phase=PhaseFactory(submission_kind=Phase.SubmissionKind.ALGORITHM),
+            phase=PhaseFactory(
+                submission_kind=SubmissionKindChoices.ALGORITHM
+            ),
         )
 
         assert "algorithm" in form.fields
@@ -35,7 +38,9 @@ class TestSubmissionForm:
     def test_no_algorithm_selection(self):
         form = SubmissionForm(
             user=UserFactory(),
-            phase=PhaseFactory(submission_kind=Phase.SubmissionKind.ALGORITHM),
+            phase=PhaseFactory(
+                submission_kind=SubmissionKindChoices.ALGORITHM
+            ),
             data={"algorithm": ""},
         )
 
@@ -46,7 +51,9 @@ class TestSubmissionForm:
 
         form = SubmissionForm(
             user=UserFactory(),
-            phase=PhaseFactory(submission_kind=Phase.SubmissionKind.ALGORITHM),
+            phase=PhaseFactory(
+                submission_kind=SubmissionKindChoices.ALGORITHM
+            ),
             data={"algorithm": alg.pk},
         )
 
@@ -63,7 +70,9 @@ class TestSubmissionForm:
 
         form = SubmissionForm(
             user=user,
-            phase=PhaseFactory(submission_kind=Phase.SubmissionKind.ALGORITHM),
+            phase=PhaseFactory(
+                submission_kind=SubmissionKindChoices.ALGORITHM
+            ),
             data={"algorithm": alg.pk},
         )
 
@@ -83,7 +92,8 @@ class TestSubmissionForm:
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 
         p = PhaseFactory(
-            submission_kind=Phase.SubmissionKind.ALGORITHM, submission_limit=10
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submission_limit=10,
         )
 
         form = SubmissionForm(

@@ -3,7 +3,7 @@ import pytest
 from config import settings
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.challenges.tasks import update_challenge_results_cache
-from grandchallenge.evaluation.models import Phase
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ChallengeFactory
 
@@ -53,7 +53,7 @@ def test_challenge_creation_from_request(
     assert challenge.phase_set.count() == 1
     assert (
         challenge.phase_set.get().submission_kind
-        == Phase.SubmissionKind.ALGORITHM
+        == SubmissionKindChoices.ALGORITHM
     )
 
     # for a type 1 challenge, a csv submission phase gets created
@@ -67,7 +67,7 @@ def test_challenge_creation_from_request(
     )
     assert challenge2.phase_set.count() == 1
     assert (
-        challenge2.phase_set.get().submission_kind == Phase.SubmissionKind.CSV
+        challenge2.phase_set.get().submission_kind == SubmissionKindChoices.CSV
     )
 
 

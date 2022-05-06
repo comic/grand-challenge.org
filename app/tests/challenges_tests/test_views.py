@@ -6,6 +6,7 @@ from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
@@ -436,7 +437,7 @@ def test_challenge_request_date_check(client):
             "submission_assessment": "test",
             "challenge_publication": "test",
             "code_availability": "test",
-            "challenge_type": ChallengeRequest.ChallengeTypeChoices.T1,
+            "challenge_type": ChallengeTypeChoices.T1,
             "expected_number_of_teams": 10,
         },
     )
@@ -468,7 +469,7 @@ def test_challenge_request_date_check(client):
             "submission_assessment": "test",
             "challenge_publication": "test",
             "code_availability": "test",
-            "challenge_type": ChallengeRequest.ChallengeTypeChoices.T1,
+            "challenge_type": ChallengeTypeChoices.T1,
             "expected_number_of_teams": 10,
         },
     )

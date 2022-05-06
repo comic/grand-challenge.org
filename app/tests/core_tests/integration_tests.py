@@ -8,7 +8,8 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
 
-from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
@@ -289,7 +290,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "title": title,
             "short_name": short_name,
             "contact_email": user.email,
-            "challenge_type": ChallengeRequest.ChallengeTypeChoices.T2,
+            "challenge_type": ChallengeTypeChoices.T2,
             "start_date": datetime.date.today(),
             "end_date": datetime.date.today() + datetime.timedelta(days=1),
             "expected_number_of_participants": 10,

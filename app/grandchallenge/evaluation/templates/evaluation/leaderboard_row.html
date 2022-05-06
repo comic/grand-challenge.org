@@ -18,7 +18,7 @@
 {% endif %}
 <split></split>
 
-{% if object.submission.phase.submission_kind == object.submission.phase.SubmissionKind.ALGORITHM %}
+{% if object.submission.phase.submission_kind == object.submission.phase.SubmissionKindChoices.ALGORITHM %}
     <a href="{{ object.submission.algorithm_image.algorithm.get_absolute_url }}">{{ object.submission.algorithm_image.algorithm.title }}</a>
     {% if object.submission.algorithm_image.algorithm.repo_name %}
         <a href="https://github.com/{{object.submission.algorithm_image.algorithm.repo_name}}" class="mx-1"> <i class="fab fa-github"></i></a>
