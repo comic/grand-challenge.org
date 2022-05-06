@@ -109,7 +109,10 @@
     <span class="n">calculate_ranks</span><span class="p">,</span>
     <span class="n">create_evaluation</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="n">StatusChoices</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">StatusChoices</span><span class="p">,</span>
+    <span class="n">SubmissionKindChoices</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
@@ -209,10 +212,7 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
-<div class="viewcode-block" id="Phase.SubmissionKind"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.SubmissionKind">[docs]</a>    <span class="k">class</span> <span class="nc">SubmissionKind</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
-        <span class="n">CSV</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span>
-        <span class="n">ZIP</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;ZIP&quot;</span>
-        <span class="n">ALGORITHM</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Algorithm&quot;</span></div>
+    <span class="n">SubmissionKindChoices</span> <span class="o">=</span> <span class="n">SubmissionKindChoices</span>
 
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
@@ -302,8 +302,8 @@
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">submission_kind</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">SubmissionKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">SubmissionKind</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;Should participants submit a .csv/.zip file of predictions, &quot;</span>
             <span class="s2">&quot;or an algorithm?&quot;</span>
@@ -565,7 +565,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SubmissionKind</span><span class="o">.</span><span class="n">ALGORITHM</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator_must_be_verified</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
