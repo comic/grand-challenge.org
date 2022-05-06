@@ -586,10 +586,10 @@ class Challenge(ChallengeBase):
 
     @property
     def type(self):
-        phase_type = {phase.submission_kind for phase in self.phase_set.all()}
+        phase_types = {phase.submission_kind for phase in self.phase_set.all()}
         # as long as one of the phases is type 2,
         # the challenge is classified as type 2
-        if 3 in phase_type:
+        if 3 in phase_types:
             challenge_type = ChallengeTypeChoices.T2
         else:
             challenge_type = ChallengeTypeChoices.T1
