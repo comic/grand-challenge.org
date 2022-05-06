@@ -1,6 +1,7 @@
 import csv
 
 from django.contrib import messages
+from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -306,6 +307,15 @@ class ReaderStudyDelete(
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        nested_objects = NestedObjects(using="default")
+        nested_objects.collect([self.object])
+        context.update({"nested_objects": nested_objects})
+
+        return context
 
 
 class ReaderStudyLeaderBoard(
