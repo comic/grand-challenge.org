@@ -36,7 +36,10 @@ from grandchallenge.evaluation.tasks import (
     calculate_ranks,
     create_evaluation,
 )
-from grandchallenge.evaluation.utils import StatusChoices, SubmissionKind
+from grandchallenge.evaluation.utils import (
+    StatusChoices,
+    SubmissionKindChoices,
+)
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -136,6 +139,8 @@ class Phase(UUIDModel):
         ),
     )
 
+    SubmissionKindChoices = SubmissionKindChoices
+
     challenge = models.ForeignKey(
         Challenge, on_delete=models.PROTECT, editable=False
     )
@@ -224,8 +229,8 @@ class Phase(UUIDModel):
         ),
     )
     submission_kind = models.PositiveSmallIntegerField(
-        default=SubmissionKind.CSV,
-        choices=SubmissionKind.choices,
+        default=SubmissionKindChoices.CSV,
+        choices=SubmissionKindChoices.choices,
         help_text=(
             "Should participants submit a .csv/.zip file of predictions, "
             "or an algorithm?"
@@ -487,7 +492,7 @@ class Phase(UUIDModel):
         super().clean()
 
         if (
-            self.submission_kind == SubmissionKind.ALGORITHM
+            self.submission_kind == SubmissionKindChoices.ALGORITHM
             and not self.creator_must_be_verified
         ):
             raise ValidationError(

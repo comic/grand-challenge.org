@@ -37,7 +37,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from grandchallenge.evaluation.utils import SubmissionKind
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -427,7 +427,7 @@ class LeaderboardDetail(
             ]
         )
 
-        if self.phase.submission_kind == SubmissionKind.ALGORITHM:
+        if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             columns.append(
                 Column(
                     title="Algorithm",

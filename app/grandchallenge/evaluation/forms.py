@@ -24,7 +24,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from grandchallenge.evaluation.utils import SubmissionKind
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
@@ -240,7 +240,7 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
         elif self._phase.supplementary_url_choice == Phase.OFF:
             del self.fields["supplementary_url"]
 
-        if self._phase.submission_kind == SubmissionKind.ALGORITHM:
+        if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             del self.fields["user_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(

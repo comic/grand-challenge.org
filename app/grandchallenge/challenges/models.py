@@ -53,7 +53,10 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
-from grandchallenge.evaluation.utils import StatusChoices, SubmissionKind
+from grandchallenge.evaluation.utils import (
+    StatusChoices,
+    SubmissionKindChoices,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -589,7 +592,7 @@ class Challenge(ChallengeBase):
         phase_types = {phase.submission_kind for phase in self.phase_set.all()}
         # as long as one of the phases is type 2,
         # the challenge is classified as type 2
-        if SubmissionKind.ALGORITHM in phase_types:
+        if SubmissionKindChoices.ALGORITHM in phase_types:
             challenge_type = ChallengeTypeChoices.T2
         else:
             challenge_type = ChallengeTypeChoices.T1
@@ -894,7 +897,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
 
         if self.challenge_type == ChallengeTypeChoices.T2:
             phase = challenge.phase_set.get()
-            phase.submission_kind = SubmissionKind.ALGORITHM
+            phase.submission_kind = SubmissionKindChoices.ALGORITHM
             phase.creator_must_be_verified = True
             phase.full_clean()
             phase.save()
