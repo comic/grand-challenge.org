@@ -5,7 +5,6 @@ from django.conf import settings
 from requests.exceptions import RequestException
 
 from grandchallenge.publications.models import Publication
-from grandchallenge.publications.utils import get_identifier_csl
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +13,7 @@ logger = logging.getLogger(__name__)
 def update_publication_metadata():
     for publication in Publication.objects.all():
         try:
-            csl, new_identifier = get_identifier_csl(
-                doi_or_arxiv=publication.identifier
-            )
+            csl, new_identifier = publication.identifier.csl
         except ValueError:
             logger.warning(
                 f"Identifier {publication.identifier} not recognised"

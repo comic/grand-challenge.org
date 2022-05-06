@@ -1,20 +1,11 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from grandchallenge.publications.models import (
-    Publication,
-    identifier_validator,
-)
-from grandchallenge.publications.utils import get_identifier_csl
+from grandchallenge.publications.fields import PublicationIdentifier
+from grandchallenge.publications.models import Publication
 
 
 class PublicationForm(forms.ModelForm):
-    def clean_identifier(self):
-        identifier = self.cleaned_data["identifier"]
-        identifier = identifier.lower()
-        identifier_validator(identifier)
-        return identifier
-
     def clean(self):
         self.cleaned_data = super().clean()
 
@@ -24,9 +15,8 @@ class PublicationForm(forms.ModelForm):
         identifier = self.cleaned_data.get(
             "identifier", self.instance.identifier
         )
-
         try:
-            csl, new_identifier = get_identifier_csl(doi_or_arxiv=identifier)
+            csl, new_identifier = PublicationIdentifier(identifier).csl
         except ValueError:
             raise ValidationError("Identifier not recognised")
 
@@ -36,7 +26,6 @@ class PublicationForm(forms.ModelForm):
 
         self.cleaned_data["csl"] = csl
         self.instance.csl = csl
-
         return self.cleaned_data
 
     class Meta:
