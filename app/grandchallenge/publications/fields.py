@@ -22,31 +22,31 @@ class PublicationType(models.TextChoices):
 
 class PublicationIdentifier:
     def __init__(self, identifier):
-        self.identifier = identifier
+        self._identifier = identifier.lower()
 
     def __len__(self):
-        return len(self.identifier)
+        return len(self._identifier)
 
     def __str__(self):
-        return str(self.identifier)
+        return str(self._identifier)
 
     @property
     def kind(self):
-        if re.match(DOI_REGEX, self.identifier):
+        if re.match(DOI_REGEX, self._identifier):
             return PublicationType.DOI
-        elif re.match(ARXIV_REGEX, self.identifier):
+        elif re.match(ARXIV_REGEX, self._identifier):
             return PublicationType.ARXIV
         else:
             raise ValueError(
-                f"Could not determine publication type from {self.identifier}"
+                f"Could not determine publication type from {self._identifier}"
             )
 
     @property
     def url(self):
         if self.kind == PublicationType.ARXIV:
-            return f"https://arxiv.org/abs/{self.identifier}"
+            return f"https://arxiv.org/abs/{self._identifier}"
         elif self.kind == PublicationType.DOI:
-            return f"https://doi.org/{self.identifier}"
+            return f"https://doi.org/{self._identifier}"
         else:
             return "#"
 
@@ -60,7 +60,7 @@ class PublicationIdentifier:
         is fetched.
         """
         if self.kind == PublicationType.ARXIV:
-            new_id = self.identifier
+            new_id = self._identifier
             csl = get_arxiv_csl(arxiv_id=new_id)
 
             if "DOI" in csl:
@@ -69,7 +69,7 @@ class PublicationIdentifier:
                 new_id = csl["DOI"].lower()
                 csl = get_doi_csl(doi=new_id)
         elif self.kind == PublicationType.DOI:
-            new_id = self.identifier
+            new_id = self._identifier
             csl = get_doi_csl(doi=new_id)
         else:
             raise ValueError("Identifier not recognised")
@@ -83,7 +83,7 @@ def parse_identifier(identifier_string):
 
 
 class IdentifierField(models.CharField):
-    # default_validators = [identifier_validator]
+    default_validators = [identifier_validator]
     description = "String reflecting a DOI or arXiv id"
 
     def __init__(self, *args, **kwargs):
@@ -104,7 +104,7 @@ class IdentifierField(models.CharField):
 
     def get_prep_value(self, value):
         if isinstance(value, PublicationIdentifier):
-            return str(value.identifier)
+            return str(value)
         else:
             return value
 
