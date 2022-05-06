@@ -36,7 +36,7 @@ from grandchallenge.evaluation.tasks import (
     calculate_ranks,
     create_evaluation,
 )
-from grandchallenge.evaluation.utils import StatusChoices
+from grandchallenge.evaluation.utils import StatusChoices, SubmissionKind
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -135,11 +135,6 @@ class Phase(UUIDModel):
             "Use the median of the relative ranks of the score and extra result columns",
         ),
     )
-
-    class SubmissionKind(models.IntegerChoices):
-        CSV = 1, "CSV"
-        ZIP = 2, "ZIP"
-        ALGORITHM = 3, "Algorithm"
 
     challenge = models.ForeignKey(
         Challenge, on_delete=models.PROTECT, editable=False
@@ -492,7 +487,7 @@ class Phase(UUIDModel):
         super().clean()
 
         if (
-            self.submission_kind == self.SubmissionKind.ALGORITHM
+            self.submission_kind == SubmissionKind.ALGORITHM
             and not self.creator_must_be_verified
         ):
             raise ValidationError(

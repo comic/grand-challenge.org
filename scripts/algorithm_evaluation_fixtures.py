@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.evaluation.models import Method
+from grandchallenge.evaluation.utils import SubmissionKind
 from grandchallenge.workstations.models import Workstation
 
 
@@ -107,7 +108,7 @@ def _create_challenge(
     p.algorithm_outputs.set(outputs)
 
     p.title = "Algorithm Evaluation"
-    p.submission_kind = p.SubmissionKind.ALGORITHM
+    p.submission_kind = SubmissionKind.ALGORITHM
     p.archive = archive
     p.score_jsonpath = "score"
     p.submission_limit = 10

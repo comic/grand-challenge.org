@@ -3,7 +3,7 @@ import pytest
 from config import settings
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.challenges.tasks import update_challenge_results_cache
-from grandchallenge.evaluation.models import Phase
+from grandchallenge.evaluation.utils import SubmissionKind
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ChallengeFactory
 
@@ -52,8 +52,7 @@ def test_challenge_creation_from_request(
     # an algorithm submission phase has been created
     assert challenge.phase_set.count() == 1
     assert (
-        challenge.phase_set.get().submission_kind
-        == Phase.SubmissionKind.ALGORITHM
+        challenge.phase_set.get().submission_kind == SubmissionKind.ALGORITHM
     )
 
     # for a type 1 challenge, a csv submission phase gets created
@@ -66,9 +65,7 @@ def test_challenge_creation_from_request(
         in challenge2.admins_group.user_set.all()
     )
     assert challenge2.phase_set.count() == 1
-    assert (
-        challenge2.phase_set.get().submission_kind == Phase.SubmissionKind.CSV
-    )
+    assert challenge2.phase_set.get().submission_kind == SubmissionKind.CSV
 
 
 @pytest.mark.django_db

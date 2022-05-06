@@ -43,6 +43,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.evaluation.utils import SubmissionKind
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
@@ -217,7 +218,7 @@ def _create_demo_challenge(users):
             }
         ]
         if phase_num == 0:
-            phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.submission_kind = SubmissionKind.ALGORITHM
         phase.save()
 
         method = Method(phase=phase, creator=users["demo"])

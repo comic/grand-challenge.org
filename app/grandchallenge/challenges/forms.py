@@ -20,6 +20,7 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     ExternalChallenge,
 )
+from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse_lazy
 
 common_information_items = (
@@ -182,7 +183,7 @@ class ChallengeRequestBudgetFieldValidationMixin:
             if "challenge_type" in cleaned_data
             else self.instance.challenge_type
         )
-        if challenge_type == self.instance.ChallengeTypeChoices.T2:
+        if challenge_type == ChallengeTypeChoices.T2:
             if not cleaned_data["average_size_of_test_image_in_mb"]:
                 raise ValidationError(
                     "For a type 2 challenge, you need to provide the average "
