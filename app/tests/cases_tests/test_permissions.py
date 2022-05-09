@@ -8,7 +8,10 @@ from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory
-from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    ReaderStudyFactory,
+)
 
 
 @pytest.mark.django_db
@@ -146,16 +149,15 @@ def test_view_permission_when_reused(in_archive, in_rs, in_job):
     job = AlgorithmJobFactory()
     rs = ReaderStudyFactory()
     archive = ArchiveFactory()
-
+    civ = ComponentInterfaceValueFactory(image=im)
     if in_archive:
-        civ = ComponentInterfaceValueFactory(image=im)
         ai = ArchiveItemFactory(archive=archive)
         with capture_on_commit_callbacks(execute=True):
             ai.values.add(civ)
     if in_rs:
-        rs.images.add(im)
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
     if in_job:
-        civ = ComponentInterfaceValueFactory(image=im)
         job.inputs.add(civ)
 
     assert ("view_image" in get_perms(archive.editors_group, im)) is in_archive

@@ -904,7 +904,7 @@ def test_reader_study_add_ground_truth_ds(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory(use_display_sets=True)
+    rs = ReaderStudyFactory()
     QuestionFactory(
         reader_study=rs,
         question_text="bar",

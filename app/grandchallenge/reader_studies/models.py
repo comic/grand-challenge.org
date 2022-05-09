@@ -773,7 +773,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             )
             .values(
                 "display_set_id",
-                "images__name",
                 "answer",
                 "question",
                 "question__question_text",

@@ -618,7 +618,7 @@ def reader_study_with_gt():
     rs.add_editor(editor)
     ci = ComponentInterface.objects.first()
     for im in [im1, im2]:
-        civ = ComponentInterfaceValueFactory(images=im)
+        civ = ComponentInterfaceValueFactory(image=im)
         ds = DisplaySetFactory(reader_study=rs)
         ds.values.add(civ)
     rs.view_content = {"main": [ci.slug]}

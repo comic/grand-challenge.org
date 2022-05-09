@@ -349,7 +349,7 @@ def test_help_markdown_is_scrubbed(client):
 
 
 @pytest.mark.django_db
-def test_case_text_is_scrubbed(client):
+def test_description_is_scrubbed(client):
     u = UserFactory()
     im, im1 = ImageFactory(), ImageFactory()
     rs = ReaderStudyFactory(
@@ -360,17 +360,16 @@ def test_case_text_is_scrubbed(client):
         },
     )
     ds = DisplaySetFactory(reader_study=rs)
-    ds.values.add(ComponentInterfaceValueFactory(image=im1))
-    rs.images.add(im)
+    ds.values.add(ComponentInterfaceValueFactory(image=im))
     rs.add_reader(u)
 
     response = get_view_for_user(client=client, url=ds.api_url, user=u)
 
     assert response.status_code == 200
     # Case should be indexed with the api url
-    assert response.json()["description"] == {
-        im.api_url: "<p><b>My Help Text</b>naughty</p>"
-    }
+    assert (
+        response.json()["description"] == "<p><b>My Help Text</b>naughty</p>"
+    )
 
 
 @pytest.mark.django_db
@@ -397,7 +396,8 @@ def test_validate_answer():
 
     ds = DisplaySetFactory(reader_study=rs)
     assert (
-        Answer.validate(creator=u, question=q, answer=True, images=ds) is None
+        Answer.validate(creator=u, question=q, answer=True, display_set=ds)
+        is None
     )
 
 

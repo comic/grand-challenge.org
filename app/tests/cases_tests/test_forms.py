@@ -42,7 +42,7 @@ def test_upload_some_images(client: Client, challenge_set, settings):
         response = get_view_for_user(
             data={
                 "user_uploads": [user_upload.pk],
-                "interface": ComponentInterface.objects.get().pk,
+                "interface": ComponentInterface.objects.first().pk,
             },
             client=client,
             viewname="reader-studies:add-displaysets",

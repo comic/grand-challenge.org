@@ -246,7 +246,7 @@ def test_reader_study_list_view_filter(client):
 @pytest.mark.django_db
 def test_reader_study_display_set_list(client):
     user = UserFactory()
-    rs = ReaderStudyFactory(use_display_sets=True)
+    rs = ReaderStudyFactory()
     rs.add_editor(user)
 
     civ = ComponentInterfaceValueFactory(image=ImageFactory())
