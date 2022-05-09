@@ -891,7 +891,6 @@ def test_csv_export(client, answer_type, answer):
 
     headers = str(response.serialize_headers())
     content = str(response.content)
-
     assert response.status_code == 200
     assert "Content-Type: text/csv" in headers
 
@@ -923,8 +922,8 @@ def test_csv_export(client, answer_type, answer):
     assert a.question.get_image_port_display() in content
 
     response = get_view_for_user(
-        viewname="api:image-list",
-        params={"readerstudies": str(rs.pk)},
+        viewname="api:reader-studies-display-set-list",
+        params={"reader_study": str(rs.pk)},
         user=editor,
         client=client,
         method=client.get,
@@ -937,7 +936,7 @@ def test_csv_export(client, answer_type, answer):
     assert response.status_code == 200
     assert "Content-Type: text/csv" in headers
 
-    assert ds.pk in content
+    assert str(ds.pk) in content
 
 
 @pytest.mark.django_db
