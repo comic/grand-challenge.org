@@ -5,7 +5,8 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 
 from grandchallenge.cases.models import Image
-from grandchallenge.reader_studies.models import DisplaySet
+from grandchallenge.reader_studies.models import Answer, DisplaySet
+from grandchallenge.reader_studies.tasks import add_scores_for_display_set
 
 
 @receiver(m2m_changed, sender=DisplaySet.values.through)
@@ -101,3 +102,17 @@ def set_display_set_order(sender, instance, created, **_):
     highest = getattr(last, "order", 0)
     instance.order = (highest + 10) // 10 * 10
     instance.save()
+
+
+@receiver(post_save, sender=Answer)
+def assign_score(sender, instance, created, update_fields=None, **kwargs):
+    if update_fields is not None and set(update_fields) == {"score"}:
+        return
+    on_commit(
+        lambda: add_scores_for_display_set.apply_async(
+            kwargs={
+                "instance_pk": str(instance.pk),
+                "ds_pk": str(instance.display_set.pk),
+            }
+        )
+    )

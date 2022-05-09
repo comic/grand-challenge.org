@@ -17,7 +17,7 @@ from grandchallenge.reader_studies.models import (
 @transaction.atomic
 def add_score(obj, answer):
     obj.calculate_score(answer)
-    obj.save()
+    obj.save(update_fields=["score"])
 
 
 @transaction.atomic
