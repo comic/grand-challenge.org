@@ -156,7 +156,8 @@ def test_view_permission_when_reused(in_archive, in_rs, in_job):
             ai.values.add(civ)
     if in_rs:
         ds = DisplaySetFactory(reader_study=rs)
-        ds.values.add(civ)
+        with capture_on_commit_callbacks(execute=True):
+            ds.values.add(civ)
     if in_job:
         job.inputs.add(civ)
 
