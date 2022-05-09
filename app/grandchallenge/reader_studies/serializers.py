@@ -130,6 +130,7 @@ class DisplaySetPostSerializer(DisplaySetSerializer):
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     hanging_list_images = SerializerMethodField()
+    is_valid = SerializerMethodField()
     help_text = ReadOnlyField()
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
@@ -159,6 +160,9 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     def get_hanging_list_images(self, obj: ReaderStudy):
         """Used by hanging_list_images serializer field."""
         return []
+
+    def get_is_valid(self, obj):
+        return True
 
 
 class AnswerSerializer(HyperlinkedModelSerializer):

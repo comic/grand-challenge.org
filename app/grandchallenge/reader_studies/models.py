@@ -353,14 +353,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return f"{self.title}"
 
     @property
-    def case_field(self):
-        return "case"
-
-    @property
     def ground_truth_file_headers(self):
-        return [self.case_field] + [
-            q.question_text for q in self.answerable_questions
-        ]
+        return ["case"] + [q.question_text for q in self.answerable_questions]
 
     def get_ground_truth_csv_dict(self):
         if self.display_sets.count() == 0:
@@ -515,29 +509,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         """The cleaned help text from the markdown sources"""
         return md2html(self.help_text_markdown, link_blank_target=True)
 
-    @property
-    def cleaned_case_text(self):
-        return {}
-
-    @property
+    @cached_property
     def study_image_names(self):
         """Names for all images added to this ``ReaderStudy``."""
-        return self.ds_images
-
-    @property
-    def hanging_image_names(self):
-        """Names for all images in the hanging list."""
-        return [
-            name for hanging in self.hanging_list for name in hanging.values()
-        ]
-
-    @property
-    def hanging_list_valid(self):
-        """
-        Tests that all of the study images are included in the hanging list
-        exactly once.
-        """
-        return True
+        return sorted(
+            list(
+                self.display_sets.filter(
+                    values__image__isnull=False
+                ).values_list("values__image__name", flat=True)
+            )
+        )
 
     def hanging_list_diff(self, provided=None):
         """
@@ -552,16 +533,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         }
 
     @property
-    def non_unique_study_image_names(self):
-        """Returns all of the non-unique image names for this ``ReaderStudy``."""
-        return []
-
-    @property
-    def is_valid(self):
-        """Deprecated."""
-        return True
-
-    @property
     def image_groups(self):
         """Names of the images as they are grouped in the hanging list."""
         return self.display_sets.all().values_list("pk", flat=True)
@@ -571,16 +542,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return Answer.objects.filter(
             question__reader_study_id=self.id, is_ground_truth=True
         ).exists()
-
-    @cached_property
-    def ds_images(self):
-        return sorted(
-            list(
-                self.display_sets.filter(
-                    values__image__isnull=False
-                ).values_list("values__image__name", flat=True)
-            )
-        )
 
     @cached_property
     def answerable_questions(self):
@@ -599,9 +560,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
         answers = []
         for gt in data:
-            display_set = self.display_sets.get(pk=gt[self.case_field])
+            display_set = self.display_sets.get(pk=gt["case"])
             for key in gt.keys():
-                if key == self.case_field or key.endswith("__explanation"):
+                if key == "case" or key.endswith("__explanation"):
                     continue
                 question = self.questions.get(question_text=key)
                 _answer = json.loads(gt[key])
@@ -666,8 +627,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
-        no_cases = self.display_sets.count() == 0
-        if not self.is_valid or no_cases:
+        if self.display_sets.count() == 0:
             return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
         hanging_list_count = self.display_sets.count()
