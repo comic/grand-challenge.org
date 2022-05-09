@@ -669,13 +669,14 @@ def reader_study_with_mc_gt(reader_study_with_gt):
         (q_choice, c_options[0].id),
         (q_multiple_choice, [mc_options[0].id, mc_options[1].id]),
     ]:
-        AnswerFactory(
-            question=question,
-            creator=editor,
-            answer=answer,
-            is_ground_truth=True,
-            display_set=rs.display_sets.first(),
-        )
+        for ds in rs.display_sets.all():
+            AnswerFactory(
+                question=question,
+                creator=editor,
+                answer=answer,
+                is_ground_truth=True,
+                display_set=ds,
+            )
 
     return rs
 

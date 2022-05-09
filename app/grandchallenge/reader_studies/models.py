@@ -806,7 +806,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         questions = list(dict.fromkeys(questions))
 
         return {
-            "max_score_questions": float(len(self.hanging_list))
+            "max_score_questions": float(len(self.display_sets.all()))
             * self.scores_by_user.count(),
             "scores_by_question": scores_by_question,
             "max_score_cases": float(self.answerable_question_count)

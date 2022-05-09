@@ -673,7 +673,6 @@ def test_reader_study_delete(client):
     assert not is_following(user=editor, obj=rs)
 
 
-@pytest.mark.skip
 @pytest.mark.django_db
 def test_reader_study_add_ground_truth(client, settings):
     settings.task_eager_propagates = (True,)
@@ -712,15 +711,26 @@ def test_reader_study_add_ground_truth(client, settings):
         ImageFactory(name="im3"),
         ImageFactory(name="im4"),
     )
-    rs.images.set([im1.pk, im2.pk, im3.pk, im4.pk])
-    rs.hanging_list = [
-        {"primary": "im1"},
-        {"primary": "im2"},
-        {"primary": "im3"},
-        {"secondary": "im4"},
-    ]
-    rs.save()
-    assert rs.hanging_list_valid
+    ds1 = DisplaySetFactory(
+        reader_study=rs, pk="00000000-0000-0000-0000-0000000000d1"
+    )
+    ds2 = DisplaySetFactory(
+        reader_study=rs, pk="00000000-0000-0000-0000-0000000000d2"
+    )
+    ds3 = DisplaySetFactory(
+        reader_study=rs, pk="00000000-0000-0000-0000-0000000000d3"
+    )
+
+    civ = ComponentInterfaceValueFactory(image=im1)
+    ds1.values.add(civ)
+
+    civ = ComponentInterfaceValueFactory(image=im2)
+    ds2.values.add(civ)
+
+    civ = ComponentInterfaceValueFactory(image=im3)
+    ds3.values.add(civ)
+    civ = ComponentInterfaceValueFactory(image=im4)
+    ds3.values.add(civ)
 
     editor = UserFactory()
     reader = UserFactory()
@@ -770,54 +780,6 @@ def test_reader_study_add_ground_truth(client, settings):
     q.question_text = "foo"
     q.save()
 
-    with open(RESOURCE_PATH / "ground_truth.csv") as gt:
-        response = get_view_for_user(
-            viewname="reader-studies:add-ground-truth",
-            client=client,
-            method=client.post,
-            reverse_kwargs={"slug": rs.slug},
-            data={"ground_truth": gt},
-            follow=True,
-            user=editor,
-        )
-    assert response.status_code == 200
-    assert (
-        "Images provided do not match hanging protocol"
-        in response.rendered_content
-    )
-
-    with open(RESOURCE_PATH / "ground_truth_wrong_images.csv") as gt:
-        response = get_view_for_user(
-            viewname="reader-studies:add-ground-truth",
-            client=client,
-            method=client.post,
-            reverse_kwargs={"slug": rs.slug},
-            data={"ground_truth": gt},
-            follow=True,
-            user=editor,
-        )
-    assert response.status_code == 200
-    assert (
-        "Images provided do not match hanging protocol"
-        in response.rendered_content
-    )
-    assert (
-        "The following images appear in the file, but not in the hanging "
-        "list: im5." in response.rendered_content
-    )
-    assert (
-        "These images appear in the hanging list, but not in the file: im4."
-        in response.rendered_content.replace(r"[\n']", "")
-    )
-
-    rs.hanging_list = [
-        {"primary": "im1"},
-        {"primary": "im2"},
-        {"primary": "im3", "secondary": "im4"},
-    ]
-    rs.save()
-    assert rs.hanging_list_valid
-
     with open(RESOURCE_PATH / "ground_truth_invalid.csv") as gt:
         response = get_view_for_user(
             viewname="reader-studies:add-ground-truth",
@@ -846,24 +808,22 @@ def test_reader_study_add_ground_truth(client, settings):
         )
     assert response.status_code == 200
 
-    answer_count = len(rs.hanging_list) * rs.answerable_question_count
+    answer_count = rs.display_sets.count() * rs.answerable_question_count
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
-    assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "yes"
+    assert Answer.objects.get(display_set=ds1, question=q).answer == "yes"
     assert (
-        Answer.objects.get(images__in=[im1.pk], question=q).explanation
+        Answer.objects.get(display_set=ds1, question=q).explanation
         == "explanation, with a comma"
     )
+    assert Answer.objects.get(display_set=ds2, question=q).explanation == ""
+    assert Answer.objects.get(display_set=ds1, question=q0).answer is True
     assert (
-        Answer.objects.get(images__in=[im2.pk], question=q).explanation == ""
-    )
-    assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is True
-    assert (
-        Answer.objects.get(images__in=[im1.pk], question=q1).answer
+        Answer.objects.get(display_set=ds1, question=q1).answer
         == options["0-1"].pk
     )
     assert sorted(
-        Answer.objects.get(images__in=[im1.pk], question=q2).answer
+        Answer.objects.get(display_set=ds1, question=q2).answer
     ) == sorted([options["1-1"].pk, options["1-2"].pk])
 
     with open(RESOURCE_PATH / "ground_truth_new.csv") as gt:
@@ -880,21 +840,21 @@ def test_reader_study_add_ground_truth(client, settings):
     assert response.status_code == 200
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
-    assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "no"
+    assert Answer.objects.get(display_set=ds1, question=q).answer == "no"
     assert (
-        Answer.objects.get(images__in=[im1.pk], question=q).explanation
+        Answer.objects.get(display_set=ds1, question=q).explanation
         == "new explanation"
     )
     assert (
-        Answer.objects.get(images__in=[im2.pk], question=q).explanation
+        Answer.objects.get(display_set=ds2, question=q).explanation
         == "explanation"
     )
-    assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is False
+    assert Answer.objects.get(display_set=ds1, question=q0).answer is False
     assert (
-        Answer.objects.get(images__in=[im1.pk], question=q1).answer
+        Answer.objects.get(display_set=ds1, question=q1).answer
         == options["0-2"].pk
     )
-    assert Answer.objects.get(images__in=[im1.pk], question=q2).answer == [
+    assert Answer.objects.get(display_set=ds1, question=q2).answer == [
         options["1-0"].pk
     ]
 

@@ -6,7 +6,6 @@ from grandchallenge.reader_studies.templatetags.reader_study_tags import (
 )
 
 
-@pytest.mark.skip
 @pytest.mark.django_db
 def test_get_ground_truth(reader_study_with_mc_gt):
     rs = reader_study_with_mc_gt

@@ -265,12 +265,12 @@ def test_statistics(reader_study_with_gt, settings):
 
     scores = statistics["scores_by_case"]
     assert len(scores) == rs.display_sets.count()
-    images = set(rs.images.values_list("name", flat=True))
+    ds = set(rs.display_sets.values_list("pk", flat=True))
     for score in scores:
-        images -= {score["images__name"]}
+        ds -= {score["display_set_id"]}
         assert score["score__sum"] == 3.0
         assert score["score__avg"] == 1.0
-    assert images == set()
+    assert ds == set()
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
@@ -305,9 +305,9 @@ def test_statistics(reader_study_with_gt, settings):
 
     assert sorted(statistics["questions"]) == sorted(rs_questions)
     for ds in rs.display_sets.all():
-        assert sorted(
-            statistics["ground_truths"][str(ds.pk)].keys()
-        ) == sorted(rs_questions)
+        assert sorted(statistics["ground_truths"][ds.pk].keys()) == sorted(
+            rs_questions
+        )
 
 
 @pytest.mark.django_db
