@@ -28,24 +28,6 @@ def add_image(obj, image):
     image.update_viewer_groups_permissions()
 
 
-@shared_task
-def add_scores(*, instance_pk, pk_set):
-    instance = Answer.objects.get(pk=instance_pk)
-    if instance.is_ground_truth:
-        for answer in Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=False,
-            images__in=pk_set,
-        ):
-            add_score(answer, instance.answer)
-    else:
-        ground_truth = Answer.objects.filter(
-            question=instance.question, is_ground_truth=True, images__in=pk_set
-        ).first()
-        if ground_truth:
-            add_score(instance, ground_truth.answer)
-
-
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def add_scores_for_display_set(*, instance_pk, ds_pk):
     instance = Answer.objects.get(pk=instance_pk)
