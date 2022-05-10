@@ -36,7 +36,6 @@ class AnswersAdmin(GuardedModelAdmin):
     list_filter = ("is_ground_truth", "question__reader_study__slug")
     list_select_related = ("question__reader_study",)
     readonly_fields = (
-        "images",
         "creator",
         "answer",
         "answer_image",
