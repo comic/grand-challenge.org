@@ -916,6 +916,10 @@ class AlgorithmAddRepo(
             kwargs.update({"repos": []})
             return kwargs
 
+        if user_token.refresh_token_is_expired:
+            kwargs.update({"repos": []})
+            return kwargs
+
         if user_token.access_token_is_expired:
             user_token.refresh_access_token()
             user_token.save()
