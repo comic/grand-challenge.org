@@ -214,27 +214,42 @@ def test_filter_origin_images_api_view(client):
 
 @pytest.mark.django_db
 def test_filter_reader_study_images_api_view(client):
-    rs = ReaderStudyFactory()
+    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
     user = UserFactory()
-    rs.add_editor(user)
+    rs1.add_editor(user)
+    rs2.add_editor(user)
 
-    ds = DisplaySetFactory(reader_study=rs)
+    ds1 = DisplaySetFactory(reader_study=rs1)
+    ds2 = DisplaySetFactory(reader_study=rs2)
 
-    im = ImageFactory()
-    civ = ComponentInterfaceValueFactory(image=im)
+    im1, im2 = ImageFactory(), ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im1)
     with capture_on_commit_callbacks(execute=True):
-        ds.values.add(civ)
+        ds1.values.add(civ)
+
+    civ = ComponentInterfaceValueFactory(image=im2)
+    with capture_on_commit_callbacks(execute=True):
+        ds2.values.add(civ)
 
     response = get_view_for_user(
         client=client,
         user=user,
         viewname="api:image-list",
-        data={"reader_study": str(rs.pk)},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="api:image-list",
+        data={"reader_study": str(rs1.pk)},
         content_type="application/json",
     )
     assert response.status_code == 200
     assert response.json()["count"] == 1
-    assert response.json()["results"][0]["pk"] == str(im.pk)
+    assert response.json()["results"][0]["pk"] == str(im1.pk)
 
 
 @pytest.mark.django_db
