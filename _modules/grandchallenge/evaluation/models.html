@@ -84,7 +84,6 @@
 <span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">localtime</span>
-<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 
@@ -449,28 +448,6 @@
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;Should all of the metrics be displayed on the Result detail page?&quot;</span>
         <span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">evaluation_detail_observable_url</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
-            <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">max_length</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
-            <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;The URL of the embeddable observable notebook for viewing &quot;</span>
-                <span class="s2">&quot;individual results. Must be of the form &quot;</span>
-                <span class="s2">&quot;https://observablehq.com/embed/@user/notebook?cell=...&quot;</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">evaluation_comparison_observable_url</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
-            <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">max_length</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
-            <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;The URL of the embeddable observable notebook for comparing&quot;</span>
-                <span class="s2">&quot;results. Must be of the form &quot;</span>
-                <span class="s2">&quot;https://observablehq.com/embed/@user/notebook?cell=...&quot;</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>

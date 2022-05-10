@@ -86,7 +86,6 @@
 <span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="kn">import</span> <span class="n">post_delete</span>
 <span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">get_objects_for_group</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">RefResolutionError</span>
@@ -215,36 +214,6 @@
 <span class="s2">as for each case are displayed in the ``statistics`` view.</span>
 <span class="s2">&quot;&quot;&quot;</span>
 
-<span class="c1">#: Supported image-port overlays.</span>
-<span class="n">IMAGE_PORT_OVERLAYS</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">-overlay&quot;</span> <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">ImagePort</span><span class="o">.</span><span class="n">labels</span><span class="p">]</span>
-
-<span class="c1">#: Schema used to validate if the hanging list is of the correct format.</span>
-<span class="n">HANGING_LIST_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;definitions&quot;</span><span class="p">:</span> <span class="p">{},</span>
-    <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json-schema.org/draft-06/schema#&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Hanging List Schema&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Items Schema&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;main&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">port</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;#/items/properties/</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;The </span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> Schema&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;im_</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">.mhd&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
-            <span class="p">}</span>
-            <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ImagePort</span><span class="o">.</span><span class="n">labels</span><span class="p">]</span>
-            <span class="o">+</span> <span class="n">IMAGE_PORT_OVERLAYS</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-<span class="p">}</span>
-
 <span class="n">CASE_TEXT_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
     <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{},</span>
@@ -271,9 +240,6 @@
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readers_of_readerstudy&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">images</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readerstudies&quot;</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">workstation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -320,15 +286,6 @@
     <span class="p">)</span>
     <span class="n">help_text_markdown</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="c1"># A hanging_list is a list of dictionaries where the keys are the</span>
-    <span class="c1"># view names, and the values are the filenames to place there.</span>
-    <span class="n">hanging_list</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
-            <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-            <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">HANGING_LIST_SCHEMA</span><span class="p">)],</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
     <span class="n">shuffle_hanging_list</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">is_educational</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -375,7 +332,6 @@
             <span class="s2">&quot;whereas case 3 starts anew but its answers will rollover to case 4.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">validate_hanging_list</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
     <span class="n">publications</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
         <span class="n">Publication</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -396,9 +352,6 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The organizations associated with this reader study&quot;</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readerstudies&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">use_display_sets</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
@@ -688,8 +641,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
 
-        <span class="n">hanging_list_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-        <span class="n">expected</span> <span class="o">=</span> <span class="n">hanging_list_count</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span>
+        <span class="n">n_display_sets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">n_display_sets</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span>
 
         <span class="n">answers</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_questions</span><span class="p">,</span>
@@ -713,7 +666,7 @@
             <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">answers_for_user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span><span class="p">)</span>
         <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
         <span class="n">questions</span> <span class="o">=</span> <span class="n">answer_count</span> <span class="o">/</span> <span class="n">expected</span> <span class="o">*</span> <span class="mi">100</span>
-        <span class="n">hangings</span> <span class="o">=</span> <span class="n">completed_hangings</span> <span class="o">/</span> <span class="n">hanging_list_count</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="n">hangings</span> <span class="o">=</span> <span class="n">completed_hangings</span> <span class="o">/</span> <span class="n">n_display_sets</span> <span class="o">*</span> <span class="mi">100</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="n">questions</span><span class="p">,</span>
             <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="n">hangings</span><span class="p">,</span>
@@ -1259,9 +1212,6 @@
 
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">get_user_model</span><span class="p">(),</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
     <span class="n">question</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
-    <span class="n">images</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;answers&quot;</span><span class="p">)</span>
-    <span class="p">)</span>
     <span class="n">display_set</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">DisplaySet</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;answers&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
