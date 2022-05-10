@@ -1,4 +1,3 @@
-import itertools
 import json
 
 import numpy as np
@@ -1007,8 +1006,6 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
 
-    csv_headers = ["Question text", "Answer type", "Required", "Image port"]
-
     class Meta:
         ordering = ("order", "created")
 
@@ -1022,16 +1019,6 @@ class Question(UUIDModel):
             f"order {self.order}"
             ")"
         )
-
-    @property
-    def csv_values(self):
-        """Values that are included in this ``Question``'s csv export."""
-        return [
-            self.question_text,
-            self.get_answer_type_display(),
-            self.required,
-            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}",
-        ]
 
     @property
     def api_url(self):
@@ -1229,13 +1216,6 @@ class Answer(UUIDModel):
         ]
     )
 
-    _csv_headers = Question.csv_headers + [
-        "Created",
-        "Answer",
-        "Images",
-        "Creator",
-    ]
-
     class Meta:
         ordering = ("created",)
         unique_together = (
@@ -1255,31 +1235,6 @@ class Answer(UUIDModel):
     @cached_property
     def history_values(self):
         return self.history.values_list("answer", "history_date")
-
-    @property
-    def csv_values(self):
-        """Values that are included in this ``Answer``'s csv export."""
-        return (
-            self.question.csv_values
-            + [
-                self.created.isoformat(),
-                self.answer_text,
-                "; ".join(self.images.values_list("name", flat=True)),
-                self.creator.username,
-            ]
-            + list(itertools.chain(*self.history_values))
-        )
-
-    @property
-    def csv_headers(self):
-        return self._csv_headers + list(
-            itertools.chain(
-                *[
-                    [f"Answer-{x}", f"Modification_date-{x}"]
-                    for x in range(len(self.history_values))
-                ]
-            )
-        )
 
     @staticmethod
     def validate(  # noqa: C901
