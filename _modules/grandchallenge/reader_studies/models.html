@@ -71,9 +71,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for grandchallenge.reader_studies.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">itertools</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">actstream.models</span> <span class="kn">import</span> <span class="n">Follow</span>
@@ -84,20 +82,19 @@
 <span class="kn">from</span> <span class="nn">django.core.cache</span> <span class="kn">import</span> <span class="n">cache</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">OuterRef</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Subquery</span><span class="p">,</span> <span class="n">Sum</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Sum</span>
 <span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="kn">import</span> <span class="n">post_delete</span>
 <span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">get_objects_for_group</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">RefResolutionError</span>
-<span class="kn">from</span> <span class="nn">numpy.random.mtrand</span> <span class="kn">import</span> <span class="n">RandomState</span>
 <span class="kn">from</span> <span class="nn">simple_history.models</span> <span class="kn">import</span> <span class="n">HistoricalRecords</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span> <span class="nn">stdimage</span> <span class="kn">import</span> <span class="n">JPEGField</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.anatomy.models</span> <span class="kn">import</span> <span class="n">BodyStructure</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="n">ComponentInterfaceValue</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
@@ -275,8 +272,8 @@
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readers_of_readerstudy&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">images</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
-        <span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readerstudies&quot;</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readerstudies&quot;</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">workstation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -325,10 +322,12 @@
 
     <span class="c1"># A hanging_list is a list of dictionaries where the keys are the</span>
     <span class="c1"># view names, and the values are the filenames to place there.</span>
-    <span class="n">hanging_list</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">HANGING_LIST_SCHEMA</span><span class="p">)],</span>
+    <span class="n">hanging_list</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
+            <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+            <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">HANGING_LIST_SCHEMA</span><span class="p">)],</span>
+        <span class="p">)</span>
     <span class="p">)</span>
     <span class="n">shuffle_hanging_list</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">is_educational</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
@@ -376,7 +375,7 @@
             <span class="s2">&quot;whereas case 3 starts anew but its answers will rollover to case 4.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">validate_hanging_list</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">validate_hanging_list</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
     <span class="n">publications</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
         <span class="n">Publication</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -398,7 +397,9 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The organizations associated with this reader study&quot;</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readerstudies&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">use_display_sets</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">use_display_sets</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">&quot;reader studies&quot;</span>
@@ -424,17 +425,11 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">case_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;case&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span> <span class="k">else</span> <span class="s2">&quot;images&quot;</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">ground_truth_file_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">case_field</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
-            <span class="n">q</span><span class="o">.</span><span class="n">question_text</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_questions</span>
-        <span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;case&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">q</span><span class="o">.</span><span class="n">question_text</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_questions</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">get_ground_truth_csv_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{}</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">answers</span> <span class="o">=</span> <span class="p">{</span>
@@ -443,14 +438,12 @@
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">images</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_groups</span><span class="p">:</span>
             <span class="n">_answers</span> <span class="o">=</span> <span class="n">answers</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">_answers</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">case_field</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">images</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span> <span class="k">else</span> <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="n">_answers</span><span class="p">[</span><span class="s2">&quot;case&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_answers</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span>
 
     <span class="k">def</span> <span class="nf">get_example_ground_truth_csv_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;No cases in this reader study&quot;</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_file_headers</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
@@ -534,8 +527,6 @@
                 <span class="p">)</span>
 
 <div class="viewcode-block" id="ReaderStudy.clean"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -588,119 +579,9 @@
         <span class="sd">&quot;&quot;&quot;The cleaned help text from the markdown sources&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">md2html</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">help_text_markdown</span><span class="p">,</span> <span class="n">link_blank_target</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">cleaned_case_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{}</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">study_images</span> <span class="o">=</span> <span class="p">{</span><span class="n">im</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">im</span><span class="o">.</span><span class="n">api_url</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="n">study_images</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">md2html</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_text</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">study_images</span>
-            <span class="p">}</span>
-
-    <span class="nd">@property</span>
+    <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">study_image_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Names for all images added to this ``ReaderStudy``.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ds_images</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">hanging_image_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Names for all images in the hanging list.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="n">name</span> <span class="k">for</span> <span class="n">hanging</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hanging</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-        <span class="p">]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">hanging_list_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Tests that all of the study images are included in the hanging list</span>
-<span class="sd">        exactly once.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="c1"># As the answers is now linked to a display set, this check is</span>
-            <span class="c1"># no longer necessary</span>
-            <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_hanging_list</span> <span class="ow">or</span> <span class="nb">sorted</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">study_image_names</span>
-            <span class="p">)</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_image_names</span><span class="p">)</span>
-
-<div class="viewcode-block" id="ReaderStudy.hanging_list_diff"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.hanging_list_diff">[docs]</a>    <span class="k">def</span> <span class="nf">hanging_list_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provided</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns the diff between the images added to the study and the images</span>
-<span class="sd">        in the hanging list.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">comparison</span> <span class="o">=</span> <span class="n">provided</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">study_image_names</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;in_provided_list&quot;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="n">comparison</span><span class="p">)</span>
-            <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_image_names</span><span class="p">),</span>
-            <span class="s2">&quot;in_hanging_list&quot;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_image_names</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">comparison</span><span class="p">),</span>
-        <span class="p">}</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">non_unique_study_image_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns all of the non-unique image names for this ``ReaderStudy``.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="c1"># As the answers is now linked to a display set, this check is</span>
-            <span class="c1"># no longer necessary</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span>
-                <span class="n">name</span>
-                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">Counter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">study_image_names</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">1</span>
-            <span class="p">]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns ``True`` if the hanging list is valid and there are no</span>
-<span class="sd">        duplicate image names in this ``ReaderStudy`` and ``False`` otherwise.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list_valid</span>
-            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">non_unique_study_image_names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-        <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">hanging_list_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Substitutes the image name for the image detail api url for each image</span>
-<span class="sd">        defined in the hanging list.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">study_images</span> <span class="o">=</span> <span class="p">{</span><span class="n">im</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">im</span><span class="o">.</span><span class="n">api_url</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
-
-        <span class="n">hanging_list_images</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{</span><span class="n">view</span><span class="p">:</span> <span class="n">study_images</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">view</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">hanging</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-            <span class="k">for</span> <span class="n">hanging</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span>
-        <span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">hanging_list_images</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">image_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Names of the images as they are grouped in the hanging list.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="nb">sorted</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">has_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">question__reader_study_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">ds_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="nb">list</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -708,6 +589,17 @@
                 <span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;values__image__name&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">image_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Names of the images as they are grouped in the hanging list.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">question__reader_study_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">answerable_questions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -726,16 +618,9 @@
         <span class="sd">&quot;&quot;&quot;Add ground truth answers provided by ``data`` for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="n">answers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">gt</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-                <span class="n">display_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">gt</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">case_field</span><span class="p">])</span>
-                <span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">display_set</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                    <span class="n">name__in</span><span class="o">=</span><span class="n">gt</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">case_field</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)</span>
-                <span class="p">)</span>
+            <span class="n">display_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">gt</span><span class="p">[</span><span class="s2">&quot;case&quot;</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">gt</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_field</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;__explanation&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;case&quot;</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;__explanation&quot;</span><span class="p">):</span>
                     <span class="k">continue</span>
                 <span class="n">question</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">question_text</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
                 <span class="n">_answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
@@ -762,29 +647,20 @@
                     <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">_answer</span><span class="p">,</span>
                     <span class="s2">&quot;is_ground_truth&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
                 <span class="p">}</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-                    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;display_set&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">display_set</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;images&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">images</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;display_set&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">display_set</span>
 
                 <span class="n">Answer</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">explanation</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;__explanation&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
                 <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
                     <span class="n">explanation</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-                    <span class="n">answer_obj</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                        <span class="n">display_set</span><span class="o">=</span><span class="n">display_set</span><span class="p">,</span>
-                        <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
-                        <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">answer_obj</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                        <span class="n">images__in</span><span class="o">=</span><span class="n">images</span><span class="p">,</span>
-                        <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
-                        <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="n">answer_obj</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">display_set</span><span class="o">=</span><span class="n">display_set</span><span class="p">,</span>
+                    <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
+                    <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
                 <span class="n">answers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
                         <span class="s2">&quot;answer_obj&quot;</span><span class="p">:</span> <span class="n">answer_obj</span>
@@ -796,7 +672,6 @@
                         <span class="p">),</span>
                         <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">_answer</span><span class="p">,</span>
                         <span class="s2">&quot;explanation&quot;</span><span class="p">:</span> <span class="n">explanation</span><span class="p">,</span>
-                        <span class="s2">&quot;images&quot;</span><span class="p">:</span> <span class="n">images</span><span class="p">,</span>
                         <span class="s2">&quot;display_set&quot;</span><span class="p">:</span> <span class="n">display_set</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
@@ -805,44 +680,15 @@
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">answer</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">]</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">explanation</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;explanation&quot;</span><span class="p">]</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-            <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">answer</span><span class="p">[</span><span class="s2">&quot;images&quot;</span><span class="p">])</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">display_set</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;display_set&quot;</span><span class="p">]</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ReaderStudy.get_hanging_list_images_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_hanging_list_images_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">get_hanging_list_images_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a shuffled list of the hanging list images for a particular</span>
-<span class="sd">        user.</span>
-
-<span class="sd">        The shuffle is seeded with the users pk, and using ``RandomState``</span>
-<span class="sd">        from numpy guarantees that the ordering will be consistent across</span>
-<span class="sd">        python/library versions. Returns the normal list if</span>
-<span class="sd">        ``shuffle_hanging_list`` is ``False``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">hanging_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list_images</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shuffle_hanging_list</span> <span class="ow">and</span> <span class="n">hanging_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># In place shuffle</span>
-            <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">))</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">hanging_list</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">hanging_list</span></div>
-
 <div class="viewcode-block" id="ReaderStudy.get_progress_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">get_progress_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the percentage of completed hangings and questions for ``user``.&quot;&quot;&quot;</span>
-        <span class="n">no_cases</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="ow">or</span> <span class="n">no_cases</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
 
-        <span class="n">hanging_list_count</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
-            <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">hanging_list_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
         <span class="n">expected</span> <span class="o">=</span> <span class="n">hanging_list_count</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span>
 
         <span class="n">answers</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -855,70 +701,24 @@
         <span class="k">if</span> <span class="n">expected</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">answer_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="n">completed_hangings</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-                    <span class="n">answers_for_user</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span>
-                        <span class="s2">&quot;answers&quot;</span><span class="p">,</span>
-                        <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span>
-                            <span class="n">answers__creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-                            <span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="p">),</span>
-                    <span class="p">)</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">answers_for_user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span><span class="p">)</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-            <span class="n">questions</span> <span class="o">=</span> <span class="n">answer_count</span> <span class="o">/</span> <span class="n">expected</span> <span class="o">*</span> <span class="mi">100</span>
-            <span class="n">hangings</span> <span class="o">=</span> <span class="n">completed_hangings</span> <span class="o">/</span> <span class="n">hanging_list_count</span> <span class="o">*</span> <span class="mi">100</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="n">questions</span><span class="p">,</span>
-                <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="n">hangings</span><span class="p">,</span>
-                <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="n">questions</span> <span class="o">-</span> <span class="n">hangings</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Group the answers by images and filter out the images that</span>
-            <span class="c1"># have an inadequate amount of answers</span>
-            <span class="n">unanswered_images</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">answers</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">answer_count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">))</span>
-                <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">answer_count__lt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">image_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
-                <span class="n">unanswered_images</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
-                <span class="nb">set</span><span class="p">(</span>
-                    <span class="n">Image</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">readerstudies</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
-                    <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-                        <span class="n">answers_for_user</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span>
-                            <span class="n">Subquery</span><span class="p">(</span>
-                                <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                                    <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-                                    <span class="n">images</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">),</span>
-                                    <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                                <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">]</span>
-                            <span class="p">)</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">answers_for_user</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
-                    <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
-                    <span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">completed_hangings</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">answers_for_user</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span>
+                    <span class="s2">&quot;answers&quot;</span><span class="p">,</span>
+                    <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span>
+                        <span class="n">answers__creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                        <span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="c1"># Determine which hangings have images with unanswered questions</span>
-            <span class="n">hanging_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">]</span>
-            <span class="n">completed_hangings</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">hanging_list</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">image_names</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="p">]</span>
-            <span class="n">completed_hangings</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">completed_hangings</span><span class="p">)</span>
-
-            <span class="n">hangings</span> <span class="o">=</span> <span class="n">completed_hangings</span> <span class="o">/</span> <span class="n">hanging_list_count</span> <span class="o">*</span> <span class="mi">100</span>
-            <span class="n">questions</span> <span class="o">=</span> <span class="n">answer_count</span> <span class="o">/</span> <span class="n">expected</span> <span class="o">*</span> <span class="mi">100</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="n">questions</span><span class="p">,</span>
-                <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="n">hangings</span><span class="p">,</span>
-                <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="n">questions</span> <span class="o">-</span> <span class="n">hangings</span><span class="p">,</span>
-            <span class="p">}</span></div>
+            <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">answers_for_user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">questions</span> <span class="o">=</span> <span class="n">answer_count</span> <span class="o">/</span> <span class="n">expected</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="n">hangings</span> <span class="o">=</span> <span class="n">completed_hangings</span> <span class="o">/</span> <span class="n">hanging_list_count</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;questions&quot;</span><span class="p">:</span> <span class="n">questions</span><span class="p">,</span>
+            <span class="s2">&quot;hangings&quot;</span><span class="p">:</span> <span class="n">hangings</span><span class="p">,</span>
+            <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="n">questions</span> <span class="o">-</span> <span class="n">hangings</span><span class="p">,</span>
+        <span class="p">}</span></div>
 
 <div class="viewcode-block" id="ReaderStudy.score_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.score_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">score_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the average and total score for answers given by ``user``.&quot;&quot;&quot;</span>
@@ -942,11 +742,7 @@
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">leaderboard</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The leaderboard for this ``ReaderStudy``.&quot;&quot;&quot;</span>
-        <span class="n">n_hangings</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
-            <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">n_hangings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
         <span class="n">question_count</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_hangings</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;question_count&quot;</span><span class="p">:</span> <span class="n">question_count</span><span class="p">,</span>
@@ -966,32 +762,18 @@
             <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-score__avg&quot;</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span><span class="p">:</span>
-            <span class="n">scores_by_case</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                    <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span>
-                <span class="p">)</span>
-                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;display_set&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;display_set_id&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-                    <span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
-                    <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;score__avg&quot;</span><span class="p">)</span>
+        <span class="n">scores_by_case</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">scores_by_case</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                    <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span>
-                <span class="p">)</span>
-                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;images__name&quot;</span><span class="p">,</span> <span class="s2">&quot;images__pk&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-                    <span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
-                    <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;score__avg&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;display_set&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;display_set_id&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
+                <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
             <span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;score__avg&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
 
         <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">CategoricalOption</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -1009,7 +791,6 @@
             <span class="p">)</span>
             <span class="o">.</span><span class="n">values</span><span class="p">(</span>
                 <span class="s2">&quot;display_set_id&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;images__name&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;answer&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;question&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;question__question_text&quot;</span><span class="p">,</span>
@@ -1019,11 +800,7 @@
         <span class="p">):</span>
             <span class="n">questions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="s2">&quot;question__question_text&quot;</span><span class="p">])</span>
 
-            <span class="n">field</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;display_set_id&quot;</span><span class="p">]</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_display_sets</span>
-                <span class="k">else</span> <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;images__name&quot;</span><span class="p">]</span>
-            <span class="p">)</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;display_set_id&quot;</span><span class="p">]</span>
             <span class="n">ground_truths</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">ground_truths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">{})</span>
 
             <span class="k">if</span> <span class="n">gt</span><span class="p">[</span><span class="s2">&quot;question__answer_type&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span>
@@ -1047,7 +824,7 @@
         <span class="n">questions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">questions</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;max_score_questions&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_list</span><span class="p">))</span>
+            <span class="s2">&quot;max_score_questions&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()))</span>
             <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scores_by_user</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
             <span class="s2">&quot;scores_by_question&quot;</span><span class="p">:</span> <span class="n">scores_by_question</span><span class="p">,</span>
             <span class="s2">&quot;max_score_cases&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">answerable_question_count</span><span class="p">)</span>
@@ -1302,8 +1079,6 @@
     <span class="p">)</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 
-    <span class="n">csv_headers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Question text&quot;</span><span class="p">,</span> <span class="s2">&quot;Answer type&quot;</span><span class="p">,</span> <span class="s2">&quot;Required&quot;</span><span class="p">,</span> <span class="s2">&quot;Image port&quot;</span><span class="p">]</span>
-
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
 
@@ -1317,16 +1092,6 @@
             <span class="sa">f</span><span class="s2">&quot;order </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="s2">&quot;)&quot;</span>
         <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">csv_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Values that are included in this ``Question``&#39;s csv export.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">question_text</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">get_answer_type_display</span><span class="p">(),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_image_port_display</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39; port,&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_port</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">api_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1494,7 +1259,9 @@
 
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">get_user_model</span><span class="p">(),</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
     <span class="n">question</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
-    <span class="n">images</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;answers&quot;</span><span class="p">)</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;answers&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">display_set</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">DisplaySet</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;answers&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
@@ -1522,13 +1289,6 @@
         <span class="p">]</span>
     <span class="p">)</span>
 
-    <span class="n">_csv_headers</span> <span class="o">=</span> <span class="n">Question</span><span class="o">.</span><span class="n">csv_headers</span> <span class="o">+</span> <span class="p">[</span>
-        <span class="s2">&quot;Created&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Answer&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Images&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Creator&quot;</span><span class="p">,</span>
-    <span class="p">]</span>
-
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,)</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span>
@@ -1549,39 +1309,13 @@
     <span class="k">def</span> <span class="nf">history_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">,</span> <span class="s2">&quot;history_date&quot;</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">csv_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Values that are included in this ``Answer``&#39;s csv export.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">csv_values</span>
-            <span class="o">+</span> <span class="p">[</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">created</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">answer_text</span><span class="p">,</span>
-                <span class="s2">&quot;; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
-            <span class="p">]</span>
-            <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">history_values</span><span class="p">))</span>
-        <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">csv_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_csv_headers</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
-                <span class="o">*</span><span class="p">[</span>
-                    <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Answer-</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Modification_date-</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history_values</span><span class="p">))</span>
-                <span class="p">]</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-
 <div class="viewcode-block" id="Answer.validate"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.validate">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">creator</span><span class="p">,</span>
         <span class="n">question</span><span class="p">,</span>
         <span class="n">answer</span><span class="p">,</span>
-        <span class="n">images</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">display_set</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">display_set</span><span class="p">,</span>
         <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -1597,50 +1331,13 @@
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span><span class="si">}</span><span class="s2"> found.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">images</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">display_set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">display_set</span><span class="o">.</span><span class="n">reader_study</span> <span class="o">!=</span> <span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;You must specify the images or display sey that this answer &quot;</span>
-                <span class="s2">&quot;corresponds to.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Display set </span><span class="si">{</span><span class="n">display_set</span><span class="si">}</span><span class="s2"> does not belong to this reader study.&quot;</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">images</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">display_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;You can only specify one of these two field: images, display_set.&quot;</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">images</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">reader_study_images</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">im</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">reader_study_images</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Image </span><span class="si">{</span><span class="n">im</span><span class="si">}</span><span class="s2"> does not belong to this reader study.&quot;</span>
-                    <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">display_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">display_set</span><span class="o">.</span><span class="n">reader_study</span> <span class="o">!=</span> <span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Display set </span><span class="si">{</span><span class="n">display_set</span><span class="si">}</span><span class="s2"> does not belong to this reader study.&quot;</span>
-                <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">is_ground_truth</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">images</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
-                <span class="ow">and</span> <span class="p">(</span>
-                    <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
-                    <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                        <span class="n">creator</span><span class="o">=</span><span class="n">creator</span><span class="p">,</span>
-                        <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
-                        <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="n">images__in</span><span class="o">=</span><span class="n">images</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">count_images</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;images&quot;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-                    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">count_images</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">))</span>
-                    <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-                <span class="p">)</span>
-            <span class="p">):</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;User </span><span class="si">{</span><span class="n">creator</span><span class="si">}</span><span class="s2"> has already answered this question &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;for this set of images.&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">display_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
                 <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
                 <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                     <span class="n">creator</span><span class="o">=</span><span class="n">creator</span><span class="p">,</span>
