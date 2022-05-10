@@ -270,7 +270,18 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 ).count(),
                 limit,
             ),
-            "image_offsets": range(0, self.object.display_sets.count(), limit),
+            "display_set_offsets": range(
+                0, self.object.display_sets.count(), limit
+            ),
+            "image_offsets": range(
+                0,
+                Image.objects.filter(
+                    componentinterfacevalue__display_sets__reader_study=self.object
+                )
+                .distinct()
+                .count(),
+                limit,
+            ),
         }
 
 

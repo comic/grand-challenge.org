@@ -178,7 +178,7 @@ def test_upload_session_post_permissions(client, is_active, expected_response):
 
 
 @pytest.mark.django_db
-def test_filter_images_api_view(client):
+def test_filter_origin_images_api_view(client):
     alg = AlgorithmFactory()
     user = UserFactory()
     alg.add_editor(user=user)
@@ -205,6 +205,31 @@ def test_filter_images_api_view(client):
         user=user,
         viewname="api:image-list",
         data={"origin": str(im.origin.pk)},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 1
+    assert response.json()["results"][0]["pk"] == str(im.pk)
+
+
+@pytest.mark.django_db
+def test_filter_reader_study_images_api_view(client):
+    rs = ReaderStudyFactory()
+    user = UserFactory()
+    rs.add_editor(user)
+
+    ds = DisplaySetFactory(reader_study=rs)
+
+    im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
+    with capture_on_commit_callbacks(execute=True):
+        ds.values.add(civ)
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="api:image-list",
+        data={"reader_study": str(rs.pk)},
         content_type="application/json",
     )
     assert response.status_code == 200

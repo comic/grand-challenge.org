@@ -38,7 +38,7 @@ class ImageFilterSet(FilterSet):
         widget=Select2MultipleWidget,
         label="Reader Study",
         help_text="Filter images that belong to a reader study",
-        field_name="readerstudies__pk",
+        field_name="componentinterfacevalue__display_sets__reader_study__pk",
         to_field_name="pk",
     )
     patient_id__isempty = EmptyStringFilter(field_name="patient_id")
