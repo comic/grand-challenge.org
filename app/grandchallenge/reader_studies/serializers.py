@@ -15,7 +15,6 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from grandchallenge.cases.models import Image
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -31,10 +30,7 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
-from grandchallenge.reader_studies.tasks import (
-    add_scores,
-    add_scores_for_display_set,
-)
+from grandchallenge.reader_studies.tasks import add_scores_for_display_set
 
 
 class CategoricalOptionSerializer(ModelSerializer):
@@ -133,8 +129,8 @@ class DisplaySetPostSerializer(DisplaySetSerializer):
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     hanging_list_images = SerializerMethodField()
+    is_valid = SerializerMethodField()
     help_text = ReadOnlyField()
-    case_text = ReadOnlyField(source="cleaned_case_text")
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
 
@@ -154,7 +150,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "title",
             "is_educational",
             "has_ground_truth",
-            "case_text",
             "allow_answer_modification",
             "allow_case_navigation",
             "allow_show_all_annotations",
@@ -163,9 +158,10 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
 
     def get_hanging_list_images(self, obj: ReaderStudy):
         """Used by hanging_list_images serializer field."""
-        return obj.get_hanging_list_images_for_user(
-            user=self.context["request"].user
-        )
+        return []
+
+    def get_is_valid(self, obj):
+        return True
 
 
 class AnswerSerializer(HyperlinkedModelSerializer):
@@ -173,12 +169,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     question = HyperlinkedRelatedField(
         view_name="api:reader-studies-question-detail",
         queryset=Question.objects.all(),
-    )
-    images = HyperlinkedRelatedField(
-        many=True,
-        queryset=Image.objects.all(),
-        view_name="api:image-detail",
-        required=False,
     )
     display_set = HyperlinkedRelatedField(
         queryset=DisplaySet.objects.all(),
@@ -217,44 +207,31 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                     "Only the answer and last_edit_duration field can be modified."
                 )
             question = self.instance.question
-            images = self.instance.images.all()
             display_set = self.instance.display_set
             creator = self.instance.creator
         else:
             question = attrs.get("question")
-            images = attrs.get("images")
             display_set = attrs.get("display_set")
             creator = self.context.get("request").user
+
         Answer.validate(
             creator=creator,
             question=question,
             answer=answer,
-            images=images,
             display_set=display_set,
             instance=self.instance,
         )
 
         if self.instance:
-            if images is not None and images.count() > 0:
-                on_commit(
-                    lambda: add_scores.apply_async(
-                        kwargs={
-                            "instance_pk": str(self.instance.pk),
-                            "pk_set": list(
-                                map(str, images.values_list("pk", flat=True))
-                            ),
-                        }
-                    )
+            on_commit(
+                lambda: add_scores_for_display_set.apply_async(
+                    kwargs={
+                        "instance_pk": str(self.instance.pk),
+                        "ds_pk": display_set.pk,
+                    }
                 )
-            if display_set is not None:
-                on_commit(
-                    lambda: add_scores_for_display_set.apply_async(
-                        kwargs={
-                            "instance_pk": str(self.instance.pk),
-                            "ds_pk": display_set.pk,
-                        }
-                    )
-                )
+            )
+
         return (
             attrs
             if not self.instance
@@ -268,7 +245,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "api_url",
             "created",
             "creator",
-            "images",
             "display_set",
             "pk",
             "question",

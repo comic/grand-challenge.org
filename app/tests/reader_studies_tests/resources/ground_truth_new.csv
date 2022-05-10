@@ -1,4 +1,4 @@
-images,foo,bool,choice,mchoice,foo__explanation
-im1,'"no"','false','"option2"','["option0"]','"new explanation"'
-im2,'"no"','false','"option1"','["option1", "option2"]','"explanation"'
-im3;im4,'"yes"','true','"option1"','["option1", "option2"]',
+case,foo,bool,choice,mchoice,foo__explanation
+00000000-0000-0000-0000-0000000000d1,'"no"','false','"option2"','["option0"]','"new explanation"'
+00000000-0000-0000-0000-0000000000d2,'"no"','false','"option1"','["option1", "option2"]','"explanation"'
+00000000-0000-0000-0000-0000000000d3,'"yes"','true','"option1"','["option1", "option2"]',

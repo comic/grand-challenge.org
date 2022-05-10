@@ -17,7 +17,7 @@ from grandchallenge.reader_studies.models import (
 @transaction.atomic
 def add_score(obj, answer):
     obj.calculate_score(answer)
-    obj.save()
+    obj.save(update_fields=["score"])
 
 
 @transaction.atomic
@@ -26,24 +26,6 @@ def add_image(obj, image):
     obj.save()
     image.assign_view_perm_to_creator()
     image.update_viewer_groups_permissions()
-
-
-@shared_task
-def add_scores(*, instance_pk, pk_set):
-    instance = Answer.objects.get(pk=instance_pk)
-    if instance.is_ground_truth:
-        for answer in Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=False,
-            images__in=pk_set,
-        ):
-            add_score(answer, instance.answer)
-    else:
-        ground_truth = Answer.objects.filter(
-            question=instance.question, is_ground_truth=True, images__in=pk_set
-        ).first()
-        if ground_truth:
-            add_score(instance, ground_truth.answer)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
@@ -105,14 +87,6 @@ def create_display_sets_for_upload_session(
 
 
 @shared_task
-def add_images_to_reader_study(*, upload_session_pk, reader_study_pk):
-    images = Image.objects.filter(origin_id=upload_session_pk)
-    reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
-
-    reader_study.images.add(*images.all())
-
-
-@shared_task
 def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
@@ -130,6 +104,7 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
 def copy_reader_study_display_sets(*, orig_pk, new_pk):
     orig = ReaderStudy.objects.get(pk=orig_pk)
     new = ReaderStudy.objects.get(pk=new_pk)
+
     with transaction.atomic():
         for ds in orig.display_sets.all():
             new_ds = DisplaySet.objects.create(reader_study=new)

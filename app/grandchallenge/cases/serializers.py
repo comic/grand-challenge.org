@@ -24,7 +24,6 @@ from grandchallenge.reader_studies.models import (
 from grandchallenge.reader_studies.tasks import (
     add_image_to_answer,
     add_image_to_display_set,
-    add_images_to_reader_study,
 )
 from grandchallenge.uploads.models import UserUpload
 
@@ -272,11 +271,6 @@ def _get_linked_task(*, targets, interface):
                 "archive_item_pk": targets["archive_item"].pk,
                 "interface_pk": interface.pk,
             },
-            immutable=True,
-        )
-    elif "reader_study" in targets:
-        return add_images_to_reader_study.signature(
-            kwargs={"reader_study_pk": targets["reader_study"].pk},
             immutable=True,
         )
     elif "display_set" in targets:

@@ -169,15 +169,11 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
         self.user = user
         self.archive = archive
 
-        self.fields["reader_study"].queryset = (
-            get_objects_for_user(
-                self.user,
-                "reader_studies.change_readerstudy",
-                accept_global_perms=False,
-            )
-            .filter(use_display_sets=True)
-            .order_by("title")
-        )
+        self.fields["reader_study"].queryset = get_objects_for_user(
+            self.user,
+            "reader_studies.change_readerstudy",
+            accept_global_perms=False,
+        ).order_by("title")
 
         self.fields["items"].queryset = self.archive.items.all()
         self.fields["items"].initial = self.fields["items"].queryset

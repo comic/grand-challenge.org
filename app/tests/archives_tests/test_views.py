@@ -464,14 +464,12 @@ def test_archive_items_to_reader_study_update(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
     archive = ArchiveFactory()
-    rs1 = ReaderStudyFactory(use_display_sets=True)
-    rs2 = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
 
     editor, user = UserFactory(), UserFactory()
     archive.add_user(user)
     archive.add_editor(editor)
-    rs1.add_editor(editor)
-    rs2.add_editor(editor)
+    rs.add_editor(editor)
 
     im1, im2, im3, im4 = ImageFactory.create_batch(4)
     overlay = ComponentInterface.objects.get(slug="generic-overlay")
@@ -497,8 +495,7 @@ def test_archive_items_to_reader_study_update(client, settings):
         user=user,
     )
     assert response.status_code == 200
-    assert str(rs1.pk) not in response.rendered_content
-    assert str(rs2.pk) not in response.rendered_content
+    assert str(rs.pk) not in response.rendered_content
 
     response = get_view_for_user(
         viewname="archives:items-reader-study-update",
@@ -509,8 +506,7 @@ def test_archive_items_to_reader_study_update(client, settings):
     )
 
     assert response.status_code == 200
-    assert str(rs1.pk) in response.rendered_content
-    assert str(rs2.pk) not in response.rendered_content
+    assert str(rs.pk) in response.rendered_content
 
     assert im1.name in response.rendered_content
     assert im2.name in response.rendered_content

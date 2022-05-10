@@ -1,5 +1,0 @@
-images,foo,bool,choice,mchoice
-im1,'"yes'",'true','"option1"','["option1", "option2"]'
-im2,'"no"','false','"option1"','["option1", "option2"]'
-im3,'"no"','false','"option1"','["option1", "option2"]'
-im5,'"yes"','true','"option1"','["option1", "option2"]'

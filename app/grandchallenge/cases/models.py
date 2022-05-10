@@ -399,13 +399,9 @@ class Image(UUIDModel):
         algorithm_jobs_groups = (
             Q(job__inputs__image=self) | Q(job__outputs__image=self)
         ) & ~Q(job__in=exclude_jobs)
-        reader_studies_groups = Q(
-            editors_of_readerstudy__images__id__exact=self.pk
-        ) | Q(readers_of_readerstudy__images__id__exact=self.pk)
 
         expected_groups = {
             *Group.objects.filter(algorithm_jobs_groups),
-            *Group.objects.filter(reader_studies_groups),
         }
 
         for archive in Archive.objects.filter(

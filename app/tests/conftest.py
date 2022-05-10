@@ -35,7 +35,10 @@ from tests.annotations_tests.factories import (
     SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import (
     ChallengeFactory,
@@ -46,6 +49,7 @@ from tests.factories import (
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
+    DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -588,7 +592,7 @@ def multiple_etdrs_annotations():
 
 @pytest.fixture
 def reader_study_with_gt():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
         QuestionFactory(
@@ -612,19 +616,23 @@ def reader_study_with_gt():
     rs.add_reader(r1)
     rs.add_reader(r2)
     rs.add_editor(editor)
-    rs.images.set([im1, im2])
-    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
+    ci = ComponentInterface.objects.first()
+    for im in [im1, im2]:
+        civ = ComponentInterfaceValueFactory(image=im)
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+    rs.view_content = {"main": [ci.slug]}
     rs.save()
 
     for question in [q1, q2, q3]:
-        for im in [im1, im2]:
-            ans = AnswerFactory(
+        for ds in rs.display_sets.all():
+            AnswerFactory(
                 question=question,
                 creator=editor,
                 answer=True,
                 is_ground_truth=True,
+                display_set=ds,
             )
-            ans.images.add(im)
 
     return rs
 
@@ -657,19 +665,18 @@ def reader_study_with_mc_gt(reader_study_with_gt):
     ]
 
     editor = rs.editors_group.user_set.first()
-    images = reader_study_with_gt.images.all()
     for question, answer in [
         (q_choice, c_options[0].id),
         (q_multiple_choice, [mc_options[0].id, mc_options[1].id]),
     ]:
-        ans = AnswerFactory(
-            question=question,
-            creator=editor,
-            answer=answer,
-            is_ground_truth=True,
-        )
-        for im in images:
-            ans.images.add(im)
+        for ds in rs.display_sets.all():
+            AnswerFactory(
+                question=question,
+                creator=editor,
+                answer=answer,
+                is_ground_truth=True,
+                display_set=ds,
+            )
 
     return rs
 

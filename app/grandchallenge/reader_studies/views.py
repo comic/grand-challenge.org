@@ -97,7 +97,6 @@ from grandchallenge.reader_studies.serializers import (
     ReaderStudySerializer,
 )
 from grandchallenge.reader_studies.tasks import (
-    add_images_to_reader_study,
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
@@ -252,7 +251,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                         self.request.user
                     ),
                     "answerable_questions": self.object.answerable_question_count
-                    * len(self.object.hanging_list),
+                    * self.object.display_sets.count(),
                 }
             )
 
@@ -271,7 +270,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 ).count(),
                 limit,
             ),
-            "image_offsets": range(0, self.object.images.count(), limit),
+            "image_offsets": range(0, self.object.display_sets.count(), limit),
         }
 
 
@@ -610,6 +609,7 @@ class ReaderStudyCopy(
             },
         )
         rs.add_editor(self.request.user)
+
         if form.cleaned_data["copy_view_content"]:
             rs.view_content = reader_study.view_content
         if form.cleaned_data["copy_hanging_protocol"]:
@@ -692,10 +692,6 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
         kwargs.update(
             {
                 "user": self.request.user,
-                "linked_task": add_images_to_reader_study.signature(
-                    kwargs={"reader_study_pk": self.reader_study.pk},
-                    immutable=True,
-                ),
             }
         )
         return kwargs
@@ -895,7 +891,6 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
-        "images",
         "questions__options",
     )
     permission_classes = [DjangoObjectPermissions]
@@ -918,22 +913,11 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         reader_study = self.get_object()
         if not (reader_study.is_educational and reader_study.has_ground_truth):
             raise Http404()
-        if reader_study.use_display_sets:
-            answers = Answer.objects.filter(
-                display_set_id=case_pk,
-                question__reader_study=reader_study,
-                is_ground_truth=True,
-            )
-        else:
-            try:
-                image = reader_study.images.get(pk=case_pk)
-            except Image.DoesNotExist:
-                raise Http404()
-            answers = Answer.objects.filter(
-                images=image,
-                question__reader_study=reader_study,
-                is_ground_truth=True,
-            )
+        answers = Answer.objects.filter(
+            display_set_id=case_pk,
+            question__reader_study=reader_study,
+            is_ground_truth=True,
+        )
         return JsonResponse(
             {
                 str(answer.question_id): {
@@ -1121,13 +1105,9 @@ class AnswerViewSet(
     GenericViewSet,
 ):
     serializer_class = AnswerSerializer
-    queryset = (
-        Answer.objects.all()
-        .select_related(
-            "creator",
-            "question__reader_study",
-        )
-        .prefetch_related("images")
+    queryset = Answer.objects.all().select_related(
+        "creator",
+        "question__reader_study",
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]

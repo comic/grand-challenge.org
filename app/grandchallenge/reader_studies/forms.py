@@ -1,6 +1,5 @@
 import csv
 import io
-import itertools
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
@@ -39,7 +38,6 @@ from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     CASE_TEXT_SCHEMA,
-    HANGING_LIST_SCHEMA,
     Answer,
     CategoricalOption,
     Question,
@@ -164,11 +162,6 @@ class ReaderStudyCreateForm(
 class ReaderStudyUpdateForm(
     ReaderStudyCreateForm, ModelForm, ViewContentMixin
 ):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance.use_display_sets:
-            del self.fields["hanging_list"]
-
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",
@@ -192,11 +185,9 @@ class ReaderStudyUpdateForm(
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
-            "hanging_list",
             "case_text",
         )
         widgets = {
-            "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
             "help_text_markdown": MarkdownEditorWidget,
             "description": TextInput,
@@ -213,15 +204,6 @@ class ReaderStudyUpdateForm(
                 "order. The ordering for each user will be consistent over "
                 "time. If false, the readers will all read the cases in the "
                 "order that you define."
-            ),
-            "hanging_list": (
-                "A list of hangings. "
-                "The hanging defines which image (the hanging value) "
-                "should be assigned to which image port or overlay. "
-                "Options are: main, secondary, tertiary, quaternary, "
-                "quinary, senary, septenary, octonary, nonary, denary. "
-                "For instance: "
-                '[{"main":"im1.mhd","main-overlay":"im1-overlay.mhd"}]'
             ),
             "case_text": (
                 "Free text that can be included for each case, where the key "
@@ -437,7 +419,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         if sorted(
             filter(lambda x: not x.endswith("__explanation"), headers)
         ) != sorted(
-            [self.reader_study.case_field]
+            ["case"]
             + list(
                 self.reader_study.questions.values_list(
                     "question_text", flat=True
@@ -450,22 +432,5 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             )
 
         values = [x for x in rdr]
-
-        if not self.reader_study.use_display_sets:
-            images = sorted(
-                sorted(x[self.reader_study.case_field].split(";"))
-                for x in values
-            )
-            if images != sorted(self.reader_study.image_groups):
-                diff = self.reader_study.hanging_list_diff(
-                    provided=list(itertools.chain(*images))
-                )
-                raise ValidationError(
-                    f"Images provided do not match hanging protocol. The following "
-                    f"images appear in the file, but not in the hanging list: "
-                    f"{', '.join(diff['in_provided_list'])}. These images appear "
-                    f"in the hanging list, but not in the file: "
-                    f"{', '.join(diff['in_hanging_list'])}."
-                )
 
         return values

@@ -18,7 +18,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_group_deletion():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -37,7 +37,7 @@ def test_group_deletion():
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ["readers_group", "editors_group"])
 def test_group_deletion_reverse(group):
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     readers_group = rs.readers_group
     editors_group = rs.editors_group
 
@@ -50,7 +50,7 @@ def test_group_deletion_reverse(group):
 
 @pytest.mark.django_db
 def test_read_only_fields():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     q = QuestionFactory(reader_study=rs)
 
     assert q.is_fully_editable is True
@@ -68,12 +68,11 @@ def test_read_only_fields():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("use_display_sets", [True, False])
-def test_progress_for_user(settings, use_display_sets):  # noqa: C901
+def test_progress_for_user(settings):  # noqa: C901
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    rs = ReaderStudyFactory(use_display_sets=use_display_sets)
+    rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
         QuestionFactory(reader_study=rs),
@@ -92,42 +91,30 @@ def test_progress_for_user(settings, use_display_sets):  # noqa: C901
         "questions": 0.0,
     }
 
-    if use_display_sets:
-        ci = ComponentInterface.objects.get(slug="generic-medical-image")
-        civ1 = ComponentInterfaceValueFactory(image=im1, interface=ci)
-        civ2 = ComponentInterfaceValueFactory(image=im2, interface=ci)
-        ds1, ds2 = DisplaySetFactory(reader_study=rs), DisplaySetFactory(
-            reader_study=rs
-        )
-        ds1.values.add(civ1)
-        ds2.values.add(civ2)
-
-    else:
-        rs.images.set([im1, im2])
-        rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
-        rs.save()
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
+    civ1 = ComponentInterfaceValueFactory(image=im1, interface=ci)
+    civ2 = ComponentInterfaceValueFactory(image=im2, interface=ci)
+    ds1, ds2 = DisplaySetFactory(reader_study=rs), DisplaySetFactory(
+        reader_study=rs
+    )
+    ds1.values.add(civ1)
+    ds2.values.add(civ2)
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
     assert progress["questions"] == 0
 
     a11 = AnswerFactory(question=q1, answer="foo", creator=reader)
-    if use_display_sets:
-        a11.display_set = ds1
-        a11.save()
-    else:
-        a11.images.add(im1)
+    a11.display_set = ds1
+    a11.save()
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
     assert progress["questions"] == pytest.approx(question_perc)
 
     a21 = AnswerFactory(question=q1, answer="foo", creator=reader)
-    if use_display_sets:
-        a21.display_set = ds2
-        a21.save()
-    else:
-        a21.images.add(im2)
+    a21.display_set = ds2
+    a21.save()
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 0
@@ -135,14 +122,10 @@ def test_progress_for_user(settings, use_display_sets):  # noqa: C901
 
     a12 = AnswerFactory(question=q2, answer="foo", creator=reader)
     a13 = AnswerFactory(question=q3, answer="foo", creator=reader)
-    if use_display_sets:
-        a12.display_set = ds1
-        a12.save()
-        a13.display_set = ds1
-        a13.save()
-    else:
-        a12.images.add(im1)
-        a13.images.add(im1)
+    a12.display_set = ds1
+    a12.save()
+    a13.display_set = ds1
+    a13.save()
 
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 50
@@ -153,48 +136,28 @@ def test_progress_for_user(settings, use_display_sets):  # noqa: C901
     rs.add_editor(editor)
 
     for q in [q1, q2, q3]:
-        if use_display_sets:
-            for ds in [ds1, ds2]:
-                a = AnswerFactory(
-                    question=q,
-                    answer="foo",
-                    creator=editor,
-                    is_ground_truth=True,
-                    display_set=ds,
-                )
-        else:
-            for im in [im1, im2]:
-                a = AnswerFactory(
-                    question=q,
-                    answer="foo",
-                    creator=editor,
-                    is_ground_truth=True,
-                )
-                a.images.add(im)
+        for ds in [ds1, ds2]:
+            AnswerFactory(
+                question=q,
+                answer="foo",
+                creator=editor,
+                is_ground_truth=True,
+                display_set=ds,
+            )
 
     progress = rs.get_progress_for_user(editor)
     assert progress["hangings"] == 0
     assert progress["questions"] == 0
 
     for q in [q1, q2, q3]:
-        if use_display_sets:
-            for ds in [ds1, ds2]:
-                a = AnswerFactory(
-                    question=q,
-                    answer="foo",
-                    creator=editor,
-                    is_ground_truth=False,
-                    display_set=ds,
-                )
-        else:
-            for im in [im1, im2]:
-                a = AnswerFactory(
-                    question=q,
-                    answer="foo",
-                    creator=editor,
-                    is_ground_truth=False,
-                )
-                a.images.add(im)
+        for ds in [ds1, ds2]:
+            AnswerFactory(
+                question=q,
+                answer="foo",
+                creator=editor,
+                is_ground_truth=False,
+                display_set=ds,
+            )
 
     progress = rs.get_progress_for_user(editor)
     assert progress["hangings"] == 100.0
@@ -212,9 +175,10 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
-                ans = AnswerFactory(question=question, creator=r1, answer=True)
-                ans.images.add(im)
+            for ds in rs.display_sets.all():
+                AnswerFactory(
+                    question=question, creator=r1, answer=True, display_set=ds
+                )
 
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -228,11 +192,13 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
 
     with capture_on_commit_callbacks(execute=True):
         for i, question in enumerate(rs.questions.all()):
-            for j, im in enumerate(rs.images.all()):
-                ans = AnswerFactory(
-                    question=question, creator=r2, answer=(i + j) % 2 == 0
+            for j, ds in enumerate(rs.display_sets.all()):
+                AnswerFactory(
+                    question=question,
+                    creator=r2,
+                    answer=(i + j) % 2 == 0,
+                    display_set=ds,
                 )
-                ans.images.add(im)
 
     del rs.scores_by_user
     del rs.leaderboard
@@ -249,9 +215,10 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
-                ans = AnswerFactory(question=question, creator=e, answer=True)
-                ans.images.add(im)
+            for ds in rs.display_sets.all():
+                AnswerFactory(
+                    question=question, creator=e, answer=True, display_set=ds
+                )
 
     del rs.scores_by_user
     del rs.leaderboard
@@ -279,9 +246,10 @@ def test_statistics(reader_study_with_gt, settings):
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
-                ans = AnswerFactory(question=question, creator=r1, answer=True)
-                ans.images.add(im)
+            for ds in rs.display_sets.all():
+                AnswerFactory(
+                    question=question, creator=r1, answer=True, display_set=ds
+                )
 
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -296,22 +264,27 @@ def test_statistics(reader_study_with_gt, settings):
     assert questions == set()
 
     scores = statistics["scores_by_case"]
-    assert len(scores) == rs.images.count()
-    images = set(rs.images.values_list("name", flat=True))
+    assert len(scores) == rs.display_sets.count()
+    ds = set(rs.display_sets.values_list("pk", flat=True))
     for score in scores:
-        images -= {score["images__name"]}
+        ds -= {score["display_set_id"]}
         assert score["score__sum"] == 3.0
         assert score["score__avg"] == 1.0
-    assert images == set()
+    assert ds == set()
 
     with capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
-            for im in rs.images.all():
-                answer = question.question_text == "q1" and im.name == "im1"
-                ans = AnswerFactory(
-                    question=question, creator=r2, answer=answer
+            for ds in rs.display_sets.all():
+                answer = (
+                    question.question_text == "q1"
+                    and ds.values.first().image.name == "im1"
                 )
-                ans.images.add(im)
+                AnswerFactory(
+                    question=question,
+                    creator=r2,
+                    answer=answer,
+                    display_set=ds,
+                )
 
     del rs.statistics
     statistics = rs.statistics
@@ -331,8 +304,8 @@ def test_statistics(reader_study_with_gt, settings):
     assert questions == set()
 
     assert sorted(statistics["questions"]) == sorted(rs_questions)
-    for im in rs.images.all():
-        assert sorted(statistics["ground_truths"][im.name].keys()) == sorted(
+    for ds in rs.display_sets.all():
+        assert sorted(statistics["ground_truths"][ds.pk].keys()) == sorted(
             rs_questions
         )
 
@@ -347,11 +320,13 @@ def test_score_for_user(reader_study_with_gt, settings):
 
     with capture_on_commit_callbacks(execute=True):
         for i, question in enumerate(rs.questions.all()):
-            for j, im in enumerate(rs.images.all()):
-                ans = AnswerFactory(
-                    question=question, creator=r1, answer=(i + j) % 2 == 0
+            for j, ds in enumerate(rs.display_sets.all()):
+                AnswerFactory(
+                    question=question,
+                    creator=r1,
+                    answer=(i + j) % 2 == 0,
+                    display_set=ds,
                 )
-                ans.images.add(im)
 
     score = rs.score_for_user(r1)
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -363,7 +338,6 @@ def test_score_for_user(reader_study_with_gt, settings):
 def test_help_markdown_is_scrubbed(client):
     rs = ReaderStudyFactory(
         help_text_markdown="<b>My Help Text</b><script>naughty</script>",
-        use_display_sets=False,
     )
     u = UserFactory()
     rs.add_reader(u)
@@ -375,7 +349,7 @@ def test_help_markdown_is_scrubbed(client):
 
 
 @pytest.mark.django_db
-def test_case_text_is_scrubbed(client):
+def test_description_is_scrubbed(client):
     u = UserFactory()
     im, im1 = ImageFactory(), ImageFactory()
     rs = ReaderStudyFactory(
@@ -384,77 +358,52 @@ def test_case_text_is_scrubbed(client):
             "not an image name": "Shouldn't appear in result",
             im1.name: "Doesn't belong to this study so ignore",
         },
-        use_display_sets=False,
     )
-    rs.images.add(im)
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(ComponentInterfaceValueFactory(image=im))
     rs.add_reader(u)
 
-    response = get_view_for_user(client=client, url=rs.api_url, user=u)
+    response = get_view_for_user(client=client, url=ds.api_url, user=u)
 
     assert response.status_code == 200
     # Case should be indexed with the api url
-    assert response.json()["case_text"] == {
-        im.api_url: "<p><b>My Help Text</b>naughty</p>"
-    }
+    assert (
+        response.json()["description"] == "<p><b>My Help Text</b>naughty</p>"
+    )
 
 
 @pytest.mark.django_db
 def test_validate_answer():
     u = UserFactory()
-    im1, im2, im3 = ImageFactory(), ImageFactory(), ImageFactory()
-    rs = ReaderStudyFactory(
-        hanging_list=[
-            {"main": im1.name, "main-overlay": im3.name},
-            {"main": im2.name, "main-overlay": im3.name},
-        ],
-        use_display_sets=False,
-    )
-    rs.images.set([im1, im2, im3])
-    rs.add_reader(u)
+    rs = ReaderStudyFactory()
 
+    rs.add_reader(u)
+    ds = DisplaySetFactory(reader_study=rs)
     q = QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.BOOL,
         question_text="q1",
     )
 
-    answer = AnswerFactory(creator=u, question=q, answer=True)
-    answer.images.set([im1, im3])
+    AnswerFactory(creator=u, question=q, answer=True, display_set=ds)
 
     with pytest.raises(ValidationError) as e:
-        Answer.validate(creator=u, question=q, answer=True, images=[im1, im3])
+        Answer.validate(creator=u, question=q, answer=True, display_set=ds)
         assert (
             e.value.message
-            == f"User {u} has already answered this question for this set of images."
+            == f"User {u} has already answered this question for this display set."
         )
 
+    ds = DisplaySetFactory(reader_study=rs)
     assert (
-        Answer.validate(creator=u, question=q, answer=True, images=[im2, im3])
+        Answer.validate(creator=u, question=q, answer=True, display_set=ds)
         is None
     )
 
 
 @pytest.mark.django_db
-def test_validate_hanging_list():
-    im1, im2, im3 = ImageFactory(), ImageFactory(), ImageFactory()
-    rs = ReaderStudyFactory(
-        hanging_list=[
-            {"main": im1.name, "main-overlay": im3.name},
-            {"main": im2.name, "main-overlay": im3.name},
-        ],
-        use_display_sets=False,
-    )
-    rs.images.set([im1, im2, im3])
-
-    assert rs.hanging_list_valid is False
-
-    rs.validate_hanging_list = False
-    assert rs.hanging_list_valid is True
-
-
-@pytest.mark.django_db
 def test_display_set_order():
-    rs = ReaderStudyFactory(use_display_sets=False)
+    rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     assert ds.order == 10
 

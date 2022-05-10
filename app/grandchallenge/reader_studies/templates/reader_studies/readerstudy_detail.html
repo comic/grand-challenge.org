@@ -48,7 +48,7 @@
                    href="#cases" role="tab" aria-controls="v-pills-cases"
                    aria-selected="false"><i class="fas fa-image fa-fw"></i>&nbsp;Cases&nbsp;
                    <span class="badge badge-pill badge-secondary align-middle">
-                      {% if object.use_display_sets %}{{ object.display_sets.count }}{% else %}{{ object.images.all.count }}{% endif %}
+                      {{ object.display_sets.count }}
                    </span>
                 </a>
                 <a class="nav-link" id="v-pills-questions-tab" data-toggle="pill"
@@ -115,7 +115,7 @@
                 </div>
             {% endif %}
 
-            {% if "read_readerstudy" in readerstudy_perms and object.is_valid %}
+            {% if "read_readerstudy" in readerstudy_perms %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
@@ -155,19 +155,12 @@
                     {% endif %}
 
 
-                    {% if object.use_display_sets %}
-                        There are {{ object.display_sets.count }} case{{ object.display_sets.count|pluralize }}.
-                    {% else %}
-                        There are {{ object.images.all.count }}
-                        image{{ object.images.all.count|pluralize }} arranged
-                        in {{ object.hanging_list|length }}
-                        hanging{{ object.hanging_list|pluralize }}.
-                    {% endif %}
+                    There are {{ object.display_sets.count }} case{{ object.display_sets.count|pluralize }}.
 
                     {% if object.shuffle_hanging_list %}
-                        Each reader will read the {% if object.use_display_sets %}cases{% else %}hangings{% endif %} in a unique order.
+                        Each reader will read the cases in a unique order.
                     {% else %}
-                        Each reader will read the {% if object.use_display_sets %}cases{% else %}hangings{% endif %} in the same order.
+                        Each reader will read the cases in the same order.
                     {% endif %}
                 </p>
                 <p>
@@ -208,34 +201,21 @@
                 <h2>Cases</h2>
 
                 <p>
-                    There are {% if object.use_display_sets %}{{ object.display_sets.count }}{% else %}{{ object.images.all.count }}{% endif %}
-                    case{% if object.use_display_sets %}{{ object.display_sets.count|pluralize }}{% else %}{{ object.images.all.count|pluralize }}{% endif %} in this
+                    There are {{ object.display_sets.count }}
+                    case{{ object.display_sets.count|pluralize }} in this
                     reader study.
                 </p>
 
-                {% if object.use_display_sets %}
-                    <p class="mt-3">
-                        <a class="btn btn-primary"
-                           href="{% url 'reader-studies:add-displaysets' slug=object.slug %}">
-                            <i class="fas fa-plus"></i> Add Cases
-                        </a>
-                        <a class="btn btn-primary ml-1"
-                           href="{% url 'reader-studies:display_sets' slug=object.slug %}">
-                            <i class="fas fa-eye mr-1"></i> View / Delete Cases
-                        </a>
-                    </p>
-                {% else %}
-                    <p class="mt-3">
-                        <a class="btn btn-primary"
-                           href="{% url 'reader-studies:add-images' slug=object.slug %}">
-                            <i class="fas fa-plus"></i> Add Cases
-                        </a>
-                        <a class="btn btn-primary ml-1"
-                           href="{% url 'reader-studies:images' slug=object.slug %}">
-                            <i class="fas fa-eye mr-1"></i> View / Delete Cases
-                        </a>
-                    </p>
-                {% endif %}
+                <p class="mt-3">
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:add-displaysets' slug=object.slug %}">
+                        <i class="fas fa-plus"></i> Add Cases
+                    </a>
+                    <a class="btn btn-primary ml-1"
+                       href="{% url 'reader-studies:display_sets' slug=object.slug %}">
+                        <i class="fas fa-eye mr-1"></i> View / Delete Cases
+                    </a>
+                </p>
             </div>
 
             <div class="tab-pane fade"

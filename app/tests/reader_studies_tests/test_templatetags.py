@@ -9,11 +9,11 @@ from grandchallenge.reader_studies.templatetags.reader_study_tags import (
 @pytest.mark.django_db
 def test_get_ground_truth(reader_study_with_mc_gt):
     rs = reader_study_with_mc_gt
-    for im in rs.images.all():
+    for ds in rs.display_sets.all():
         for q in rs.questions.all():
             assert (
-                get_ground_truth(rs, im.name, q.question_text)
+                get_ground_truth(rs, ds.pk, q.question_text)
                 == Answer.objects.get(
-                    question=q, images=im, is_ground_truth=True
+                    question=q, display_set=ds, is_ground_truth=True
                 ).answer_text
             )
