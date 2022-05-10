@@ -13,7 +13,6 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
@@ -142,36 +141,6 @@ based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
 
-#: Supported image-port overlays.
-IMAGE_PORT_OVERLAYS = [f"{port.lower()}-overlay" for port in ImagePort.labels]
-
-#: Schema used to validate if the hanging list is of the correct format.
-HANGING_LIST_SCHEMA = {
-    "definitions": {},
-    "$schema": "http://json-schema.org/draft-06/schema#",
-    "type": "array",
-    "title": "The Hanging List Schema",
-    "items": {
-        "$id": "#/items",
-        "type": "object",
-        "title": "The Items Schema",
-        "required": ["main"],
-        "additionalProperties": False,
-        "properties": {
-            port: {
-                "$id": f"#/items/properties/{port}",
-                "type": "string",
-                "title": f"The {port.title()} Schema",
-                "default": "",
-                "examples": [f"im_{port}.mhd"],
-                "pattern": "^(.*)$",
-            }
-            for port in [p.lower() for p in ImagePort.labels]
-            + IMAGE_PORT_OVERLAYS
-        },
-    },
-}
-
 CASE_TEXT_SCHEMA = {
     "type": "object",
     "properties": {},
@@ -198,9 +167,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         on_delete=models.PROTECT,
         editable=False,
         related_name="readers_of_readerstudy",
-    )
-    images = deprecate_field(
-        models.ManyToManyField("cases.Image", related_name="readerstudies")
     )
 
     workstation = models.ForeignKey(
@@ -247,15 +213,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     )
     help_text_markdown = models.TextField(blank=True)
 
-    # A hanging_list is a list of dictionaries where the keys are the
-    # view names, and the values are the filenames to place there.
-    hanging_list = deprecate_field(
-        models.JSONField(
-            default=list,
-            blank=True,
-            validators=[JSONValidator(schema=HANGING_LIST_SCHEMA)],
-        )
-    )
     shuffle_hanging_list = models.BooleanField(default=False)
     is_educational = models.BooleanField(
         default=False,
@@ -302,7 +259,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             "whereas case 3 starts anew but its answers will rollover to case 4."
         ),
     )
-    validate_hanging_list = deprecate_field(models.BooleanField(default=True))
     publications = models.ManyToManyField(
         Publication,
         blank=True,
@@ -323,9 +279,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         blank=True,
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
-    )
-    use_display_sets = deprecate_field(
-        models.BooleanField(default=True, editable=False)
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
@@ -615,8 +568,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         if self.display_sets.count() == 0:
             return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
-        hanging_list_count = self.display_sets.count()
-        expected = hanging_list_count * self.answerable_question_count
+        n_display_sets = self.display_sets.count()
+        expected = n_display_sets * self.answerable_question_count
 
         answers = Answer.objects.filter(
             question__in=self.answerable_questions,
@@ -640,7 +593,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             ).filter(answers_for_user=self.answerable_question_count)
         ).count()
         questions = answer_count / expected * 100
-        hangings = completed_hangings / hanging_list_count * 100
+        hangings = completed_hangings / n_display_sets * 100
         return {
             "questions": questions,
             "hangings": hangings,
@@ -1186,9 +1139,6 @@ class Answer(UUIDModel):
 
     creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
-    images = deprecate_field(
-        models.ManyToManyField("cases.Image", related_name="answers")
-    )
     display_set = models.ForeignKey(
         DisplaySet, related_name="answers", on_delete=models.PROTECT, null=True
     )

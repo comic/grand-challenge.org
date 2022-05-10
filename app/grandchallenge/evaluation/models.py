@@ -11,7 +11,6 @@ from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -376,28 +375,6 @@ class Phase(UUIDModel):
         help_text=(
             "Should all of the metrics be displayed on the Result detail page?"
         ),
-    )
-    evaluation_detail_observable_url = deprecate_field(
-        models.URLField(
-            blank=True,
-            max_length=2000,
-            help_text=(
-                "The URL of the embeddable observable notebook for viewing "
-                "individual results. Must be of the form "
-                "https://observablehq.com/embed/@user/notebook?cell=..."
-            ),
-        )
-    )
-    evaluation_comparison_observable_url = deprecate_field(
-        models.URLField(
-            blank=True,
-            max_length=2000,
-            help_text=(
-                "The URL of the embeddable observable notebook for comparing"
-                "results. Must be of the form "
-                "https://observablehq.com/embed/@user/notebook?cell=..."
-            ),
-        )
     )
 
     inputs = models.ManyToManyField(
