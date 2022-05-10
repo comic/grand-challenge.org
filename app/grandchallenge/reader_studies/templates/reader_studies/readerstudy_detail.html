@@ -377,6 +377,16 @@
                     </p>
                 {% endfor %}
 
+                {% for offset in display_set_offsets %}
+                    <p>
+                        <a class="btn btn-primary"
+                           href="{% url 'api:reader-studies-display-set-list' %}?format=csv&reader_study={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
+                           download="reader_study_{{ object.slug }}_display_sets_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
+                            <i class="fas fa-file-csv"></i> Display sets ({{ offset|add:1 }} to {{ offset|add:limit }})
+                        </a>
+                    </p>
+                {% endfor %}
+
             </div>
 
             {% if perms.reader_studies.add_readerstudy %}

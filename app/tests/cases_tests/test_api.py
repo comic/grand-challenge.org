@@ -178,7 +178,7 @@ def test_upload_session_post_permissions(client, is_active, expected_response):
 
 
 @pytest.mark.django_db
-def test_filter_images_api_view(client):
+def test_filter_origin_images_api_view(client):
     alg = AlgorithmFactory()
     user = UserFactory()
     alg.add_editor(user=user)
@@ -210,6 +210,46 @@ def test_filter_images_api_view(client):
     assert response.status_code == 200
     assert response.json()["count"] == 1
     assert response.json()["results"][0]["pk"] == str(im.pk)
+
+
+@pytest.mark.django_db
+def test_filter_reader_study_images_api_view(client):
+    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+    user = UserFactory()
+    rs1.add_editor(user)
+    rs2.add_editor(user)
+
+    ds1 = DisplaySetFactory(reader_study=rs1)
+    ds2 = DisplaySetFactory(reader_study=rs2)
+
+    im1, im2 = ImageFactory(), ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im1)
+    with capture_on_commit_callbacks(execute=True):
+        ds1.values.add(civ)
+
+    civ = ComponentInterfaceValueFactory(image=im2)
+    with capture_on_commit_callbacks(execute=True):
+        ds2.values.add(civ)
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="api:image-list",
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="api:image-list",
+        data={"reader_study": str(rs1.pk)},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 1
+    assert response.json()["results"][0]["pk"] == str(im1.pk)
 
 
 @pytest.mark.django_db
