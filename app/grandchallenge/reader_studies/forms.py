@@ -162,9 +162,6 @@ class ReaderStudyCreateForm(
 class ReaderStudyUpdateForm(
     ReaderStudyCreateForm, ModelForm, ViewContentMixin
 ):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     class Meta(ReaderStudyCreateForm.Meta):
         fields = (
             "title",

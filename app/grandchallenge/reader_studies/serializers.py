@@ -15,7 +15,6 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from grandchallenge.cases.models import Image
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -171,12 +170,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         view_name="api:reader-studies-question-detail",
         queryset=Question.objects.all(),
     )
-    images = HyperlinkedRelatedField(
-        many=True,
-        queryset=Image.objects.all(),
-        view_name="api:image-detail",
-        required=False,
-    )
     display_set = HyperlinkedRelatedField(
         queryset=DisplaySet.objects.all(),
         view_name="api:reader-studies-display-set-detail",
@@ -220,6 +213,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             question = attrs.get("question")
             display_set = attrs.get("display_set")
             creator = self.context.get("request").user
+
         Answer.validate(
             creator=creator,
             question=question,
@@ -229,15 +223,15 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         )
 
         if self.instance:
-            if display_set is not None:
-                on_commit(
-                    lambda: add_scores_for_display_set.apply_async(
-                        kwargs={
-                            "instance_pk": str(self.instance.pk),
-                            "ds_pk": display_set.pk,
-                        }
-                    )
+            on_commit(
+                lambda: add_scores_for_display_set.apply_async(
+                    kwargs={
+                        "instance_pk": str(self.instance.pk),
+                        "ds_pk": display_set.pk,
+                    }
                 )
+            )
+
         return (
             attrs
             if not self.instance
@@ -251,7 +245,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "api_url",
             "created",
             "creator",
-            "images",
             "display_set",
             "pk",
             "question",

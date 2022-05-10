@@ -1242,7 +1242,7 @@ class Answer(UUIDModel):
         creator,
         question,
         answer,
-        display_set=None,
+        display_set,
         is_ground_truth=False,
         instance=None,
     ):
@@ -1258,16 +1258,11 @@ class Answer(UUIDModel):
                 f"{type(answer)} found."
             )
 
-        if display_set is None:
-            raise ValidationError(
-                "You must specify display set that this answer "
-                "corresponds to."
-            )
-
         if display_set.reader_study != question.reader_study:
             raise ValidationError(
                 f"Display set {display_set} does not belong to this reader study."
             )
+
         if not is_ground_truth:
             if (
                 Answer.objects.exclude(pk=getattr(instance, "pk", None))
