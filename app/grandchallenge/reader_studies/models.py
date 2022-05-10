@@ -455,8 +455,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 )
 
     def clean(self):
-        if self.hanging_list is None:
-            self.hanging_list = []
         if self.case_text is None:
             self.case_text = {}
         if self.view_content is None:
@@ -519,18 +517,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 ).values_list("values__image__name", flat=True)
             )
         )
-
-    def hanging_list_diff(self, provided=None):
-        """
-        Returns the diff between the images added to the study and the images
-        in the hanging list.
-        """
-        comparison = provided or self.study_image_names
-        return {
-            "in_provided_list": set(comparison)
-            - set(self.hanging_image_names),
-            "in_hanging_list": set(self.hanging_image_names) - set(comparison),
-        }
 
     @property
     def image_groups(self):
