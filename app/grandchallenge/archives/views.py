@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
@@ -435,7 +436,12 @@ class ArchiveEditArchiveItem(
                 }
             ).apply_async
         )
-
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            "Archive item will be updated. It may take some time for your "
+            "changes to become visible.",
+        )
         return HttpResponseRedirect(
             reverse("archives:items-list", kwargs={"slug": self.archive.slug})
         )
