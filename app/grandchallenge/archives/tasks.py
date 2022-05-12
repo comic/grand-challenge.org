@@ -74,21 +74,10 @@ def add_images_to_archive_item(
         )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def update_archive_item_values(
-    *, archive_item_pk, civ_pks_to_remove, civ_pks_to_add
-):
-    with transaction.atomic():
-        archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
-        archive_item.values.remove(*civ_pks_to_remove)
-        archive_item.values.add(*civ_pks_to_add)
-
-
 def update_archive_item_update_kwargs(
     instance,
     interface,
     civ_pks_to_add,
-    civ_pks_to_remove,
     upload_pks,
     value=None,
     image=None,
@@ -104,26 +93,16 @@ def update_archive_item_update_kwargs(
     it also appends the session pk together with the new civ pk to the list of
     to be processed images.
     """
-    if instance.values.filter(interface=interface.pk).exists():
-        for civ_pk in instance.values.filter(
-            interface=interface.pk
-        ).values_list("pk", flat=True):
-            civ_pks_to_remove.add(civ_pk)
-    else:
-        # for images, check if there are any CIVs with the provided image
-        if interface.is_image_kind:
-            if instance.values.filter(image=image).exists():
-                for civ_pk in instance.values.filter(image=image).values_list(
-                    "pk", flat=True
-                ):
-                    civ_pks_to_remove.add(civ_pk)
-
     with transaction.atomic():
         if interface.is_image_kind:
-            civ = ComponentInterfaceValue.objects.create(interface=interface)
             if image:
-                civ.image = image
-                civ.full_clean()
+                civ = ComponentInterfaceValue.objects.filter(
+                    interface=interface, image=image
+                ).first()
+                if civ is None:
+                    civ = ComponentInterfaceValue.objects.create(
+                        interface=interface, image=image
+                    )
             elif upload_session:
                 upload_pks[civ.pk] = upload_session.pk
             civ.save()
@@ -139,18 +118,41 @@ def update_archive_item_update_kwargs(
             civ = interface.create_instance(value=value)
             civ_pks_to_add.add(civ.pk)
 
-    return civ_pks_to_add, civ_pks_to_remove, upload_pks
+    return civ_pks_to_add, upload_pks
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def update_archive_item_values(*, archive_item_pk, civ_pks_to_add):
+    instance = ArchiveItem.objects.get(pk=archive_item_pk)
+    civ_pks_to_remove = []
+    civs = ComponentInterfaceValue.objects.filter(pk__in=civ_pks_to_add)
+    for civ in civs:
+        if instance.values.filter(interface=civ.interface.pk).exists():
+            for civ_pk in instance.values.filter(
+                interface=civ.interface.pk
+            ).values_list("pk", flat=True):
+                civ_pks_to_remove.append(civ_pk)
+        # for images, check if there are any CIVs with the provided image
+        if civ.interface.is_image_kind:
+            if instance.values.filter(image=civ.image).exists():
+                for civ_pk in instance.values.filter(
+                    image=civ.image
+                ).values_list("pk", flat=True):
+                    civ_pks_to_remove.append(civ_pk)
+
+    with transaction.atomic():
+        instance.values.remove(*civ_pks_to_remove)
+        instance.values.add(*civ_pks_to_add)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def start_archive_item_update_tasks(
-    archive_item_pk, civ_pks_to_add, civ_pks_to_remove, upload_pks
+    archive_item_pk, civ_pks_to_add, upload_pks
 ):
     tasks = update_archive_item_values.signature(
         kwargs={
             "archive_item_pk": archive_item_pk,
             "civ_pks_to_add": civ_pks_to_add,
-            "civ_pks_to_remove": civ_pks_to_remove,
         },
         immutable=True,
     )

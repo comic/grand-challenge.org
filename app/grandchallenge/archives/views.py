@@ -394,6 +394,8 @@ class ArchiveEditArchiveItem(
 
     def form_valid(self, form):
         def create_upload(image_files):
+            if not image_files:
+                return
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
             )
@@ -401,7 +403,6 @@ class ArchiveEditArchiveItem(
             return upload_session
 
         upload_pks = {}
-        civ_pks_to_remove = set()
         civ_pks_to_add = set()
 
         for slug, value in form.cleaned_data.items():
@@ -411,8 +412,7 @@ class ArchiveEditArchiveItem(
             ci = ComponentInterface.objects.get(slug=slug)
 
             if ci.is_image_kind:
-                if value:
-                    upload_session = create_upload(value)
+                upload_session = create_upload(value)
             else:
                 upload_session = None
 
@@ -423,7 +423,6 @@ class ArchiveEditArchiveItem(
                 user_upload=value if ci.is_file_kind else None,
                 upload_session=upload_session,
                 civ_pks_to_add=civ_pks_to_add,
-                civ_pks_to_remove=civ_pks_to_remove,
                 upload_pks=upload_pks,
             )
 
@@ -432,7 +431,6 @@ class ArchiveEditArchiveItem(
                 kwargs={
                     "archive_item_pk": self.archive_item.pk,
                     "civ_pks_to_add": list(civ_pks_to_add),
-                    "civ_pks_to_remove": list(civ_pks_to_remove),
                     "upload_pks": upload_pks,
                 }
             ).apply_async
