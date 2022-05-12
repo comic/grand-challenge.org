@@ -6,11 +6,9 @@ from typing import List
 from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Q
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -390,19 +388,24 @@ class Image(UUIDModel):
             image from the results image set, and is used when the pre_clear
             signal is sent.
         """
+        from grandchallenge.algorithms.models import Job
         from grandchallenge.archives.models import Archive
         from grandchallenge.reader_studies.models import ReaderStudy
 
         if exclude_jobs is None:
-            exclude_jobs = []
+            exclude_jobs = set()
+        else:
+            exclude_jobs = {j.pk for j in exclude_jobs}
 
-        algorithm_jobs_groups = (
-            Q(job__inputs__image=self) | Q(job__outputs__image=self)
-        ) & ~Q(job__in=exclude_jobs)
+        expected_groups = set()
 
-        expected_groups = {
-            *Group.objects.filter(algorithm_jobs_groups),
-        }
+        for key in ["inputs__image", "outputs__image"]:
+            for job in (
+                Job.objects.exclude(pk__in=exclude_jobs)
+                .filter(**{key: self})
+                .prefetch_related("viewer_groups")
+            ):
+                expected_groups.update(job.viewer_groups.all())
 
         for archive in Archive.objects.filter(
             items__values__image=self
