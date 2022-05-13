@@ -118,8 +118,6 @@ def update_archive_item_update_kwargs(
             civ = interface.create_instance(value=value)
             civ_pks_to_add.add(civ.pk)
 
-    return civ_pks_to_add, upload_pks
-
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def update_archive_item_values(*, archive_item_pk, civ_pks_to_add):
