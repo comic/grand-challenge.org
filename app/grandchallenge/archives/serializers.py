@@ -85,7 +85,6 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
     def update(self, instance, validated_data):
         civs = validated_data.pop("values")
 
-        civ_pks_to_remove = set()
         civ_pks_to_add = set()
         upload_pks = {}
 
@@ -104,7 +103,6 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
                 user_upload=user_upload,
                 upload_session=upload_session,
                 civ_pks_to_add=civ_pks_to_add,
-                civ_pks_to_remove=civ_pks_to_remove,
                 upload_pks=upload_pks,
             )
 
@@ -113,7 +111,6 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
                 kwargs={
                     "archive_item_pk": instance.pk,
                     "civ_pks_to_add": list(civ_pks_to_add),
-                    "civ_pks_to_remove": list(civ_pks_to_remove),
                     "upload_pks": upload_pks,
                 }
             ).apply_async
