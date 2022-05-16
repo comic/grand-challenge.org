@@ -1217,6 +1217,8 @@ DISALLOWED_EMAIL_DOMAINS = {
     "raysightmed.com",
     "csu.edu.cn",
     "cerist.dz",
+    "ciitvehari.edu.pk",
+    "mail.dcu.ie",
     *blocklist,
 }
 
