@@ -34,6 +34,7 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "container_count",
     )
     list_filter = ("public",)
+    search_fields = ("title", "slug")
     form = AlgorithmAdminForm
 
     def container_count(self, obj):
