@@ -38,6 +38,8 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
         "schema",
         "store_in_database",
     )
+    search_fields = ("title", "slug")
+    list_filter = ("kind",)
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -49,6 +51,7 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
 class ComponentInterfaceValueAdmin(admin.ModelAdmin):
     list_display = ("pk", "interface", "value", "file", "image")
     readonly_fields = ("interface", "value", "file", "image")
+    list_filter = ("interface",)
 
 
 admin.site.register(ComponentInterface, ComponentInterfaceAdmin)
