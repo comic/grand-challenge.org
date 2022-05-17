@@ -5,10 +5,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import BaseUserManager
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.utils.html import format_html
 from pyswot.pyswot import _domain_parts, _is_stoplisted
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.profiles.tasks import deactivate_user
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from grandchallenge.verifications.resources.free_email_domains import (
     FREE_EMAIL_DOMAINS,
@@ -72,6 +74,19 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
         return email
 
     def clean(self):
+        if self.user.user_profile.is_incomplete:
+            profile_link = reverse(
+                "profile-update", kwargs={"username": self.user.username}
+            )
+            raise ValidationError(
+                format_html(
+                    (
+                        "Your profile information is incomplete. You can complete "
+                        "your profile <a href='{}'>here</a>."
+                    ),
+                    profile_link,
+                )
+            )
         try:
             if self.user.verification:
                 raise ValidationError(
