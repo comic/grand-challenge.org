@@ -21,7 +21,7 @@
     </p>
     <p>
         Before submitting this form, make sure that your profile information is complete and valid. You must provide
-        your legal full name and the affiliation you indicate should match the email you use for verification below.
+        your full name and the affiliation you indicate should match the email you use for verification below.
     </p>
     <p>
         Your current profile information:
@@ -29,6 +29,9 @@
         <li>Institution: {% if request.user.user_profile.institution %} {{ request.user.user_profile.institution }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
         <li>Department: {% if request.user.user_profile.department %} {{ request.user.user_profile.department }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
         <li>Country: {% if request.user.user_profile.country.name %} {{ request.user.user_profile.country.name }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
+    </p>
+    <p>
+        If you would like to update this information, please <a href="{% url 'profile-update' username=request.user.username %}">edit your profile</a> before making a verification request.
     </p>
 
     {% crispy form %}
