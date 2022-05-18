@@ -1061,9 +1061,7 @@ class DisplaySetViewSet(
         # reader study.
         reader_study = self.reader_study
         if reader_study and reader_study.shuffle_hanging_list:
-            queryset = self.shuffle_qs(queryset=queryset)
-            # Save the queryset to determine each item's index in the serializer
-            self.randomized_qs = list(queryset)
+            queryset = self.create_randomized_qs(queryset=queryset)
         unanswered_by_user = strtobool(
             self.request.query_params.get("unanswered_by_user", "False")
         )
@@ -1103,16 +1101,16 @@ class DisplaySetViewSet(
         obj = super().get_object()
         # retrieve the full queryset and save its shuffled version to later
         # determine the shuffled index for this object
-        if obj.reader_study and obj.reader_study.shuffle_hanging_list:
+        if obj.reader_study.shuffle_hanging_list:
             queryset = super().filter_queryset(self.get_queryset())
-            queryset = self.shuffle_qs(queryset=queryset)
-            # Save the queryset to determine each item's index in the serializer
-            self.randomized_qs = list(queryset)
+            self.create_randomized_qs(queryset=queryset)
         return obj
 
-    def shuffle_qs(self, queryset):
+    def create_randomized_qs(self, queryset):
         set_seed(1 / int(self.request.user.pk))
         queryset = queryset.order_by("?")
+        # Save the queryset to determine each item's index in the serializer
+        self.randomized_qs = list(queryset)
         return queryset
 
 
