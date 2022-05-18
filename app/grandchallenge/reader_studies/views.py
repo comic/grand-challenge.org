@@ -1053,19 +1053,15 @@ class DisplaySetViewSet(
             )
         return super().destroy(request, *args, **kwargs)
 
-    def filter_queryset(self, queryset):
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
         # Note: if more fields besides 'reader_study' are added to the
         # filter_set fields, we cannot call super anymore before randomizing
         # as we only want to filter out the display sets for a specific
         # reader study.
         reader_study = self.reader_study
-        queryset = super().filter_queryset(queryset)
         if reader_study and reader_study.shuffle_hanging_list:
-            set_seed(1 / int(self.request.user.pk))
-            queryset = queryset.order_by("?")
-            # Save the queryset to determine each item's index in the serializer
-            self.randomized_qs = list(queryset)
-
+            queryset = self.create_randomized_qs(queryset=queryset)
         unanswered_by_user = strtobool(
             self.request.query_params.get("unanswered_by_user", "False")
         )
@@ -1093,6 +1089,28 @@ class DisplaySetViewSet(
                 pks = queryset.values_list("pk", flat=True)
                 queryset = [x for x in self.randomized_qs if x.pk in pks]
 
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_object(self):
+        obj = super().get_object()
+        # retrieve the full queryset and save its shuffled version to later
+        # determine the shuffled index for this object
+        if obj.reader_study.shuffle_hanging_list:
+            queryset = super().filter_queryset(self.get_queryset())
+            self.create_randomized_qs(queryset=queryset)
+        return obj
+
+    def create_randomized_qs(self, queryset):
+        set_seed(1 / int(self.request.user.pk))
+        queryset = queryset.order_by("?")
+        # Save the queryset to determine each item's index in the serializer
+        self.randomized_qs = list(queryset)
         return queryset
 
 

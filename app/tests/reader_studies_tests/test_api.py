@@ -6,6 +6,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKind
+from grandchallenge.core.utils.query import set_seed
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
@@ -1549,7 +1550,13 @@ def test_display_set_index(client):
         method=client.get,
     )
 
-    assert response.json()["index"] is None
+    # determine shuffled index of first Displayset
+    set_seed(1 / int(r.pk))
+    queryset = list(DisplaySet.objects.all().order_by("?"))
+    new_index = queryset.index(DisplaySet.objects.first())
+
+    assert response.json()["index"] is not None
+    assert response.json()["index"] == new_index
 
     rs.shuffle_hanging_list = False
     rs.save()
