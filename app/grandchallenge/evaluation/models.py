@@ -400,7 +400,7 @@ class Phase(UUIDModel):
         help_text="Time limit for inference jobs in seconds",
         validators=[
             MinValueValidator(limit_value=60),
-            MaxValueValidator(limit_value=4 * 60 * 60),
+            MaxValueValidator(limit_value=3600),
         ],
     )
     public = models.BooleanField(
