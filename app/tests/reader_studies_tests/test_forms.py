@@ -413,7 +413,7 @@ def test_question_interface_field(client, answer_type, ci_kinds):
                 "reader_study": rs,
                 "answer_type": answer_type,
                 "image_port": "M" if answer_type in q.annotation_types else "",
-                "interfac": ci,
+                "interface": ci,
             }
         )
         assert f.is_valid()
