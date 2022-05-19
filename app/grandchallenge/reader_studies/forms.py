@@ -263,6 +263,7 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
                 Field("image_port"),
                 Field("direction"),
                 Field("order"),
+                Field("interface"),
                 HTML("<br>"),
                 ButtonHolder(Submit("save", "Save")),
             )
@@ -291,6 +292,7 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
             "image_port",
             "direction",
             "order",
+            "interface",
         )
         help_texts = {
             "question_text": (
@@ -323,6 +325,10 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
             "required": (
                 "If true, the user must answer this question, otherwise the "
                 "user can skip it."
+            ),
+            "interface": (
+                "Select component interface to use as a default answer for this "
+                "question."
             ),
         }
         widgets = {"question_text": TextInput}

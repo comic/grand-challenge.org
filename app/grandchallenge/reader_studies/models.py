@@ -21,7 +21,10 @@ from sklearn.metrics import accuracy_score
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -958,6 +961,9 @@ class Question(UUIDModel):
         default=ScoringFunction.ACCURACY,
     )
     order = models.PositiveSmallIntegerField(default=100)
+    interface = models.ForeignKey(
+        ComponentInterface, on_delete=models.SET_NULL, null=True, blank=True
+    )
 
     class Meta:
         ordering = ("order", "created")
