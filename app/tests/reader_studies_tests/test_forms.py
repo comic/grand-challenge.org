@@ -7,11 +7,21 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from grandchallenge.reader_studies.forms import QuestionForm
+from grandchallenge.reader_studies.models import (
+    ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
+    Answer,
+    Question,
+    ReaderStudy,
+)
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.reader_studies_tests import RESOURCE_PATH
@@ -380,6 +390,48 @@ def test_image_port_only_with_bounding_box(
         assert response.status_code == 200
 
     assert Question.objects.all().count() == questions_created
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type,ci_kinds", ANSWER_TYPE_TO_INTERFACE_KIND_MAP.items()
+)
+def test_question_interface_field(client, answer_type, ci_kinds):
+    defaults = {
+        "question_text": "What?",
+        "direction": "H",
+        "order": 1,
+    }
+
+    q = QuestionFactory()
+    rs = ReaderStudyFactory()
+    for ci_kind in ci_kinds:
+        ci = ComponentInterfaceFactory(kind=ci_kind)
+        f = QuestionForm(
+            {
+                **defaults,
+                "reader_study": rs,
+                "answer_type": answer_type,
+                "image_port": "M" if answer_type in q.annotation_types else "",
+                "interfac": ci,
+            }
+        )
+        assert f.is_valid()
+
+    non_ci_kind = [
+        c[0] for c in InterfaceKindChoices.choices if c[0] not in ci_kinds
+    ][0]
+    non_ci = ComponentInterfaceFactory(kind=non_ci_kind)
+    f = QuestionForm(
+        {
+            **defaults,
+            "reader_study": rs,
+            "answer_type": answer_type,
+            "image_port": "M" if answer_type in q.annotation_types else "",
+            "interface": non_ci,
+        }
+    )
+    assert not f.is_valid()
 
 
 @pytest.mark.django_db
