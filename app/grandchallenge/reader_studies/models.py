@@ -1046,6 +1046,13 @@ class Question(UUIDModel):
             self.answer_type, "<NO EXAMPLE YET>"
         )
 
+    @property
+    def allowed_component_interfaces(self):
+        allowed_interfaces = ANSWER_TYPE_TO_INTERFACE_KIND_MAP.get(
+            self.answer_type
+        )
+        return ComponentInterface.objects.filter(kind__in=allowed_interfaces)
+
     def calculate_score(self, answer, ground_truth):
         """
         Calculates the score for ``answer`` by applying ``scoring_function``

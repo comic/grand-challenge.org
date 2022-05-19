@@ -52,7 +52,10 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
@@ -82,6 +85,7 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyUpdateForm,
 )
 from grandchallenge.reader_studies.models import (
+    ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     Answer,
     CategoricalOption,
     DisplaySet,
@@ -722,7 +726,20 @@ class AddQuestionToReaderStudy(
             context["options"] = CategoricalOptionFormSet(self.request.POST)
         else:
             context["options"] = CategoricalOptionFormSet()
-        context.update({"reader_study": self.reader_study})
+        context.update(
+            {
+                "reader_study": self.reader_study,
+                "at_to_ci_map": {
+                    k: [
+                        ci.pk
+                        for ci in ComponentInterface.objects.filter(
+                            kind__in=[k for k in kinds]
+                        )
+                    ]
+                    for k, kinds in ANSWER_TYPE_TO_INTERFACE_KIND_MAP.items()
+                },
+            }
+        )
         return context
 
     def form_valid(self, form):

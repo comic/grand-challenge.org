@@ -1,4 +1,5 @@
 {% extends "reader_studies/reader_study_object_form.html" %}
+{%  load static %}
 
 {% block title %}
     Add {{ type_to_add }} to {{ object }} - {{ block.super }}
@@ -17,4 +18,10 @@
 
 {% block form_heading %}
     <h2>Add {{ type_to_add }} to {{ object }}</h2>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ at_to_ci_map|json_script:"answerTypeToInterfaceMapJson" }}
+    <script type="text/javascript" src="{% static "js/reader_studies/interface_choice.js" %}"></script>
 {% endblock %}
