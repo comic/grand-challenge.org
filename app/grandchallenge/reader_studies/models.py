@@ -916,8 +916,8 @@ class AnswerType(models.TextChoices):
 
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
-    AnswerType.SINGLE_LINE_TEXT: [],
-    AnswerType.MULTI_LINE_TEXT: [],
+    AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
+    AnswerType.MULTI_LINE_TEXT: [InterfaceKindChoices.STRING],
     AnswerType.BOOL: [InterfaceKindChoices.BOOL],
     AnswerType.NUMBER: [
         InterfaceKindChoices.FLOAT,
@@ -946,8 +946,6 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
         InterfaceKindChoices.MULTIPLE_CHOICE
     ],
     AnswerType.MASK: [
-        InterfaceKindChoices.IMAGE,
-        InterfaceKindChoices.HEAT_MAP,
         InterfaceKindChoices.SEGMENTATION,
     ],
 }
@@ -1001,7 +999,7 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
     interface = models.ForeignKey(
-        ComponentInterface, on_delete=models.SET_NULL, null=True
+        ComponentInterface, on_delete=models.PROTECT, null=True
     )
 
     class Meta:
