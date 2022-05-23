@@ -1065,6 +1065,21 @@ class DisplaySetViewSet(
         unanswered_by_user = strtobool(
             self.request.query_params.get("unanswered_by_user", "False")
         )
+        user_pk = self.request.query_params.get("user", False)
+        if user_pk:
+            user = get_user_model().objects.filter(pk=user_pk).get()
+            if (
+                user != self.request.user
+                and not self.request.user.groups.filter(
+                    pk=self.reader_study.editors_group.pk
+                ).exists()
+            ):
+                raise PermissionDenied(
+                    "You do not have permission to view the answers of this user."
+                )
+        else:
+            user = self.request.user
+
         if unanswered_by_user is True:
             if reader_study is None:
                 raise DRFValidationError(
@@ -1075,7 +1090,7 @@ class DisplaySetViewSet(
             queryset = (
                 queryset.annotate(answer_count=Count("answers"))
                 .exclude(
-                    answers__creator=self.request.user,
+                    answers__creator=user,
                     answer_count__gte=answerable_question_count,
                 )
                 .order_by("order", "created")
