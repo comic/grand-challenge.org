@@ -162,7 +162,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             username = user.username
         return response, username
 
-    def _signup_user(self):
+    def _signup_user(self, override):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
         For example, signup_user({'username':'user1'}) to creates a user called
@@ -181,6 +181,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "website": "https://www.example.com",
             "accept_terms": True,
         }
+        data.update(override)
 
         self.client.logout()
         response = self.client.post(
