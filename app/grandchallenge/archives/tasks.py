@@ -95,14 +95,10 @@ def update_archive_item_update_kwargs(
     """
     with transaction.atomic():
         if interface.is_image_kind:
+            civ = ComponentInterfaceValue.objects.create(interface=interface)
             if image:
-                civ = ComponentInterfaceValue.objects.filter(
-                    interface=interface, image=image
-                ).first()
-                if civ is None:
-                    civ = ComponentInterfaceValue.objects.create(
-                        interface=interface, image=image
-                    )
+                civ.image = image
+                civ.full_clean()
             elif upload_session:
                 upload_pks[civ.pk] = upload_session.pk
             civ.save()
