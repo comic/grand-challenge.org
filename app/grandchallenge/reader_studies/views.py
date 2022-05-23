@@ -1065,16 +1065,16 @@ class DisplaySetViewSet(
         unanswered_by_user = strtobool(
             self.request.query_params.get("unanswered_by_user", "False")
         )
-        user_pk = self.request.query_params.get("user", False)
+        username = self.request.query_params.get("user", False)
 
-        if user_pk and not unanswered_by_user:
+        if username and not unanswered_by_user:
             raise DRFValidationError(
                 "Specifying a user is only possible when retrieving unanswered"
                 " display sets."
             )
 
-        if user_pk:
-            user = get_user_model().objects.filter(pk=user_pk).get()
+        if username:
+            user = get_user_model().objects.filter(username=username).get()
             if (
                 user != self.request.user
                 and not self.request.user.groups.filter(
@@ -1086,7 +1086,6 @@ class DisplaySetViewSet(
                     " display sets."
                 )
         else:
-            user = self.request.user
             user = self.request.user
 
         if unanswered_by_user is True:

@@ -1788,7 +1788,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
         data={
             "reader_study": str(rs.pk),
             "unanswered_by_user": True,
-            "user": r1.pk,
+            "user": r1.username,
         },
         user=r2,
         client=client,
@@ -1802,7 +1802,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
         data={
             "reader_study": str(rs.pk),
             "unanswered_by_user": True,
-            "user": r2.pk,
+            "user": r2.username,
         },
         user=r2,
         client=client,
@@ -1815,7 +1815,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
         viewname="api:reader-studies-display-set-list",
         data={
             "reader_study": str(rs.pk),
-            "user": r1.pk,
+            "user": r1.username,
         },
         user=editor,
         client=client,
@@ -1833,7 +1833,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
         data={
             "reader_study": str(rs.pk),
             "unanswered_by_user": True,
-            "user": r1.pk,
+            "user": r1.username,
         },
         user=editor,
         client=client,
@@ -1847,7 +1847,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
         data={
             "reader_study": str(rs.pk),
             "unanswered_by_user": True,
-            "user": r2.pk,
+            "user": r2.username,
         },
         user=editor,
         client=client,
