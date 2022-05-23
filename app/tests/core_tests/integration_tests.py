@@ -144,32 +144,10 @@ class GrandChallengeFrameworkTestCase(TestCase):
         Used for checking forms. Also checks for 403 response forbidden.
         Return string error message if anything does not check out, "" if not.
         """
-        if response.status_code == 403:
-            return "Could not check for errors, as response was a 403 response\
-                     forbidden. User asking for this url did not have permission."
-
-        errors = re.search(
-            '<ul class="errorlist">(.*)</ul>',
-            response.content.decode(),
-            re.IGNORECASE,
-        )
-        if errors:
-            # show a little around the actual error to scan for variables that
-            # might have caused it
-            span = errors.span()
-            wide_start = max(span[0] - 200, 0)
-            wide_end = min(span[1] + 200, len(response.content))
-            wide_error = response.content[wide_start:wide_end]
-            return wide_error
-
-        else:
-            # See if there are any new style errors
-            soup = BeautifulSoup(response.content, "html.parser")
-            errors = soup.findAll("span", attrs={"class": "invalid-feedback"})
-            if len(errors) > 0:
-                return str(errors)
-
-        return ""
+        soup = BeautifulSoup(response.content, "html.parser")
+        errors = soup.findAll("span", attrs={"class": "invalid-feedback"})
+        if len(errors) > 0:
+            return str(errors)
 
     def _view_url(self, user, url):
         self._login(user)
@@ -184,15 +162,12 @@ class GrandChallengeFrameworkTestCase(TestCase):
             username = user.username
         return response, username
 
-    def _signup_user(self, overwrite_data=None):
+    def _signup_user(self):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
         For example, signup_user({'username':'user1'}) to creates a user called
         'user1' and fills the rest with default data.
         """
-        if overwrite_data is None:
-            overwrite_data = {}
-
         data = {
             "first_name": "test",
             "last_name": "test",
@@ -206,7 +181,6 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "website": "https://www.example.com",
             "accept_terms": True,
         }
-        data.update(overwrite_data)  # overwrite any key in default if in data
 
         self.client.logout()
         response = self.client.post(
