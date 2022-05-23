@@ -2,6 +2,7 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm, remove_perm
 
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
 from tests.archives_tests.factories import (
@@ -528,3 +529,103 @@ def test_archive_items_to_reader_study_update(client, settings):
 
     assert f"{im1.name}, {im3.name}" in response.rendered_content
     assert f"{im2.name}, {im4.name}" in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_archive_item_add_image(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    archive = ArchiveFactory()
+    item = ArchiveItemFactory(archive=archive)
+    editor = UserFactory()
+    archive.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha",
+        creator=editor,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "pk": item.pk,
+                    "interface_slug": ci.slug,
+                    "archive_slug": archive.slug,
+                },
+                user=editor,
+                follow=True,
+                data={ci.slug: upload.pk},
+            )
+    assert response.status_code == 200
+    assert (
+        "image10x10x10.mha"
+        == ArchiveItem.objects.get().values.first().image.name
+    )
+
+
+@pytest.mark.django_db
+def test_archive_item_add_file(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    archive = ArchiveFactory()
+    item = ArchiveItemFactory(archive=archive)
+    editor = UserFactory()
+    archive.add_editor(editor)
+    ci = ComponentInterfaceFactory(kind=InterfaceKind.InterfaceKindChoices.PDF)
+    upload = create_upload_from_file(
+        creator=editor, file_path=RESOURCE_PATH / "test.pdf"
+    )
+
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "pk": item.pk,
+                    "interface_slug": ci.slug,
+                    "archive_slug": archive.slug,
+                },
+                user=editor,
+                follow=True,
+                data={ci.slug: upload.pk},
+            )
+    assert response.status_code == 200
+    assert "test" in ArchiveItem.objects.get().values.first().file.name
+
+
+@pytest.mark.django_db
+def test_archive_item_add_value(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    archive = ArchiveFactory()
+    item = ArchiveItemFactory(archive=archive)
+    editor = UserFactory()
+    archive.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "pk": item.pk,
+                    "interface_slug": ci.slug,
+                    "archive_slug": archive.slug,
+                },
+                user=editor,
+                follow=True,
+                data={ci.slug: True},
+            )
+    assert response.status_code == 200
+    assert ArchiveItem.objects.get().values.first().value
