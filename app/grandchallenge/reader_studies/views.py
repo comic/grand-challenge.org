@@ -1066,6 +1066,13 @@ class DisplaySetViewSet(
             self.request.query_params.get("unanswered_by_user", "False")
         )
         user_pk = self.request.query_params.get("user", False)
+
+        if user_pk and not unanswered_by_user:
+            raise DRFValidationError(
+                "Specifying a user is only possible when retrieving unanswered"
+                " display sets."
+            )
+
         if user_pk:
             user = get_user_model().objects.filter(pk=user_pk).get()
             if (
@@ -1075,9 +1082,11 @@ class DisplaySetViewSet(
                 ).exists()
             ):
                 raise PermissionDenied(
-                    "You do not have permission to view the answers of this user."
+                    "You do not have permission to retrieve this users unanswered"
+                    " display sets."
                 )
         else:
+            user = self.request.user
             user = self.request.user
 
         if unanswered_by_user is True:

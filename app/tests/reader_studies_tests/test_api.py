@@ -1782,7 +1782,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
     AnswerFactory(question=q1, display_set=ds1, creator=r1)
     AnswerFactory(question=q2, display_set=ds1, creator=r1)
 
-    # R2 cannot view R1s answers
+    # R2 cannot retrieve unanswered ds from R1
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         data={
@@ -1796,7 +1796,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
     )
     assert response.status_code == 403
 
-    # r2 can view their own answers
+    # but R2 can retrieve their own unanswered display sets
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         data={
@@ -1809,6 +1809,23 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
         method=client.get,
     )
     assert response.json()["count"] == 2
+
+    # specifing a user is only possible in combination with unanswered_by_user=True
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={
+            "reader_study": str(rs.pk),
+            "user": r1.pk,
+        },
+        user=editor,
+        client=client,
+        method=client.get,
+    )
+    assert response.status_code == 400
+    assert (
+        "Specifying a user is only possible when retrieving unanswered display sets."
+        in str(response.rendered_content)
+    )
 
     # the rs editor can view all
     response = get_view_for_user(
