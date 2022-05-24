@@ -1072,17 +1072,13 @@ class DisplaySetViewSet(
                 "Specifying a user is only possible when retrieving unanswered"
                 " display sets."
             )
-
         if username:
             user = get_user_model().objects.filter(username=username).get()
-            if (
-                user != self.request.user
-                and not self.request.user.groups.filter(
-                    pk=self.reader_study.editors_group.pk
-                ).exists()
+            if user != self.request.user and not self.request.user.has_perm(
+                "change_readerstudy", self.reader_study
             ):
                 raise PermissionDenied(
-                    "You do not have permission to retrieve this users unanswered"
+                    "You do not have permission to retrieve this user's unanswered"
                     " display sets."
                 )
         else:

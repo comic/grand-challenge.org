@@ -1768,6 +1768,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
     rs.add_editor(editor)
     rs.add_reader(r1)
     rs.add_reader(r2)
+    assert editor.has_perm("change_readerstudy", rs)
 
     q1, q2 = (
         QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
@@ -1810,7 +1811,7 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
     )
     assert response.json()["count"] == 2
 
-    # specifing a user is only possible in combination with unanswered_by_user=True
+    # specifying a user is only possible in combination with unanswered_by_user=True
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         data={
