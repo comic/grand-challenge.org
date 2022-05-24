@@ -1,5 +1,3 @@
-import pytest
-
 from grandchallenge.workstations.templatetags.workstations import (
     workstation_query,
 )
@@ -9,7 +7,6 @@ from tests.factories import ImageFactory, UserFactory, WorkstationConfigFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 
-@pytest.mark.django_db
 def test_workstation_query(settings):
     image, overlay = ImageFactory.build_batch(2)
     reader_study = ReaderStudyFactory.build(
