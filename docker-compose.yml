@@ -26,7 +26,7 @@ services:
     entrypoint: "/bin/sh"
     command: >-
       -c "
-      mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/
+      mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/ /data/grand-challenge-components-inputs/ /data/grand-challenge-components-outputs/
       && minio --compat server /data
       "
     restart: always

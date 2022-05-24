@@ -2,9 +2,11 @@ import base64
 import json
 import logging
 import os
+import subprocess
 from datetime import timedelta
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-import boto3
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -85,8 +87,8 @@ def run():
 
     try:
         users = _create_users(usernames=DEFAULT_USERS)
-    except IntegrityError:
-        raise RuntimeError("Fixtures already initialized")
+    except IntegrityError as e:
+        raise RuntimeError("Fixtures already initialized") from e
 
     _set_user_permissions(users)
     _create_demo_challenge(users)
@@ -101,6 +103,7 @@ def run():
     _create_help_forum()
     _create_flatpages()
     _setup_public_storage()
+    _setup_components_storage()
 
     print("✨ Development fixtures successfully created ✨")
 
@@ -609,10 +612,11 @@ def _setup_public_storage():
     """
     Add anonymous read only to public S3 storage.
 
-    Only used in development, in production, set a similar policy manually
-    on the S3 bucket.
+    Only used in development. In production, set a similar policy on the S3 bucket.
     """
-    bucket_policy = {
+    host_alias = "local"
+    policy_name = "public_read"
+    policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
@@ -625,23 +629,114 @@ def _setup_public_storage():
         ],
     }
 
-    bucket_policy = json.dumps(bucket_policy)
-
-    # Get or create the bucket
-    _ = public_s3_storage.bucket
-
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=public_s3_storage.access_key,
-        aws_secret_access_key=public_s3_storage.secret_key,
-        aws_session_token=public_s3_storage.security_token,
-        region_name=public_s3_storage.region_name,
-        use_ssl=public_s3_storage.use_ssl,
-        endpoint_url=public_s3_storage.endpoint_url,
-        config=public_s3_storage.config,
-        verify=public_s3_storage.verify,
+    subprocess.check_call(
+        [
+            "mc",
+            "config",
+            "host",
+            "add",
+            host_alias,
+            settings.AWS_S3_ENDPOINT_URL,
+            os.environ["AWS_ACCESS_KEY_ID"],
+            os.environ["AWS_SECRET_ACCESS_KEY"],
+        ]
     )
 
-    s3.put_bucket_policy(
-        Bucket=public_s3_storage.bucket_name, Policy=bucket_policy
+    with TemporaryDirectory() as tmp_dir:
+        policy_file = Path(tmp_dir) / f"{policy_name}.json"
+
+        with open(policy_file, "w") as f:
+            f.write(json.dumps(policy))
+
+        subprocess.check_call(
+            [
+                "mc",
+                "policy",
+                "set-json",
+                str(policy_file),
+                f"{host_alias}/{public_s3_storage.bucket_name}",
+            ]
+        )
+
+
+def _setup_components_storage():
+    """
+    Add a user and IAM role for the components storage
+
+    Only used in development. In production, create similar policies and roles.
+    """
+    host_alias = "local"
+    components_username = "componentsuser"
+    components_password = "componentsuser"
+    input_bucket_name = "grand-challenge-components-inputs"
+    output_bucket_name = "grand-challenge-components-outputs"
+    policy_name = "components"
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": ["s3:GetObject"],
+                "Effect": "Allow",
+                "Resource": [f"arn:aws:s3:::{input_bucket_name}/*"],
+                "Sid": "GetInputs",
+            },
+            {
+                "Action": ["s3:PutObject"],
+                "Effect": "Allow",
+                "Resource": [f"arn:aws:s3:::{output_bucket_name}/*"],
+                "Sid": "PutOutputs",
+            },
+        ],
+    }
+
+    subprocess.check_call(
+        [
+            "mc",
+            "config",
+            "host",
+            "add",
+            host_alias,
+            settings.AWS_S3_ENDPOINT_URL,
+            os.environ["AWS_ACCESS_KEY_ID"],
+            os.environ["AWS_SECRET_ACCESS_KEY"],
+        ]
+    )
+
+    with TemporaryDirectory() as tmp_dir:
+        policy_file = Path(tmp_dir) / f"{policy_name}.json"
+        with open(policy_file, "w") as f:
+            f.write(json.dumps(policy))
+        subprocess.check_call(
+            [
+                "mc",
+                "admin",
+                "policy",
+                "add",
+                host_alias,
+                policy_name,
+                str(policy_file),
+            ]
+        )
+
+    subprocess.check_call(
+        [
+            "mc",
+            "admin",
+            "user",
+            "add",
+            host_alias,
+            components_username,
+            components_password,
+        ]
+    )
+    subprocess.check_call(
+        [
+            "mc",
+            "admin",
+            "policy",
+            "set",
+            host_alias,
+            policy_name,
+            f"user={components_username}",
+        ]
     )

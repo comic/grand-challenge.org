@@ -78,6 +78,12 @@ FROM base as test-base
 # Add java and graphviz for plantuml documentation
 USER root
 RUN apt-get update && apt-get install -y default-jre graphviz
+# Get the minio client (they do not provide sha256sums)
+RUN mkdir -p /opt/mc \
+    && wget https://dl.min.io/client/mc/release/linux-amd64/mc -P /opt/mc/ \
+    && chmod a+x /opt/mc/mc \
+    && mv /opt/mc/mc /usr/local/bin/ \
+    && rm -r /opt/mc
 USER django:django
 
 RUN poetry install --no-interaction --no-ansi --no-root
