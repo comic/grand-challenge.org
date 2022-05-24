@@ -1756,3 +1756,103 @@ def test_display_set_filterset_fields_is_only_reader_sudy():
         "Please check DisplaySetViewSet's filter_queryset method and "
         "ensure shuffle order and index consistency are still intact."
     )
+
+
+@pytest.mark.django_db
+def test_query_unanswered_display_sets_for_another_user(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    editor, r1, r2 = UserFactory.create_batch(3)
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+    rs.add_reader(r1)
+    rs.add_reader(r2)
+    assert editor.has_perm("change_readerstudy", rs)
+
+    q1, q2 = (
+        QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
+        for _ in range(2)
+    )
+    civ1, civ2 = (
+        ComponentInterfaceValueFactory(image=ImageFactory()) for _ in range(2)
+    )
+    ds1, ds2 = (DisplaySetFactory(reader_study=rs) for _ in range(2))
+    ds1.values.add(civ1)
+    ds2.values.add(civ2)
+    AnswerFactory(question=q1, display_set=ds1, creator=r1)
+    AnswerFactory(question=q2, display_set=ds1, creator=r1)
+
+    # R2 cannot retrieve unanswered ds from R1
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={
+            "reader_study": str(rs.pk),
+            "unanswered_by_user": True,
+            "user": r1.username,
+        },
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+    assert response.status_code == 403
+
+    # but R2 can retrieve their own unanswered display sets
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={
+            "reader_study": str(rs.pk),
+            "unanswered_by_user": True,
+            "user": r2.username,
+        },
+        user=r2,
+        client=client,
+        method=client.get,
+    )
+    assert response.json()["count"] == 2
+
+    # specifying a user is only possible in combination with unanswered_by_user=True
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={
+            "reader_study": str(rs.pk),
+            "user": r1.username,
+        },
+        user=editor,
+        client=client,
+        method=client.get,
+    )
+    assert response.status_code == 400
+    assert (
+        "Specifying a user is only possible when retrieving unanswered display sets."
+        in str(response.rendered_content)
+    )
+
+    # the rs editor can view all
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={
+            "reader_study": str(rs.pk),
+            "unanswered_by_user": True,
+            "user": r1.username,
+        },
+        user=editor,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 1
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={
+            "reader_study": str(rs.pk),
+            "unanswered_by_user": True,
+            "user": r2.username,
+        },
+        user=editor,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 2
