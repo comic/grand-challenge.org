@@ -666,10 +666,6 @@ def _setup_components_storage():
     Only used in development. In production, create similar policies and roles.
     """
     host_alias = "local"
-    components_username = "componentsuser"
-    components_password = "componentsuser"
-    input_bucket_name = "grand-challenge-components-inputs"
-    output_bucket_name = "grand-challenge-components-outputs"
     policy_name = "components"
     policy = {
         "Version": "2012-10-17",
@@ -677,13 +673,17 @@ def _setup_components_storage():
             {
                 "Action": ["s3:GetObject"],
                 "Effect": "Allow",
-                "Resource": [f"arn:aws:s3:::{input_bucket_name}/*"],
+                "Resource": [
+                    f"arn:aws:s3:::{settings.COMPONENTS_INPUT_BUCKET_NAME}/*"
+                ],
                 "Sid": "GetInputs",
             },
             {
                 "Action": ["s3:PutObject"],
                 "Effect": "Allow",
-                "Resource": [f"arn:aws:s3:::{output_bucket_name}/*"],
+                "Resource": [
+                    f"arn:aws:s3:::{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/*"
+                ],
                 "Sid": "PutOutputs",
             },
         ],
@@ -725,8 +725,8 @@ def _setup_components_storage():
             "user",
             "add",
             host_alias,
-            components_username,
-            components_password,
+            settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
+            settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
         ]
     )
     subprocess.check_call(
@@ -737,6 +737,6 @@ def _setup_components_storage():
             "set",
             host_alias,
             policy_name,
-            f"user={components_username}",
+            f"user={settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID}",
         ]
     )

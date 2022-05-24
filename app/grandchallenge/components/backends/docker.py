@@ -369,6 +369,18 @@ class DockerExecutor(DockerConnection):
         )
 
     def _execute_container(self) -> None:
+        environment = {
+            "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
+        }
+
+        if settings.COMPONENTS_DOCKER_TASK_SET_AWS_ENV:
+            environment.update(
+                {
+                    "AWS_ACCESS_KEY_ID": settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
+                    "AWS_SECRET_ACCESS_KEY": settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
+                }
+            )
+
         with stop(
             self._client.containers.run(
                 image=self._exec_image_sha256,
@@ -382,9 +394,7 @@ class DockerExecutor(DockerConnection):
                 name=self._execution_container_name,
                 detach=True,
                 labels=self._labels,
-                environment={
-                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
-                },
+                environment=environment,
                 **self._run_kwargs,
             )
         ) as c:
