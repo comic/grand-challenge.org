@@ -13,6 +13,7 @@ def workstation_query(
     algorithm_job=None,
     archive_item=None,
     config=None,
+    user=None,
 ):
     """
     Generate the workstation query string.
@@ -63,5 +64,8 @@ def workstation_query(
                 settings.WORKSTATIONS_CONFIG_QUERY_PARAM: reader_study.workstation_config.pk
             }
         )
+
+    if user:
+        query.update({settings.WORKSTATIONS_USER_QUERY_PARAM: user.username})
 
     return urlencode(query)

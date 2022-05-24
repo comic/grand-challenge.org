@@ -1071,6 +1071,7 @@ WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
 WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM = "algorithmJob"
 WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM = "archiveItem"
 WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
+WORKSTATIONS_USER_QUERY_PARAM = "viewAsUser"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
     "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
