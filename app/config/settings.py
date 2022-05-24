@@ -1115,6 +1115,8 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 }
 # Number of minutes grace period before the container is stopped
 WORKSTATIONS_GRACE_MINUTES = 5
+# Feature Flag for reader study admin view
+READER_STUDY_VIEW_AS_USER_FEATURE = False
 
 CELERY_BEAT_SCHEDULE = {
     "ping_google": {

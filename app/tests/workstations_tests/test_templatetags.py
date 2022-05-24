@@ -11,14 +11,14 @@ from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 @pytest.mark.django_db
 def test_workstation_query(settings):
-    image, overlay = ImageFactory(), ImageFactory()
-    reader_study = ReaderStudyFactory(
-        workstation_config=WorkstationConfigFactory()
+    image, overlay = ImageFactory.build_batch(2)
+    reader_study = ReaderStudyFactory.build(
+        workstation_config=WorkstationConfigFactory.build()
     )
-    algorithm_job = AlgorithmJobFactory()
-    config = WorkstationConfigFactory()
-    archive_item = ArchiveItemFactory()
-    user = UserFactory()
+    algorithm_job = AlgorithmJobFactory.build()
+    config = WorkstationConfigFactory.build()
+    archive_item = ArchiveItemFactory.build()
+    user = UserFactory.build()
 
     qs = workstation_query(image=image)
     assert "&" not in qs

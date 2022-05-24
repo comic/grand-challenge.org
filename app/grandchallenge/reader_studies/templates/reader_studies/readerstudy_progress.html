@@ -29,21 +29,22 @@
         {% for user in users %}
             <li class="list-group-item mb-1">
                 <div class="row">
-                    <div class="col-6 col-lg-2 col-md-3 p-1">
+                    <div class="col-6 {% if reader_study_view_as_user_feature %}col-lg-2 col-md-3 {% else %} col-md-3 {% endif %}p-1">
                         <div class="h-100 d-flex justify-content-start align-items-center">
                             {{ user.obj|user_profile_link }}
                         </div>
                     </div>
-                    <div class="col-6 col-lg-4 col-md-3 p-1">
+                    <div class="col-6 {% if reader_study_view_as_user_feature %} col-lg-4 col-md-3 {% else %}col-md-5 {% endif %}p-1">
                         <div class="progress h-100">
                             <div class="progress-bar" role="progressbar"
                                  style="width: {{ user.progress.questions }}%"
                                  aria-valuenow="{{ user.progress.questions }}"
                                  aria-valuemin="0" aria-valuemax="100">
-                                {{ user.progress.questions|floatformat }}%
+                                <div class="position-absolute" style="text-shadow: 0px 0px 4px #444;">{{ user.progress.questions|floatformat }}%</div>
                             </div>
                         </div>
                     </div>
+                    {% if reader_study_view_as_user_feature %}
                     <div class="col-6 col-md-3 p-1">
                         <div class="d-flex justify-content-md-end justify-content-start align-items-center">
                             <a class="btn btn-primary"
@@ -52,7 +53,8 @@
                             </a>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3 p-1">
+                    {% endif %}
+                    <div class="{% if reader_study_view_as_user_feature %}col-6 col-md-3{% else %}col-12 col-md-4 {% endif %}p-1">
                         <div class="d-flex justify-content-md-center justify-content-start align-items-center">
                             <!-- Answer removal is handled by Modal, see below -->
                             <button type="button"

@@ -38,6 +38,10 @@ def workstation_query(
         query = {
             settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM: reader_study.pk
         }
+        if user:
+            query.update(
+                {settings.WORKSTATIONS_USER_QUERY_PARAM: user.username}
+            )
     elif algorithm_job:
         query = {
             settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM: algorithm_job.pk
@@ -64,8 +68,5 @@ def workstation_query(
                 settings.WORKSTATIONS_CONFIG_QUERY_PARAM: reader_study.workstation_config.pk
             }
         )
-
-    if user:
-        query.update({settings.WORKSTATIONS_USER_QUERY_PARAM: user.username})
 
     return urlencode(query)
