@@ -422,7 +422,7 @@ class Session(UUIDModel):
         return Service(
             job_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image_sha256=self.workstation_image.image_sha256,
-            exec_image_repo_tag=self.workstation_image.repo_tag,
+            exec_image_repo_tag=self.workstation_image.original_repo_tag,
             memory_limit=settings.COMPONENTS_MEMORY_LIMIT,
             requires_gpu=False,
             time_limit=settings.WORKSTATIONS_SESSION_DURATION_LIMIT,
