@@ -49,10 +49,12 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
@@ -71,6 +73,7 @@ from grandchallenge.reader_studies.filters import (
     ReaderStudyFilter,
 )
 from grandchallenge.reader_studies.forms import (
+    AddCasesForm,
     AnswersRemoveForm,
     CategoricalOptionFormSet,
     GroundTruthForm,
@@ -1205,3 +1208,8 @@ class QuestionDelete(
         return HttpResponseForbidden(
             reason="This question already has answers associated with it"
         )
+
+
+class ComponentInterfaceList(LoginRequiredMixin, ListView):
+    model = ComponentInterface
+    template_name = "reader_studies/componentinterface_list.html"

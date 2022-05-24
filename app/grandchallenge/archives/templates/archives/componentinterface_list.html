@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block title %}
+    Interface Options - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Interface Options</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Archive Interface Options</h2>
+
+    <p>
+        Here is a list of the existing options that you can use for archive items.
+        You can select multiple interfaces for your archive item but each interface can only be used once per archive item.
+        If an option does not exist for your use case please contact support with the title, description, and kind
+        for your new interface.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm" id="interfacesTable">
+            <thead class="thead-light">
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Kind</th>
+                <th>Slug</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for interface in object_list %}
+                <tr>
+                    <td>{{ interface.title }}</td>
+                    <td>{{ interface.description }}</td>
+                    <td>{{ interface.get_kind_display }}</td>
+                    <td><code>{{ interface.slug }}</code></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#interfacesTable').DataTable({
+                "pageLength": 100,
+            });
+        });
+    </script>
+{% endblock %}

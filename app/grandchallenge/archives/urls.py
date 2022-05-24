@@ -16,6 +16,7 @@ from grandchallenge.archives.views import (
     ArchiveUploadersUpdate,
     ArchiveUploadSessionCreate,
     ArchiveUsersUpdate,
+    ComponentInterfaceList,
 )
 
 app_name = "archives"
@@ -23,6 +24,11 @@ app_name = "archives"
 urlpatterns = [
     path("", ArchiveList.as_view(), name="list"),
     path("create/", ArchiveCreate.as_view(), name="create"),
+    path(
+        "interfaces/",
+        ComponentInterfaceList.as_view(),
+        name="component-interface-list",
+    ),
     path("<slug>/", ArchiveDetail.as_view(), name="detail"),
     path("<slug>/update/", ArchiveUpdate.as_view(), name="update"),
     path(

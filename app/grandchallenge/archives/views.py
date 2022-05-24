@@ -718,3 +718,8 @@ class ArchiveItemViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
             return ArchiveItemPostSerializer
         else:
             return ArchiveItemSerializer
+
+
+class ComponentInterfaceList(LoginRequiredMixin, ListView):
+    model = ComponentInterface
+    template_name = "archives/componentinterface_list.html"
