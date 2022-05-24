@@ -92,7 +92,9 @@ class DockerConnection:
     def _run_kwargs(self):
         return {
             "init": True,
-            "network_disabled": True,
+            # Do not disable the network but use an internal network
+            "network_disabled": False,
+            "network": settings.COMPONENTS_DOCKER_NETWORK_NAME,
             "mem_limit": f"{self._memory_limit}g",
             # Set to the same as mem_limit to avoid using swap
             "memswap_limit": f"{self._memory_limit}g",
@@ -535,13 +537,8 @@ class Service(DockerConnection):
     @property
     def _run_kwargs(self):
         kwargs = super()._run_kwargs
-        kwargs.update(
-            {
-                # Allow networking for service containers
-                "network_disabled": False,
-                "network": settings.WORKSTATIONS_NETWORK_NAME,
-            }
-        )
+        # Use a network with external access
+        kwargs["network"] = settings.WORKSTATIONS_NETWORK_NAME
         return kwargs
 
     @property

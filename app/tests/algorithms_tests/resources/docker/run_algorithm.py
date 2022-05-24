@@ -1,6 +1,8 @@
 import json
 import os
 import shutil
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Union
 from warnings import warn
@@ -18,6 +20,11 @@ if __name__ == "__main__":
     # What the user uploads will be placed directly in /input/, but the admin
     # is free to determine the file type. The only limitation is that this will
     # be a single file.
+
+    try:
+        urllib.request.urlopen("https://google.com/", timeout=5)
+    except urllib.error.URLError as e:
+        warn(f"Could not google: {e.reason}")
 
     input_file = next(Path("/input/").glob("*.tif"))
     os.makedirs("/output/images")

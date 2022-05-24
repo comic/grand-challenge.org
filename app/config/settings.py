@@ -975,6 +975,9 @@ COMPONENTS_DOCKER_BASE_URL = os.environ.get(
 COMPONENTS_DOCKER_TLS_VERIFY = strtobool(
     os.environ.get("COMPONENTS_DOCKER_TLS_VERIFY", "False")
 )
+COMPONENTS_DOCKER_NETWORK_NAME = os.environ.get(
+    "COMPONENTS_DOCKER_NETWORK_NAME", "grand-challengeorg_components"
+)
 COMPONENTS_PUBLISH_PORTS = strtobool(
     os.environ.get("COMPONENTS_PUBLISH_PORTS", "False")
 )

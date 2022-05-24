@@ -64,6 +64,7 @@ def test_submission_evaluation(
     evaluation = submission.evaluation_set.first()
     assert evaluation.stdout.endswith("Greetings from stdout\n")
     assert evaluation.stderr.endswith('warn("Hello from stderr")\n')
+    assert "UserWarning: Could not google: [Errno " in evaluation.stderr
     assert evaluation.error_message == ""
     assert evaluation.status == evaluation.SUCCESS
     assert (

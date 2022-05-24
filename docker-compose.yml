@@ -30,6 +30,9 @@ services:
       && minio --compat server /data
       "
     restart: always
+    networks:
+      - default
+      - components
 
   web:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
@@ -233,6 +236,8 @@ services:
 networks:
   default:
   workstations:
+  components:
+    internal: true
 
 volumes:
   pytest-cache:
