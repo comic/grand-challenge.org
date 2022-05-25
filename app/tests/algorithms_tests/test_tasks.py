@@ -218,9 +218,10 @@ def test_algorithm(client, algorithm_image, settings):
 
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+    recurse_callbacks(callbacks=callbacks)
+    alg.refresh_from_db()
 
     # We should not be able to download image
     with pytest.raises(NotImplementedError):
@@ -312,9 +313,10 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
 
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+    recurse_callbacks(callbacks=callbacks)
+    alg.refresh_from_db()
 
     # Make sure the job fails when trying to upload an invalid file
     detection_interface = ComponentInterfaceFactory(
@@ -361,9 +363,10 @@ def test_algorithm_multiple_inputs(
 
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_io_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+    recurse_callbacks(callbacks=callbacks)
+
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())

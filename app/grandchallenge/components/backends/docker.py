@@ -30,6 +30,7 @@ from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import LOGLINES, user_error
 from grandchallenge.components.registry import _get_registry_auth_config
+from grandchallenge.components.tasks import _repo_login_and_run
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,6 @@ class DockerConnection:
         self,
         *,
         job_id: str,
-        exec_image_sha256: str,
         exec_image_repo_tag: str,
         memory_limit: int,
         time_limit: int,
@@ -54,7 +54,6 @@ class DockerConnection:
     ):
         super().__init__()
         self._job_id = job_id
-        self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
         self._requires_gpu = requires_gpu
@@ -165,16 +164,32 @@ class DockerConnection:
 
     def _pull_images(self):
         try:
-            self._client.images.get(name=self._exec_image_sha256)
+            self._client.images.get(name=self._exec_image_repo_tag)
         except ImageNotFound:
             # This can take a long time so increase the default timeout #1330
             old_timeout = self._client.api.timeout
             self._client.api.timeout = 600  # 10 minutes
 
-            self._client.images.pull(
-                repository=self._exec_image_repo_tag,
-                auth_config=_get_registry_auth_config(),
-            )
+            if settings.COMPONENTS_REGISTRY_INSECURE:
+                # In CI we cannot set the docker daemon to trust the local
+                # registry, so pull the container with crane and then load it
+                with TemporaryDirectory() as tmp_dir:
+                    tarball = Path(tmp_dir) / f"{self._job_id}.tar"
+                    _repo_login_and_run(
+                        command=[
+                            "crane",
+                            "pull",
+                            self._exec_image_repo_tag,
+                            str(tarball),
+                        ]
+                    )
+                    with open(tarball, "rb") as f:
+                        self._client.images.load(f)
+            else:
+                self._client.images.pull(
+                    repository=self._exec_image_repo_tag,
+                    auth_config=_get_registry_auth_config(),
+                )
 
             self._client.api.timeout = old_timeout
 
@@ -383,7 +398,7 @@ class DockerExecutor(DockerConnection):
 
         with stop(
             self._client.containers.run(
-                image=self._exec_image_sha256,
+                image=self._exec_image_repo_tag,
                 volumes={
                     self._input_volume_name: {"bind": "/input/", "mode": "ro"},
                     self._output_volume_name: {
@@ -397,8 +412,8 @@ class DockerExecutor(DockerConnection):
                 environment=environment,
                 **self._run_kwargs,
             )
-        ) as c:
-            container_state = c.wait()
+        ) as container:
+            container_state = container.wait()
 
         exit_code = int(container_state["StatusCode"])
         if exit_code == 137:
@@ -627,7 +642,7 @@ class Service(DockerConnection):
             ports = {}
 
         self._client.containers.run(
-            image=self._exec_image_sha256,
+            image=self._exec_image_repo_tag,
             name=f"{self._job_id}-service",
             remove=True,
             detach=True,

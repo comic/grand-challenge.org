@@ -15,6 +15,7 @@ from tests.factories import (
     WorkstationFactory,
     WorkstationImageFactory,
 )
+from tests.utils import recurse_callbacks
 
 
 def stop_all_sessions():
@@ -72,9 +73,10 @@ def test_session_auth_token():
 def test_session_start(http_image, docker_client, settings):
     path, sha256 = http_image
 
-    wsi = WorkstationImageFactory(
-        image__from_path=path, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        wsi = WorkstationImageFactory(image__from_path=path)
+    recurse_callbacks(callbacks=callbacks)
+    wsi.refresh_from_db()
 
     # Execute the celery in place
     settings.task_eager_propagates = (True,)
@@ -118,9 +120,10 @@ def test_session_start(http_image, docker_client, settings):
 def test_correct_session_stopped(http_image, docker_client, settings):
     path, sha256 = http_image
 
-    wsi = WorkstationImageFactory(
-        image__from_path=path, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        wsi = WorkstationImageFactory(image__from_path=path)
+    recurse_callbacks(callbacks=callbacks)
+    wsi.refresh_from_db()
 
     # Execute the celery in place
     settings.task_eager_propagates = (True,)
@@ -160,9 +163,10 @@ def test_correct_session_stopped(http_image, docker_client, settings):
 def test_session_cleanup(http_image, docker_client, settings):
     path, sha256 = http_image
 
-    wsi = WorkstationImageFactory(
-        image__from_path=path, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        wsi = WorkstationImageFactory(image__from_path=path)
+    recurse_callbacks(callbacks=callbacks)
+    wsi.refresh_from_db()
 
     # Execute the celery in place
     settings.task_eager_propagates = (True,)
@@ -232,9 +236,10 @@ def test_workstation_ready(http_image, docker_client, settings):
 def test_session_limit(http_image, docker_client, settings):
     path, sha256 = http_image
 
-    wsi = WorkstationImageFactory(
-        image__from_path=path, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        wsi = WorkstationImageFactory(image__from_path=path)
+    recurse_callbacks(callbacks=callbacks)
+    wsi.refresh_from_db()
 
     # Execute the celery in place
     settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1

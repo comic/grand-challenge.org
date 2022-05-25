@@ -46,14 +46,12 @@ class AmazonECSExecutor:
         self,
         *,
         job_id: str,
-        exec_image_sha256: str,
         exec_image_repo_tag: str,
         memory_limit: int,
         time_limit: int,
         requires_gpu: bool,
     ):
         self._job_id = job_id
-        self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
         self._time_limit = time_limit

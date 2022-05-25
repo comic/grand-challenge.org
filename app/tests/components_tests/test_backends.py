@@ -40,7 +40,6 @@ def test_cpuset_cpus(settings, cpuset, expected):
 
     c = DockerConnection(
         job_id="",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -107,7 +106,6 @@ def test_provision(tmp_path, settings):
 
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -205,7 +203,6 @@ def test_input_prefixes(tmp_path, settings):
 
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -252,7 +249,6 @@ def test_ecs_unzip(tmp_path, settings, submission_file):
 
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -337,7 +333,6 @@ def test_filter_members_single_file_nested():
 def test_handle_stopped_successful_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -369,7 +364,6 @@ def test_handle_stopped_successful_task():
 def test_handle_stopped_successful_fast_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -401,7 +395,6 @@ def test_handle_stopped_successful_fast_task():
 def test_handle_stopped_start_failed_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -433,7 +426,6 @@ def test_handle_stopped_start_failed_task():
 def test_handle_stopped_terminated_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -465,7 +457,6 @@ def test_handle_stopped_terminated_task():
 def test_handle_stopped_cancelled_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -497,7 +488,6 @@ def test_handle_stopped_cancelled_task():
 def test_set_duration_success():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -518,7 +508,6 @@ def test_set_duration_success():
 def test_set_duration_fast_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,

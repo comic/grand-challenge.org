@@ -42,9 +42,9 @@ def test_submission_evaluation(
 
     # Upload a submission and create an evaluation
     eval_container, sha256 = evaluation_image
-    method = MethodFactory(
-        image__from_path=eval_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        method = MethodFactory(image__from_path=eval_container)
+    recurse_callbacks(callbacks=callbacks)
 
     # We should not be able to download methods
     with pytest.raises(NotImplementedError):
@@ -55,7 +55,6 @@ def test_submission_evaluation(
         submission = SubmissionFactory(
             predictions_file__from_path=submission_file, phase=method.phase
         )
-
     recurse_callbacks(callbacks=callbacks)
 
     # The evaluation method should return the correct answer
@@ -314,9 +313,10 @@ def test_evaluation_notifications(
 
     # Add method and upload a submission
     eval_container, sha256 = evaluation_image
-    method = MethodFactory(
-        image__from_path=eval_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        method = MethodFactory(image__from_path=eval_container)
+    recurse_callbacks(callbacks=callbacks)
+
     # clear notifications for easier testing later
     Notification.objects.all().delete()
     # create submission and wait for it to be evaluated

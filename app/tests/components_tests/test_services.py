@@ -14,11 +14,8 @@ def test_service_start_cleanup():
     )
     dockerclient.images.pull(exec_image)
 
-    exec_sha256 = dockerclient.images.get(exec_image).id
-
     s = Service(
         job_id=job_id,
-        exec_image_sha256=exec_sha256,
         exec_image_repo_tag=exec_image,
         requires_gpu=False,
         memory_limit=4,
