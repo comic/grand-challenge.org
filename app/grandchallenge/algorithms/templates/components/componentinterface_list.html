@@ -2,29 +2,34 @@
 {% load url %}
 
 {% block title %}
-    {{ list_type|title }} Interface Options - {{ block.super }}
+    {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:component-interface-list' %}">Interface Options</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ list_type|title }}</li>
+        {% if list_type == list_type_options.DISPLAY_SET %}
+            <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
+        {% else %}
+            <li class="breadcrumb-item"><a href="/{{ object_type|lower }}{{ 2|pluralize }}">{{ object_type|title }}{{ 2|pluralize }}</a></li>
+        {% endif %}
+        {% if list_type == list_type_options.ITEM or list_type == list_type_options.DISPLAY_SET %}
+            <li class="breadcrumb-item active" aria-current="page">Interface options {{ list_type|title }}</li>
+        {% else %}
+            <li class="breadcrumb-item"><a href="{% url 'algorithms:component-interface-list' %}">Interface Options</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ list_type|title }}</li>
+        {% endif %}
+
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Algorithm {{ list_type|title }} Options</h2>
+    <h2>{{ object_type|title }} {{ list_type|title }} Options</h2>
 
     <p>
-        Here is a list of the existing options that you can to use as
-        {% if list_type == list_type_options.INPUT %}
-            input to
-        {% elif list_type == list_type_options.OUTPUT %}
-            output from
-        {% endif %} your algorithm.
-        You can select multiple options for your algorithms {{ list_type|lower }}.
-        However, the same option cannot be used for both input to and output from your algorithm.
+        Here is a list of the existing options that you can use as {{ list_type|lower }} for your {{ object_type }}.
+        You can select multiple options for your {{ object_type }} {{ list_type|lower }}.
+        However, the same option cannot be used {% if list_type == list_type_options.INPUT or list_type == list_type_options.OUTPUT %} for both input and output for your algorithm.{% else %}
+        multiple times within one {{ list_type|lower }}.{% endif %}
         If an option does not exist for your use case please contact support with the title, description, and kind
         for your new interface option.
     </p>

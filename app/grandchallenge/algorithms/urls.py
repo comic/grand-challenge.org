@@ -41,14 +41,14 @@ urlpatterns = [
     path(
         "interfaces/inputs/",
         ComponentInterfaceList.as_view(
-            list_type=InterfaceListTypeOptions.INPUT
+            list_type=InterfaceListTypeOptions.INPUT, object_type="Algorithm"
         ),
         name="component-interface-list-input",
     ),
     path(
         "interfaces/outputs/",
         ComponentInterfaceList.as_view(
-            list_type=InterfaceListTypeOptions.OUTPUT
+            list_type=InterfaceListTypeOptions.OUTPUT, object_type="Algorithm"
         ),
         name="component-interface-list-output",
     ),

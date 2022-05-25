@@ -100,6 +100,8 @@ class ComponentInterfaceIOSwitch(LoginRequiredMixin, TemplateView):
 class InterfaceListTypeOptions(TextChoices):
     INPUT = "INPUT"
     OUTPUT = "OUTPUT"
+    ITEM = "ITEM"
+    DISPLAY_SET = "DISPLAY SET"
 
 
 class ComponentInterfaceList(LoginRequiredMixin, ListView):
@@ -108,12 +110,14 @@ class ComponentInterfaceList(LoginRequiredMixin, ListView):
         slug__in=NON_ALGORITHM_INTERFACES
     )
     list_type = None
+    object_type = None
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update(
             {
                 "list_type": self.list_type,
+                "object_type": self.object_type,
                 "list_type_options": InterfaceListTypeOptions,
             }
         )

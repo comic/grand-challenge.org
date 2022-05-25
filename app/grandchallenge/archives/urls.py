@@ -1,5 +1,9 @@
 from django.urls import path
 
+from grandchallenge.algorithms.views import (
+    ComponentInterfaceList,
+    InterfaceListTypeOptions,
+)
 from grandchallenge.archives.views import (
     ArchiveCasesList,
     ArchiveCreate,
@@ -23,6 +27,13 @@ app_name = "archives"
 urlpatterns = [
     path("", ArchiveList.as_view(), name="list"),
     path("create/", ArchiveCreate.as_view(), name="create"),
+    path(
+        "interfaces/",
+        ComponentInterfaceList.as_view(
+            list_type=InterfaceListTypeOptions.ITEM, object_type="Archive"
+        ),
+        name="component-interface-list",
+    ),
     path("<slug>/", ArchiveDetail.as_view(), name="detail"),
     path("<slug>/update/", ArchiveUpdate.as_view(), name="update"),
     path(

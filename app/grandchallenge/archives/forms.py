@@ -193,7 +193,7 @@ class AddCasesForm(UploadRawImagesForm):
             (
                 'See the <a href="{}">list of interfaces</a> for more '
                 "information about each interface. "
-                "Please contact support if your desired output is missing."
+                "Please contact support if your desired interface is missing."
             ),
             reverse_lazy("algorithms:component-interface-list"),
         ),
