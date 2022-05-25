@@ -20,15 +20,10 @@ from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from tests.annotations_tests.factories import (
-    BooleanClassificationAnnotationFactory,
-    CoordinateListAnnotationFactory,
-    ETDRSGridAnnotationFactory,
     ImagePathologyAnnotationFactory,
     ImageQualityAnnotationFactory,
     ImageTextAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
     LandmarkAnnotationSetFactory,
-    MeasurementAnnotationFactory,
     OctRetinaImagePathologyAnnotationFactory,
     PolygonAnnotationSetFactory,
     RetinaImagePathologyAnnotationFactory,
@@ -328,93 +323,6 @@ def add_to_graders_group(users):
         )
 
 
-class AnnotationSet(NamedTuple):
-    grader: UserFactory
-    measurement: MeasurementAnnotationFactory
-    boolean: BooleanClassificationAnnotationFactory
-    integer: IntegerClassificationAnnotationFactory
-    polygon: PolygonAnnotationSetFactory
-    coordinatelist: CoordinateListAnnotationFactory
-    landmark: LandmarkAnnotationSetFactory
-    singlelandmarks: List
-    etdrs: ETDRSGridAnnotationFactory
-
-
-def generate_annotation_set(retina_grader=False, image=False):
-    grader = UserFactory()
-
-    if retina_grader:
-        add_to_graders_group([grader])
-
-    create_options = {"grader": grader}
-    if image:
-        create_options_with_image = {"image": image, **create_options}
-    else:
-        create_options_with_image = create_options
-
-    measurement = MeasurementAnnotationFactory(**create_options_with_image)
-    boolean = BooleanClassificationAnnotationFactory(
-        **create_options_with_image
-    )
-    integer = IntegerClassificationAnnotationFactory(
-        **create_options_with_image
-    )
-    polygon = PolygonAnnotationSetFactory(**create_options_with_image)
-    coordinatelist = CoordinateListAnnotationFactory(
-        **create_options_with_image
-    )
-    etdrs = ETDRSGridAnnotationFactory(**create_options_with_image)
-    landmark = LandmarkAnnotationSetFactory(**create_options)
-
-    # Create child models for polygon annotation set
-    SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygon)
-
-    # Create child models for landmark annotation set (3 per image)
-    single_landmarks = []
-    for i in range(5):
-        if i > 0 or not image:
-            image = ImageFactory()
-        single_landmarks.append(
-            SingleLandmarkAnnotationFactory(
-                annotation_set=landmark, image=image
-            )
-        )
-
-    return AnnotationSet(
-        grader=grader,
-        measurement=measurement,
-        boolean=boolean,
-        polygon=polygon,
-        coordinatelist=coordinatelist,
-        landmark=landmark,
-        singlelandmarks=single_landmarks,
-        etdrs=etdrs,
-        integer=integer,
-    )
-
-
-@pytest.fixture(name="annotation_set")
-def annotation_set():
-    """
-    Create a user with the one of each of the following annotations:
-    Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
-    annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
-    annotations for 5 images), ETDRSGrid.
-    """
-    return generate_annotation_set()
-
-
-@pytest.fixture(name="annotation_set_for_image")
-def annotation_set_for_image():
-    """
-    Create a user with the one of each of the following annotations:
-    Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
-    annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
-    annotations for 5 images), ETDRSGrid.
-    """
-    return generate_annotation_set
-
-
 class TwoPolygonAnnotationSets(NamedTuple):
     grader1: UserFactory
     grader2: UserFactory
@@ -552,42 +460,6 @@ def multiple_landmark_retina_annotation_sets():
 @pytest.fixture(name="multiple_landmark_annotation_sets")
 def multiple_landmark_annotation_sets():
     return generate_multiple_landmark_annotation_sets(retina_grader=False)
-
-
-class MultipleETDRSAnnotations(NamedTuple):
-    grader1: UserFactory
-    grader2: UserFactory
-    etdrss1: List
-    etdrss2: List
-
-
-def generate_multiple_etdrs_annotations(retina_grader=False):
-    graders = (UserFactory(), UserFactory())
-
-    if retina_grader:
-        add_to_graders_group(graders)
-
-    etdrss1 = ETDRSGridAnnotationFactory.create_batch(10, grader=graders[0])
-    etdrss2 = ETDRSGridAnnotationFactory.create_batch(5, grader=graders[1])
-
-    return MultipleETDRSAnnotations(
-        grader1=graders[0],
-        grader2=graders[1],
-        etdrss1=etdrss1,
-        etdrss2=etdrss2,
-    )
-
-
-@pytest.fixture(name="multiple_retina_etdrs_annotations")
-def multiple_retina_etdrs_annotations():
-    """Creates 2 retina_grader users with 10 and 5 etdrs annotations."""
-    return generate_multiple_etdrs_annotations(retina_grader=True)
-
-
-@pytest.fixture(name="MultipleETDRSAnnotations")
-def multiple_etdrs_annotations():
-    """Creates 2 users with 10 and 5 etdrs annotations."""
-    return generate_multiple_etdrs_annotations(retina_grader=False)
 
 
 @pytest.fixture

@@ -1,52 +1,14 @@
 from typing import Callable
 from urllib.parse import urlparse
 
-import pytest
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import PermissionDenied
-from django.test import Client, RequestFactory
-from django.views.generic import View
+from django.test import Client
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import SUPER_SECURE_TEST_PASSWORD
-
-
-def assert_redirect(uri: str, *args):
-    request, response = assert_status(302, *args)
-
-    redirect_url = list(urlparse(response.url))[2]
-    assert uri == redirect_url
-
-    return request, response
-
-
-def assert_status(
-    code: int,
-    user: settings.AUTH_USER_MODEL,
-    view: View,
-    challenge: Challenge,
-    rf: RequestFactory,
-):
-    request = rf.get("/rand")
-    request.challenge = challenge
-
-    if user is not None:
-        request.user = user
-
-    view = view.as_view()
-
-    if code == 403:
-        with pytest.raises(PermissionDenied):
-            view(request)
-        response = None
-    else:
-        response = view(request)
-        assert response.status_code == code
-
-    return request, response
 
 
 def get_view_for_user(

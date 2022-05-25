@@ -1,23 +1,21 @@
-import pytest
-
 from grandchallenge.workstations.templatetags.workstations import (
     workstation_query,
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveItemFactory
-from tests.factories import ImageFactory, WorkstationConfigFactory
+from tests.factories import ImageFactory, UserFactory, WorkstationConfigFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 
-@pytest.mark.django_db
 def test_workstation_query(settings):
-    image, overlay = ImageFactory(), ImageFactory()
-    reader_study = ReaderStudyFactory(
-        workstation_config=WorkstationConfigFactory()
+    image, overlay = ImageFactory.build_batch(2)
+    reader_study = ReaderStudyFactory.build(
+        workstation_config=WorkstationConfigFactory.build()
     )
-    algorithm_job = AlgorithmJobFactory()
-    config = WorkstationConfigFactory()
-    archive_item = ArchiveItemFactory()
+    algorithm_job = AlgorithmJobFactory.build()
+    config = WorkstationConfigFactory.build()
+    archive_item = ArchiveItemFactory.build()
+    user = UserFactory.build()
 
     qs = workstation_query(image=image)
     assert "&" not in qs
@@ -40,6 +38,18 @@ def test_workstation_query(settings):
         f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" not in qs
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
+
+    qs = workstation_query(reader_study=reader_study, user=user)
+    assert "&" in qs
+    assert (
+        f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
+        in qs
+    )
+    assert f"{settings.WORKSTATIONS_USER_QUERY_PARAM}={user.username}" in qs
+    assert (
+        f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={reader_study.workstation_config.pk}"
+        in qs
+    )
 
     qs = workstation_query(reader_study=reader_study)
     assert "&" in qs

@@ -25,8 +25,8 @@ RUN apt-get install -y ruby2.7 ruby-rugged \
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \
-    && wget https://github.com/google/go-containerregistry/releases/download/v0.5.1/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
-    && echo "24f6a4d63086fb203489f7ce92610b98eff530c30afa19dceb182b511045dc2e  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
+    && wget https://github.com/google/go-containerregistry/releases/download/v0.9.0/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
+    && echo "1d2cf3fac0830dd8e5fb6e2829fdfc304a3d4a0f48f7e1df9ebb7e2921f28803  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
     && chmod a+x /opt/crane/crane \
     && mv /opt/crane/crane /usr/local/bin/ \
@@ -42,13 +42,21 @@ RUN mkdir -p /opt/git-lfs \
 
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
+    GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION=0.0.3\
     PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
-RUN mkdir -p /opt/poetry /app /static /opt/static \
+RUN mkdir -p /opt/poetry /app /static /opt/static /opt/sagemaker-shim \
     && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/poetry /app /static /opt/static
+    && chown django:django /opt/poetry /app /static /opt/static /opt/sagemaker-shim
 
 USER django:django
+
+# Fetch and install sagemaker shim for shimming containers
+RUN mkdir -p /opt/sagemaker-shim \
+    && wget "https://github.com/DIAGNijmegen/rse-sagemaker-shim/releases/download/v${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" -P /opt/sagemaker-shim/ \
+    && echo "c12cef84b82ca58fff3d89ee0a3fbdf2a441796c21084627e69a084c988a2948  /opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
+    && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
+    && rm "/opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
 
 WORKDIR /opt/poetry
 
