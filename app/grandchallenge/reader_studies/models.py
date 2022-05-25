@@ -646,8 +646,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
             )
+            .select_related("display_set__reader_study__workstation_config")
             .order_by("display_set")
-            .values("display_set_id")
             .annotate(
                 Sum("score"),
                 Avg("score"),
