@@ -209,7 +209,7 @@ class AmazonECSExecutor:
             input_civs=input_civs, input_prefixes=input_prefixes
         )
 
-    def execute(self):
+    def execute(self, *, input_civs, input_prefixes):
         task_definition_arn = self._register_task_definition()
         self._run_task(task_definition_arn=task_definition_arn)
 

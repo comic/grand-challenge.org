@@ -1,22 +1,20 @@
 import json
 import logging
 import os
-import sys
-import tarfile
 from contextlib import contextmanager
 from ipaddress import ip_address
 from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from socket import getaddrinfo
-from tempfile import SpooledTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from time import sleep
 
+import boto3
 import docker
 from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files import File
 from django.db import transaction
 from django.utils._os import safe_join
 from docker.api.container import ContainerApiMixin
@@ -25,6 +23,7 @@ from docker.tls import TLSConfig
 from docker.types import LogConfig
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from requests import HTTPError
+from requests.exceptions import ChunkedEncodingError
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
@@ -197,6 +196,10 @@ class DockerConnection:
 class DockerExecutor(DockerConnection):
     IS_EVENT_DRIVEN = False
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__s3_client = None
+
     @staticmethod
     def get_job_params(*, event):
         raise NotImplementedError
@@ -206,22 +209,20 @@ class DockerExecutor(DockerConnection):
         pass
 
     def provision(self, *, input_civs, input_prefixes):
-        self._pull_images()
-        self._create_io_volumes()
-        self._provision_input_volume(
+        self._provision_inputs(
             input_civs=input_civs, input_prefixes=input_prefixes
         )
-        self._chmod_volumes()
 
-    def execute(self):
+    def execute(self, *, input_civs, input_prefixes):
         self._pull_images()
-        self._execute_container()
+        self._execute_container(
+            input_civs=input_civs, input_prefixes=input_prefixes
+        )
 
     def handle_event(self):
         pass
 
     def get_outputs(self, *, output_interfaces):
-        self._pull_images()
         return self._get_outputs(output_interfaces=output_interfaces)
 
     def deprovision(self):
@@ -230,40 +231,41 @@ class DockerExecutor(DockerConnection):
     @property
     def stdout(self):
         try:
-            container = self._execution_container
             return (
-                container.logs(
+                self.container.logs(
                     stdout=True, stderr=False, timestamps=True, tail=LOGLINES
                 )
                 .replace(b"\x00", b"")
                 .decode("utf-8")
             )
-        except DockerException as e:
+        except (DockerException, ChunkedEncodingError) as e:
+            # ChunkedEncodingError leaks from docker py
+            # https://github.com/docker/docker-py/issues/2696
             logger.warning(f"Could not fetch stdout: {e}")
             return ""
 
     @property
     def stderr(self):
         try:
-            container = self._execution_container
             return (
-                container.logs(
+                self.container.logs(
                     stdout=False, stderr=True, timestamps=True, tail=LOGLINES
                 )
                 .replace(b"\x00", b"")
                 .decode("utf-8")
             )
-        except DockerException as e:
+        except (DockerException, ChunkedEncodingError) as e:
+            # ChunkedEncodingError leaks from docker py
+            # https://github.com/docker/docker-py/issues/2696
             logger.warning(f"Could not fetch stderr: {e}")
             return ""
 
     @property
     def duration(self):
         try:
-            container = self._execution_container
-            if container.status == "exited":
+            if self.container.status == "exited":
                 state = self._client.api.inspect_container(
-                    container=container.id
+                    container=self.container.id
                 )
                 started_at = state["State"]["StartedAt"]
                 finished_at = state["State"]["FinishedAt"]
@@ -275,115 +277,59 @@ class DockerExecutor(DockerConnection):
             return None
 
     @property
-    def _input_volume_name(self):
-        return f"{self._job_id}-input"
+    def container_name(self):
+        return self._job_id
 
     @property
-    def _output_volume_name(self):
-        return f"{self._job_id}-output"
+    def container(self):
+        return self._client.containers.get(container_id=self.container_name)
 
     @property
-    def _execution_container_name(self):
-        return f"{self._job_id}-executor"
+    def io_prefix(self):
+        path_parts = self._job_id.split("-", 2)
+
+        if len(path_parts) != 3 or "/" in self._job_id or "." in self._job_id:
+            raise ValueError(f"Invalid job id {self._job_id}")
+
+        return "/".join(path_parts)
 
     @property
-    def _execution_container(self):
-        return self._client.containers.get(
-            container_id=self._execution_container_name
-        )
-
-    def _pull_images(self):
-        try:
-            self._client.images.get(name=settings.COMPONENTS_IO_IMAGE)
-        except ImageNotFound:
-            self._client.images.pull(repository=settings.COMPONENTS_IO_IMAGE)
-
-        super()._pull_images()
-
-    def _create_io_volumes(self):
-        for volume in [self._input_volume_name, self._output_volume_name]:
-            self._client.volumes.create(name=volume, labels=self._labels)
-
-    def _provision_input_volume(self, *, input_civs, input_prefixes):
-        with stop(
-            self._client.containers.run(
-                image=settings.COMPONENTS_IO_IMAGE,
-                volumes={
-                    self._input_volume_name: {"bind": "/input/", "mode": "rw"}
-                },
-                name=f"{self._job_id}-writer",
-                remove=True,
-                detach=True,
-                tty=True,
-                labels=self._labels,
-                **self._run_kwargs,
+    def _s3_client(self):
+        if self.__s3_client is None:
+            self.__s3_client = boto3.client(
+                "s3",
+                endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             )
-        ) as writer:
-            self._copy_input_files(
-                writer=writer,
-                input_civs=input_civs,
-                input_prefixes=input_prefixes,
-            )
+        return self.__s3_client
 
-    def _copy_input_files(self, *, writer, input_civs, input_prefixes):
+    def _get_key_and_relative_path(self, *, civ, input_prefixes):
+        if str(civ.pk) in input_prefixes:
+            # TODO add a test for this
+            relative_path = safe_join(
+                input_prefixes[str(civ.pk)], civ.relative_path
+            )
+        else:
+            relative_path = str(civ.relative_path)
+
+        key = safe_join("/", self.io_prefix, relative_path)
+
+        return key, relative_path
+
+    def _provision_inputs(self, *, input_civs, input_prefixes):
         for civ in input_civs:
-            prefix = "/input/"
+            key, _ = self._get_key_and_relative_path(
+                civ=civ, input_prefixes=input_prefixes
+            )
 
-            if str(civ.pk) in input_prefixes:
-                prefix = safe_join(prefix, input_prefixes[str(civ.pk)])
-
-            if civ.decompress:
-                dest = Path(
-                    safe_join("/tmp/", prefix.lstrip("/"), "submission-src")
-                )
-            else:
-                dest = Path(safe_join(prefix, civ.relative_path))
-
-            writer.exec_run(f"mkdir -p {dest.parent}")
-            put_file(container=writer, src=civ.input_file, dest=dest)
-
-            if civ.decompress:
-                # Decompression is legacy for submission evaluations where
-                # we offered to unzip prediction files for challenge admins
-                if prefix[0] != "/" or prefix[-1] != "/":
-                    raise RuntimeError(f"Prefix {prefix} is not a full path")
-
-                writer.exec_run(f"unzip {dest} -d {prefix} -x '__MACOSX/*'")
-
-                # Remove a duplicated directory
-                input_files = (
-                    writer.exec_run(f"ls -1 {prefix}")
-                    .output.decode()
-                    .splitlines()
+            with civ.input_file.open("rb") as f:
+                # TODO replace this with server side copy
+                self._s3_client.upload_fileobj(
+                    Fileobj=f,
+                    Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                    Key=key,
                 )
 
-                if (
-                    len(input_files) == 1
-                    and not writer.exec_run(
-                        f"ls -d {prefix}{input_files[0]}/"
-                    ).exit_code
-                ):
-                    writer.exec_run(
-                        f'/bin/sh -c "mv {prefix}{input_files[0]}/* {prefix} '
-                        f'&& rm -r {prefix}{input_files[0]}/"'
-                    )
-
-    def _chmod_volumes(self):
-        """Ensure that the i/o directories are writable."""
-        self._client.containers.run(
-            image=settings.COMPONENTS_IO_IMAGE,
-            volumes={
-                self._input_volume_name: {"bind": "/input/", "mode": "rw"},
-                self._output_volume_name: {"bind": "/output/", "mode": "rw"},
-            },
-            name=f"{self._job_id}-chmod-volumes",
-            command="chmod -R 0777 /input/ /output/",
-            remove=True,
-            labels=self._labels,
-            **self._run_kwargs,
-        )
-
-    def _execute_container(self) -> None:
+    def _execute_container(self, *, input_civs, input_prefixes) -> None:
         environment = {
             "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
         }
@@ -393,20 +339,42 @@ class DockerExecutor(DockerConnection):
                 {
                     "AWS_ACCESS_KEY_ID": settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
                     "AWS_SECRET_ACCESS_KEY": settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
+                    "AWS_S3_ENDPOINT_URL": settings.AWS_S3_ENDPOINT_URL,
                 }
+            )
+
+        inputs = []
+        for civ in input_civs:
+            key, relative_path = self._get_key_and_relative_path(
+                civ=civ, input_prefixes=input_prefixes
+            )
+            inputs.extend(
+                [
+                    "--input-file",
+                    json.dumps(
+                        {
+                            "relative_path": relative_path,
+                            "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
+                            "bucket_key": key,
+                        }
+                    ),
+                ]
             )
 
         with stop(
             self._client.containers.run(
                 image=self._exec_image_repo_tag,
-                volumes={
-                    self._input_volume_name: {"bind": "/input/", "mode": "ro"},
-                    self._output_volume_name: {
-                        "bind": "/output/",
-                        "mode": "rw",
-                    },
-                },
-                name=self._execution_container_name,
+                command=[
+                    "invoke",
+                    "--pk",
+                    self._job_id,
+                    *inputs,
+                    "--output-bucket-name",
+                    settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    "--output-prefix",
+                    self.io_prefix,
+                ],
+                name=self.container_name,
                 detach=True,
                 labels=self._labels,
                 environment=environment,
@@ -428,55 +396,34 @@ class DockerExecutor(DockerConnection):
         """Create ComponentInterfaceValues from the output interfaces"""
         outputs = []
 
-        with stop(
-            self._client.containers.run(
-                image=settings.COMPONENTS_IO_IMAGE,
-                volumes={
-                    self._output_volume_name: {
-                        "bind": "/output/",
-                        "mode": "ro",
-                    }
-                },
-                name=f"{self._job_id}-reader",
-                remove=True,
-                detach=True,
-                tty=True,
-                labels=self._labels,
-                **self._run_kwargs,
-            )
-        ) as reader:
-            with transaction.atomic():
-                # Atomic block required as create_instance needs to
-                # create interfaces in order to store the files
-                for interface in output_interfaces:
-                    if interface.is_image_kind:
-                        res = self._create_images_result(
-                            interface=interface, reader=reader
-                        )
-                    elif interface.is_json_kind:
-                        res = self._create_json_result(
-                            interface=interface, reader=reader
-                        )
-                    else:
-                        res = self._create_file_result(
-                            interface=interface, reader=reader
-                        )
+        with transaction.atomic():
+            # Atomic block required as create_instance needs to
+            # create interfaces in order to store the files
+            for interface in output_interfaces:
+                if interface.is_image_kind:
+                    res = self._create_images_result(interface=interface)
+                elif interface.is_json_kind:
+                    res = self._create_json_result(interface=interface)
+                else:
+                    res = self._create_file_result(interface=interface)
 
-                    outputs.append(res)
+                outputs.append(res)
 
         return outputs
 
-    def _create_images_result(self, *, interface, reader):
+    def _create_images_result(self, *, interface):
         base_dir = Path(safe_join("/output/", interface.relative_path))
-        found_files = reader.exec_run(f"find {base_dir} -type f")
+        # TODO FIXME
+        output_files = []
+        # found_files = reader.exec_run(f"find {base_dir} -type f")
 
-        if found_files.exit_code != 0:
-            raise ComponentException(f"Error listing {base_dir}")
+        # if found_files.exit_code != 0:
+        #    raise ComponentException(f"Error listing {base_dir}")
 
-        output_files = [
-            base_dir / Path(f)
-            for f in found_files.output.decode().splitlines()
-        ]
+        # output_files = [
+        #    base_dir / Path(f)
+        #    for f in found_files.output.decode().splitlines()
+        # ]
 
         if not output_files:
             raise ComponentException(f"{base_dir} is empty")
@@ -485,7 +432,8 @@ class DockerExecutor(DockerConnection):
             for file in output_files:
                 temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
                 temp_file.parent.mkdir(parents=True, exist_ok=True)
-                get_file(container=reader, src=file, dest=temp_file)
+                # TODO FIXME
+                # get_file(container=reader, src=file, dest=temp_file)
 
             importer_result = import_images(
                 input_directory=tmpdir,
@@ -511,13 +459,14 @@ class DockerExecutor(DockerConnection):
 
         return civ
 
-    def _create_json_result(self, *, interface, reader):
+    def _create_json_result(self, *, interface):
         output_file = Path(safe_join("/output/", interface.relative_path))
 
         try:
             with TemporaryDirectory() as tmpdir:
                 temp_file = Path(safe_join(tmpdir, "output.json"))
-                get_file(container=reader, src=output_file, dest=temp_file)
+                # TODO FIXME
+                # get_file(container=reader, src=output_file, dest=temp_file)
 
                 with open(temp_file, "rb") as file:
                     result = json.loads(
@@ -540,12 +489,13 @@ class DockerExecutor(DockerConnection):
 
         return civ
 
-    def _create_file_result(self, *, interface, reader):
+    def _create_file_result(self, *, interface):
         output_file = Path(safe_join("/output/", interface.relative_path))
         try:
             with TemporaryDirectory() as tmpdir:
                 temp_file = Path(safe_join(tmpdir, interface.relative_path))
-                get_file(container=reader, src=output_file, dest=temp_file)
+                # TODO FIXME
+                # get_file(container=reader, src=output_file, dest=temp_file)
                 with open(temp_file, "rb") as f:
                     civ = interface.create_instance(fileobj=f)
         except NotFound:
@@ -667,45 +617,3 @@ def stop(container: ContainerApiMixin):
 
     finally:
         container.stop()
-
-
-def put_file(*, container: ContainerApiMixin, src: File, dest: Path) -> ():
-    """
-    Puts a file on the host into a container.
-    This method will create an in memory tar archive, add the src file to this
-    and upload it to the docker container where it will be unarchived at dest.
-
-    :param container: The container to write to
-    :param src: The path to the source file on the host
-    :param dest: The path to the target file in the container
-    :return:
-    """
-    with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as tar_b:
-        tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
-        tarinfo.size = getattr(src, "size", sys.getsizeof(src))
-
-        with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
-            tar.addfile(tarinfo, fileobj=f)
-
-        tar_b.seek(0)
-        container.put_archive(os.path.dirname(dest), tar_b)
-
-
-def get_file(*, container: ContainerApiMixin, src: Path, dest: Path):
-    """Gets a file from src in the container and writes it to dest"""
-    tarstrm, info = container.get_archive(src)
-
-    with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as ftmp, open(
-        dest, "wb"
-    ) as outfile:
-        for t in tarstrm:
-            ftmp.write(t)
-        ftmp.seek(0)
-
-        tar = tarfile.open(mode="r", fileobj=ftmp)
-        infile = tar.extractfile(src.name)
-
-        buffer = True
-        while buffer:
-            buffer = infile.read(1024)
-            outfile.write(buffer)

@@ -1014,9 +1014,18 @@ class ComponentJob(models.Model):
 
     @property
     def executor_kwargs(self):
+        if (
+            settings.COMPONENTS_DEFAULT_BACKEND
+            == "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
+        ):
+            # TODO can be removed when backend is gone
+            repo_tag = self.container.original_repo_tag
+        else:
+            repo_tag = self.container.shimmed_repo_tag
+
         return {
             "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            "exec_image_repo_tag": self.container.original_repo_tag,
+            "exec_image_repo_tag": repo_tag,
             "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,
             "requires_gpu": self.container.requires_gpu,
