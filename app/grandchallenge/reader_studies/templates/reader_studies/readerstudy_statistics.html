@@ -2,6 +2,7 @@
 {% load url %}
 {% load workstations %}
 {% load reader_study_tags %}
+{% load dict_lookup %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -35,16 +36,17 @@
             <tbody>
                 {% for entry in object.statistics.scores_by_case %}
                     <tr>
-                        <td data-order="{{ entry.display_set.id }}">{{ entry.display_set.id }}</td>
+                        <td data-order="{{ entry.display_set_id }}">{{ entry.display_set_id }}</td>
                         <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.statistics.max_score_cases }}</td>
                         <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
                         {% for question in object.statistics.questions %}
-                            {% get_ground_truth object entry.display_set.id question as ground_truth %}
+                            {% get_ground_truth object entry.display_set_id question as ground_truth %}
                             <td data-order="{{ ground_truth }}">{{ ground_truth }}</td>
                         {% endfor %}
                     {% if reader_study_display_set_view_feature %}
-                        <td data-order="{{ entry.display_set.id }}">
-                            <a href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query display_set=entry.display_set %}">
+                        {% get_dict_values display_sets entry.display_set_id as display_set %}
+                        <td data-order="{{ entry.display_set_id }}">
+                            <a href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query display_set=display_set %}">
                                 <span class="badge badge-primary">
                                     <i class="fa fa-eye"></i>
                                 </span>
