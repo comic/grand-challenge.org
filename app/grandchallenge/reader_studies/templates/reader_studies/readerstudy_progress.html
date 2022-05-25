@@ -3,6 +3,7 @@
 {% load url %}
 {% load profiles %}
 {% load humanize %}
+{% load workstations %}
 
 {% block title %}
     Users Progress - {{ block.super }}
@@ -26,33 +27,41 @@
 
     <ul class="list-group list-group-flush">
         {% for user in users %}
-            <li class="list-group-item">
+            <li class="list-group-item mb-1">
                 <div class="row">
-                    <div class="col-3 mb-1">
-                        <div class="h-100 d-flex justify-content-start align-items-center">
+                    <div class="d-flex col-6 col-md-3 p-1 align-items-center">
+                        <div class="text-wrap">
                             {{ user.obj|user_profile_link }}
                         </div>
                     </div>
-                    <div class="col-4 mb-1">
-                        <div class="h-100 d-flex align-items-center">
-                            <div class="flex-fill progress h-100">
-                                <div class="progress-bar" role="progressbar"
-                                     style="width: {{ user.progress.questions }}%"
-                                     aria-valuenow="{{ user.progress.questions }}"
-                                     aria-valuemin="0" aria-valuemax="100">
-                                </div>
+                    <div class="col-4 {% if reader_study_view_as_user_feature %} col-md-2 {% else %}col-md-4 {% endif %}p-1">
+                        <div class="progress h-100">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ user.progress.questions }}%"
+                                 aria-valuenow="{{ user.progress.questions }}"
+                                 aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
                     </div>
-                    <div class="col-2 mb-1">
+                    <div class="col-2 {% if reader_study_view_as_user_feature %} col-md-1 {% else %}col-md-2 {% endif %} p-1">
                         <div class="h-100 d-flex align-items-center">
                             <div>
-                                &nbsp;Progress: {{ user.progress.questions|floatformat }}%
+                                &nbsp;{{ user.progress.questions|floatformat }}%
                             </div>
                         </div>
                     </div>
-                    <div class="col-3 mb-1">
-                        <div class="d-flex justify-content-end align-items-center">
+                    {% if reader_study_view_as_user_feature %}
+                    <div class="col-6 col-md-3 p-1">
+                        <div class="d-flex justify-content-md-end justify-content-start align-items-center">
+                            <a class="btn btn-primary"
+                                    href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query reader_study=reader_study user=user.obj %}">
+                               <i class="fa fa-eye"></i>&nbsp;View User's Answers
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="{% if reader_study_view_as_user_feature %}col-6 col-md-3 {% else %}col-12 col-md-3 {% endif %}p-1">
+                        <div class="d-flex justify-content-md-center justify-content-start align-items-center">
                             <!-- Answer removal is handled by Modal, see below -->
                             <button type="button"
                                     class="btn btn-danger"
@@ -62,7 +71,7 @@
                                     data-warning="This will delete all answers for user '{{ user.obj }}'. This action cannot be undone."
                                     data-user="{{ user.obj.id }}"
                                     data-action="Delete Answers">
-                                <i class="fa fa-trash-alt"></i>&nbsp;Delete Users Answers
+                                <i class="fa fa-trash-alt"></i>&nbsp;Delete User's Answers
                             </button>
                         </div>
                     </div>

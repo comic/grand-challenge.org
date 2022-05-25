@@ -13,6 +13,7 @@ def workstation_query(
     algorithm_job=None,
     archive_item=None,
     config=None,
+    user=None,
 ):
     """
     Generate the workstation query string.
@@ -37,6 +38,10 @@ def workstation_query(
         query = {
             settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM: reader_study.pk
         }
+        if user:
+            query.update(
+                {settings.WORKSTATIONS_USER_QUERY_PARAM: user.username}
+            )
     elif algorithm_job:
         query = {
             settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM: algorithm_job.pk
