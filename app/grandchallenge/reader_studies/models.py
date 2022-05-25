@@ -643,26 +643,18 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         )
 
         scores_by_case = (
-            Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=False
-            )
-            .values("display_set_id")
-            .order_by("display_set")
+            DisplaySet.objects.filter(reader_study=self)
             .annotate(
-                Sum("score"),
-                Avg("score"),
+                sum=Sum(
+                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                ),
+                avg=Avg(
+                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                ),
             )
-            .order_by("score__avg")
-        )
-
-        display_sets = {
-            ds.pk: ds
-            for ds in DisplaySet.objects.filter(
-                pk__in=[case["display_set_id"] for case in scores_by_case]
-            )
-            .select_related("reader_study__workstation_config")
+            .order_by("avg")
             .all()
-        }
+        )
 
         options = {}
         for option in CategoricalOption.objects.filter(
@@ -721,7 +713,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             "scores_by_case": scores_by_case,
             "ground_truths": ground_truths,
             "questions": questions,
-            "display_sets": display_sets,
         }
 
     @cached_property
