@@ -8,6 +8,7 @@ from grandchallenge.reader_studies.views import (
     AnswersRemove,
     EditorsUpdate,
     QuestionDelete,
+    QuestionInterfacesView,
     QuestionUpdate,
     ReaderStudyCopy,
     ReaderStudyCreate,
@@ -117,5 +118,10 @@ urlpatterns = [
         "<slug>/permission-requests/<int:pk>/update/",
         ReaderStudyPermissionRequestUpdate.as_view(),
         name="permission-request-update",
+    ),
+    path(
+        "question/interfaces/",
+        QuestionInterfacesView.as_view(),
+        name="question-interfaces",
     ),
 ]

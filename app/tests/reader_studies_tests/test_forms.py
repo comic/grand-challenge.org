@@ -7,17 +7,14 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
-from grandchallenge.reader_studies.forms import QuestionForm
-from grandchallenge.reader_studies.models import (
-    ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
-    Answer,
-    Question,
-    ReaderStudy,
-)
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -222,7 +219,6 @@ def test_question_create(client):
                 "order": 1,
                 "image_port": "",
                 "direction": "H",
-                "interface": None,
                 "options-TOTAL_FORMS": 2,
                 "options-INITIAL_FORMS": 1,
                 "options-MIN_NUM_FORMS": 0,
@@ -285,7 +281,9 @@ def test_question_update(client):
     assert question.answer_type == Question.AnswerType.SINGLE_LINE_TEXT
     assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
+    assert question.interface is None
 
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     get_view_for_user(
         viewname="reader-studies:question-update",
         client=client,
@@ -295,7 +293,7 @@ def test_question_update(client):
             "answer_type": Question.AnswerType.BOOL,
             "direction": Question.Direction.VERTICAL,
             "order": 200,
-            "interface": None,
+            "interface": str(ci_bool.pk),
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
@@ -311,6 +309,31 @@ def test_question_update(client):
     assert question.answer_type == Question.AnswerType.BOOL
     assert question.direction == Question.Direction.VERTICAL
     assert question.order == 200
+    assert question.interface == ci_bool
+
+    ci_img = ComponentInterface.objects.get(slug="generic-medical-image")
+    get_view_for_user(
+        viewname="reader-studies:question-update",
+        client=client,
+        method=client.post,
+        data={
+            "question_text": "bar",
+            "answer_type": Question.AnswerType.BOOL,
+            "direction": Question.Direction.VERTICAL,
+            "order": 200,
+            "interface": str(ci_img.pk),
+            "options-TOTAL_FORMS": 2,
+            "options-INITIAL_FORMS": 1,
+            "options-MIN_NUM_FORMS": 0,
+            "options-MAX_NUM_FORMS": 1000,
+        },
+        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
+        follow=True,
+        user=editor,
+    )
+
+    question.refresh_from_db()
+    assert question.interface == ci_bool
 
     AnswerFactory(question=question, answer="true")
 
@@ -324,7 +347,6 @@ def test_question_update(client):
             "answer_type": Question.AnswerType.SINGLE_LINE_TEXT,
             "direction": Question.Direction.HORIZONTAL,
             "order": 100,
-            "interface": None,
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
@@ -376,7 +398,6 @@ def test_image_port_only_with_bounding_box(
             "question_text": "What?",
             "answer_type": answer_type,
             "order": 1,
-            "interface": None,
             "image_port": port,
             "direction": "H",
             "options-TOTAL_FORMS": 2,
@@ -394,48 +415,6 @@ def test_image_port_only_with_bounding_box(
         assert response.status_code == 200
 
     assert Question.objects.all().count() == questions_created
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "answer_type,ci_kinds", ANSWER_TYPE_TO_INTERFACE_KIND_MAP.items()
-)
-def test_question_interface_field(client, answer_type, ci_kinds):
-    defaults = {
-        "question_text": "What?",
-        "direction": "H",
-        "order": 1,
-    }
-
-    q = QuestionFactory()
-    rs = ReaderStudyFactory()
-    for ci_kind in ci_kinds:
-        ci = ComponentInterfaceFactory(kind=ci_kind)
-        f = QuestionForm(
-            {
-                **defaults,
-                "reader_study": rs,
-                "answer_type": answer_type,
-                "image_port": "M" if answer_type in q.annotation_types else "",
-                "interface": ci,
-            }
-        )
-        assert f.is_valid()
-
-    non_ci_kind = [
-        c[0] for c in InterfaceKindChoices.choices if c[0] not in ci_kinds
-    ][0]
-    non_ci = ComponentInterfaceFactory(kind=non_ci_kind)
-    f = QuestionForm(
-        {
-            **defaults,
-            "reader_study": rs,
-            "answer_type": answer_type,
-            "image_port": "M" if answer_type in q.annotation_types else "",
-            "interface": non_ci,
-        }
-    )
-    assert not f.is_valid()
 
 
 @pytest.mark.django_db
