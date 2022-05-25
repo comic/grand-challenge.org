@@ -356,6 +356,7 @@ class DockerExecutor(DockerConnection):
                             "relative_path": relative_path,
                             "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
                             "bucket_key": key,
+                            "decompress": civ.decompress,
                         }
                     ),
                 ]
