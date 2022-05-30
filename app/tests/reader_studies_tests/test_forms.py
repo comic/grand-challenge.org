@@ -14,7 +14,13 @@ from grandchallenge.components.models import (
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.forms import QuestionForm
+from grandchallenge.reader_studies.models import (
+    ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
+    Answer,
+    Question,
+    ReaderStudy,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -362,6 +368,28 @@ def test_question_update(client):
     assert question.answer_type == Question.AnswerType.BOOL
     assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type,interfaces",
+    ((k, v) for k, v in ANSWER_TYPE_TO_INTERFACE_KIND_MAP.items()),
+)
+def test_question_form_interface_field(answer_type, interfaces):
+    if len(interfaces) > 0:
+        ci = ComponentInterfaceFactory(kind=interfaces[0])
+    else:
+        ci = None
+    ci_img = ComponentInterface.objects.filter(
+        kind=InterfaceKindChoices.IMAGE
+    ).first()
+    assert ci_img is not None
+    form = QuestionForm(initial={"answer_type": answer_type})
+    if ci is not None:
+        assert form.interface_choices().filter(pk=ci.pk).exists()
+        assert not form.interface_choices().filter(pk=ci_img.pk).exists()
+    else:
+        assert form.interface_choices().count() == 0
 
 
 @pytest.mark.django_db
