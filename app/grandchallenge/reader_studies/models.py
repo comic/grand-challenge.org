@@ -644,6 +644,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
         scores_by_case = (
             DisplaySet.objects.filter(reader_study=self)
+            .select_related("reader_study__workstation__config")
             .annotate(
                 sum=Sum(
                     "answers__score", filter=Q(answers__is_ground_truth=False)
