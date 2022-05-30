@@ -716,16 +716,18 @@
         <span class="p">)</span>
 
         <span class="n">scores_by_case</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;display_set&quot;</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;display_set_id&quot;</span><span class="p">)</span>
+            <span class="n">DisplaySet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;reader_study__workstation__config&quot;</span><span class="p">)</span>
             <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-                <span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
-                <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span>
+                <span class="nb">sum</span><span class="o">=</span><span class="n">Sum</span><span class="p">(</span>
+                    <span class="s2">&quot;answers__score&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">avg</span><span class="o">=</span><span class="n">Avg</span><span class="p">(</span>
+                    <span class="s2">&quot;answers__score&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;score__avg&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;avg&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">all</span><span class="p">()</span>
         <span class="p">)</span>
 
         <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span>
