@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import os
@@ -7,10 +8,11 @@ from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from socket import getaddrinfo
-from tempfile import TemporaryDirectory
+from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from time import sleep
 
 import boto3
+import botocore
 import docker
 from dateutil.parser import isoparse
 from django.conf import settings
@@ -18,7 +20,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils._os import safe_join
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, DockerException, ImageNotFound, NotFound
+from docker.errors import APIError, DockerException, ImageNotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
@@ -163,7 +165,6 @@ class DockerConnection:
             c.stop(timeout=timeout)
 
         self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
-        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
 
     def _pull_images(self):
         try:
@@ -436,28 +437,39 @@ class DockerExecutor(DockerConnection):
         return outputs
 
     def _create_images_result(self, *, interface):
-        base_dir = Path(safe_join("/output/", interface.relative_path))
-        # TODO FIXME
-        output_files = []
-        # found_files = reader.exec_run(f"find {base_dir} -type f")
+        prefix = safe_join("/", self.io_prefix, interface.relative_path)
+        response = self._s3_client.list_objects_v2(
+            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            Prefix=prefix,
+        )
 
-        # if found_files.exit_code != 0:
-        #    raise ComponentException(f"Error listing {base_dir}")
+        if response.get("IsTruncated", False):
+            raise ComponentException(
+                f"Too many files produced in '{interface.relative_path}'"
+            )
 
-        # output_files = [
-        #    base_dir / Path(f)
-        #    for f in found_files.output.decode().splitlines()
-        # ]
-
+        output_files = response["Contents"]
         if not output_files:
-            raise ComponentException(f"{base_dir} is empty")
+            raise ComponentException(
+                f"Output directory '{interface.relative_path}' is empty"
+            )
 
         with TemporaryDirectory() as tmpdir:
             for file in output_files:
-                temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
-                temp_file.parent.mkdir(parents=True, exist_ok=True)
-                # TODO FIXME
-                # get_file(container=reader, src=file, dest=temp_file)
+                key = safe_join("/", file["Key"])
+                dest = safe_join(tmpdir, Path(key).relative_to(prefix))
+
+                logger.info(
+                    f"Downloading {key} to {dest} from "
+                    f"{settings.COMPONENTS_OUTPUT_BUCKET_NAME}"
+                )
+
+                Path(dest).parent.mkdir(parents=True, exist_ok=True)
+                self._s3_client.download_file(
+                    Filename=dest,
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=key,
+                )
 
             importer_result = import_images(
                 input_directory=tmpdir,
@@ -465,10 +477,12 @@ class DockerExecutor(DockerConnection):
             )
 
         if len(importer_result.new_images) == 0:
-            raise ComponentException(f"No images imported from {base_dir}")
+            raise ComponentException(
+                f"No output images could be imported from '{interface.relative_path}'"
+            )
         elif len(importer_result.new_images) > 1:
             raise ComponentException(
-                f"Only 1 image should be produced in {base_dir}, "
+                f"Only 1 image should be produced in '{interface.relative_path}', "
                 f"we found {len(importer_result.new_images)}"
             )
 
@@ -478,55 +492,61 @@ class DockerExecutor(DockerConnection):
             )
         except ValidationError:
             raise ComponentException(
-                f"The image produced in {base_dir} is not valid"
+                f"The image produced in '{interface.relative_path}' is not valid"
             )
 
         return civ
 
     def _create_json_result(self, *, interface):
-        output_file = Path(safe_join("/output/", interface.relative_path))
+        key = safe_join("/", self.io_prefix, interface.relative_path)
 
         try:
-            with TemporaryDirectory() as tmpdir:
-                temp_file = Path(safe_join(tmpdir, "output.json"))
-                # TODO FIXME
-                # get_file(container=reader, src=output_file, dest=temp_file)
-
-                with open(temp_file, "rb") as file:
-                    result = json.loads(
-                        file.read().decode("utf-8"),
-                        parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-                    )
-        except NotFound:
-            raise ComponentException(f"File {output_file} was not produced")
+            with io.BytesIO() as fileobj:
+                self._s3_client.download_fileobj(
+                    Fileobj=fileobj,
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=key,
+                )
+                fileobj.seek(0)
+                result = json.loads(
+                    fileobj.read().decode("utf-8"),
+                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+                )
+            civ = interface.create_instance(value=result)
+        except botocore.exceptions.ClientError:
+            raise ComponentException(
+                f"Output file '{interface.relative_path}' was not produced"
+            )
         except JSONDecodeError:
             raise ComponentException(
-                f"The file produced at {output_file} is not valid json"
+                f"The output file '{interface.relative_path}' is not valid json"
             )
-
-        try:
-            civ = interface.create_instance(value=result)
         except ValidationError:
             raise ComponentException(
-                f"The file produced at {output_file} is not valid"
+                f"The output file '{interface.relative_path}' is not valid"
             )
 
         return civ
 
     def _create_file_result(self, *, interface):
-        output_file = Path(safe_join("/output/", interface.relative_path))
+        key = safe_join("/", self.io_prefix, interface.relative_path)
+
         try:
-            with TemporaryDirectory() as tmpdir:
-                temp_file = Path(safe_join(tmpdir, interface.relative_path))
-                # TODO FIXME
-                # get_file(container=reader, src=output_file, dest=temp_file)
-                with open(temp_file, "rb") as f:
-                    civ = interface.create_instance(fileobj=f)
-        except NotFound:
-            raise ComponentException(f"File {output_file} was not produced")
+            with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as fileobj:
+                self._s3_client.download_fileobj(
+                    Fileobj=fileobj,
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=key,
+                )
+                fileobj.seek(0)
+                civ = interface.create_instance(fileobj=fileobj)
+        except botocore.exceptions.ClientError:
+            raise ComponentException(
+                f"Output file '{interface.relative_path}' was not produced"
+            )
         except ValidationError:
             raise ComponentException(
-                f"The file produced at {output_file} is not valid"
+                f"The output file '{interface.relative_path}' is not valid"
             )
 
         return civ

@@ -344,7 +344,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     assert len(jobs) == 1
     assert (
         jobs.first().error_message
-        == "The file produced at /output/some_text.txt is not valid json"
+        == "The output file 'some_text.txt' is not valid json"
     )
     assert len(jobs[0].outputs.all()) == 0
 

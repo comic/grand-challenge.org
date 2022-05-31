@@ -113,7 +113,7 @@ def test_provision(tmp_path, settings):
     )
 
     executor.provision(input_civs=civs, input_prefixes={})
-    executor.execute()
+    executor.execute(input_civs=civs, input_prefixes={})
     executor.handle_event(
         event={
             # Minimal successful event

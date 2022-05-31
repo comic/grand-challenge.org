@@ -21,8 +21,10 @@ class AmazonECSExecutorStub(AmazonECSExecutor):
     def _logs_client(self):
         return LogsClientStub()
 
-    def execute(self):
-        ret = super().execute()
+    def execute(self, *, input_civs, input_prefixes):
+        ret = super().execute(
+            input_civs=input_civs, input_prefixes=input_prefixes
+        )
         self._copy_to_output()
         return ret
 
