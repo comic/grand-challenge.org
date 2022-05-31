@@ -27,7 +27,11 @@ from requests.exceptions import ChunkedEncodingError
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
-from grandchallenge.components.backends.utils import LOGLINES, user_error
+from grandchallenge.components.backends.utils import (
+    LOGLINES,
+    parse_structured_log,
+    user_error,
+)
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.components.tasks import _repo_login_and_run
 
@@ -228,10 +232,29 @@ class DockerExecutor(DockerConnection):
     def deprovision(self):
         self.stop_and_cleanup()
 
+    @staticmethod
+    def parse_logs(logs):
+        output = []
+
+        for line in logs.split("\n"):
+            try:
+                timestamp, log = line.split(" ", 1)
+            except ValueError:
+                if line:
+                    logger.error(f"Could not parse line: {line}")
+                continue
+
+            message = parse_structured_log(log=log)
+
+            if message is not None:
+                output.append(f"{timestamp} {message}")
+
+        return "\n".join(output)
+
     @property
     def stdout(self):
         try:
-            return (
+            return self.parse_logs(
                 self.container.logs(
                     stdout=True, stderr=False, timestamps=True, tail=LOGLINES
                 )
@@ -247,7 +270,7 @@ class DockerExecutor(DockerConnection):
     @property
     def stderr(self):
         try:
-            return (
+            return self.parse_logs(
                 self.container.logs(
                     stdout=False, stderr=True, timestamps=True, tail=LOGLINES
                 )

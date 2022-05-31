@@ -1,11 +1,16 @@
+import json
+import logging
 import re
 import zipfile
 from os.path import commonpath
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from django.core.files import File
 from django.utils._os import safe_join
+
+logger = logging.getLogger(__name__)
+
 
 LOGLINES = 2000  # The number of loglines to keep
 
@@ -31,6 +36,33 @@ def user_error(obj: str):
             error_message = e
 
     return error_message
+
+
+def parse_structured_log(*, log: str) -> Optional[str]:
+    """Parse the structured logs from SageMaker Shim"""
+
+    try:
+        structured_log = json.loads(log.strip())
+    except json.JSONDecodeError:
+        logger.error(f"Could not decode log as json: {log}")
+        return
+
+    try:
+        message = structured_log["log"]
+
+        if structured_log["internal"] is False:
+            # Defensive, in case the value is a string
+            return message
+        else:
+            if structured_log["source"] == "stdout":
+                logger.info(f"Internal log: {message}")
+            elif structured_log["source"] == "stderr":
+                logger.warning(f"Internal log: {message}")
+            else:
+                raise KeyError("Invalid log structure")
+
+    except KeyError:
+        logger.error(f"Invalid log structure: {log}")
 
 
 def safe_extract(*, src: File, dest: Path):

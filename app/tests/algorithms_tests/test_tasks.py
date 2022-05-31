@@ -245,8 +245,8 @@ def test_algorithm(client, algorithm_image, settings):
     # There should be a single, successful job
     assert len(jobs) == 1
 
-    assert jobs[0].stdout.endswith("Greetings from stdout\n")
-    assert jobs[0].stderr.endswith('("Hello from stderr")\n')
+    assert jobs[0].stdout.endswith("Greetings from stdout")
+    assert jobs[0].stderr.endswith('("Hello from stderr")')
     assert "UserWarning: Could not google: [Errno " in jobs[0].stderr
     assert jobs[0].error_message == ""
     assert jobs[0].status == jobs[0].SUCCESS
