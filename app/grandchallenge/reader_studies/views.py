@@ -353,6 +353,15 @@ class ReaderStudyStatistics(
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
+            }
+        )
+        return context
+
 
 class ReaderStudyDisplaySetList(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
@@ -380,7 +389,12 @@ class ReaderStudyDisplaySetList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"reader_study": self.reader_study})
+        context.update(
+            {
+                "reader_study": self.reader_study,
+                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
+            }
+        )
         return context
 
     def get_queryset(self):

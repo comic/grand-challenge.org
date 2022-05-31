@@ -267,9 +267,9 @@ def test_statistics(reader_study_with_gt, settings):
     assert len(scores) == rs.display_sets.count()
     ds = set(rs.display_sets.values_list("pk", flat=True))
     for score in scores:
-        ds -= {score["display_set_id"]}
-        assert score["score__sum"] == 3.0
-        assert score["score__avg"] == 1.0
+        ds -= {score.id}
+        assert score.sum == 3.0
+        assert score.avg == 1.0
     assert ds == set()
 
     with capture_on_commit_callbacks(execute=True):

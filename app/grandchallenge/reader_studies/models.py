@@ -647,16 +647,18 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         )
 
         scores_by_case = (
-            Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=False
-            )
-            .order_by("display_set")
-            .values("display_set_id")
+            DisplaySet.objects.filter(reader_study=self)
+            .select_related("reader_study__workstation__config")
             .annotate(
-                Sum("score"),
-                Avg("score"),
+                sum=Sum(
+                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                ),
+                avg=Avg(
+                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                ),
             )
-            .order_by("score__avg")
+            .order_by("avg")
+            .all()
         )
 
         options = {}
