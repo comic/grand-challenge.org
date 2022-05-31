@@ -2,10 +2,7 @@ import base64
 import json
 import logging
 import os
-import subprocess
 from datetime import timedelta
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -38,7 +35,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
     Evaluation,
     Method,
@@ -102,8 +98,6 @@ def run():
     _create_github_webhook_message()
     _create_help_forum()
     _create_flatpages()
-    _setup_public_storage()
-    _setup_components_storage()
 
     print("✨ Development fixtures successfully created ✨")
 
@@ -606,137 +600,3 @@ def _create_user_tokens(users):
         out += f"\t{user} token is: {token}\n"
     out += f"{'*' * 80}\n"
     logger.debug(out)
-
-
-def _setup_public_storage():
-    """
-    Add anonymous read only to public S3 storage.
-
-    Only used in development. In production, set a similar policy on the S3 bucket.
-    """
-    host_alias = "local"
-    policy_name = "public_read"
-    policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "PublicReadGetObject",
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:GetObject",
-                "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}/*",
-            }
-        ],
-    }
-
-    subprocess.check_call(
-        [
-            "mc",
-            "config",
-            "host",
-            "add",
-            host_alias,
-            settings.AWS_S3_ENDPOINT_URL,
-            os.environ["AWS_ACCESS_KEY_ID"],
-            os.environ["AWS_SECRET_ACCESS_KEY"],
-        ]
-    )
-
-    with TemporaryDirectory() as tmp_dir:
-        policy_file = Path(tmp_dir) / f"{policy_name}.json"
-
-        with open(policy_file, "w") as f:
-            f.write(json.dumps(policy))
-
-        subprocess.check_call(
-            [
-                "mc",
-                "policy",
-                "set-json",
-                str(policy_file),
-                f"{host_alias}/{public_s3_storage.bucket_name}",
-            ]
-        )
-
-
-def _setup_components_storage():
-    """
-    Add a user and IAM role for the components storage
-
-    Only used in development. In production, create similar policies and roles.
-    """
-    host_alias = "local"
-    policy_name = "components"
-    policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Action": ["s3:GetObject"],
-                "Effect": "Allow",
-                "Resource": [
-                    f"arn:aws:s3:::{settings.COMPONENTS_INPUT_BUCKET_NAME}/*"
-                ],
-                "Sid": "GetInputs",
-            },
-            {
-                "Action": ["s3:PutObject"],
-                "Effect": "Allow",
-                "Resource": [
-                    f"arn:aws:s3:::{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/*"
-                ],
-                "Sid": "PutOutputs",
-            },
-        ],
-    }
-
-    subprocess.check_call(
-        [
-            "mc",
-            "config",
-            "host",
-            "add",
-            host_alias,
-            settings.AWS_S3_ENDPOINT_URL,
-            os.environ["AWS_ACCESS_KEY_ID"],
-            os.environ["AWS_SECRET_ACCESS_KEY"],
-        ]
-    )
-
-    with TemporaryDirectory() as tmp_dir:
-        policy_file = Path(tmp_dir) / f"{policy_name}.json"
-        with open(policy_file, "w") as f:
-            f.write(json.dumps(policy))
-        subprocess.check_call(
-            [
-                "mc",
-                "admin",
-                "policy",
-                "add",
-                host_alias,
-                policy_name,
-                str(policy_file),
-            ]
-        )
-
-    subprocess.check_call(
-        [
-            "mc",
-            "admin",
-            "user",
-            "add",
-            host_alias,
-            settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
-            settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
-        ]
-    )
-    subprocess.check_call(
-        [
-            "mc",
-            "admin",
-            "policy",
-            "set",
-            host_alias,
-            policy_name,
-            f"user={settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID}",
-        ]
-    )
