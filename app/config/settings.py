@@ -1122,7 +1122,7 @@ READER_STUDY_VIEW_AS_USER_FEATURE = strtobool(
 )
 # Feature flag for reader study display set view
 READER_STUDY_DISPLAY_SET_VIEW_FEATURE = strtobool(
-    os.environ.get("READER_STUDY_DISPLAY_SET_VIEW_FEATURE", "True")
+    os.environ.get("READER_STUDY_DISPLAY_SET_VIEW_FEATURE", "False")
 )
 
 CELERY_BEAT_SCHEDULE = {
@@ -1285,7 +1285,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
-ENABLE_DEBUG_TOOLBAR = False
+ENABLE_DEBUG_TOOLBAR = True
 
 if DEBUG:
     # Allow localhost in development

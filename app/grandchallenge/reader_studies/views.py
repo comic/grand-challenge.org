@@ -374,7 +374,7 @@ class ReaderStudyDisplaySetList(
     row_template = "reader_studies/readerstudy_display_sets_row.html"
     search_fields = ["pk", "values__image__name", "values__file"]
     columns = [
-        Column(title="Name", sort_field="order"),
+        Column(title="[DisplaySet ID] Main image name", sort_field="order"),
     ]
     text_align = "left"
     default_sort_order = "asc"
