@@ -70,17 +70,16 @@ def test_session_auth_token():
 
 
 @pytest.mark.django_db
-def test_session_start(http_image, docker_client, settings):
-    path, sha256 = http_image
+def test_session_start(http_image, settings):
+    path, _ = http_image
+
+    # Execute celery tasks in place
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=path)
     recurse_callbacks(callbacks=callbacks)
-    wsi.refresh_from_db()
-
-    # Execute the celery in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks(execute=True):
         s = SessionFactory(workstation_image=wsi)
@@ -93,13 +92,21 @@ def test_session_start(http_image, docker_client, settings):
 
         container = s.service.container
 
-        assert container.labels["traefik.enable"] == "true"
-        assert container.labels[
-            f"traefik.http.services.{s.hostname}-http.loadbalancer.server.port"
-        ] == str(s.workstation_image.http_port)
-        assert container.labels[
-            f"traefik.http.services.{s.hostname}-websocket.loadbalancer.server.port"
-        ] == str(s.workstation_image.websocket_port)
+        expected_labels = {
+            "job": f"{s._meta.app_label}-{s._meta.model_name}-{s.pk}",
+            "traefik.enable": "true",
+            f"traefik.http.routers.{s.hostname}-http.entrypoints": "workstation-http",
+            f"traefik.http.routers.{s.hostname}-http.rule": f"Host(`{s.hostname}`)",
+            f"traefik.http.routers.{s.hostname}-http.service": f"{s.hostname}-http",
+            f"traefik.http.routers.{s.hostname}-websocket.entrypoints": "workstation-websocket",
+            f"traefik.http.routers.{s.hostname}-websocket.rule": f"Host(`{s.hostname}`)",
+            f"traefik.http.routers.{s.hostname}-websocket.service": f"{s.hostname}-websocket",
+            f"traefik.http.services.{s.hostname}-http.loadbalancer.server.port": "8080",
+            f"traefik.http.services.{s.hostname}-websocket.loadbalancer.server.port": "4114",
+        }
+
+        for k, v in expected_labels.items():
+            assert container.labels[k] == v
 
         networks = container.attrs.get("NetworkSettings")["Networks"]
         assert len(networks) == 1
@@ -117,17 +124,16 @@ def test_session_start(http_image, docker_client, settings):
 
 
 @pytest.mark.django_db
-def test_correct_session_stopped(http_image, docker_client, settings):
-    path, sha256 = http_image
+def test_correct_session_stopped(http_image, settings):
+    path, _ = http_image
+
+    # Execute celery tasks in place
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=path)
     recurse_callbacks(callbacks=callbacks)
-    wsi.refresh_from_db()
-
-    # Execute the celery in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
 
     try:
         with capture_on_commit_callbacks(execute=True):
@@ -160,17 +166,16 @@ def test_correct_session_stopped(http_image, docker_client, settings):
 
 
 @pytest.mark.django_db
-def test_session_cleanup(http_image, docker_client, settings):
-    path, sha256 = http_image
+def test_session_cleanup(http_image, settings):
+    path, _ = http_image
+
+    # Execute celery tasks in place
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=path)
     recurse_callbacks(callbacks=callbacks)
-    wsi.refresh_from_db()
-
-    # Execute the celery in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
 
     default_region = "eu-nl-1"
 
@@ -213,38 +218,36 @@ def test_session_cleanup(http_image, docker_client, settings):
 
 
 @pytest.mark.django_db
-def test_workstation_ready(http_image, docker_client, settings):
-    path, sha256 = http_image
+def test_workstation_ready(http_image, settings):
+    path, _ = http_image
 
-    wsi = WorkstationImageFactory(
-        image__from_path=path, image_sha256=sha256, ready=False
-    )
-
-    # Execute the celery in place
+    # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
+    # Do not execute the callbacks as the image should not be ready
+    wsi = WorkstationImageFactory(image__from_path=path)
+    assert wsi.ready is False
 
     with capture_on_commit_callbacks(execute=True):
         s = SessionFactory(workstation_image=wsi)
 
     s.refresh_from_db()
-
     assert s.status == s.FAILED
 
 
 @pytest.mark.django_db
-def test_session_limit(http_image, docker_client, settings):
-    path, sha256 = http_image
+def test_session_limit(http_image, settings):
+    path, _ = http_image
+
+    # Execute celery tasks in place
+    settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=path)
     recurse_callbacks(callbacks=callbacks)
-    wsi.refresh_from_db()
-
-    # Execute the celery in place
-    settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
 
     try:
         with capture_on_commit_callbacks(execute=True):

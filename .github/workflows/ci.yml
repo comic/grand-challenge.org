@@ -50,7 +50,6 @@ jobs:
           make build_web_test
       - name: Run the django tests
         run: |
-          docker pull crccheck/hello-world
           make minio
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=. --durations 10"
       - name: Upload coverage report to codecov
