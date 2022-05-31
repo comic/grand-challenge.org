@@ -21,7 +21,7 @@
         <table class="table table-hover table-striped table-sm mb-3">
             <thead>
                 <tr>
-                    <th>[DisplaySet ID] Main image name</th>
+                    <th>DisplaySet ID</th>
                     <th>Total score / max score</th>
                     <th>Average score</th>
                     {% for question in object.statistics.questions %}
@@ -35,7 +35,7 @@
             <tbody>
                 {% for entry in object.statistics.scores_by_case %}
                     <tr>
-                        <td data-order="{{ entry.id }}">[{{ entry.id }}] {{ entry.main_image_title }}</td>
+                        <td data-order="{{ entry.id }}">{{ entry.id }}</td>
                         <td data-order="{{ entry.sum|stringformat:'020f' }}">{{ entry.sum }} / {{ object.statistics.max_score_cases }}</td>
                         <td data-order="{{ entry.avg|stringformat:'020f' }}">{{ entry.avg|floatformat:4 }}</td>
                         {% for question in object.statistics.questions %}
