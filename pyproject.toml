@@ -102,7 +102,7 @@ django-deprecate-fields = "*"
 django-add-default-value = "*"
 django-ses = "*"
 Pygments = "*"
-django-forms-dynamic = "^1.0.0"
+django-forms-dynamic = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
