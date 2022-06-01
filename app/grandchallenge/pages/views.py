@@ -154,8 +154,35 @@ class PageDelete(
         return super().delete(request, *args, **kwargs)
 
 
+def get_average_job_duration_for_phase(phase):
+    algorithm_images = Submission.objects.filter(
+        phase__slug=phase.slug
+    ).values_list("algorithm_image__pk")
+    average_job_duration = Job.objects.filter(
+        algorithm_image__pk__in=algorithm_images, status=Job.SUCCESS
+    ).average_duration()
+    return average_job_duration
+
+
+def get_average_image_file_size_for_phase(phase):
+    file_sizes = []
+    image_civs = phase.archive.items.filter(
+        values__image__isnull=False
+    ).values_list("values__pk")
+    images = [
+        civ.image
+        for civ in ComponentInterfaceValue.objects.filter(pk__in=image_civs)
+        .prefetch_related("image__files")
+        .all()
+    ]
+    for image in images:
+        for file in image.files.all():
+            file_sizes.append(file.file.size / 1000000)
+    return mean(file_sizes)
+
+
 class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
-    template_name = "pages/challenge_statisticss.html"
+    template_name = "pages/challenge_statistics.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
@@ -170,12 +197,12 @@ class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
         duration_dict = {}
         file_size_dict = {}
         for phase in phases:
-            duration_dict[phase.title] = self.get_average_job_duration(
+            duration_dict[phase.title] = get_average_job_duration_for_phase(
                 phase=phase
             )
-            file_size_dict[phase.title] = self.get_average_image_file_size(
-                phase=phase
-            )
+            file_size_dict[
+                phase.title
+            ] = get_average_image_file_size_for_phase(phase=phase)
 
         context.update(
             {
@@ -185,30 +212,3 @@ class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
         )
 
         return context
-
-    def get_average_job_duration(self, phase):
-        algorithm_images = Submission.objects.filter(
-            phase__slug=phase.slug
-        ).values_list("algorithm_image__pk")
-        average_job_duration = Job.objects.filter(
-            algorithm_image__pk__in=algorithm_images, status=Job.SUCCESS
-        ).average_duration()
-        return average_job_duration
-
-    def get_average_image_file_size(self, phase):
-        file_sizes = []
-        image_civs = phase.archive.items.filter(
-            values__image__isnull=False
-        ).values_list("values__pk")
-        images = [
-            civ.image
-            for civ in ComponentInterfaceValue.objects.filter(
-                pk__in=image_civs
-            )
-            .prefetch_related("image__files")
-            .all()
-        ]
-        for image in images:
-            for file in image.files.all():
-                file_sizes.append(file.file.size / 1000000)
-        return mean(file_sizes)
