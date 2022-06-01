@@ -25,23 +25,21 @@
         <div class="table-responsive">
             <table class="table table-hover table-sm w-50">
                 <tbody>
-                    {% for phase, duration in average_job_durations.items %}
+                    {% for phase, durations in average_job_durations.items %}
                         <tr>
                             <td>
                                 Average algorithm job duration for {{ phase }}:
                             </td>
                              <td>
-                                {{ duration|naturaldelta }}
+                                {{ durations.average_duration|naturaldelta }}
                             </td>
                         </tr>
-                    {% endfor %}
-                    {% for phase, size in average_file_sizes.items %}
                         <tr>
                             <td>
-                                Average image file size for {{ phase }}:
+                                Total algorithm job duration for {{ phase }}:
                             </td>
                              <td>
-                                {{ size }} MB
+                                {{ durations.total_duration|naturaldelta }}
                             </td>
                         </tr>
                     {% endfor %}

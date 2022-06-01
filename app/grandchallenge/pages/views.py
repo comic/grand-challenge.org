@@ -1,5 +1,3 @@
-from statistics import mean
-
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q
@@ -18,7 +16,6 @@ from guardian.mixins import (
 )
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.mixins import UserIsStaffMixin
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -158,27 +155,16 @@ def get_average_job_duration_for_phase(phase):
     algorithm_images = Submission.objects.filter(
         phase__slug=phase.slug
     ).values_list("algorithm_image__pk")
-    average_job_duration = Job.objects.filter(
-        algorithm_image__pk__in=algorithm_images, status=Job.SUCCESS
-    ).average_duration()
-    return average_job_duration
-
-
-def get_average_image_file_size_for_phase(phase):
-    file_sizes = []
-    image_civs = phase.archive.items.filter(
-        values__image__isnull=False
-    ).values_list("values__pk")
-    images = [
-        civ.image
-        for civ in ComponentInterfaceValue.objects.filter(pk__in=image_civs)
-        .prefetch_related("image__files")
-        .all()
-    ]
-    for image in images:
-        for file in image.files.all():
-            file_sizes.append(file.file.size / 1000000)
-    return mean(file_sizes)
+    jobs = Job.objects.filter(
+        algorithm_image__pk__in=algorithm_images,
+        status=Job.SUCCESS,
+        creator=None,
+    )
+    duration_dict = {
+        "average_duration": jobs.average_duration(),
+        "total_duration": jobs.total_duration(),
+    }
+    return duration_dict
 
 
 class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
@@ -195,19 +181,14 @@ class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
             .all()
         )
         duration_dict = {}
-        file_size_dict = {}
         for phase in phases:
             duration_dict[phase.title] = get_average_job_duration_for_phase(
                 phase=phase
             )
-            file_size_dict[
-                phase.title
-            ] = get_average_image_file_size_for_phase(phase=phase)
 
         context.update(
             {
                 "average_job_durations": duration_dict,
-                "average_file_sizes": file_size_dict,
             }
         )
 
