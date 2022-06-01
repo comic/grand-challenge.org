@@ -206,12 +206,10 @@ def _mutate_container_image(
                 new_repo_tag,
                 "--append",
                 str(new_layer),
-            ]
-            + list(
-                itertools.chain(
+                *itertools.chain(
                     *[["--env", f"{k}={v}"] for k, v in env_vars.items()]
-                )
-            )
+                ),
+            ]
         )
 
 
