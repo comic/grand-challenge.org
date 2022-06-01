@@ -24,6 +24,8 @@ from tests.reader_studies_tests.factories import ReaderStudyFactory
 @pytest.mark.django_db
 def test_get_receivers(factory, action):
     u1, u2, u3, u4 = UserFactory.create_batch(4)
+    u2.is_active = False
+    u2.save()
     for user in [u1, u2]:
         user.user_profile.receive_newsletter = True
         user.user_profile.save()
@@ -42,10 +44,10 @@ def test_get_receivers(factory, action):
 
     receivers = get_receivers(action)
 
-    assert len(receivers) == 2
-    for user in [u1, u2]:
+    assert len(receivers) == 1
+    for user in [u1]:
         assert user in receivers
-    for user in [u3, u4]:
+    for user in [u2, u3, u4]:
         assert user not in receivers
 
 
