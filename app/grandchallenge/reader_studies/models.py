@@ -889,6 +889,16 @@ class DisplaySet(UUIDModel):
             ]
         )
 
+    @cached_property
+    def main_image_title(self):
+        try:
+            interface_slug = self.reader_study.view_content["main"][0]
+            return self.values.filter(
+                interface__slug=interface_slug
+            ).values_list("image__name", flat=True)[0]
+        except KeyError:
+            return self.values.values_list("image__name", flat=True)[0]
+
 
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
