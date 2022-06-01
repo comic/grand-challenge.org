@@ -327,15 +327,16 @@ class DockerExecutor(DockerConnection):
         return self.__s3_client
 
     def _get_key_and_relative_path(self, *, civ, input_prefixes):
+        root_prefix = safe_join("/", self.io_prefix)
+
         if str(civ.pk) in input_prefixes:
-            # TODO add a test for this
-            relative_path = safe_join(
-                input_prefixes[str(civ.pk)], civ.relative_path
+            key = safe_join(
+                root_prefix, input_prefixes[str(civ.pk)], civ.relative_path
             )
         else:
-            relative_path = str(civ.relative_path)
+            key = safe_join(root_prefix, civ.relative_path)
 
-        key = safe_join("/", self.io_prefix, relative_path)
+        relative_path = str(os.path.relpath(key, root_prefix))
 
         return key, relative_path
 
