@@ -315,7 +315,7 @@ class DockerExecutor(DockerConnection):
         if len(path_parts) != 3 or "/" in self._job_id or "." in self._job_id:
             raise ValueError(f"Invalid job id {self._job_id}")
 
-        return "/".join(path_parts)
+        return safe_join("/", *path_parts)
 
     @property
     def _s3_client(self):
@@ -327,16 +327,14 @@ class DockerExecutor(DockerConnection):
         return self.__s3_client
 
     def _get_key_and_relative_path(self, *, civ, input_prefixes):
-        root_prefix = safe_join("/", self.io_prefix)
-
         if str(civ.pk) in input_prefixes:
             key = safe_join(
-                root_prefix, input_prefixes[str(civ.pk)], civ.relative_path
+                self.io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
             )
         else:
-            key = safe_join(root_prefix, civ.relative_path)
+            key = safe_join(self.io_prefix, civ.relative_path)
 
-        relative_path = str(os.path.relpath(key, root_prefix))
+        relative_path = str(os.path.relpath(key, self.io_prefix))
 
         return key, relative_path
 
@@ -438,7 +436,7 @@ class DockerExecutor(DockerConnection):
         return outputs
 
     def _create_images_result(self, *, interface):
-        prefix = safe_join("/", self.io_prefix, interface.relative_path)
+        prefix = safe_join(self.io_prefix, interface.relative_path)
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             Prefix=prefix,
@@ -499,7 +497,7 @@ class DockerExecutor(DockerConnection):
         return civ
 
     def _create_json_result(self, *, interface):
-        key = safe_join("/", self.io_prefix, interface.relative_path)
+        key = safe_join(self.io_prefix, interface.relative_path)
 
         try:
             with io.BytesIO() as fileobj:
@@ -530,7 +528,7 @@ class DockerExecutor(DockerConnection):
         return civ
 
     def _create_file_result(self, *, interface):
-        key = safe_join("/", self.io_prefix, interface.relative_path)
+        key = safe_join(self.io_prefix, interface.relative_path)
 
         try:
             with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as fileobj:
