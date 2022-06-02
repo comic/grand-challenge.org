@@ -11,7 +11,7 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -1114,7 +1114,11 @@ class DisplaySetViewSet(
                 )
             answerable_question_count = reader_study.answerable_question_count
             queryset = (
-                queryset.annotate(answer_count=Count("answers"))
+                queryset.annotate(
+                    answer_count=Count(
+                        "answers", filter=Q(answers__is_ground_truth=False)
+                    )
+                )
                 .exclude(
                     answers__creator=user,
                     answer_count__gte=answerable_question_count,
