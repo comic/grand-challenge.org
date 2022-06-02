@@ -3,9 +3,20 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
-from grandchallenge.components.models import ComponentInterface
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
+from grandchallenge.reader_studies.models import (
+    Answer,
+    AnswerType,
+    Question,
+    ReaderStudy,
+)
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -437,3 +448,28 @@ def test_display_set_description():
 
     for ds in rs.display_sets.all():
         assert ds.description == result[ds.pk]
+
+
+@pytest.mark.django_db
+def test_question_interface():
+    q = QuestionFactory(answer_type=AnswerType.SINGLE_LINE_TEXT)
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    q.interface = ci_str
+    q.clean()
+    q.save()
+    q.refresh_from_db()
+    assert q.interface == ci_str
+    ci_img = ComponentInterface.objects.filter(
+        kind=InterfaceKindChoices.IMAGE
+    ).first()
+    q.interface = ci_img
+    with pytest.raises(ValidationError) as e:
+        q.clean()
+        q.save()
+
+    assert e.value.message == (
+        f"The interface {ci_img} is not allowed for this "
+        f"question type ({AnswerType.SINGLE_LINE_TEXT})"
+    )
+    q.refresh_from_db()
+    assert q.interface == ci_str

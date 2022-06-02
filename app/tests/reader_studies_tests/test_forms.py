@@ -317,30 +317,6 @@ def test_question_update(client):
     assert question.order == 200
     assert question.interface == ci_bool
 
-    ci_img = ComponentInterface.objects.get(slug="generic-medical-image")
-    get_view_for_user(
-        viewname="reader-studies:question-update",
-        client=client,
-        method=client.post,
-        data={
-            "question_text": "bar",
-            "answer_type": Question.AnswerType.BOOL,
-            "direction": Question.Direction.VERTICAL,
-            "order": 200,
-            "interface": str(ci_img.pk),
-            "options-TOTAL_FORMS": 2,
-            "options-INITIAL_FORMS": 1,
-            "options-MIN_NUM_FORMS": 0,
-            "options-MAX_NUM_FORMS": 1000,
-        },
-        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
-        follow=True,
-        user=editor,
-    )
-
-    question.refresh_from_db()
-    assert question.interface == ci_bool
-
     AnswerFactory(question=question, answer="true")
 
     # An answer is added, so changing the question text should no longer be possible
