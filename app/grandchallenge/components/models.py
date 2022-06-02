@@ -96,6 +96,7 @@ class InterfaceKindChoices(models.TextChoices):
     SQREG = "SQREG", _("SQREG file")
     THUMBNAIL_JPG = "JPEG", _("Thumbnail jpg")
     THUMBNAIL_PNG = "PNG", _("Thumbnail png")
+    OBJ = "OBJ", _("OBJ file")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -461,6 +462,7 @@ class InterfaceKind:
         * SQREG file
         * Thumbnail JPG
         * Thumbnail PNG
+        * OBJ file
         """
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
@@ -469,6 +471,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.SQREG,
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKind.InterfaceKindChoices.OBJ,
         }
 
     @classmethod
@@ -513,6 +516,11 @@ class InterfaceKind:
                 "application/octet-stream",
                 "application/x-sqlite3",
                 "application/vnd.sqlite3",
+            )
+        elif kind == InterfaceKind.InterfaceKindChoices.OBJ:
+            return (
+                "text/plain",
+                "application/octet-stream",
             )
         else:
             raise RuntimeError(f"Unknown kind {kind}")
@@ -737,6 +745,7 @@ class ComponentInterfaceValue(models.Model):
                     ".jpeg",
                     ".pdf",
                     ".sqreg",
+                    ".obj",
                 )
             ),
             MimeTypeValidator(
