@@ -74,6 +74,9 @@ build: build_web_test build_web_dist build_http
 migrate:
 	docker-compose run --rm web python manage.py migrate
 
+check_migrations:
+	docker-compose run --rm web python manage.py makemigrations --dry-run --check
+
 migrations:
 	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations
 

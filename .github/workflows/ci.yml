@@ -48,6 +48,8 @@ jobs:
       - name: Build the test container
         run: |
           make build_web_test
+      - name: Check migrations have been made
+        run: make check_migrations
       - name: Run the django tests
         run: |
           docker pull crccheck/hello-world
