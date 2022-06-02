@@ -153,7 +153,7 @@ class PageDelete(
 
 def get_average_job_duration_for_phase(phase):
     algorithm_images = Submission.objects.filter(
-        phase__slug=phase.slug
+        phase__pk=phase.pk
     ).values_list("algorithm_image__pk")
     jobs = Job.objects.filter(
         algorithm_image__pk__in=algorithm_images,
