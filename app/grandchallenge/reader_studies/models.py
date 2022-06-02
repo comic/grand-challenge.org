@@ -900,7 +900,7 @@ class DisplaySet(UUIDModel):
             return self.values.filter(
                 interface__slug=interface_slug
             ).values_list("image__name", flat=True)[0]
-        except KeyError:
+        except (KeyError, IndexError):
             return self.values.values_list("image__name", flat=True)[0]
 
 
