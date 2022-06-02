@@ -668,6 +668,14 @@ python-versions = ">=3.6"
 Django = ">=2.2"
 
 [[package]]
+name = "django-forms-dynamic"
+version = "1.0.0"
+description = "Resolve form field arguments dynamically when a form is instantiated, not when it's declared."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "django-guardian"
 version = "2.4.0"
 description = "Implementation of per object permissions for Django."
@@ -2906,6 +2914,10 @@ django-extensions = [
 django-filter = [
     {file = "django-filter-21.1.tar.gz", hash = "sha256:632a251fa8f1aadb4b8cceff932bb52fe2f826dd7dfe7f3eac40e5c463d6836e"},
     {file = "django_filter-21.1-py3-none-any.whl", hash = "sha256:f4a6737a30104c98d2e2a5fb93043f36dd7978e0c7ddc92f5998e85433ea5063"},
+]
+django-forms-dynamic = [
+    {file = "django-forms-dynamic-1.0.0.tar.gz", hash = "sha256:38339fa12722c1eeebb2f22d9a996c80be19339f17de718784c16e2ba3d3bc6f"},
+    {file = "django_forms_dynamic-1.0.0-py3-none-any.whl", hash = "sha256:59ce7053b120727001cb1f21436d507017cbd8a91a0c65ebc731c399cbadab0c"},
 ]
 django-guardian = [
     {file = "django-guardian-2.4.0.tar.gz", hash = "sha256:c58a68ae76922d33e6bdc0e69af1892097838de56e93e78a8361090bcd9f89a0"},

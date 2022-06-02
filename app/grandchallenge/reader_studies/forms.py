@@ -20,13 +20,16 @@ from django.forms import (
     Form,
     ModelChoiceField,
     ModelForm,
+    Select,
     Textarea,
     TextInput,
 )
 from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
+from dynamic_forms import DynamicField, DynamicFormMixin
 
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -37,6 +40,7 @@ from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
+    ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     CASE_TEXT_SCHEMA,
     Answer,
     CategoricalOption,
@@ -243,7 +247,7 @@ class ReaderStudyCopyForm(Form):
         self.helper.layout.append(Submit("save", "Copy"))
 
 
-class QuestionForm(SaveFormInitMixin, ModelForm):
+class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -263,10 +267,20 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
                 Field("image_port"),
                 Field("direction"),
                 Field("order"),
+                Field("interface"),
                 HTML("<br>"),
                 ButtonHolder(Submit("save", "Save")),
             )
         )
+
+    def interface_choices(self):
+        answer_type = self["answer_type"].value()
+        return ComponentInterface.objects.filter(
+            kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP[answer_type]
+        )
+
+    def initial_interface(self):
+        return self.interface_choices().first()
 
     def full_clean(self):
         """Override of the form's full_clean method.
@@ -291,6 +305,7 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
             "image_port",
             "direction",
             "order",
+            "interface",
         )
         help_texts = {
             "question_text": (
@@ -324,8 +339,29 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
                 "If true, the user must answer this question, otherwise the "
                 "user can skip it."
             ),
+            "interface": (
+                "Select component interface to use as a default answer for this "
+                "question."
+            ),
         }
-        widgets = {"question_text": TextInput}
+        widgets = {
+            "question_text": TextInput,
+            "answer_type": Select(
+                attrs={
+                    "hx-get": reverse_lazy(
+                        "reader-studies:question-interfaces"
+                    ),
+                    "hx-target": "#id_interface",
+                }
+            ),
+        }
+
+    interface = DynamicField(
+        ModelChoiceField,
+        queryset=interface_choices,
+        initial=initial_interface,
+        required=False,
+    )
 
 
 class CategoricalOptionForm(ModelForm):
