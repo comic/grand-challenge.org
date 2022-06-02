@@ -16,8 +16,8 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.reader_studies.forms import QuestionForm
 from grandchallenge.reader_studies.models import (
-    ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     Answer,
+    AnswerType,
     Question,
     ReaderStudy,
 )
@@ -372,24 +372,50 @@ def test_question_update(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "answer_type,interfaces",
-    ((k, v) for k, v in ANSWER_TYPE_TO_INTERFACE_KIND_MAP.items()),
+    "answer_type,interface_kind",
+    (
+        (AnswerType.SINGLE_LINE_TEXT, InterfaceKindChoices.STRING),
+        (AnswerType.MULTI_LINE_TEXT, InterfaceKindChoices.STRING),
+        (AnswerType.BOOL, InterfaceKindChoices.BOOL),
+        (AnswerType.NUMBER, InterfaceKindChoices.FLOAT),
+        (AnswerType.NUMBER, InterfaceKindChoices.INTEGER),
+        (AnswerType.BOUNDING_BOX_2D, InterfaceKindChoices.TWO_D_BOUNDING_BOX),
+        (
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+        ),
+        (
+            AnswerType.DISTANCE_MEASUREMENT,
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+        ),
+        (
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+        ),
+        (AnswerType.POINT, InterfaceKindChoices.POINT),
+        (AnswerType.MULTIPLE_POINTS, InterfaceKindChoices.MULTIPLE_POINTS),
+        (AnswerType.POLYGON, InterfaceKindChoices.POLYGON),
+        (AnswerType.MULTIPLE_POLYGONS, InterfaceKindChoices.MULTIPLE_POLYGONS),
+        (AnswerType.LINE, InterfaceKindChoices.LINE),
+        (AnswerType.MULTIPLE_LINES, InterfaceKindChoices.MULTIPLE_LINES),
+        (AnswerType.CHOICE, InterfaceKindChoices.CHOICE),
+        (AnswerType.MULTIPLE_CHOICE, InterfaceKindChoices.MULTIPLE_CHOICE),
+        (
+            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+            InterfaceKindChoices.MULTIPLE_CHOICE,
+        ),
+        (AnswerType.MASK, InterfaceKindChoices.SEGMENTATION),
+    ),
 )
-def test_question_form_interface_field(answer_type, interfaces):
-    if len(interfaces) > 0:
-        ci = ComponentInterfaceFactory(kind=interfaces[0])
-    else:
-        ci = None
+def test_question_form_interface_field(answer_type, interface_kind):
+    ci = ComponentInterfaceFactory(kind=interface_kind)
     ci_img = ComponentInterface.objects.filter(
         kind=InterfaceKindChoices.IMAGE
     ).first()
     assert ci_img is not None
     form = QuestionForm(initial={"answer_type": answer_type})
-    if ci is not None:
-        assert form.interface_choices().filter(pk=ci.pk).exists()
-        assert not form.interface_choices().filter(pk=ci_img.pk).exists()
-    else:
-        assert form.interface_choices().count() == 0
+    assert form.interface_choices().filter(pk=ci.pk).exists()
+    assert not form.interface_choices().filter(pk=ci_img.pk).exists()
 
 
 @pytest.mark.django_db
