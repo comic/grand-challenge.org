@@ -19,4 +19,5 @@ class AnswerFilter(FilterSet):
             "creator",
             "question__reader_study",
             "display_set",
+            "is_ground_truth",
         )
