@@ -95,7 +95,11 @@
 <span class="kn">from</span> <span class="nn">stdimage</span> <span class="kn">import</span> <span class="n">JPEGField</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.anatomy.models</span> <span class="kn">import</span> <span class="n">BodyStructure</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="n">ComponentInterfaceValue</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ComponentInterface</span><span class="p">,</span>
+    <span class="n">ComponentInterfaceValue</span><span class="p">,</span>
+    <span class="n">InterfaceKindChoices</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
@@ -997,6 +1001,42 @@
     <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple lines&quot;</span></div>
 
 
+<span class="n">ANSWER_TYPE_TO_INTERFACE_KIND_MAP</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">TWO_D_BOUNDING_BOX</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span>
+    <span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span>
+    <span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span>
+    <span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">POINT</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POINT</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">LINE</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span>
+    <span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+
 <div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
     <span class="n">AnswerType</span> <span class="o">=</span> <span class="n">AnswerType</span>
 
@@ -1044,6 +1084,9 @@
         <span class="n">default</span><span class="o">=</span><span class="n">ScoringFunction</span><span class="o">.</span><span class="n">ACCURACY</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">interface</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
@@ -1086,6 +1129,13 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">EXAMPLE_FOR_ANSWER_TYPE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="p">,</span> <span class="s2">&quot;&lt;NO EXAMPLE YET&gt;&quot;</span>
         <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allowed_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">allowed_interfaces</span> <span class="o">=</span> <span class="n">ANSWER_TYPE_TO_INTERFACE_KIND_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">kind__in</span><span class="o">=</span><span class="n">allowed_interfaces</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Question.calculate_score"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.calculate_score">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">answer</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1147,6 +1197,15 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Bool or Heading answer types cannot not be Required &quot;</span>
                 <span class="s2">&quot;(otherwise the user will need to tick a box for each image!)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interface</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">allowed_component_interfaces</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2"> is not allowed for this &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;question type (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span></div>
 
     <span class="nd">@property</span>
