@@ -289,6 +289,11 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="A plugin that contains overlay-related controls, "
         "such as the overlay-selection tool and overlay-segmentation visibility",
     )
+    show_annotation_statistics_plugin = models.BooleanField(
+        default=False,
+        help_text="A plugin that allows analysis of segmentations. It shows voxel value "
+        "statistics of annotated areas.",
+    )
     show_invert_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that allows inverting the displayed pixel colors of an image",

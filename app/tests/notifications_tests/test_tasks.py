@@ -10,16 +10,22 @@ from tests.notifications_tests.factories import NotificationFactory
 
 @pytest.mark.django_db
 def test_notification_email():
-    user1 = UserFactory()
+    user1, user2 = UserFactory.create_batch(2)
+    user2.is_active = False
+    user2.save()
     _ = NotificationFactory(user=user1, type=Notification.Type.GENERIC)
+    _ = NotificationFactory(user=user2, type=Notification.Type.GENERIC)
 
     assert user1.user_profile.has_unread_notifications
     assert user1.user_profile.receive_notification_emails
+    assert user2.user_profile.has_unread_notifications
+    assert user2.user_profile.receive_notification_emails
     assert len(mail.outbox) == 0
     send_unread_notification_emails()
     assert len(mail.outbox) == 1
     email = mail.outbox[-1]
-    assert email.to[0] == user1.email
+    assert user1.email in email.to
+    assert user2.email not in email.to
     assert "You have 1 new notification" in email.body
 
 

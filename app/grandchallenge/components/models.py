@@ -19,7 +19,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
-from django.db.models import Avg, F, QuerySet
+from django.db.models import Avg, F, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField, ModelMultipleChoiceField
 from django.utils.functional import cached_property
@@ -888,6 +888,13 @@ class DurationQuerySet(models.QuerySet):
             self.with_duration()
             .exclude(duration=None)
             .aggregate(Avg("duration"))["duration__avg"]
+        )
+
+    def total_duration(self):
+        return (
+            self.with_duration()
+            .exclude(duration=None)
+            .aggregate(Sum("duration"))["duration__sum"]
         )
 
 

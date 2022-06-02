@@ -1139,7 +1139,7 @@ READER_STUDY_VIEW_AS_USER_FEATURE = strtobool(
 )
 # Feature flag for reader study display set view
 READER_STUDY_DISPLAY_SET_VIEW_FEATURE = strtobool(
-    os.environ.get("READER_STUDY_DISPLAY_SET_VIEW_FEATURE", "True")
+    os.environ.get("READER_STUDY_DISPLAY_SET_VIEW_FEATURE", "False")
 )
 
 CELERY_BEAT_SCHEDULE = {
