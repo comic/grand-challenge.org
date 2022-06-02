@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("components", "0009_alter_componentinterface_kind"),
-        ("reader_studies", "0028_auto_20220517_0740"),
+        ("reader_studies", "0029_auto_20220602_0640"),
     ]
 
     operations = [
