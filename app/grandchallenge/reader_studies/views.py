@@ -33,6 +33,7 @@ from django.views.generic import (
     FormView,
     ListView,
     UpdateView,
+    View,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin, PermissionListMixin
@@ -1263,3 +1264,9 @@ class QuestionDelete(
         return HttpResponseForbidden(
             reason="This question already has answers associated with it"
         )
+
+
+class QuestionInterfacesView(View):
+    def get(self, request):
+        form = QuestionForm(request.GET)
+        return HttpResponse(form["interface"])

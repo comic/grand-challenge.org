@@ -17,6 +17,7 @@ from rest_framework.serializers import (
 
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
+    ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
@@ -47,6 +48,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     form_direction = CharField(source="get_direction_display", read_only=True)
     image_port = CharField(source="get_image_port_display", read_only=True)
     options = CategoricalOptionSerializer(many=True, read_only=True)
+    interface = ComponentInterfaceSerializer(read_only=True)
 
     class Meta:
         model = Question
@@ -61,6 +63,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "reader_study",
             "required",
             "options",
+            "interface",
         )
 
 
