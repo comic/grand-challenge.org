@@ -139,7 +139,9 @@ class TestAutocompleteViews:
         archive.add_editor(admin)
 
         user = UserFactory()
-        VerificationFactory(user=user, is_verified=True)
+        VerificationFactory(
+            user=user, email="verification@email.com", is_verified=True
+        )
 
         response = get_view_for_user(
             client=client,
@@ -148,5 +150,4 @@ class TestAutocompleteViews:
             data={"q": user.verification.email},
         )
         assert response.status_code == 200
-
         assert str(user.pk) in response.json()["results"][0]["id"]
