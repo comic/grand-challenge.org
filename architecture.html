@@ -14,6 +14,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -88,13 +89,13 @@
            <div itemprop="articleBody">
              
   <section id="architecture">
-<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline"></a></h1>
+<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this heading"></a></h1>
 <p>This document uses the <a class="reference external" href="https://c4model.com/">C4 Model</a> for visualising the architecture of grand-challenge.org.
 This covers <a class="reference internal" href="#system-context">System Context</a>, <a class="reference internal" href="#containers">Containers</a> (Applications/Data Stores), and <a class="reference internal" href="#components">Components</a> (Modules/Libraries).</p>
 <section id="ubiquitous-language">
-<h2>Ubiquitous Language<a class="headerlink" href="#ubiquitous-language" title="Permalink to this headline"></a></h2>
+<h2>Ubiquitous Language<a class="headerlink" href="#ubiquitous-language" title="Permalink to this heading"></a></h2>
 <section id="users">
-<h3>Users<a class="headerlink" href="#users" title="Permalink to this headline"></a></h3>
+<h3>Users<a class="headerlink" href="#users" title="Permalink to this heading"></a></h3>
 <p>Many different users and roles are supported on grand-challenge.org.</p>
 <dl class="simple">
 <dt>Researcher</dt><dd><p>A Researcher is a user who wants to manage medical imaging data and reports,
@@ -115,7 +116,7 @@ and uploads new medical imaging data for execution by algorithms.</p>
 </section>
 </section>
 <section id="system-context">
-<h2>System Context<a class="headerlink" href="#system-context" title="Permalink to this headline"></a></h2>
+<h2>System Context<a class="headerlink" href="#system-context" title="Permalink to this heading"></a></h2>
 <p>An overview of the grand-challenge.org system, its users, and its system dependencies.</p>
 <p class="plantuml">
 <img src="_images/plantuml-11561084767c276f43488f940b29c048a0dbedd7.svg" alt="&#64;startuml
@@ -154,7 +155,7 @@ Rel_Neighbor(monitoring, grand_challenge, &quot;Scrapes monitoring endpoints of&
 "/></p>
 </section>
 <section id="containers">
-<h2>Containers<a class="headerlink" href="#containers" title="Permalink to this headline"></a></h2>
+<h2>Containers<a class="headerlink" href="#containers" title="Permalink to this heading"></a></h2>
 <p>The overall shape of the architecture and technology choices.
 <em>Note: a container is a separately deployable application or data store, not necessarily a Docker container.</em></p>
 <p class="plantuml">
@@ -213,13 +214,13 @@ Rel_U(gc_algorithm_worker, protected_s3, &quot;Reads objects from&quot;, &quot;H
 "/></p>
 </section>
 <section id="components">
-<h2>Components<a class="headerlink" href="#components" title="Permalink to this headline"></a></h2>
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this heading"></a></h2>
 <p>Logical modules and their interactions with containers.
 <em>Note: a component is a grouping of related functionality behind a well defined interface,
 not components in the sense of pipelines.</em>
 Grand-challenge.org is a Django monolith, but several components can be deployed and scaled independently.</p>
 <section id="api">
-<h3>API<a class="headerlink" href="#api" title="Permalink to this headline"></a></h3>
+<h3>API<a class="headerlink" href="#api" title="Permalink to this heading"></a></h3>
 <p>The API layer provides the HTML views and REST services to the user.</p>
 <p class="plantuml">
 <img src="_images/plantuml-7b5f3246c87d876e5e6ef05ce50099c4bb948cee.svg" alt="&#64;startuml
@@ -263,7 +264,7 @@ Rel(nginx, gc_web_app, &quot;Proxies&quot;, &quot;HTTP, HTML, JSON&quot;)
 "/></p>
 </section>
 <section id="workstations">
-<h3>Workstations<a class="headerlink" href="#workstations" title="Permalink to this headline"></a></h3>
+<h3>Workstations<a class="headerlink" href="#workstations" title="Permalink to this heading"></a></h3>
 <p>Grand Challenge is able to launch <a class="reference internal" href="workstations.html#workstations"><span class="std std-ref">workstations</span></a> for users.
 Workstations are container images that allow for interaction with medical data in the browser.
 One workstation container image is instantiated per user, which provides a single page application.
@@ -308,7 +309,7 @@ Rel(docker, gc_web_app, &quot;Fetches medical images, algorithm results, etc, fr
 "/></p>
 </section>
 <section id="image-evaluation-and-algorithm-workers">
-<h3>Image, Evaluation and Algorithm Workers<a class="headerlink" href="#image-evaluation-and-algorithm-workers" title="Permalink to this headline"></a></h3>
+<h3>Image, Evaluation and Algorithm Workers<a class="headerlink" href="#image-evaluation-and-algorithm-workers" title="Permalink to this heading"></a></h3>
 <p>There are several tasks that require asynchronous processing that require
 long compute times, high memory usage and potentially the docker api and/or a GPU.
 These tasks include medical image importing, challenge submission evaluation (requires docker), and

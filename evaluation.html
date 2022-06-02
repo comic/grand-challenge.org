@@ -14,6 +14,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -85,30 +86,30 @@
            <div itemprop="articleBody">
              
   <section id="evaluation">
-<h1>Evaluation<a class="headerlink" href="#evaluation" title="Permalink to this headline"></a></h1>
+<h1>Evaluation<a class="headerlink" href="#evaluation" title="Permalink to this heading"></a></h1>
 <p>grand-challenge.org has a system for automatically evaluating new submissions.
 Challenge administrators upload their own Docker containers that will be
 executed by Celery workers when a new submission in uploaded by a participant.</p>
 <section id="evaluation-container-requirements">
-<h2>Evaluation Container Requirements<a class="headerlink" href="#evaluation-container-requirements" title="Permalink to this headline"></a></h2>
+<h2>Evaluation Container Requirements<a class="headerlink" href="#evaluation-container-requirements" title="Permalink to this heading"></a></h2>
 <p>The evaluation container must contain everything that is needed to perform the
 evaluation on a new submission. This includes the reference standard, and the
 code that will execute the evaluation on the new submission. An instance of the
 evaluation container image is created for each submission.</p>
 <section id="input">
-<h3>Input<a class="headerlink" href="#input" title="Permalink to this headline"></a></h3>
+<h3>Input<a class="headerlink" href="#input" title="Permalink to this heading"></a></h3>
 <p>The participants submission will be extracted and mounted as a docker volume
 on <cite>/input/</cite>.</p>
 </section>
 <section id="entrypoint">
-<h3>Entrypoint<a class="headerlink" href="#entrypoint" title="Permalink to this headline"></a></h3>
+<h3>Entrypoint<a class="headerlink" href="#entrypoint" title="Permalink to this heading"></a></h3>
 <p>The container will be run with the default arguments, so the entrypoint must
 by default produce an evaluation for the data that will reside on <cite>/input/</cite>.
 The container is responsible for loading all of the data, handling incorrect
 filenames, incomplete submissions, duplicate folders, etc.</p>
 </section>
 <section id="errors">
-<h3>Errors<a class="headerlink" href="#errors" title="Permalink to this headline"></a></h3>
+<h3>Errors<a class="headerlink" href="#errors" title="Permalink to this heading"></a></h3>
 <p>If there is an error in the evaluation process grand-challenge.org will parse
 <cite>stderr</cite> and return the last non-empty line to the user. If your evaluation
 script is in Python the best practice is to raise an exception and the message
@@ -118,7 +119,7 @@ will then be passed to the user, eg</p>
 </div></blockquote>
 </section>
 <section id="output">
-<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline"></a></h3>
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this heading"></a></h3>
 <p>The container must produce the file <cite>/output/metrics.json</cite>. The structure
 within must be valid json (ie. loadable with <cite>json.loads()</cite>) and will be stored
 as a result in the database. The challenge administrator is free to define what
@@ -191,7 +192,7 @@ is one number per evaluation. For example:</p>
 </div>
 </section>
 <section id="evaluation-options">
-<h3>Evaluation Options<a class="headerlink" href="#evaluation-options" title="Permalink to this headline"></a></h3>
+<h3>Evaluation Options<a class="headerlink" href="#evaluation-options" title="Permalink to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.evaluation.models.Phase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.evaluation.models.</span></span><span class="sig-name descname"><span class="pre">Phase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">challenge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_jsonpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_error_jsonpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_default_sort</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_decimal_places</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_results_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_method_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_display_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator_must_be_verified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_submission_comments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_submission_comments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_supplementary_file_link</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_url_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_url_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_url_help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_supplementary_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_limit_period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submissions_open_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submissions_close_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_page_html</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_publish_new_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_all_metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm_time_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase" title="Permalink to this definition"></a></dt>
@@ -296,7 +297,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </section>
 </section>
 <section id="module-grandchallenge.evaluation.templatetags.evaluation_extras">
-<span id="template-tags"></span><h2>Template Tags<a class="headerlink" href="#module-grandchallenge.evaluation.templatetags.evaluation_extras" title="Permalink to this headline"></a></h2>
+<span id="template-tags"></span><h2>Template Tags<a class="headerlink" href="#module-grandchallenge.evaluation.templatetags.evaluation_extras" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="grandchallenge.evaluation.templatetags.evaluation_extras.get_jsonpath">
 <span class="sig-prename descclassname"><span class="pre">grandchallenge.evaluation.templatetags.evaluation_extras.</span></span><span class="sig-name descname"><span class="pre">get_jsonpath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jsonpath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/templatetags/evaluation_extras.html#get_jsonpath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.templatetags.evaluation_extras.get_jsonpath" title="Permalink to this definition"></a></dt>

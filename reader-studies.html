@@ -14,6 +14,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -81,7 +82,7 @@
            <div itemprop="articleBody">
              
   <section id="module-grandchallenge.reader_studies.models">
-<span id="reader-studies"></span><h1>Reader Studies<a class="headerlink" href="#module-grandchallenge.reader_studies.models" title="Permalink to this headline"></a></h1>
+<span id="reader-studies"></span><h1>Reader Studies<a class="headerlink" href="#module-grandchallenge.reader_studies.models" title="Permalink to this heading"></a></h1>
 <p>A reader study enables you to have a set of readers answer a set of questions
 about a set of images.</p>
 <dl class="simple">
@@ -101,13 +102,13 @@ on another.</p>
 </dd>
 </dl>
 <section id="creating-a-reader-study">
-<h2>Creating a Reader Study<a class="headerlink" href="#creating-a-reader-study" title="Permalink to this headline"></a></h2>
+<h2>Creating a Reader Study<a class="headerlink" href="#creating-a-reader-study" title="Permalink to this heading"></a></h2>
 <p>A <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code> can use any available <code class="docutils literal notranslate"><span class="pre">Workstation</span></code>.
 A <code class="docutils literal notranslate"><span class="pre">WorkstationConfig</span></code> can also be used for the study to customise the default
 appearance of the workstation.</p>
 </section>
 <section id="cases">
-<h2>Cases<a class="headerlink" href="#cases" title="Permalink to this headline"></a></h2>
+<h2>Cases<a class="headerlink" href="#cases" title="Permalink to this heading"></a></h2>
 <p>Cases can be added to a reader study by adding <code class="docutils literal notranslate"><span class="pre">Image</span></code> instances.
 Multiple image formats are supported:</p>
 <ul class="simple">
@@ -121,7 +122,7 @@ guaranteed to work on all <code class="docutils literal notranslate"><span class
 </ul>
 </section>
 <section id="defining-the-hanging-list">
-<h2>Defining the Hanging List<a class="headerlink" href="#defining-the-hanging-list" title="Permalink to this headline"></a></h2>
+<h2>Defining the Hanging List<a class="headerlink" href="#defining-the-hanging-list" title="Permalink to this heading"></a></h2>
 <p>When you upload a set of images you have the option to automatically generate
 the default hanging list.
 The default hanging list presents each reader with 1 image per protocol.</p>
@@ -142,7 +143,7 @@ Here, you are able to assign multiple images and overlays to each protocol.</p>
 the suffix ‘-overlay’ (e.g. <code class="docutils literal notranslate"><span class="pre">main-overlay</span></code>).</p>
 </section>
 <section id="questions">
-<h2>Questions<a class="headerlink" href="#questions" title="Permalink to this headline"></a></h2>
+<h2>Questions<a class="headerlink" href="#questions" title="Permalink to this heading"></a></h2>
 <p>A <code class="docutils literal notranslate"><span class="pre">Question</span></code> can be optional and the following <code class="docutils literal notranslate"><span class="pre">answer_type</span></code> options are
 available:</p>
 <ul class="simple">
@@ -161,7 +162,7 @@ available:</p>
 annotation will be made.</p>
 </section>
 <section id="adding-ground-truth">
-<h2>Adding Ground Truth<a class="headerlink" href="#adding-ground-truth" title="Permalink to this headline"></a></h2>
+<h2>Adding Ground Truth<a class="headerlink" href="#adding-ground-truth" title="Permalink to this heading"></a></h2>
 <p>To monitor the performance of the readers you are able add ground truth to a
 reader study by uploading a csv file.</p>
 <p>If ground truth has been added to a <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>, any <code class="docutils literal notranslate"><span class="pre">Answer</span></code> given by a
