@@ -90,6 +90,15 @@
                             </a>
                         </div>
                     {% endif %}
+                    {% if request.user.is_staff %}
+                        <div class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics'  %}active{% endif %}"
+                               href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">
+                                <i class="fas fa-chart-bar fa-fw"></i>
+                                    Statistics
+                            </a>
+                        </div>
+                    {% endif %}
                 </ul>
             </div>
         </div>

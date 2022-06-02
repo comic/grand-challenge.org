@@ -4,7 +4,7 @@ import pytest
 from django.db.models import BLANK_CHOICE_DASH
 
 from grandchallenge.pages.models import Page
-from tests.factories import PageFactory
+from tests.factories import ChallengeFactory, PageFactory, UserFactory
 from tests.utils import get_view_for_user, validate_admin_only_view
 
 
@@ -305,3 +305,35 @@ def test_create_page_with_same_title(client, two_challenge_sets):
         ).slug
         == "page1"
     )
+
+
+@pytest.mark.django_db
+def test_challenge_statistics_page_permissions(client):
+    challenge = ChallengeFactory()
+    staff = UserFactory(is_staff=True)
+    admin, user = UserFactory.create_batch(2)
+    challenge.add_admin(admin)
+
+    response = get_view_for_user(
+        viewname="pages:statistics",
+        client=client,
+        user=user,
+        challenge=challenge,
+    )
+    response.status_code = 404
+
+    response = get_view_for_user(
+        viewname="pages:statistics",
+        client=client,
+        user=admin,
+        challenge=challenge,
+    )
+    response.status_code = 404
+
+    response = get_view_for_user(
+        viewname="pages:statistics",
+        client=client,
+        user=staff,
+        challenge=challenge,
+    )
+    response.status_code = 200
