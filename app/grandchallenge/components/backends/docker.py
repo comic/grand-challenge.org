@@ -1,33 +1,25 @@
-import io
 import json
 import logging
 import os
 from contextlib import contextmanager
 from ipaddress import ip_address
-from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from socket import getaddrinfo
-from tempfile import SpooledTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from time import sleep
 
-import boto3
-import botocore
 import docker
 from dateutil.parser import isoparse
 from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.db import transaction
-from django.utils._os import safe_join
 from docker.api.container import ContainerApiMixin
 from docker.errors import APIError, DockerException, ImageNotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
-from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from requests import HTTPError
 from requests.exceptions import ChunkedEncodingError
 
-from grandchallenge.cases.tasks import import_images
+from grandchallenge.components.backends.base import Executor
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
     LOGLINES,
@@ -39,34 +31,24 @@ from grandchallenge.components.tasks import _repo_login_and_run
 
 logger = logging.getLogger(__name__)
 
-MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
 
-
-class DockerConnection:
+class DockerConnectionMixin:
     """
     Provides a client with a connection to a docker host, provisioned for
     running the container exec_image.
     """
 
-    def __init__(
-        self,
-        *,
-        job_id: str,
-        exec_image_repo_tag: str,
-        memory_limit: int,
-        time_limit: int,
-        requires_gpu: bool,
-    ):
-        super().__init__()
-        self._job_id = job_id
-        self._exec_image_repo_tag = exec_image_repo_tag
-        self._memory_limit = memory_limit
-        self._requires_gpu = requires_gpu
-
-        if time_limit != settings.CELERY_TASK_TIME_LIMIT:
-            logger.warning("Time limits are not implemented in this backend")
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.__client = None
+
+    @property
+    def container_name(self):
+        return self._job_id
+
+    @property
+    def container(self):
+        return self._client.containers.get(container_id=self.container_name)
 
     @property
     def _client(self):
@@ -166,7 +148,7 @@ class DockerConnection:
 
         self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
 
-    def _pull_images(self):
+    def _pull_image(self):
         try:
             self._client.images.get(name=self._exec_image_repo_tag)
         except ImageNotFound:
@@ -198,40 +180,26 @@ class DockerConnection:
             self._client.api.timeout = old_timeout
 
 
-class DockerExecutor(DockerConnection):
-    IS_EVENT_DRIVEN = False
-
+class DockerExecutor(DockerConnectionMixin, Executor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__s3_client = None
 
-    @staticmethod
-    def get_job_params(*, event):
-        raise NotImplementedError
-
-    @classmethod
-    def update_filesystem(cls):
-        pass
-
-    def provision(self, *, input_civs, input_prefixes):
-        self._provision_inputs(
-            input_civs=input_civs, input_prefixes=input_prefixes
-        )
+        if self._time_limit != settings.CELERY_TASK_TIME_LIMIT:
+            logger.warning("Time limits are not implemented in this backend")
 
     def execute(self, *, input_civs, input_prefixes):
-        self._pull_images()
+        self._pull_image()
         self._execute_container(
             input_civs=input_civs, input_prefixes=input_prefixes
         )
 
-    def handle_event(self):
-        pass
-
-    def get_outputs(self, *, output_interfaces):
-        return self._get_outputs(output_interfaces=output_interfaces)
-
     def deprovision(self):
+        super().deprovision()
         self.stop_and_cleanup()
+
+    @staticmethod
+    def get_job_params(*, event):
+        raise NotImplementedError
 
     @staticmethod
     def parse_logs(logs):
@@ -300,58 +268,6 @@ class DockerExecutor(DockerConnection):
             logger.warning(f"Could not inspect container: {e}")
             return None
 
-    @property
-    def container_name(self):
-        return self._job_id
-
-    @property
-    def container(self):
-        return self._client.containers.get(container_id=self.container_name)
-
-    @property
-    def io_prefix(self):
-        path_parts = self._job_id.split("-", 2)
-
-        if len(path_parts) != 3 or "/" in self._job_id or "." in self._job_id:
-            raise ValueError(f"Invalid job id {self._job_id}")
-
-        return safe_join("/", *path_parts)
-
-    @property
-    def _s3_client(self):
-        if self.__s3_client is None:
-            self.__s3_client = boto3.client(
-                "s3",
-                endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            )
-        return self.__s3_client
-
-    def _get_key_and_relative_path(self, *, civ, input_prefixes):
-        if str(civ.pk) in input_prefixes:
-            key = safe_join(
-                self.io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
-            )
-        else:
-            key = safe_join(self.io_prefix, civ.relative_path)
-
-        relative_path = str(os.path.relpath(key, self.io_prefix))
-
-        return key, relative_path
-
-    def _provision_inputs(self, *, input_civs, input_prefixes):
-        for civ in input_civs:
-            key, _ = self._get_key_and_relative_path(
-                civ=civ, input_prefixes=input_prefixes
-            )
-
-            with civ.input_file.open("rb") as f:
-                # TODO replace this with server side copy
-                self._s3_client.upload_fileobj(
-                    Fileobj=f,
-                    Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    Key=key,
-                )
-
     def _execute_container(self, *, input_civs, input_prefixes) -> None:
         environment = {
             "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
@@ -416,142 +332,19 @@ class DockerExecutor(DockerConnection):
         elif exit_code != 0:
             raise ComponentException(user_error(self.stderr))
 
-    def _get_outputs(self, *, output_interfaces):
-        """Create ComponentInterfaceValues from the output interfaces"""
-        outputs = []
 
-        with transaction.atomic():
-            # Atomic block required as create_instance needs to
-            # create interfaces in order to store the files
-            for interface in output_interfaces:
-                if interface.is_image_kind:
-                    res = self._create_images_result(interface=interface)
-                elif interface.is_json_kind:
-                    res = self._create_json_result(interface=interface)
-                else:
-                    res = self._create_file_result(interface=interface)
+class Service(DockerConnectionMixin):
+    def __init__(
+        self,
+        job_id: str,
+        exec_image_repo_tag: str,
+        memory_limit: int,
+    ):
+        super().__init__()
+        self._job_id = job_id
+        self._exec_image_repo_tag = exec_image_repo_tag
+        self._memory_limit = memory_limit
 
-                outputs.append(res)
-
-        return outputs
-
-    def _create_images_result(self, *, interface):
-        prefix = safe_join(self.io_prefix, interface.relative_path)
-        response = self._s3_client.list_objects_v2(
-            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Prefix=prefix,
-        )
-
-        if response.get("IsTruncated", False):
-            raise ComponentException(
-                f"Too many files produced in '{interface.relative_path}'"
-            )
-
-        output_files = response["Contents"]
-        if not output_files:
-            raise ComponentException(
-                f"Output directory '{interface.relative_path}' is empty"
-            )
-
-        with TemporaryDirectory() as tmpdir:
-            for file in output_files:
-                key = safe_join("/", file["Key"])
-                dest = safe_join(tmpdir, Path(key).relative_to(prefix))
-
-                logger.info(
-                    f"Downloading {key} to {dest} from "
-                    f"{settings.COMPONENTS_OUTPUT_BUCKET_NAME}"
-                )
-
-                Path(dest).parent.mkdir(parents=True, exist_ok=True)
-                self._s3_client.download_file(
-                    Filename=dest,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=key,
-                )
-
-            importer_result = import_images(
-                input_directory=tmpdir,
-                builders=[image_builder_mhd, image_builder_tiff],
-            )
-
-        if len(importer_result.new_images) == 0:
-            raise ComponentException(
-                f"No output images could be imported from '{interface.relative_path}'"
-            )
-        elif len(importer_result.new_images) > 1:
-            raise ComponentException(
-                f"Only 1 image should be produced in '{interface.relative_path}', "
-                f"we found {len(importer_result.new_images)}"
-            )
-
-        try:
-            civ = interface.create_instance(
-                image=next(iter(importer_result.new_images))
-            )
-        except ValidationError:
-            raise ComponentException(
-                f"The image produced in '{interface.relative_path}' is not valid"
-            )
-
-        return civ
-
-    def _create_json_result(self, *, interface):
-        key = safe_join(self.io_prefix, interface.relative_path)
-
-        try:
-            with io.BytesIO() as fileobj:
-                self._s3_client.download_fileobj(
-                    Fileobj=fileobj,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=key,
-                )
-                fileobj.seek(0)
-                result = json.loads(
-                    fileobj.read().decode("utf-8"),
-                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-                )
-            civ = interface.create_instance(value=result)
-        except botocore.exceptions.ClientError:
-            raise ComponentException(
-                f"Output file '{interface.relative_path}' was not produced"
-            )
-        except JSONDecodeError:
-            raise ComponentException(
-                f"The output file '{interface.relative_path}' is not valid json"
-            )
-        except ValidationError:
-            raise ComponentException(
-                f"The output file '{interface.relative_path}' is not valid"
-            )
-
-        return civ
-
-    def _create_file_result(self, *, interface):
-        key = safe_join(self.io_prefix, interface.relative_path)
-
-        try:
-            with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as fileobj:
-                self._s3_client.download_fileobj(
-                    Fileobj=fileobj,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=key,
-                )
-                fileobj.seek(0)
-                civ = interface.create_instance(fileobj=fileobj)
-        except botocore.exceptions.ClientError:
-            raise ComponentException(
-                f"Output file '{interface.relative_path}' was not produced"
-            )
-        except ValidationError:
-            raise ComponentException(
-                f"The output file '{interface.relative_path}' is not valid"
-            )
-
-        return civ
-
-
-class Service(DockerConnection):
     @property
     def _run_kwargs(self):
         kwargs = super()._run_kwargs
@@ -579,10 +372,6 @@ class Service(DockerConnection):
         else:
             return {}
 
-    @property
-    def container(self):
-        return self._client.containers.get(f"{self._job_id}-service")
-
     def logs(self) -> str:
         """Get the container logs for this service."""
         try:
@@ -599,7 +388,7 @@ class Service(DockerConnection):
         hostname: str,
         environment: dict = None,
     ):
-        self._pull_images()
+        self._pull_image()
 
         if "." in hostname:
             raise ValueError("Hostname cannot contain a '.'")
@@ -636,7 +425,7 @@ class Service(DockerConnection):
 
         self._client.containers.run(
             image=self._exec_image_repo_tag,
-            name=f"{self._job_id}-service",
+            name=self.container_name,
             remove=True,
             detach=True,
             labels={**self._labels, **traefik_labels},
