@@ -17,6 +17,9 @@ class Email(models.Model):
         help_text="This stores the page number of the last successfully sent email batch for this email.",
     )
 
+    class Meta:
+        ordering = ["pk"]
+
     def __str__(self):
         return self.subject
 
