@@ -92,22 +92,25 @@ def _repo_login_and_run(*, command):
     if settings.COMPONENTS_REGISTRY_INSECURE:
         # Do not login to insecure registries
         command.append("--insecure")
+        clean_command = shlex.join(command)
     else:
         auth_config = _get_registry_auth_config()
-        command = [
-            "crane",
-            "auth",
-            "login",
-            settings.COMPONENTS_REGISTRY_URL,
-            "-u",
-            auth_config["username"],
-            "-p",
-            auth_config["password"],
-            "&&",
-        ] + command
+        login_command = shlex.join(
+            [
+                "crane",
+                "auth",
+                "login",
+                settings.COMPONENTS_REGISTRY_URL,
+                "-u",
+                auth_config["username"],
+                "-p",
+                auth_config["password"],
+            ]
+        )
+        clean_command = f"{login_command} && {shlex.join(command)}"
 
     return subprocess.run(
-        ["/bin/sh", "-c", shlex.join(command)], check=True, capture_output=True
+        ["/bin/sh", "-c", clean_command], check=True, capture_output=True
     )
 
 
