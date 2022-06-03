@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load url %}
+{% load naturaldelta %}
+
+{% block title %}
+        Statistics
+    - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">
+            Challenge Statistics
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h3 class="mb-3">Challenge statistics</h3>
+    {% if average_job_durations %}
+        <div class="table-responsive">
+            <table class="table table-hover table-sm w-50">
+                <tbody>
+                    {% for phase, durations in average_job_durations.items %}
+                        <tr>
+                            <td>
+                                Average algorithm job duration for {{ phase }}:
+                            </td>
+                             <td>
+                                {{ durations.average_duration|naturaldelta }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Total algorithm job duration for {{ phase }}:
+                            </td>
+                             <td>
+                                {{ durations.total_duration|naturaldelta }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        No statistics to show for this challenge.
+    {% endif %}
+{% endblock %}

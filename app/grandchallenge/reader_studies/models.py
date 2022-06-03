@@ -21,7 +21,11 @@ from sklearn.metrics import accuracy_score
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -643,16 +647,18 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         )
 
         scores_by_case = (
-            Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=False
-            )
-            .order_by("display_set")
-            .values("display_set_id")
+            DisplaySet.objects.filter(reader_study=self)
+            .select_related("reader_study__workstation__config")
             .annotate(
-                Sum("score"),
-                Avg("score"),
+                sum=Sum(
+                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                ),
+                avg=Avg(
+                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                ),
             )
-            .order_by("score__avg")
+            .order_by("avg")
+            .all()
         )
 
         options = {}
@@ -887,6 +893,16 @@ class DisplaySet(UUIDModel):
             ]
         )
 
+    @cached_property
+    def main_image_title(self):
+        try:
+            interface_slug = self.reader_study.view_content["main"][0]
+            return self.values.filter(
+                interface__slug=interface_slug
+            ).values_list("image__name", flat=True)[0]
+        except (KeyError, IndexError):
+            return self.values.values_list("image__name", flat=True)[0]
+
 
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
@@ -909,6 +925,42 @@ class AnswerType(models.TextChoices):
     MASK = "MASK", "Mask"
     LINE = "LINE", "Line"
     MULTIPLE_LINES = "MLIN", "Multiple lines"
+
+
+ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
+    AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
+    AnswerType.MULTI_LINE_TEXT: [InterfaceKindChoices.STRING],
+    AnswerType.BOOL: [InterfaceKindChoices.BOOL],
+    AnswerType.NUMBER: [
+        InterfaceKindChoices.FLOAT,
+        InterfaceKindChoices.INTEGER,
+    ],
+    AnswerType.HEADING: [],
+    AnswerType.BOUNDING_BOX_2D: [InterfaceKindChoices.TWO_D_BOUNDING_BOX],
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
+        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES
+    ],
+    AnswerType.DISTANCE_MEASUREMENT: [
+        InterfaceKindChoices.DISTANCE_MEASUREMENT
+    ],
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: [
+        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS
+    ],
+    AnswerType.POINT: [InterfaceKindChoices.POINT],
+    AnswerType.MULTIPLE_POINTS: [InterfaceKindChoices.MULTIPLE_POINTS],
+    AnswerType.POLYGON: [InterfaceKindChoices.POLYGON],
+    AnswerType.MULTIPLE_POLYGONS: [InterfaceKindChoices.MULTIPLE_POLYGONS],
+    AnswerType.LINE: [InterfaceKindChoices.LINE],
+    AnswerType.MULTIPLE_LINES: [InterfaceKindChoices.MULTIPLE_LINES],
+    AnswerType.CHOICE: [InterfaceKindChoices.CHOICE],
+    AnswerType.MULTIPLE_CHOICE: [InterfaceKindChoices.MULTIPLE_CHOICE],
+    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [
+        InterfaceKindChoices.MULTIPLE_CHOICE
+    ],
+    AnswerType.MASK: [
+        InterfaceKindChoices.SEGMENTATION,
+    ],
+}
 
 
 class Question(UUIDModel):
@@ -958,6 +1010,9 @@ class Question(UUIDModel):
         default=ScoringFunction.ACCURACY,
     )
     order = models.PositiveSmallIntegerField(default=100)
+    interface = models.ForeignKey(
+        ComponentInterface, on_delete=models.PROTECT, null=True
+    )
 
     class Meta:
         ordering = ("order", "created")
@@ -1000,6 +1055,13 @@ class Question(UUIDModel):
         return self.EXAMPLE_FOR_ANSWER_TYPE.get(
             self.answer_type, "<NO EXAMPLE YET>"
         )
+
+    @property
+    def allowed_component_interfaces(self):
+        allowed_interfaces = ANSWER_TYPE_TO_INTERFACE_KIND_MAP.get(
+            self.answer_type
+        )
+        return ComponentInterface.objects.filter(kind__in=allowed_interfaces)
 
     def calculate_score(self, answer, ground_truth):
         """
@@ -1061,6 +1123,15 @@ class Question(UUIDModel):
             raise ValidationError(
                 "Bool or Heading answer types cannot not be Required "
                 "(otherwise the user will need to tick a box for each image!)"
+            )
+
+        if (
+            self.interface
+            and self.interface not in self.allowed_component_interfaces
+        ):
+            raise ValidationError(
+                f"The interface {self.interface} is not allowed for this "
+                f"question type ({self.answer_type})"
             )
 
     @property

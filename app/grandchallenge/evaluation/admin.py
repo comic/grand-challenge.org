@@ -43,6 +43,7 @@ class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
     list_display = ("pk", "challenge", "title", "slug", "modified")
     search_fields = ("pk", "title", "challenge__short_name")
+    list_filter = ("submission_kind",)
     form = PhaseAdminForm
 
 

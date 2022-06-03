@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
 from rest_framework.fields import (
+    BooleanField,
     CharField,
     DurationField,
     JSONField,
@@ -17,6 +18,7 @@ from rest_framework.serializers import (
 
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
+    ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
@@ -47,6 +49,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     form_direction = CharField(source="get_direction_display", read_only=True)
     image_port = CharField(source="get_image_port_display", read_only=True)
     options = CategoricalOptionSerializer(many=True, read_only=True)
+    interface = ComponentInterfaceSerializer(read_only=True)
 
     class Meta:
         model = Question
@@ -61,6 +64,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "reader_study",
             "required",
             "options",
+            "interface",
         )
 
 
@@ -179,6 +183,8 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         read_only=True, view_name="api:image-detail"
     )
     total_edit_duration = DurationField(read_only=True)
+    # At the moment only non-ground-truth answers are created over REST
+    is_ground_truth = BooleanField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -252,6 +258,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "answer_image",
             "last_edit_duration",
             "total_edit_duration",
+            "is_ground_truth",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}

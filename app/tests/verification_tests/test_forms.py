@@ -1,5 +1,6 @@
 import pytest
 
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.forms import (
     ConfirmEmailForm,
     VerificationForm,
@@ -24,13 +25,24 @@ class TestVerificationForm:
         ),
     )
     def test_email_domain(self, email, error):
-        form = VerificationForm(user=UserFactory(), data={"email": email})
-
+        u = UserFactory(
+            email="test@google.com", first_name="Jane", last_name="Doe"
+        )
+        u.user_profile.institution = "Foo"
+        u.user_profile.department = "Bar"
+        u.user_profile.country = "US"
+        u.user_profile.save()
+        form = VerificationForm(user=u, data={"email": email})
         assert [error] == form.errors["email"]
 
     def test_can_make_validation_with_own_email(self):
-        u = UserFactory(email="test@google.com")
-
+        u = UserFactory(
+            email="test@google.com", first_name="Jane", last_name="Doe"
+        )
+        u.user_profile.institution = "Foo"
+        u.user_profile.department = "Bar"
+        u.user_profile.country = "US"
+        u.user_profile.save()
         form = VerificationForm(user=u, data={"email": u.email, "user": u.pk})
         assert form.is_valid()
 
@@ -41,7 +53,11 @@ class TestVerificationForm:
 
     def test_cannot_make_validation_with_someone_elses_email(self):
         u1 = UserFactory(email="test@google.com")
-        u2 = UserFactory()
+        u2 = UserFactory(first_name="Jane", last_name="Doe")
+        u2.user_profile.institution = "Foo"
+        u2.user_profile.department = "Bar"
+        u2.user_profile.country = "US"
+        u2.user_profile.save()
 
         form = VerificationForm(
             user=u2, data={"email": u1.email, "user": u2.pk}
@@ -54,20 +70,42 @@ class TestVerificationForm:
         assert ["This email is already in use"] == form.errors["email"]
 
     def test_cannot_make_validation_with_other_validation_email(self):
-        u = UserFactory()
+        u = UserFactory(
+            email="test@google.com", first_name="Jane", last_name="Doe"
+        )
+        u.user_profile.institution = "Foo"
+        u.user_profile.department = "Bar"
+        u.user_profile.country = "US"
+        u.user_profile.save()
         v = VerificationFactory(user=u)
         form = VerificationForm(user=UserFactory(), data={"email": v.email})
 
         assert ["This email is already in use"] == form.errors["email"]
 
     def test_can_only_create_one_validation(self):
-        u = UserFactory()
+        u = UserFactory(
+            email="test@google.com", first_name="Jane", last_name="Doe"
+        )
+        u.user_profile.institution = "Foo"
+        u.user_profile.department = "Bar"
+        u.user_profile.country = "US"
+        u.user_profile.save()
         VerificationFactory(user=u)
         form = VerificationForm(user=u, data={"email": u.email, "user": u})
 
         assert ["You have already made a verification request"] == form.errors[
             "__all__"
         ]
+
+    def test_can_only_create_verification_request_with_complete_profile(self):
+        u = UserFactory(email="test@google.com")
+        form = VerificationForm(user=u, data={"email": u.email, "user": u})
+        profile_link = reverse(
+            "profile-update", kwargs={"username": u.username}
+        )
+        assert [
+            f"Your profile information is incomplete. You can complete your profile <a href='{profile_link}'>here</a>."
+        ] == form.errors["__all__"]
 
 
 @pytest.mark.django_db

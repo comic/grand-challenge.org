@@ -7,6 +7,7 @@ from django.views.generic import (
     DeleteView,
     DetailView,
     ListView,
+    TemplateView,
     UpdateView,
 )
 from guardian.mixins import LoginRequiredMixin
@@ -14,6 +15,10 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from grandchallenge.algorithms.models import Job
+from grandchallenge.core.mixins import UserIsStaffMixin
+from grandchallenge.evaluation.models import Submission
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -144,3 +149,47 @@ class PageDelete(
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(request, *args, **kwargs)
+
+
+def get_average_job_duration_for_phase(phase):
+    algorithm_images = Submission.objects.filter(
+        phase__pk=phase.pk
+    ).values_list("algorithm_image__pk")
+    jobs = Job.objects.filter(
+        algorithm_image__pk__in=algorithm_images,
+        status=Job.SUCCESS,
+        creator=None,
+    )
+    duration_dict = {
+        "average_duration": jobs.average_duration(),
+        "total_duration": jobs.total_duration(),
+    }
+    return duration_dict
+
+
+class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
+    template_name = "pages/challenge_statistics.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        phases = (
+            self.request.challenge.phase_set.filter(
+                submission_kind=SubmissionKindChoices.ALGORITHM
+            )
+            .select_related("archive")
+            .prefetch_related("archive__items__values")
+            .all()
+        )
+        duration_dict = {}
+        for phase in phases:
+            duration_dict[phase.title] = get_average_job_duration_for_phase(
+                phase=phase
+            )
+
+        context.update(
+            {
+                "average_job_durations": duration_dict,
+            }
+        )
+
+        return context

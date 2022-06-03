@@ -11,7 +11,7 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -33,6 +33,7 @@ from django.views.generic import (
     FormView,
     ListView,
     UpdateView,
+    View,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin, PermissionListMixin
@@ -49,6 +50,7 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from config import settings
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -351,6 +353,15 @@ class ReaderStudyStatistics(
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
+            }
+        )
+        return context
+
 
 class ReaderStudyDisplaySetList(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
@@ -364,7 +375,7 @@ class ReaderStudyDisplaySetList(
     row_template = "reader_studies/readerstudy_display_sets_row.html"
     search_fields = ["pk", "values__image__name", "values__file"]
     columns = [
-        Column(title="Name", sort_field="order"),
+        Column(title="[DisplaySet ID] Main image name", sort_field="order"),
     ]
     text_align = "left"
     default_sort_order = "asc"
@@ -378,7 +389,12 @@ class ReaderStudyDisplaySetList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"reader_study": self.reader_study})
+        context.update(
+            {
+                "reader_study": self.reader_study,
+                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
+            }
+        )
         return context
 
     def get_queryset(self):
@@ -777,7 +793,13 @@ class UsersProgress(
             .order_by("username")
         ]
 
-        context.update({"reader_study": self.object, "users": users})
+        context.update(
+            {
+                "reader_study": self.object,
+                "users": users,
+                "reader_study_view_as_user_feature": settings.READER_STUDY_VIEW_AS_USER_FEATURE,
+            }
+        )
 
         return context
 
@@ -1053,22 +1075,37 @@ class DisplaySetViewSet(
             )
         return super().destroy(request, *args, **kwargs)
 
-    def filter_queryset(self, queryset):
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
         # Note: if more fields besides 'reader_study' are added to the
         # filter_set fields, we cannot call super anymore before randomizing
         # as we only want to filter out the display sets for a specific
         # reader study.
         reader_study = self.reader_study
-        queryset = super().filter_queryset(queryset)
         if reader_study and reader_study.shuffle_hanging_list:
-            set_seed(1 / int(self.request.user.pk))
-            queryset = queryset.order_by("?")
-            # Save the queryset to determine each item's index in the serializer
-            self.randomized_qs = list(queryset)
-
+            queryset = self.create_randomized_qs(queryset=queryset)
         unanswered_by_user = strtobool(
             self.request.query_params.get("unanswered_by_user", "False")
         )
+        username = self.request.query_params.get("user", False)
+
+        if username and not unanswered_by_user:
+            raise DRFValidationError(
+                "Specifying a user is only possible when retrieving unanswered"
+                " display sets."
+            )
+        if username:
+            user = get_user_model().objects.filter(username=username).get()
+            if user != self.request.user and not self.request.user.has_perm(
+                "change_readerstudy", self.reader_study
+            ):
+                raise PermissionDenied(
+                    "You do not have permission to retrieve this user's unanswered"
+                    " display sets."
+                )
+        else:
+            user = self.request.user
+
         if unanswered_by_user is True:
             if reader_study is None:
                 raise DRFValidationError(
@@ -1077,9 +1114,13 @@ class DisplaySetViewSet(
                 )
             answerable_question_count = reader_study.answerable_question_count
             queryset = (
-                queryset.annotate(answer_count=Count("answers"))
+                queryset.annotate(
+                    answer_count=Count(
+                        "answers", filter=Q(answers__is_ground_truth=False)
+                    )
+                )
                 .exclude(
-                    answers__creator=self.request.user,
+                    answers__creator=user,
                     answer_count__gte=answerable_question_count,
                 )
                 .order_by("order", "created")
@@ -1093,6 +1134,28 @@ class DisplaySetViewSet(
                 pks = queryset.values_list("pk", flat=True)
                 queryset = [x for x in self.randomized_qs if x.pk in pks]
 
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_object(self):
+        obj = super().get_object()
+        # retrieve the full queryset and save its shuffled version to later
+        # determine the shuffled index for this object
+        if obj.reader_study.shuffle_hanging_list:
+            queryset = super().filter_queryset(self.get_queryset())
+            self.create_randomized_qs(queryset=queryset)
+        return obj
+
+    def create_randomized_qs(self, queryset):
+        set_seed(1 / int(self.request.user.pk))
+        queryset = queryset.order_by("?")
+        # Save the queryset to determine each item's index in the serializer
+        self.randomized_qs = list(queryset)
         return queryset
 
 
@@ -1205,3 +1268,9 @@ class QuestionDelete(
         return HttpResponseForbidden(
             reason="This question already has answers associated with it"
         )
+
+
+class QuestionInterfacesView(View):
+    def get(self, request):
+        form = QuestionForm(request.GET)
+        return HttpResponse(form["interface"])

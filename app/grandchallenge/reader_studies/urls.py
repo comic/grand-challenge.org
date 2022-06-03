@@ -8,6 +8,7 @@ from grandchallenge.reader_studies.views import (
     AnswersRemove,
     EditorsUpdate,
     QuestionDelete,
+    QuestionInterfacesView,
     QuestionUpdate,
     ReaderStudyCopy,
     ReaderStudyCreate,
@@ -32,6 +33,11 @@ app_name = "reader-studies"
 urlpatterns = [
     path("", ReaderStudyList.as_view(), name="list"),
     path("create/", ReaderStudyCreate.as_view(), name="create"),
+    path(
+        "questions/interfaces/",
+        QuestionInterfacesView.as_view(),
+        name="question-interfaces",
+    ),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
     path("<slug>/delete/", ReaderStudyDelete.as_view(), name="delete"),

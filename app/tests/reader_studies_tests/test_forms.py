@@ -7,11 +7,24 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from grandchallenge.reader_studies.forms import QuestionForm
+from grandchallenge.reader_studies.models import (
+    Answer,
+    AnswerType,
+    Question,
+    ReaderStudy,
+)
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.reader_studies_tests import RESOURCE_PATH
@@ -274,7 +287,9 @@ def test_question_update(client):
     assert question.answer_type == Question.AnswerType.SINGLE_LINE_TEXT
     assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
+    assert question.interface is None
 
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     get_view_for_user(
         viewname="reader-studies:question-update",
         client=client,
@@ -284,6 +299,7 @@ def test_question_update(client):
             "answer_type": Question.AnswerType.BOOL,
             "direction": Question.Direction.VERTICAL,
             "order": 200,
+            "interface": str(ci_bool.pk),
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
@@ -299,6 +315,7 @@ def test_question_update(client):
     assert question.answer_type == Question.AnswerType.BOOL
     assert question.direction == Question.Direction.VERTICAL
     assert question.order == 200
+    assert question.interface == ci_bool
 
     AnswerFactory(question=question, answer="true")
 
@@ -327,6 +344,54 @@ def test_question_update(client):
     assert question.answer_type == Question.AnswerType.BOOL
     assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type,interface_kind",
+    (
+        (AnswerType.SINGLE_LINE_TEXT, InterfaceKindChoices.STRING),
+        (AnswerType.MULTI_LINE_TEXT, InterfaceKindChoices.STRING),
+        (AnswerType.BOOL, InterfaceKindChoices.BOOL),
+        (AnswerType.NUMBER, InterfaceKindChoices.FLOAT),
+        (AnswerType.NUMBER, InterfaceKindChoices.INTEGER),
+        (AnswerType.BOUNDING_BOX_2D, InterfaceKindChoices.TWO_D_BOUNDING_BOX),
+        (
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+        ),
+        (
+            AnswerType.DISTANCE_MEASUREMENT,
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+        ),
+        (
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+        ),
+        (AnswerType.POINT, InterfaceKindChoices.POINT),
+        (AnswerType.MULTIPLE_POINTS, InterfaceKindChoices.MULTIPLE_POINTS),
+        (AnswerType.POLYGON, InterfaceKindChoices.POLYGON),
+        (AnswerType.MULTIPLE_POLYGONS, InterfaceKindChoices.MULTIPLE_POLYGONS),
+        (AnswerType.LINE, InterfaceKindChoices.LINE),
+        (AnswerType.MULTIPLE_LINES, InterfaceKindChoices.MULTIPLE_LINES),
+        (AnswerType.CHOICE, InterfaceKindChoices.CHOICE),
+        (AnswerType.MULTIPLE_CHOICE, InterfaceKindChoices.MULTIPLE_CHOICE),
+        (
+            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+            InterfaceKindChoices.MULTIPLE_CHOICE,
+        ),
+        (AnswerType.MASK, InterfaceKindChoices.SEGMENTATION),
+    ),
+)
+def test_question_form_interface_field(answer_type, interface_kind):
+    ci = ComponentInterfaceFactory(kind=interface_kind)
+    ci_img = ComponentInterface.objects.filter(
+        kind=InterfaceKindChoices.IMAGE
+    ).first()
+    assert ci_img is not None
+    form = QuestionForm(initial={"answer_type": answer_type})
+    assert form.interface_choices().filter(pk=ci.pk).exists()
+    assert not form.interface_choices().filter(pk=ci_img.pk).exists()
 
 
 @pytest.mark.django_db

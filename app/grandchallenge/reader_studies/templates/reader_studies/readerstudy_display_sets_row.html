@@ -11,7 +11,7 @@
       <h5 class="mb-0">
         <button class="btn btn-link w-100" data-toggle="collapse" data-target="#collapse-{{ object.id }}" aria-expanded="true" aria-controls="collapse{{ object.id }}">
           <div class="d-flex justify-content-between">
-            <div>{{ object.id }}</div>
+            <div>[{{ object.id }}] {{ object.main_image_title }}</div>
             <div><i class="fa fa-plus-circle"></i></div>
           </div>
         </button>
@@ -53,15 +53,23 @@
                     {{ content.title }}
                   {% endif %}
                 </td>
-                <td>
-                  {% if content.selected_image %}
-                    <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=content.selected_image config=reader_study.workstation_config %}">
-                      <span class="badge badge-primary">
-                          <i class="fa fa-eye"></i> View Case
-                      </span>
-                    </a>
-                  {% endif %}
-                </td>
+                {% if reader_study_display_set_view_feature %}
+                    <td>
+                        <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query display_set=object %}">
+                          <span class="badge badge-primary">
+                              <i class="fa fa-eye"></i> View Case
+                          </span>
+                        </a>
+                    </td>
+                {% elif  content.selected_image %}
+                    <td>
+                        <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=content.selected_image config=reader_study.workstation_config %}">
+                          <span class="badge badge-primary">
+                              <i class="fa fa-eye"></i> View Image
+                          </span>
+                        </a>
+                    </td>
+                {% endif %}
               </tr>
             {% endfor %}
             <tr>

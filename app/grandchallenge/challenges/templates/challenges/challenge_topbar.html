@@ -76,7 +76,7 @@
                         {% elif not challenge.hidden and challenge.visible_phases.first %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
-                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.visible_phases.first.slug %}">
                                     <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
                         {% endif %}
@@ -87,6 +87,15 @@
                                href="{% url 'update' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-cog fa-fw"></i>
                                     Admin
+                            </a>
+                        </div>
+                    {% endif %}
+                    {% if request.user.is_staff %}
+                        <div class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics'  %}active{% endif %}"
+                               href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">
+                                <i class="fas fa-chart-bar fa-fw"></i>
+                                    Statistics
                             </a>
                         </div>
                     {% endif %}

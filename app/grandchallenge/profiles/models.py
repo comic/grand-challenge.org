@@ -92,6 +92,16 @@ class UserProfile(models.Model):
     def unread_notifications(self):
         return self.user.notification_set.filter(read=False)
 
+    @property
+    def is_incomplete(self):
+        return (
+            not self.user.first_name
+            or not self.user.last_name
+            or not self.institution
+            or not self.department
+            or not self.country
+        )
+
 
 @disable_for_loaddata
 def create_user_profile(instance, created, *_, **__):

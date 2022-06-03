@@ -19,12 +19,16 @@ def get_receivers(action):
     if action == SendActionChoices.MAILING_LIST:
         receivers = (
             get_user_model()
-            .objects.filter(user_profile__receive_newsletter=True)
+            .objects.filter(
+                user_profile__receive_newsletter=True, is_active=True
+            )
             .order_by("pk")
         )
     elif action == SendActionChoices.STAFF:
         receivers = (
-            get_user_model().objects.filter(is_staff=True).order_by("pk")
+            get_user_model()
+            .objects.filter(is_staff=True, is_active=True)
+            .order_by("pk")
         )
     elif action == SendActionChoices.CHALLENGE_ADMINS:
         receivers = (
@@ -32,6 +36,7 @@ def get_receivers(action):
             .objects.filter(
                 groups__admins_of_challenge__isnull=False,
                 user_profile__receive_newsletter=True,
+                is_active=True,
             )
             .distinct()
             .order_by("pk")
@@ -42,6 +47,7 @@ def get_receivers(action):
             .objects.filter(
                 groups__editors_of_readerstudy__isnull=False,
                 user_profile__receive_newsletter=True,
+                is_active=True,
             )
             .distinct()
             .order_by("pk")
@@ -52,6 +58,7 @@ def get_receivers(action):
             .objects.filter(
                 groups__editors_of_algorithm__isnull=False,
                 user_profile__receive_newsletter=True,
+                is_active=True,
             )
             .distinct()
             .order_by("pk")
