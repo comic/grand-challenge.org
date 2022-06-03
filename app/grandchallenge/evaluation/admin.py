@@ -99,6 +99,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "input_prefixes",
         "task_on_success",
         "task_on_failure",
+        "runtime_metrics",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
 

@@ -940,11 +940,13 @@ class ComponentJob(models.Model):
     )
     stdout = models.TextField()
     stderr = models.TextField(default="")
+    runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     input_prefixes = models.JSONField(
         default=dict,
+        editable=False,
         help_text=(
             "Map of the ComponentInterfaceValue id to the path prefix to use "
             "for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at "
