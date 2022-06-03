@@ -518,10 +518,7 @@ class InterfaceKind:
                 "application/vnd.sqlite3",
             )
         elif kind == InterfaceKind.InterfaceKindChoices.OBJ:
-            return (
-                "text/plain",
-                "application/octet-stream",
-            )
+            return ("text/plain",)
         else:
             raise RuntimeError(f"Unknown kind {kind}")
 
