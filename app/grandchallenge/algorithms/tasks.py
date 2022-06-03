@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 from celery import chain, chord, group, shared_task
 from django.conf import settings
 from django.core.cache import cache
@@ -448,13 +450,24 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
             )
 
 
+class ChallengeNameAndUrl(NamedTuple):
+    short_name: str
+    get_absolute_url: str
+
+
 @shared_task
 def update_associated_challenges():
     from grandchallenge.challenges.models import Challenge
 
     challenge_list = {}
     for algorithm in Algorithm.objects.all():
-        challenge_list[algorithm.pk] = Challenge.objects.filter(
-            phase__submission__algorithm_image__algorithm=algorithm
-        ).distinct()
-    cache.set("challenges_for_algorithms", challenge_list)
+        challenge_list[algorithm.pk] = [
+            ChallengeNameAndUrl(
+                short_name=challenge.short_name,
+                get_absolute_url=challenge.get_absolute_url(),
+            )
+            for challenge in Challenge.objects.filter(
+                phase__submission__algorithm_image__algorithm=algorithm
+            ).distinct()
+        ]
+    cache.set("challenges_for_algorithms", challenge_list, timeout=None)
