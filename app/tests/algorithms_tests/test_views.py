@@ -508,7 +508,7 @@ class TestComponentInterfaceListView:
         def _get_view(user):
             return get_view_for_user(
                 client=client,
-                viewname="algorithms:component-interface-list",
+                viewname="components:component-interface-list",
                 user=user,
             )
 
