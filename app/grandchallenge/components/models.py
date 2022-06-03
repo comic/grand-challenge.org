@@ -832,6 +832,8 @@ class ComponentInterfaceValue(models.Model):
         return path
 
     def __str__(self):
+        if self.value is None:
+            return self.title
         return f"Component Interface Value {self.pk} for {self.interface}"
 
     def clean(self):

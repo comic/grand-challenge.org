@@ -2,8 +2,11 @@ import io
 
 import pytest
 
-from grandchallenge.reader_studies.models import Answer, Question
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -280,3 +283,83 @@ def test_reader_study_display_set_list(client):
 
     resp = response.json()
     assert str(ds.pk) in resp["data"][0][0]
+
+
+@pytest.mark.django_db
+def test_display_set_detail(client):
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(u1)
+    civ = ComponentInterfaceValueFactory(value="civ-title")
+    ds.values.add(civ)
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"pk": ds.pk},
+        user=u2,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"pk": ds.pk},
+        user=u1,
+    )
+
+    assert response.status_code == 200
+    assert "civ-title" in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_display_set_update(client):
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
+    rs.add_editor(u1)
+    ci_str = ComponentInterfaceFactory(kind="STR")
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+    im1, im2 = ImageFactory.create_batch(2)
+    civ_str = ComponentInterfaceValueFactory(
+        interface=ci_str, value="civ-title"
+    )
+    civ_img = ComponentInterfaceValueFactory(interface=ci_img, image=im1)
+    ds1.values.set([civ_str, civ_img])
+
+    civ_img_new = ComponentInterfaceValueFactory(interface=ci_img, image=im2)
+    ds2.values.add(civ_img_new)
+
+    assert DisplaySet.objects.count() == 2
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"pk": ds1.pk},
+        user=u2,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-update",
+        client=client,
+        reverse_kwargs={"pk": ds1.pk},
+        data={
+            ci_str.slug: "new-title",
+            ci_img.slug: str(civ_img_new.pk),
+            "order": 11,
+        },
+        user=u1,
+        method=client.post,
+    )
+
+    assert response.status_code == 200
+    assert not ds1.values.filter(pk=civ_img.pk).exists()
+    assert ds1.values.filter(pk=civ_img_new.pk).exists()
+    civ_str.refresh_from_db()
+    assert civ_str.value == "new-title"
+
+    # A new ds should have been created for civ_img
+    assert DisplaySet.objects.count() == 3

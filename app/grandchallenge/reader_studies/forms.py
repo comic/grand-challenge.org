@@ -18,6 +18,7 @@ from django.forms import (
     CharField,
     FileField,
     Form,
+    IntegerField,
     ModelChoiceField,
     ModelForm,
     Select,
@@ -29,7 +30,12 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -470,3 +476,30 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         values = [x for x in rdr]
 
         return values
+
+
+class DisplaySetForm(Form):
+    def __init__(self, *args, instance=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if instance is not None:
+            for (
+                key,
+                value,
+            ) in instance.reader_study.values_for_interfaces.items():
+                val = instance.values.filter(interface__slug=key).first()
+                if value["kind"] in InterfaceKind.interface_type_json():
+                    self.fields[key] = InterfaceFormField(
+                        kind=value["kind"],
+                        schema=value["schema"],
+                        initial=val.value if val else None,
+                        required=False,
+                    ).field
+                else:
+                    self.fields[key] = ModelChoiceField(
+                        queryset=ComponentInterfaceValue.objects.filter(
+                            id__in=value["values"]
+                        ),
+                        initial=val,
+                        required=False,
+                    )
+            self.fields["order"] = IntegerField(initial=instance.order)

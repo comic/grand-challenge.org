@@ -1,0 +1,45 @@
+{% load humanize %}
+{% load profiles %}
+{% load workstations %}
+{% load pathlib %}
+{% load reader_study_tags %}
+{% load bleach %}
+{% load crispy_forms_tags %}
+
+<div class="card-body py-1" id="ds-content-{{ object.id }}">
+  <table class="table table-striped table-sm">
+    <tr>
+      <th>Interface</th>
+      <th>Name</th>
+      <th>View</th>
+    </tr>
+    {% for interface, content in object.value_list.items %}
+      <tr>
+        <td>{{ interface }}:</td>
+        <td>{{ content.title }}</td>
+        <td>
+          {% if content.selected_image %}
+            <a href="{% url 'workstations:workstation-session-create' slug=object.reader_study.workstation.slug %}?{% workstation_query image=content.selected_image config=reader_study.workstation_config %}">
+              <span class="badge badge-primary">
+                  <i class="fa fa-eye"></i> View Case
+              </span>
+            </a>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td>Order:</td>
+      <td colspan="3">{{ object.order }}</td>
+    </tr>
+    <tr>
+      <td>Description:</td>
+      <td colspan="3">{{ object.description|clean }}</td>
+    </tr>
+    {% if object.is_editable %}
+      <tr>
+        <td colspan="4" class="px-0 py-2"><button class="btn btn-primary" hx-get="{% url 'reader-studies:display-set-update' pk=object.pk %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Edit</button></td>
+      </tr>
+    {% endif %}
+  </table>
+</div>

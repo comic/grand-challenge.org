@@ -22,6 +22,7 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -54,7 +55,11 @@ from config import settings
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
 )
@@ -75,6 +80,7 @@ from grandchallenge.reader_studies.filters import (
 from grandchallenge.reader_studies.forms import (
     AnswersRemoveForm,
     CategoricalOptionFormSet,
+    DisplaySetForm,
     GroundTruthForm,
     QuestionForm,
     ReadersForm,
@@ -353,15 +359,6 @@ class ReaderStudyStatistics(
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
-            }
-        )
-        return context
-
 
 class ReaderStudyDisplaySetList(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
@@ -375,7 +372,7 @@ class ReaderStudyDisplaySetList(
     row_template = "reader_studies/readerstudy_display_sets_row.html"
     search_fields = ["pk", "values__image__name", "values__file"]
     columns = [
-        Column(title="[DisplaySet ID] Main image name", sort_field="order"),
+        Column(title="Name", sort_field="order"),
     ]
     text_align = "left"
     default_sort_order = "asc"
@@ -384,17 +381,19 @@ class ReaderStudyDisplaySetList(
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
+    def render_row(self, *, object_, page_context):
+        form = DisplaySetForm(instance=object_)
+        return render_to_string(
+            self.row_template,
+            context={**page_context, "object": object_, "form": form},
+        ).split("<split></split>")
+
     def get_permission_object(self):
         return self.reader_study
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "reader_study": self.reader_study,
-                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
-            }
-        )
+        context.update({"reader_study": self.reader_study})
         return context
 
     def get_queryset(self):
@@ -1011,35 +1010,11 @@ class DisplaySetViewSet(
                 "as answers for it already exist."
             )
         assigned_civs = []
-        civ_values = request.data.pop("civ_values", [])
         values = request.data.pop("values", None)
         civs = instance.reader_study.display_sets.values_list(
             "values", flat=True
         )
         assigned_civs = []
-        for value in civ_values:
-            ci, civ = value.split("::")
-            if civ == "":
-                current_value = instance.values.filter(interface=ci).first()
-                if current_value:
-                    assigned_civs.append(current_value)
-                    instance.values.remove(current_value)
-                continue
-
-            # Get the provided civ from the current reader study's display sets.
-            civ = ComponentInterfaceValue.objects.filter(id__in=civs).get(
-                id=civ
-            )
-
-            # If there is already a value for the provided civ's interface in
-            # this display set, remove it from this display set. Cast to list
-            # to evaluate immediately.
-            assigned_civs += list(
-                instance.values.exclude(pk=civ.pk).filter(interface=ci)
-            )
-
-            # Add the provided civ to the current display set
-            instance.values.add(civ)
         if values:
             serialized_data = ComponentInterfaceValuePostSerializer(
                 many=True, data=values
@@ -1120,6 +1095,7 @@ class DisplaySetViewSet(
                     )
                 )
                 .exclude(
+                    is_ground_truth=True,
                     answers__creator=user,
                     answer_count__gte=answerable_question_count,
                 )
@@ -1274,3 +1250,88 @@ class QuestionInterfacesView(View):
     def get(self, request):
         form = QuestionForm(request.GET)
         return HttpResponse(form["interface"])
+
+
+class DisplaySetDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    template_name = "reader_studies/readerstudy_display_set_detail.html"
+    model = DisplaySet
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}"
+    )
+    raise_exception = True
+
+
+class DisplaySetUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    template_name = "reader_studies/readerstudy_display_set_update.html"
+    model = DisplaySet
+    form_class = DisplaySetForm
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
+    )
+    raise_exception = True
+
+    def form_valid(self, form):
+        instance = self.get_object()
+        assigned_civs = []
+        for ci_slug, civ in form.cleaned_data.items():
+            if ci_slug == "order":
+                continue
+            ci = ComponentInterface.objects.get(slug=ci_slug)
+            current_value = instance.values.filter(interface=ci).first()
+
+            if ci.kind in InterfaceKind.interface_type_json():
+                if current_value:
+                    current_value.value = civ
+                    current_value.save()
+                else:
+                    val = ComponentInterfaceValue.objects.create(
+                        interface=ci, value=civ
+                    )
+                    instance.values.add(val)
+            else:
+                if civ is None:
+
+                    if current_value:
+                        assigned_civs.append(current_value)
+                        instance.values.remove(current_value)
+                    continue
+
+                # If there is already a value for the provided civ's interface in
+                # this display set, remove it from this display set. Cast to list
+                # to evaluate immediately.
+                assigned_civs += list(
+                    instance.values.exclude(pk=civ.pk).filter(interface=ci)
+                )
+
+                # Add the provided civ to the current display set
+                instance.values.add(civ)
+
+        # Create a new display set for any civs that have been replaced by a
+        # new value in this display set, to ensure it remains connected to
+        # the reader study.
+        for assigned in assigned_civs:
+            if (
+                not instance.reader_study.display_sets.exclude(pk=instance.pk)
+                .filter(values=assigned)
+                .exists()
+            ):
+                ds = DisplaySet.objects.create(
+                    reader_study=instance.reader_study
+                )
+                ds.values.add(assigned)
+            instance.values.remove(assigned)
+
+        if (
+            form.cleaned_data.get("order")
+            and form.cleaned_data["order"] != instance.order
+        ):
+            instance.order = form.cleaned_data["order"]
+            instance.save()
+
+        return HttpResponse("ok", content_type="text/plain")

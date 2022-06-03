@@ -13,7 +13,6 @@
 {% block content %}
 
     <h1>{{ reader_study.title }} Cases</h1>
-
     <p>
         <a class="btn btn-primary"
            href="{% url 'reader-studies:add-displaysets' slug=reader_study.slug %}"
@@ -88,23 +87,27 @@
 
              $(document).on('submit', '.ds-form', (e) => {
                 e.preventDefault();
-                const formdata = $(e.currentTarget).serializeArray();
-                const data = {civ_values: []};
-                $(formdata).each((index, obj) => {
-                    if (obj.name === "civ_values") {
-                        data[obj.name].push(obj.value);
-                    } else data[obj.name] = obj.value;
-                });
+                const target = $(e.currentTarget);
+                const formData = target.serialize();
                 $.ajax({
-                    type: 'PATCH',
-                    url:  $(e.currentTarget).attr("action"),
-                    data: JSON.stringify(data),
-                    contentType: 'application/json',
-                    accept: 'application/json',
+                    type: 'POST',
+                    url:  target.attr("action"),
+                    data: formData,
                     complete: (response) => {
-                        window.location.replace(window.location.href);
+                        htmx.ajax('GET', target.data("hx-get"), {target: target.data("hx-target"), swap: target.data("hx-swap")});
                     }
                 })
+
+            });
+
+            // Trigger htmx ajax request here, because using hx- attributes does not work in html loaded by datatables.js
+            // TODO: replace datatables.js with htmx?
+            $(document).on('click', '.ds-htmx', (e) => {
+                const target = $(e.currentTarget);
+                if (!target.data("loaded")) {
+                    htmx.ajax('GET', target.data("hx-get"), {target: target.data("hx-target"), swap: target.data("hx-swap")});
+                    target.data("loaded", true);
+                }
             });
         });
     </script>
