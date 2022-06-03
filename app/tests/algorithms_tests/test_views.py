@@ -1,7 +1,6 @@
 import datetime
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.utils.text import slugify
@@ -500,24 +499,6 @@ class TestObjectPermissionRequiredViews:
 
             for obj in objs:
                 remove_perm(permission, u, obj)
-
-
-@pytest.mark.django_db
-class TestComponentInterfaceListView:
-    def test_login_required(self, client):
-        def _get_view(user):
-            return get_view_for_user(
-                client=client,
-                viewname="components:component-interface-list",
-                user=user,
-            )
-
-        response = _get_view(user=None)
-        assert response.status_code == 302
-        assert settings.LOGIN_URL in response.url
-
-        response = _get_view(user=UserFactory())
-        assert response.status_code == 200
 
 
 @pytest.mark.django_db
