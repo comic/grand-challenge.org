@@ -1146,7 +1146,7 @@ def test_question_accepts_image_type_answers(client, settings):
 
 
 @pytest.mark.django_db
-def test_display_set_endpoints(client, settings):
+def test_display_set_list_filters(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -1205,6 +1205,23 @@ def test_display_set_endpoints(client, settings):
     assert response.json() == [
         "Please provide a reader study when filtering for unanswered display_sets."
     ]
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
+        user=r,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.json()["count"] == 2
+
+    AnswerFactory(
+        question=q1, display_set=ds1, creator=r, is_ground_truth=True
+    )
+    AnswerFactory(
+        question=q2, display_set=ds1, creator=r, is_ground_truth=True
+    )
+
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
