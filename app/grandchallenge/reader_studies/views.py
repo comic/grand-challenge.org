@@ -372,7 +372,7 @@ class ReaderStudyDisplaySetList(
     row_template = "reader_studies/readerstudy_display_sets_row.html"
     search_fields = ["pk", "values__image__name", "values__file"]
     columns = [
-        Column(title="Name", sort_field="order"),
+        Column(title="[DisplaySet ID] Main image name", sort_field="order"),
     ]
     text_align = "left"
     default_sort_order = "asc"
@@ -393,7 +393,12 @@ class ReaderStudyDisplaySetList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"reader_study": self.reader_study})
+        context.update(
+            {
+                "reader_study": self.reader_study,
+                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
+            }
+        )
         return context
 
     def get_queryset(self):
@@ -1095,7 +1100,6 @@ class DisplaySetViewSet(
                     )
                 )
                 .exclude(
-                    is_ground_truth=True,
                     answers__creator=user,
                     answer_count__gte=answerable_question_count,
                 )
