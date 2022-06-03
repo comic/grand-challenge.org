@@ -36,12 +36,12 @@ class AmazonSageMakerBatchExecutor(Executor):
     @property
     def stdout(self):
         # TODO
-        raise NotImplementedError
+        return ""
 
     @property
     def stderr(self):
         # TODO
-        raise NotImplementedError
+        return ""
 
     @property
     def duration(self):

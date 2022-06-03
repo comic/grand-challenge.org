@@ -60,8 +60,8 @@ class Executor(ABC):
         return self._get_outputs(output_interfaces=output_interfaces)
 
     def deprovision(self):
-        # TODO remove files from S3
-        pass
+        self._delete_objects(bucket=settings.COMPONENTS_INPUT_BUCKET_NAME)
+        self._delete_objects(bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME)
 
     @staticmethod
     @abstractmethod
@@ -106,7 +106,11 @@ class Executor(ABC):
         if self.__s3_client is None:
             self.__s3_client = boto3.client(
                 "s3",
-                endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+                # TODO DO NOT ALLOW OVERRIDING HERE
+                endpoint_url=os.environ.get(
+                    "COMPONENTS_AWS_S3_ENDPOINT_URL",
+                    settings.AWS_S3_ENDPOINT_URL,
+                ),
             )
         return self.__s3_client
 
@@ -291,3 +295,28 @@ class Executor(ABC):
             )
 
         return civ
+
+    def _delete_objects(self, *, bucket):
+        """Deletes all objects that are prefixed with io_prefix"""
+        objects_list = self._s3_client.list_objects_v2(
+            Bucket=bucket,
+            Prefix=self.io_prefix,
+        )
+
+        if contents := objects_list.get("Contents"):
+            response = self._s3_client.delete_objects(
+                Bucket=bucket,
+                Delete={
+                    "Objects": [
+                        {"Key": content["Key"]} for content in contents
+                    ],
+                },
+            )
+            logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
+            errors = response.get("Errors")
+        else:
+            logger.debug(f"No objects found in {bucket}/{self.io_prefix}")
+            errors = None
+
+        if objects_list["IsTruncated"] or errors:
+            logger.error("Not all files were deleted")
