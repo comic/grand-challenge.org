@@ -262,6 +262,11 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             logger.warning(f"Could not inspect container: {e}")
             return None
 
+    @property
+    def runtime_metrics(self):
+        logger.warning("Runtime metrics are not implemented for this backend")
+        return None
+
     def _execute_container(self, *, input_civs, input_prefixes) -> None:
         environment = {
             "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES

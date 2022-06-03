@@ -53,7 +53,7 @@ class Executor(ABC):
     def execute(self, *, input_civs, input_prefixes):
         ...
 
-    def handle_event(self):
+    def handle_event(self, *, event):
         pass
 
     def get_outputs(self, *, output_interfaces):
@@ -85,6 +85,11 @@ class Executor(ABC):
     @property
     @abstractmethod
     def duration(self):
+        ...
+
+    @property
+    @abstractmethod
+    def runtime_metrics(self):
         ...
 
     @property

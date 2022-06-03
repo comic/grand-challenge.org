@@ -10,6 +10,11 @@ class AmazonSageMakerBatchExecutor(Executor):
         self.__logs_client = None
         self.__cloudwatch_client = None
 
+    @staticmethod
+    def get_job_params(*, event):
+        # TODO
+        raise NotImplementedError
+
     @property
     def _sagemaker_client(self):
         if self.__sagemaker_client is None:
@@ -27,3 +32,31 @@ class AmazonSageMakerBatchExecutor(Executor):
         if self.__cloudwatch_client is None:
             self.__cloudwatch_client = boto3.client("cloudwatch")
         return self.__cloudwatch_client
+
+    @property
+    def stdout(self):
+        # TODO
+        raise NotImplementedError
+
+    @property
+    def stderr(self):
+        # TODO
+        raise NotImplementedError
+
+    @property
+    def duration(self):
+        # TODO
+        raise NotImplementedError
+
+    @property
+    def runtime_metrics(self):
+        # TODO
+        raise NotImplementedError
+
+    def execute(self, *, input_civs, input_prefixes):
+        # TODO
+        raise NotImplementedError
+
+    def handle_event(self, *, event):
+        # TODO
+        raise NotImplementedError
