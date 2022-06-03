@@ -63,6 +63,9 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_overlay_interpolation = CharField(
         source="get_default_overlay_interpolation_display", read_only=True
     )
+    default_image_interpolation = CharField(
+        source="get_default_image_interpolation_display", read_only=True
+    )
     default_overlay_alpha = FloatField()
     default_zoom_scale = FloatField()
 
@@ -88,6 +91,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "overlay_luts",
             "default_overlay_lut",
             "default_overlay_interpolation",
+            "default_image_interpolation",
             "overlay_segments",
             "key_bindings",
             "default_zoom_scale",
