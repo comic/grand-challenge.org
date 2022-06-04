@@ -42,7 +42,7 @@ RUN mkdir -p /opt/git-lfs \
 
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
-    GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION=0.0.6\
+    GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION=0.0.7\
     PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
 RUN mkdir -p /opt/poetry /app /static /opt/static /opt/sagemaker-shim \
@@ -54,7 +54,7 @@ USER django:django
 # Fetch and install sagemaker shim for shimming containers
 RUN mkdir -p /opt/sagemaker-shim \
     && wget "https://github.com/DIAGNijmegen/rse-sagemaker-shim/releases/download/v${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" -P /opt/sagemaker-shim/ \
-    && echo "a0ce13ef79a875f6d5366e51e96524a3a3abe17734023b5790ad4650b2d6d108  /opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
+    && echo "9840b484768773f22e830887f578a165b8e157c55927d64c025317e10a70f3e7  /opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
 

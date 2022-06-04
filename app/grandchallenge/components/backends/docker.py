@@ -333,6 +333,8 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             attempts += 1
 
             try:
+                # Timeout is from the SageMaker API definitions
+                # https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-batch-code.html#your-algorithms-batch-algo-ping-requests
                 response = requests.get(
                     f"http://{self.container_name}:8080/ping",
                     timeout=2,
@@ -343,7 +345,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             if response.status_code == 200:
                 break
             elif attempts > 10:
-                raise ComponentException("Container was not ready in time")
+                raise ComponentException("Container did not start in time")
 
 
 class Service(DockerConnectionMixin):
