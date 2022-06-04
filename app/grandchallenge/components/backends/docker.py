@@ -276,20 +276,6 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 }
             )
 
-        inputs = []
-        for civ in input_civs:
-            key, relative_path = self._get_key_and_relative_path(
-                civ=civ, input_prefixes=input_prefixes
-            )
-            inputs.append(
-                {
-                    "relative_path": relative_path,
-                    "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    "bucket_key": key,
-                    "decompress": civ.decompress,
-                }
-            )
-
         with stop(
             self._client.containers.run(
                 image=self._exec_image_repo_tag,
@@ -305,12 +291,9 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             try:
                 response = requests.post(
                     f"http://{self.container_name}:8080/invocations",
-                    json={
-                        "pk": self._job_id,
-                        "inputs": inputs,
-                        "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                        "output_prefix": self.io_prefix,
-                    },
+                    json=self._get_invocation_json(
+                        input_civs=input_civs, input_prefixes=input_prefixes
+                    ),
                     timeout=self._time_limit,
                 )
             except requests.exceptions.Timeout:

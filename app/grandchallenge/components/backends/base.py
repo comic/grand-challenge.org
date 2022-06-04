@@ -117,6 +117,28 @@ class Executor(ABC):
 
         return key, relative_path
 
+    def _get_invocation_json(self, *, input_civs, input_prefixes):
+        inputs = []
+        for civ in input_civs:
+            key, relative_path = self._get_key_and_relative_path(
+                civ=civ, input_prefixes=input_prefixes
+            )
+            inputs.append(
+                {
+                    "relative_path": relative_path,
+                    "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
+                    "bucket_key": key,
+                    "decompress": civ.decompress,
+                }
+            )
+
+        return {
+            "pk": self._job_id,
+            "inputs": inputs,
+            "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            "output_prefix": self.io_prefix,
+        }
+
     def _provision_inputs(self, *, input_civs, input_prefixes):
         for civ in input_civs:
             key, _ = self._get_key_and_relative_path(
