@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from contextlib import contextmanager
@@ -10,6 +9,7 @@ from tempfile import TemporaryDirectory
 from time import sleep
 
 import docker
+import requests
 from dateutil.parser import isoparse
 from django.conf import settings
 from docker.api.container import ContainerApiMixin
@@ -181,12 +181,6 @@ class DockerConnectionMixin:
 
 
 class DockerExecutor(DockerConnectionMixin, Executor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if self._time_limit != settings.CELERY_TASK_TIME_LIMIT:
-            logger.warning("Time limits are not implemented in this backend")
-
     def execute(self, *, input_civs, input_prefixes):
         self._pull_image()
         self._execute_container(
@@ -287,43 +281,44 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             key, relative_path = self._get_key_and_relative_path(
                 civ=civ, input_prefixes=input_prefixes
             )
-            inputs.extend(
-                [
-                    "--input-file",
-                    json.dumps(
-                        {
-                            "relative_path": relative_path,
-                            "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                            "bucket_key": key,
-                            "decompress": civ.decompress,
-                        }
-                    ),
-                ]
+            inputs.append(
+                {
+                    "relative_path": relative_path,
+                    "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
+                    "bucket_key": key,
+                    "decompress": civ.decompress,
+                }
             )
 
         with stop(
             self._client.containers.run(
                 image=self._exec_image_repo_tag,
-                command=[
-                    "invoke",
-                    "--pk",
-                    self._job_id,
-                    *inputs,
-                    "--output-bucket-name",
-                    settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    "--output-prefix",
-                    self.io_prefix,
-                ],
+                command=["serve"],
                 name=self.container_name,
                 detach=True,
                 labels=self._labels,
                 environment=environment,
                 **self._run_kwargs,
             )
-        ) as container:
-            container_state = container.wait()
+        ):
+            self._await_container_ready()
+            try:
+                response = requests.post(
+                    f"http://{self.container_name}:8080/invocations",
+                    json={
+                        "pk": self._job_id,
+                        "inputs": inputs,
+                        "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        "output_prefix": self.io_prefix,
+                    },
+                    timeout=self._time_limit,
+                )
+            except requests.exceptions.Timeout:
+                raise ComponentException("Time limit exceeded")
 
-        exit_code = int(container_state["StatusCode"])
+        response = response.json()
+        exit_code = int(response["return_code"])
+
         if exit_code == 137:
             raise ComponentException(
                 "The container was killed as it exceeded the memory limit "
@@ -331,6 +326,24 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             )
         elif exit_code != 0:
             raise ComponentException(user_error(self.stderr))
+
+    def _await_container_ready(self):
+        attempts = 0
+        while True:
+            attempts += 1
+
+            try:
+                response = requests.get(
+                    f"http://{self.container_name}:8080/ping",
+                    timeout=2,
+                )
+            except requests.exceptions.RequestException:
+                continue
+
+            if response.status_code == 200:
+                break
+            elif attempts > 10:
+                raise ComponentException("Container was not ready in time")
 
 
 class Service(DockerConnectionMixin):
