@@ -78,11 +78,9 @@ class AmazonSageMakerBatchExecutor(Executor):
         model_name = self._exec_image_repo_tag
 
         # Assuming the registry prefix follows the recommendation of
-        # org-project-env
-        new_prefix = settings.COMPONENTS_REGISTRY_PREFIX.split("-", 1)[1]
+        # organisation-project-env
         model_name_replacements = {
             f"{settings.COMPONENTS_REGISTRY_URL}/": "",
-            f"{settings.COMPONENTS_REGISTRY_PREFIX}/": f"{new_prefix}/",
             "algorithms/algorithmimage": "A",
             "evaluation/method": "M",
             ":": "-",

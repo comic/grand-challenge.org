@@ -26,15 +26,15 @@ def test_model_name_generation(settings, model):
     settings.COMPONENTS_REGISTRY_URL = (
         "000000000000.dkr.ecr.regionregion.amazonaws.com"
     )
-    settings.COMPONENTS_REGISTRY_PREFIX = "organisation-proj-env"
+    settings.COMPONENTS_REGISTRY_PREFIX = "org-proj-env"
     shimmed_version = "99.99.99"
     pk = uuid4()
     image = model(pk=pk, latest_shimmed_version=shimmed_version)
 
     assert image.shimmed_repo_tag == (
         "000000000000.dkr.ecr.regionregion.amazonaws.com/"
-        f"organisation-proj-env/{model._meta.app_label}/"
-        f"{model._meta.model_name}:{pk}-shm-{shimmed_version}"
+        f"org-proj-env/{model._meta.app_label}/"
+        f"{model._meta.model_name}:{pk}-{shimmed_version}"
     )
 
     executor = AmazonSageMakerBatchExecutor(
