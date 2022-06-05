@@ -1206,7 +1206,7 @@ class ComponentImage(models.Model):
 
     @property
     def shimmed_repo_tag(self):
-        return f"{self.original_repo_tag}-shm-{self.latest_shimmed_version}"
+        return f"{self.original_repo_tag}-{self.latest_shimmed_version}"
 
     class Meta:
         abstract = True

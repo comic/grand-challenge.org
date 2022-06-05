@@ -68,7 +68,10 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         return
 
     push_container_image(instance=instance)
-    shim_container_image(instance=instance)
+
+    if settings.COMPONENTS_SHIM_IMAGES:
+        shim_container_image(instance=instance)
+
     model.objects.filter(pk=instance.pk).update(
         image_sha256=image_sha256,
         latest_shimmed_version=instance.latest_shimmed_version,

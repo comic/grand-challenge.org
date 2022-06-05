@@ -932,6 +932,9 @@ COMPONENTS_REGISTRY_PREFIX = os.environ.get(
 COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
+COMPONENTS_SHIM_IMAGES = strtobool(
+    os.environ.get("COMPONENTS_SHIM_IMAGES", "True")
+)
 COMPONENTS_INPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_INPUT_BUCKET_NAME", "grand-challenge-components-inputs"
 )
