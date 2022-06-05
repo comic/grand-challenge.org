@@ -218,9 +218,10 @@ def test_algorithm(client, algorithm_image, settings):
 
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+    recurse_callbacks(callbacks=callbacks)
+    alg.refresh_from_db()
 
     # We should not be able to download image
     with pytest.raises(NotImplementedError):
@@ -244,8 +245,9 @@ def test_algorithm(client, algorithm_image, settings):
     # There should be a single, successful job
     assert len(jobs) == 1
 
-    assert jobs[0].stdout.endswith("Greetings from stdout\n")
-    assert jobs[0].stderr.endswith('("Hello from stderr")\n')
+    assert jobs[0].stdout.endswith("Greetings from stdout")
+    assert jobs[0].stderr.endswith('("Hello from stderr")')
+    assert "UserWarning: Could not google: [Errno " in jobs[0].stderr
     assert jobs[0].error_message == ""
     assert jobs[0].status == jobs[0].SUCCESS
 
@@ -311,9 +313,10 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
 
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+    recurse_callbacks(callbacks=callbacks)
+    alg.refresh_from_db()
 
     # Make sure the job fails when trying to upload an invalid file
     detection_interface = ComponentInterfaceFactory(
@@ -341,7 +344,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     assert len(jobs) == 1
     assert (
         jobs.first().error_message
-        == "The file produced at /output/some_text.txt is not valid json"
+        == "The output file 'some_text.txt' is not valid json"
     )
     assert len(jobs[0].outputs.all()) == 0
 
@@ -360,9 +363,10 @@ def test_algorithm_multiple_inputs(
 
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_io_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+    recurse_callbacks(callbacks=callbacks)
+
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())

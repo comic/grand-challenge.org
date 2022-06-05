@@ -1027,10 +1027,18 @@ class ComponentJob(models.Model):
 
     @property
     def executor_kwargs(self):
+        if (
+            settings.COMPONENTS_DEFAULT_BACKEND
+            == "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
+        ):
+            # TODO can be removed when backend is gone
+            repo_tag = self.container.original_repo_tag
+        else:
+            repo_tag = self.container.shimmed_repo_tag
+
         return {
             "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            "exec_image_sha256": self.container.image_sha256,
-            "exec_image_repo_tag": self.container.repo_tag,
+            "exec_image_repo_tag": repo_tag,
             "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,
             "requires_gpu": self.container.requires_gpu,
@@ -1152,8 +1160,10 @@ class ComponentImage(models.Model):
         ),
         storage=private_s3_storage,
     )
-
     image_sha256 = models.CharField(editable=False, max_length=71)
+    latest_shimmed_version = models.CharField(
+        editable=False, max_length=8, default=""
+    )
 
     ready = models.BooleanField(
         default=False,
@@ -1192,13 +1202,17 @@ class ComponentImage(models.Model):
             )
 
     @property
-    def repo_tag(self):
+    def original_repo_tag(self):
         """The tag of this image in the container repository"""
         return (
             f"{settings.COMPONENTS_REGISTRY_URL}/"
             f"{settings.COMPONENTS_REGISTRY_PREFIX}/"
             f"{self._meta.app_label}/{self._meta.model_name}:{self.pk}"
         )
+
+    @property
+    def shimmed_repo_tag(self):
+        return f"{self.original_repo_tag}-{self.latest_shimmed_version}"
 
     class Meta:
         abstract = True

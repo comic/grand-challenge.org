@@ -4,7 +4,6 @@ import logging
 import os
 from datetime import timedelta
 
-import boto3
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -36,7 +35,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
     Evaluation,
     Method,
@@ -85,8 +83,8 @@ def run():
 
     try:
         users = _create_users(usernames=DEFAULT_USERS)
-    except IntegrityError:
-        raise RuntimeError("Fixtures already initialized")
+    except IntegrityError as e:
+        raise RuntimeError("Fixtures already initialized") from e
 
     _set_user_permissions(users)
     _create_demo_challenge(users)
@@ -100,7 +98,6 @@ def run():
     _create_github_webhook_message()
     _create_help_forum()
     _create_flatpages()
-    _setup_public_storage()
 
     print("✨ Development fixtures successfully created ✨")
 
@@ -603,45 +600,3 @@ def _create_user_tokens(users):
         out += f"\t{user} token is: {token}\n"
     out += f"{'*' * 80}\n"
     logger.debug(out)
-
-
-def _setup_public_storage():
-    """
-    Add anonymous read only to public S3 storage.
-
-    Only used in development, in production, set a similar policy manually
-    on the S3 bucket.
-    """
-    bucket_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "PublicReadGetObject",
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "s3:GetObject",
-                "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}/*",
-            }
-        ],
-    }
-
-    bucket_policy = json.dumps(bucket_policy)
-
-    # Get or create the bucket
-    _ = public_s3_storage.bucket
-
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=public_s3_storage.access_key,
-        aws_secret_access_key=public_s3_storage.secret_key,
-        aws_session_token=public_s3_storage.security_token,
-        region_name=public_s3_storage.region_name,
-        use_ssl=public_s3_storage.use_ssl,
-        endpoint_url=public_s3_storage.endpoint_url,
-        config=public_s3_storage.config,
-        verify=public_s3_storage.verify,
-    )
-
-    s3.put_bucket_policy(
-        Bucket=public_s3_storage.bucket_name, Policy=bucket_policy
-    )

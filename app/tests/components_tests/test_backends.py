@@ -7,7 +7,7 @@ import pytest
 from django.core.files.base import ContentFile, File
 
 from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
-from grandchallenge.components.backends.docker import DockerConnection
+from grandchallenge.components.backends.docker import DockerConnectionMixin
 from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
     TaskStillExecuting,
@@ -38,14 +38,8 @@ from tests.factories import ImageFileFactory
 def test_cpuset_cpus(settings, cpuset, expected):
     settings.COMPONENTS_CPUSET_CPUS = cpuset
 
-    c = DockerConnection(
-        job_id="",
-        exec_image_sha256="",
-        exec_image_repo_tag="",
-        memory_limit=4,
-        time_limit=60,
-        requires_gpu=False,
-    )
+    c = DockerConnectionMixin()
+    c._memory_limit = 4  # Sub-classes would otherwise set this
 
     assert os.cpu_count() > 1
     assert c._run_kwargs["cpuset_cpus"] == expected
@@ -107,7 +101,6 @@ def test_provision(tmp_path, settings):
 
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -115,7 +108,7 @@ def test_provision(tmp_path, settings):
     )
 
     executor.provision(input_civs=civs, input_prefixes={})
-    executor.execute()
+    executor.execute(input_civs=civs, input_prefixes={})
     executor.handle_event(
         event={
             # Minimal successful event
@@ -205,7 +198,6 @@ def test_input_prefixes(tmp_path, settings):
 
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -252,7 +244,6 @@ def test_ecs_unzip(tmp_path, settings, submission_file):
 
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -337,7 +328,6 @@ def test_filter_members_single_file_nested():
 def test_handle_stopped_successful_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -369,7 +359,6 @@ def test_handle_stopped_successful_task():
 def test_handle_stopped_successful_fast_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -401,7 +390,6 @@ def test_handle_stopped_successful_fast_task():
 def test_handle_stopped_start_failed_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -433,7 +421,6 @@ def test_handle_stopped_start_failed_task():
 def test_handle_stopped_terminated_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -465,7 +452,6 @@ def test_handle_stopped_terminated_task():
 def test_handle_stopped_cancelled_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -497,7 +483,6 @@ def test_handle_stopped_cancelled_task():
 def test_set_duration_success():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,
@@ -518,7 +503,6 @@ def test_set_duration_success():
 def test_set_duration_fast_task():
     executor = AmazonECSExecutorStub(
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
-        exec_image_sha256="",
         exec_image_repo_tag="",
         memory_limit=4,
         time_limit=60,

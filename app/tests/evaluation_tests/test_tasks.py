@@ -42,9 +42,9 @@ def test_submission_evaluation(
 
     # Upload a submission and create an evaluation
     eval_container, sha256 = evaluation_image
-    method = MethodFactory(
-        image__from_path=eval_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        method = MethodFactory(image__from_path=eval_container)
+    recurse_callbacks(callbacks=callbacks)
 
     # We should not be able to download methods
     with pytest.raises(NotImplementedError):
@@ -55,15 +55,15 @@ def test_submission_evaluation(
         submission = SubmissionFactory(
             predictions_file__from_path=submission_file, phase=method.phase
         )
-
     recurse_callbacks(callbacks=callbacks)
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
 
     evaluation = submission.evaluation_set.first()
-    assert evaluation.stdout.endswith("Greetings from stdout\n")
-    assert evaluation.stderr.endswith('warn("Hello from stderr")\n')
+    assert evaluation.stdout.endswith("Greetings from stdout")
+    assert evaluation.stderr.endswith('warn("Hello from stderr")')
+    assert "UserWarning: Could not google: [Errno " in evaluation.stderr
     assert evaluation.error_message == ""
     assert evaluation.status == evaluation.SUCCESS
     assert (
@@ -313,9 +313,10 @@ def test_evaluation_notifications(
 
     # Add method and upload a submission
     eval_container, sha256 = evaluation_image
-    method = MethodFactory(
-        image__from_path=eval_container, image_sha256=sha256, ready=True
-    )
+    with capture_on_commit_callbacks() as callbacks:
+        method = MethodFactory(image__from_path=eval_container)
+    recurse_callbacks(callbacks=callbacks)
+
     # clear notifications for easier testing later
     Notification.objects.all().delete()
     # create submission and wait for it to be evaluated

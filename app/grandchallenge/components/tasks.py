@@ -1,10 +1,14 @@
+import itertools
 import json
 import logging
+import os
+import shlex
 import subprocess
 import tarfile
 import uuid
+from base64 import b64encode
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
@@ -64,8 +68,14 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         return
 
     push_container_image(instance=instance)
+
+    if settings.COMPONENTS_SHIM_IMAGES:
+        shim_container_image(instance=instance)
+
     model.objects.filter(pk=instance.pk).update(
-        image_sha256=image_sha256, ready=True
+        image_sha256=image_sha256,
+        latest_shimmed_version=instance.latest_shimmed_version,
+        ready=True,
     )
 
 
@@ -75,31 +85,138 @@ def push_container_image(*, instance):
             # Rewrite to tar as crane cannot handle gz
             _decompress_tarball(in_fileobj=im, out_fileobj=o)
 
-        login_cmd = _get_repo_login_cmd()
-        push_cmd = f"crane push {o.name} {instance.repo_tag}"
-
-        if settings.COMPONENTS_REGISTRY_INSECURE:
-            # Note, not setting this on login_cmd as it should never happen
-            push_cmd += " --insecure"
-
-        if login_cmd:
-            cmd = f"{login_cmd} && {push_cmd}"
-        else:
-            cmd = push_cmd
-
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Could not push image: {e.stdout.decode()}")
+        _repo_login_and_run(
+            command=["crane", "push", o.name, instance.original_repo_tag]
+        )
 
 
-def _get_repo_login_cmd():
+def _repo_login_and_run(*, command):
+    """Logs in to a repo and runs a crane command"""
     if settings.COMPONENTS_REGISTRY_INSECURE:
         # Do not login to insecure registries
-        return ""
+        command.append("--insecure")
+        clean_command = shlex.join(command)
     else:
         auth_config = _get_registry_auth_config()
-        return f"crane auth login {settings.COMPONENTS_REGISTRY_URL} -u {auth_config['username']} -p {auth_config['password']}"
+        login_command = shlex.join(
+            [
+                "crane",
+                "auth",
+                "login",
+                settings.COMPONENTS_REGISTRY_URL,
+                "-u",
+                auth_config["username"],
+                "-p",
+                auth_config["password"],
+            ]
+        )
+        clean_command = f"{login_command} && {shlex.join(command)}"
+
+    return subprocess.run(
+        ["/bin/sh", "-c", clean_command], check=True, capture_output=True
+    )
+
+
+def shim_container_image(*, instance):
+    """Patches a container image with the SageMaker Shim executable"""
+
+    # Set the new version, so we can then get the value of the new tag.
+    # Do not save the instance until the container image has been mutated.
+    instance.latest_shimmed_version = os.environ.get(
+        "GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION"
+    )
+    new_repo_tag = instance.shimmed_repo_tag
+    original_repo_tag = instance.original_repo_tag
+
+    original_config = _get_container_image_config(
+        original_repo_tag=original_repo_tag
+    )
+    env_vars = _get_shim_env_vars(original_config=original_config)
+    _mutate_container_image(
+        original_repo_tag=original_repo_tag,
+        new_repo_tag=new_repo_tag,
+        version=instance.latest_shimmed_version,
+        env_vars=env_vars,
+    )
+
+
+def encode_b64j(*, val):
+    """Base64 encode a JSON serialised value"""
+    return b64encode(json.dumps(val).encode("utf-8")).decode("utf-8")
+
+
+def _get_container_image_config(*, original_repo_tag):
+    """Get the configuration of an existing container image"""
+    output = _repo_login_and_run(
+        command=["crane", "config", original_repo_tag]
+    )
+    return json.loads(output.stdout.decode("utf-8"))
+
+
+def _get_shim_env_vars(*, original_config):
+    """Get the environment variables for a shimmed container image"""
+    cmd = original_config["config"].get("Cmd")
+    entrypoint = original_config["config"].get("Entrypoint")
+
+    return {
+        "GRAND_CHALLENGE_COMPONENT_CMD_B64J": encode_b64j(val=cmd),
+        "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
+            val=entrypoint
+        ),
+    }
+
+
+def _mutate_container_image(
+    *, original_repo_tag, new_repo_tag, version, env_vars
+):
+    """Add the SageMaker Shim executable to a container image"""
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        new_layer = tmp_path / "sagemaker-shim.tar"
+
+        with tarfile.open(new_layer, "w") as f:
+
+            def _set_root_555_perms(
+                tarinfo,
+            ):
+                tarinfo.uid = 0
+                tarinfo.gid = 0
+                tarinfo.mode = 0o555
+                return tarinfo
+
+            f.add(
+                name=f"/opt/sagemaker-shim/sagemaker-shim-{version}-Linux-x86_64",
+                arcname="/sagemaker-shim",
+                filter=_set_root_555_perms,
+            )
+
+            for dir in ["/input", "/output", "/tmp"]:
+                # /tmp is required by staticx
+                tarinfo = tarfile.TarInfo(dir)
+                tarinfo.type = tarfile.DIRTYPE
+                tarinfo.uid = 0
+                tarinfo.gid = 0
+                tarinfo.mode = 0o777
+                f.addfile(tarinfo=tarinfo)
+
+        _repo_login_and_run(
+            command=[
+                "crane",
+                "mutate",
+                original_repo_tag,
+                "--cmd",
+                "",
+                "--entrypoint",
+                "/sagemaker-shim",
+                "--tag",
+                new_repo_tag,
+                "--append",
+                str(new_layer),
+                *itertools.chain(
+                    *[["--env", f"{k}={v}"] for k, v in env_vars.items()]
+                ),
+            ]
+        )
 
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
@@ -299,7 +416,12 @@ def execute_job(  # noqa: C901
 
     try:
         # This call is potentially very long
-        executor.execute()
+        executor.execute(
+            input_civs=job.inputs.prefetch_related(
+                "interface", "image__files"
+            ).all(),
+            input_prefixes=job.input_prefixes,
+        )
     except RetryStep:
         job.update_status(status=job.PROVISIONED)
         try:

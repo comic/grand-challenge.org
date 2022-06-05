@@ -46,14 +46,12 @@ class AmazonECSExecutor:
         self,
         *,
         job_id: str,
-        exec_image_sha256: str,
         exec_image_repo_tag: str,
         memory_limit: int,
         time_limit: int,
         requires_gpu: bool,
     ):
         self._job_id = job_id
-        self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
         self._time_limit = time_limit
@@ -211,7 +209,7 @@ class AmazonECSExecutor:
             input_civs=input_civs, input_prefixes=input_prefixes
         )
 
-    def execute(self):
+    def execute(self, *, input_civs, input_prefixes):
         task_definition_arn = self._register_task_definition()
         self._run_task(task_definition_arn=task_definition_arn)
 

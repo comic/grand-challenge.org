@@ -26,10 +26,13 @@ services:
     entrypoint: "/bin/sh"
     command: >-
       -c "
-      mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/
+      mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/ /data/grand-challenge-components-inputs/ /data/grand-challenge-components-outputs/
       && minio --compat server /data
       "
     restart: always
+    networks:
+      - default
+      - components
 
   web:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
@@ -71,6 +74,9 @@ services:
         target: /tmp/.pytest_cache
     group_add:
       - ${DOCKER_GID-1001} # The docker group is only needed for testing
+    networks:
+      - default
+      - components # The components network is only needed for testing
 
   http:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest
@@ -168,6 +174,9 @@ services:
         target: /app/
     group_add:
       - ${DOCKER_GID-1001}
+    networks:
+      - default
+      - components
 
   celery_beat:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
@@ -233,6 +242,8 @@ services:
 networks:
   default:
   workstations:
+  components:
+    internal: true
 
 volumes:
   pytest-cache:

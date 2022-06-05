@@ -42,7 +42,7 @@ RUN mkdir -p /opt/git-lfs \
 
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
-    GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION=0.0.3\
+    GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION=0.0.7\
     PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
 RUN mkdir -p /opt/poetry /app /static /opt/static /opt/sagemaker-shim \
@@ -54,7 +54,7 @@ USER django:django
 # Fetch and install sagemaker shim for shimming containers
 RUN mkdir -p /opt/sagemaker-shim \
     && wget "https://github.com/DIAGNijmegen/rse-sagemaker-shim/releases/download/v${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" -P /opt/sagemaker-shim/ \
-    && echo "c12cef84b82ca58fff3d89ee0a3fbdf2a441796c21084627e69a084c988a2948  /opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
+    && echo "9840b484768773f22e830887f578a165b8e157c55927d64c025317e10a70f3e7  /opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
 
@@ -78,6 +78,12 @@ FROM base as test-base
 # Add java and graphviz for plantuml documentation
 USER root
 RUN apt-get update && apt-get install -y default-jre graphviz
+# Get the minio client (they do not provide sha256sums)
+RUN mkdir -p /opt/mc \
+    && wget https://dl.min.io/client/mc/release/linux-amd64/mc -P /opt/mc/ \
+    && chmod a+x /opt/mc/mc \
+    && mv /opt/mc/mc /usr/local/bin/ \
+    && rm -r /opt/mc
 USER django:django
 
 RUN poetry install --no-interaction --no-ansi --no-root

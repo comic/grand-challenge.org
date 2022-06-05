@@ -271,19 +271,13 @@ def root_image(tmpdir_factory, docker_client, docker_api_client):
 
 @pytest.fixture(scope="session")
 def http_image(tmpdir_factory, docker_client, docker_api_client):
-    image_name = "crccheck/hello-world"
-
-    docker_client.images.pull(image_name)
-    sha_256 = docker_client.images.get(image_name).id
-
-    image = docker_api_client.get_image(image_name)
-    outfile = tmpdir_factory.mktemp("http").join("http.tar")
-
-    with outfile.open("wb") as f:
-        for chunk in image:
-            f.write(chunk)
-
-    return outfile, sha_256
+    return docker_image(
+        tmpdir_factory,
+        docker_client,
+        docker_api_client,
+        path="workstations_tests",
+        label="workstation",
+    )
 
 
 @pytest.fixture(scope="session")

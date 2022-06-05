@@ -7,6 +7,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.components.tasks import (
     _retry,
     civ_value_to_file,
+    encode_b64j,
     execute_job,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -83,3 +84,18 @@ def test_civ_value_to_file():
     # Check idempotency
     with pytest.raises(RuntimeError):
         civ_value_to_file(civ_pk=civ.pk)
+
+
+@pytest.mark.parametrize(
+    "val,expected",
+    (
+        (None, "bnVsbA=="),
+        (["exec_cmd", "p1_cmd"], "WyJleGVjX2NtZCIsICJwMV9jbWQiXQ=="),
+        ("exec_cmd p1_cmd", "ImV4ZWNfY21kIHAxX2NtZCI="),
+        ("c\xf7>", "ImNcdTAwZjc+Ig=="),
+        ("👍", "Ilx1ZDgzZFx1ZGM0ZCI="),
+        ("null", "Im51bGwi"),
+    ),
+)
+def test_encode_b64j(val, expected):
+    assert encode_b64j(val=val) == expected

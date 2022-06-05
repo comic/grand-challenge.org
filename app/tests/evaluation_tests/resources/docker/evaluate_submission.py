@@ -1,4 +1,6 @@
 import json
+import urllib.error
+import urllib.request
 from csv import DictReader
 from pathlib import Path
 from warnings import warn
@@ -19,6 +21,11 @@ def write_metrics(metrics: dict):
 
 
 if __name__ == "__main__":
+    try:
+        urllib.request.urlopen("https://google.com/", timeout=5)
+    except urllib.error.URLError as e:
+        warn(f"Could not google: {e.reason}")
+
     # Requirement: The ground truth must be part of the container
     gt = get_classes(Path("ground_truth.csv"))
     # The challenge organizer is free to define the input from the participants

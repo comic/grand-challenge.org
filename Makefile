@@ -80,12 +80,19 @@ check_migrations:
 migrations:
 	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations
 
+minio:
+	docker-compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+		--rm \
+		web \
+		bash -c "python manage.py runscript minio"
+
 development_fixtures:
 	docker-compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
 		--rm \
 		web \
-		bash -c "python manage.py migrate && python manage.py runscript development_fixtures"
+		bash -c "python manage.py migrate && python manage.py runscript minio development_fixtures"
 
 
 retina_archive_structures:

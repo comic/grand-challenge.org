@@ -58,7 +58,7 @@ jobs:
         run: |
           mkdir -p /tmp/coverage
           chmod a+w /tmp/coverage
-          docker pull crccheck/hello-world
+          make minio
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
