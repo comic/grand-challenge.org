@@ -495,11 +495,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Service</span><span class="p">(</span>
             <span class="n">job_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">exec_image_sha256</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image_sha256</span><span class="p">,</span>
-            <span class="n">exec_image_repo_tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">repo_tag</span><span class="p">,</span>
+            <span class="n">exec_image_repo_tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">original_repo_tag</span><span class="p">,</span>
             <span class="n">memory_limit</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_MEMORY_LIMIT</span><span class="p">,</span>
-            <span class="n">requires_gpu</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">time_limit</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATIONS_SESSION_DURATION_LIMIT</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>

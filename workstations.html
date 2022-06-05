@@ -340,6 +340,7 @@ workstation</p></li>
 <li><p><strong>user_upload</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">UserUpload</span></code>) – User upload</p></li>
 <li><p><strong>image</strong> (<em>FileField</em>) – Image. .tar.xz archive of the container image produced from the command ‘docker save IMAGE | xz -c &gt; IMAGE.tar.xz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
 <li><p><strong>image_sha256</strong> (<em>CharField</em>) – Image sha256</p></li>
+<li><p><strong>latest_shimmed_version</strong> (<em>CharField</em>) – Latest shimmed version</p></li>
 <li><p><strong>ready</strong> (<em>BooleanField</em>) – Ready. Is this image ready to be used?</p></li>
 <li><p><strong>status</strong> (<em>TextField</em>) – Status</p></li>
 <li><p><strong>requires_gpu</strong> (<em>BooleanField</em>) – Requires gpu</p></li>
