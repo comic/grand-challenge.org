@@ -20,6 +20,7 @@ from grandchallenge.components.backends.utils import (
     ms_timestamp_to_datetime,
     parse_structured_log,
 )
+from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)
 
@@ -535,11 +536,20 @@ class AmazonSageMakerBatchExecutor(Executor):
         self.__stderr = stderr
 
     def _set_runtime_metrics(self, *, event):
+        # TODO add a test for this
         query_id = "q"
 
         start_time = ms_timestamp_to_datetime(event["TransformStartTime"])
         end_time = ms_timestamp_to_datetime(event["TransformEndTime"])
         query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._transform_job_name}/i-', 'Average', 60)"
+
+        instance_type = get(
+            [
+                instance
+                for instance in INSTANCE_OPTIONS
+                if instance.name == event["TransformResources"]["InstanceType"]
+            ]
+        )
 
         response = self._cloudwatch_client.get_metric_data(
             MetricDataQueries=[{"Id": query_id, "Expression": query}],
@@ -551,12 +561,18 @@ class AmazonSageMakerBatchExecutor(Executor):
         if "NextToken" in response:
             raise logger.error("Too many metrics found")
 
-        self.__runtime_metrics = {
-            metric["Label"]: {
+        runtime_metrics = [
+            {
+                "label": metric["Label"],
                 "status": metric["StatusCode"],
                 "timestamps": [t.isoformat() for t in metric["Timestamps"]],
                 "values": metric["Values"],
             }
             for metric in response["MetricDataResults"]
             if metric["Id"] == query_id
+        ]
+
+        self.__runtime_metrics = {
+            "instance": dict(instance_type),
+            "metrics": runtime_metrics,
         }
