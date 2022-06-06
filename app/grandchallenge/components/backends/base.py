@@ -76,8 +76,14 @@ class Executor(ABC):
         return outputs
 
     def deprovision(self):
-        self._delete_objects(bucket=settings.COMPONENTS_INPUT_BUCKET_NAME)
-        self._delete_objects(bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME)
+        self._delete_objects(
+            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            prefix=self._io_prefix,
+        )
+        self._delete_objects(
+            bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            prefix=self._io_prefix,
+        )
 
     @staticmethod
     @abstractmethod
@@ -118,7 +124,7 @@ class Executor(ABC):
         return path_parts
 
     @property
-    def io_prefix(self):
+    def _io_prefix(self):
         return safe_join("/io", *self.job_path_parts)
 
     @property
@@ -137,12 +143,12 @@ class Executor(ABC):
     def _get_key_and_relative_path(self, *, civ, input_prefixes):
         if str(civ.pk) in input_prefixes:
             key = safe_join(
-                self.io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
+                self._io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
             )
         else:
-            key = safe_join(self.io_prefix, civ.relative_path)
+            key = safe_join(self._io_prefix, civ.relative_path)
 
-        relative_path = str(os.path.relpath(key, self.io_prefix))
+        relative_path = str(os.path.relpath(key, self._io_prefix))
 
         return key, relative_path
 
@@ -165,7 +171,7 @@ class Executor(ABC):
             "pk": self._job_id,
             "inputs": inputs,
             "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            "output_prefix": self.io_prefix,
+            "output_prefix": self._io_prefix,
         }
 
     def _provision_inputs(self, *, input_civs, input_prefixes):
@@ -183,7 +189,7 @@ class Executor(ABC):
                 )
 
     def _create_images_result(self, *, interface):
-        prefix = safe_join(self.io_prefix, interface.relative_path)
+        prefix = safe_join(self._io_prefix, interface.relative_path)
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             Prefix=prefix,
@@ -244,7 +250,7 @@ class Executor(ABC):
         return civ
 
     def _create_json_result(self, *, interface):
-        key = safe_join(self.io_prefix, interface.relative_path)
+        key = safe_join(self._io_prefix, interface.relative_path)
 
         try:
             with io.BytesIO() as fileobj:
@@ -275,7 +281,7 @@ class Executor(ABC):
         return civ
 
     def _create_file_result(self, *, interface):
-        key = safe_join(self.io_prefix, interface.relative_path)
+        key = safe_join(self._io_prefix, interface.relative_path)
 
         try:
             with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as fileobj:
@@ -297,11 +303,11 @@ class Executor(ABC):
 
         return civ
 
-    def _delete_objects(self, *, bucket):
+    def _delete_objects(self, *, bucket, prefix):
         """Deletes all objects that are prefixed with io_prefix"""
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
-            Prefix=self.io_prefix,
+            Prefix=prefix,
         )
 
         if contents := objects_list.get("Contents"):
@@ -316,7 +322,7 @@ class Executor(ABC):
             logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
             errors = response.get("Errors")
         else:
-            logger.debug(f"No objects found in {bucket}/{self.io_prefix}")
+            logger.debug(f"No objects found in {bucket}/{prefix}")
             errors = None
 
         if objects_list["IsTruncated"] or errors:

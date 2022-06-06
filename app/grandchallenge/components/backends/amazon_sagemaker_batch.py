@@ -141,6 +141,18 @@ class AmazonSageMakerBatchExecutor(Executor):
         )
         self._create_transform_job()
 
+    def deprovision(self):
+        super().deprovision()
+        # TODO cancel any running tasks
+        self._delete_objects(
+            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            prefix=self._invocation_prefix,
+        )
+        self._delete_objects(
+            bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            prefix=self._invocation_prefix,
+        )
+
     def _create_invocation_json(self, *, input_civs, input_prefixes):
         f = io.BytesIO(
             json.dumps(
@@ -188,6 +200,7 @@ class AmazonSageMakerBatchExecutor(Executor):
         job_status = event["TransformJobStatus"]
 
         if job_status == "Completed":
+            # TODO inspect return code
             self._set_duration(event=event)
             self._set_task_logs()
         elif job_status == "Failed":
