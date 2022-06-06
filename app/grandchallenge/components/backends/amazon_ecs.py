@@ -272,6 +272,11 @@ class AmazonECSExecutor:
         return self.__duration
 
     @property
+    def runtime_metrics(self):
+        logger.warning("Runtime metrics are not implemented for this backend")
+        return
+
+    @property
     def _ecs_client(self):
         if self.__ecs_client is None:
             self.__ecs_client = boto3.client(

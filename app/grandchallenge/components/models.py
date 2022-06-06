@@ -993,6 +993,7 @@ class ComponentJob(models.Model):
         stderr: str = "",
         error_message="",
         duration: Optional[timedelta] = None,
+        runtime_metrics=None,
     ):
         self.status = status
 
@@ -1019,6 +1020,9 @@ class ComponentJob(models.Model):
             if duration and self.started_at:
                 # TODO: maybe add separate timings for provisioning, executing, parsing and total
                 self.started_at = self.completed_at - duration
+
+        if runtime_metrics is not None:
+            self.runtime_metrics = runtime_metrics
 
         self.save()
 

@@ -588,6 +588,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
+            runtime_metrics=executor.runtime_metrics,
         )
         on_commit(
             parse_job_outputs.signature(**job.signature_kwargs).apply_async

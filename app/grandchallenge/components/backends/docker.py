@@ -270,7 +270,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
     @property
     def runtime_metrics(self):
         logger.warning("Runtime metrics are not implemented for this backend")
-        return None
+        return
 
     def _execute_container(self, *, input_civs, input_prefixes) -> None:
         environment = {

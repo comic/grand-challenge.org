@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import re
+from datetime import timedelta
 from json import JSONDecodeError
 
 import boto3
@@ -42,6 +43,7 @@ class AmazonSageMakerBatchExecutor(Executor):
         self.__duration = None
         self.__stdout = []
         self.__stderr = []
+        self.__runtime_metrics = {}
 
         self.__sagemaker_client = None
         self.__logs_client = None
@@ -106,8 +108,7 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     @property
     def runtime_metrics(self):
-        # TODO
-        raise NotImplementedError
+        return self.__runtime_metrics
 
     @property
     def _invocation_prefix(self):
@@ -203,6 +204,7 @@ class AmazonSageMakerBatchExecutor(Executor):
             # TODO inspect return code
             self._set_duration(event=event)
             self._set_task_logs()
+            self._set_runtime_metrics(event=event)
         elif job_status == "Failed":
             # TODO what about time limit exceeded?
             # This is an internal error to AWS, could be permissions
@@ -215,11 +217,7 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     def _set_duration(self, *, event):
         try:
-            started = ms_timestamp_to_datetime(
-                event["TransformStartTime"]
-                if "TransformStartTime" in event
-                else event["CreationTime"]
-            )
+            started = ms_timestamp_to_datetime(event["TransformStartTime"])
             stopped = ms_timestamp_to_datetime(event["TransformEndTime"])
             self.__duration = stopped - started
         except Exception as e:
@@ -279,3 +277,30 @@ class AmazonSageMakerBatchExecutor(Executor):
 
         self.__stdout = stdout
         self.__stderr = stderr
+
+    def _set_runtime_metrics(self, *, event):
+        query_id = "q"
+
+        start_time = ms_timestamp_to_datetime(event["TransformStartTime"])
+        end_time = ms_timestamp_to_datetime(event["TransformEndTime"])
+        query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._transform_job_name}/i-', 'Average', 60)"
+
+        response = self._cloudwatch_client.get_metric_data(
+            MetricDataQueries=[{"Id": query_id, "Expression": query}],
+            # Add buffer time to allow metrics to be delivered
+            StartTime=start_time - timedelta(minutes=1),
+            EndTime=end_time + timedelta(minutes=5),
+        )
+
+        if "NextToken" in response:
+            raise logger.error("Too many metrics found")
+
+        self.__runtime_metrics = {
+            metric["Label"]: {
+                "status": metric["StatusCode"],
+                "timestamps": [t.isoformat() for t in metric["Timestamps"]],
+                "values": metric["Values"],
+            }
+            for metric in response["MetricDataResults"]
+            if metric["Id"] == query_id
+        }
