@@ -44,6 +44,8 @@ class InstanceType(NamedTuple):
 
 
 INSTANCE_OPTIONS = [
+    # Instance types and pricing from eu-west-1, retrieved 06-JUN-2022
+    # https://aws.amazon.com/sagemaker/pricing/
     InstanceType(
         name="ml.m5.large",
         cpu=2,
