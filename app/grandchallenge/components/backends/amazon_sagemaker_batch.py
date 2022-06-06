@@ -4,6 +4,7 @@ import logging
 import re
 from datetime import timedelta
 from json import JSONDecodeError
+from typing import NamedTuple, Optional
 
 import boto3
 from django.conf import settings
@@ -25,6 +26,233 @@ logger = logging.getLogger(__name__)
 UUID4_REGEX = (
     r"[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}"
 )
+
+
+class GPUChoices(TextChoices):
+    V100 = "V100"
+    K80 = "K80"
+    T4 = "T4"
+
+
+class InstanceType(NamedTuple):
+    name: str
+    cpu: int
+    memory: float
+    price_per_hour: float
+    gpus: int = 0
+    gpu_type: Optional[GPUChoices] = None
+
+
+INSTANCE_OPTIONS = [
+    InstanceType(
+        name="ml.m5.large",
+        cpu=2,
+        memory=8,
+        price_per_hour=0.128,
+    ),
+    InstanceType(
+        name="ml.m5.xlarge",
+        cpu=4,
+        memory=16,
+        price_per_hour=0.257,
+    ),
+    InstanceType(
+        name="ml.m5.2xlarge",
+        cpu=8,
+        memory=32,
+        price_per_hour=0.514,
+    ),
+    InstanceType(
+        name="ml.m5.4xlarge",
+        cpu=16,
+        memory=64,
+        price_per_hour=1.027,
+    ),
+    InstanceType(
+        name="ml.m5.12xlarge",
+        cpu=48,
+        memory=192,
+        price_per_hour=3.082,
+    ),
+    InstanceType(
+        name="ml.m5.24xlarge",
+        cpu=96,
+        memory=384,
+        price_per_hour=6.163,
+    ),
+    InstanceType(
+        name="ml.m4.xlarge",
+        cpu=4,
+        memory=16,
+        price_per_hour=0.266,
+    ),
+    InstanceType(
+        name="ml.m4.2xlarge",
+        cpu=8,
+        memory=32,
+        price_per_hour=0.533,
+    ),
+    InstanceType(
+        name="ml.m4.4xlarge",
+        cpu=16,
+        memory=64,
+        price_per_hour=1.066,
+    ),
+    InstanceType(
+        name="ml.m4.10xlarge",
+        cpu=40,
+        memory=160,
+        price_per_hour=2.664,
+    ),
+    InstanceType(
+        name="ml.m4.16xlarge",
+        cpu=64,
+        memory=256,
+        price_per_hour=4.262,
+    ),
+    InstanceType(
+        name="ml.c5.xlarge",
+        cpu=4,
+        memory=8,
+        price_per_hour=0.23,
+    ),
+    InstanceType(
+        name="ml.c5.2xlarge",
+        cpu=8,
+        memory=16,
+        price_per_hour=0.461,
+    ),
+    InstanceType(
+        name="ml.c5.4xlarge",
+        cpu=16,
+        memory=32,
+        price_per_hour=0.922,
+    ),
+    InstanceType(
+        name="ml.c5.9xlarge",
+        cpu=36,
+        memory=72,
+        price_per_hour=2.074,
+    ),
+    InstanceType(
+        name="ml.c5.18xlarge",
+        cpu=72,
+        memory=144,
+        price_per_hour=4.147,
+    ),
+    InstanceType(
+        name="ml.c4.xlarge",
+        cpu=4,
+        memory=7.5,
+        price_per_hour=0.271,
+    ),
+    InstanceType(
+        name="ml.c4.2xlarge",
+        cpu=8,
+        memory=15,
+        price_per_hour=0.544,
+    ),
+    InstanceType(
+        name="ml.c4.4xlarge",
+        cpu=16,
+        memory=30,
+        price_per_hour=1.086,
+    ),
+    InstanceType(
+        name="ml.c4.8xlarge",
+        cpu=36,
+        memory=60,
+        price_per_hour=2.173,
+    ),
+    InstanceType(
+        name="ml.p3.2xlarge",
+        cpu=8,
+        memory=61,
+        price_per_hour=4.131,
+        gpus=1,
+        gpu_type=GPUChoices.V100,
+    ),
+    InstanceType(
+        name="ml.p3.8xlarge",
+        cpu=32,
+        memory=244,
+        price_per_hour=15.864,
+        gpus=4,
+        gpu_type=GPUChoices.V100,
+    ),
+    InstanceType(
+        name="ml.p3.16xlarge",
+        cpu=64,
+        memory=488,
+        price_per_hour=30.406,
+        gpus=8,
+        gpu_type=GPUChoices.V100,
+    ),
+    InstanceType(
+        name="ml.p2.xlarge",
+        cpu=4,
+        memory=61,
+        price_per_hour=1.215,
+        gpus=1,
+        gpu_type=GPUChoices.K80,
+    ),
+    InstanceType(
+        name="ml.p2.8xlarge",
+        cpu=32,
+        memory=488,
+        price_per_hour=9.331,
+        gpus=8,
+        gpu_type=GPUChoices.K80,
+    ),
+    InstanceType(
+        name="ml.p2.16xlarge",
+        cpu=64,
+        memory=732,
+        price_per_hour=17.885,
+        gpus=16,
+        gpu_type=GPUChoices.K80,
+    ),
+    InstanceType(
+        name="ml.g4dn.xlarge",
+        cpu=4,
+        memory=16,
+        price_per_hour=0.822,
+        gpus=1,
+        gpu_type=GPUChoices.T4,
+    ),
+    InstanceType(
+        name="ml.g4dn.2xlarge",
+        cpu=8,
+        memory=32,
+        price_per_hour=1.047,
+        gpus=1,
+        gpu_type=GPUChoices.T4,
+    ),
+    InstanceType(
+        name="ml.g4dn.4xlarge",
+        cpu=16,
+        memory=64,
+        price_per_hour=1.678,
+        gpus=1,
+        gpu_type=GPUChoices.T4,
+    ),
+    InstanceType(
+        name="ml.g4dn.12xlarge",
+        cpu=48,
+        memory=192,
+        price_per_hour=5.453,
+        gpus=4,
+        gpu_type=GPUChoices.T4,
+    ),
+    InstanceType(
+        name="ml.g4dn.16xlarge",
+        cpu=64,
+        memory=256,
+        price_per_hour=6.066,
+        gpus=1,
+        gpu_type=GPUChoices.T4,
+    ),
+]
 
 
 class ModelChoices(TextChoices):
@@ -136,6 +364,33 @@ class AmazonSageMakerBatchExecutor(Executor):
         # Hardcoded by AWS
         return "/aws/sagemaker/TransformJobs"
 
+    @property
+    def _instance_type(self):
+        """Find the cheapest instance that can run this job"""
+
+        if self._requires_gpu:
+            # For now only use single gpu, T4 instances
+            n_gpu = 1
+            gpu_type = GPUChoices.T4
+        else:
+            n_gpu = 0
+            gpu_type = None
+
+        compatible_instances = [
+            instance
+            for instance in INSTANCE_OPTIONS
+            if instance.gpus == n_gpu
+            and instance.gpu_type == gpu_type
+            and instance.memory >= self._memory_limit
+        ]
+
+        if not compatible_instances:
+            raise ValueError("No suitable instance types for job")
+
+        # Get the lowest priced instance
+        compatible_instances.sort(key=lambda x: x.price_per_hour)
+        return compatible_instances[0].name
+
     def execute(self, *, input_civs, input_prefixes):
         self._create_invocation_json(
             input_civs=input_civs, input_prefixes=input_prefixes
@@ -184,8 +439,7 @@ class AmazonSageMakerBatchExecutor(Executor):
                 "S3OutputPath": f"s3://{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/{self._invocation_prefix}"
             },
             TransformResources={
-                # TODO get instance type
-                "InstanceType": "ml.g4dn.xlarge",
+                "InstanceType": self._instance_type,
                 "InstanceCount": 1,
             },
             Environment={  # Up to 16 pairs
