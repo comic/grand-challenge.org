@@ -1141,6 +1141,8 @@ def docker_image_path(instance, filename):
 
 
 class ComponentImage(models.Model):
+    SHIM_IMAGE = True
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
