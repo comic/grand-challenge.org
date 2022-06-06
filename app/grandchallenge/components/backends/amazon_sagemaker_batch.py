@@ -1,15 +1,28 @@
 import io
 import json
 import logging
+import re
 
 import boto3
 from django.conf import settings
+from django.db.models import TextChoices
 from django.utils._os import safe_join
 
 from grandchallenge.components.backends.base import Executor
 from grandchallenge.components.backends.utils import get_sagemaker_model_name
 
 logger = logging.getLogger(__name__)
+
+UUID4_REGEX = (
+    r"[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}"
+)
+
+
+class ModelChoices(TextChoices):
+    # The values must be short
+    # The labels must be in the form "<app_label>-<model_name>"
+    ALGORITHMS_JOB = "A", "algorithms-job"
+    EVALUATION_EVALUATION = "E", "evaluation-evaluation"
 
 
 class AmazonSageMakerBatchExecutor(Executor):
@@ -23,8 +36,22 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     @staticmethod
     def get_job_params(*, event):
-        # TODO
-        raise NotImplementedError
+        # TODO needs a test
+        job_name = event["TransformJobName"]
+
+        prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
+        model_regex = r"|".join(ModelChoices.values)
+        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})$"
+
+        result = re.match(pattern, job_name)
+
+        if result is None:
+            raise ValueError("Invalid job name")
+        else:
+            job_model = ModelChoices(result.group("job_model")).label
+            job_app_label, job_model_name = job_model.split("-")
+            job_pk = result.group("job_pk")
+            return job_app_label, job_model_name, job_pk
 
     @property
     def _sagemaker_client(self):
@@ -88,13 +115,8 @@ class AmazonSageMakerBatchExecutor(Executor):
         # SageMaker requires job names to be less than 63 chars
         job_name = f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self._job_id}"
 
-        replacements = {
-            "algorithms-job": "A",
-            "evaluation-evaluation": "E",
-        }
-
-        for k, v in replacements.items():
-            job_name = job_name.replace(k, v)
+        for value, label in ModelChoices.choices:
+            job_name = job_name.replace(label, value)
 
         return job_name
 
