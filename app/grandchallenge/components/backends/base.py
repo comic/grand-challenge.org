@@ -93,13 +93,17 @@ class Executor(ABC):
         ...
 
     @property
-    def io_prefix(self):
+    def job_path_parts(self):
         path_parts = self._job_id.split("-", 2)
 
         if len(path_parts) != 3 or "/" in self._job_id or "." in self._job_id:
             raise ValueError(f"Invalid job id {self._job_id}")
 
-        return safe_join("/", *path_parts)
+        return path_parts
+
+    @property
+    def io_prefix(self):
+        return safe_join("/io", *self.job_path_parts)
 
     @property
     def _s3_client(self):
