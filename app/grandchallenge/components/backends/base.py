@@ -57,7 +57,23 @@ class Executor(ABC):
         pass
 
     def get_outputs(self, *, output_interfaces):
-        return self._get_outputs(output_interfaces=output_interfaces)
+        """Create ComponentInterfaceValues from the output interfaces"""
+        outputs = []
+
+        with transaction.atomic():
+            # Atomic block required as create_instance needs to
+            # create interfaces in order to store the files
+            for interface in output_interfaces:
+                if interface.is_image_kind:
+                    res = self._create_images_result(interface=interface)
+                elif interface.is_json_kind:
+                    res = self._create_json_result(interface=interface)
+                else:
+                    res = self._create_file_result(interface=interface)
+
+                outputs.append(res)
+
+        return outputs
 
     def deprovision(self):
         self._delete_objects(bucket=settings.COMPONENTS_INPUT_BUCKET_NAME)
@@ -165,25 +181,6 @@ class Executor(ABC):
                     Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
                     Key=key,
                 )
-
-    def _get_outputs(self, *, output_interfaces):
-        """Create ComponentInterfaceValues from the output interfaces"""
-        outputs = []
-
-        with transaction.atomic():
-            # Atomic block required as create_instance needs to
-            # create interfaces in order to store the files
-            for interface in output_interfaces:
-                if interface.is_image_kind:
-                    res = self._create_images_result(interface=interface)
-                elif interface.is_json_kind:
-                    res = self._create_json_result(interface=interface)
-                else:
-                    res = self._create_file_result(interface=interface)
-
-                outputs.append(res)
-
-        return outputs
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self.io_prefix, interface.relative_path)

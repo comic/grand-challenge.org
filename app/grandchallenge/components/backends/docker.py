@@ -2,6 +2,7 @@ import logging
 import os
 from contextlib import contextmanager
 from ipaddress import ip_address
+from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from socket import getaddrinfo
@@ -207,10 +208,14 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                     logger.error(f"Could not parse line: {line}")
                 continue
 
-            message = parse_structured_log(log=log)
+            try:
+                parsed_log = parse_structured_log(log=log)
+            except (JSONDecodeError, KeyError, ValueError):
+                logger.error("Could not parse log")
+                continue
 
-            if message is not None:
-                output.append(f"{timestamp} {message}")
+            if parsed_log is not None:
+                output.append(f"{timestamp} {parsed_log.message}")
 
         return "\n".join(output)
 

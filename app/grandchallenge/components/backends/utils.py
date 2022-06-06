@@ -2,12 +2,14 @@ import json
 import logging
 import re
 import zipfile
+from datetime import datetime, timezone
 from os.path import commonpath
 from pathlib import Path
-from typing import List, Optional
+from typing import List, NamedTuple, Optional
 
 from django.conf import settings
 from django.core.files import File
+from django.db.models import TextChoices
 from django.utils._os import safe_join
 
 logger = logging.getLogger(__name__)
@@ -39,31 +41,33 @@ def user_error(obj: str):
     return error_message
 
 
-def parse_structured_log(*, log: str) -> Optional[str]:
+class SourceChoices(TextChoices):
+    STDOUT = "stdout"
+    STDERR = "stderr"
+
+
+class ParsedLog(NamedTuple):
+    message: str
+    source: SourceChoices
+
+
+def parse_structured_log(*, log: str) -> Optional[ParsedLog]:
     """Parse the structured logs from SageMaker Shim"""
+    structured_log = json.loads(log.strip())
 
-    try:
-        structured_log = json.loads(log.strip())
-    except json.JSONDecodeError:
-        logger.error(f"Could not decode log as json: {log}")
-        return
+    message = structured_log["log"]
+    source = SourceChoices(structured_log["source"])
 
-    try:
-        message = structured_log["log"]
-
-        if structured_log["internal"] is False:
-            # Defensive, in case the value is a string
-            return message
+    if structured_log["internal"] is False:
+        # Defensive, in case the type of structured_log["internal"] is str
+        return ParsedLog(message=message, source=source)
+    else:
+        if source == SourceChoices.STDOUT:
+            logger.info(f"Internal log: {message}")
+        elif source == SourceChoices.STDERR:
+            logger.warning(f"Internal log: {message}")
         else:
-            if structured_log["source"] == "stdout":
-                logger.info(f"Internal log: {message}")
-            elif structured_log["source"] == "stderr":
-                logger.warning(f"Internal log: {message}")
-            else:
-                raise KeyError("Invalid log structure")
-
-    except KeyError:
-        logger.error(f"Invalid log structure: {log}")
+            raise ValueError("Invalid log structure")
 
 
 def safe_extract(*, src: File, dest: Path):
@@ -146,3 +150,8 @@ def get_sagemaker_model_name(*, repo_tag):
         model_name = model_name.replace(k, v)
 
     return model_name
+
+
+def ms_timestamp_to_datetime(timestamp):
+    """Convert AWS timestamps (ms from epoch) to datetime"""
+    return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)

@@ -1,7 +1,7 @@
 import json
 import logging
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
@@ -27,6 +27,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.backends.utils import (
     LOGLINES,
+    ms_timestamp_to_datetime,
     safe_extract,
     user_error,
 )
@@ -327,16 +328,11 @@ class AmazonECSExecutor:
             message = json.loads(event["message"])
 
             if message["source"] == source:
-                timestamp = self._timestamp_to_datetime(event["timestamp"])
+                timestamp = ms_timestamp_to_datetime(event["timestamp"])
                 log = message["log"].replace("\x00", "")
                 loglines.append(f"{timestamp.isoformat()} {log}")
 
         return loglines
-
-    @staticmethod
-    def _timestamp_to_datetime(timestamp):
-        """Convert AWS timestamps (ms from epoch) to datetime"""
-        return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
     def _set_duration(self, *, event):
         try:
