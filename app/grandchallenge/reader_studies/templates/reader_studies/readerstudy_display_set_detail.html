@@ -13,28 +13,19 @@
       <th>Name</th>
       <th>View</th>
     </tr>
-    {% for interface, content in object.value_list.items %}
+    {% for value in object.values.all %}
       <tr>
-        <td>{{ interface }}:</td>
-        <td>{{ content.title }}</td>
-        <td>
-          {% if content.selected_image %}
-            <a href="{% url 'workstations:workstation-session-create' slug=object.reader_study.workstation.slug %}?{% workstation_query image=content.selected_image config=reader_study.workstation_config %}">
-              <span class="badge badge-primary">
-                  <i class="fa fa-eye"></i> View Case
-              </span>
-            </a>
-          {% endif %}
-        </td>
+        <td>{{ value.interface.slug }}:</td>
+        <td>{{ value.title }}</td>
       </tr>
     {% endfor %}
     <tr>
       <td>Order:</td>
-      <td colspan="3">{{ object.order }}</td>
+      <td>{{ object.order }}</td>
     </tr>
     <tr>
       <td>Description:</td>
-      <td colspan="3">{{ object.description|clean }}</td>
+      <td>{{ object.description|clean }}</td>
     </tr>
     {% if object.is_editable %}
       <tr>

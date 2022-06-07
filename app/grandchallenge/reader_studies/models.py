@@ -831,17 +831,6 @@ class DisplaySet(UUIDModel):
         ordering = ("order", "created")
 
     @cached_property
-    def value_list(self):
-        items = {
-            val.interface.slug: {
-                "title": val.title,
-                "selected_image": val.image_id,
-            }
-            for val in self.values.all()
-        }
-        return items
-
-    @cached_property
     def is_editable(self):
         return not self.answers.exists()
 
