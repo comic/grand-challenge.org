@@ -11,7 +11,6 @@
     <tr>
       <th>Interface</th>
       <th>Name</th>
-      <th>View</th>
     </tr>
     {% for value in object.values.all %}
       <tr>
@@ -27,10 +26,15 @@
       <td>Description:</td>
       <td>{{ object.description|clean }}</td>
     </tr>
-    {% if object.is_editable %}
-      <tr>
-        <td colspan="4" class="px-0 py-2"><button class="btn btn-primary" hx-get="{% url 'reader-studies:display-set-update' pk=object.pk %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Edit</button></td>
-      </tr>
-    {% endif %}
   </table>
+  <div class="d-flex justify-content-between px-1 py-2">
+    {% if object.is_editable %}
+      <button class="btn btn-primary" hx-get="{% url 'reader-studies:display-set-update' pk=object.pk %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Edit</button>
+    {% else %}
+      <div></div>
+    {% endif %}
+    <a href="{% url 'workstations:workstation-session-create' slug=object.reader_study.workstation.slug %}?{% workstation_query display_set=object config=reader_study.workstation_config %}" class="btn btn-primary">
+      <i class="fa fa-eye"></i> View Case
+    </a>
+  </div>
 </div>
