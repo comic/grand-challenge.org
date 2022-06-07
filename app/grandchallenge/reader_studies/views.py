@@ -1280,7 +1280,20 @@ class DisplaySetUpdate(
     )
     raise_exception = True
 
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:display-set-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
+
     def form_valid(self, form):
+        """Handles the update action on the object.
+
+        The reason this is handled here and not in the form class is that we
+        do not use a ModelForm for display sets. This is because the form
+        fields do not match the model fields: the model only has a `values`
+        fields, whereas the form has a field for each value in those values.
+        """
         instance = self.get_object()
         assigned_civs = []
         for ci_slug, civ in form.cleaned_data.items():
@@ -1338,4 +1351,4 @@ class DisplaySetUpdate(
             instance.order = form.cleaned_data["order"]
             instance.save()
 
-        return HttpResponse("ok", content_type="text/plain")
+        return HttpResponseRedirect(self.get_success_url())
