@@ -703,7 +703,7 @@ class AddDisplaySetsToReaderStudy(AddObjectToReaderStudyMixin):
                     kwargs={"reader_study_pk": self.reader_study.pk},
                     immutable=True,
                 ),
-                "url": "components:component-interface-list-reader-studies",
+                "interface_viewame": "components:component-interface-list-reader-studies",
             }
         )
         return kwargs

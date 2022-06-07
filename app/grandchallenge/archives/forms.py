@@ -191,7 +191,7 @@ class AddCasesForm(UploadRawImagesForm):
         ),
     )
 
-    def __init__(self, *args, url, **kwargs):
+    def __init__(self, *args, interface_viewname, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["interface"].help_text = format_lazy(
             (
@@ -199,7 +199,7 @@ class AddCasesForm(UploadRawImagesForm):
                 "information about each interface. "
                 "Please contact support if your desired interface is missing."
             ),
-            reverse_lazy(url),
+            reverse_lazy(interface_viewname),
         )
 
     def save(self, *args, **kwargs):
