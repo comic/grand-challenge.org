@@ -51,6 +51,7 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from config import settings
+from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -72,7 +73,6 @@ from grandchallenge.reader_studies.filters import (
     ReaderStudyFilter,
 )
 from grandchallenge.reader_studies.forms import (
-    AddCasesForm,
     AnswersRemoveForm,
     CategoricalOptionFormSet,
     GroundTruthForm,
@@ -703,6 +703,7 @@ class AddDisplaySetsToReaderStudy(AddObjectToReaderStudyMixin):
                     kwargs={"reader_study_pk": self.reader_study.pk},
                     immutable=True,
                 ),
+                "url": "components:component-interface-list-reader-studies",
             }
         )
         return kwargs

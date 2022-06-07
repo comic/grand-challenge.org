@@ -29,8 +29,7 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -471,25 +470,3 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         values = [x for x in rdr]
 
         return values
-
-
-class AddCasesForm(UploadRawImagesForm):
-    interface = ModelChoiceField(
-        queryset=ComponentInterface.objects.filter(
-            kind__in=InterfaceKind.interface_type_image()
-        ),
-        help_text=format_lazy(
-            (
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired interface is missing."
-            ),
-            reverse_lazy("components:component-interface-list-reader-studies"),
-        ),
-    )
-
-    def save(self, *args, **kwargs):
-        self._linked_task.kwargs.update(
-            {"interface_pk": self.cleaned_data["interface"].pk}
-        )
-        return super().save(*args, **kwargs)

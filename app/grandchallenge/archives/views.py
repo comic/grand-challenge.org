@@ -329,7 +329,8 @@ class ArchiveUploadSessionCreate(
             {
                 "linked_task": add_images_to_archive.signature(
                     kwargs={"archive_pk": self.archive.pk}, immutable=True
-                )
+                ),
+                "url": "components:component-interface-list-archives",
             }
         )
         return kwargs
