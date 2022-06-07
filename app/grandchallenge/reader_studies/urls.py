@@ -41,12 +41,12 @@ urlpatterns = [
         name="question-interfaces",
     ),
     path(
-        "display-sets/<pk>/",
+        "display-sets/<uuid:pk>/",
         DisplaySetDetail.as_view(),
         name="display-set-detail",
     ),
     path(
-        "display-sets/<pk>/update",
+        "display-sets/<uuid:pk>/update",
         DisplaySetUpdate.as_view(),
         name="display-set-update",
     ),
