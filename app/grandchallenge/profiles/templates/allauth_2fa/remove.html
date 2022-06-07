@@ -1,0 +1,28 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block title %}Disable Two-Factor Authentication{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item text-light">Users</li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'profile-detail' username=request.user.username %}">{{ request.user.username }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Disable Two Factor Authentication</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h1>
+      {% trans "Disable Two-Factor Authentication" %}
+    </h1>
+
+    <p>{% trans "Are you sure you want to disable Two-Factor Authentication from your account?" %}</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn btn-primary" type="submit">
+        {% trans 'Yes, disable 2FA' %}
+      </button>
+    </form>
+{% endblock %}

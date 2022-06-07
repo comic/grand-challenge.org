@@ -405,6 +405,14 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Configure the django-otp package. Note this must be after the
+    # AuthenticationMiddleware.
+    "django_otp.middleware.OTPMiddleware",
+    # Reset login flow middleware. If this middleware is included, the login
+    # flow is reset if another page is loaded between login and successfully
+    # entering two-factor credentials
+    "allauth_2fa.middleware.AllauthTwoFactorMiddleware",
+    "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -484,6 +492,12 @@ THIRD_PARTY_APPS = [
     # Overridden apps
     "grandchallenge.forum_conversation",
     "grandchallenge.forum_member",
+    # Configure the django-otp package
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
+    # Enable two-factor auth
+    "allauth_2fa",
 ]
 
 LOCAL_APPS = [
@@ -552,7 +566,7 @@ GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 #
 ##############################################################################
 
-ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
+ACCOUNT_ADAPTER = "allauth_2fa.adapter.OTPAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
 ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 30

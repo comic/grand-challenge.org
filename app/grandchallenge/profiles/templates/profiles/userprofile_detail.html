@@ -5,6 +5,7 @@
 {% load meta_attr %}
 {% load evaluation_extras %}
 {% load humanize %}
+{% load profiles %}
 
 {% block title %}{% blocktrans with profile.user.username as username %}
     {{ username }}'s profile
@@ -77,6 +78,13 @@
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'api-tokens:list' %}'><i
                                     class="fas fa-unlock fa-fw"></i>&nbsp;{% trans "Manage API Tokens" %}</a>
+                        {% if request.user|has_2fa_enabled %}
+                            <a class="list-group-item list-group-item-action" href="{% url 'two-factor-backup-tokens' %}"><i
+                                   class="fas fa-qrcode fa-fw"></i>{% trans "Two-Factor Authentication Settings" %}</a>
+                        {% else %}
+                            <a class="list-group-item list-group-item-action" href="{% url 'two-factor-setup' %}"><i
+                                   class="fas fa-qrcode fa-fw"></i>{% trans "Enable Two-Factor Authentication" %}</a>
+                        {% endif %}
                         </ul>
                     {% endif %}
 

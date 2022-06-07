@@ -58,6 +58,7 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path(settings.ADMIN_URL, admin.site.urls),
+    path("accounts/", include("allauth_2fa.urls")),
     path("accounts/", include("allauth.urls")),
     path(
         "stats/",
