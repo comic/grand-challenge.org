@@ -483,21 +483,27 @@ class DisplaySetForm(Form):
         super().__init__(*args, **kwargs)
         if instance is not None:
             for (
-                key,
-                value,
+                slug,
+                civ,
             ) in instance.reader_study.values_for_interfaces.items():
-                val = instance.values.filter(interface__slug=key).first()
-                if value["kind"] in InterfaceKind.interface_type_json():
-                    self.fields[key] = InterfaceFormField(
-                        kind=value["kind"],
-                        schema=value["schema"],
+                val = instance.values.filter(interface__slug=slug).first()
+                if civ["kind"] in InterfaceKind.interface_type_json():
+                    # Use the field/widget provided by InterfaceFormField,
+                    # which includes proper validation
+                    self.fields[slug] = InterfaceFormField(
+                        kind=civ["kind"],
+                        schema=civ["schema"],
                         initial=val.value if val else None,
                         required=False,
                     ).field
                 else:
-                    self.fields[key] = ModelChoiceField(
+                    # Use a ModelChoiceField here, as InterfaceFormField would
+                    # provide an upload wodget, but we do not want to add new
+                    # images/files here, but rather assign existing values to
+                    # the proper display sets.
+                    self.fields[slug] = ModelChoiceField(
                         queryset=ComponentInterfaceValue.objects.filter(
-                            id__in=value["values"]
+                            id__in=civ["values"]
                         ),
                         initial=val,
                         required=False,
