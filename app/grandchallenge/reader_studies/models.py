@@ -1011,7 +1011,7 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
     interface = models.ForeignKey(
-        ComponentInterface, on_delete=models.PROTECT, null=True
+        ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
     )
 
     class Meta:
