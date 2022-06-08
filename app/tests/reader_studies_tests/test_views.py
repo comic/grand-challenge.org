@@ -355,7 +355,7 @@ def test_display_set_update(client):
         method=client.post,
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
     civ_str.refresh_from_db()
