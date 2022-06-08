@@ -1453,42 +1453,6 @@ def test_display_set_add_and_edit(client, settings):
 
     assert ds2.values.count() == 1
 
-    # Add the image civ to the new display set
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-detail",
-        reverse_kwargs={"pk": ds2.pk},
-        user=r1,
-        client=client,
-        method=client.patch,
-        content_type="application/json",
-        data={"civ_values": [f"{new.interface.pk}::{new.pk}"]},
-    )
-
-    ds.refresh_from_db()
-    ds2.refresh_from_db()
-
-    # The image civ is now part of both display sets
-    assert ds.values.count() == 2
-    assert ds2.values.count() == 2
-
-    # Remove the civ from the new display set again
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-detail",
-        reverse_kwargs={"pk": ds2.pk},
-        user=r1,
-        client=client,
-        method=client.patch,
-        content_type="application/json",
-        data={"civ_values": [f"{new.interface.pk}::"]},
-    )
-
-    ds.refresh_from_db()
-    ds2.refresh_from_db()
-
-    # The image civ is now part of the first display set only
-    assert ds.values.count() == 2
-    assert ds2.values.count() == 1
-
     q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
     AnswerFactory(question=q, creator=r2, display_set=ds)
 

@@ -14,7 +14,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
-from grandchallenge.reader_studies.forms import QuestionForm
+from grandchallenge.reader_studies.forms import DisplaySetForm, QuestionForm
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
@@ -959,3 +959,26 @@ def test_reader_study_add_ground_truth_ds(client, settings):
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_display_set_form():
+    rs = ReaderStudyFactory()
+    for slug in ["slug-1", "slug-2"]:
+        ci = ComponentInterfaceFactory(title=slug)
+        civ = ComponentInterfaceValueFactory(interface=ci)
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+    form = DisplaySetForm(instance=ds)
+    assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
+
+    ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
+    QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
+    del rs.values_for_interfaces
+    form = DisplaySetForm(instance=ds)
+    assert sorted(form.fields.keys()) == [
+        "order",
+        "slug-1",
+        "slug-2",
+        "slug-3",
+    ]

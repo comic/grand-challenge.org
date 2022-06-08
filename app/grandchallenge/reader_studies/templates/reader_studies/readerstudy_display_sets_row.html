@@ -4,12 +4,13 @@
 {% load pathlib %}
 {% load reader_study_tags %}
 {% load bleach %}
+{% load crispy_forms_tags %}
 
 <div id="accordion">
   <div class="card">
     <div class="card-header py-1" id="heading-{{ object.id }}">
       <h5 class="mb-0">
-        <button class="btn btn-link w-100" data-toggle="collapse" data-target="#collapse-{{ object.id }}" aria-expanded="true" aria-controls="collapse{{ object.id }}">
+        <button class="btn btn-link w-100 ds-htmx" data-toggle="collapse" data-target="#collapse-{{ object.id }}" aria-expanded="true" aria-controls="collapse{{ object.id }}" data-hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk %}" data-hx-target="#ds-item-{{ object.id }}" data-hx-swap="outerHTML" data-loaded="false">
           <div class="d-flex justify-content-between">
             <div>[{{ object.id }}] {{ object.main_image_title }}</div>
             <div><i class="fa fa-plus-circle"></i></div>
@@ -18,92 +19,8 @@
       </h5>
     </div>
 
-    <div id="collapse-{{ object.id }}" class="collapse" aria-labelledby="heading-{{ object.id }}" data-parent="#accordion">
-      <div class="card-body py-1">
-        <form action="{% url 'api:reader-studies-display-set-detail' object.id %}" method="patch" class="ds-form">
-          <table class="table table-striped table-sm">
-            <tr>
-              <th>Interface</th>
-              <th>Name</th>
-              <th>View</th>
-            </tr>
-            {% for interface, content in object.value_list.items %}
-              <tr>
-                <td>{{ interface }}:</td>
-                <td>
-                  {% if object.is_editable %}
-                    <div class="form-group">
-                      <select class="form-control form-select add-interface" data-url="{% url 'api:reader-studies-display-set-detail' object.id %}" name="civ_values">
-                        <option value="{{ content.id }}::" {% if content.selected == "" %}selected{% endif %}>---</option>
-                        {% for value in content.values %}
-                          {{value}}
-                          <option value="{{ content.id }}::{{ value.values__id }}" {% if content.selected == value.values__id %}selected{% endif %}>
-                            {% if value.values__image__name %}
-                              {{ value.values__image__name }}
-                            {% elif value.values__file %}
-                              {{ value.values__file|filename }}
-                            {% elif value.values__value %}
-                              {{ value.values__value|slice:24 }}
-                            {% endif %}
-                          </option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                  {% else %}
-                    {{ content.title }}
-                  {% endif %}
-                </td>
-                {% if reader_study_display_set_view_feature %}
-                    <td>
-                        <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query display_set=object %}">
-                          <span class="badge badge-primary">
-                              <i class="fa fa-eye"></i> View Case
-                          </span>
-                        </a>
-                    </td>
-                {% elif  content.selected_image %}
-                    <td>
-                        <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=content.selected_image config=reader_study.workstation_config %}">
-                          <span class="badge badge-primary">
-                              <i class="fa fa-eye"></i> View Image
-                          </span>
-                        </a>
-                    </td>
-                {% endif %}
-              </tr>
-            {% endfor %}
-            <tr>
-              <td>Order:</td>
-              <td colspan="3">
-                {% if object.is_editable %}
-                  <div class="form-group">
-                    <input type="text" class="form-control" aria-describedby="orderHelp" placeholder="10" name="order" value="{{ object.order }}">
-                    <small id="orderHelp" class="form-text text-muted">By default, display sets are shown in the order they are created. Use this field to change the ordering. Lower numbers get presented to the users first.</small>
-                  </div>
-                {% else %}
-                  {{ object.order }}
-                {% endif %}
-              </td>
-            </tr>
-            <tr>
-              <td>Description:</td>
-              <td colspan="3">
-                {{ object.description|clean }}
-              </td>
-            </tr>
-            {% if object.is_editable %}
-              <tr>
-                <td colspan="4">
-                  <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn btn-danger" onclick="removeCase('{% url 'api:reader-studies-display-set-detail' object.id %}', true)">Remove</button>
-                  </div>
-                </td>
-              </tr>
-            {% endif %}
-          </table>
-        </form>
-      </div>
+    <div id="collapse-{{ object.id }}" class="collapse" aria-labelledby="heading-{{ object.id }}" data-parent="#accordion" >
+      <div id="ds-item-{{ object.id }}"></div>
     </div>
   </div>
 </div>
