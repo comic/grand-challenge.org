@@ -1,5 +1,6 @@
 import csv
 import io
+import logging
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
@@ -55,6 +56,8 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.subdomains.utils import reverse_lazy
+
+logger = logging.getLogger(__name__)
 
 READER_STUDY_HELP_TEXTS = {
     "title": "The title of this reader study.",
@@ -477,6 +480,11 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 
 
 class DisplaySetForm(Form):
+    _possible_widgets = {
+        Select,  # Default for ModelChoiceField
+        *InterfaceFormField._possible_widgets,
+    }
+
     def __init__(self, *args, instance=None, **kwargs):
         super().__init__(*args, **kwargs)
         if instance is not None:
@@ -485,6 +493,7 @@ class DisplaySetForm(Form):
                 civ,
             ) in instance.reader_study.values_for_interfaces.items():
                 val = instance.values.filter(interface__slug=slug).first()
+
                 if civ["kind"] in InterfaceKind.interface_type_json():
                     # Use the field/widget provided by InterfaceFormField,
                     # which includes proper validation
@@ -506,4 +515,11 @@ class DisplaySetForm(Form):
                         initial=val,
                         required=False,
                     )
+
+                if self.fields[slug].widget not in self._possible_widgets:
+                    # The forms media must be pre-loaded in the list view
+                    # which means we need to know all possible media
+                    # from each form
+                    logger.error("Unexpected widget in htmx form")
+
             self.fields["order"] = IntegerField(initial=instance.order)

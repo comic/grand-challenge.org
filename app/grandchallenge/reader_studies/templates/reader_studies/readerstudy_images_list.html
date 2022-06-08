@@ -2,10 +2,6 @@
 {% load static %}
 {% load url %}
 
-{% block extra_css %}
-    <link href="{% static 'vendored/jsoneditor/jsoneditor.min.css' %}" rel="stylesheet">
-{% endblock %}
-
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
@@ -15,7 +11,6 @@
 {% endblock %}
 
 {% block content %}
-
     <h1>{{ reader_study.title }} Cases</h1>
     <p>
         <a class="btn btn-primary"
@@ -116,5 +111,5 @@
         });
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
-    <script src="{% static 'vendored/jsoneditor/jsoneditor.min.js' %}"></script>
+    {{ form_media }}
 {% endblock %}
