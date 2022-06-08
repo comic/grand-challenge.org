@@ -405,14 +405,8 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # Configure the django-otp package. Note this must be after the
-    # AuthenticationMiddleware.
+    # Django-otp middleware must be after the AuthenticationMiddleware.
     "django_otp.middleware.OTPMiddleware",
-    # Reset login flow middleware. If this middleware is included, the login
-    # flow is reset if another page is loaded between login and successfully
-    # entering two-factor credentials
-    "allauth_2fa.middleware.AllauthTwoFactorMiddleware",
-    "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -427,6 +421,13 @@ MIDDLEWARE = (
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     # Redirects last as they're a last resort
     "django.contrib.redirects.middleware.RedirectFallbackMiddleware",
+    # 2FA middleware, needs to be after subdomina, flatpage and redirect middleware
+    # TwoFactorMiddleware resets the login flow if another page is loaded
+    # between login and successfully entering two-factor credentials. We're subsetting
+    # the original allauth_2fa middleware to pass the correct urlconf.
+    "grandchallenge.core.middleware.TwoFactorMiddleware",
+    # Force 2AF for staff users
+    "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
 )
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -566,7 +567,7 @@ GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 #
 ##############################################################################
 
-ACCOUNT_ADAPTER = "allauth_2fa.adapter.OTPAdapter"
+ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
 ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 30

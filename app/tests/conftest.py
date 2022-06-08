@@ -9,9 +9,12 @@ from typing import List, NamedTuple
 import docker
 import pytest
 from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from django.utils.timezone import now
+from django_otp.oath import TOTP
+from django_otp.plugins.otp_totp.models import TOTPDevice
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
@@ -19,6 +22,7 @@ from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
+from grandchallenge.subdomains.utils import reverse_lazy
 from tests.annotations_tests.factories import (
     ImagePathologyAnnotationFactory,
     ImageQualityAnnotationFactory,
@@ -36,6 +40,7 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import (
+    SUPER_SECURE_TEST_PASSWORD,
     ChallengeFactory,
     ChallengeRequestFactory,
     ImageFactory,
@@ -675,4 +680,40 @@ def challenge_reviewer():
     user = UserFactory()
     assign_perm("challenges.change_challengerequest", user)
     assign_perm("challenges.view_challengerequest", user)
+    return user
+
+
+AUTH_URL = reverse_lazy("two-factor-authenticate")
+
+
+def get_token_from_totp_device(totp_model) -> str:
+    return TOTP(
+        key=totp_model.bin_key,
+        step=totp_model.step,
+        t0=totp_model.t0,
+        digits=totp_model.digits,
+    ).token()
+
+
+def do_totp_authentication(
+    client,
+    totp_device: TOTPDevice,
+    *,
+    auth_url: str = AUTH_URL,
+):
+    token = get_token_from_totp_device(totp_device)
+    client.post(auth_url, {"otp_token": token})
+
+
+@pytest.fixture
+def authenticated_staff_user(client):
+    user = UserFactory(username="john", is_staff=True)
+    totp_device = user.totpdevice_set.create()
+    user = authenticate(
+        username=user.username, password=SUPER_SECURE_TEST_PASSWORD
+    )
+    do_totp_authentication(
+        client=client,
+        totp_device=totp_device,
+    )
     return user

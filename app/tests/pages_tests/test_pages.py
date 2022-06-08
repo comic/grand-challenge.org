@@ -308,9 +308,10 @@ def test_create_page_with_same_title(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_challenge_statistics_page_permissions(client):
+def test_challenge_statistics_page_permissions(
+    client, authenticated_staff_user
+):
     challenge = ChallengeFactory()
-    staff = UserFactory(is_staff=True)
     admin, user = UserFactory.create_batch(2)
     challenge.add_admin(admin)
 
@@ -333,7 +334,7 @@ def test_challenge_statistics_page_permissions(client):
     response = get_view_for_user(
         viewname="pages:statistics",
         client=client,
-        user=staff,
+        user=authenticated_staff_user,
         challenge=challenge,
     )
     response.status_code = 200

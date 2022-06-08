@@ -1,6 +1,6 @@
-from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.utils import user_email, user_username
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth_2fa.adapter import OTPAdapter
 from django import forms
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -8,7 +8,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from grandchallenge.challenges.models import Challenge
 
 
-class AccountAdapter(DefaultAccountAdapter):
+class AccountAdapter(OTPAdapter):
     def is_safe_url(self, url):
         challenge_domains = {
             f"{c.short_name.lower()}{settings.SESSION_COOKIE_DOMAIN}"
