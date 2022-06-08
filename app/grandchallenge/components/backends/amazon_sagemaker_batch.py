@@ -403,23 +403,22 @@ class AmazonSageMakerBatchExecutor(Executor):
         self._create_invocation_json(
             input_civs=input_civs, input_prefixes=input_prefixes
         )
+        # TODO handle job creation failures
         self._create_transform_job()
 
     def handle_event(self, *, event):
         job_status = event["TransformJobStatus"]
 
-        if job_status == "Completed":
+        if job_status == "Stopped":
+            raise TaskCancelled
+        elif job_status in {"Completed", "Failed"}:
             self._set_duration(event=event)
             self._set_task_logs()
             self._set_runtime_metrics(event=event)
-            self._handle_return_code()
-        elif job_status == "Failed":
-            # TODO what about time limit exceeded?
-            # This is an internal error to AWS, could be permissions
-            # Needs investigating by a site administrator
-            raise RuntimeError
-        elif job_status == "Stopped":
-            raise TaskCancelled
+            if job_status == "Completed":
+                self._handle_completed_job()
+            else:
+                self._handle_failed_job()
         else:
             raise ValueError("Invalid job status")
 
@@ -488,7 +487,7 @@ class AmazonSageMakerBatchExecutor(Executor):
             logger.warning(f"Could not determine duration: {e}")
             self.__duration = None
 
-    def _get_log_stream_name(self):
+    def _get_log_stream_name(self, *, data_log=False):
         response = self._logs_client.describe_log_streams(
             logGroupName=self._log_group_name,
             logStreamNamePrefix=f"{self._transform_job_name}",
@@ -500,7 +499,7 @@ class AmazonSageMakerBatchExecutor(Executor):
         log_streams = {
             s["logStreamName"]
             for s in response["logStreams"]
-            if not s["logStreamName"].endswith("/data-log")
+            if s["logStreamName"].endswith("/data-log") is data_log
         }
 
         if len(log_streams) == 1:
@@ -511,16 +510,14 @@ class AmazonSageMakerBatchExecutor(Executor):
     def _set_task_logs(self):
         response = self._logs_client.get_log_events(
             logGroupName=self._log_group_name,
-            logStreamName=self._get_log_stream_name(),
+            logStreamName=self._get_log_stream_name(data_log=False),
             limit=LOGLINES,
             startFromHead=False,
         )
-        events = response["events"]
-
         stdout = []
         stderr = []
 
-        for event in events:
+        for event in response["events"]:
             try:
                 parsed_log = parse_structured_log(
                     log=event["message"].replace("\x00", "")
@@ -541,6 +538,15 @@ class AmazonSageMakerBatchExecutor(Executor):
 
         self.__stdout = stdout
         self.__stderr = stderr
+
+    def _get_job_data_log(self):
+        response = self._logs_client.get_log_events(
+            logGroupName=self._log_group_name,
+            logStreamName=self._get_log_stream_name(data_log=True),
+            limit=LOGLINES,
+            startFromHead=False,
+        )
+        return [event["message"] for event in response["events"]]
 
     def _set_runtime_metrics(self, *, event):
         # TODO add a test for this
@@ -619,7 +625,7 @@ class AmazonSageMakerBatchExecutor(Executor):
                     "The invocation response object is not valid"
                 )
 
-    def _handle_return_code(self):
+    def _handle_completed_job(self):
         return_code = self._get_task_return_code()
 
         if return_code == 0:
@@ -632,6 +638,18 @@ class AmazonSageMakerBatchExecutor(Executor):
             )
         else:
             raise ComponentException(user_error(self.stderr))
+
+    def _handle_failed_job(self):
+        data_log = self._get_job_data_log()
+
+        if any(
+            "Model server did not respond to /invocations request within" in e
+            for e in data_log
+        ):
+            raise ComponentException("Time limit exceeded")
+        else:
+            # Needs investigation by a site administrator, could be permissions
+            raise RuntimeError("Job failed for an unknown reason")
 
     def _stop_running_jobs(self):
         try:
