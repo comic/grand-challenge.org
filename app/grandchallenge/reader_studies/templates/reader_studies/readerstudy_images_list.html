@@ -93,8 +93,10 @@
                     type: 'POST',
                     url:  target.attr("action"),
                     data: formData,
-                    complete: (response) => {
-                        htmx.ajax('GET', target.data("hx-get"), {target: target.data("hx-target"), swap: target.data("hx-swap")});
+                    success: (response) => {
+                        const elem = target.data("hx-target");
+                        $(elem).html(response);
+                        htmx.process(elem);
                     }
                 })
 
