@@ -13,13 +13,17 @@ from django.db.models import TextChoices
 from django.utils._os import safe_join
 
 from grandchallenge.components.backends.base import Executor
-from grandchallenge.components.backends.exceptions import TaskCancelled
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    TaskCancelled,
+)
 from grandchallenge.components.backends.utils import (
     LOGLINES,
     SourceChoices,
     get_sagemaker_model_name,
     ms_timestamp_to_datetime,
     parse_structured_log,
+    user_error,
 )
 from grandchallenge.evaluation.utils import get
 
@@ -405,10 +409,10 @@ class AmazonSageMakerBatchExecutor(Executor):
         job_status = event["TransformJobStatus"]
 
         if job_status == "Completed":
-            # TODO inspect return code
             self._set_duration(event=event)
             self._set_task_logs()
             self._set_runtime_metrics(event=event)
+            self._handle_return_code()
         elif job_status == "Failed":
             # TODO what about time limit exceeded?
             # This is an internal error to AWS, could be permissions
@@ -588,6 +592,46 @@ class AmazonSageMakerBatchExecutor(Executor):
             },
             "metrics": runtime_metrics,
         }
+
+    def _get_task_return_code(self):
+        with io.BytesIO() as fileobj:
+            self._s3_client.download_fileobj(
+                Fileobj=fileobj,
+                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Key=f"{self._invocation_key}.out",
+            )
+            fileobj.seek(0)
+
+            try:
+                result = json.loads(
+                    fileobj.read().decode("utf-8"),
+                )
+            except JSONDecodeError:
+                raise ComponentException(
+                    "The invocation request did not return valid json"
+                )
+
+            try:
+                logger.info(f"{result=}")
+                return int(result["return_code"])
+            except (KeyError, ValueError):
+                raise ComponentException(
+                    "The invocation response object is not valid"
+                )
+
+    def _handle_return_code(self):
+        return_code = self._get_task_return_code()
+
+        if return_code == 0:
+            # Job's a good un
+            return
+        elif return_code == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded the memory limit "
+                f"of {self._memory_limit}g."
+            )
+        else:
+            raise ComponentException(user_error(self.stderr))
 
     def _stop_running_jobs(self):
         try:
