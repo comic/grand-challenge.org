@@ -1,6 +1,9 @@
+import io
+import json
 from uuid import uuid4
 
 import pytest
+from botocore.stub import Stubber
 from django.conf import settings
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
@@ -48,11 +51,7 @@ def test_instance_type_incompatible():
 @pytest.mark.parametrize(
     "key,model_name,app_label",
     (
-        (
-            "A",
-            "job",
-            "algorithms",
-        ),
+        ("A", "job", "algorithms"),
         ("E", "evaluation", "evaluation"),
     ),
 )
@@ -111,3 +110,63 @@ def test_transform_job_name(model, container, container_model, key):
     assert job_params.pk == str(j.pk)
     assert job_params.model_name == j._meta.model_name
     assert job_params.app_label == j._meta.app_label
+
+
+def test_execute(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    with Stubber(executor._sagemaker_client) as s:
+        s.add_response(
+            "create_transform_job",
+            {"TransformJobArn": "string"},
+            {
+                "TransformJobName": executor._transform_job_name,
+                "Environment": {"LOGLEVEL": "INFO"},
+                "ModelClientConfig": {
+                    "InvocationsMaxRetries": 0,
+                    "InvocationsTimeoutInSeconds": 60,
+                },
+                "ModelName": "",
+                "TransformInput": {
+                    "DataSource": {
+                        "S3DataSource": {
+                            "S3DataType": "S3Prefix",
+                            "S3Uri": f"s3://grand-challenge-components-inputs//invocations/algorithms/job/{pk}/invocation.json",
+                        }
+                    }
+                },
+                "TransformOutput": {
+                    "S3OutputPath": f"s3://grand-challenge-components-outputs//invocations/algorithms/job/{pk}"
+                },
+                "TransformResources": {
+                    "InstanceCount": 1,
+                    "InstanceType": "ml.m5.large",
+                },
+            },
+        )
+        executor.execute(input_civs=[], input_prefixes={})
+
+    with io.BytesIO() as fileobj:
+        executor._s3_client.download_fileobj(
+            Fileobj=fileobj,
+            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            Key=executor._invocation_key,
+        )
+        fileobj.seek(0)
+        result = json.loads(fileobj.read().decode("utf-8"))
+
+    assert result == {
+        "inputs": [],
+        "output_bucket_name": "grand-challenge-components-outputs",
+        "output_prefix": f"/io/algorithms/job/{pk}",
+        "pk": f"algorithms-job-{pk}",
+    }
