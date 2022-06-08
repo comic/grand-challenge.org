@@ -1281,6 +1281,11 @@ class DisplaySetUpdate(
     )
     raise_exception = True
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"auto_id": f"id-{self.kwargs['pk']}-%s"})
+        return kwargs
+
     def get_success_url(self):
         return reverse(
             "reader-studies:display-set-detail",
