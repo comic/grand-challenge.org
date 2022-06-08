@@ -8,7 +8,6 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
         <li class="breadcrumb-item active" aria-current="page">Interface Options</li>
     </ol>
 {% endblock %}
@@ -44,14 +43,14 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'algorithms:component-interface-list-input' %}">
+           href="{% url 'components:component-interface-list-input' %}">
             Input options for your algorithm
         </a>
     </p>
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'algorithms:component-interface-list-output' %}">
+           href="{% url 'components:component-interface-list-output' %}">
             Output options for your algorithm
         </a>
     </p>

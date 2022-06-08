@@ -4,7 +4,7 @@
 {% load bleach %}
 
 {% block title %}
-    Add Cases to Archive - {{ block.super }}
+    Add Items to Archive - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -16,13 +16,13 @@
                 href="{{ archive.get_absolute_url }}">{{ archive.title }}
         </a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Add Cases
+            aria-current="page">Add Items
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Add Cases to Archive</h2>
+    <h2>Add Items to Archive</h2>
 
     {% crispy form %}
 {% endblock %}

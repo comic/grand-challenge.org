@@ -2,29 +2,35 @@
 {% load url %}
 
 {% block title %}
-    {{ list_type|title }} Interface Options - {{ block.super }}
+    {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:component-interface-list' %}">Interface Options</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ list_type|title }}</li>
+        {% if object_type == object_type_options.ALGORITHM %}
+            <li class="breadcrumb-item"><a href="{% url 'components:component-interface-list-algorithms' %}">Interface Options</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ list_type|title }}</li>
+        {% else %}
+            <li class="breadcrumb-item active" aria-current="page">Interface Options</li>
+        {% endif %}
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Algorithm {{ list_type|title }} Options</h2>
+    <h2>{{ object_type|title }} {{ list_type|title }} Options</h2>
 
     <p>
-        Here is a list of the existing options that you can to use as
-        {% if list_type == list_type_options.INPUT %}
-            input to
-        {% elif list_type == list_type_options.OUTPUT %}
-            output from
-        {% endif %} your algorithm.
-        You can select multiple options for your algorithms {{ list_type|lower }}.
-        However, the same option cannot be used for both input to and output from your algorithm.
+        {% if object_type == object_type_options.ALGORITHM %}
+            Here is a list of the existing options that you can use as {{ list_type|lower }} for your {{ object_type|lower }}.
+            You can select multiple options for your {{ object_type|lower }} {{ list_type|lower }}.
+            However, the same option cannot be used multiple times, either for input or output for your algorithm. For example,
+            if you add option <code>ct-image</code> as an input, you can't add another <code>ct-image</code>
+            option as either input or output of your algorithm.
+        {% else %}
+            Here is a list of the existing options that you can use for your {{ object_type|lower }} {{ list_type|lower }}.
+            You can select multiple options for your {{ list_type|lower }}, but the same option cannot be used multiple
+            times within one {{ list_type|lower }}.
+        {% endif %}
         If an option does not exist for your use case please contact support with the title, description, and kind
         for your new interface option.
     </p>

@@ -236,8 +236,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         default=False,
         help_text=(
             "If true, readers are allowed to modify their answers for a case "
-            "by navigating back to previous cases. 'allow_case_browsing' must "
-            "be checked with this as well."
+            "by navigating back to previous cases. 'Allow case navigation' must "
+            "be checked as well to enable this setting."
         ),
     )
     allow_case_navigation = models.BooleanField(
@@ -1011,7 +1011,7 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
     interface = models.ForeignKey(
-        ComponentInterface, on_delete=models.PROTECT, null=True
+        ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
     )
 
     class Meta:

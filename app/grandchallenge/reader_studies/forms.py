@@ -204,10 +204,9 @@ class ReaderStudyUpdateForm(
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
             "shuffle_hanging_list": (
-                "If true, each reader will read the cases in a unique "
-                "order. The ordering for each user will be consistent over "
-                "time. If false, the readers will all read the cases in the "
-                "order that you define."
+                "If true, the order of the display sets will be uniquely shuffled "
+                "for each reader. If false, the display sets will be "
+                "ordered by the Order field that you have set on each display set."
             ),
             "case_text": (
                 "Free text that can be included for each case, where the key "
@@ -434,8 +433,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         " and the question text for each of the questions in this study."
         " The subsequent rows should then be filled with the image file"
         " names (separated by semicolons) and the answer corresponding to"
-        " the question text provided in the header. For Boolean type answers,"
-        " use `0` for False and `1` for True.",
+        " the question text provided in the header.",
     )
 
     def __init__(self, *args, reader_study, **kwargs):
