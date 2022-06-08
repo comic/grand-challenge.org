@@ -7,6 +7,7 @@ from json import JSONDecodeError
 from typing import NamedTuple, Optional
 
 import boto3
+import botocore
 from django.conf import settings
 from django.db.models import TextChoices
 from django.utils._os import safe_join
@@ -400,9 +401,29 @@ class AmazonSageMakerBatchExecutor(Executor):
         )
         self._create_transform_job()
 
+    def handle_event(self, *, event):
+        job_status = event["TransformJobStatus"]
+
+        if job_status == "Completed":
+            # TODO inspect return code
+            self._set_duration(event=event)
+            self._set_task_logs()
+            self._set_runtime_metrics(event=event)
+        elif job_status == "Failed":
+            # TODO what about time limit exceeded?
+            # This is an internal error to AWS, could be permissions
+            # Needs investigating by a site administrator
+            raise RuntimeError
+        elif job_status == "Stopped":
+            raise TaskCancelled
+        else:
+            raise ValueError("Invalid job status")
+
     def deprovision(self):
+        self._stop_running_jobs()
+
         super().deprovision()
-        # TODO cancel any running tasks
+
         self._delete_objects(
             bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
             prefix=self._invocation_prefix,
@@ -453,24 +474,6 @@ class AmazonSageMakerBatchExecutor(Executor):
                 "InvocationsMaxRetries": 0,
             },
         )
-
-    def handle_event(self, *, event):
-        job_status = event["TransformJobStatus"]
-
-        if job_status == "Completed":
-            # TODO inspect return code
-            self._set_duration(event=event)
-            self._set_task_logs()
-            self._set_runtime_metrics(event=event)
-        elif job_status == "Failed":
-            # TODO what about time limit exceeded?
-            # This is an internal error to AWS, could be permissions
-            # Needs investigating by a site administrator
-            raise RuntimeError
-        elif job_status == "Stopped":
-            raise TaskCancelled
-        else:
-            raise ValueError("Invalid job status")
 
     def _set_duration(self, *, event):
         try:
@@ -559,7 +562,7 @@ class AmazonSageMakerBatchExecutor(Executor):
         )
 
         if "NextToken" in response:
-            raise logger.error("Too many metrics found")
+            logger.error("Too many metrics found")
 
         runtime_metrics = [
             {
@@ -573,6 +576,32 @@ class AmazonSageMakerBatchExecutor(Executor):
         ]
 
         self.__runtime_metrics = {
-            "instance": dict(instance_type),
+            "instance": {
+                "name": instance_type.name,
+                "cpu": instance_type.cpu,
+                "memory": instance_type.memory,
+                "price_per_hour": instance_type.price_per_hour,
+                "gpus": instance_type.gpus,
+                "gpu_type": None
+                if instance_type.gpu_type is None
+                else instance_type.gpu_type.value,
+            },
             "metrics": runtime_metrics,
         }
+
+    def _stop_running_jobs(self):
+        try:
+            self._sagemaker_client.stop_transform_job(
+                TransformJobName=self._transform_job_name
+            )
+        except botocore.exceptions.ClientError as error:
+            if (
+                error.response["Error"]["Code"] == "ValidationException"
+                and "The request was rejected because the transform job is in status"
+                in error.response["Error"]["Message"]
+            ):
+                logger.info(
+                    "The job could not be stopped as it was not in a stoppable state"
+                )
+            else:
+                raise error
