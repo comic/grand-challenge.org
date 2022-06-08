@@ -906,6 +906,8 @@
         <span class="k">return</span> <span class="n">path</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Component Interface Value </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span>
 
 <div class="viewcode-block" id="ComponentInterfaceValue.clean"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
