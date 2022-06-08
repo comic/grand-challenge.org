@@ -46,7 +46,7 @@ urlpatterns = [
         name="display-set-detail",
     ),
     path(
-        "display-sets/<uuid:pk>/update",
+        "display-sets/<uuid:pk>/update/",
         DisplaySetUpdate.as_view(),
         name="display-set-update",
     ),
