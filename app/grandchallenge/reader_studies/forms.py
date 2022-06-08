@@ -516,10 +516,4 @@ class DisplaySetForm(Form):
                         required=False,
                     )
 
-                if self.fields[slug].widget not in self._possible_widgets:
-                    # The forms media must be pre-loaded in the list view
-                    # which means we need to know all possible media
-                    # from each form
-                    logger.error("Unexpected widget in htmx form")
-
             self.fields["order"] = IntegerField(initial=instance.order)

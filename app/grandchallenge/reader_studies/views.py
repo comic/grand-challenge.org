@@ -43,6 +43,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
+from psycopg2 import ProgrammingError
 from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -385,6 +386,14 @@ class ReaderStudyDisplaySetList(
 
     def render_row(self, *, object_, page_context):
         form = self.form_class(instance=object_)
+
+        all_media = page_context["form_media"] + form.media
+        if all_media.render() != page_context["form_media"].render():
+            raise ProgrammingError(
+                "Media is missing for this form, ensure that all widgets "
+                "have been declared in _possible_widgets on the forms class."
+            )
+
         return render_to_string(
             self.row_template,
             context={**page_context, "object": object_, "form": form},
