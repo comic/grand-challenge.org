@@ -15,6 +15,7 @@ from django.utils._os import safe_join
 from grandchallenge.components.backends.base import Executor
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
+    RetryStep,
     TaskCancelled,
 )
 from grandchallenge.components.backends.utils import (
@@ -403,7 +404,6 @@ class AmazonSageMakerBatchExecutor(Executor):
         self._create_invocation_json(
             input_civs=input_civs, input_prefixes=input_prefixes
         )
-        # TODO handle job creation failures
         self._create_transform_job()
 
     def handle_event(self, *, event):
@@ -449,34 +449,37 @@ class AmazonSageMakerBatchExecutor(Executor):
         )
 
     def _create_transform_job(self):
-        self._sagemaker_client.create_transform_job(
-            TransformJobName=self._transform_job_name,
-            ModelName=get_sagemaker_model_name(
-                repo_tag=self._exec_image_repo_tag
-            ),
-            TransformInput={
-                "DataSource": {
-                    "S3DataSource": {
-                        "S3DataType": "S3Prefix",
-                        "S3Uri": f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._invocation_key}",
+        try:
+            self._sagemaker_client.create_transform_job(
+                TransformJobName=self._transform_job_name,
+                ModelName=get_sagemaker_model_name(
+                    repo_tag=self._exec_image_repo_tag
+                ),
+                TransformInput={
+                    "DataSource": {
+                        "S3DataSource": {
+                            "S3DataType": "S3Prefix",
+                            "S3Uri": f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._invocation_key}",
+                        }
                     }
-                }
-            },
-            TransformOutput={
-                "S3OutputPath": f"s3://{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/{self._invocation_prefix}"
-            },
-            TransformResources={
-                "InstanceType": self._instance_type,
-                "InstanceCount": 1,
-            },
-            Environment={  # Up to 16 pairs
-                "LOGLEVEL": "INFO",
-            },
-            ModelClientConfig={
-                "InvocationsTimeoutInSeconds": self._time_limit,
-                "InvocationsMaxRetries": 0,
-            },
-        )
+                },
+                TransformOutput={
+                    "S3OutputPath": f"s3://{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/{self._invocation_prefix}"
+                },
+                TransformResources={
+                    "InstanceType": self._instance_type,
+                    "InstanceCount": 1,
+                },
+                Environment={  # Up to 16 pairs
+                    "LOGLEVEL": "INFO",
+                },
+                ModelClientConfig={
+                    "InvocationsTimeoutInSeconds": self._time_limit,
+                    "InvocationsMaxRetries": 0,
+                },
+            )
+        except self._sagemaker_client.exceptions.ResourceLimitExceeded as error:
+            raise RetryStep("Capacity Limit Exceeded") from error
 
     def _set_duration(self, *, event):
         try:
@@ -657,13 +660,19 @@ class AmazonSageMakerBatchExecutor(Executor):
                 TransformJobName=self._transform_job_name
             )
         except botocore.exceptions.ClientError as error:
-            if (
-                error.response["Error"]["Code"] == "ValidationException"
-                and "The request was rejected because the transform job is in status"
-                in error.response["Error"]["Message"]
+            okay_error_messages = {
+                # Unstoppable job:
+                "The request was rejected because the transform job is in status",
+                # Job was never created:
+                "Could not find job to update with name",
+            }
+
+            if error.response["Error"][
+                "Code"
+            ] == "ValidationException" and any(
+                okay_message in error.response["Error"]["Message"]
+                for okay_message in okay_error_messages
             ):
-                logger.info(
-                    "The job could not be stopped as it was not in a stoppable state"
-                )
+                logger.info(f"The job could not be stopped: {error}")
             else:
                 raise error
