@@ -11,20 +11,20 @@
                 href="{{ archive.get_absolute_url }}">{{ archive.title }}</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{% url 'archives:cases-list' slug=archive.slug %}">Cases</a>
+                href="{% url 'archives:items-list' slug=archive.slug %}">Items</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Add Cases to Reader Study</li>
+            aria-current="page">Add Items to Reader Study</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Add Cases to Reader Study</h2>
+    <h2>Add Items to Reader Study</h2>
 
     <p>
-        Use this form to append cases from this archive to a reader study.
-        If the cases already belong to the selected reader study then those cases will not be added again.
-        All of the cases in this archive have been pre-selected for you.
+        Use this form to append items from this archive to a reader study.
+        If the items already belong to the selected reader study then those items will not be added again.
+        All items in this archive have been pre-selected for you.
         <b>Be sure to select the correct reader study first!</b>
     </p>
 

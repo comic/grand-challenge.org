@@ -5,12 +5,12 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a></li>
         <li class="breadcrumb-item"><a href="{{ archive.get_absolute_url }}">{{ archive.title }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Cases</li>
+        <li class="breadcrumb-item active" aria-current="page">Images</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Cases for {{ archive.title }}</h2>
+    <h2>Images for {{ archive.title }}</h2>
 
     {% get_obj_perms request.user for archive as "archive_perms" %}
 
@@ -18,7 +18,7 @@
         <p>
             <a class="btn btn-primary"
                href="{% url 'archives:cases-create' slug=archive.slug %}"
-            ><i class="fas fa-file-import"></i> Add Cases
+            ><i class="fas fa-file-import"></i> Add Items
             </a>
         </p>
     {% endif %}

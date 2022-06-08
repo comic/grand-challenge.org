@@ -159,7 +159,7 @@ class AlgorithmForm(
                 "information about each interface. "
                 "Please contact support if your desired input is missing."
             ),
-            reverse_lazy("algorithms:component-interface-list"),
+            reverse_lazy("components:component-interface-list-algorithms"),
         ),
     )
     outputs = ModelMultipleChoiceField(
@@ -174,7 +174,7 @@ class AlgorithmForm(
                 "information about each interface. "
                 "Please contact support if your desired output is missing."
             ),
-            reverse_lazy("algorithms:component-interface-list"),
+            reverse_lazy("components:component-interface-list-algorithms"),
         ),
     )
 

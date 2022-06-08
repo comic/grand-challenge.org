@@ -189,15 +189,18 @@ class AddCasesForm(UploadRawImagesForm):
         queryset=ComponentInterface.objects.filter(
             kind__in=InterfaceKind.interface_type_image()
         ),
-        help_text=format_lazy(
+    )
+
+    def __init__(self, *args, interface_viewname, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["interface"].help_text = format_lazy(
             (
                 'See the <a href="{}">list of interfaces</a> for more '
                 "information about each interface. "
-                "Please contact support if your desired output is missing."
+                "Please contact support if your desired interface is missing."
             ),
-            reverse_lazy("algorithms:component-interface-list"),
-        ),
-    )
+            reverse_lazy(interface_viewname),
+        )
 
     def save(self, *args, **kwargs):
         self._linked_task.kwargs.update(
