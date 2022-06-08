@@ -12,7 +12,7 @@ from django.conf import settings
 from django.db.models import TextChoices
 from django.utils._os import safe_join
 
-from grandchallenge.components.backends.base import Executor
+from grandchallenge.components.backends.base import Executor, JobParams
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
@@ -288,7 +288,6 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     @staticmethod
     def get_job_params(*, event):
-        # TODO needs a test
         job_name = event["TransformJobName"]
 
         prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
@@ -303,7 +302,9 @@ class AmazonSageMakerBatchExecutor(Executor):
             job_model = ModelChoices(result.group("job_model")).label
             job_app_label, job_model_name = job_model.split("-")
             job_pk = result.group("job_pk")
-            return job_app_label, job_model_name, job_pk
+            return JobParams(
+                app_label=job_app_label, model_name=job_model_name, pk=job_pk
+            )
 
     @property
     def _sagemaker_client(self):
@@ -349,17 +350,14 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     @property
     def _invocation_prefix(self):
-        # TODO test this is a different path to IO prefix
         return safe_join("/invocations", *self.job_path_parts)
 
     @property
     def _invocation_key(self):
-        # TODO test this contains the pk, and must use the invocation prefix
         return safe_join(self._invocation_prefix, "invocation.json")
 
     @property
     def _transform_job_name(self):
-        # TODO test this
         # SageMaker requires job names to be less than 63 chars
         job_name = f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self._job_id}"
 

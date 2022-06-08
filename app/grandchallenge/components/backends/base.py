@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
+from typing import NamedTuple
+from uuid import UUID
 
 import boto3
 import botocore
@@ -21,6 +23,12 @@ from grandchallenge.components.backends.exceptions import ComponentException
 logger = logging.getLogger(__name__)
 
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
+
+
+class JobParams(NamedTuple):
+    app_label: str
+    model_name: str
+    pk: UUID
 
 
 class Executor(ABC):

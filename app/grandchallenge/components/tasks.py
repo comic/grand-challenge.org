@@ -525,15 +525,15 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     Backend = import_string(backend)  # noqa: N806
 
     try:
-        job_app_label, job_model_name, job_pk = Backend.get_job_params(
-            event=event
-        )
+        job_params = Backend.get_job_params(event=event)
     except EventError:
         logger.warning("Event not handled by backend")
         return
 
     job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        pk=job_params.pk,
+        app_label=job_params.app_label,
+        model_name=job_params.model_name,
     )
     executor = job.get_executor(backend=backend)
 

@@ -18,6 +18,7 @@ from django.utils.timezone import now
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
+from grandchallenge.components.backends.base import JobParams
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     EventError,
@@ -86,7 +87,9 @@ class AmazonECSExecutor:
         job_id = task_definition_arn.split("/")[-1].split(":")[0]
         job_app_label, job_model_name, job_pk = job_id.split("-", 2)
 
-        return job_app_label, job_model_name, job_pk
+        return JobParams(
+            app_label=job_app_label, model_name=job_model_name, pk=job_pk
+        )
 
     @classmethod
     def update_filesystem(cls):
