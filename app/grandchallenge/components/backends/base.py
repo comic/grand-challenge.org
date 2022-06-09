@@ -309,6 +309,17 @@ class Executor(ABC):
 
     def _delete_objects(self, *, bucket, prefix):
         """Deletes all objects with a given prefix"""
+        if not (
+            prefix.startswith("/io/") or prefix.startswith("/invocations/")
+        ) or bucket not in {
+            settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            settings.COMPONENTS_INPUT_BUCKET_NAME,
+        }:
+            # Guard against deleting something unexpected
+            raise RuntimeError(
+                "Deleting from this prefix or bucket is not allowed"
+            )
+
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
             Prefix=prefix,
