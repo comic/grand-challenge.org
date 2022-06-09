@@ -1,10 +1,11 @@
 import io
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
 from botocore.stub import Stubber
+from dateutil.tz import tzlocal
 from django.conf import settings
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
@@ -254,6 +255,9 @@ def test_set_task_logs(settings):
             service_response={
                 "logStreams": [
                     {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
+                    {
+                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
+                    },
                 ]
             },
             expected_params={
@@ -338,7 +342,7 @@ def test_set_task_logs(settings):
     assert executor.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
 
 
-def test_get_job_data_log():
+def test_get_job_data_log(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
@@ -355,6 +359,7 @@ def test_get_job_data_log():
             method="describe_log_streams",
             service_response={
                 "logStreams": [
+                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
                     {
                         "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
                     },
@@ -386,3 +391,100 @@ def test_get_job_data_log():
         data_logs = executor._get_job_data_log()
 
     assert data_logs == ["data message"]
+
+
+def test_set_runtime_metrics(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    assert executor.runtime_metrics == {}
+
+    with Stubber(executor._cloudwatch_client) as cloudwatch:
+        cloudwatch.add_response(
+            method="get_metric_data",
+            service_response={
+                "MetricDataResults": [
+                    {
+                        "Id": "q",
+                        "Label": "CPUUtilization",
+                        "Timestamps": [
+                            datetime(2022, 6, 9, 9, 38, tzinfo=tzlocal()),
+                            datetime(2022, 6, 9, 9, 37, tzinfo=tzlocal()),
+                        ],
+                        "Values": [0.677884, 0.130367],
+                        "StatusCode": "Complete",
+                    },
+                    {
+                        "Id": "q",
+                        "Label": "MemoryUtilization",
+                        "Timestamps": [
+                            datetime(2022, 6, 9, 9, 38, tzinfo=tzlocal()),
+                            datetime(2022, 6, 9, 9, 37, tzinfo=tzlocal()),
+                        ],
+                        "Values": [1.14447, 0.875619],
+                        "StatusCode": "Complete",
+                    },
+                ]
+            },
+            expected_params={
+                "EndTime": datetime(2022, 6, 9, 9, 43, 1, tzinfo=timezone.utc),
+                "MetricDataQueries": [
+                    {
+                        "Expression": f"SEARCH('{{/aws/sagemaker/TransformJobs,Host}} Host=gc.localhost-A-{pk}/i-', 'Average', 60)",
+                        "Id": "q",
+                    }
+                ],
+                "StartTime": datetime(
+                    2022, 6, 9, 9, 36, 47, tzinfo=timezone.utc
+                ),
+            },
+        )
+        executor._set_runtime_metrics(
+            event={
+                "TransformStartTime": 1654767467000,
+                "TransformEndTime": 1654767481000,
+                "TransformResources": {
+                    "InstanceType": "ml.m5.large",
+                    "InstanceCount": 1,
+                },
+            }
+        )
+
+    assert executor.runtime_metrics == {
+        "instance": {
+            "cpu": 2,
+            "gpu_type": None,
+            "gpus": 0,
+            "memory": 8,
+            "name": "ml.m5.large",
+            "price_per_hour": 0.128,
+        },
+        "metrics": [
+            {
+                "label": "CPUUtilization",
+                "status": "Complete",
+                "timestamps": [
+                    "2022-06-09T09:38:00+00:00",
+                    "2022-06-09T09:37:00+00:00",
+                ],
+                "values": [0.677884, 0.130367],
+            },
+            {
+                "label": "MemoryUtilization",
+                "status": "Complete",
+                "timestamps": [
+                    "2022-06-09T09:38:00+00:00",
+                    "2022-06-09T09:37:00+00:00",
+                ],
+                "values": [1.14447, 0.875619],
+            },
+        ],
+    }

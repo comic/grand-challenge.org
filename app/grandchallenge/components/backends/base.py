@@ -312,7 +312,7 @@ class Executor(ABC):
         return civ
 
     def _delete_objects(self, *, bucket, prefix):
-        """Deletes all objects that are prefixed with io_prefix"""
+        """Deletes all objects with a given prefix"""
         objects_list = self._s3_client.list_objects_v2(
             Bucket=bucket,
             Prefix=prefix,

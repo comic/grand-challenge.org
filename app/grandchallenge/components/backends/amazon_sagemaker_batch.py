@@ -550,7 +550,6 @@ class AmazonSageMakerBatchExecutor(Executor):
         return [event["message"] for event in response["events"]]
 
     def _set_runtime_metrics(self, *, event):
-        # TODO add a test for this
         query_id = "q"
 
         start_time = ms_timestamp_to_datetime(event["TransformStartTime"])
