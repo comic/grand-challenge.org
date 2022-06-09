@@ -12,6 +12,7 @@ from django.core.exceptions import (
 )
 from django.db import transaction
 from django.db.models import Count, Q
+from django.forms import Media
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -376,13 +377,22 @@ class ReaderStudyDisplaySetList(
     ]
     text_align = "left"
     default_sort_order = "asc"
+    form_class = DisplaySetForm
 
     @cached_property
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def render_row(self, *, object_, page_context):
-        form = DisplaySetForm(instance=object_)
+        form = self.form_class(instance=object_)
+
+        all_media = page_context["form_media"] + form.media
+        if all_media.render() != page_context["form_media"].render():
+            raise RuntimeError(
+                "Media is missing for this form, ensure that all widgets "
+                "have been declared in _possible_widgets on the forms class."
+            )
+
         return render_to_string(
             self.row_template,
             context={**page_context, "object": object_, "form": form},
@@ -393,8 +403,14 @@ class ReaderStudyDisplaySetList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        media = Media()
+        for widget in self.form_class._possible_widgets:
+            media = media + widget().media
+
         context.update(
             {
+                "form_media": media,
                 "reader_study": self.reader_study,
                 "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
             }
@@ -1280,6 +1296,11 @@ class DisplaySetUpdate(
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
     raise_exception = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"auto_id": f"id-{self.kwargs['pk']}-%s"})
+        return kwargs
 
     def get_success_url(self):
         return reverse(
