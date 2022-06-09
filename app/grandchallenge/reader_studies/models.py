@@ -507,6 +507,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                     continue
                 question = self.questions.get(question_text=key)
                 _answer = json.loads(gt[key])
+                if _answer is None and question.required is False:
+                    continue
                 if question.answer_type == Question.AnswerType.CHOICE:
                     try:
                         option = question.options.get(title=_answer)
@@ -603,10 +605,19 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             "diff": questions - hangings,
         }
 
+    @cached_property
+    def questions_with_ground__truth(self):
+        return self.questions.annotate(
+            gt_count=Count("answer", filter=Q(answer__is_ground_truth=True))
+        ).filter(gt_count__gte=1)
+
     def score_for_user(self, user):
         """Returns the average and total score for answers given by ``user``."""
+
         return Answer.objects.filter(
-            creator=user, question__reader_study=self, is_ground_truth=False
+            creator=user,
+            question__in=self.questions_with_ground__truth,
+            is_ground_truth=False,
         ).aggregate(Sum("score"), Avg("score"))
 
     @cached_property
@@ -614,7 +625,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         """The average and total scores for this ``ReaderStudy`` grouped by user."""
         return (
             Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=False
+                question__in=self.questions_with_ground__truth,
+                is_ground_truth=False,
             )
             .order_by("creator_id")
             .values("creator__username")
