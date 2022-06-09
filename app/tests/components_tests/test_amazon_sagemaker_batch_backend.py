@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+import botocore
 import pytest
 from botocore.stub import Stubber
 from dateutil.tz import tzlocal
@@ -586,3 +587,58 @@ def test_handle_stopped_event():
 
     with pytest.raises(TaskCancelled):
         executor.handle_event(event={"TransformJobStatus": "Stopped"})
+
+
+def test_deprovision(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    created_files = (
+        (
+            settings.COMPONENTS_INPUT_BUCKET_NAME,
+            f"{executor._io_prefix}/test.json",
+        ),
+        (
+            settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            f"{executor._io_prefix}/test.json",
+        ),
+        (settings.COMPONENTS_INPUT_BUCKET_NAME, executor._invocation_key),
+        (
+            settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            f"{executor._invocation_key}.out",
+        ),
+    )
+
+    for bucket, key in created_files:
+        with io.BytesIO() as f:
+            f.write(json.dumps({"foo": 123}).encode("utf-8"))
+            executor._s3_client.upload_fileobj(
+                Fileobj=f,
+                Bucket=bucket,
+                Key=key,
+            )
+
+    with Stubber(executor._sagemaker_client) as s:
+        s.add_response(
+            method="stop_transform_job",
+            service_response={},
+            expected_params={"TransformJobName": f"gc.localhost-A-{pk}"},
+        )
+        executor.deprovision()
+
+    for bucket, key in created_files:
+        with pytest.raises(botocore.exceptions.ClientError) as error:
+            executor._s3_client.head_object(
+                Bucket=bucket,
+                Key=key,
+            )
+
+        assert error.value.response["Error"]["Message"] == "Not Found"
