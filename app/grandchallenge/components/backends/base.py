@@ -140,11 +140,7 @@ class Executor(ABC):
         if self.__s3_client is None:
             self.__s3_client = boto3.client(
                 "s3",
-                # TODO DO NOT ALLOW OVERRIDING HERE
-                endpoint_url=os.environ.get(
-                    "COMPONENTS_AWS_S3_ENDPOINT_URL",
-                    settings.AWS_S3_ENDPOINT_URL,
-                ),
+                endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             )
         return self.__s3_client
 
