@@ -159,6 +159,7 @@ def get_average_job_duration_for_phase(phase):
         algorithm_image__pk__in=algorithm_images,
         status=Job.SUCCESS,
         creator=None,
+        inputs__archive_items__archive=phase.archive,
     )
     duration_dict = {
         "average_duration": jobs.average_duration(),
