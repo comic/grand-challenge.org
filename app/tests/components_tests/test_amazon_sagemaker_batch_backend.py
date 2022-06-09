@@ -11,6 +11,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.backends.amazon_sagemaker_batch import (
     AmazonSageMakerBatchExecutor,
 )
+from grandchallenge.components.backends.utils import LOGLINES
 from grandchallenge.evaluation.models import Evaluation, Method
 
 
@@ -230,3 +231,158 @@ def test_get_log_stream_name(settings, data_log):
         assert log_stream_name == f"gc.localhost-A-{pk}/i-whatever/data-log"
     else:
         assert log_stream_name == f"gc.localhost-A-{pk}/i-whatever"
+
+
+def test_set_task_logs(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    assert executor.stdout == ""
+    assert executor.stderr == ""
+
+    with Stubber(executor._logs_client) as logs:
+        logs.add_response(
+            method="describe_log_streams",
+            service_response={
+                "logStreams": [
+                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "hello from stdout",
+                                "source": "stdout",
+                                "internal": False,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "hello from stderr",
+                                "source": "stderr",
+                                "internal": False,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "internal stderr",
+                                "source": "stderr",
+                                "internal": True,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "internal stdout",
+                                "source": "stdout",
+                                "internal": True,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": "unstructured log",
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps({"err": "wrong"}),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "wrong source",
+                                "source": "fdgfgsdfdg",
+                                "internal": False,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamName": f"gc.localhost-A-{pk}/i-whatever",
+                "limit": LOGLINES,
+                "startFromHead": False,
+            },
+        )
+        executor._set_task_logs()
+
+    assert executor.stdout == "2022-06-08T10:23:58+00:00 hello from stdout"
+    assert executor.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
+
+
+def test_get_job_data_log():
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    with Stubber(executor._logs_client) as logs:
+        logs.add_response(
+            method="describe_log_streams",
+            service_response={
+                "logStreams": [
+                    {
+                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
+                    },
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": "data message",
+                        "timestamp": 1654683838000,
+                    },
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log",
+                "limit": LOGLINES,
+                "startFromHead": False,
+            },
+        )
+
+        data_logs = executor._get_job_data_log()
+
+    assert data_logs == ["data message"]
