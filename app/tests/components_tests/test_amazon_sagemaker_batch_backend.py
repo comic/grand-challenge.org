@@ -12,6 +12,10 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.backends.amazon_sagemaker_batch import (
     AmazonSageMakerBatchExecutor,
 )
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    TaskCancelled,
+)
 from grandchallenge.components.backends.utils import LOGLINES
 from grandchallenge.evaluation.models import Evaluation, Method
 
@@ -488,3 +492,97 @@ def test_set_runtime_metrics(settings):
             },
         ],
     }
+
+
+def test_handle_completed_job():
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    return_code = 0
+
+    with io.BytesIO() as f:
+        f.write(json.dumps({"return_code": return_code}).encode("utf-8"))
+        f.seek(0)
+        executor._s3_client.upload_fileobj(
+            Fileobj=f,
+            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            Key=f"{executor._invocation_key}.out",
+        )
+
+    assert executor._handle_completed_job() is None
+
+
+def test_handle_failed_job(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    with Stubber(executor._logs_client) as logs:
+        logs.add_response(
+            method="describe_log_streams",
+            service_response={
+                "logStreams": [
+                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
+                    {
+                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
+                    },
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": "Something happened",
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": "Model server did not respond to /invocations request within 1200 seconds",
+                        "timestamp": 1654683838000,
+                    },
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log",
+                "limit": LOGLINES,
+                "startFromHead": False,
+            },
+        )
+
+        with pytest.raises(ComponentException) as error:
+            executor._handle_failed_job()
+
+    assert "Time limit exceeded" in str(error)
+
+
+def test_handle_stopped_event():
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    with pytest.raises(TaskCancelled):
+        executor.handle_event(event={"TransformJobStatus": "Stopped"})
