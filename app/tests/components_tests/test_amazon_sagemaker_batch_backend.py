@@ -1,5 +1,6 @@
 import io
 import json
+from datetime import timedelta
 from uuid import uuid4
 
 import pytest
@@ -126,9 +127,9 @@ def test_execute(settings):
 
     with Stubber(executor._sagemaker_client) as s:
         s.add_response(
-            "create_transform_job",
-            {"TransformJobArn": "string"},
-            {
+            method="create_transform_job",
+            service_response={"TransformJobArn": "string"},
+            expected_params={
                 "TransformJobName": executor._transform_job_name,
                 "Environment": {"LOGLEVEL": "INFO"},
                 "ModelClientConfig": {
@@ -170,3 +171,62 @@ def test_execute(settings):
         "output_prefix": f"/io/algorithms/job/{pk}",
         "pk": f"algorithms-job-{pk}",
     }
+
+
+def test_set_duration():
+    executor = AmazonSageMakerBatchExecutor(
+        job_id="algorithms-job-0",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    assert executor.duration is None
+
+    executor._set_duration(
+        event={
+            "CreationTime": 1654683838000,
+            "TransformStartTime": 1654684027000,
+            "TransformEndTime": 1654684048000,
+        }
+    )
+
+    assert executor.duration == timedelta(seconds=21)
+
+
+@pytest.mark.parametrize("data_log", (True, False))
+def test_get_log_stream_name(settings, data_log):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerBatchExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu=False,
+    )
+
+    with Stubber(executor._logs_client) as s:
+        s.add_response(
+            method="describe_log_streams",
+            service_response={
+                "logStreams": [
+                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
+                    {
+                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
+                    },
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TransformJobs",
+                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+            },
+        )
+        log_stream_name = executor._get_log_stream_name(data_log=data_log)
+
+    if data_log:
+        assert log_stream_name == f"gc.localhost-A-{pk}/i-whatever/data-log"
+    else:
+        assert log_stream_name == f"gc.localhost-A-{pk}/i-whatever"
