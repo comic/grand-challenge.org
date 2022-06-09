@@ -1131,6 +1131,33 @@ class ComponentJob(models.Model):
         else:
             return "secondary"
 
+    @property
+    def runtime_metrics_chart(self):
+        return {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": "container",
+            "padding": 0,
+            "data": {
+                "values": [
+                    {
+                        "Metric": metric["label"],
+                        "Timestamp": timestamp,
+                        "Percent": value,
+                    }
+                    for metric in self.runtime_metrics["metrics"]
+                    for timestamp, value in zip(
+                        metric["timestamps"], metric["values"]
+                    )
+                ]
+            },
+            "mark": {"type": "line", "point": True},
+            "encoding": {
+                "x": {"timeUnit": "hoursminutesseconds", "field": "Timestamp"},
+                "y": {"field": "Percent", "type": "quantitative"},
+                "color": {"field": "Metric", "type": "nominal"},
+            },
+        }
+
     class Meta:
         abstract = True
 

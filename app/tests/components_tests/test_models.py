@@ -652,3 +652,74 @@ def test_extra_schema_validation(kind, value, invalidation_schema, use_file):
 
     with pytest.raises(ValidationError):
         v.full_clean()
+
+
+def test_runtime_metrics_chart():
+    job = Job(
+        runtime_metrics={
+            "instance": {
+                "cpu": 2,
+                "gpu_type": None,
+                "gpus": 0,
+                "memory": 8,
+                "name": "ml.m5.large",
+                "price_per_hour": 0.128,
+            },
+            "metrics": [
+                {
+                    "label": "CPUUtilization",
+                    "status": "Complete",
+                    "timestamps": [
+                        "2022-06-09T09:38:00+00:00",
+                        "2022-06-09T09:37:00+00:00",
+                    ],
+                    "values": [0.677884, 0.130367],
+                },
+                {
+                    "label": "MemoryUtilization",
+                    "status": "Complete",
+                    "timestamps": [
+                        "2022-06-09T09:38:00+00:00",
+                        "2022-06-09T09:37:00+00:00",
+                    ],
+                    "values": [1.14447, 0.875619],
+                },
+            ],
+        }
+    )
+
+    assert job.runtime_metrics_chart == {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "width": "container",
+        "padding": 0,
+        "data": {
+            "values": [
+                {
+                    "Metric": "CPUUtilization",
+                    "Timestamp": "2022-06-09T09:38:00+00:00",
+                    "Percent": 0.677884,
+                },
+                {
+                    "Metric": "CPUUtilization",
+                    "Timestamp": "2022-06-09T09:37:00+00:00",
+                    "Percent": 0.130367,
+                },
+                {
+                    "Metric": "MemoryUtilization",
+                    "Timestamp": "2022-06-09T09:38:00+00:00",
+                    "Percent": 1.14447,
+                },
+                {
+                    "Metric": "MemoryUtilization",
+                    "Timestamp": "2022-06-09T09:37:00+00:00",
+                    "Percent": 0.875619,
+                },
+            ]
+        },
+        "mark": {"type": "line", "point": True},
+        "encoding": {
+            "x": {"timeUnit": "hoursminutesseconds", "field": "Timestamp"},
+            "y": {"field": "Percent", "type": "quantitative"},
+            "color": {"field": "Metric", "type": "nominal"},
+        },
+    }
