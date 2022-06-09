@@ -451,14 +451,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         headers = rdr.fieldnames
         if sorted(
             filter(lambda x: not x.endswith("__explanation"), headers)
-        ) != sorted(
-            ["case"]
-            + list(
-                self.reader_study.questions.values_list(
-                    "question_text", flat=True
-                )
-            )
-        ):
+        ) != sorted(self.reader_study.ground_truth_file_headers):
             raise ValidationError(
                 f"Fields provided do not match with reader study. Fields should "
                 f"be: {','.join(self.reader_study.ground_truth_file_headers)}"
