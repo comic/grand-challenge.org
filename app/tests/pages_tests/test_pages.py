@@ -5,7 +5,6 @@ import pytest
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.timezone import now
 
-from grandchallenge.algorithms.models import Job
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import get_average_job_duration_for_phase
@@ -15,7 +14,7 @@ from tests.algorithms_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.evaluation_tests.factories import PhaseFactory, SubmissionFactory
+from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, PageFactory, UserFactory
 from tests.utils import get_view_for_user, validate_admin_only_view
 
@@ -372,23 +371,17 @@ def test_average_job_duration_calculation():
 
     ai = AlgorithmImageFactory(ready=True)
 
-    SubmissionFactory(phase=phase1, algorithm_image=ai)
     AlgorithmJobFactory(
         algorithm_image=ai,
-        status=Job.SUCCESS,
         started_at=now() - timedelta(minutes=1),
         completed_at=now(),
         files=[civ1],
-        creator=None,
     )
-    SubmissionFactory(phase=phase2, algorithm_image=ai)
     AlgorithmJobFactory(
         algorithm_image=ai,
-        status=Job.SUCCESS,
         started_at=now() - timedelta(minutes=2),
         completed_at=now(),
         files=[civ2],
-        creator=None,
     )
 
     duration = get_average_job_duration_for_phase(phase=phase1)

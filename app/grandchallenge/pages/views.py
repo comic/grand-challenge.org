@@ -17,7 +17,6 @@ from guardian.mixins import (
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.core.mixins import UserIsStaffMixin
-from grandchallenge.evaluation.models import Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -152,13 +151,7 @@ class PageDelete(
 
 
 def get_average_job_duration_for_phase(phase):
-    algorithm_images = Submission.objects.filter(
-        phase__pk=phase.pk
-    ).values_list("algorithm_image__pk")
     jobs = Job.objects.filter(
-        algorithm_image__pk__in=algorithm_images,
-        status=Job.SUCCESS,
-        creator=None,
         inputs__archive_items__archive=phase.archive,
     )
     duration_dict = {
