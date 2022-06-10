@@ -325,6 +325,7 @@ class AlgorithmDescriptionForm(ModelForm):
             "validation_and_performance",
             "warnings",
             "common_error_messages",
+            "editor_notes",
         )
         widgets = {
             "summary": MarkdownEditorWidget,
@@ -333,6 +334,7 @@ class AlgorithmDescriptionForm(ModelForm):
             "validation_and_performance": MarkdownEditorWidget,
             "warnings": MarkdownEditorWidget,
             "common_error_messages": MarkdownEditorWidget,
+            "editor_notes": MarkdownEditorWidget,
         }
         help_texts = {
             "validation_and_performance": "If you have performance metrics about your algorithm, you can report them here. We recommend doing this in a table. <br>"
@@ -373,6 +375,7 @@ class AlgorithmDescriptionForm(ModelForm):
                 ModelFactsTextField("uses_and_directions"),
                 ModelFactsTextField("warnings"),
                 ModelFactsTextField("common_error_messages"),
+                ModelFactsTextField("editor_notes"),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
