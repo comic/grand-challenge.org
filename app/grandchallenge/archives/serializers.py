@@ -80,7 +80,7 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             user = self.context["request"].user
 
             self.fields["archive"].queryset = get_objects_for_user(
-                user, "archives.use_archive", accept_global_perms=False
+                user, "archives.upload_archive", accept_global_perms=False
             )
 
     def create(self, validated_data):

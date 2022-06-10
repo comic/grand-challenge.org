@@ -467,6 +467,7 @@ def test_api_archive_item_create(client, settings):
     archive = ArchiveFactory()
     editor, user = UserFactory.create_batch(2)
     archive.add_editor(editor)
+    archive.add_user(user)
 
     response = get_view_for_user(
         viewname="api:archives-item-list",
