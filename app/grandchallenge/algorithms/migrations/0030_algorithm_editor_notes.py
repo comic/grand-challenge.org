@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('algorithms', '0029_algorithmimage_latest_shimmed_version'),
+        ("algorithms", "0029_algorithmimage_latest_shimmed_version"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='algorithm',
-            name='editor_notes',
-            field=models.TextField(blank=True, help_text='Add internal notes such as the deployed version number, code and data locations, etc. Only visible to editors.'),
+            model_name="algorithm",
+            name="editor_notes",
+            field=models.TextField(
+                blank=True,
+                help_text="Add internal notes such as the deployed version number, code and data locations, etc. Only visible to editors.",
+            ),
         ),
     ]
