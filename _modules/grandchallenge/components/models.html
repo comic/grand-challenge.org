@@ -171,6 +171,7 @@
     <span class="n">THUMBNAIL_JPG</span> <span class="o">=</span> <span class="s2">&quot;JPEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Thumbnail jpg&quot;</span><span class="p">)</span>
     <span class="n">THUMBNAIL_PNG</span> <span class="o">=</span> <span class="s2">&quot;PNG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Thumbnail png&quot;</span><span class="p">)</span>
     <span class="n">OBJ</span> <span class="o">=</span> <span class="s2">&quot;OBJ&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;OBJ file&quot;</span><span class="p">)</span>
+    <span class="n">MP4</span> <span class="o">=</span> <span class="s2">&quot;MP4&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;MP4 file&quot;</span><span class="p">)</span>
 
     <span class="c1"># Legacy support</span>
     <span class="n">CSV</span> <span class="o">=</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;CSV file&quot;</span><span class="p">)</span>
@@ -537,6 +538,7 @@
 <span class="sd">        * Thumbnail JPG</span>
 <span class="sd">        * Thumbnail PNG</span>
 <span class="sd">        * OBJ file</span>
+<span class="sd">        * MP4 file</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
@@ -546,6 +548,7 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">,</span>
         <span class="p">}</span></div>
 
     <span class="nd">@classmethod</span>
@@ -593,6 +596,8 @@
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;text/plain&quot;</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;video/mp4&quot;</span><span class="p">,)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
@@ -817,6 +822,7 @@
                     <span class="s2">&quot;.pdf&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;.sqreg&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;.obj&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.mp4&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">),</span>
             <span class="n">MimeTypeValidator</span><span class="p">(</span>
@@ -831,6 +837,7 @@
                     <span class="s2">&quot;application/octet-stream&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;application/x-sqlite3&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;application/vnd.sqlite3&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;video/mp4&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">),</span>
         <span class="p">],</span>
@@ -844,7 +851,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">name</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span>
@@ -908,7 +915,8 @@
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Component Interface Value </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Component Interface Value </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span>
 
 <div class="viewcode-block" id="ComponentInterfaceValue.clean"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
