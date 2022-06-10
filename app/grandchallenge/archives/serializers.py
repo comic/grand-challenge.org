@@ -1,6 +1,7 @@
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import JSONField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 
@@ -81,6 +82,11 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             self.fields["archive"].queryset = get_objects_for_user(
                 user, "archives.use_archive", accept_global_perms=False
             )
+
+    def create(self, validated_data):
+        if validated_data.pop("values") != []:
+            raise ValidationError("Values can only be added via update")
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
         civs = validated_data.pop("values")
