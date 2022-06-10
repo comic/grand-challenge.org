@@ -465,8 +465,24 @@ def test_api_archive_item_create(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
     archive = ArchiveFactory()
-    editor = UserFactory()
+    editor, user = UserFactory.create_batch(2)
     archive.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="api:archives-item-list",
+        client=client,
+        method=client.post,
+        data={"archive": archive.api_url, "values": []},
+        user=user,
+        content_type="application/json",
+        follow=True,
+    )
+
+    # User does not have access to the archive
+    assert response.status_code == 400
+    assert response.json()["archive"] == [
+        "Invalid hyperlink - Object does not exist."
+    ]
 
     assert archive.items.count() == 0
     response = get_view_for_user(
