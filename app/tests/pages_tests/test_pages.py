@@ -5,6 +5,10 @@ import pytest
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.timezone import now
 
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import get_average_job_duration_for_phase
@@ -12,9 +16,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
-from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.evaluation_tests.factories import PhaseFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, PageFactory, UserFactory
 from tests.utils import get_view_for_user, validate_admin_only_view
 
@@ -356,33 +358,27 @@ def test_average_job_duration_calculation():
     phase1, phase2 = PhaseFactory.create_batch(
         2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
     )
-    phase1.archive = ArchiveFactory()
-    phase2.archive = ArchiveFactory()
-    phase1.save()
-    phase2.save()
-
-    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)
-    item1 = ArchiveItemFactory(archive=phase1.archive)
-    item2 = ArchiveItemFactory(archive=phase2.archive)
-    item1.values.set([civ1])
-    item2.values.set([civ2])
-    phase1.archive.items.add(item1)
-    phase2.archive.items.add(item2)
 
     ai = AlgorithmImageFactory(ready=True)
 
-    AlgorithmJobFactory(
+    j1 = AlgorithmJobFactory(
         algorithm_image=ai,
         started_at=now() - timedelta(minutes=1),
         completed_at=now(),
-        files=[civ1],
     )
-    AlgorithmJobFactory(
+    _ = AlgorithmJobFactory(
         algorithm_image=ai,
         started_at=now() - timedelta(minutes=2),
         completed_at=now(),
-        files=[civ2],
     )
+    j1.outputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(slug="metrics-json-file"),
+            value=True,
+        )
+    )
+    e1 = EvaluationFactory(submission__phase=phase1)
+    e1.inputs.add(j1.outputs.first())
 
     duration = get_average_job_duration_for_phase(phase=phase1)
 
