@@ -1,9 +1,22 @@
+from datetime import timedelta
 from itertools import chain
 
 import pytest
 from django.db.models import BLANK_CHOICE_DASH
+from django.utils.timezone import now
 
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
+from grandchallenge.pages.views import get_average_job_duration_for_phase
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+)
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, PageFactory, UserFactory
 from tests.utils import get_view_for_user, validate_admin_only_view
 
@@ -337,3 +350,37 @@ def test_challenge_statistics_page_permissions(client):
         challenge=challenge,
     )
     response.status_code = 200
+
+
+@pytest.mark.django_db
+def test_average_job_duration_calculation():
+    challenge = ChallengeFactory()
+    phase1, phase2 = PhaseFactory.create_batch(
+        2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+
+    ai = AlgorithmImageFactory(ready=True)
+
+    j1 = AlgorithmJobFactory(
+        algorithm_image=ai,
+        started_at=now() - timedelta(minutes=1),
+        completed_at=now(),
+    )
+    _ = AlgorithmJobFactory(
+        algorithm_image=ai,
+        started_at=now() - timedelta(minutes=2),
+        completed_at=now(),
+    )
+    j1.outputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(slug="metrics-json-file"),
+            value=True,
+        )
+    )
+    e1 = EvaluationFactory(submission__phase=phase1)
+    e1.inputs.add(j1.outputs.first())
+
+    duration = get_average_job_duration_for_phase(phase=phase1)
+
+    assert duration["average_duration"].seconds == timedelta(minutes=1).seconds
+    assert duration["total_duration"].seconds == timedelta(minutes=1).seconds

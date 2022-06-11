@@ -215,6 +215,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         blank=True,
         help_text="Describe common error messages a user might encounter when trying out your algorithm and provide solutions for them.",
     )
+    editor_notes = models.TextField(
+        blank=True,
+        help_text="Add internal notes such as the deployed version number, code and data locations, etc. Only visible to editors.",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

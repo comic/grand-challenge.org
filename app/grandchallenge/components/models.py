@@ -97,6 +97,7 @@ class InterfaceKindChoices(models.TextChoices):
     THUMBNAIL_JPG = "JPEG", _("Thumbnail jpg")
     THUMBNAIL_PNG = "PNG", _("Thumbnail png")
     OBJ = "OBJ", _("OBJ file")
+    MP4 = "MP4", _("MP4 file")
 
     # Legacy support
     CSV = "CSV", _("CSV file")
@@ -463,6 +464,7 @@ class InterfaceKind:
         * Thumbnail JPG
         * Thumbnail PNG
         * OBJ file
+        * MP4 file
         """
         return {
             InterfaceKind.InterfaceKindChoices.CSV,
@@ -472,6 +474,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
             InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
             InterfaceKind.InterfaceKindChoices.OBJ,
+            InterfaceKind.InterfaceKindChoices.MP4,
         }
 
     @classmethod
@@ -519,6 +522,8 @@ class InterfaceKind:
             )
         elif kind == InterfaceKind.InterfaceKindChoices.OBJ:
             return ("text/plain",)
+        elif kind == InterfaceKind.InterfaceKindChoices.MP4:
+            return ("video/mp4",)
         else:
             raise RuntimeError(f"Unknown kind {kind}")
 
@@ -743,6 +748,7 @@ class ComponentInterfaceValue(models.Model):
                     ".pdf",
                     ".sqreg",
                     ".obj",
+                    ".mp4",
                 )
             ),
             MimeTypeValidator(
@@ -757,6 +763,7 @@ class ComponentInterfaceValue(models.Model):
                     "application/octet-stream",
                     "application/x-sqlite3",
                     "application/vnd.sqlite3",
+                    "video/mp4",
                 )
             ),
         ],
@@ -770,7 +777,7 @@ class ComponentInterfaceValue(models.Model):
         if self.value is not None:
             return str(self.value)
         if self.file:
-            return self.file.name
+            return Path(self.file.name).name
         if self.image:
             return self.image.name
         return ""
@@ -834,7 +841,8 @@ class ComponentInterfaceValue(models.Model):
     def __str__(self):
         if self.value is None:
             return self.title
-        return f"Component Interface Value {self.pk} for {self.interface}"
+        else:
+            return f"Component Interface Value {self.pk} for {self.interface}"
 
     def clean(self):
         super().clean()

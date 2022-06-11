@@ -117,6 +117,7 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.THUMBNAIL_JPG, True, False),
         (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
         (InterfaceKindChoices.OBJ, True, False),
+        (InterfaceKindChoices.MP4, True, False),
     ),
 )
 def test_saved_in_object_store(kind, object_store_required, is_image):

@@ -256,10 +256,18 @@
                         taken {{ object.average_duration|naturaldelta }}.
                     </p>
                 {% endif %}
+                {% if object.editor_notes %}
+                    <h4>Notes</h4>
+                    {{ object.editor_notes|md2html }}
+                {% endif %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:update' slug=object.slug %}">
                         <i class="fa fa-cog"></i> Update Settings
+                    </a>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:description-update' slug=object.slug %}">
+                        <i class="fa fa-edit"></i> Update Description
                     </a>
                 </p>
             {% endif %}

@@ -19,6 +19,10 @@ def init_archiveitem_permissions(*_, **__):
         f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}",
         g,
     )
+    assign_perm(
+        f"{ArchiveItem._meta.app_label}.add_{ArchiveItem._meta.model_name}",
+        g,
+    )
 
 
 class ArchivesConfig(AppConfig):
