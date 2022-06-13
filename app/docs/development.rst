@@ -30,7 +30,12 @@ installed alongside docker. If the docker compose cycle invocation below crashes
     $ git clone https://github.com/comic/grand-challenge.org
     $ cd grand-challenge.org
 
-3. You can then start the development site by invoking
+3. Set your local docker group id in your ``.env`` file
+
+.. code-block:: console
+    $ echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
+
+4. You can then start the development site by invoking
 
 .. code-block:: console
 

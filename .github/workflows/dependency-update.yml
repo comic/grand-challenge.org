@@ -38,6 +38,9 @@ jobs:
           POETRY_LOG="${POETRY_LOG//$'\n'/'%0A'}"
           POETRY_LOG="${POETRY_LOG//$'\r'/'%0D'}"
           echo "::set-output name=poetry-log::$POETRY_LOG"
+      - name: Set DOCKER_GID
+        run: |
+          echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
       - name: Build the test container, make the docs and migrations
         run: |
           make build_web_test
