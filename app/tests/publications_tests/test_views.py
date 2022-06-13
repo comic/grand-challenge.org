@@ -22,7 +22,7 @@ def test_publication_creation(client, mocker):
     assert Publication.objects.count() == 0
 
     mocker.patch(
-        "grandchallenge.publications.utils.get_doi_csl", return_value=TEST_CSL
+        "grandchallenge.publications.fields.get_doi_csl", return_value=TEST_CSL
     )
 
     # only registered users can create a publication
@@ -59,7 +59,7 @@ def test_publication_object_visibilty(client, mocker):
     assert not user2.has_perm("view_algorithm", alg)
 
     mocker.patch(
-        "grandchallenge.publications.utils.get_doi_csl", return_value=TEST_CSL
+        "grandchallenge.publications.fields.get_doi_csl", return_value=TEST_CSL
     )
 
     # create publication

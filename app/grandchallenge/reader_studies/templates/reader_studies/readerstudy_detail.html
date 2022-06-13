@@ -155,7 +155,7 @@
                     {% endif %}
 
 
-                    There are {{ object.display_sets.count }} case{{ object.display_sets.count|pluralize }}.
+                    There {{ object.display_sets.count|pluralize:'is, are' }} {{ object.display_sets.count }} case{{ object.display_sets.count|pluralize }}.
 
                     {% if object.shuffle_hanging_list %}
                         Each reader will read the cases in a unique order.
@@ -201,7 +201,7 @@
                 <h2>Cases</h2>
 
                 <p>
-                    There are {{ object.display_sets.count }}
+                    There {{ object.display_sets.count|pluralize:'is, are' }} {{ object.display_sets.count }}
                     case{{ object.display_sets.count|pluralize }} in this
                     reader study.
                 </p>

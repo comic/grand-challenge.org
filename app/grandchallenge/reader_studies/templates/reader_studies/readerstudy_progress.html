@@ -34,7 +34,7 @@
                             {{ user.obj|user_profile_link }}
                         </div>
                     </div>
-                    <div class="col-4 {% if reader_study_view_as_user_feature %} col-md-2 {% else %}col-md-4 {% endif %}p-1">
+                    <div class="col-4 col-md-2 p-1">
                         <div class="progress h-100">
                             <div class="progress-bar" role="progressbar"
                                  style="width: {{ user.progress.questions }}%"
@@ -43,14 +43,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-2 {% if reader_study_view_as_user_feature %} col-md-1 {% else %}col-md-2 {% endif %} p-1">
+                    <div class="col-2 col-md-1 p-1">
                         <div class="h-100 d-flex align-items-center">
                             <div>
                                 &nbsp;{{ user.progress.questions|floatformat }}%
                             </div>
                         </div>
                     </div>
-                    {% if reader_study_view_as_user_feature %}
                     <div class="col-6 col-md-3 p-1">
                         <div class="d-flex justify-content-md-end justify-content-start align-items-center">
                             <a class="btn btn-primary"
@@ -59,8 +58,7 @@
                             </a>
                         </div>
                     </div>
-                    {% endif %}
-                    <div class="{% if reader_study_view_as_user_feature %}col-6 col-md-3 {% else %}col-12 col-md-3 {% endif %}p-1">
+                    <div class="col-6 col-md-3 p-1">
                         <div class="d-flex justify-content-md-center justify-content-start align-items-center">
                             <!-- Answer removal is handled by Modal, see below -->
                             <button type="button"

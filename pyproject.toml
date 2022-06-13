@@ -122,7 +122,8 @@ sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
 sphinxcontrib-django = "*"
 django-capture-on-commit-callbacks = "*"  # Backport from Django 4.0, can be removed
-amass = "^0.1.3"
+amass = "*"
+watchfiles = "*"
 
 [tool.amass]
 output = "app/grandchallenge/core/static/vendored"

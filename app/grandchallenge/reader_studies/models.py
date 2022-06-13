@@ -6,7 +6,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
@@ -236,8 +235,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         default=False,
         help_text=(
             "If true, readers are allowed to modify their answers for a case "
-            "by navigating back to previous cases. 'allow_case_browsing' must "
-            "be checked with this as well."
+            "by navigating back to previous cases. 'Allow case navigation' must "
+            "be checked as well to enable this setting."
         ),
     )
     allow_case_navigation = models.BooleanField(
@@ -722,47 +721,52 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @cached_property
     def values_for_interfaces(self):
-        cache_key = f"{self._meta.app_label}.{self._meta.model_name}-{self.slug}-{self.modified.timestamp()}"
-        cached = cache.get(cache_key)
-        if cached:
-            return cached
-        for key in cache.keys(
-            f"{self._meta.app_label}.{self._meta.model_name}-{self.slug}-*"
-        ):
-            cache.delete(key)
         vals = list(
             self.display_sets.select_related(
                 "values", "values__interface", "values__image"
             )
             .values(
-                "values__interface",
+                "values__interface__kind",
                 "values__interface__slug",
+                "values__interface__schema",
                 "values__id",
-                "values__image__name",
-                "values__file",
-                "values__value",
             )
             .order_by("values__id")
             .distinct()
         )
         interfaces = {
-            x["values__interface__slug"]: x["values__interface"] for x in vals
+            x["values__interface__slug"]: (
+                x["values__interface__kind"],
+                x["values__interface__schema"],
+            )
+            for x in vals
         }
+        interfaces.update(
+            {
+                val["interface__slug"]: (
+                    val["interface__kind"],
+                    val["interface__schema"],
+                )
+                for val in self.questions.filter(
+                    interface__isnull=False
+                ).values(
+                    "interface__slug", "interface__kind", "interface__schema"
+                )
+            }
+        )
         values_for_interfaces = {
             interface: {
-                "id": interfaces[interface],
+                "kind": interfaces[interface][0],
+                "schema": interfaces[interface][1],
                 "values": [
-                    x
+                    x["values__id"]
                     for x in vals
                     if x["values__interface__slug"] == interface
                 ],
-                "selected": "",
-                "selected_image": "",
             }
             for interface in sorted(interfaces.keys())
         }
 
-        cache.set(cache_key, values_for_interfaces, timeout=None)
         return values_for_interfaces
 
 
@@ -827,38 +831,6 @@ class DisplaySet(UUIDModel):
         ordering = ("order", "created")
 
     @cached_property
-    def value_list(self):
-        cache_key = (
-            f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-"
-            f"{self.reader_study.modified.timestamp()}-"
-            f"{self.modified.timestamp()}"
-        )
-        cached = cache.get(cache_key)
-        if cached:
-            return cached
-        for key in cache.keys(
-            f"{self._meta.app_label}.{self._meta.model_name}-{self.pk}-*"
-        ):
-            cache.delete(key)
-        if self.is_editable:
-            items = self.reader_study.values_for_interfaces
-            for civ in self.values.all():
-                items[civ.interface.slug]["selected"] = civ.id
-                items[civ.interface.slug]["selected_image"] = (
-                    civ.image_id or ""
-                )
-        else:
-            items = {
-                val.interface.slug: {
-                    "title": val.title,
-                    "selected_image": val.image_id,
-                }
-                for val in self.values.all()
-            }
-        cache.set(cache_key, items, timeout=None)
-        return items
-
-    @cached_property
     def is_editable(self):
         return not self.answers.exists()
 
@@ -877,7 +849,7 @@ class DisplaySet(UUIDModel):
                 [
                     md2html(case_text[val.image.name])
                     for val in self.values.all()
-                    if val.image.name in case_text
+                    if val.image and val.image.name in case_text
                 ]
             )
         else:
@@ -1011,7 +983,7 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
     interface = models.ForeignKey(
-        ComponentInterface, on_delete=models.PROTECT, null=True
+        ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
     )
 
     class Meta:

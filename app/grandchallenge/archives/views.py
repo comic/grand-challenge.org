@@ -28,7 +28,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.decorators import action
-from rest_framework.mixins import UpdateModelMixin
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -329,7 +329,8 @@ class ArchiveUploadSessionCreate(
             {
                 "linked_task": add_images_to_archive.signature(
                     kwargs={"archive_pk": self.archive.pk}, immutable=True
-                )
+                ),
+                "interface_viewname": "components:component-interface-list-archives",
             }
         )
         return kwargs
@@ -704,7 +705,9 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
         return Response(studies)
 
 
-class ArchiveItemViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
+class ArchiveItemViewSet(
+    CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet
+):
     queryset = ArchiveItem.objects.all().prefetch_related(
         "archive__hanging_protocol"
     )
@@ -714,7 +717,7 @@ class ArchiveItemViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
     filterset_fields = ["archive"]
 
     def get_serializer_class(self):
-        if "update" in self.action:
+        if "update" in self.action or "create" in self.action:
             return ArchiveItemPostSerializer
         else:
             return ArchiveItemSerializer

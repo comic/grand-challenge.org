@@ -164,6 +164,10 @@ urlpatterns = [
         ),
     ),
     path("emails/", include("grandchallenge.emails.urls", namespace="emails")),
+    path(
+        "components/",
+        include("grandchallenge.components.urls", namespace="components"),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

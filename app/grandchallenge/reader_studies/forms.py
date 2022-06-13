@@ -1,5 +1,6 @@
 import csv
 import io
+import logging
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
@@ -18,6 +19,7 @@ from django.forms import (
     CharField,
     FileField,
     Form,
+    IntegerField,
     ModelChoiceField,
     ModelForm,
     Select,
@@ -29,7 +31,12 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -49,6 +56,8 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.subdomains.utils import reverse_lazy
+
+logger = logging.getLogger(__name__)
 
 READER_STUDY_HELP_TEXTS = {
     "title": "The title of this reader study.",
@@ -204,10 +213,9 @@ class ReaderStudyUpdateForm(
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
             "shuffle_hanging_list": (
-                "If true, each reader will read the cases in a unique "
-                "order. The ordering for each user will be consistent over "
-                "time. If false, the readers will all read the cases in the "
-                "order that you define."
+                "If true, the order of the display sets will be uniquely shuffled "
+                "for each reader. If false, the display sets will be "
+                "ordered by the Order field that you have set on each display set."
             ),
             "case_text": (
                 "Free text that can be included for each case, where the key "
@@ -275,6 +283,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def interface_choices(self):
         answer_type = self["answer_type"].value()
+        if answer_type is None:
+            return ComponentInterface.objects.none()
         return ComponentInterface.objects.filter(
             kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP[answer_type]
         )
@@ -434,8 +444,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         " and the question text for each of the questions in this study."
         " The subsequent rows should then be filled with the image file"
         " names (separated by semicolons) and the answer corresponding to"
-        " the question text provided in the header. For Boolean type answers,"
-        " use `0` for False and `1` for True.",
+        " the question text provided in the header.",
     )
 
     def __init__(self, *args, reader_study, **kwargs):
@@ -470,3 +479,43 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         values = [x for x in rdr]
 
         return values
+
+
+class DisplaySetForm(Form):
+    _possible_widgets = {
+        Select,  # Default for ModelChoiceField
+        *InterfaceFormField._possible_widgets,
+    }
+
+    def __init__(self, *args, instance=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if instance is not None:
+            for (
+                slug,
+                civ,
+            ) in instance.reader_study.values_for_interfaces.items():
+                val = instance.values.filter(interface__slug=slug).first()
+
+                if civ["kind"] in InterfaceKind.interface_type_json():
+                    # Use the field/widget provided by InterfaceFormField,
+                    # which includes proper validation
+                    self.fields[slug] = InterfaceFormField(
+                        kind=civ["kind"],
+                        schema=civ["schema"],
+                        initial=val.value if val else None,
+                        required=False,
+                    ).field
+                else:
+                    # Use a ModelChoiceField here, as InterfaceFormField would
+                    # provide an upload wodget, but we do not want to add new
+                    # images/files here, but rather assign existing values to
+                    # the proper display sets.
+                    self.fields[slug] = ModelChoiceField(
+                        queryset=ComponentInterfaceValue.objects.filter(
+                            id__in=civ["values"]
+                        ),
+                        initial=val,
+                        required=False,
+                    )
+
+            self.fields["order"] = IntegerField(initial=instance.order)

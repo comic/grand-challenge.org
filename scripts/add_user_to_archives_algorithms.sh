@@ -14,5 +14,5 @@ u = get_user_model().objects.filter(username='$1').get()
 for model in (Archive, Algorithm):
     for obj in model.objects.all():
         obj.add_user(u)"
-echo "$add_user_cmd" | docker-compose run -u "$user_id" --rm web python manage.py shell
+echo "$add_user_cmd" | docker compose run -u "$user_id" --rm web python manage.py shell
 echo "Added user $1 as a user of all existing archives and algorithms"

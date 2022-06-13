@@ -9,8 +9,8 @@ from grandchallenge.archives.models import (
 
 class ArchiveAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug")
-    list_display = ("pk", "title", "slug", "public")
-    list_filter = ("public",)
+    list_display = ("pk", "title", "slug", "public", "workstation")
+    list_filter = ("public", "workstation__slug")
 
 
 class ArchiveItemAdmin(admin.ModelAdmin):

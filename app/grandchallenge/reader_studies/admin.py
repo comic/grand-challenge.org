@@ -20,12 +20,14 @@ class ReaderStudyAdmin(GuardedModelAdmin):
         "is_educational",
         "allow_answer_modification",
         "allow_case_navigation",
+        "workstation",
     )
     list_filter = (
         "public",
         "is_educational",
         "allow_answer_modification",
         "allow_case_navigation",
+        "workstation__slug",
     )
     search_fields = ("title", "slug", "pk")
 
@@ -67,10 +69,7 @@ class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
 class DisplaySetAdmin(GuardedModelAdmin):
     list_filter = ("reader_study__slug",)
     readonly_fields = ("reader_study", "values")
-    list_display = (
-        "reader_study",
-        "order",
-    )
+    list_display = ("reader_study", "order")
     list_select_related = ("reader_study",)
 
 

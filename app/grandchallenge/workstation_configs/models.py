@@ -162,7 +162,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         null=True,
         on_delete=models.SET_NULL,
         related_name="workstation_default_window_presets",
-        help_text="The preset that is applied when an image is fist shown",
+        help_text="The preset that is applied when an image is first shown",
     )
 
     image_context = models.CharField(
@@ -211,7 +211,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-        help_text="The look-up table that is applied when an overlay image is fist shown",
+        help_text="The look-up table that is applied when an overlay image is first shown",
     )
 
     default_overlay_interpolation = models.CharField(

@@ -14,7 +14,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
-from grandchallenge.reader_studies.forms import QuestionForm
+from grandchallenge.reader_studies.forms import DisplaySetForm, QuestionForm
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
@@ -392,6 +392,16 @@ def test_question_form_interface_field(answer_type, interface_kind):
     form = QuestionForm(initial={"answer_type": answer_type})
     assert form.interface_choices().filter(pk=ci.pk).exists()
     assert not form.interface_choices().filter(pk=ci_img.pk).exists()
+
+
+@pytest.mark.django_db
+def test_question_form_interface_field_no_answer_type():
+    assert ComponentInterface.objects.count() > 0
+    form = QuestionForm(initial={"answer_type": None})
+    # No answer_type provided, this happens for answers that already have
+    # answers. The form shouldn't error and the interface_choices should
+    # be empty.
+    assert form.interface_choices().count() == 0
 
 
 @pytest.mark.django_db
@@ -959,3 +969,26 @@ def test_reader_study_add_ground_truth_ds(client, settings):
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_display_set_form():
+    rs = ReaderStudyFactory()
+    for slug in ["slug-1", "slug-2"]:
+        ci = ComponentInterfaceFactory(title=slug)
+        civ = ComponentInterfaceValueFactory(interface=ci)
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+    form = DisplaySetForm(instance=ds)
+    assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
+
+    ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
+    QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
+    del rs.values_for_interfaces
+    form = DisplaySetForm(instance=ds)
+    assert sorted(form.fields.keys()) == [
+        "order",
+        "slug-1",
+        "slug-2",
+        "slug-3",
+    ]

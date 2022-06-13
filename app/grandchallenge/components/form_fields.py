@@ -29,6 +29,12 @@ def _join_with_br(a, b):
 
 
 class InterfaceFormField:
+    _possible_widgets = {
+        UserUploadMultipleWidget,
+        UserUploadSingleWidget,
+        JSONEditorWidget,
+    }
+
     def __init__(
         self,
         *,

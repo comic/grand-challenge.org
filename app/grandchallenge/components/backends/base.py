@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
+from typing import NamedTuple
+from uuid import UUID
 
 import boto3
 import botocore
@@ -21,6 +23,12 @@ from grandchallenge.components.backends.exceptions import ComponentException
 logger = logging.getLogger(__name__)
 
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
+
+
+class JobParams(NamedTuple):
+    app_label: str
+    model_name: str
+    pk: UUID
 
 
 class Executor(ABC):
@@ -53,15 +61,37 @@ class Executor(ABC):
     def execute(self, *, input_civs, input_prefixes):
         ...
 
-    def handle_event(self):
+    def handle_event(self, *, event):
         pass
 
     def get_outputs(self, *, output_interfaces):
-        return self._get_outputs(output_interfaces=output_interfaces)
+        """Create ComponentInterfaceValues from the output interfaces"""
+        outputs = []
+
+        with transaction.atomic():
+            # Atomic block required as create_instance needs to
+            # create interfaces in order to store the files
+            for interface in output_interfaces:
+                if interface.is_image_kind:
+                    res = self._create_images_result(interface=interface)
+                elif interface.is_json_kind:
+                    res = self._create_json_result(interface=interface)
+                else:
+                    res = self._create_file_result(interface=interface)
+
+                outputs.append(res)
+
+        return outputs
 
     def deprovision(self):
-        # TODO remove files from S3
-        pass
+        self._delete_objects(
+            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            prefix=self._io_prefix,
+        )
+        self._delete_objects(
+            bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            prefix=self._io_prefix,
+        )
 
     @staticmethod
     @abstractmethod
@@ -88,13 +118,22 @@ class Executor(ABC):
         ...
 
     @property
-    def io_prefix(self):
+    @abstractmethod
+    def runtime_metrics(self):
+        ...
+
+    @property
+    def job_path_parts(self):
         path_parts = self._job_id.split("-", 2)
 
         if len(path_parts) != 3 or "/" in self._job_id or "." in self._job_id:
             raise ValueError(f"Invalid job id {self._job_id}")
 
-        return safe_join("/", *path_parts)
+        return path_parts
+
+    @property
+    def _io_prefix(self):
+        return safe_join("/io", *self.job_path_parts)
 
     @property
     def _s3_client(self):
@@ -108,12 +147,12 @@ class Executor(ABC):
     def _get_key_and_relative_path(self, *, civ, input_prefixes):
         if str(civ.pk) in input_prefixes:
             key = safe_join(
-                self.io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
+                self._io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
             )
         else:
-            key = safe_join(self.io_prefix, civ.relative_path)
+            key = safe_join(self._io_prefix, civ.relative_path)
 
-        relative_path = str(os.path.relpath(key, self.io_prefix))
+        relative_path = str(os.path.relpath(key, self._io_prefix))
 
         return key, relative_path
 
@@ -136,7 +175,7 @@ class Executor(ABC):
             "pk": self._job_id,
             "inputs": inputs,
             "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            "output_prefix": self.io_prefix,
+            "output_prefix": self._io_prefix,
         }
 
     def _provision_inputs(self, *, input_civs, input_prefixes):
@@ -153,27 +192,8 @@ class Executor(ABC):
                     Key=key,
                 )
 
-    def _get_outputs(self, *, output_interfaces):
-        """Create ComponentInterfaceValues from the output interfaces"""
-        outputs = []
-
-        with transaction.atomic():
-            # Atomic block required as create_instance needs to
-            # create interfaces in order to store the files
-            for interface in output_interfaces:
-                if interface.is_image_kind:
-                    res = self._create_images_result(interface=interface)
-                elif interface.is_json_kind:
-                    res = self._create_json_result(interface=interface)
-                else:
-                    res = self._create_file_result(interface=interface)
-
-                outputs.append(res)
-
-        return outputs
-
     def _create_images_result(self, *, interface):
-        prefix = safe_join(self.io_prefix, interface.relative_path)
+        prefix = safe_join(self._io_prefix, interface.relative_path)
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
             Prefix=prefix,
@@ -234,7 +254,7 @@ class Executor(ABC):
         return civ
 
     def _create_json_result(self, *, interface):
-        key = safe_join(self.io_prefix, interface.relative_path)
+        key = safe_join(self._io_prefix, interface.relative_path)
 
         try:
             with io.BytesIO() as fileobj:
@@ -265,7 +285,7 @@ class Executor(ABC):
         return civ
 
     def _create_file_result(self, *, interface):
-        key = safe_join(self.io_prefix, interface.relative_path)
+        key = safe_join(self._io_prefix, interface.relative_path)
 
         try:
             with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as fileobj:
@@ -286,3 +306,39 @@ class Executor(ABC):
             )
 
         return civ
+
+    def _delete_objects(self, *, bucket, prefix):
+        """Deletes all objects with a given prefix"""
+        if not (
+            prefix.startswith("/io/") or prefix.startswith("/invocations/")
+        ) or bucket not in {
+            settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            settings.COMPONENTS_INPUT_BUCKET_NAME,
+        }:
+            # Guard against deleting something unexpected
+            raise RuntimeError(
+                "Deleting from this prefix or bucket is not allowed"
+            )
+
+        objects_list = self._s3_client.list_objects_v2(
+            Bucket=bucket,
+            Prefix=prefix,
+        )
+
+        if contents := objects_list.get("Contents"):
+            response = self._s3_client.delete_objects(
+                Bucket=bucket,
+                Delete={
+                    "Objects": [
+                        {"Key": content["Key"]} for content in contents
+                    ],
+                },
+            )
+            logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
+            errors = response.get("Errors")
+        else:
+            logger.debug(f"No objects found in {bucket}/{prefix}")
+            errors = None
+
+        if objects_list["IsTruncated"] or errors:
+            logger.error("Not all files were deleted")

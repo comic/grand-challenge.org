@@ -56,14 +56,14 @@
             {% if "upload_archive" in object_perms %}
                 <a class="nav-link"
                    href="{% url 'archives:cases-create' slug=object.slug %}"
-                ><i class="fas fa-file-import fa-fw"></i>&nbsp;Add Cases
+                ><i class="fas fa-file-import fa-fw"></i>&nbsp;Add Items
                 </a>
             {% endif %}
 
             {% if "use_archive" in object_perms %}
                 <a class="nav-link"
                    href="{% url 'archives:cases-list' slug=object.slug %}"
-                ><i class="fas fa-eye fa-fw"></i>&nbsp;View Cases
+                ><i class="fas fa-eye fa-fw"></i>&nbsp;View Images
                 </a>
                 <a class="nav-link"
                    href="{% url 'archives:items-list' slug=object.slug %}"
@@ -140,7 +140,7 @@
 
                 <h2>Editors</h2>
                 <p>
-                    The following users are able to edit, view all cases, download all cases and upload new cases to
+                    The following users are able to edit, view all items, download all items and upload new items to
                     this {{ object|meta_attr:'verbose_name' }}:
                 </p>
 
@@ -160,7 +160,7 @@
 
                 <h2>Uploaders</h2>
                 <p>
-                    The following users are able to view all cases, download all cases and upload new cases to
+                    The following users are able to view all items, download all items and upload new items to
                     this {{ object|meta_attr:'verbose_name' }}:
                 </p>
 
@@ -180,7 +180,7 @@
 
                 <h2>Users</h2>
                 <p>
-                    The following users are able to view and download all cases belonging to this
+                    The following users are able to view and download all items belonging to this
                     {{ object|meta_attr:'verbose_name' }}:
                 </p>
 
