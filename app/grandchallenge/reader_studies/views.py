@@ -52,7 +52,6 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from config import settings
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
@@ -817,7 +816,6 @@ class UsersProgress(
             {
                 "reader_study": self.object,
                 "users": users,
-                "reader_study_view_as_user_feature": settings.READER_STUDY_VIEW_AS_USER_FEATURE,
             }
         )
 
