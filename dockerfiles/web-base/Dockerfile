@@ -61,7 +61,6 @@ RUN mkdir -p /opt/sagemaker-shim \
 WORKDIR /opt/poetry
 
 # Install base python packages
-COPY --chown=django:django poetry.toml /opt/poetry
 COPY --chown=django:django pyproject.toml /opt/poetry
 COPY --chown=django:django poetry.lock /opt/poetry
 
