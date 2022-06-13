@@ -849,7 +849,7 @@ class DisplaySet(UUIDModel):
                 [
                     md2html(case_text[val.image.name])
                     for val in self.values.all()
-                    if val.image.name in case_text
+                    if val.image and val.image.name in case_text
                 ]
             )
         else:
