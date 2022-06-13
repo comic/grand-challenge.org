@@ -412,7 +412,6 @@ class ReaderStudyDisplaySetList(
             {
                 "form_media": media,
                 "reader_study": self.reader_study,
-                "reader_study_display_set_view_feature": settings.READER_STUDY_DISPLAY_SET_VIEW_FEATURE,
             }
         )
         return context

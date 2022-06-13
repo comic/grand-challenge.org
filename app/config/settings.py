@@ -1148,14 +1148,6 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 }
 # Number of minutes grace period before the container is stopped
 WORKSTATIONS_GRACE_MINUTES = 5
-# Feature Flag for reader study admin view
-READER_STUDY_VIEW_AS_USER_FEATURE = strtobool(
-    os.environ.get("READER_STUDY_VIEW_AS_USER_FEATURE", "False")
-)
-# Feature flag for reader study display set view
-READER_STUDY_DISPLAY_SET_VIEW_FEATURE = strtobool(
-    os.environ.get("READER_STUDY_DISPLAY_SET_VIEW_FEATURE", "False")
-)
 
 CELERY_BEAT_SCHEDULE = {
     "ping_google": {
