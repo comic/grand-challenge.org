@@ -1,5 +1,3 @@
-version: '2.3'
-
 services:
 
   postgres:
@@ -8,8 +6,6 @@ services:
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: grandchallenge
       POSTGRES_DB: grandchallenge
-    ports:
-      - "5432:5432" # Only required for running django locally
     tmpfs:
       - /var/lib/postgresql/data/
     healthcheck:
@@ -65,18 +61,6 @@ services:
       - type: bind
         source: ./app
         target: /app/
-      # The docker socket is only needed for testing
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-      - type: volume
-        source: pytest-cache
-        target: /tmp/.pytest_cache
-    group_add:
-      - ${DOCKER_GID-1001} # The docker group is only needed for testing
-    networks:
-      - default
-      - components # The components network is only needed for testing
 
   http:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest
@@ -107,8 +91,6 @@ services:
     image: redis:5.0
     command: redis-server --appendonly yes
     restart: always
-    ports:
-      - "6379:6379" # Only required for running django locally
 
   celery_worker:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
@@ -164,14 +146,17 @@ services:
       registry:
         condition: service_started
     volumes:
-      # The docker socket is only needed for testing
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
       # Bind the app directory for live reloading in development
       - type: bind
         source: ./app
         target: /app/
+      # The docker socket and pytest_cache is only needed for testing
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: volume
+        source: pytest-cache
+        target: /tmp/.pytest_cache
     group_add:
       - ${DOCKER_GID-1001}
     networks:

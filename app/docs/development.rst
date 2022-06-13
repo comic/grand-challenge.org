@@ -3,7 +3,7 @@ Development
 ===========
 
 Grand-challenge is distributed as a set of containers that are defined and linked together in ``docker-compose.yml``.
-To develop the platform you need to have docker and docker-compose running on your system.
+To develop the platform you need to have docker and docker compose running on your system.
 
 Installation
 ------------
@@ -19,8 +19,8 @@ Please ensure that the correct backend is enabled in your docker settings, and r
 At the time of writing, we use ``Ubuntu 20.04`` from the Microsoft store as the default distro.
 As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within ``wsl`` itself.
 
-The docker-compose cycle script below utilizes `Docker Buildx`_. Depending on the steps above, buildx should be
-installed alongside docker. If the docker-compose cycle invocation below crashes on buildx, it is recommended to
+The docker compose cycle script below utilizes `Docker Buildx`_. Depending on the steps above, buildx should be
+installed alongside docker. If the docker compose cycle invocation below crashes on buildx, it is recommended to
 (re)install the latest version.
 
 2. Clone the repo
@@ -97,7 +97,7 @@ You can also run the tests locally by
 
 .. code-block:: console
 
-    $ docker compose run --rm web pytest -n 2
+    $ docker compose run --rm celery_worker_evaluation pytest -n 2
 
 Replace 2 with the number of CPUs that you have on your system, this runs
 the tests in parallel.
@@ -107,7 +107,7 @@ If you only want to run the tests for a particular app, eg. for ``teams``, you c
 
 .. code-block:: console
 
-    $ docker compose run --rm web pytest -k teams_tests
+    $ docker compose run --rm celery_worker_evaluation pytest -k teams_tests
 
 Development
 -----------
@@ -172,51 +172,7 @@ It is recommended to setup django integration to ensure that the code completion
 16. In the main window at the top right click the drop down box and then click ``Edit Configurations...``
 17. Click on ``templates`` -> ``Python Tests`` -> ``pytest``, and enter ``--reuse-db`` in the ``Additional Arguments`` box and ``run --rm`` in the ``Command and options`` box under ``Docker Compose``
 
-It is also recommended to install the black extension (version ``19.10b0``) for code formatting. You can add it as an external tool, following the same instructions as for ``Flake8`` above.
-
-Running locally
-~~~~~~~~~~~~~~~
-Alternatively, it can be useful to run code from a local python environment - this allows for easier debugging and does
-not require e.g. the professional edition of PyCharm. The setup described here uses all services from the normal
-``docker-compose`` stack, except for the web service. Though this service is running, a separate Django dev server is
-started in PyCharm (or from the terminal). As the dev server is running on port ``8000`` by default, there is no port conflict
-with the service running in the docker container.
-
-1. Run the ``docker-compose`` stack for the database and celery task handling
-
-.. code-block:: console
-
-    $ make runserver
-
-2. Make sure you have ``poetry`` installed.
-3. In a new terminal, create a new virtual python environment using ``poetry install`` in this repository's root folder.
-4. Activate the virtual env: ``poetry shell``.
-5. Load the environmental variables contained in ``.env.local``
-
-.. code-block:: console
-
-    $ export $(cat .env.local | egrep -v "^#" | xargs)
-
-6. Run migrations (optionally load demo data).
-
-.. code-block:: console
-
-    $ cd app
-    $ python manage.py migrate
-    $ python manage.py runscript development_fixtures
-
-7. You can now start the server using ``python manage.py runserver_plus``.
-
-8. To setup PyCharm:
-
-   1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> Select your created virtual environment
-   2. For each run/debug configuration, make sure the environmental variables are loaded,
-      the easiest is to use `this plugin <https://plugins.jetbrains.com/plugin/7861-envfile>`_. Or they can be pasted after pressing
-      the folder icon in the ``Environmental variables`` field.
-   3. Useful to setup: the built-in python/django console in Pycharm:
-      ``Settings`` -> ``Build``, ``execution``, ``deployment`` -> ``Console`` -> Python/Django console.
-      Choose the same python interpreter here, and make sure to load the environmental variables
-      (the .env plugin cannot be used here, the variables can only be pasted).
+It is also recommended to install the black extension for code formatting. You can add it as an external tool, following the same instructions as for ``Flake8`` above.
 
 Creating Migrations
 -------------------
