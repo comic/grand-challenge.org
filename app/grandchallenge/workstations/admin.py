@@ -20,7 +20,7 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
         "region",
         "ping_times",
     ]
-    list_filter = ["status", "region", "slug"]
+    list_filter = ["status", "region", "workstation__slug"]
     readonly_fields = [
         "creator",
         "workstation_image",
