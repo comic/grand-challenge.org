@@ -395,6 +395,16 @@ def test_question_form_interface_field(answer_type, interface_kind):
 
 
 @pytest.mark.django_db
+def test_question_form_interface_field_no_answer_type():
+    assert ComponentInterface.objects.count() > 0
+    form = QuestionForm(initial={"answer_type": None})
+    # No answer_type provided, this happens for answers that already have
+    # answers. The form shouldn't error and the interface_choices should
+    # be empty.
+    assert form.interface_choices().count() == 0
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "answer_type,port,questions_created",
     (

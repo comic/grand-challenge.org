@@ -283,6 +283,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def interface_choices(self):
         answer_type = self["answer_type"].value()
+        if answer_type is None:
+            return ComponentInterface.objects.none()
         return ComponentInterface.objects.filter(
             kind__in=ANSWER_TYPE_TO_INTERFACE_KIND_MAP[answer_type]
         )
