@@ -1,7 +1,7 @@
 import json
 import logging
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
@@ -18,6 +18,7 @@ from django.utils.timezone import now
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
+from grandchallenge.components.backends.base import JobParams
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     EventError,
@@ -27,6 +28,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.backends.utils import (
     LOGLINES,
+    ms_timestamp_to_datetime,
     safe_extract,
     user_error,
 )
@@ -85,7 +87,9 @@ class AmazonECSExecutor:
         job_id = task_definition_arn.split("/")[-1].split(":")[0]
         job_app_label, job_model_name, job_pk = job_id.split("-", 2)
 
-        return job_app_label, job_model_name, job_pk
+        return JobParams(
+            app_label=job_app_label, model_name=job_model_name, pk=job_pk
+        )
 
     @classmethod
     def update_filesystem(cls):
@@ -271,6 +275,11 @@ class AmazonECSExecutor:
         return self.__duration
 
     @property
+    def runtime_metrics(self):
+        logger.warning("Runtime metrics are not implemented for this backend")
+        return
+
+    @property
     def _ecs_client(self):
         if self.__ecs_client is None:
             self.__ecs_client = boto3.client(
@@ -327,16 +336,11 @@ class AmazonECSExecutor:
             message = json.loads(event["message"])
 
             if message["source"] == source:
-                timestamp = self._timestamp_to_datetime(event["timestamp"])
+                timestamp = ms_timestamp_to_datetime(event["timestamp"])
                 log = message["log"].replace("\x00", "")
                 loglines.append(f"{timestamp.isoformat()} {log}")
 
         return loglines
-
-    @staticmethod
-    def _timestamp_to_datetime(timestamp):
-        """Convert AWS timestamps (ms from epoch) to datetime"""
-        return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
 
     def _set_duration(self, *, event):
         try:

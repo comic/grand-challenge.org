@@ -10,6 +10,7 @@ from base64 import b64encode
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
@@ -32,6 +33,7 @@ from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
     TaskStillExecuting,
 )
+from grandchallenge.components.backends.utils import get_sagemaker_model_name
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
@@ -69,8 +71,12 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     push_container_image(instance=instance)
 
-    if settings.COMPONENTS_SHIM_IMAGES:
+    if instance.SHIM_IMAGE and settings.COMPONENTS_SHIM_IMAGES:
         shim_container_image(instance=instance)
+
+        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
+            # Only create SageMaker models for shimmed images for now
+            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
 
     model.objects.filter(pk=instance.pk).update(
         image_sha256=image_sha256,
@@ -279,6 +285,26 @@ def _extract_docker_image_file(*, instance, filename: str):
             f"{filename} not found at the root of the container image "
             f"file. Was this created with docker save?"
         )
+
+
+def create_sagemaker_model(*, repo_tag):
+    sagemaker_client = boto3.client(
+        "sagemaker",
+        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
+    )
+
+    sagemaker_client.create_model(
+        ModelName=get_sagemaker_model_name(repo_tag=repo_tag),
+        PrimaryContainer={"Image": repo_tag},
+        ExecutionRoleArn=settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN,
+        EnableNetworkIsolation=False,  # Restricted by VPC
+        VpcConfig={
+            "SecurityGroupIds": [
+                settings.COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID,
+            ],
+            "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
+        },
+    )
 
 
 def retry_if_dropped(func):
@@ -499,15 +525,15 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     Backend = import_string(backend)  # noqa: N806
 
     try:
-        job_app_label, job_model_name, job_pk = Backend.get_job_params(
-            event=event
-        )
+        job_params = Backend.get_job_params(event=event)
     except EventError:
         logger.warning("Event not handled by backend")
         return
 
     job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        pk=job_params.pk,
+        app_label=job_params.app_label,
+        model_name=job_params.model_name,
     )
     executor = job.get_executor(backend=backend)
 
@@ -562,6 +588,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             stdout=executor.stdout,
             stderr=executor.stderr,
             duration=executor.duration,
+            runtime_metrics=executor.runtime_metrics,
         )
         on_commit(
             parse_job_outputs.signature(**job.signature_kwargs).apply_async

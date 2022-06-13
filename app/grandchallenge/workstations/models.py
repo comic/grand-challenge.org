@@ -189,6 +189,8 @@ class WorkstationImage(UUIDModel, ComponentImage):
         workstation
     """
 
+    SHIM_IMAGE = False
+
     workstation = models.ForeignKey(Workstation, on_delete=models.PROTECT)
     http_port = models.PositiveIntegerField(
         default=8080, validators=[MaxValueValidator(2**16 - 1)]

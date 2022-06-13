@@ -950,11 +950,13 @@ class ComponentJob(models.Model):
     )
     stdout = models.TextField()
     stderr = models.TextField(default="")
+    runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     input_prefixes = models.JSONField(
         default=dict,
+        editable=False,
         help_text=(
             "Map of the ComponentInterfaceValue id to the path prefix to use "
             "for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at "
@@ -1001,6 +1003,7 @@ class ComponentJob(models.Model):
         stderr: str = "",
         error_message="",
         duration: Optional[timedelta] = None,
+        runtime_metrics=None,
     ):
         self.status = status
 
@@ -1027,6 +1030,9 @@ class ComponentJob(models.Model):
             if duration and self.started_at:
                 # TODO: maybe add separate timings for provisioning, executing, parsing and total
                 self.started_at = self.completed_at - duration
+
+        if runtime_metrics is not None:
+            self.runtime_metrics = runtime_metrics
 
         self.save()
 
@@ -1133,6 +1139,33 @@ class ComponentJob(models.Model):
         else:
             return "secondary"
 
+    @property
+    def runtime_metrics_chart(self):
+        return {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": "container",
+            "padding": 0,
+            "data": {
+                "values": [
+                    {
+                        "Metric": metric["label"],
+                        "Timestamp": timestamp,
+                        "Percent": value,
+                    }
+                    for metric in self.runtime_metrics["metrics"]
+                    for timestamp, value in zip(
+                        metric["timestamps"], metric["values"]
+                    )
+                ]
+            },
+            "mark": {"type": "line", "point": True},
+            "encoding": {
+                "x": {"timeUnit": "hoursminutesseconds", "field": "Timestamp"},
+                "y": {"field": "Percent", "type": "quantitative"},
+                "color": {"field": "Metric", "type": "nominal"},
+            },
+        }
+
     class Meta:
         abstract = True
 
@@ -1149,6 +1182,8 @@ def docker_image_path(instance, filename):
 
 
 class ComponentImage(models.Model):
+    SHIM_IMAGE = True
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
