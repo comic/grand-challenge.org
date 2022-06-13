@@ -121,6 +121,9 @@ installed alongside docker. If the docker compose cycle invocation below crashes
 <ol class="arabic simple" start="3">
 <li><p>Set your local docker group id in your <code class="docutils literal notranslate"><span class="pre">.env</span></code> file</p></li>
 </ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">echo</span> <span class="nv">DOCKER_GID</span><span class="o">=</span><span class="sb">`</span>getent group docker <span class="p">|</span> cut -d: -f3<span class="sb">`</span> &gt; .env
+</pre></div>
+</div>
 <ol class="arabic simple" start="4">
 <li><p>You can then start the development site by invoking</p></li>
 </ol>
