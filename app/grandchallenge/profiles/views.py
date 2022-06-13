@@ -1,3 +1,6 @@
+from base64 import b32encode
+
+from allauth_2fa.views import TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
@@ -191,3 +194,19 @@ class UserProfileViewSet(GenericViewSet):
         obj = get_object_or_404(UserProfile, user=request.user)
         serializer = self.get_serializer(instance=obj)
         return Response(serializer.data)
+
+
+class TwoFactorSetup(TwoFactorSetup):
+    def get_secret_key(self):
+        return b32encode(self.device.bin_key).decode("utf-8")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["secret_key"] = self.get_secret_key()
+        return context
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        # and display an error message
+        messages.add_message(self.request, messages.ERROR, "Incorrect token.")
+        return response
