@@ -34,12 +34,11 @@ installed alongside docker. If the docker-compose cycle invocation below crashes
 
 .. code-block:: console
 
-    $ ./cycle_docker_compose.sh
+    $ make runserver
 
 The ``app/`` directory is mounted in the containers,
 ``werkzeug`` handles the file monitoring and will restart the process if any changes are detected.
-If you need to manually restart the process you can do this when running ``cycle_docker_compose.sh`` by pressing  ``CTRL+D`` in the console window,
-you can also kill the server with ``CTRL+C``.
+You can also kill the server with ``CTRL+C``.
 
 The Development Site
 ~~~~~~~~~~~~~~~~~~~~
@@ -63,7 +62,7 @@ Before you run
 
 .. code-block:: console
 
-    $ ./cycle_docker_compose.sh
+    $ make runserver
 
 
 You can also download an `Example Algorithm Image`_ from Docker Hub.
@@ -92,13 +91,13 @@ You can also run the tests locally by
 
 .. code-block:: console
 
-    $ ./cycle_docker_compose.sh
+    $ make runserver
 
 2. Then in a second window run
 
 .. code-block:: console
 
-    $ docker-compose run --rm web pytest -n 2
+    $ docker compose run --rm web pytest -n 2
 
 Replace 2 with the number of CPUs that you have on your system, this runs
 the tests in parallel.
@@ -108,7 +107,7 @@ If you only want to run the tests for a particular app, eg. for ``teams``, you c
 
 .. code-block:: console
 
-    $ docker-compose run --rm web pytest -k teams_tests
+    $ docker compose run --rm web pytest -k teams_tests
 
 Development
 -----------
@@ -123,9 +122,9 @@ Please do all development on a branch and make a pull request to main, this will
 
 We recommend using Pycharm for development.
 
-Running through docker-compose
+Running through docker compose
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You will need the Professional edition to use the docker-compose integration.
+You will need the Professional edition to use the docker compose integration.
 To set up the environment in Pycharm Professional 2018.1:
 
 1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> ``Cog`` wheel (top right) -> ``Add`` -> ``Docker Compose``
@@ -187,7 +186,7 @@ with the service running in the docker container.
 
 .. code-block:: console
 
-    $ ./cycle_docker_compose.sh
+    $ make runserver
 
 2. Make sure you have ``poetry`` installed.
 3. In a new terminal, create a new virtual python environment using ``poetry install`` in this repository's root folder.
@@ -233,7 +232,7 @@ or, more explicitly
 
 .. code-block:: console
 
-    $ docker-compose run --rm --user `id -u` web python manage.py makemigrations
+    $ docker compose run --rm --user `id -u` web python manage.py makemigrations
 
 
 add these to git and commit.
@@ -241,7 +240,7 @@ add these to git and commit.
 Building the documentation
 --------------------------
 
-Having built the web container with ``cycle_docker_compose.sh`` you can use this to generate the docs with
+Having built the web container with ``make runserver`` you can use this to generate the docs with
 
 .. code-block:: console
 
@@ -270,7 +269,7 @@ Versions are unpinned in the ``pyproject.toml`` file, to update the resolved dep
     $ poetry lock
 
 and commit the update ``poetry.lock``.
-The containers will need to be rebuilt after running these steps, so stop the ``cycle_docker_compose.sh`` process with ``CTRL+C`` and restart.
+The containers will need to be rebuilt after running these steps, so stop the ``make runserver`` process with ``CTRL+C`` and restart.
 
 Going to Production
 -------------------

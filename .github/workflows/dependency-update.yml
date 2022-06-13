@@ -38,11 +38,6 @@ jobs:
           POETRY_LOG="${POETRY_LOG//$'\n'/'%0A'}"
           POETRY_LOG="${POETRY_LOG//$'\r'/'%0D'}"
           echo "::set-output name=poetry-log::$POETRY_LOG"
-      - name: Set the environment
-        run: |
-          echo "GIT_COMMIT_ID=$(git describe --always --dirty)" >> $GITHUB_ENV
-          echo "GIT_BRANCH_NAME=$(echo ${{ github.ref }} | cut -d/ -f3- | sed "s/[^[:alnum:]]//g")" >> $GITHUB_ENV
-          echo "DOCKER_GID=$(getent group docker | cut -d: -f3)" >> $GITHUB_ENV
       - name: Build the test container, make the docs and migrations
         run: |
           make build_web_test
@@ -59,7 +54,7 @@ jobs:
           mkdir -p /tmp/coverage
           chmod a+w /tmp/coverage
           make minio
-          docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
+          docker compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:

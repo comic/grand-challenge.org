@@ -1,10 +1,13 @@
-USER_ID = $(shell id -u)
-PYTHON_VERSION = 3.8
-POETRY_HASH = $(shell shasum -a 512 poetry.lock | cut -c 1-8)
-GRAND_CHALLENGE_HTTP_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/http
-GRAND_CHALLENGE_WEB_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/web
-GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/web-base
-GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base
+USER_ID=$(shell id -u)
+PYTHON_VERSION=3.8
+POETRY_HASH=$(shell shasum -a 512 poetry.lock | cut -c 1-8)
+GIT_COMMIT_ID=$(shell git describe --always --dirty)
+GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
+DOCKER_GID=$(shell getent group docker | cut -d: -f3)
+GRAND_CHALLENGE_HTTP_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/http
+GRAND_CHALLENGE_WEB_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web
+GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-base
+GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base
 
 
 build_web_test:
@@ -72,32 +75,35 @@ push_http:
 build: build_web_test build_web_dist build_http
 
 migrate:
-	docker-compose run --rm web python manage.py migrate
+	docker compose run --rm web python manage.py migrate
 
 check_migrations:
-	docker-compose run --rm web python manage.py makemigrations --dry-run --check
+	docker compose run --rm web python manage.py makemigrations --dry-run --check
 
 migrations:
-	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations
+	docker compose run -u $(USER_ID) --rm web python manage.py makemigrations
+
+runserver: build_web_test build_http development_fixtures
+	docker compose up
 
 minio:
-	docker-compose run \
-		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
 		web \
 		bash -c "python manage.py runscript minio"
 
 development_fixtures:
-	docker-compose run \
-		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
 		web \
 		bash -c "python manage.py migrate && python manage.py runscript minio development_fixtures"
 
 
 retina_archive_structures:
-	docker-compose run \
-		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
 		web \
 		bash -c "python manage.py runscript create_retina_archive_structures"
@@ -107,12 +113,12 @@ algorithm_evaluation_fixtures:
 	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
 	docker save algorithm_io -o scripts/algorithm_io.tar
 	chmod a+r scripts/algorithm_io.tar
-	docker-compose run \
-		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
 		web \
 		python manage.py runscript algorithm_evaluation_fixtures
 
 .PHONY: docs
 docs:
-	docker-compose run --rm -u $(USER_ID) web bash -c "cd docs && make html"
+	docker compose run --rm -u $(USER_ID) web bash -c "cd docs && make html"
