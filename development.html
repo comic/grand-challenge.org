@@ -48,9 +48,8 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#running-the-tests">Running the Tests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id1">Development</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#running-through-docker-compose">Running through docker-compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-through-docker-compose">Running through docker compose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pycharm-configuration">PyCharm Configuration</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#running-locally">Running locally</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#creating-migrations">Creating Migrations</a></li>
@@ -94,7 +93,7 @@
   <section id="development">
 <h1>Development<a class="headerlink" href="#development" title="Permalink to this heading"></a></h1>
 <p>Grand-challenge is distributed as a set of containers that are defined and linked together in <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code>.
-To develop the platform you need to have docker and docker-compose running on your system.</p>
+To develop the platform you need to have docker and docker compose running on your system.</p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
 <ol class="arabic">
@@ -109,8 +108,8 @@ To develop the platform you need to have docker and docker-compose running on yo
 Please ensure that the correct backend is enabled in your docker settings, and run all of the following commands in the <code class="docutils literal notranslate"><span class="pre">wsl</span></code> shell.
 At the time of writing, we use <code class="docutils literal notranslate"><span class="pre">Ubuntu</span> <span class="pre">20.04</span></code> from the Microsoft store as the default distro.
 As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within <code class="docutils literal notranslate"><span class="pre">wsl</span></code> itself.</p>
-<p>The docker-compose cycle script below utilizes <a class="reference external" href="https://docs.docker.com/buildx/working-with-buildx/#install">Docker Buildx</a>. Depending on the steps above, buildx should be
-installed alongside docker. If the docker-compose cycle invocation below crashes on buildx, it is recommended to
+<p>The docker compose cycle script below utilizes <a class="reference external" href="https://docs.docker.com/buildx/working-with-buildx/#install">Docker Buildx</a>. Depending on the steps above, buildx should be
+installed alongside docker. If the docker compose cycle invocation below crashes on buildx, it is recommended to
 (re)install the latest version.</p>
 <ol class="arabic simple" start="2">
 <li><p>Clone the repo</p></li>
@@ -120,15 +119,17 @@ installed alongside docker. If the docker-compose cycle invocation below crashes
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
+<li><p>Set your local docker group id in your <code class="docutils literal notranslate"><span class="pre">.env</span></code> file</p></li>
+</ol>
+<ol class="arabic simple" start="4">
 <li><p>You can then start the development site by invoking</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make runserver
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">app/</span></code> directory is mounted in the containers,
 <code class="docutils literal notranslate"><span class="pre">werkzeug</span></code> handles the file monitoring and will restart the process if any changes are detected.
-If you need to manually restart the process you can do this when running <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> by pressing  <code class="docutils literal notranslate"><span class="pre">CTRL+D</span></code> in the console window,
-you can also kill the server with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code>.</p>
+You can also kill the server with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code>.</p>
 <section id="the-development-site">
 <h3>The Development Site<a class="headerlink" href="#the-development-site" title="Permalink to this heading"></a></h3>
 <p>If you follow the installation instructions above you will be able to go to <a class="reference external" href="https://gc.localhost">https://gc.localhost</a> to see the development site,
@@ -143,7 +144,7 @@ who have permission to administer the existing fixtures and create new ones.</p>
 </pre></div>
 </div>
 <p>Before you run</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make runserver
 </pre></div>
 </div>
 <p>You can also download an <a class="reference external" href="https://hub.docker.com/r/grandchallenge/otsu">Example Algorithm Image</a> from Docker Hub.
@@ -166,20 +167,20 @@ You can also run the tests locally by</p>
 <ol class="arabic simple">
 <li><p>In a console window make sure the database is running</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make runserver
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
 <li><p>Then in a second window run</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker-compose run --rm web pytest -n <span class="m">2</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker compose run --rm celery_worker_evaluation pytest -n <span class="m">2</span>
 </pre></div>
 </div>
 <p>Replace 2 with the number of CPUs that you have on your system, this runs
 the tests in parallel.</p>
 <p>If you want to add a new test please add them to the <code class="docutils literal notranslate"><span class="pre">app/tests</span></code> folder.
 If you only want to run the tests for a particular app, eg. for <code class="docutils literal notranslate"><span class="pre">teams</span></code>, you can do</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker-compose run --rm web pytest -k teams_tests
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker compose run --rm celery_worker_evaluation pytest -k teams_tests
 </pre></div>
 </div>
 </section>
@@ -192,8 +193,8 @@ If you only want to run the tests for a particular app, eg. for <code class="doc
 <p>Please do all development on a branch and make a pull request to main, this will need to be reviewed before it is integrated.</p>
 <p>We recommend using Pycharm for development.</p>
 <section id="running-through-docker-compose">
-<h3>Running through docker-compose<a class="headerlink" href="#running-through-docker-compose" title="Permalink to this heading"></a></h3>
-<p>You will need the Professional edition to use the docker-compose integration.
+<h3>Running through docker compose<a class="headerlink" href="#running-through-docker-compose" title="Permalink to this heading"></a></h3>
+<p>You will need the Professional edition to use the docker compose integration.
 To set up the environment in Pycharm Professional 2018.1:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">File</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project:</span> <span class="pre">grand-challenge.org</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">Interpreter</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Cog</span></code> wheel (top right) -&gt; <code class="docutils literal notranslate"><span class="pre">Add</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Docker</span> <span class="pre">Compose</span></code></p></li>
@@ -244,53 +245,7 @@ If you edit any files these will be updated on the fly by werkzeug.</p>
 <li><p>In the main window at the top right click the drop down box and then click <code class="docutils literal notranslate"><span class="pre">Edit</span> <span class="pre">Configurations...</span></code></p></li>
 <li><p>Click on <code class="docutils literal notranslate"><span class="pre">templates</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Python</span> <span class="pre">Tests</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, and enter <code class="docutils literal notranslate"><span class="pre">--reuse-db</span></code> in the <code class="docutils literal notranslate"><span class="pre">Additional</span> <span class="pre">Arguments</span></code> box and <code class="docutils literal notranslate"><span class="pre">run</span> <span class="pre">--rm</span></code> in the <code class="docutils literal notranslate"><span class="pre">Command</span> <span class="pre">and</span> <span class="pre">options</span></code> box under <code class="docutils literal notranslate"><span class="pre">Docker</span> <span class="pre">Compose</span></code></p></li>
 </ol>
-<p>It is also recommended to install the black extension (version <code class="docutils literal notranslate"><span class="pre">19.10b0</span></code>) for code formatting. You can add it as an external tool, following the same instructions as for <code class="docutils literal notranslate"><span class="pre">Flake8</span></code> above.</p>
-</section>
-<section id="running-locally">
-<h3>Running locally<a class="headerlink" href="#running-locally" title="Permalink to this heading"></a></h3>
-<p>Alternatively, it can be useful to run code from a local python environment - this allows for easier debugging and does
-not require e.g. the professional edition of PyCharm. The setup described here uses all services from the normal
-<code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> stack, except for the web service. Though this service is running, a separate Django dev server is
-started in PyCharm (or from the terminal). As the dev server is running on port <code class="docutils literal notranslate"><span class="pre">8000</span></code> by default, there is no port conflict
-with the service running in the docker container.</p>
-<ol class="arabic simple">
-<li><p>Run the <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> stack for the database and celery task handling</p></li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
-</pre></div>
-</div>
-<ol class="arabic simple" start="2">
-<li><p>Make sure you have <code class="docutils literal notranslate"><span class="pre">poetry</span></code> installed.</p></li>
-<li><p>In a new terminal, create a new virtual python environment using <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">install</span></code> in this repository’s root folder.</p></li>
-<li><p>Activate the virtual env: <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">shell</span></code>.</p></li>
-<li><p>Load the environmental variables contained in <code class="docutils literal notranslate"><span class="pre">.env.local</span></code></p></li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span> <span class="k">$(</span>cat .env.local <span class="p">|</span> egrep -v <span class="s2">&quot;^#&quot;</span> <span class="p">|</span> xargs<span class="k">)</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="6">
-<li><p>Run migrations (optionally load demo data).</p></li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span> app
-<span class="gp">$ </span>python manage.py migrate
-<span class="gp">$ </span>python manage.py runscript development_fixtures
-</pre></div>
-</div>
-<ol class="arabic simple" start="7">
-<li><p>You can now start the server using <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">runserver_plus</span></code>.</p></li>
-<li><p>To setup PyCharm:</p>
-<ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">File</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project:</span> <span class="pre">grand-challenge.org</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">Interpreter</span></code> -&gt; Select your created virtual environment</p></li>
-<li><p>For each run/debug configuration, make sure the environmental variables are loaded,
-the easiest is to use <a class="reference external" href="https://plugins.jetbrains.com/plugin/7861-envfile">this plugin</a>. Or they can be pasted after pressing
-the folder icon in the <code class="docutils literal notranslate"><span class="pre">Environmental</span> <span class="pre">variables</span></code> field.</p></li>
-<li><p>Useful to setup: the built-in python/django console in Pycharm:
-<code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Build</span></code>, <code class="docutils literal notranslate"><span class="pre">execution</span></code>, <code class="docutils literal notranslate"><span class="pre">deployment</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Console</span></code> -&gt; Python/Django console.
-Choose the same python interpreter here, and make sure to load the environmental variables
-(the .env plugin cannot be used here, the variables can only be pasted).</p></li>
-</ol>
-</li>
-</ol>
+<p>It is also recommended to install the black extension for code formatting. You can add it as an external tool, following the same instructions as for <code class="docutils literal notranslate"><span class="pre">Flake8</span></code> above.</p>
 </section>
 </section>
 <section id="creating-migrations">
@@ -301,14 +256,14 @@ You can do this with</p>
 </pre></div>
 </div>
 <p>or, more explicitly</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker-compose run --rm --user <span class="sb">`</span>id -u<span class="sb">`</span> web python manage.py makemigrations
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker compose run --rm --user <span class="sb">`</span>id -u<span class="sb">`</span> web python manage.py makemigrations
 </pre></div>
 </div>
 <p>add these to git and commit.</p>
 </section>
 <section id="building-the-documentation">
 <h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this heading"></a></h2>
-<p>Having built the web container with <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> you can use this to generate the docs with</p>
+<p>Having built the web container with <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code> you can use this to generate the docs with</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make docs
 </pre></div>
 </div>
@@ -328,7 +283,7 @@ If this is a development dependency then use the <code class="docutils literal n
 </pre></div>
 </div>
 <p>and commit the update <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
-The containers will need to be rebuilt after running these steps, so stop the <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> process with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code> and restart.</p>
+The containers will need to be rebuilt after running these steps, so stop the <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code> process with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code> and restart.</p>
 </section>
 <section id="going-to-production">
 <h2>Going to Production<a class="headerlink" href="#going-to-production" title="Permalink to this heading"></a></h2>
