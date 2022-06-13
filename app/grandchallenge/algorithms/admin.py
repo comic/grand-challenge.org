@@ -32,8 +32,9 @@ class AlgorithmAdmin(GuardedModelAdmin):
         "credits_per_job",
         "average_duration",
         "container_count",
+        "workstation",
     )
-    list_filter = ("public",)
+    list_filter = ("public", "workstation__slug")
     search_fields = ("title", "slug")
     form = AlgorithmAdminForm
 
