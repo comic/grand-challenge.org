@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.contrib.sitemaps.views import sitemap
 from django.template.response import TemplateResponse
-from django.urls import path, re_path
+from django.urls import path
 from django.views.generic import TemplateView
 from machina import urls as machina_urls
 
@@ -59,8 +59,8 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path(settings.ADMIN_URL, admin.site.urls),
-    re_path(
-        r"accounts/two_factor/setup/?$",
+    path(
+        "accounts/two_factor/setup/",
         TwoFactorSetup.as_view(),
         name="two-factor-setup",
     ),

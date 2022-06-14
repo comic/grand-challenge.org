@@ -417,17 +417,18 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
     "grandchallenge.timezones.middleware.TimezoneMiddleware",
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
+    # 2FA middleware, needs to be after subdomain middleware
+    # TwoFactorMiddleware resets the login flow if another page is loaded
+    # between login and successfully entering two-factor credentials. We're using
+    # a modified version of the original allauth_2fa middleware to pass the
+    # correct urlconf.
+    "grandchallenge.core.middleware.TwoFactorMiddleware",
+    # Force 2FA for staff users
+    "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     # Redirects last as they're a last resort
     "django.contrib.redirects.middleware.RedirectFallbackMiddleware",
-    # 2FA middleware, needs to be after subdomina, flatpage and redirect middleware
-    # TwoFactorMiddleware resets the login flow if another page is loaded
-    # between login and successfully entering two-factor credentials. We're subsetting
-    # the original allauth_2fa middleware to pass the correct urlconf.
-    "grandchallenge.core.middleware.TwoFactorMiddleware",
-    # Force 2AF for staff users
-    "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
 )
 
 # Python dotted path to the WSGI application used by Django's runserver.
