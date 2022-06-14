@@ -3,7 +3,6 @@
 {% load url %}
 {% load guardian_tags %}
 {% load bleach %}
-{% load tz %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -33,8 +32,6 @@
     {{ phase.submission_page_html|clean }}
 
     <h3>Create a new submission</h3>
-
-    {% get_current_timezone as TIME_ZONE %}
 
     {% if "change_challenge" in challenge_perms %}
 
