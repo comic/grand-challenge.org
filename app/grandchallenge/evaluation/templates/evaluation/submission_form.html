@@ -47,9 +47,9 @@
                     {% else %}
                         in total
                     {% endif %}
-                    {% if phase.submissions_open_at and phase.submissions_close_at %}between {{ phase.submissions_open_at }} and {{ phase.submissions_close_at }}
-                    {% elif phase.submissions_open_at and not phase.submissions_close_at %} from {{ phase.submissions_open_at }} onwards
-                    {% elif not phase.submissions_open_at and  phase.submissions_close_at %} until {{ phase.submissions_close_at }}
+                    {% if phase.submissions_open_at and phase.submissions_close_at %}between {{ phase.submissions_open_at }} ({{ TIME_ZONE }}) and {{ phase.submissions_close_at }} ({{ TIME_ZONE }})
+                    {% elif phase.submissions_open_at and not phase.submissions_close_at %} from {{ phase.submissions_open_at }} ({{ TIME_ZONE }}) onwards
+                    {% elif not phase.submissions_open_at and  phase.submissions_close_at %} until {{ phase.submissions_close_at }} ({{ TIME_ZONE }})
                     {% endif %}
                     to this phase.</p>
                     <p>You can change the submission limit and period and the submission start and end dates in
@@ -125,6 +125,12 @@
                 {% endif %}
                 to this phase.
             </div>
+
+            {% if phase.submissions_close_at %}
+                <div class="alert alert-warning">
+                    Submissions to this phase will automatically close at {{ phase.submissions_close_at }} ({{ TIME_ZONE }}).
+                </div>
+            {% endif %}
 
             {% crispy form %}
 
