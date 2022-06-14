@@ -4,7 +4,7 @@ from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set
+from typing import Callable, Dict, List, Optional, Sequence, Set
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
@@ -179,7 +179,7 @@ def import_images(
     *,
     input_directory: Path,
     origin: Optional[RawImageUploadSession] = None,
-    builders: Optional[Iterable[Callable]] = None,
+    builders: Optional[Sequence[Callable]] = None,
     recurse_subdirectories: bool = True,
 ) -> ImporterResult:
     """
@@ -200,13 +200,12 @@ def import_images(
         any file errors
 
     """
-
     with TemporaryDirectory() as output_directory:
         panimg_result = convert(
             input_directory=input_directory,
             output_directory=output_directory,
             builders=builders,
-            post_processors=POST_PROCESSORS,
+            post_processors=[],  # Do the post-processing later
             recurse_subdirectories=recurse_subdirectories,
         )
 
