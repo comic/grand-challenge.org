@@ -23,6 +23,14 @@ class DummyForm(ViewContentMixin):
 @pytest.mark.django_db
 def test_view_content_mixin():
     form = DummyForm()
+    form.cleaned_data["view_content"] = [{}]
+    form.clean_view_content()
+    assert (
+        "Value [{}] is not valid. Should be of type `object`."
+        in form.errors["view_content"]
+    )
+
+    form.errors = {"view_content": []}
     form.cleaned_data["view_content"] = {"main": ["test"]}
     form.clean_view_content()
     assert "Unkown slugs in view_content: test" in form.errors["view_content"]

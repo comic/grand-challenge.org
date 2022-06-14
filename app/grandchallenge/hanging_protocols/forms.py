@@ -88,6 +88,14 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
 class ViewContentMixin:
     def clean_view_content(self):
         mapping = self.cleaned_data["view_content"] or {}
+        if not isinstance(mapping, dict):
+            self.add_error(
+                error=f"Value {str(mapping)} is not valid. "
+                "Should be of type `object`.",
+                field="view_content",
+            )
+            # return, because the ci check assumes the value is a dict
+            return mapping
         hanging_protocol = self.cleaned_data["hanging_protocol"]
         if mapping and hanging_protocol:
             if set(mapping.keys()) != {
