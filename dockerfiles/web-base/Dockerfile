@@ -40,6 +40,14 @@ RUN mkdir -p /opt/git-lfs \
     && bash /opt/git-lfs/install.sh \
     && rm -r /opt/git-lfs
 
+# Get the minio client for development
+RUN mkdir -p /opt/mc \
+    && wget https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2022-06-11T21-10-36Z -O /opt/mc/mc \
+    && echo "77a784948c3bce2c169bf3f4d998ae1485c060193689268627ff896ddcf9f617  /opt/mc/mc" | shasum -c - || exit 1 \
+    && chmod a+x /opt/mc/mc \
+    && mv /opt/mc/mc /usr/local/bin/ \
+    && rm -r /opt/mc
+
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
     GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION=0.1.0\
@@ -61,7 +69,6 @@ RUN mkdir -p /opt/sagemaker-shim \
 WORKDIR /opt/poetry
 
 # Install base python packages
-COPY --chown=django:django poetry.toml /opt/poetry
 COPY --chown=django:django pyproject.toml /opt/poetry
 COPY --chown=django:django poetry.lock /opt/poetry
 
@@ -78,12 +85,6 @@ FROM base as test-base
 # Add java and graphviz for plantuml documentation
 USER root
 RUN apt-get update && apt-get install -y default-jre graphviz
-# Get the minio client (they do not provide sha256sums)
-RUN mkdir -p /opt/mc \
-    && wget https://dl.min.io/client/mc/release/linux-amd64/mc -P /opt/mc/ \
-    && chmod a+x /opt/mc/mc \
-    && mv /opt/mc/mc /usr/local/bin/ \
-    && rm -r /opt/mc
 USER django:django
 
 RUN poetry install --no-interaction --no-ansi --no-root

@@ -5,6 +5,7 @@ GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
 GRAND_CHALLENGE_HTTP_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/http
 GRAND_CHALLENGE_WEB_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web
+GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-test
 GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-base
 GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base
 
@@ -25,8 +26,8 @@ build_web_test:
 		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
 		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
 		--target test \
-		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI)-test:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
-		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI)-test:latest \
+		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
+		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):latest \
 		-f dockerfiles/web/Dockerfile \
 		.
 
