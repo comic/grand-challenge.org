@@ -16,11 +16,7 @@ from grandchallenge.archives.tasks import (
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
-from grandchallenge.reader_studies.models import (
-    Answer,
-    DisplaySet,
-    ReaderStudy,
-)
+from grandchallenge.reader_studies.models import Answer, DisplaySet
 from grandchallenge.reader_studies.tasks import (
     add_image_to_answer,
     add_image_to_display_set,
@@ -81,9 +77,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     archive = SlugRelatedField(
         slug_field="slug", queryset=Archive.objects.none(), required=False
     )
-    reader_study = SlugRelatedField(
-        slug_field="slug", queryset=ReaderStudy.objects.none(), required=False
-    )
     answer = PrimaryKeyRelatedField(
         queryset=Answer.objects.none(), required=False
     )
@@ -110,7 +103,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "api_url",
             "user_uploads",
             "archive",
-            "reader_study",
             "answer",
             "interface",
             "archive_item",
@@ -140,12 +132,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 user, "archives.upload_archive", accept_global_perms=False
             )
 
-            self.fields["reader_study"].queryset = get_objects_for_user(
-                user,
-                "reader_studies.change_readerstudy",
-                accept_global_perms=False,
-            )
-
             self.fields["answer"].queryset = get_objects_for_user(
                 user, "reader_studies.change_answer", accept_global_perms=False
             )
@@ -165,7 +151,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         return [
             "archive",
             "archive_item",
-            "reader_study",
             "answer",
             "display_set",
         ]
