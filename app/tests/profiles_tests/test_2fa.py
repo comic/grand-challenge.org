@@ -8,7 +8,12 @@ from pytest_django.asserts import assertRedirects
 
 from config.settings import LOGIN_REDIRECT_URL
 from grandchallenge.profiles.providers.gmail.provider import GmailProvider
-from tests.factories import UserFactory
+from grandchallenge.subdomains.utils import reverse_lazy
+from tests.factories import (
+    SUPER_SECURE_TEST_PASSWORD,
+    ChallengeFactory,
+    UserFactory,
+)
 from tests.utils import get_view_for_user
 
 
@@ -102,3 +107,46 @@ class SocialLoginTests(OAuth2TestsMixin, TestCase):
         # sign in again, check that redirect is now to 2fa authenticate page
         resp = self.login(resp_mock=self.get_mocked_response())
         assert "two-factor-authenticate" in resp.url
+
+
+@override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
+@pytest.mark.django_db
+def test_2fa_reset_flow(client):
+    user = UserFactory()
+    user.totpdevice_set.create()
+
+    response = client.post(
+        reverse_lazy("account_login"),
+        {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
+    )
+    assert "/accounts/two-factor-authenticate" == response.url
+
+    # The user ID should be in the session.
+    assert client.session.get("allauth_2fa_user_id")
+
+    # Navigate to a different page.
+    client.get(reverse_lazy("algorithms:list"))
+
+    # The middleware should reset the login flow.
+    assert not client.session.get("allauth_2fa_user_id")
+
+    # Trying to continue with two-factor without logging in again will
+    # redirect to login.
+    resp = client.get(reverse_lazy("two-factor-authenticate"))
+
+    assert "/accounts/login/" == resp.url
+
+    # navigate to a subdomain page
+    client.post(
+        reverse_lazy("account_login"),
+        {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
+    )
+    assert client.session.get("allauth_2fa_user_id")
+    target_url = reverse_lazy(
+        "pages:home",
+        kwargs={"challenge_short_name": ChallengeFactory().short_name},
+    )
+    client.get(target_url)
+    assert not client.session.get("allauth_2fa_user_id")
+    resp = client.get(reverse_lazy("two-factor-authenticate"))
+    assert "/accounts/login/" == resp.url
