@@ -232,6 +232,8 @@ class Image(UUIDModel):
         (PATIENT_SEX_OTHER, "Other"),
     )
 
+    post_processed = models.BooleanField(default=False, editable=False)
+
     name = models.CharField(max_length=4096)
     origin = models.ForeignKey(
         to=RawImageUploadSession,

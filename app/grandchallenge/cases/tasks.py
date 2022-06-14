@@ -1,3 +1,4 @@
+import logging
 import zipfile
 from dataclasses import asdict, dataclass
 from itertools import chain
@@ -12,11 +13,13 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
+from django.db.transaction import on_commit
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
 from panimg import convert
-from panimg.models import PanImgResult
+from panimg.models import PanImgFile, PanImgResult
+from panimg.panimg import _post_process
 
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -27,6 +30,8 @@ from grandchallenge.cases.models import (
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
+
+logger = logging.getLogger(__name__)
 
 POST_PROCESSORS = [
     import_string(p) for p in settings.CASES_POST_PROCESSORS if p
@@ -220,6 +225,13 @@ def import_images(
             folders=django_result.new_folders,
         )
 
+        for image in django_result.new_images:
+            on_commit(
+                post_process_image.signature(
+                    kwargs={"image_pk": image.pk}
+                ).apply_async
+            )
+
     return ImporterResult(
         new_images=django_result.new_images,
         consumed_files=panimg_result.consumed_files,
@@ -330,3 +342,59 @@ def _handle_raw_files(
 
 def _delete_session_files(*, upload_session):
     upload_session.user_uploads.all().delete()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def post_process_image(*, image_pk):
+    image = Image.objects.get(pk=image_pk)
+
+    if image.post_processed:
+        logger.warning("Image has already been post-processed")
+        return
+
+    with TemporaryDirectory() as output_directory:
+        panimg_files = set()
+
+        for im_file in image.files.all():
+            dest = safe_join(output_directory, im_file.file.name)
+            panimg_files.add(
+                PanImgFile(
+                    image_id=im_file.image.pk,
+                    image_type=im_file.image_type,
+                    file=dest,
+                )
+            )
+
+            # Safe to create directories as safe_join has been used
+            Path(dest).parent.mkdir(parents=True, exist_ok=True)
+
+            with im_file.file.open("rb") as fs, open(dest, "wb") as fd:
+                for chunk in fs.chunks():
+                    fd.write(chunk)
+
+        post_processor_result = _post_process(
+            image_files=panimg_files, post_processors=POST_PROCESSORS
+        )
+
+        new_image_files = {
+            ImageFile(
+                image_id=f.image_id,
+                image_type=f.image_type,
+                file=File(open(f.file, "rb"), f.file.name),
+            )
+            for f in post_processor_result.new_image_files
+            if str(f.image_id) == str(image_pk)
+        }
+        new_folders = {
+            FolderUpload(**asdict(f))
+            for f in post_processor_result.new_folders
+            if str(f.image_id) == str(image_pk)
+        }
+
+        with transaction.atomic():
+            image.post_processed = True
+            image.save()
+
+            for obj in chain(new_image_files, new_folders):
+                obj.full_clean()
+                obj.save()
