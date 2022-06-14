@@ -597,6 +597,9 @@ LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
 
+# django-allauth-2fa
+ALLAUTH_2FA_ALWAYS_REVEAL_BACKUP_TOKENS = False
+
 ##############################################################################
 #
 # stdimage

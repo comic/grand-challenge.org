@@ -14,38 +14,40 @@
 
 {% block content %}
     <h1 class="mb-3">
-      {% trans "Two-Factor Authentication" %}
+        {% trans "Two-Factor Authentication" %}
     </h1>
-    <p><i class="fas fa-check-circle text-success mr-1"></i>{% trans 'Two-Factor Authentication is enabled for your account.' %}</p>
+    <p>
+        <i class="fas fa-check-circle text-success mr-1"></i>{% trans 'Two-Factor Authentication is enabled for your account.' %}
+    </p>
 
     <h3 class="mt-4">
-      {% trans "Back-Up Tokens" %}
+        {% trans "Back-Up Tokens" %}
     </h3>
     <p>{% trans "If you don't have your authentication device with you, you can access your account using backup tokens." %}</p>
 
     {% if backup_tokens %}
-      {% if reveal_tokens %}
-        <ul>
-          {% for token in backup_tokens %}
-            <li>{{ token.token }}</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-            {% trans 'Backup tokens have been generated, but are not revealed here for security reasons. Press the button below to generate new ones.' %}
-      {% endif %}
+        {% if reveal_tokens %}
+            <ul>
+                {% for token in backup_tokens %}
+                    <li>{{ token.token }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p> {% trans 'Backup tokens have been generated, but are not revealed here for security reasons. Press the button below to generate new ones.' %} </p>
+        {% endif %}
     {% else %}
-      {% trans 'No tokens. Press the button below to generate some.' %}
+        <p> {% trans 'No tokens. Press the button below to generate some.' %}</p>
     {% endif %}
 
     <form method="post">
-      {% csrf_token %}
-      <button class="btn btn-primary" type="submit">
-        {% trans 'Generate backup tokens' %}
-      </button>
+        {% csrf_token %}
+        <button class="btn btn-primary" type="submit">
+            {% trans 'Generate backup tokens' %}
+        </button>
     </form>
 
     <h3 class="mt-4">
-      {% trans "Disable Two-Factor Authentication" %}
+        {% trans "Disable Two-Factor Authentication" %}
     </h3>
     <p>{% trans 'You can disable two-factor authentication for your account at any time.' %}</p>
     <a class="btn btn-primary" href="{% url 'two-factor-remove' %}">Disable Two Factor Authentication</a>
