@@ -17,9 +17,8 @@ from django.db.transaction import on_commit
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
-from panimg import convert
+from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
-from panimg.panimg import _post_process
 
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -372,7 +371,7 @@ def post_process_image(*, image_pk):
                 for chunk in fs.chunks():
                     fd.write(chunk)
 
-        post_processor_result = _post_process(
+        post_processor_result = post_process(
             image_files=panimg_files, post_processors=POST_PROCESSORS
         )
 
