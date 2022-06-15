@@ -15,7 +15,6 @@ from dateutil.parser import isoparse
 from django.conf import settings
 from docker.api.container import ContainerApiMixin
 from docker.errors import APIError, DockerException, ImageNotFound
-from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
 from requests.exceptions import ChunkedEncodingError
@@ -54,26 +53,7 @@ class DockerConnectionMixin:
     @property
     def _client(self):
         if self.__client is None:
-            if settings.COMPONENTS_DOCKER_FROM_ENV:
-                self.__client = docker.from_env()
-            else:
-                client_kwargs = {
-                    "base_url": settings.COMPONENTS_DOCKER_BASE_URL
-                }
-
-                if settings.COMPONENTS_DOCKER_TLS_VERIFY:
-                    tlsconfig = TLSConfig(
-                        verify=True,
-                        client_cert=(
-                            settings.COMPONENTS_DOCKER_TLS_CERT,
-                            settings.COMPONENTS_DOCKER_TLS_KEY,
-                        ),
-                        ca_cert=settings.COMPONENTS_DOCKER_CA_CERT,
-                    )
-                    client_kwargs.update({"tls": tlsconfig})
-
-                self.__client = docker.DockerClient(**client_kwargs)
-
+            self.__client = docker.from_env()
         return self.__client
 
     @property
