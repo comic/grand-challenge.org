@@ -408,13 +408,15 @@ def _download_image_files(*, image_files, dir):
 
 def _check_post_processor_result(*, post_processor_result, image_pk):
     """Ensure all post processed results belong to the given image"""
-    if {
-        f.image_id
+    created_ids = {
+        str(f.image_id)
         for f in chain(
             post_processor_result.new_image_files,
             post_processor_result.new_folders,
         )
-    } != {image_pk}:
+    }
+
+    if created_ids not in [{str(image_pk)}, set()]:
         raise RuntimeError("Created image IDs do not match")
 
 
