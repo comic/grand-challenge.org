@@ -215,7 +215,11 @@ def import_images(
 
         _check_all_ids(panimg_result=panimg_result)
 
-        django_result = _convert_panimg_to_django(panimg_result=panimg_result)
+        django_result = _convert_panimg_to_django(
+            new_images=panimg_result.new_images,
+            new_image_files=panimg_result.new_image_files,
+            new_folders=panimg_result.new_folders,
+        )
 
         _store_images(
             origin=origin,
@@ -267,20 +271,18 @@ class ConversionResult:
 
 
 def _convert_panimg_to_django(
-    *, panimg_result: PanImgResult
+    *, new_images, new_image_files, new_folders
 ) -> ConversionResult:
-    new_images = {Image(**asdict(im)) for im in panimg_result.new_images}
+    new_images = {Image(**asdict(im)) for im in new_images}
     new_image_files = {
         ImageFile(
             image_id=f.image_id,
             image_type=f.image_type,
             file=File(open(f.file, "rb"), f.file.name),
         )
-        for f in panimg_result.new_image_files
+        for f in new_image_files
     }
-    new_folders = {
-        FolderUpload(**asdict(f)) for f in panimg_result.new_folders
-    }
+    new_folders = {FolderUpload(**asdict(f)) for f in new_folders}
 
     return ConversionResult(
         new_images=new_images,
@@ -345,55 +347,83 @@ def _delete_session_files(*, upload_session):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def post_process_image(*, image_pk):
-    image = Image.objects.get(pk=image_pk)
-
-    if image.post_processed:
-        logger.warning("Image has already been post-processed")
-        return
-
     with TemporaryDirectory() as output_directory:
-        panimg_files = set()
+        image_files = ImageFile.objects.filter(
+            image__pk=image_pk, post_processed=False
+        ).select_related("image")
 
-        for im_file in image.files.all():
-            dest = safe_join(output_directory, im_file.file.name)
-            panimg_files.add(
-                PanImgFile(
-                    image_id=im_file.image.pk,
-                    image_type=im_file.image_type,
-                    file=dest,
-                )
-            )
-
-            # Safe to create directories as safe_join has been used
-            Path(dest).parent.mkdir(parents=True, exist_ok=True)
-
-            with im_file.file.open("rb") as fs, open(dest, "wb") as fd:
-                for chunk in fs.chunks():
-                    fd.write(chunk)
+        panimg_files = _download_image_files(
+            image_files=image_files, dir=output_directory
+        )
 
         post_processor_result = post_process(
             image_files=panimg_files, post_processors=POST_PROCESSORS
         )
 
-        new_image_files = {
-            ImageFile(
-                image_id=f.image_id,
-                image_type=f.image_type,
-                file=File(open(f.file, "rb"), f.file.name),
-            )
-            for f in post_processor_result.new_image_files
-            if str(f.image_id) == str(image_pk)
-        }
-        new_folders = {
-            FolderUpload(**asdict(f))
-            for f in post_processor_result.new_folders
-            if str(f.image_id) == str(image_pk)
-        }
+        _check_post_processor_result(
+            post_processor_result=post_processor_result, image_pk=image_pk
+        )
+
+        django_result = _convert_panimg_to_django(
+            new_images=[],
+            new_image_files=post_processor_result.new_image_files,
+            new_folders=post_processor_result.new_folders,
+        )
 
         with transaction.atomic():
-            image.post_processed = True
-            image.save()
+            _store_post_processed_images(
+                image_files=image_files,
+                new_image_files=django_result.new_image_files,
+                new_folders=django_result.new_folders,
+            )
 
-            for obj in chain(new_image_files, new_folders):
-                obj.full_clean()
-                obj.save()
+
+def _download_image_files(*, image_files, dir):
+    """
+    Downloads a set of image files to a directory
+
+    Returns a set of PanImgFiles that point to the local files
+    """
+    panimg_files = set()
+
+    for im_file in image_files:
+        dest = safe_join(dir, im_file.file.name)
+        panimg_files.add(
+            PanImgFile(
+                image_id=im_file.image.pk,
+                image_type=im_file.image_type,
+                file=dest,
+            )
+        )
+
+        # Safe to create directories as safe_join has been used
+        Path(dest).parent.mkdir(parents=True, exist_ok=True)
+
+        with im_file.file.open("rb") as fs, open(dest, "wb") as fd:
+            for chunk in fs.chunks():
+                fd.write(chunk)
+
+    return panimg_files
+
+
+def _check_post_processor_result(*, post_processor_result, image_pk):
+    """Ensure all post processed results belong to the given image"""
+    if {
+        f.image_id
+        for f in chain(
+            post_processor_result.new_image_files,
+            post_processor_result.new_folders,
+        )
+    } != {image_pk}:
+        raise RuntimeError("Created image IDs do not match")
+
+
+def _store_post_processed_images(*, image_files, new_image_files, new_folders):
+    """Save the post processed files and folders"""
+    for im_file in image_files:
+        im_file.post_processed = True
+        im_file.save(update_fields=["post_processed"])
+
+    for obj in chain(new_image_files, new_folders):
+        obj.full_clean()
+        obj.save()

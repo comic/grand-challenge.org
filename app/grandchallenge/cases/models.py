@@ -232,8 +232,6 @@ class Image(UUIDModel):
         (PATIENT_SEX_OTHER, "Other"),
     )
 
-    post_processed = models.BooleanField(default=False, editable=False)
-
     name = models.CharField(max_length=4096)
     origin = models.ForeignKey(
         to=RawImageUploadSession,
@@ -475,6 +473,8 @@ class ImageFile(UUIDModel):
         (IMAGE_TYPE_TIFF, "TIFF"),
         (IMAGE_TYPE_DZI, "DZI"),
     )
+
+    post_processed = models.BooleanField(default=False, editable=False)
 
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.CASCADE, related_name="files"
