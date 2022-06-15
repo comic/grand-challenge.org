@@ -1014,14 +1014,14 @@ COMPONENTS_PORT_ADDRESS = os.environ.get("COMPONENTS_PORT_ADDRESS", "0.0.0.0")
 
 if COMPONENTS_DOCKER_TLS_VERIFY:
     # docker-py only works with certificate files so export these
-    DOCKER_CERTS_PATH = Path(
-        os.environ.get("DOCKER_CERTS_PATH", os.path.expanduser("~/.docker"))
+    DOCKER_CERT_PATH = Path(
+        os.environ.get("DOCKER_CERT_PATH", os.path.expanduser("~/.docker"))
     )
-    DOCKER_CERTS_PATH.mkdir(exist_ok=True)
+    DOCKER_CERT_PATH.mkdir(exist_ok=True)
 
-    COMPONENTS_DOCKER_CA_CERT = DOCKER_CERTS_PATH / "ca.pem"
-    COMPONENTS_DOCKER_TLS_CERT = DOCKER_CERTS_PATH / "cert.pem"
-    COMPONENTS_DOCKER_TLS_KEY = DOCKER_CERTS_PATH / "key.pem"
+    COMPONENTS_DOCKER_CA_CERT = DOCKER_CERT_PATH / "ca.pem"
+    COMPONENTS_DOCKER_TLS_CERT = DOCKER_CERT_PATH / "cert.pem"
+    COMPONENTS_DOCKER_TLS_KEY = DOCKER_CERT_PATH / "key.pem"
 
     docker_tls_file_map = {
         "COMPONENTS_DOCKER_CA_CERT_BASE64": {
