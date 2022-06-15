@@ -18,6 +18,7 @@ from grandchallenge.cases.tasks import (
     POST_PROCESSORS,
     _check_post_processor_result,
     import_images,
+    post_process_image,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory
@@ -168,7 +169,6 @@ def test_post_processing(source_dir, filename, tmpdir_factory, settings):
     all_image_files = ImageFile.objects.filter(image=new_image)
     if filename == "valid_tiff.tif":
         assert len(all_image_files) == 2
-
     else:
         assert len(all_image_files) == 1
 
@@ -177,3 +177,17 @@ def test_post_processing(source_dir, filename, tmpdir_factory, settings):
 
     # Newly created images should not be marked as post processed
     assert ImageFile.objects.filter(post_processed=True).count() == 1
+
+    # Task should be idempotent, but all related
+    # files are now marked as post processed
+    post_process_image(image_pk=new_image.pk)
+
+    all_image_files = ImageFile.objects.filter(image=new_image)
+    if filename == "valid_tiff.tif":
+        assert len(all_image_files) == 2
+        assert ImageFile.objects.count() == 2
+        assert ImageFile.objects.filter(post_processed=True).count() == 2
+    else:
+        assert len(all_image_files) == 1
+        assert ImageFile.objects.count() == 1
+        assert ImageFile.objects.filter(post_processed=True).count() == 1
