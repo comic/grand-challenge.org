@@ -54,20 +54,25 @@ class DockerConnectionMixin:
     @property
     def _client(self):
         if self.__client is None:
-            client_kwargs = {"base_url": settings.COMPONENTS_DOCKER_BASE_URL}
+            if settings.COMPONENTS_DOCKER_FROM_ENV:
+                self.__client = docker.from_env()
+            else:
+                client_kwargs = {
+                    "base_url": settings.COMPONENTS_DOCKER_BASE_URL
+                }
 
-            if settings.COMPONENTS_DOCKER_TLS_VERIFY:
-                tlsconfig = TLSConfig(
-                    verify=True,
-                    client_cert=(
-                        settings.COMPONENTS_DOCKER_TLS_CERT,
-                        settings.COMPONENTS_DOCKER_TLS_KEY,
-                    ),
-                    ca_cert=settings.COMPONENTS_DOCKER_CA_CERT,
-                )
-                client_kwargs.update({"tls": tlsconfig})
+                if settings.COMPONENTS_DOCKER_TLS_VERIFY:
+                    tlsconfig = TLSConfig(
+                        verify=True,
+                        client_cert=(
+                            settings.COMPONENTS_DOCKER_TLS_CERT,
+                            settings.COMPONENTS_DOCKER_TLS_KEY,
+                        ),
+                        ca_cert=settings.COMPONENTS_DOCKER_CA_CERT,
+                    )
+                    client_kwargs.update({"tls": tlsconfig})
 
-            self.__client = docker.DockerClient(**client_kwargs)
+                self.__client = docker.DockerClient(**client_kwargs)
 
         return self.__client
 

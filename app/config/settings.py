@@ -1011,11 +1011,14 @@ COMPONENTS_PUBLISH_PORTS = strtobool(
     os.environ.get("COMPONENTS_PUBLISH_PORTS", "False")
 )
 COMPONENTS_PORT_ADDRESS = os.environ.get("COMPONENTS_PORT_ADDRESS", "0.0.0.0")
+COMPONENTS_DOCKER_FROM_ENV = strtobool(
+    os.environ.get("COMPONENTS_DOCKER_FROM_ENV", "False")
+)
 
 if COMPONENTS_DOCKER_TLS_VERIFY:
     # docker-py only works with certificate files so export these
     DOCKER_CERT_PATH = Path(
-        os.environ.get("DOCKER_CERT_PATH", os.path.expanduser("~/.docker"))
+        os.path.expanduser(os.environ.get("DOCKER_CERT_PATH", "~/.docker"))
     )
     DOCKER_CERT_PATH.mkdir(exist_ok=True)
 
