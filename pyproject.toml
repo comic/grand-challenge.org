@@ -45,7 +45,7 @@ django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
 djangorestframework = "*"
-docker = "*"
+docker = {extras = ["tls"], version = "*"}
 "oauth2" = "*"
 python-magic = "*"
 pytz = "*"
