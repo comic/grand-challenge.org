@@ -86,9 +86,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             try:
                 return self.context["view"].randomized_qs.index(obj)
             except ValueError:
-                # The list is empty in the detail view. Return None to
-                # indicate that the value is invalid for shuffled lists
-                # in this case.
+                # The list is empty if no reader study is specified.
                 return None
         else:
             return obj.standard_index
@@ -132,8 +130,6 @@ class DisplaySetPostSerializer(DisplaySetSerializer):
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    hanging_list_images = SerializerMethodField()
-    is_valid = SerializerMethodField()
     help_text = ReadOnlyField()
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
@@ -147,8 +143,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "logo",
             "description",
             "help_text",
-            "hanging_list_images",  # Note: required in gcapi
-            "is_valid",  # Note: required in gcapi
             "pk",
             "questions",
             "title",
@@ -159,13 +153,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
         )
-
-    def get_hanging_list_images(self, obj: ReaderStudy):
-        """Used by hanging_list_images serializer field."""
-        return []
-
-    def get_is_valid(self, obj):
-        return True
 
 
 class AnswerSerializer(HyperlinkedModelSerializer):

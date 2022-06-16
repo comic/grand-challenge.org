@@ -76,12 +76,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
 @pytest.fixture(scope="session")
 def docker_client():
-    return docker.DockerClient(base_url=settings.COMPONENTS_DOCKER_BASE_URL)
-
-
-@pytest.fixture(scope="session")
-def docker_api_client():
-    return docker.APIClient(base_url=settings.COMPONENTS_DOCKER_BASE_URL)
+    return docker.from_env()
 
 
 class ChallengeSet(NamedTuple):
@@ -179,7 +174,6 @@ def challenge_set_with_evaluation(challenge_set):
 def docker_image(
     tmpdir_factory,
     docker_client,
-    docker_api_client,
     path,
     label,
     full_path=None,
@@ -193,7 +187,7 @@ def docker_image(
         path=full_path, tag=f"test-{label}:latest"
     )
     assert im.id in [x.id for x in docker_client.images.list()]
-    image = docker_api_client.get_image(f"test-{label}:latest")
+    image = docker_client.api.get_image(f"test-{label}:latest")
     outfile = tmpdir_factory.mktemp("docker").join(f"{label}-latest.tar")
 
     with outfile.open(mode="wb") as f:
@@ -206,36 +200,33 @@ def docker_image(
 
 
 @pytest.fixture(scope="session")
-def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
+def evaluation_image(tmpdir_factory, docker_client):
     """Create the example evaluation container."""
     return docker_image(
         tmpdir_factory,
         docker_client,
-        docker_api_client,
         path="evaluation_tests",
         label="evaluation",
     )
 
 
 @pytest.fixture(scope="session")
-def algorithm_image(tmpdir_factory, docker_client, docker_api_client):
+def algorithm_image(tmpdir_factory, docker_client):
     """Create the example algorithm container."""
     return docker_image(
         tmpdir_factory,
         docker_client,
-        docker_api_client,
         path="algorithms_tests",
         label="algorithm",
     )
 
 
 @pytest.fixture(scope="session")
-def algorithm_io_image(tmpdir_factory, docker_client, docker_api_client):
+def algorithm_io_image(tmpdir_factory, docker_client):
     """Create the example algorithm container."""
     return docker_image(
         tmpdir_factory,
         docker_client,
-        docker_api_client,
         path="",
         label="algorithm-io",
         full_path=os.path.join(
@@ -245,12 +236,12 @@ def algorithm_io_image(tmpdir_factory, docker_client, docker_api_client):
 
 
 @pytest.fixture(scope="session")
-def alpine_images(tmpdir_factory, docker_client, docker_api_client):
+def alpine_images(tmpdir_factory, docker_client):
     docker_client.images.pull("alpine:3.12")
     docker_client.images.pull("alpine:3.11")
 
     # get all images and put them in a tar archive
-    image = docker_api_client.get_image("alpine")
+    image = docker_client.api.get_image("alpine")
     outfile = tmpdir_factory.mktemp("alpine").join("alpine_multi.tar")
 
     with outfile.open("wb") as f:
@@ -261,10 +252,10 @@ def alpine_images(tmpdir_factory, docker_client, docker_api_client):
 
 
 @pytest.fixture(scope="session")
-def root_image(tmpdir_factory, docker_client, docker_api_client):
+def root_image(tmpdir_factory, docker_client):
     docker_client.images.pull("alpine:3.8")
 
-    image = docker_api_client.get_image("alpine:3.8")
+    image = docker_client.api.get_image("alpine:3.8")
     outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
 
     with outfile.open("wb") as f:
@@ -275,11 +266,10 @@ def root_image(tmpdir_factory, docker_client, docker_api_client):
 
 
 @pytest.fixture(scope="session")
-def http_image(tmpdir_factory, docker_client, docker_api_client):
+def http_image(tmpdir_factory, docker_client):
     return docker_image(
         tmpdir_factory,
         docker_client,
-        docker_api_client,
         path="workstations_tests",
         label="workstation",
     )
