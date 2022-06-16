@@ -1,6 +1,9 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
 from django import forms
+from django.core.exceptions import ValidationError
+from jsonschema import ValidationError as JSONValidationError
+from jsonschema import validate
 
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -88,17 +91,18 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
 class ViewContentMixin:
     def clean_view_content(self):
         mapping = self.cleaned_data["view_content"] or {}
+        try:
+            validate(mapping, VIEW_CONTENT_SCHEMA)
+        except JSONValidationError as e:
+            raise ValidationError(f"JSON does not fulfill schema: {e}")
         hanging_protocol = self.cleaned_data["hanging_protocol"]
         if mapping and hanging_protocol:
             if set(mapping.keys()) != {
                 x["viewport_name"] for x in hanging_protocol.json
             }:
-                self.add_error(
-                    error=(
-                        "Image ports in view_content do not match "
-                        "those in the selected hanging protocol."
-                    ),
-                    field="view_content",
+                raise ValidationError(
+                    "Image ports in view_content do not match "
+                    "those in the selected hanging protocol."
                 )
 
         slugs = {slug for viewport in mapping.values() for slug in viewport}
@@ -107,9 +111,8 @@ class ViewContentMixin:
             if not ComponentInterface.objects.filter(slug=slug).exists():
                 unknown.append(slug)
         if len(unknown) > 0:
-            self.add_error(
-                error=f"Unkown slugs in view_content: {', '.join(unknown)}",
-                field="view_content",
+            raise ValidationError(
+                f"Unkown slugs in view_content: {', '.join(unknown)}"
             )
 
         return mapping

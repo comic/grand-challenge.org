@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.hanging_protocols.forms import (
@@ -14,31 +15,34 @@ from tests.utils import get_view_for_user
 
 class DummyForm(ViewContentMixin):
     cleaned_data = {"hanging_protocol": None}
-    errors = {"view_content": []}
-
-    def add_error(self, *, field, error):
-        self.errors[field].append(error)
 
 
 @pytest.mark.django_db
 def test_view_content_mixin():
     form = DummyForm()
+    form.cleaned_data["view_content"] = [{}]
+    with pytest.raises(ValidationError) as e:
+        form.clean_view_content()
+
+    assert "JSON does not fulfill schema" in e.value.message
+
+    form.errors = {"view_content": []}
     form.cleaned_data["view_content"] = {"main": ["test"]}
-    form.clean_view_content()
-    assert "Unkown slugs in view_content: test" in form.errors["view_content"]
+    with pytest.raises(ValidationError) as e:
+        form.clean_view_content()
+    assert e.value.message == "Unkown slugs in view_content: test"
 
     form.errors = {"view_content": []}
     form.cleaned_data["hanging_protocol"] = HangingProtocolFactory(
         json=[{"viewport_name": "main"}]
     )
     form.cleaned_data["view_content"] = {"secondary": ["test"]}
-    form.clean_view_content()
+    with pytest.raises(ValidationError) as e:
+        form.clean_view_content()
 
-    assert (
+    assert e.value.message == (
         "Image ports in view_content do not match those in the selected hanging protocol."
-        in form.errors["view_content"]
     )
-    assert "Unkown slugs in view_content: test" in form.errors["view_content"]
 
     ComponentInterfaceFactory(title="Test")
     form.errors = {"view_content": []}
@@ -47,8 +51,6 @@ def test_view_content_mixin():
     )
     form.cleaned_data["view_content"] = {"main": ["test"]}
     form.clean_view_content()
-
-    assert form.errors["view_content"] == []
 
 
 @pytest.mark.django_db
