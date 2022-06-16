@@ -24,10 +24,7 @@ def test_view_content_mixin():
     with pytest.raises(ValidationError) as e:
         form.clean_view_content()
 
-    assert (
-        e.value.message
-        == "Value [{}] is not valid. Should be of type `object`."
-    )
+    assert "JSON does not fulfill schema" in e.value.message
 
     form.errors = {"view_content": []}
     form.cleaned_data["view_content"] = {"main": ["test"]}

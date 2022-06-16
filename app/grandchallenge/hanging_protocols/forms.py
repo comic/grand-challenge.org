@@ -2,6 +2,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from jsonschema import ValidationError as JSONValidationError
+from jsonschema import validate
 
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -89,11 +91,10 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
 class ViewContentMixin:
     def clean_view_content(self):
         mapping = self.cleaned_data["view_content"] or {}
-        if not isinstance(mapping, dict):
-            raise ValidationError(
-                f"Value {str(mapping)} is not valid. "
-                "Should be of type `object`."
-            )
+        try:
+            validate(mapping, VIEW_CONTENT_SCHEMA)
+        except JSONValidationError as e:
+            raise ValidationError(f"JSON does not fulfill schema: {e}")
         hanging_protocol = self.cleaned_data["hanging_protocol"]
         if mapping and hanging_protocol:
             if set(mapping.keys()) != {
