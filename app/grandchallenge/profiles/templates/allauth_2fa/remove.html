@@ -14,15 +14,19 @@
 
 {% block content %}
     <h1>
-      {% trans "Disable Two-Factor Authentication" %}
+        {% trans "Disable Two-Factor Authentication" %}
     </h1>
 
     <p>{% trans "Are you sure you want to disable Two-Factor Authentication from your account?" %}</p>
-
-    <form method="post">
-      {% csrf_token %}
-      <button class="btn btn-primary" type="submit">
-        {% trans 'Yes, disable 2FA' %}
-      </button>
+    <p>{% trans "Confirm by entering the token from your authenticator app." %}</p>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.otp_token.label }}:
+        {{ form.otp_token }}
+        <br>
+        <button class="btn btn-primary mt-3" type="submit">
+            {% trans 'Yes, disable 2FA' %}
+        </button>
     </form>
 {% endblock %}

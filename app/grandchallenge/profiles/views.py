@@ -1,5 +1,8 @@
+import contextlib
 from base64 import b32encode
 
+from allauth_2fa.forms import TOTPAuthenticateForm
+from allauth_2fa.mixins import ValidTOTPDeviceRequiredMixin
 from allauth_2fa.views import TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
@@ -7,7 +10,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import DetailView, UpdateView
+from django.views.generic import DetailView, FormView, UpdateView
+from django_otp.plugins.otp_totp.models import TOTPDevice
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
@@ -27,7 +31,7 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.profiles.forms import NewsletterSignupForm, UserProfileForm
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.profiles.serializers import UserProfileSerializer
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 def profile(request):
@@ -210,3 +214,33 @@ class TwoFactorSetup(TwoFactorSetup):
         # and display an error message
         messages.add_message(self.request, messages.ERROR, "Incorrect token.")
         return response
+
+
+class TwoFactorRemove(ValidTOTPDeviceRequiredMixin, FormView):
+    form_class = TOTPAuthenticateForm
+    template_name = "allauth_2fa/remove.html"
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "profile-detail", kwargs={"username": self.request.user.username}
+        )
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        with contextlib.suppress(ObjectDoesNotExist):
+            # Delete any backup tokens and their related static device.
+            static_device = self.request.user.staticdevice_set.get(
+                name="backup"
+            )
+            static_device.token_set.all().delete()
+            static_device.delete()
+
+        # Delete TOTP device.
+        device = TOTPDevice.objects.get(user=self.request.user)
+        device.delete()
+        return response
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
