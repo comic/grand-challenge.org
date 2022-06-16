@@ -1,14 +1,18 @@
+from base64 import b32encode
+
 import pytest
 from allauth.socialaccount.models import SocialAccount
 from allauth.socialaccount.tests import OAuth2TestsMixin
 from allauth.tests import MockedResponse
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
+from django_otp.plugins.otp_static.models import StaticToken
 from pytest_django.asserts import assertRedirects
 
 from config.settings import LOGIN_REDIRECT_URL
 from grandchallenge.profiles.providers.gmail.provider import GmailProvider
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from tests.conftest import get_token_from_totp_device
 from tests.factories import (
     SUPER_SECURE_TEST_PASSWORD,
     ChallengeFactory,
@@ -150,3 +154,100 @@ def test_2fa_reset_flow(client):
     assert not client.session.get("allauth_2fa_user_id")
     resp = client.get(reverse_lazy("two-factor-authenticate"))
     assert "/accounts/login/" == resp.url
+
+
+@override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
+@pytest.mark.django_db
+def test_2fa_removal(client):
+    user = UserFactory()
+    # enable 2fa
+    totp_device = user.totpdevice_set.create()
+
+    # generate some backup tokens
+    static_device = user.staticdevice_set.create(name="backup")
+    static_device.token_set.create(token=StaticToken.random_token())
+    assert static_device.token_set.count() == 1
+
+    # Navigate to 2FA removal view
+    response = get_view_for_user(
+        viewname="two-factor-remove",
+        client=client,
+        user=user,
+    )
+
+    # check that token is required
+    assert 'required id="id_otp_token"' in response.rendered_content
+    # submitting without a token does not work
+    response = get_view_for_user(
+        viewname="two-factor-remove",
+        client=client,
+        method=client.post,
+        user=user,
+    )
+    assert "Please enter your OTP token." in str(
+        response.context["form"].errors
+    )
+
+    # when correct token is entered, the totp device and any backup tokens are deleted
+    token = get_token_from_totp_device(totp_device)
+    _ = get_view_for_user(
+        viewname="two-factor-remove",
+        client=client,
+        method=client.post,
+        data={"otp_token": token},
+        user=user,
+    )
+    user.refresh_from_db()
+    assert not user.totpdevice_set.exists()
+    assert static_device.token_set.count() == 0
+
+
+@override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
+@pytest.mark.django_db
+def test_2fa_setup(client):
+    user = UserFactory()
+    response = get_view_for_user(
+        viewname="two-factor-setup",
+        client=client,
+        user=user,
+    )
+
+    # assert the text code is in the template
+    secret_code = b32encode(user.totpdevice_set.get().bin_key).decode("utf-8")
+    assert secret_code in response.rendered_content
+
+    # filling in wrong token return error
+    response = get_view_for_user(
+        viewname="two-factor-setup",
+        client=client,
+        method=client.post,
+        data={"token": "12345"},
+        user=user,
+    )
+    assert "The entered token is not valid" in str(
+        response.context["form"].errors
+    )
+
+    # with the correct token, authentication succeeds and user is
+    # redirected to the back-up tokens page
+    token = get_token_from_totp_device(user.totpdevice_set.get())
+    response = get_view_for_user(
+        viewname="two-factor-setup",
+        client=client,
+        method=client.post,
+        data={"token": token},
+        user=user,
+    )
+    assert "/accounts/two_factor/backup_tokens" == response.url
+
+    # upon next sign-in 2fa will be prompted
+    client.logout()
+    response = client.post(
+        reverse("account_login"),
+        {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
+    )
+    assertRedirects(
+        response,
+        "/accounts/two-factor-authenticate",
+        fetch_redirect_response=False,
+    )
