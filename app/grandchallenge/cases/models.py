@@ -474,6 +474,8 @@ class ImageFile(UUIDModel):
         (IMAGE_TYPE_DZI, "DZI"),
     )
 
+    post_processed = models.BooleanField(default=False, editable=False)
+
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.CASCADE, related_name="files"
     )

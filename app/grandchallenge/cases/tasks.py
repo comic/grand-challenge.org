@@ -1,10 +1,11 @@
+import logging
 import zipfile
 from dataclasses import asdict, dataclass
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set
+from typing import Callable, Dict, List, Optional, Sequence, Set
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
@@ -12,11 +13,12 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError, transaction
+from django.db.transaction import on_commit
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
-from panimg import convert
-from panimg.models import PanImgResult
+from panimg import convert, post_process
+from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -27,6 +29,8 @@ from grandchallenge.cases.models import (
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
+
+logger = logging.getLogger(__name__)
 
 POST_PROCESSORS = [
     import_string(p) for p in settings.CASES_POST_PROCESSORS if p
@@ -179,7 +183,7 @@ def import_images(
     *,
     input_directory: Path,
     origin: Optional[RawImageUploadSession] = None,
-    builders: Optional[Iterable[Callable]] = None,
+    builders: Optional[Sequence[Callable]] = None,
     recurse_subdirectories: bool = True,
 ) -> ImporterResult:
     """
@@ -200,19 +204,22 @@ def import_images(
         any file errors
 
     """
-
     with TemporaryDirectory() as output_directory:
         panimg_result = convert(
             input_directory=input_directory,
             output_directory=output_directory,
             builders=builders,
-            post_processors=POST_PROCESSORS,
+            post_processors=[],  # Do the post-processing later
             recurse_subdirectories=recurse_subdirectories,
         )
 
         _check_all_ids(panimg_result=panimg_result)
 
-        django_result = _convert_panimg_to_django(panimg_result=panimg_result)
+        django_result = _convert_panimg_to_django(
+            new_images=panimg_result.new_images,
+            new_image_files=panimg_result.new_image_files,
+            new_folders=panimg_result.new_folders,
+        )
 
         _store_images(
             origin=origin,
@@ -220,6 +227,13 @@ def import_images(
             image_files=django_result.new_image_files,
             folders=django_result.new_folders,
         )
+
+        for image in django_result.new_images:
+            on_commit(
+                post_process_image.signature(
+                    kwargs={"image_pk": image.pk}
+                ).apply_async
+            )
 
     return ImporterResult(
         new_images=django_result.new_images,
@@ -257,20 +271,18 @@ class ConversionResult:
 
 
 def _convert_panimg_to_django(
-    *, panimg_result: PanImgResult
+    *, new_images, new_image_files, new_folders
 ) -> ConversionResult:
-    new_images = {Image(**asdict(im)) for im in panimg_result.new_images}
+    new_images = {Image(**asdict(im)) for im in new_images}
     new_image_files = {
         ImageFile(
             image_id=f.image_id,
             image_type=f.image_type,
             file=File(open(f.file, "rb"), f.file.name),
         )
-        for f in panimg_result.new_image_files
+        for f in new_image_files
     }
-    new_folders = {
-        FolderUpload(**asdict(f)) for f in panimg_result.new_folders
-    }
+    new_folders = {FolderUpload(**asdict(f)) for f in new_folders}
 
     return ConversionResult(
         new_images=new_images,
@@ -331,3 +343,89 @@ def _handle_raw_files(
 
 def _delete_session_files(*, upload_session):
     upload_session.user_uploads.all().delete()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def post_process_image(*, image_pk):
+    with TemporaryDirectory() as output_directory:
+        image_files = ImageFile.objects.filter(
+            image__pk=image_pk, post_processed=False
+        ).select_related("image")
+
+        panimg_files = _download_image_files(
+            image_files=image_files, dir=output_directory
+        )
+
+        post_processor_result = post_process(
+            image_files=panimg_files, post_processors=POST_PROCESSORS
+        )
+
+        _check_post_processor_result(
+            post_processor_result=post_processor_result, image_pk=image_pk
+        )
+
+        django_result = _convert_panimg_to_django(
+            new_images=[],
+            new_image_files=post_processor_result.new_image_files,
+            new_folders=post_processor_result.new_folders,
+        )
+
+        with transaction.atomic():
+            _store_post_processed_images(
+                image_files=image_files,
+                new_image_files=django_result.new_image_files,
+                new_folders=django_result.new_folders,
+            )
+
+
+def _download_image_files(*, image_files, dir):
+    """
+    Downloads a set of image files to a directory
+
+    Returns a set of PanImgFiles that point to the local files
+    """
+    panimg_files = set()
+
+    for im_file in image_files:
+        dest = safe_join(dir, im_file.file.name)
+        panimg_files.add(
+            PanImgFile(
+                image_id=im_file.image.pk,
+                image_type=im_file.image_type,
+                file=dest,
+            )
+        )
+
+        # Safe to create directories as safe_join has been used
+        Path(dest).parent.mkdir(parents=True, exist_ok=True)
+
+        with im_file.file.open("rb") as fs, open(dest, "wb") as fd:
+            for chunk in fs.chunks():
+                fd.write(chunk)
+
+    return panimg_files
+
+
+def _check_post_processor_result(*, post_processor_result, image_pk):
+    """Ensure all post processed results belong to the given image"""
+    created_ids = {
+        str(f.image_id)
+        for f in chain(
+            post_processor_result.new_image_files,
+            post_processor_result.new_folders,
+        )
+    }
+
+    if created_ids not in [{str(image_pk)}, set()]:
+        raise RuntimeError("Created image IDs do not match")
+
+
+def _store_post_processed_images(*, image_files, new_image_files, new_folders):
+    """Save the post processed files and folders"""
+    for im_file in image_files:
+        im_file.post_processed = True
+        im_file.save(update_fields=["post_processed"])
+
+    for obj in chain(new_image_files, new_folders):
+        obj.full_clean()
+        obj.save()
