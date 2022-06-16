@@ -180,14 +180,6 @@ def test_reader_study_create(client, uploaded_image):
     assert "error_1_id_workstation" not in response.rendered_content
     assert case_navigation_error in response.rendered_content
 
-    shuffled_case_navigation_error = (
-        "Shuffled hanging lists cannot be used together with case navigation."
-    )
-    response = try_create_rs(
-        allow_case_navigation=True, shuffle_hanging_list=True
-    )
-    assert shuffled_case_navigation_error in response.rendered_content
-
     response = try_create_rs(allow_case_navigation=True)
     assert "error_1_id_workstation" not in response.rendered_content
     assert case_navigation_error not in response.rendered_content

@@ -147,18 +147,6 @@ class ReaderStudyCreateForm(
                 ),
                 field=None,
             )
-        if (
-            self.cleaned_data["shuffle_hanging_list"]
-            and self.cleaned_data["allow_case_navigation"]
-        ):
-            self.add_error(
-                error=ValidationError(
-                    "Shuffled hanging lists cannot be used together with "
-                    "case navigation.",
-                    code="invalid",
-                ),
-                field=None,
-            )
         if self.cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
             self.cleaned_data["allow_case_navigation"]
             or self.cleaned_data["shuffle_hanging_list"]
