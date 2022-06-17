@@ -10,7 +10,7 @@ def run():
         "superuser", "superuser@example.com", "superuser"
     )
     su.user_profile.receive_newsletter = False
-    su.save()
+    su.user_profile.save()
     EmailAddress.objects.filter(email=su.email).delete()
     EmailAddress.objects.create(
         user=su, email=su.email, verified=True, primary=True
