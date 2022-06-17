@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from contextlib import contextmanager
@@ -6,6 +7,7 @@ from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from socket import getaddrinfo
+from subprocess import run
 from tempfile import TemporaryDirectory
 from time import sleep
 
@@ -30,6 +32,34 @@ from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.components.tasks import _repo_login_and_run
 
 logger = logging.getLogger(__name__)
+
+
+class DockerClient:
+    def _run(self, *args):
+        return run(
+            ["docker", *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def pull_image(self, *, repo_tag):
+        return self._run("image", "pull", repo_tag)
+
+    def build_image(self, *, repo_tag, path):
+        return self._run("build", "-t", repo_tag, path)
+
+    def save_image(self, *, repo_tag, output):
+        return self._run("save", "--output", output, repo_tag)
+
+    def list_images(self, repo_tag=None):
+        args = ["image", "list", "--no-trunc", "--format", "{{json .}}"]
+
+        if repo_tag is not None:
+            args.append(repo_tag)
+
+        result = self._run(*args)
+        return [json.loads(line) for line in result.stdout.splitlines()]
 
 
 class DockerConnectionMixin:

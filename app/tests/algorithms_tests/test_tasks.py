@@ -217,9 +217,8 @@ def test_algorithm(client, algorithm_image, settings):
     assert Job.objects.count() == 0
 
     # Create the algorithm image
-    algorithm_container, sha256 = algorithm_image
     with capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+        alg = AlgorithmImageFactory(image__from_path=algorithm_image)
     recurse_callbacks(callbacks=callbacks)
     alg.refresh_from_db()
 
@@ -312,9 +311,8 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     assert Job.objects.count() == 0
 
     # Create the algorithm image
-    algorithm_container, sha256 = algorithm_image
     with capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+        alg = AlgorithmImageFactory(image__from_path=algorithm_image)
     recurse_callbacks(callbacks=callbacks)
     alg.refresh_from_db()
 
@@ -362,9 +360,8 @@ def test_algorithm_multiple_inputs(
     assert Job.objects.count() == 0
 
     # Create the algorithm image
-    algorithm_container, sha256 = algorithm_io_image
     with capture_on_commit_callbacks() as callbacks:
-        alg = AlgorithmImageFactory(image__from_path=algorithm_container)
+        alg = AlgorithmImageFactory(image__from_path=algorithm_io_image)
     recurse_callbacks(callbacks=callbacks)
 
     alg.algorithm.add_editor(creator)
@@ -426,7 +423,7 @@ def test_algorithm_multiple_inputs(
 
 @pytest.mark.django_db
 def test_algorithm_input_image_multiple_files(
-    client, algorithm_io_image, settings, component_interfaces
+    client, settings, component_interfaces
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -437,10 +434,7 @@ def test_algorithm_input_image_multiple_files(
     assert Job.objects.count() == 0
 
     # Create the algorithm image
-    algorithm_container, sha256 = algorithm_io_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    alg = AlgorithmImageFactory(ready=True)
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())

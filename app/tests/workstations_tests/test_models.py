@@ -71,14 +71,12 @@ def test_session_auth_token():
 
 @pytest.mark.django_db
 def test_session_start(http_image, settings):
-    path, _ = http_image
-
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=path)
+        wsi = WorkstationImageFactory(image__from_path=http_image)
     recurse_callbacks(callbacks=callbacks)
 
     with capture_on_commit_callbacks(execute=True):
@@ -125,14 +123,12 @@ def test_session_start(http_image, settings):
 
 @pytest.mark.django_db
 def test_correct_session_stopped(http_image, settings):
-    path, _ = http_image
-
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=path)
+        wsi = WorkstationImageFactory(image__from_path=http_image)
     recurse_callbacks(callbacks=callbacks)
 
     try:
@@ -167,14 +163,12 @@ def test_correct_session_stopped(http_image, settings):
 
 @pytest.mark.django_db
 def test_session_cleanup(http_image, settings):
-    path, _ = http_image
-
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=path)
+        wsi = WorkstationImageFactory(image__from_path=http_image)
     recurse_callbacks(callbacks=callbacks)
 
     default_region = "eu-nl-1"
@@ -219,14 +213,12 @@ def test_session_cleanup(http_image, settings):
 
 @pytest.mark.django_db
 def test_workstation_ready(http_image, settings):
-    path, _ = http_image
-
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     # Do not execute the callbacks as the image should not be ready
-    wsi = WorkstationImageFactory(image__from_path=path)
+    wsi = WorkstationImageFactory(image__from_path=http_image)
     assert wsi.ready is False
 
     with capture_on_commit_callbacks(execute=True):
@@ -238,15 +230,13 @@ def test_workstation_ready(http_image, settings):
 
 @pytest.mark.django_db
 def test_session_limit(http_image, settings):
-    path, _ = http_image
-
     # Execute celery tasks in place
     settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     with capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=path)
+        wsi = WorkstationImageFactory(image__from_path=http_image)
     recurse_callbacks(callbacks=callbacks)
 
     try:
