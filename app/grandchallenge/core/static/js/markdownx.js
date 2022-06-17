@@ -260,7 +260,7 @@
                 }));
                 xhr.success = function(response) {
                     properties.preview.innerHTML = response;
-                    properties.editor = updateHeight(properties.editor);
+                    properties.editor = properties._editorIsResizable ? (properties.editor) : properties.editor;
                     utils_1.triggerCustomEvent("markdownx.update", properties.parent, [ response ]);
                 };
                 xhr.error = function(response) {
