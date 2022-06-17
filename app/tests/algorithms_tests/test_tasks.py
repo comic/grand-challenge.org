@@ -495,9 +495,7 @@ def test_add_images_to_component_interface_value():
 
 
 @pytest.mark.django_db
-def test_execute_algorithm_job_for_inputs(
-    client, algorithm_io_image, settings
-):
+def test_execute_algorithm_job_for_inputs(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -505,10 +503,7 @@ def test_execute_algorithm_job_for_inputs(
     creator = UserFactory()
 
     # Create the algorithm image
-    algorithm_container, sha256 = algorithm_io_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    alg = AlgorithmImageFactory(ready=True)
     alg.algorithm.add_editor(creator)
 
     # create the job without value for the ComponentInterfaceValues
@@ -610,7 +605,7 @@ class TestJobCreation:
 
 
 @pytest.mark.django_db
-def test_failed_job_notifications(client, algorithm_io_image, settings):
+def test_failed_job_notifications(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -619,10 +614,7 @@ def test_failed_job_notifications(client, algorithm_io_image, settings):
     editor = UserFactory()
 
     # Create the algorithm image
-    algorithm_container, sha256 = algorithm_io_image
-    alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True
-    )
+    alg = AlgorithmImageFactory(ready=True)
     alg.algorithm.add_editor(editor)
 
     job = Job.objects.create(creator=creator, algorithm_image=alg)
