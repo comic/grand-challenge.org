@@ -943,6 +943,14 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
+class DeleteGroundTruthPermission(DjangoObjectPermissions):
+    def get_required_permissions(self, method, model):
+        return [f"{model._meta.app_label}.change_{model._meta.model_name}"]
+
+    def get_required_object_permissions(self, method, model):
+        return [f"{model._meta.app_label}.change_{model._meta.model_name}"]
+
+
 class ReaderStudyViewSet(ModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
@@ -966,10 +974,14 @@ class ReaderStudyViewSet(ModelViewSet):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
 
+    def get_permissions(self, *args, **kwargs):
+        if self.action == "remove_ground_truth":
+            return [DeleteGroundTruthPermission()]
+        return super().get_permissions(*args, **kwargs)
+
     @action(detail=True, url_path="delete-ground-truth", methods=["post"])
     def remove_ground_truth(self, request, pk=None):
-        reader_study = get_object_or_404(ReaderStudy, pk=self.kwargs["pk"])
-        self._check_change_perms(request.user, reader_study)
+        reader_study = self.get_object()
         Answer.objects.filter(
             question__reader_study=reader_study, is_ground_truth=True
         ).delete()

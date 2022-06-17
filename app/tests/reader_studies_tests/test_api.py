@@ -1019,6 +1019,44 @@ def test_ground_truth(client):
 
 
 @pytest.mark.django_db
+def test_delete_ground_truth(client):
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(reader_study=rs)
+    reader, editor = UserFactory.create_batch(2)
+    rs.add_reader(reader)
+    rs.add_editor(editor)
+    a, gt = AnswerFactory(
+        question=q, display_set=ds, is_ground_truth=False
+    ), AnswerFactory(question=q, display_set=ds, is_ground_truth=True)
+
+    response = get_view_for_user(
+        viewname="api:reader-study-remove-ground-truth",
+        reverse_kwargs={"pk": rs.pk},
+        user=reader,
+        client=client,
+        method=client.post,
+        data={},
+        content_type="application/json",
+    )
+    assert response.status_code == 404
+    assert Answer.objects.filter(pk=a.pk).exists()
+    assert Answer.objects.filter(pk=gt.pk).exists()
+
+    response = get_view_for_user(
+        viewname="api:reader-study-remove-ground-truth",
+        reverse_kwargs={"pk": rs.pk},
+        user=editor,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+    )
+    assert response.status_code == 204
+    assert Answer.objects.filter(pk=a.pk).exists()
+    assert not Answer.objects.filter(pk=gt.pk).exists()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("answer_type", ("MASK",))
 def test_assign_answer_image(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
