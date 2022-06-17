@@ -2,6 +2,9 @@ from django.contrib import admin
 from django.utils.timezone import now
 from pyswot import is_academic
 
+from grandchallenge.verifications.emails import (
+    send_verification_reminder_email,
+)
 from grandchallenge.verifications.models import Verification
 
 
@@ -19,6 +22,18 @@ def mark_not_verified(modeladmin, request, queryset):
 
 mark_not_verified.short_description = "Mark selected users as not verified"
 mark_not_verified.allowed_permissions = ("change",)
+
+
+def send_reminder_email(modeladmin, request, queryset):
+    for verification in queryset.filter(
+        email_is_verified=False, is_verified=False
+    ):
+        send_verification_reminder_email(verification=verification)
+
+
+send_reminder_email.short_description = (
+    "Email selected users a verification reminder"
+)
 
 
 class VerificationAdmin(admin.ModelAdmin):
@@ -45,7 +60,7 @@ class VerificationAdmin(admin.ModelAdmin):
         "verified_at",
     )
     search_fields = ("user__username", "email", "user__email")
-    actions = (mark_verified, mark_not_verified)
+    actions = (mark_verified, mark_not_verified, send_reminder_email)
     autocomplete_fields = ("user",)
 
     def email_is_academic(self, instance):
