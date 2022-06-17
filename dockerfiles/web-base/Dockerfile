@@ -48,6 +48,15 @@ RUN mkdir -p /opt/mc \
     && mv /opt/mc/mc /usr/local/bin/ \
     && rm -r /opt/mc
 
+# Get the docker cli
+RUN mkdir -p /opt/docker \
+    && wget https://download.docker.com/linux/static/stable/x86_64/docker-20.10.17.tgz -O /opt/docker/docker.tgz \
+    && echo "969210917b5548621a2b541caf00f86cc6963c6cf0fb13265b9731c3b98974d9  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
+    && tar -C /opt/docker/ -xzvf /opt/docker/docker.tgz \
+    && chmod a+x /opt/docker/docker/docker \
+    && mv /opt/docker/docker/docker /usr/local/bin/ \
+    && rm -r /opt/docker
+
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
     GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION=0.1.0\
