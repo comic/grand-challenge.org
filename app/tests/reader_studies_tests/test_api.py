@@ -2,9 +2,8 @@ import re
 from pathlib import Path
 
 import pytest
+from django.urls import reverse
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
-from drf_spectacular.generators import SchemaGenerator
-from rest_framework import routers
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKind
@@ -1147,16 +1146,17 @@ def test_question_accepts_image_type_answers(client, settings):
     )
 
 
-def test_display_set_extended_schema():
+@pytest.mark.django_db
+def test_display_set_extended_schema(client):
     """Ensure that the added params are still included if we ever upgrade drf_spectacular."""
-    route = "test-ds"
-    viewset = DisplaySetViewSet
-    router = routers.SimpleRouter()
-    router.register(route, viewset, basename=route)
-    patterns = router.urls
-    generator = SchemaGenerator(patterns=patterns)
-    schema = generator.get_schema(request=None, public=True)
-    params = schema["paths"][f"/{route}/"]["get"]["parameters"]
+    response = get_view_for_user(
+        viewname="api:schema",
+        client=client,
+        data={"format": "json"},
+    )
+    params = response.json()["paths"][
+        reverse("api:reader-studies-display-set-list")
+    ]["get"]["parameters"]
     param_names = [param["name"] for param in params]
     assert "unanswered_by_user" in param_names
     assert "user" in param_names
