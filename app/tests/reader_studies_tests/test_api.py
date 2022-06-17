@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from drf_spectacular.generators import SchemaGenerator
+from rest_framework import routers
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKind
@@ -1143,6 +1145,21 @@ def test_question_accepts_image_type_answers(client, settings):
         b"This question does not accept image type answers"
         in response.rendered_content
     )
+
+
+def test_display_set_extended_schema():
+    """Ensure that the added params are still included if we ever upgrade drf_spectacular."""
+    route = "test-ds"
+    viewset = DisplaySetViewSet
+    router = routers.SimpleRouter()
+    router.register(route, viewset, basename=route)
+    patterns = router.urls
+    generator = SchemaGenerator(patterns=patterns)
+    schema = generator.get_schema(request=None, public=True)
+    params = schema["paths"][f"/{route}/"]["get"]["parameters"]
+    param_names = [param["name"] for param in params]
+    assert "unanswered_by_user" in param_names
+    assert "user" in param_names
 
 
 @pytest.mark.django_db
