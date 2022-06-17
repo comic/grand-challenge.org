@@ -314,16 +314,21 @@
                         {{ example_ground_truth|linebreaks }}
                     </code>
                 </p>
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
-                        <i class="fas fa-upload"></i> Upload Ground Truth
-                    </a>
-                    <a class="btn btn-secondary"
-                       href="{% url 'reader-studies:example-ground-truth' slug=object.slug %}">
-                        <i class="fas fa-download"></i> Download Example CSV
-                    </a>
-                </p>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <a class="btn btn-primary"
+                           href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
+                            <i class="fas fa-upload"></i> Upload Ground Truth
+                        </a>
+                        <a class="btn btn-secondary"
+                           href="{% url 'reader-studies:example-ground-truth' slug=object.slug %}">
+                            <i class="fas fa-download"></i> Download Example CSV
+                        </a>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteGroundTruth()">
+                        <i class="fas fa-trash-alt"></i> Delete ground truth
+                    </button>
+                </div>
 
             </div>
 
@@ -417,4 +422,22 @@
 {% block script %}
     {{ block.super }}
     <script src="{% static "js/refresh_sidebar.js" %}"></script>
+    <script>
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
+        deleteGroundTruth = () => {
+            $.ajax({
+                url: "{% url 'api:reader-study-remove-ground-truth' pk=object.pk %}",
+                type: "POST",
+                complete: () => {location.reload()},
+                headers: {
+                    'X-CSRFToken': window.drf.csrftoken,
+                    'Content-Type': 'application/json'
+                },
+            });
+        };
+    </script>
+     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
 {% endblock %}

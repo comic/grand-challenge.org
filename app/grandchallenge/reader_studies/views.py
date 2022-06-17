@@ -49,7 +49,11 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import (
+    GenericViewSet,
+    ModelViewSet,
+    ReadOnlyModelViewSet,
+)
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
@@ -939,7 +943,7 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
-class ReaderStudyViewSet(ReadOnlyModelViewSet):
+class ReaderStudyViewSet(ModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
         "questions__options",
@@ -950,6 +954,9 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+    delete_permission = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
@@ -958,6 +965,18 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     def _check_change_perms(self, user, obj):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
+
+    @action(detail=True, url_path="delete-ground-truth", methods=["post"])
+    def remove_ground_truth(self, request, pk=None):
+        reader_study = get_object_or_404(ReaderStudy, pk=self.kwargs["pk"])
+        self._check_change_perms(request.user, reader_study)
+        Answer.objects.filter(
+            question__reader_study=reader_study, is_ground_truth=True
+        ).delete()
+        messages.add_message(
+            request, messages.SUCCESS, "Ground truth deleted successfully"
+        )
+        return Response(status=204)
 
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
     def ground_truth(self, request, pk=None, case_pk=None):
