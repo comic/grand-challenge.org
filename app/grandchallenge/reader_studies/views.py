@@ -962,9 +962,6 @@ class ReaderStudyViewSet(ModelViewSet):
     change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
-    delete_permission = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
