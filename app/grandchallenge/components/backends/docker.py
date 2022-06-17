@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from contextlib import contextmanager
+import shlex
 from ipaddress import ip_address
 from json import JSONDecodeError
 from pathlib import Path
@@ -11,13 +11,11 @@ from subprocess import run
 from tempfile import TemporaryDirectory
 from time import sleep
 
-import docker
 import requests
 from dateutil.parser import isoparse
 from django.conf import settings
-from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, DockerException, ImageNotFound
-from docker.types import LogConfig
+from django.core.exceptions import ObjectDoesNotExist
+from docker.errors import APIError, DockerException
 from requests import HTTPError
 from requests.exceptions import ChunkedEncodingError
 
@@ -30,29 +28,50 @@ from grandchallenge.components.backends.utils import (
 )
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.components.tasks import _repo_login_and_run
+from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)
 
 
 class DockerClient:
-    def _run(self, *args):
+    def _run(self, *args, authenticate=False):
+        clean_command = shlex.join(["docker", *args])
+
+        if authenticate:
+            auth_config = _get_registry_auth_config()
+            login_command = shlex.join(
+                [
+                    "docker",
+                    "login",
+                    "--username",
+                    auth_config["username"],
+                    "--password",
+                    auth_config["password"],
+                    settings.COMPONENTS_REGISTRY_URL,
+                ]
+            )
+            clean_command = f"{login_command} && {clean_command}"
+
         return run(
-            ["docker", *args],
+            ["/bin/sh", "-c", clean_command],
             check=True,
             capture_output=True,
             text=True,
         )
 
-    def pull_image(self, *, repo_tag):
-        return self._run("image", "pull", repo_tag)
+    def pull_image(self, *, repo_tag, authenticate=False):
+        return self._run("image", "pull", repo_tag, authenticate=authenticate)
 
     def build_image(self, *, repo_tag, path):
-        return self._run("build", "-t", repo_tag, path)
+        return self._run("build", "--tag", repo_tag, path)
 
     def save_image(self, *, repo_tag, output):
-        return self._run("save", "--output", output, repo_tag)
+        return self._run("save", "--output", str(output), repo_tag)
 
-    def list_images(self, repo_tag=None):
+    def load_image(self, *, input):
+        return self._run("load", "--input", str(input))
+
+    def list_images(self, *, repo_tag=None):
         args = ["image", "list", "--no-trunc", "--format", "{{json .}}"]
 
         if repo_tag is not None:
@@ -61,58 +80,101 @@ class DockerClient:
         result = self._run(*args)
         return [json.loads(line) for line in result.stdout.splitlines()]
 
+    def get_image(self, *, repo_tag):
+        return get(self.list_images(repo_tag=repo_tag))
 
-class DockerConnectionMixin:
-    """
-    Provides a client with a connection to a docker host, provisioned for
-    running the container exec_image.
-    """
+    def stop_container(self, *, name):
+        try:
+            container_id = self.get_container_id(name=name)
+            return self._run("stop", container_id)
+        except ObjectDoesNotExist:
+            return
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__client = None
+    def get_container_id(self, *, name):
+        result = self._run("ps", "-a", "-q", "--filter", f"name={name}")
+        return get([line for line in result.stdout.splitlines()])
 
-    @property
-    def container_name(self):
-        return self._job_id
+    def run_container(
+        self,
+        *,
+        repo_tag,
+        name,
+        labels,
+        environment,
+        network,
+        mem_limit,
+        ports=None,
+        extra_hosts=None,
+        command=None,
+        remove=False,
+    ):
+        args = [
+            "run",
+            "--name",
+            name,
+            "--network",
+            network,
+            "--memory",
+            f"{mem_limit}g",
+            "--memory-swap",
+            f"{mem_limit}g",
+            "--shm-size",
+            f"{settings.COMPONENTS_SHARED_MEMORY_SIZE}m",
+            "--cpu-period",
+            str(settings.COMPONENTS_CPU_PERIOD),
+            "--cpu-quota",
+            str(settings.COMPONENTS_CPU_QUOTA),
+            "--cpu-shares",
+            str(settings.COMPONENTS_CPU_SHARES),
+            "--cpuset-cpus",
+            self._cpuset_cpus,
+            "--cap-drop",
+            "all",
+            "--security-opt",
+            "no-new-privileges",
+            "--pids-limit",
+            str(settings.COMPONENTS_PIDS_LIMIT),
+            "--log-driver",
+            "json-file",
+            "--log-opt",
+            "max-size=1g",
+            "--init",
+            "--detach",
+        ]
 
-    @property
-    def container(self):
-        return self._client.containers.get(container_id=self.container_name)
+        if remove:
+            args.append("--rm")
 
-    @property
-    def _client(self):
-        if self.__client is None:
-            self.__client = docker.from_env()
-        return self.__client
+        if settings.COMPONENTS_DOCKER_RUNTIME is not None:
+            args.extend(["--runtime", settings.COMPONENTS_DOCKER_RUNTIME])
 
-    @property
-    def _labels(self):
-        return {"job": f"{self._job_id}", "traefik.enable": "false"}
+        for k, v in labels.items():
+            args.extend(["--label", f"{k}={v}"])
 
-    @property
-    def _run_kwargs(self):
-        return {
-            "init": True,
-            # Do not disable the network but use an internal network
-            "network_disabled": False,
-            "network": settings.COMPONENTS_DOCKER_NETWORK_NAME,
-            "mem_limit": f"{self._memory_limit}g",
-            # Set to the same as mem_limit to avoid using swap
-            "memswap_limit": f"{self._memory_limit}g",
-            "shm_size": f"{settings.COMPONENTS_SHARED_MEMORY_SIZE}m",
-            "cpu_period": settings.COMPONENTS_CPU_PERIOD,
-            "cpu_quota": settings.COMPONENTS_CPU_QUOTA,
-            "cpu_shares": settings.COMPONENTS_CPU_SHARES,
-            "cpuset_cpus": self._cpuset_cpus,
-            "runtime": settings.COMPONENTS_DOCKER_RUNTIME,
-            "cap_drop": ["all"],
-            "security_opt": ["no-new-privileges"],
-            "pids_limit": settings.COMPONENTS_PIDS_LIMIT,
-            "log_config": LogConfig(
-                type=LogConfig.types.JSON, config={"max-size": "1g"}
-            ),
-        }
+        for k, v in environment.items():
+            args.extend(["--env", f"{k}={v}"])
+
+        if extra_hosts is not None:
+            for k, v in extra_hosts.items():
+                args.extend(["--add-host", f"{k}:{v}"])
+
+        if ports is not None:
+            for container_port, v in ports.items():
+                bind_address, host_port = v
+                host_port = "" if host_port is None else host_port
+                args.extend(
+                    [
+                        "--publish",
+                        f"{bind_address}:{host_port}:{container_port}",
+                    ]
+                )
+
+        # Last two args must be the repo tag and optional command
+        args.append(repo_tag)
+        if command is not None:
+            args.extend(command)
+
+        return self._run(*args)
 
     @property
     def _cpuset_cpus(self):
@@ -137,6 +199,35 @@ class DockerConnectionMixin:
                 return "0"
             else:
                 return f"0-{cpus - 1}"
+
+
+class DockerConnectionMixin:
+    """
+    Provides a client with a connection to a docker host, provisioned for
+    running the container exec_image.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__client = None
+
+    @property
+    def container_name(self):
+        return self._job_id
+
+    @property
+    def container(self):
+        return self._client.containers.get(container_id=self.container_name)
+
+    @property
+    def _client(self):
+        if self.__client is None:
+            self.__client = DockerClient()
+        return self.__client
+
+    @property
+    def _labels(self):
+        return {"job": f"{self._job_id}", "traefik.enable": "false"}
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
@@ -166,12 +257,8 @@ class DockerConnectionMixin:
 
     def _pull_image(self):
         try:
-            self._client.images.get(name=self._exec_image_repo_tag)
-        except ImageNotFound:
-            # This can take a long time so increase the default timeout #1330
-            old_timeout = self._client.api.timeout
-            self._client.api.timeout = 600  # 10 minutes
-
+            self._client.get_image(repo_tag=self._exec_image_repo_tag)
+        except ObjectDoesNotExist:
             if settings.COMPONENTS_REGISTRY_INSECURE:
                 # In CI we cannot set the docker daemon to trust the local
                 # registry, so pull the container with crane and then load it
@@ -185,15 +272,11 @@ class DockerConnectionMixin:
                             str(tarball),
                         ]
                     )
-                    with open(tarball, "rb") as f:
-                        self._client.images.load(f)
+                    self._client.load_image(input=tarball)
             else:
-                self._client.images.pull(
-                    repository=self._exec_image_repo_tag,
-                    auth_config=_get_registry_auth_config(),
+                self._client.pull_image(
+                    repo_tag=self._exec_image_repo_tag, authenticate=True
                 )
-
-            self._client.api.timeout = old_timeout
 
 
 class DockerExecutor(DockerConnectionMixin, Executor):
@@ -244,7 +327,8 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 .replace(b"\x00", b"")
                 .decode("utf-8")
             )
-        except (DockerException, ChunkedEncodingError) as e:
+        # TODO AttributeError is temporary
+        except (DockerException, ChunkedEncodingError, AttributeError) as e:
             # ChunkedEncodingError leaks from docker py
             # https://github.com/docker/docker-py/issues/2696
             logger.warning(f"Could not fetch stdout: {e}")
@@ -260,7 +344,8 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 .replace(b"\x00", b"")
                 .decode("utf-8")
             )
-        except (DockerException, ChunkedEncodingError) as e:
+        # TODO AttributeError is temporary
+        except (DockerException, ChunkedEncodingError, AttributeError) as e:
             # ChunkedEncodingError leaks from docker py
             # https://github.com/docker/docker-py/issues/2696
             logger.warning(f"Could not fetch stderr: {e}")
@@ -301,17 +386,16 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 }
             )
 
-        with stop(
-            self._client.containers.run(
-                image=self._exec_image_repo_tag,
-                command=["serve"],
+        try:
+            self._client.run_container(
+                repo_tag=self._exec_image_repo_tag,
                 name=self.container_name,
-                detach=True,
+                command=["serve"],
                 labels=self._labels,
                 environment=environment,
-                **self._run_kwargs,
+                network=settings.COMPONENTS_DOCKER_NETWORK_NAME,
+                mem_limit=self._memory_limit,
             )
-        ):
             self._await_container_ready()
             try:
                 response = requests.post(
@@ -323,6 +407,8 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 )
             except requests.exceptions.Timeout:
                 raise ComponentException("Time limit exceeded")
+        finally:
+            self._client.stop_container(name=self.container_name)
 
         response = response.json()
         exit_code = int(response["return_code"])
@@ -330,7 +416,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
         if exit_code == 137:
             raise ComponentException(
                 "The container was killed as it exceeded the memory limit "
-                f"of {self._run_kwargs['mem_limit']}."
+                f"of {self._memory_limit}g."
             )
         elif exit_code != 0:
             raise ComponentException(user_error(self.stderr))
@@ -367,13 +453,6 @@ class Service(DockerConnectionMixin):
         self._job_id = job_id
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
-
-    @property
-    def _run_kwargs(self):
-        kwargs = super()._run_kwargs
-        # Use a network with external access
-        kwargs["network"] = settings.WORKSTATIONS_NETWORK_NAME
-        return kwargs
 
     @property
     def extra_hosts(self):
@@ -446,29 +525,14 @@ class Service(DockerConnectionMixin):
         else:
             ports = {}
 
-        self._client.containers.run(
-            image=self._exec_image_repo_tag,
+        self._client.run_container(
+            repo_tag=self._exec_image_repo_tag,
             name=self.container_name,
             remove=True,
-            detach=True,
             labels={**self._labels, **traefik_labels},
             environment=environment or {},
             extra_hosts=self.extra_hosts,
             ports=ports,
-            **self._run_kwargs,
+            network=settings.WORKSTATIONS_NETWORK_NAME,
+            mem_limit=self._memory_limit,
         )
-
-
-@contextmanager
-def stop(container: ContainerApiMixin):
-    """
-    Stops a docker container which is running in detached mode
-
-    :param container: An instance of a container
-    :return:
-    """
-    try:
-        yield container
-
-    finally:
-        container.stop()
