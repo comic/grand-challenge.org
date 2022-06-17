@@ -17,5 +17,5 @@ su = get_user_model().objects.create_superuser('$su_username', '$su_username@exa
 EmailAddress.objects.filter(email=su.email).delete()
 EmailAddress.objects.create(user=su, email=su.email, verified=True, primary=True)
 Verification.objects.create(user=su, is_verified=True)"
-echo "$create_su_shell" | docker compose run -u "$user_id" --rm web python manage.py shell
+docker compose run -u "$user_id" --rm web python manage.py shell -c "$create_su_shell"
 echo "Created superuser with username and password: $su_username"
