@@ -119,6 +119,13 @@ algorithm_evaluation_fixtures:
 		web \
 		python manage.py runscript algorithm_evaluation_fixtures
 
+superuser:
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
+		--rm \
+		web \
+		python manage.py runscript create_superuser
+
 .PHONY: docs
 docs:
 	docker compose run --rm -u $(USER_ID) web bash -c "cd docs && make html"
