@@ -170,9 +170,6 @@ def docker_image(tmpdir_factory, path, label, full_path=None):
         )
 
     docker_client.build_image(path=full_path, repo_tag=repo_tag)
-    assert repo_tag in [
-        f"{c['Repository']}:{c['Tag']}" for c in docker_client.list_images()
-    ]
 
     outfile = tmpdir_factory.mktemp("docker").join(f"{label}-latest.tar")
     docker_client.save_image(repo_tag=repo_tag, output=outfile)
@@ -187,9 +184,8 @@ def evaluation_image(tmpdir_factory):
         tmpdir_factory, path="evaluation_tests", label="evaluation"
     )
 
-    images = docker_client.list_images(repo_tag="test-evaluation:latest")
-    assert len(images) == 1
-    sha256 = images[0]["ID"]
+    image = docker_client.inspect_image(repo_tag="test-evaluation:latest")
+    sha256 = image["Id"]
 
     return container, sha256
 

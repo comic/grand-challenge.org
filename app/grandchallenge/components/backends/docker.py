@@ -35,7 +35,7 @@ class DockerConnectionMixin:
 
     def _pull_image(self):
         try:
-            docker_client.get_image(repo_tag=self._exec_image_repo_tag)
+            docker_client.inspect_image(repo_tag=self._exec_image_repo_tag)
         except ObjectDoesNotExist:
             if settings.COMPONENTS_REGISTRY_INSECURE:
                 # In CI we cannot set the docker daemon to trust the local

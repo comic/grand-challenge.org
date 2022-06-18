@@ -1,7 +1,7 @@
 import json
 import os
 import shlex
-from subprocess import run
+from subprocess import CalledProcessError, run
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -54,23 +54,22 @@ def load_image(*, input):
     return _run_docker_command("load", "--input", str(input))
 
 
-def list_images(*, repo_tag=None):
-    args = ["image", "list", "--no-trunc", "--format", "{{json .}}"]
-
-    if repo_tag is not None:
-        args.append(repo_tag)
-
-    result = _run_docker_command(*args)
-    return [json.loads(line) for line in result.stdout.splitlines()]
-
-
-def get_image(*, repo_tag):
-    return get(list_images(repo_tag=repo_tag))
+def inspect_image(*, repo_tag):
+    try:
+        result = _run_docker_command(
+            "image", "inspect", "--format", "{{json .}}", repo_tag
+        )
+        return json.loads(result.stdout)
+    except CalledProcessError as error:
+        if "Error: No such image" in error.stderr:
+            raise ObjectDoesNotExist from error
+        else:
+            raise
 
 
 def inspect_network(*, name):
     result = _run_docker_command(
-        ["network", "inspect", "--format", "{{json .}}", name]
+        "network", "inspect", "--format", "{{json .}}", name
     )
     return json.loads(result.stdout)
 
@@ -103,7 +102,7 @@ def inspect_container(*, name):
     result = _run_docker_command(
         "inspect", "--format", "{{json .}}", container_id
     )
-    return json.loads(result.stdout.strip())
+    return json.loads(result.stdout)
 
 
 def get_logs(*, name, tail=None):
