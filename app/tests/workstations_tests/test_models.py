@@ -107,9 +107,9 @@ def test_session_start(http_image, settings):
         }
 
         for k, v in expected_labels.items():
-            assert container.labels[k] == v
+            assert container["Config"]["Labels"][k] == v
 
-        networks = container.attrs.get("NetworkSettings")["Networks"]
+        networks = container["NetworkSettings"]["Networks"]
         assert len(networks) == 1
         assert settings.WORKSTATIONS_NETWORK_NAME in networks
 
