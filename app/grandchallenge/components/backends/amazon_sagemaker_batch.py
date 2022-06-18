@@ -278,8 +278,6 @@ class AmazonSageMakerBatchExecutor(Executor):
         super().__init__(*args, **kwargs)
 
         self.__duration = None
-        self.__stdout = []
-        self.__stderr = []
         self.__runtime_metrics = {}
 
         self.__sagemaker_client = None
@@ -331,14 +329,6 @@ class AmazonSageMakerBatchExecutor(Executor):
                 region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
             )
         return self.__cloudwatch_client
-
-    @property
-    def stdout(self):
-        return "\n".join(self.__stdout)
-
-    @property
-    def stderr(self):
-        return "\n".join(self.__stderr)
 
     @property
     def duration(self):
@@ -537,8 +527,8 @@ class AmazonSageMakerBatchExecutor(Executor):
                 else:
                     logger.error("Invalid source")
 
-        self.__stdout = stdout
-        self.__stderr = stderr
+        self._stdout = stdout
+        self._stderr = stderr
 
     def _get_job_data_log(self):
         response = self._logs_client.get_log_events(

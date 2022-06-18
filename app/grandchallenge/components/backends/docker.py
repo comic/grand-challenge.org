@@ -5,24 +5,21 @@ import shlex
 from ipaddress import ip_address
 from json import JSONDecodeError
 from pathlib import Path
-from random import randint
 from socket import getaddrinfo
 from subprocess import run
 from tempfile import TemporaryDirectory
-from time import sleep
 
 import requests
 from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from docker.errors import APIError, DockerException
-from requests import HTTPError
-from requests.exceptions import ChunkedEncodingError
+from docker.errors import APIError
 
 from grandchallenge.components.backends.base import Executor
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
     LOGLINES,
+    SourceChoices,
     parse_structured_log,
     user_error,
 )
@@ -90,9 +87,34 @@ class DockerClient:
         except ObjectDoesNotExist:
             return
 
+    def remove_container(self, *, name):
+        try:
+            container_id = self.get_container_id(name=name)
+            self._run("rm", container_id)
+        except ObjectDoesNotExist:
+            return
+
     def get_container_id(self, *, name):
-        result = self._run("ps", "-a", "-q", "--filter", f"name={name}")
+        result = self._run(
+            "ps", "--all", "--quiet", "--filter", f"name={name}"
+        )
         return get([line for line in result.stdout.splitlines()])
+
+    def inspect_container(self, *, name):
+        container_id = self.get_container_id(name=name)
+        result = self._run("inspect", "--format", "{{json .}}", container_id)
+        return json.loads(result.stdout.strip())
+
+    def get_logs(self, *, name, tail=None):
+        container_id = self.get_container_id(name=name)
+        args = ["logs", "--timestamps"]
+
+        if tail is not None:
+            args.extend(["--tail", str(tail)])
+
+        result = self._run(*args, container_id)
+
+        return result.stdout.splitlines() + result.stderr.splitlines()
 
     def run_container(
         self,
@@ -229,32 +251,6 @@ class DockerConnectionMixin:
     def _labels(self):
         return {"job": f"{self._job_id}", "traefik.enable": "false"}
 
-    @staticmethod
-    def __retry_docker_obj_prune(*, obj, filters: dict):
-        # Retry and exponential backoff of the prune command as only 1 prune
-        # operation can occur at a time on a docker host
-        num_retries = 0
-        e = Exception
-        while num_retries < 10:
-            try:
-                obj.prune(filters=filters)
-                break
-            except (APIError, HTTPError) as _e:
-                num_retries += 1
-                e = _e
-                sleep((2**num_retries) + (randint(0, 1000) / 1000))
-        else:
-            raise e
-
-    def stop_and_cleanup(self, timeout: int = 10):
-        """Stops and prunes all containers associated with this job."""
-        flt = {"label": f"job={self._job_id}"}
-
-        for c in self._client.containers.list(filters=flt):
-            c.stop(timeout=timeout)
-
-        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
-
     def _pull_image(self):
         try:
             self._client.get_image(repo_tag=self._exec_image_repo_tag)
@@ -288,83 +284,23 @@ class DockerExecutor(DockerConnectionMixin, Executor):
 
     def deprovision(self):
         super().deprovision()
-        self.stop_and_cleanup()
+        self._client.remove_container(name=self.container_name)
 
     @staticmethod
     def get_job_params(*, event):
         raise NotImplementedError
 
-    @staticmethod
-    def parse_logs(logs):
-        output = []
-
-        for line in logs.split("\n"):
-            try:
-                timestamp, log = line.split(" ", 1)
-            except ValueError:
-                if line:
-                    logger.error(f"Could not parse line: {line}")
-                continue
-
-            try:
-                parsed_log = parse_structured_log(log=log)
-            except (JSONDecodeError, KeyError, ValueError):
-                logger.error("Could not parse log")
-                continue
-
-            if parsed_log is not None:
-                output.append(f"{timestamp} {parsed_log.message}")
-
-        return "\n".join(output)
-
-    @property
-    def stdout(self):
-        try:
-            return self.parse_logs(
-                self.container.logs(
-                    stdout=True, stderr=False, timestamps=True, tail=LOGLINES
-                )
-                .replace(b"\x00", b"")
-                .decode("utf-8")
-            )
-        # TODO AttributeError is temporary
-        except (DockerException, ChunkedEncodingError, AttributeError) as e:
-            # ChunkedEncodingError leaks from docker py
-            # https://github.com/docker/docker-py/issues/2696
-            logger.warning(f"Could not fetch stdout: {e}")
-            return ""
-
-    @property
-    def stderr(self):
-        try:
-            return self.parse_logs(
-                self.container.logs(
-                    stdout=False, stderr=True, timestamps=True, tail=LOGLINES
-                )
-                .replace(b"\x00", b"")
-                .decode("utf-8")
-            )
-        # TODO AttributeError is temporary
-        except (DockerException, ChunkedEncodingError, AttributeError) as e:
-            # ChunkedEncodingError leaks from docker py
-            # https://github.com/docker/docker-py/issues/2696
-            logger.warning(f"Could not fetch stderr: {e}")
-            return ""
-
     @property
     def duration(self):
         try:
-            if self.container.status == "exited":
-                state = self._client.api.inspect_container(
-                    container=self.container.id
-                )
-                started_at = state["State"]["StartedAt"]
-                finished_at = state["State"]["FinishedAt"]
+            details = self._client.inspect_container(name=self.container_name)
+            if details["State"]["Status"] == "exited":
+                started_at = details["State"]["StartedAt"]
+                finished_at = details["State"]["FinishedAt"]
                 return isoparse(finished_at) - isoparse(started_at)
             else:
                 return None
-        except DockerException as e:
-            logger.warning(f"Could not inspect container: {e}")
+        except ObjectDoesNotExist:
             return None
 
     @property
@@ -409,6 +345,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 raise ComponentException("Time limit exceeded")
         finally:
             self._client.stop_container(name=self.container_name)
+            self._set_task_logs()
 
         response = response.json()
         exit_code = int(response["return_code"])
@@ -440,6 +377,37 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 break
             elif attempts > 10:
                 raise ComponentException("Container did not start in time")
+
+    def _set_task_logs(self):
+        stdout = []
+        stderr = []
+
+        try:
+            loglines = self._client.get_logs(
+                name=self.container_name, tail=LOGLINES
+            )
+        except ObjectDoesNotExist:
+            return
+
+        for line in loglines:
+            try:
+                timestamp, log = line.replace("\x00", "").split(" ", 1)
+                parsed_log = parse_structured_log(log=log)
+            except (JSONDecodeError, KeyError, ValueError):
+                logger.error("Could not parse log")
+                continue
+
+            if parsed_log is not None:
+                output = f"{timestamp} {parsed_log.message}"
+                if parsed_log.source == SourceChoices.STDOUT:
+                    stdout.append(output)
+                elif parsed_log.source == SourceChoices.STDERR:
+                    stderr.append(output)
+                else:
+                    logger.error("Invalid source")
+
+        self._stdout = stdout
+        self._stderr = stderr
 
 
 class Service(DockerConnectionMixin):
