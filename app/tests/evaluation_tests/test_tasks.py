@@ -11,10 +11,6 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import (
-    deprovision_job,
-    execute_job,
-    parse_job_outputs,
-    provision_job,
     push_container_image,
     validate_docker_image,
 )
@@ -59,14 +55,6 @@ def test_submission_evaluation(
         submission = SubmissionFactory(
             predictions_file__from_path=submission_file, phase=method.phase
         )
-
-    # TODO this is for running the task outside celery for easier debugging
-    callbacks[0]()
-    evaluation = submission.evaluation_set.first()
-    provision_job(**evaluation.signature_kwargs["kwargs"])
-    execute_job(**evaluation.signature_kwargs["kwargs"])
-    parse_job_outputs(**evaluation.signature_kwargs["kwargs"])
-    deprovision_job(**evaluation.signature_kwargs["kwargs"])
 
     recurse_callbacks(callbacks=callbacks)
 
