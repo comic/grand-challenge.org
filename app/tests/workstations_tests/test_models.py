@@ -5,9 +5,12 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
-from docker.errors import NotFound
 from knox.models import AuthToken
 
+from grandchallenge.components.backends.docker_client import (
+    get_container_id,
+    inspect_container,
+)
 from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
@@ -83,12 +86,12 @@ def test_session_start(http_image, settings):
         s = SessionFactory(workstation_image=wsi)
 
     try:
-        assert s.service.container
+        assert get_container_id(name=s.service.container_name)
 
         s.refresh_from_db()
         assert s.status == s.STARTED
 
-        container = s.service.container
+        container = inspect_container(name=s.service.container_name)
 
         expected_labels = {
             "job": f"{s._meta.app_label}-{s._meta.model_name}-{s.pk}",
@@ -114,9 +117,9 @@ def test_session_start(http_image, settings):
             s.user_finished = True
             s.save()
 
-        with pytest.raises(NotFound):
+        with pytest.raises(ObjectDoesNotExist):
             # noinspection PyStatementEffect
-            s.service.container
+            get_container_id(name=s.service.container_name)
     finally:
         stop_all_sessions()
 
@@ -138,8 +141,8 @@ def test_correct_session_stopped(http_image, settings):
                 SessionFactory(workstation_image=wsi),
             )
 
-        assert s1.service.container
-        assert s2.service.container
+        assert get_container_id(name=s1.service.container_name)
+        assert get_container_id(name=s2.service.container_name)
 
         s2.refresh_from_db()
         auth_token_pk = s2.auth_token.pk
@@ -148,10 +151,10 @@ def test_correct_session_stopped(http_image, settings):
             s2.user_finished = True
             s2.save()
 
-        assert s1.service.container
-        with pytest.raises(NotFound):
+        assert get_container_id(name=s1.service.container_name)
+        with pytest.raises(ObjectDoesNotExist):
             # noinspection PyStatementEffect
-            s2.service.container
+            get_container_id(name=s2.service.container_name)
 
         with pytest.raises(ObjectDoesNotExist):
             # auth token should be deleted when the service is stopped
@@ -190,9 +193,9 @@ def test_session_cleanup(http_image, settings):
                 ),
             )
 
-        assert s1.service.container
-        assert s2.service.container
-        assert s3.service.container
+        assert get_container_id(name=s1.service.container_name)
+        assert get_container_id(name=s2.service.container_name)
+        assert get_container_id(name=s3.service.container_name)
 
         # Stop expired services in the default region
         stop_expired_services(
@@ -201,11 +204,11 @@ def test_session_cleanup(http_image, settings):
             region=default_region,
         )
 
-        assert s1.service.container
-        with pytest.raises(NotFound):
+        assert get_container_id(name=s1.service.container_name)
+        with pytest.raises(ObjectDoesNotExist):
             # noinspection PyStatementEffect
-            s2.service.container
-        assert s3.service.container
+            get_container_id(name=s2.service.container_name)
+        assert get_container_id(name=s3.service.container_name)
 
     finally:
         stop_all_sessions()

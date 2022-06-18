@@ -1,20 +1,16 @@
-import json
 import logging
-import os
-import shlex
 from ipaddress import ip_address
 from json import JSONDecodeError
 from pathlib import Path
 from socket import getaddrinfo
-from subprocess import run
 from tempfile import TemporaryDirectory
 
 import requests
 from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from docker.errors import APIError
 
+from grandchallenge.components.backends import docker_client
 from grandchallenge.components.backends.base import Executor
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
@@ -23,229 +19,15 @@ from grandchallenge.components.backends.utils import (
     parse_structured_log,
     user_error,
 )
-from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.components.tasks import _repo_login_and_run
-from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)
 
 
-class DockerClient:
-    def _run(self, *args, authenticate=False):
-        clean_command = shlex.join(["docker", *args])
-
-        if authenticate:
-            auth_config = _get_registry_auth_config()
-            login_command = shlex.join(
-                [
-                    "docker",
-                    "login",
-                    "--username",
-                    auth_config["username"],
-                    "--password",
-                    auth_config["password"],
-                    settings.COMPONENTS_REGISTRY_URL,
-                ]
-            )
-            clean_command = f"{login_command} && {clean_command}"
-
-        return run(
-            ["/bin/sh", "-c", clean_command],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-
-    def pull_image(self, *, repo_tag, authenticate=False):
-        return self._run("image", "pull", repo_tag, authenticate=authenticate)
-
-    def build_image(self, *, repo_tag, path):
-        return self._run("build", "--tag", repo_tag, path)
-
-    def save_image(self, *, repo_tag, output):
-        return self._run("save", "--output", str(output), repo_tag)
-
-    def load_image(self, *, input):
-        return self._run("load", "--input", str(input))
-
-    def list_images(self, *, repo_tag=None):
-        args = ["image", "list", "--no-trunc", "--format", "{{json .}}"]
-
-        if repo_tag is not None:
-            args.append(repo_tag)
-
-        result = self._run(*args)
-        return [json.loads(line) for line in result.stdout.splitlines()]
-
-    def get_image(self, *, repo_tag):
-        return get(self.list_images(repo_tag=repo_tag))
-
-    def stop_container(self, *, name):
-        try:
-            container_id = self.get_container_id(name=name)
-            return self._run("stop", container_id)
-        except ObjectDoesNotExist:
-            return
-
-    def remove_container(self, *, name):
-        try:
-            container_id = self.get_container_id(name=name)
-            self._run("rm", container_id)
-        except ObjectDoesNotExist:
-            return
-
-    def get_container_id(self, *, name):
-        result = self._run(
-            "ps", "--all", "--quiet", "--filter", f"name={name}"
-        )
-        return get([line for line in result.stdout.splitlines()])
-
-    def inspect_container(self, *, name):
-        container_id = self.get_container_id(name=name)
-        result = self._run("inspect", "--format", "{{json .}}", container_id)
-        return json.loads(result.stdout.strip())
-
-    def get_logs(self, *, name, tail=None):
-        container_id = self.get_container_id(name=name)
-        args = ["logs", "--timestamps"]
-
-        if tail is not None:
-            args.extend(["--tail", str(tail)])
-
-        result = self._run(*args, container_id)
-
-        return result.stdout.splitlines() + result.stderr.splitlines()
-
-    def run_container(
-        self,
-        *,
-        repo_tag,
-        name,
-        labels,
-        environment,
-        network,
-        mem_limit,
-        ports=None,
-        extra_hosts=None,
-        command=None,
-        remove=False,
-    ):
-        args = [
-            "run",
-            "--name",
-            name,
-            "--network",
-            network,
-            "--memory",
-            f"{mem_limit}g",
-            "--memory-swap",
-            f"{mem_limit}g",
-            "--shm-size",
-            f"{settings.COMPONENTS_SHARED_MEMORY_SIZE}m",
-            "--cpu-period",
-            str(settings.COMPONENTS_CPU_PERIOD),
-            "--cpu-quota",
-            str(settings.COMPONENTS_CPU_QUOTA),
-            "--cpu-shares",
-            str(settings.COMPONENTS_CPU_SHARES),
-            "--cpuset-cpus",
-            self._cpuset_cpus,
-            "--cap-drop",
-            "all",
-            "--security-opt",
-            "no-new-privileges",
-            "--pids-limit",
-            str(settings.COMPONENTS_PIDS_LIMIT),
-            "--log-driver",
-            "json-file",
-            "--log-opt",
-            "max-size=1g",
-            "--init",
-            "--detach",
-        ]
-
-        if remove:
-            args.append("--rm")
-
-        if settings.COMPONENTS_DOCKER_RUNTIME is not None:
-            args.extend(["--runtime", settings.COMPONENTS_DOCKER_RUNTIME])
-
-        for k, v in labels.items():
-            args.extend(["--label", f"{k}={v}"])
-
-        for k, v in environment.items():
-            args.extend(["--env", f"{k}={v}"])
-
-        if extra_hosts is not None:
-            for k, v in extra_hosts.items():
-                args.extend(["--add-host", f"{k}:{v}"])
-
-        if ports is not None:
-            for container_port, v in ports.items():
-                bind_address, host_port = v
-                host_port = "" if host_port is None else host_port
-                args.extend(
-                    [
-                        "--publish",
-                        f"{bind_address}:{host_port}:{container_port}",
-                    ]
-                )
-
-        # Last two args must be the repo tag and optional command
-        args.append(repo_tag)
-        if command is not None:
-            args.extend(command)
-
-        return self._run(*args)
-
-    @property
-    def _cpuset_cpus(self):
-        """
-        The cpuset_cpus as a string.
-
-        Returns
-        -------
-            The setting COMPONENTS_CPUSET_CPUS if this is set to a
-            none-empty string. Otherwise, works out the available cpu
-            from the os.
-        """
-        if settings.COMPONENTS_CPUSET_CPUS:
-            return settings.COMPONENTS_CPUSET_CPUS
-        else:
-            # Get the cpu count, note that this is setting up the container
-            # so that it can use all of the CPUs on the system. To limit
-            # the containers execution set COMPONENTS_CPUSET_CPUS
-            # externally.
-            cpus = os.cpu_count()
-            if cpus in [None, 1]:
-                return "0"
-            else:
-                return f"0-{cpus - 1}"
-
-
 class DockerConnectionMixin:
-    """
-    Provides a client with a connection to a docker host, provisioned for
-    running the container exec_image.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__client = None
-
     @property
     def container_name(self):
         return self._job_id
-
-    @property
-    def container(self):
-        return self._client.containers.get(container_id=self.container_name)
-
-    @property
-    def _client(self):
-        if self.__client is None:
-            self.__client = DockerClient()
-        return self.__client
 
     @property
     def _labels(self):
@@ -253,7 +35,7 @@ class DockerConnectionMixin:
 
     def _pull_image(self):
         try:
-            self._client.get_image(repo_tag=self._exec_image_repo_tag)
+            docker_client.get_image(repo_tag=self._exec_image_repo_tag)
         except ObjectDoesNotExist:
             if settings.COMPONENTS_REGISTRY_INSECURE:
                 # In CI we cannot set the docker daemon to trust the local
@@ -268,9 +50,9 @@ class DockerConnectionMixin:
                             str(tarball),
                         ]
                     )
-                    self._client.load_image(input=tarball)
+                    docker_client.load_image(input=tarball)
             else:
-                self._client.pull_image(
+                docker_client.pull_image(
                     repo_tag=self._exec_image_repo_tag, authenticate=True
                 )
 
@@ -284,7 +66,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
 
     def deprovision(self):
         super().deprovision()
-        self._client.remove_container(name=self.container_name)
+        docker_client.remove_container(name=self.container_name)
 
     @staticmethod
     def get_job_params(*, event):
@@ -293,7 +75,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
     @property
     def duration(self):
         try:
-            details = self._client.inspect_container(name=self.container_name)
+            details = docker_client.inspect_container(name=self.container_name)
             if details["State"]["Status"] == "exited":
                 started_at = details["State"]["StartedAt"]
                 finished_at = details["State"]["FinishedAt"]
@@ -323,7 +105,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             )
 
         try:
-            self._client.run_container(
+            docker_client.run_container(
                 repo_tag=self._exec_image_repo_tag,
                 name=self.container_name,
                 command=["serve"],
@@ -344,7 +126,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             except requests.exceptions.Timeout:
                 raise ComponentException("Time limit exceeded")
         finally:
-            self._client.stop_container(name=self.container_name)
+            docker_client.stop_container(name=self.container_name)
             self._set_task_logs()
 
         response = response.json()
@@ -383,7 +165,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
         stderr = []
 
         try:
-            loglines = self._client.get_logs(
+            loglines = docker_client.get_logs(
                 name=self.container_name, tail=LOGLINES
             )
         except ObjectDoesNotExist:
@@ -430,26 +212,23 @@ class Service(DockerConnectionMixin):
             # when running in debug mode we need to pass through the developers
             # host via the workstations network gateway
 
-            network = self._client.networks.list(
-                names=[settings.WORKSTATIONS_NETWORK_NAME]
-            )[0]
+            network = docker_client.inspect_network(
+                name=settings.WORKSTATIONS_NETWORK_NAME
+            )
 
-            return {
-                "gc.localhost": network.attrs.get("IPAM")["Config"][0][
-                    "Gateway"
-                ]
-            }
+            return {"gc.localhost": network["IPAM"]["Config"][0]["Gateway"]}
         else:
             return {}
 
     def logs(self) -> str:
         """Get the container logs for this service."""
         try:
-            logs = self.container.logs().decode()
-        except APIError as e:
-            logs = str(e)
-
-        return logs
+            logs = docker_client.get_logs(
+                name=self.container_name, tail=LOGLINES
+            )
+            return "\n".join(logs)
+        except ObjectDoesNotExist:
+            return ""
 
     def start(
         self,
@@ -493,7 +272,7 @@ class Service(DockerConnectionMixin):
         else:
             ports = {}
 
-        self._client.run_container(
+        docker_client.run_container(
             repo_tag=self._exec_image_repo_tag,
             name=self.container_name,
             remove=True,
@@ -504,3 +283,7 @@ class Service(DockerConnectionMixin):
             network=settings.WORKSTATIONS_NETWORK_NAME,
             mem_limit=self._memory_limit,
         )
+
+    def stop_and_cleanup(self):
+        docker_client.stop_container(name=self.container_name)
+        docker_client.remove_container(name=self.container_name)

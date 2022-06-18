@@ -14,7 +14,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.utils import ChallengeTypeChoices
-from grandchallenge.components.backends.docker import DockerClient
+from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
@@ -162,7 +162,6 @@ def challenge_set_with_evaluation(challenge_set):
 
 def docker_image(tmpdir_factory, path, label, full_path=None):
     """Create the docker container."""
-    docker_client = DockerClient()
     repo_tag = f"test-{label}:latest"
 
     if not full_path:
@@ -188,7 +187,7 @@ def evaluation_image(tmpdir_factory):
         tmpdir_factory, path="evaluation_tests", label="evaluation"
     )
 
-    images = DockerClient().list_images(repo_tag="test-evaluation:latest")
+    images = docker_client.list_images(repo_tag="test-evaluation:latest")
     assert len(images) == 1
     sha256 = images[0]["ID"]
 
@@ -218,8 +217,6 @@ def algorithm_io_image(tmpdir_factory):
 
 @pytest.fixture(scope="session")
 def alpine_images(tmpdir_factory):
-    docker_client = DockerClient()
-
     docker_client.pull_image(repo_tag="alpine:3.16")
     docker_client.pull_image(repo_tag="alpine:3.15")
 
@@ -232,8 +229,6 @@ def alpine_images(tmpdir_factory):
 
 @pytest.fixture(scope="session")
 def root_image(tmpdir_factory):
-    docker_client = DockerClient()
-
     docker_client.pull_image(repo_tag="alpine:3.16")
 
     outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
