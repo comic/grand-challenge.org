@@ -55,6 +55,7 @@ def test_submission_evaluation(
         submission = SubmissionFactory(
             predictions_file__from_path=submission_file, phase=method.phase
         )
+
     recurse_callbacks(callbacks=callbacks)
 
     # The evaluation method should return the correct answer

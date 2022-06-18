@@ -3,10 +3,8 @@ import zipfile
 from collections import namedtuple
 from datetime import timedelta
 from pathlib import Path
-from subprocess import call
 from typing import List, NamedTuple
 
-import docker
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -16,6 +14,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.utils import ChallengeTypeChoices
+from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
@@ -67,11 +66,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
         site = Site.objects.get(pk=settings.SITE_ID)
         site.domain = "testserver"
         site.save()
-
-
-@pytest.fixture(scope="session")
-def docker_client():
-    return docker.from_env()
 
 
 class ChallengeSet(NamedTuple):
@@ -166,62 +160,49 @@ def challenge_set_with_evaluation(challenge_set):
     return eval_challenge_set(challenge_set, method)
 
 
-def docker_image(
-    tmpdir_factory,
-    docker_client,
-    path,
-    label,
-    full_path=None,
-):
+def docker_image(tmpdir_factory, path, label, full_path=None):
     """Create the docker container."""
+    repo_tag = f"test-{label}:latest"
+
     if not full_path:
         full_path = os.path.join(
             os.path.split(__file__)[0], path, "resources", "docker"
         )
-    im, _ = docker_client.images.build(
-        path=full_path, tag=f"test-{label}:latest"
-    )
-    assert im.id in [x.id for x in docker_client.images.list()]
-    image = docker_client.api.get_image(f"test-{label}:latest")
+
+    docker_client.build_image(path=full_path, repo_tag=repo_tag)
+
     outfile = tmpdir_factory.mktemp("docker").join(f"{label}-latest.tar")
+    docker_client.save_image(repo_tag=repo_tag, output=outfile)
 
-    with outfile.open(mode="wb") as f:
-        for chunk in image:
-            f.write(chunk)
-
-    call(["gzip", outfile])
-
-    return f"{outfile}.gz", im.id
+    return outfile
 
 
 @pytest.fixture(scope="session")
-def evaluation_image(tmpdir_factory, docker_client):
+def evaluation_image(tmpdir_factory):
     """Create the example evaluation container."""
+    container = docker_image(
+        tmpdir_factory, path="evaluation_tests", label="evaluation"
+    )
+
+    image = docker_client.inspect_image(repo_tag="test-evaluation:latest")
+    sha256 = image["Id"]
+
+    return container, sha256
+
+
+@pytest.fixture(scope="session")
+def algorithm_image(tmpdir_factory):
+    """Create the example algorithm container."""
     return docker_image(
-        tmpdir_factory,
-        docker_client,
-        path="evaluation_tests",
-        label="evaluation",
+        tmpdir_factory, path="algorithms_tests", label="algorithm"
     )
 
 
 @pytest.fixture(scope="session")
-def algorithm_image(tmpdir_factory, docker_client):
+def algorithm_io_image(tmpdir_factory):
     """Create the example algorithm container."""
     return docker_image(
         tmpdir_factory,
-        docker_client,
-        path="algorithms_tests",
-        label="algorithm",
-    )
-
-
-@pytest.fixture(scope="session")
-def algorithm_io_image(tmpdir_factory, docker_client):
-    """Create the example algorithm container."""
-    return docker_image(
-        tmpdir_factory,
-        docker_client,
         path="",
         label="algorithm-io",
         full_path=os.path.join(
@@ -231,42 +212,31 @@ def algorithm_io_image(tmpdir_factory, docker_client):
 
 
 @pytest.fixture(scope="session")
-def alpine_images(tmpdir_factory, docker_client):
-    docker_client.images.pull("alpine:3.12")
-    docker_client.images.pull("alpine:3.11")
+def alpine_images(tmpdir_factory):
+    docker_client.pull_image(repo_tag="alpine:3.16")
+    docker_client.pull_image(repo_tag="alpine:3.15")
 
     # get all images and put them in a tar archive
-    image = docker_client.api.get_image("alpine")
     outfile = tmpdir_factory.mktemp("alpine").join("alpine_multi.tar")
-
-    with outfile.open("wb") as f:
-        for chunk in image:
-            f.write(chunk)
+    docker_client.save_image(repo_tag="alpine", output=outfile)
 
     return outfile
 
 
 @pytest.fixture(scope="session")
-def root_image(tmpdir_factory, docker_client):
-    docker_client.images.pull("alpine:3.8")
+def root_image(tmpdir_factory):
+    docker_client.pull_image(repo_tag="alpine:3.16")
 
-    image = docker_client.api.get_image("alpine:3.8")
     outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
-
-    with outfile.open("wb") as f:
-        for chunk in image:
-            f.write(chunk)
+    docker_client.save_image(repo_tag="alpine:3.16", output=outfile)
 
     return outfile
 
 
 @pytest.fixture(scope="session")
-def http_image(tmpdir_factory, docker_client):
+def http_image(tmpdir_factory):
     return docker_image(
-        tmpdir_factory,
-        docker_client,
-        path="workstations_tests",
-        label="workstation",
+        tmpdir_factory, path="workstations_tests", label="workstation"
     )
 
 

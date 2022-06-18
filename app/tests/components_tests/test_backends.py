@@ -7,7 +7,7 @@ import pytest
 from django.core.files.base import ContentFile, File
 
 from grandchallenge.components.backends.amazon_ecs import AmazonECSExecutor
-from grandchallenge.components.backends.docker import DockerConnectionMixin
+from grandchallenge.components.backends.docker_client import _get_cpuset_cpus
 from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
     TaskStillExecuting,
@@ -38,11 +38,8 @@ from tests.factories import ImageFileFactory
 def test_cpuset_cpus(settings, cpuset, expected):
     settings.COMPONENTS_CPUSET_CPUS = cpuset
 
-    c = DockerConnectionMixin()
-    c._memory_limit = 4  # Sub-classes would otherwise set this
-
     assert os.cpu_count() > 1
-    assert c._run_kwargs["cpuset_cpus"] == expected
+    assert _get_cpuset_cpus() == expected
 
 
 @pytest.mark.parametrize("with_timestamp", (True, False))

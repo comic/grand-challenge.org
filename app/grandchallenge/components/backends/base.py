@@ -50,6 +50,8 @@ class Executor(ABC):
         self._memory_limit = memory_limit
         self._time_limit = time_limit
         self._requires_gpu = requires_gpu
+        self._stdout = []
+        self._stderr = []
         self.__s3_client = None
 
     def provision(self, *, input_civs, input_prefixes):
@@ -103,14 +105,12 @@ class Executor(ABC):
         pass
 
     @property
-    @abstractmethod
     def stdout(self):
-        ...
+        return "\n".join(self._stdout)
 
     @property
-    @abstractmethod
     def stderr(self):
-        ...
+        return "\n".join(self._stderr)
 
     @property
     @abstractmethod
