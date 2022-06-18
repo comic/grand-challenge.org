@@ -161,15 +161,18 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 raise ComponentException("Container did not start in time")
 
     def _set_task_logs(self):
-        stdout = []
-        stderr = []
-
         try:
             loglines = docker_client.get_logs(
                 name=self.container_name, tail=LOGLINES
             )
         except ObjectDoesNotExist:
             return
+
+        self._parse_loglines(loglines=loglines)
+
+    def _parse_loglines(self, *, loglines):
+        stdout = []
+        stderr = []
 
         for line in loglines:
             try:
