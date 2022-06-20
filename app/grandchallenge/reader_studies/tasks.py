@@ -2,7 +2,8 @@ from celery import shared_task
 from django.conf import settings
 from django.db import transaction
 
-from grandchallenge.cases.models import Image
+from grandchallenge.algorithms.exceptions import ImageImportError
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -54,7 +55,15 @@ def add_image_to_display_set(
     *, upload_session_pk, display_set_pk, interface_pk
 ):
     display_set = DisplaySet.objects.get(pk=display_set_pk)
-    image = Image.objects.get(origin_id=upload_session_pk)
+    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    try:
+        image = Image.objects.get(origin_id=upload_session_pk)
+    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+        error_message = "Image imports should result in a single image"
+        upload_session.status = RawImageUploadSession.FAILURE
+        upload_session.error_message = error_message
+        upload_session.save()
+        raise ImageImportError(error_message)
     interface = ComponentInterface.objects.get(pk=interface_pk)
     with transaction.atomic():
         display_set.values.remove(
