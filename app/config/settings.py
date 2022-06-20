@@ -735,6 +735,7 @@ MARKDOWNX_MARKDOWNIFY_FUNCTION = (
 )
 MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
+MARKDOWNX_EDITOR_RESIZABLE = "False"
 
 HAYSTACK_CONNECTIONS = {
     "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"}
