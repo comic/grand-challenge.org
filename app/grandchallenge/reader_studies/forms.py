@@ -264,6 +264,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("direction"),
                 Field("order"),
                 Field("interface"),
+                Field("overlay_segments"),
+                Field("look_up_table"),
                 HTML("<br>"),
                 ButtonHolder(Submit("save", "Save")),
             )
@@ -304,6 +306,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "direction",
             "order",
             "interface",
+            "overlay_segments",
+            "look_up_table",
         )
         help_texts = {
             "question_text": (

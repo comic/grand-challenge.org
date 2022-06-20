@@ -433,3 +433,63 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/MLIN"},
     ],
 }
+
+
+OVERLAY_SEGMENTS_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-06/schema",
+    "$id": "http://example.com/example.json",
+    "type": "array",
+    "title": "The Overlay Segments Schema",
+    "description": "Define the overlay segments for the LUT.",
+    "items": {
+        "$id": "#/items",
+        "type": "object",
+        "title": "The Segment Schema",
+        "description": "Defines what each segment of the LUT represents.",
+        "default": {},
+        "examples": [
+            {
+                "name": "Metastasis",
+                "voxel_value": 1,
+                "visible": True,
+                "metric_template": "{{metrics.volumes[0]}} mm³",
+            }
+        ],
+        "required": ["voxel_value", "name", "visible"],
+        "additionalProperties": False,
+        "properties": {
+            "voxel_value": {
+                "$id": "#/items/properties/voxel_value",
+                "type": "integer",
+                "title": "The Voxel Value Schema",
+                "description": "The value of the LUT for this segment.",
+                "default": 0,
+                "examples": [1],
+            },
+            "name": {
+                "$id": "#/items/properties/name",
+                "type": "string",
+                "title": "The Name Schema",
+                "description": "What this segment should be called.",
+                "default": "",
+                "examples": ["Metastasis"],
+            },
+            "visible": {
+                "$id": "#/items/properties/visible",
+                "type": "boolean",
+                "title": "The Visible Schema",
+                "description": "Whether this segment is visible by default.",
+                "default": True,
+                "examples": [True],
+            },
+            "metric_template": {
+                "$id": "#/items/properties/metric_template",
+                "type": "string",
+                "title": "The Metric Template Schema",
+                "description": "The jinja template to determine which property from the results.json should be used as the label text.",
+                "default": "",
+                "examples": ["{{metrics.volumes[0]}} mm³"],
+            },
+        },
+    },
+}

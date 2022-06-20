@@ -23,7 +23,10 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
-from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
+from grandchallenge.components.schemas import (
+    ANSWER_TYPE_SCHEMA,
+    OVERLAY_SEGMENTS_SCHEMA,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -35,13 +38,14 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.core.validators import JSONValidator
+from grandchallenge.core.validators import JSONSchemaValidator, JSONValidator
 from grandchallenge.hanging_protocols.models import ImagePort, ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.workstation_configs.models import LookUpTable
 
 __doc__ = """
 A reader study enables you to have a set of readers answer a set of questions
@@ -983,6 +987,23 @@ class Question(UUIDModel):
     order = models.PositiveSmallIntegerField(default=100)
     interface = models.ForeignKey(
         ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
+    )
+    overlay_segments = models.JSONField(
+        blank=True,
+        null=True,
+        default=None,
+        help_text=(
+            "The schema that defines how categories of values in the overlay "
+            "images are differentiated."
+        ),
+        validators=[JSONSchemaValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+    )
+    look_up_table = models.ForeignKey(
+        to=LookUpTable,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="The look-up table that is applied when an overlay image is first shown",
     )
 
     class Meta:

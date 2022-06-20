@@ -30,7 +30,10 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image, ImageFile
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import (
+    INTERFACE_VALUE_SCHEMA,
+    OVERLAY_SEGMENTS_SCHEMA,
+)
 from grandchallenge.components.tasks import (
     deprovision_job,
     provision_job,
@@ -51,6 +54,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.workstation_configs.models import LookUpTable
 
 logger = logging.getLogger(__name__)
 
@@ -555,6 +559,23 @@ class ComponentInterface(models.Model):
             "Only Draft 7, 6, 4 or 3 are supported."
         ),
         validators=[JSONSchemaValidator()],
+    )
+    overlay_segments = models.JSONField(
+        blank=True,
+        null=True,
+        default=None,
+        help_text=(
+            "The schema that defines how categories of values in the overlay "
+            "images are differentiated."
+        ),
+        validators=[JSONSchemaValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+    )
+    look_up_table = models.ForeignKey(
+        to=LookUpTable,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="The look-up table that is applied when an overlay image is first shown",
     )
     kind = models.CharField(
         blank=False,
