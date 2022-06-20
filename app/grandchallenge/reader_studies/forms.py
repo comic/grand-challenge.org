@@ -37,6 +37,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
+from grandchallenge.components.schemas import OVERLAY_SEGMENTS_SCHEMA
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -348,6 +349,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         }
         widgets = {
             "question_text": TextInput,
+            "overlay_segments": JSONEditorWidget(
+                schema=OVERLAY_SEGMENTS_SCHEMA
+            ),
             "answer_type": Select(
                 attrs={
                     "hx-get": reverse_lazy(

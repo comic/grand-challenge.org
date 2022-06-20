@@ -38,7 +38,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.core.validators import JSONSchemaValidator, JSONValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.hanging_protocols.models import ImagePort, ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
@@ -996,7 +996,7 @@ class Question(UUIDModel):
             "The schema that defines how categories of values in the overlay "
             "images are differentiated."
         ),
-        validators=[JSONSchemaValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+        validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
     look_up_table = models.ForeignKey(
         to=LookUpTable,

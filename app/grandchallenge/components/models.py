@@ -568,7 +568,7 @@ class ComponentInterface(models.Model):
             "The schema that defines how categories of values in the overlay "
             "images are differentiated."
         ),
-        validators=[JSONSchemaValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+        validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
     look_up_table = models.ForeignKey(
         to=LookUpTable,
