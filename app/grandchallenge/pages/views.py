@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import Http404
 from django.views.generic import (
     CreateView,
@@ -15,8 +15,8 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from config import settings
 from grandchallenge.algorithms.models import Job
-from grandchallenge.core.mixins import UserIsStaffMixin
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -161,24 +161,50 @@ def get_average_job_duration_for_phase(phase):
     return duration_dict
 
 
-class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
+class ChallengeStatistics(
+    LoginRequiredMixin, UserPassesTestMixin, TemplateView
+):
     template_name = "pages/challenge_statistics.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        phases = self.request.challenge.phase_set.filter(
-            submission_kind=SubmissionKindChoices.ALGORITHM
-        ).all()
-        duration_dict = {}
-        for phase in phases:
-            duration_dict[phase.title] = get_average_job_duration_for_phase(
-                phase=phase
+        phases = (
+            self.request.challenge.phase_set.filter(
+                submission_kind=SubmissionKindChoices.ALGORITHM
             )
+            .annotate(archive_item_count=Count("archive__items"))
+            .all()
+        )
+        duration_dict = {}
+        archive_items_dict = {}
+        compute_costs_dict = {}
+        for phase in phases:
+            avg_duration = get_average_job_duration_for_phase(phase=phase)
+            duration_dict[phase.title] = avg_duration
+            archive_items_dict[phase.title] = phase.archive_item_count
+            try:
+                compute_costs_dict[phase.title] = round(
+                    phase.archive_item_count
+                    * avg_duration["average_duration"]
+                    * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+                    / 60
+                    / 100,
+                    ndigits=2,
+                )
+            except TypeError:
+                compute_costs_dict[phase.title] = None
 
         context.update(
             {
                 "average_job_durations": duration_dict,
+                "num_archive_items": archive_items_dict,
+                "compute_costs": compute_costs_dict,
             }
         )
 
         return context
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.has_perm(
+            "challenges.view_challengerequest"
+        )
