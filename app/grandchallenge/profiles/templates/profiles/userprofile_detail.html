@@ -82,8 +82,8 @@
                             <a class="list-group-item list-group-item-action" href="{% url 'two-factor-backup-tokens' %}" title="Two-Factor Authentication Settings"><i
                                    class="fas fa-qrcode fa-fw"></i>{% trans "2FA Settings" %}</a>
                         {% else %}
-                            <a class="list-group-item list-group-item-action" href="{% url 'two-factor-setup' %}"><i
-                                   class="fas fa-qrcode fa-fw"></i>{% trans "Enable Two-Factor Authentication" %}</a>
+                            <a class="list-group-item list-group-item-action" href="{% url 'two-factor-setup' %}" title="Enable Two-Factor Authentication"><i
+                                   class="fas fa-qrcode fa-fw"></i>{% trans "Enable 2FA" %}</a>
                         {% endif %}
                         </ul>
                     {% endif %}
