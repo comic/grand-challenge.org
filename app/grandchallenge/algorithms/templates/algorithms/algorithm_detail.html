@@ -98,7 +98,13 @@
         <div class="alert alert-warning" role="alert">
             Please update your algorithm settings. Grand Challenge now requires a <u>contact email address</u> for all algorithms.<br>
             You will also need to indicate whether you want the algorithm editors to be displayed on the Information page.
-            Please also take note of the new <u>Algorithm description</u> form, accessible through the 'Update description' button.
+        </div>
+    {% endif %}
+
+    {% if 'change_algorithm' in algorithm_perms and object.public and not object.summary or object.public and not object.mechanism or object.public and not object.public_test_case %}
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle mr-1"></i>{% if not object.summary or not object.mechanism %}Please update your algorithm description and add at least a summary and description of your algorithm's mechanism
+            <a href="{% url 'algorithms:description-update' slug=object.slug %}">here</a>.{% endif %} {% if not object.public_test_case %}Please also upload a public test case <a href="{% url 'algorithms:execution-session-create' slug=object.slug %}">here</a>.{% endif %}
         </div>
     {% endif %}
 
@@ -118,6 +124,14 @@
                            href="{% url 'algorithms:description-update' slug=object.slug %}">
                             <i class="fa fa-edit"></i> Update Description
                         </a>
+                        {% if not object.public %}
+                            <a class="btn btn-primary btn-block"
+                               href="#publishAlgorithmModal"
+                               data-toggle="modal"
+                               data-target="#publishAlgorithmModal">
+                                <i class="fa fa-star"></i> Publish Algorithm
+                            </a>
+                        {% endif %}
                     </span>
                 {% endif %}
             </div>
@@ -402,9 +416,50 @@
             </div>
         {% endif %}
     </div>
+
+    {#  modal  #}
+    <div class="modal" id="publishAlgorithmModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Make this algorithm public</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Making an algorithm public means that it will be publicly listed on the <a href="{% url 'algorithms:list' %}">algorithm overview page</a>. Everyone will be able to see your algorithm description and the public results linked to your algorithm.</p>
+                    <p>However, users will <b>still need to request access to your algorithm</b> to try it out themselves, unless you have your access request handling set to "accept all users".</p>
+                    <p>To publish your algorithm you need:</p>
+                    <ul class="list-unstyled">
+                        <li>{% if object.public_test_case %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-exclamation-circle text-danger mr-1"></i>{% endif %}at least 1 public test case with a successful result based on the latest version of the algorithm</li>
+                        <li>{% if object.summary %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-exclamation-circle text-danger mr-1"></i>{% endif %}a summary of your algorithm</li>
+                        <li>{% if object.mechanism %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-exclamation-circle text-danger mr-1"></i>{% endif %}a description of the mechanism behind your algorithm</li>
+                        <li>{% if object.contact_email %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-exclamation-circle text-danger mr-1"></i>{% endif %}a contact email address (add in settings)</li>
+                        <li>{% if object.display_editors %}<i class="fas fa-check-circle text-success mr-1"></i>{% else %}<i class="fas fa-exclamation-circle text-danger mr-1"></i>{% endif %}a publicly visible list of the editors of the algorithm (enable in settings)</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-12 d-flex justify-content-center">
+                        <a type="button" class="btn btn-sm btn-secondary mr-1" href="{% url 'algorithms:update' slug=object.slug %}">Update Settings</a>
+                        <a type="button" class="btn btn-sm btn-secondary mr-1" href="{% url 'algorithms:description-update' slug=object.slug %}">Update Description</a>
+                        <a type="button" class="btn btn-sm btn-secondary" href="{% url 'algorithms:execution-session-create' slug=object.slug %}">Add Test Case</a>
+                    </div>
+                    <div class="col-12 d-flex justify-content-center">
+                        <a type="button" class="btn btn-sm btn-primary {% if not object.mechanism or not object.summary or not object.public_test_case or not object.contact_email or not object.display_editors %}disabled{% endif %}" hx-post="{% url 'algorithms:publish' slug=object.slug %}" hx-vals='{"public": true}'>Publish algorithm</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
     <script src="{% static "js/refresh_sidebar.js" %}"></script>
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+            })
+    </script>
 {% endblock %}

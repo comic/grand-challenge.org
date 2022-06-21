@@ -117,6 +117,20 @@ class RepoNameValidationMixin:
         return repo_name
 
 
+class AlgorithmPublishValidation:
+    def clean_public(self):
+        public = self.cleaned_data.get("public")
+        if public and (
+            not self.instance.summary
+            or not self.instance.public_test_case
+            or not self.instance.mechanism
+        ):
+            raise ValidationError(
+                "To publish this algorithm you need at least 1 public test case with a successful result from the latest version of the algorithm. You also need a summary and description of the mechanism of your algorithm. The link to update your algorithm description can be found on the algorithm information page."
+            )
+        return public
+
+
 class AlgorithmIOValidationMixin:
     def clean(self):
         cleaned_data = super().clean()
@@ -137,6 +151,7 @@ class AlgorithmIOValidationMixin:
 class AlgorithmForm(
     RepoNameValidationMixin,
     AlgorithmIOValidationMixin,
+    AlgorithmPublishValidation,
     WorkstationUserFilterMixin,
     ModelForm,
     ViewContentMixin,
@@ -490,3 +505,9 @@ class AlgorithmRepoForm(RepoNameValidationMixin, SaveFormInitMixin, ModelForm):
     class Meta:
         model = Algorithm
         fields = ("repo_name",)
+
+
+class AlgorithmPublishForm(AlgorithmPublishValidation, ModelForm):
+    class Meta:
+        model = Algorithm
+        fields = ("public",)
