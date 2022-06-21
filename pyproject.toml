@@ -102,6 +102,7 @@ django-add-default-value = "*"
 django-ses = "*"
 Pygments = "*"
 django-forms-dynamic = "*"
+django-allauth-2fa = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

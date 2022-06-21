@@ -401,6 +401,8 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Django-otp middleware must be after the AuthenticationMiddleware.
+    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -411,6 +413,14 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
     "grandchallenge.timezones.middleware.TimezoneMiddleware",
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
+    # 2FA middleware, needs to be after subdomain middleware
+    # TwoFactorMiddleware resets the login flow if another page is loaded
+    # between login and successfully entering two-factor credentials. We're using
+    # a modified version of the original allauth_2fa middleware to pass the
+    # correct urlconf.
+    "grandchallenge.core.middleware.TwoFactorMiddleware",
+    # Force 2FA for staff users
+    "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     # Redirects last as they're a last resort
@@ -480,6 +490,12 @@ THIRD_PARTY_APPS = [
     # Overridden apps
     "grandchallenge.forum_conversation",
     "grandchallenge.forum_member",
+    # Configure the django-otp package
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
+    # Enable two-factor auth
+    "allauth_2fa",
 ]
 
 LOCAL_APPS = [
@@ -576,6 +592,9 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
+
+# django-allauth-2fa
+ALLAUTH_2FA_ALWAYS_REVEAL_BACKUP_TOKENS = False
 
 ##############################################################################
 #
