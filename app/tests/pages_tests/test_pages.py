@@ -4,6 +4,7 @@ from itertools import chain
 import pytest
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.timezone import now
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -325,8 +326,9 @@ def test_challenge_statistics_page_permissions(
     client, authenticated_staff_user
 ):
     challenge = ChallengeFactory()
-    admin, user = UserFactory.create_batch(2)
+    admin, reviewer, user = UserFactory.create_batch(3)
     challenge.add_admin(admin)
+    assign_perm("challenges.view_challengerequest", reviewer)
 
     response = get_view_for_user(
         viewname="pages:statistics",
@@ -348,6 +350,14 @@ def test_challenge_statistics_page_permissions(
         viewname="pages:statistics",
         client=client,
         user=authenticated_staff_user,
+        challenge=challenge,
+    )
+    response.status_code = 200
+
+    response = get_view_for_user(
+        viewname="pages:statistics",
+        client=client,
+        user=reviewer,
         challenge=challenge,
     )
     response.status_code = 200
