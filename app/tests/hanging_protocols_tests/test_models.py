@@ -61,6 +61,7 @@ from tests.factories import UserFactory
                     "show_mouse_voxel_value": True,
                     "label": "Test label",
                     "opacity": 0.5,
+                    "orientation": "axial",
                 }
             ],
             nullcontext(),

@@ -4,6 +4,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
+from grandchallenge.workstation_configs.models import WorkstationConfig
 
 
 class ImagePort(models.TextChoices):
@@ -87,6 +88,13 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "label": {
                 "type": "string",
+            },
+            "orientation": {
+                "type": "string",
+                "enum": [
+                    orientation.lower()
+                    for orientation in WorkstationConfig.Orientation.labels
+                ],
             },
             "parent_id": {
                 "type": "string",
