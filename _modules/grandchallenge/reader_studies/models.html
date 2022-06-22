@@ -74,7 +74,6 @@
   <h1>Source code for grandchallenge.reader_studies.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">json</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">actstream.models</span> <span class="kn">import</span> <span class="n">Follow</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
@@ -90,7 +89,6 @@
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">get_objects_for_group</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">RefResolutionError</span>
 <span class="kn">from</span> <span class="nn">simple_history.models</span> <span class="kn">import</span> <span class="n">HistoricalRecords</span>
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span> <span class="nn">stdimage</span> <span class="kn">import</span> <span class="n">JPEGField</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.anatomy.models</span> <span class="kn">import</span> <span class="n">BodyStructure</span>
@@ -116,6 +114,7 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.modalities.models</span> <span class="kn">import</span> <span class="n">ImagingModality</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.organizations.models</span> <span class="kn">import</span> <span class="n">Organization</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.publications.models</span> <span class="kn">import</span> <span class="n">Publication</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.reader_studies.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 
 <span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
@@ -1120,16 +1119,17 @@
         <span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">return</span> <span class="mf">1.0</span>
-            <span class="n">ans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-            <span class="n">gt</span> <span class="o">=</span> <span class="n">ans</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="n">elements</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">))</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">elements</span>
+            <span class="n">gt</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">elements</span>
+
             <span class="n">ans</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">)]</span> <span class="o">=</span> <span class="n">answer</span>
             <span class="n">gt</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)]</span> <span class="o">=</span> <span class="n">ground_truth</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ans</span> <span class="o">=</span> <span class="p">[</span><span class="n">answer</span><span class="p">]</span>
             <span class="n">gt</span> <span class="o">=</span> <span class="p">[</span><span class="n">ground_truth</span><span class="p">]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SCORING_FUNCTIONS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring_function</span><span class="p">](</span>
-            <span class="n">ans</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SCORING_FUNCTIONS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring_function</span><span class="p">](</span><span class="n">gt</span><span class="p">,</span> <span class="n">ans</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Question.save"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
