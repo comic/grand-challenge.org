@@ -2,7 +2,6 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-import pandas as pd
 from django.core.files.images import ImageFile
 from django.db import transaction
 from django.utils.text import slugify
@@ -37,9 +36,9 @@ class DataImporter:
         self.images_path = Path(".")
 
     def _read_data(self, data_dir):
-        df = pd.read_excel(data_dir)
-        df = df.fillna(value="")
-        return df
+        # df = pd.read_excel(data_dir)
+        # df = df.fillna(value="")
+        return None  # df
 
     def import_data(self, *, product_data, company_data, images_zip):
         with tempfile.TemporaryDirectory() as input_dir:
