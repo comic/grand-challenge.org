@@ -106,12 +106,14 @@ RUN python -m pip install -U pip \
 ##################
 FROM base as test-base
 
-# Add java and graphviz for plantuml documentation
 USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        # Add java and graphviz for plantuml documentation
         default-jre \
         graphviz \
+        # make for sphinx docs
+        make \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
