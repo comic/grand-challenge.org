@@ -16,7 +16,6 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from simple_history.models import HistoricalRecords
-from sklearn.metrics import accuracy_score
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -933,6 +932,11 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
         InterfaceKindChoices.SEGMENTATION,
     ],
 }
+
+
+def accuracy_score(y_true, y_pred, *, normalize=True):
+    # TODO implement accuracy score
+    return 0
 
 
 class Question(UUIDModel):

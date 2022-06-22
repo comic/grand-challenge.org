@@ -3,11 +3,11 @@
 ###################
 ARG PYTHON_VERSION
 
-FROM python:${PYTHON_VERSION} as base
+FROM python:${PYTHON_VERSION}-slim-bullseye as base
 
 # Install system dependencies
 RUN apt-get update \
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
         libpng-dev \
         libjpeg-dev \
         libjpeg62-turbo-dev \
@@ -16,12 +16,27 @@ RUN apt-get update \
         libffi-dev \
         wget \
         gettext \
+        # postgres packages for psycopg2
+        libpq-dev \
+        # curl and ssl for pycurl
+        libcurl4-openssl-dev \
+        libssl-dev \
+        # for python-magic
+        libmagic1 \
+        # openslide and vips for image imports with panimg
+        # gcc is required to compile the extensions
         libopenslide-dev \
-        libvips-dev
+        libvips-dev \
+        gcc \
+        # ruby2.7 and rugged for licensee
+        ruby2.7 \
+        ruby-rugged \
+        # git for CodeBuild integration
+        git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Fetch and install licensee for checking licenses
-RUN apt-get install -y ruby2.7 ruby-rugged \
-    && gem install licensee -v 9.15.1
+RUN gem install licensee -v 9.15.1
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \
@@ -93,7 +108,11 @@ FROM base as test-base
 
 # Add java and graphviz for plantuml documentation
 USER root
-RUN apt-get update && apt-get install -y default-jre graphviz
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        default-jre \
+        graphviz \
+    && rm -rf /var/lib/apt/lists/*
 USER django:django
 
 RUN poetry install --no-interaction --no-ansi --no-root
