@@ -1,10 +1,7 @@
-import tempfile
-import zipfile
-from pathlib import Path
-
 from django.core.files.images import ImageFile
 from django.db import transaction
 from django.utils.text import slugify
+from openpyxl import load_workbook
 
 from grandchallenge.products.models import (
     Company,
@@ -31,156 +28,163 @@ CE_MAPPING = {
 }
 
 
-class DataImporter:
-    def __init__(self):
-        self.images_path = Path(".")
+class Row:
+    def __init__(self, *, row, locs):
+        self._row = row
+        self._locs = locs
 
-    def _read_data(self, data_dir):
-        # df = pd.read_excel(data_dir)
-        # df = df.fillna(value="")
-        return None  # df
-
-    def import_data(self, *, product_data, company_data, images_zip):
-        with tempfile.TemporaryDirectory() as input_dir:
-            input_dir = Path(input_dir)
-
-            product_path = input_dir / "product_data.xlsx"
-            companies_path = input_dir / "company_data.xlsx"
-            images_path = input_dir / "images.zip"
-
-            with open(product_path, "wb") as f:
-                product_data.download_fileobj(f)
-
-            with open(companies_path, "wb") as f:
-                company_data.download_fileobj(f)
-
-            with open(images_path, "wb") as f:
-                images_zip.download_fileobj(f)
-
-            df_c = self._read_data(companies_path)
-            df_p = self._read_data(product_path)
-
-            extracted_images = input_dir / "images"
-            extracted_images.mkdir()
-
-            with zipfile.ZipFile(images_path) as zipf:
-                zipf.extractall(extracted_images)
-
-            self.images_path = extracted_images
-
-            with transaction.atomic():
-                # Delete all existing entries and recreate them
-                Company.objects.all().delete()
-                Product.objects.all().delete()
-                ProductImage.objects.all().delete()
-
-                for _, c_row in df_c.iterrows():
-                    c = self._create_company(c_row)
-                    df_filter = df_p.loc[
-                        df_p["Company name"] == c_row["Company name"]
-                    ]
-                    for _, p_row in df_filter.iterrows():
-                        product = self._create_product(p_row, c)
-                        self._create_product_images(product, p_row)
-
-                # Remove the file uploads
-                product_data.delete()
-                company_data.delete()
-                images_zip.delete()
-
-    def _split(self, string, max_char):
-        if len(string) > max_char:
-            short_string = string[:max_char].rsplit(" ", 1)[0] + " ..."
+    def __getitem__(self, item):
+        value = self._row[self._locs[item]]
+        if value is None:
+            return ""
         else:
-            return string
-        return short_string
+            return value
 
-    def _create_company(self, row):
-        c = Company()
-        c.company_name = row["Company name"]
-        c.modified = row["Timestamp"]
-        c.website = row["Company website url"]
-        c.founded = row["Founded"]
-        c.hq = row["Head office"]
-        c.email = row["Email address (public)"]
-        c.description = row["Company description"]
-        c.description_short = self._split(row["Company description"], 200)
-        slug = slugify(row["Company name"])
-        c.slug = slug
-        img_file = self.images_path.glob(f"**/logo/{slug}.*")
-        for file in img_file:
-            c.logo = ImageFile(open(file, "rb"))
-        c.save()
-        return c
 
-    def _create_product(self, row, c):
-        p = Product()
-        p.product_name = row["Product name"]
-        p.company = c
-        p.modified = row["Timestamp"]
-        p.slug = slugify(row["Short name"])
-        p.description = row["Product description"]
-        p.description_short = self._split(row["Product description"], 200)
-        p.modality = row["Modality"]
-        p.subspeciality = row["Subspeciality"]
-        p.input_data = row["Input data"]
-        p.file_format_input = row["File format of input data"]
-        p.output_data = row["Output data"]
-        p.file_format_output = row["File format of output data"]
-        p.key_features = row["Key-feature(s)"]
-        p.ce_status = STATUS_MAPPING.get(row["CE-certified"], Status.UNKNOWN)
-        p.ce_under = CE_MAPPING.get(row["CE-certified under"], "")
-        p.ce_class = row["If CE-certified, what class"]
-        p.fda_status = STATUS_MAPPING.get(
-            row["FDA approval/clearance"], Status.UNKNOWN
-        )
-        p.fda_class = row["If FDA approval/clearance, what class"]
-        p.verified = STATUS_MAPPING.get(row["Verified"], Status.UNKNOWN)
-        p.ce_verified = STATUS_MAPPING.get(row["CE verified"], Status.UNKNOWN)
-        p.integration = row["Integration"]
-        p.deployment = row["Deployment"]
-        p.process_time = row["Algorithm processing time per study"]
-        p.trigger = row["Trigger for the analysis of data"]
-        p.market_since = str(row["Product on the market since"])
-        p.countries = str(row["Number of countries present"])
-        p.diseases = row["Disease(s) targeted"]
-        p.population = row["Population on which analysis is applied"]
-        p.distribution = str(
-            row["Distribution platforms/marketplaces availability"]
-        )
-        p.software_usage = row[
-            "Suggested use of software (before, during or after study assessment)"
-        ]
-        p.institutes_research = str(
-            row["Number of institutes using the product for research"]
-        )
-        p.institutes_clinic = str(
-            row["Number of institutes using the product in clinical practice"]
-        )
-        p.pricing_model = row["Pricing model"]
-        p.pricing_basis = row["Pricing model based on"]
-        p.tech_peer_papers = row[
-            "Name peer reviewed papers that describe the performance of the software as is commercially available."
-        ]
-        p.tech_other_papers = row[
-            "Name other (white)papers that describe the performance of the software as is commercially available."
-        ]
-        p.all_other_papers = row[
-            "Name other relevant (white)papers regarding the performance or implementation of the software not mentioned above."
-        ]
+class Sheet:
+    def __init__(self, *, filename):
+        self._workbook = load_workbook(filename=filename)
+        self._sheet = self._workbook.active
+        self._locs = {cell.value: cell.column - 1 for cell in self._sheet["1"]}
 
-        p.save()
-        return p
+    def iter_rows(self):
+        for row in self._sheet.iter_rows(min_row=2, values_only=True):
+            yield Row(row=row, locs=self._locs)
 
-    def _create_product_images(self, product, row):
-        images = []
-        img_files = self.images_path.glob(
-            "**/product_images/{}*".format(row["Short name"])
-        )
-        product.images.all().delete()
-        for file in img_files:
-            img = ImageFile(open(file, "rb"))
-            i = ProductImage(img=img)
-            i.save()
-            images.append(i)
-        product.images.set(images)
+
+def import_data(*, products_path, companies_path, images_path):
+    companies = Sheet(filename=companies_path)
+    products = Sheet(filename=products_path)
+
+    with transaction.atomic():
+        # Delete all existing entries and recreate them
+        Company.objects.all().delete()
+        Product.objects.all().delete()
+        ProductImage.objects.all().delete()
+        pk = "Company name"
+
+        for company_row in companies.iter_rows():
+            if not company_row[pk]:
+                break
+
+            company = _create_company(row=company_row, images_path=images_path)
+
+            for product_row in products.iter_rows():
+                if not product_row[pk]:
+                    break
+
+                if product_row[pk] != company_row[pk]:
+                    continue
+
+                product = _create_product(row=product_row, company=company)
+                _create_product_images(
+                    product=product,
+                    row=product_row,
+                    images_path=images_path,
+                )
+
+
+def _split(string, max_char):
+    if len(string) > max_char:
+        short_string = string[:max_char].rsplit(" ", 1)[0] + " ..."
+    else:
+        return string
+    return short_string
+
+
+def _create_company(*, row, images_path):
+    company = Company()
+    company.company_name = row["Company name"]
+    company.modified = row["Timestamp"]
+    company.website = row["Company website url"]
+    company.founded = row["Founded"]
+    company.hq = row["Head office"]
+    company.email = row["Email address (public)"]
+    company.description = row["Company description"]
+    company.description_short = _split(row["Company description"], 200)
+    slug = slugify(row["Company name"])
+    company.slug = slug
+    img_file = images_path.glob(f"**/logo/{slug}.*")
+
+    for file in img_file:
+        company.logo = ImageFile(open(file, "rb"))
+
+    company.save()
+
+    return company
+
+
+def _create_product(*, row, company):
+    product = Product()
+    product.product_name = row["Product name"]
+    product.company = company
+    product.modified = row["Timestamp"]
+    product.slug = slugify(row["Short name"])
+    product.description = row["Product description"]
+    product.description_short = _split(row["Product description"], 200)
+    product.modality = row["Modality"]
+    product.subspeciality = row["Subspeciality"]
+    product.input_data = row["Input data"]
+    product.file_format_input = row["File format of input data"]
+    product.output_data = row["Output data"]
+    product.file_format_output = row["File format of output data"]
+    product.key_features = row["Key-feature(s)"]
+    product.ce_status = STATUS_MAPPING.get(row["CE-certified"], Status.UNKNOWN)
+    product.ce_under = CE_MAPPING.get(row["CE-certified under"], "")
+    product.ce_class = row["If CE-certified, what class"]
+    product.fda_status = STATUS_MAPPING.get(
+        row["FDA approval/clearance"], Status.UNKNOWN
+    )
+    product.fda_class = row["If FDA approval/clearance, what class"]
+    product.verified = STATUS_MAPPING.get(row["Verified"], Status.UNKNOWN)
+    product.ce_verified = STATUS_MAPPING.get(
+        row["CE verified"], Status.UNKNOWN
+    )
+    product.integration = row["Integration"]
+    product.deployment = row["Deployment"]
+    product.process_time = row["Algorithm processing time per study"]
+    product.trigger = row["Trigger for the analysis of data"]
+    product.market_since = str(row["Product on the market since"])
+    product.countries = str(row["Number of countries present"])
+    product.diseases = row["Disease(s) targeted"]
+    product.population = row["Population on which analysis is applied"]
+    product.distribution = str(
+        row["Distribution platforms/marketplaces availability"]
+    )
+    product.software_usage = row[
+        "Suggested use of software (before, during or after study assessment)"
+    ]
+    product.institutes_research = str(
+        row["Number of institutes using the product for research"]
+    )
+    product.institutes_clinic = str(
+        row["Number of institutes using the product in clinical practice"]
+    )
+    product.pricing_model = row["Pricing model"]
+    product.pricing_basis = row["Pricing model based on"]
+    product.tech_peer_papers = row[
+        "Name peer reviewed papers that describe the performance of the software as is commercially available."
+    ]
+    product.tech_other_papers = row[
+        "Name other (white)papers that describe the performance of the software as is commercially available."
+    ]
+    product.all_other_papers = row[
+        "Name other relevant (white)papers regarding the performance or implementation of the software not mentioned above."
+    ]
+
+    product.save()
+
+    return product
+
+
+def _create_product_images(*, row, product, images_path):
+    images = []
+    img_files = images_path.glob(
+        "**/product_images/{}*".format(row["Short name"])
+    )
+    product.images.all().delete()
+    for file in img_files:
+        image = ProductImage(img=ImageFile(open(file, "rb")))
+        image.save()
+        images.append(image)
+    product.images.set(images)
