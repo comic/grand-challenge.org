@@ -3,7 +3,6 @@ import re
 from random import choice
 
 from allauth.account.models import EmailAddress
-from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
@@ -136,18 +135,6 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "page'%s' logged in as user '%s'" % (url, username),
         )
         return response
-
-    def _find_errors_in_page(self, response):
-        """
-        See if there are any errors rendered in the html of response.
-
-        Used for checking forms. Also checks for 403 response forbidden.
-        Return string error message if anything does not check out, "" if not.
-        """
-        soup = BeautifulSoup(response.content, "html.parser")
-        errors = soup.findAll("span", attrs={"class": "invalid-feedback"})
-        if len(errors) > 0:
-            return str(errors)
 
     def _view_url(self, user, url):
         self._login(user)
@@ -321,35 +308,31 @@ class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):
         response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
-        errors = self._find_errors_in_page(response)
-        assert "Underscores (_) are not allowed." in errors
+        assert "Underscores (_) are not allowed." in response.content
 
         challenge_short_name = "project with spaces"
         response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
-        errors = self._find_errors_in_page(response)
         assert (
             "Enter a valid “slug” consisting of letters, numbers, underscores or hyphens"
-            in errors
+            in response.content
         )
 
         challenge_short_name = "project-with-w#$%^rd-items"
         response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
-        errors = self._find_errors_in_page(response)
         assert (
             "Enter a valid “slug” consisting of letters, numbers, underscores or hyphens"
-            in errors
+            in response.content
         )
 
         challenge_short_name = "images"
         response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
-        errors = self._find_errors_in_page(response)
-        assert "That name is not allowed." in errors
+        assert "That name is not allowed." in response.content
 
 
 class ViewsTest(GrandChallengeFrameworkTestCase):
