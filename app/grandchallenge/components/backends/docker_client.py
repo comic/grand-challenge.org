@@ -85,7 +85,13 @@ def stop_container(*, name):
 def remove_container(*, name):
     try:
         container_id = get_container_id(name=name)
-        _run_docker_command("rm", container_id)
+        try:
+            _run_docker_command("rm", container_id)
+        except CalledProcessError as error:
+            if "Error: No such container" in error.stderr:
+                raise ObjectDoesNotExist from error
+            else:
+                raise
     except ObjectDoesNotExist:
         return
 
