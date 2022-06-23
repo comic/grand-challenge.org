@@ -308,7 +308,7 @@ class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):
         response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
-        assert "Underscores (_) are not allowed." in response.content
+        assert "Underscores (_) are not allowed." in response.rendered_content
 
         challenge_short_name = "project with spaces"
         response = self._try_create_challenge_request(
@@ -316,7 +316,7 @@ class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):
         )
         assert (
             "Enter a valid “slug” consisting of letters, numbers, underscores or hyphens"
-            in response.content
+            in response.rendered_content
         )
 
         challenge_short_name = "project-with-w#$%^rd-items"
@@ -325,14 +325,14 @@ class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):
         )
         assert (
             "Enter a valid “slug” consisting of letters, numbers, underscores or hyphens"
-            in response.content
+            in response.rendered_content
         )
 
         challenge_short_name = "images"
         response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
         )
-        assert "That name is not allowed." in response.content
+        assert "That name is not allowed." in response.rendered_content
 
 
 class ViewsTest(GrandChallengeFrameworkTestCase):
