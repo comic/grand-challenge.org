@@ -1156,6 +1156,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.components.tasks.update_filesystem",
         "schedule": timedelta(hours=COMPONENTS_AMAZON_EFS_TARGET_HOURS),
     },
+    "delete_users_who_dont_signin": {
+        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_signin",
+        "schedule": timedelta(days=1),
+    },
     **{
         f"stop_expired_services_{region}": {
             "task": "grandchallenge.components.tasks.stop_expired_services",
