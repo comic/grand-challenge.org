@@ -37,15 +37,12 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
-"beautifulsoup4" = "*"
 celery = { extras = ["redis", "sqs"], version = "!=5.0.6" }
-kombu = "*"
 pycurl = ">=7.44.1,<7.45.0"  # Fix poetry dependency resolution for celery
 django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
 djangorestframework = "*"
-"oauth2" = "*"
 python-magic = "*"
 pytz = "*"
 gunicorn = "*"
@@ -92,7 +89,7 @@ Pillow = "*"
 panimg = ">0.5.0"
 django-activity-stream = "*"
 django-stdimage = "*"
-django-permissions-policy = "<4.8.0"  # v4.8.0 removes interest-cohort
+django-permissions-policy = "*"
 aws-xray-sdk = "*"
 django-deprecate-fields = "*"
 django-add-default-value = "*"
@@ -109,7 +106,6 @@ factory-boy = "*"
 django-debug-toolbar = "*"
 sphinx-autobuild = "*"
 sphinx = "*"
-pyupgrade = "*"
 pytest-xdist = "*"
 sphinx-autodoc-typehints = "*"
 werkzeug = {extras = ["watchdog"], version = "<2.1"}
