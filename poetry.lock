@@ -792,14 +792,14 @@ qrcode = ["qrcode"]
 
 [[package]]
 name = "django-permissions-policy"
-version = "4.7.0"
+version = "4.12.0"
 description = "Set the draft security HTTP header Permissions-Policy (previously Feature-Policy) on your Django app."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-Django = ">=2.2"
+Django = ">=3.2"
 
 [[package]]
 name = "django-redis"
@@ -1097,17 +1097,6 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-name = "httplib2"
-version = "0.20.4"
-description = "A comprehensive HTTP client library."
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-
-[package.dependencies]
-pyparsing = {version = ">=2.4.2,<3.0.0 || >3.0.0,<3.0.1 || >3.0.1,<3.0.2 || >3.0.2,<3.0.3 || >3.0.3,<4", markers = "python_version > \"3.0\""}
-
-[[package]]
 name = "httptools"
 version = "0.4.0"
 description = "A collection of framework independent HTTP protocol utils."
@@ -1333,17 +1322,6 @@ description = "NumPy is the fundamental package for array computing with Python.
 category = "main"
 optional = false
 python-versions = ">=3.8"
-
-[[package]]
-name = "oauth2"
-version = "1.9.0.post1"
-description = "library for OAuth version 1.9"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-httplib2 = "*"
 
 [[package]]
 name = "oauthlib"
@@ -1798,17 +1776,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "pyupgrade"
-version = "2.34.0"
-description = "A tool to automatically upgrade syntax for newer versions."
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-tokenize-rt = ">=3.2.0"
-
-[[package]]
 name = "pyvips"
 version = "2.2.1"
 description = "binding for the libvips image processing library, API mode"
@@ -2211,14 +2178,6 @@ requests = ">=2.1.0"
 requests-file = ">=1.4"
 
 [[package]]
-name = "tokenize-rt"
-version = "4.2.1"
-description = "A wrapper around the stdlib `tokenize` which roundtrips."
-category = "dev"
-optional = false
-python-versions = ">=3.6.1"
-
-[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -2297,7 +2256,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "uvicorn"
-version = "0.18.0"
+version = "0.18.1"
 description = "The lightning-fast ASGI server."
 category = "main"
 optional = false
@@ -2444,7 +2403,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "d3806e4ef77c3b7c8834a8ec955c4e2815bfda7f98183d1a33020d353f6b3273"
+content-hash = "63f4720550c7f2d6707095999b3a81d98b60f0f851f4f921c0d16868999b2a64"
 
 [metadata.files]
 aiohttp = [
@@ -2903,8 +2862,8 @@ django-otp = [
     {file = "django_otp-1.1.3-py3-none-any.whl", hash = "sha256:8637be826c0465d0fd1710e4472efe9fc83883853a2141fefdbace9358d20003"},
 ]
 django-permissions-policy = [
-    {file = "django-permissions-policy-4.7.0.tar.gz", hash = "sha256:f3dd79709cf79813aea98502a3ff15fd208cffe03aeac12da6ba94a3b239d3b5"},
-    {file = "django_permissions_policy-4.7.0-py3-none-any.whl", hash = "sha256:8cab61be9876a4c4b5fc691b1c5be62c817518a9c26a30368ebf310ed905188b"},
+    {file = "django-permissions-policy-4.12.0.tar.gz", hash = "sha256:1f10fc354110fef9270fbabbbf8d5358a6d6f5380c79f0dfba56dd41e45b1936"},
+    {file = "django_permissions_policy-4.12.0-py3-none-any.whl", hash = "sha256:88ee9cb345898414a6ad3f2eb0d8284c67decdfc43c6fc5331531b7c39809d8c"},
 ]
 django-redis = [
     {file = "django-redis-5.2.0.tar.gz", hash = "sha256:8a99e5582c79f894168f5865c52bd921213253b7fd64d16733ae4591564465de"},
@@ -3053,10 +3012,6 @@ gunicorn = [
 h11 = [
     {file = "h11-0.13.0-py3-none-any.whl", hash = "sha256:8ddd78563b633ca55346c8cd41ec0af27d3c79931828beffb46ce70a379e7442"},
     {file = "h11-0.13.0.tar.gz", hash = "sha256:70813c1135087a248a4d38cc0e1a0181ffab2188141a93eaf567940c3957ff06"},
-]
-httplib2 = [
-    {file = "httplib2-0.20.4-py3-none-any.whl", hash = "sha256:8b6a905cb1c79eefd03f8669fd993c36dc341f7c558f056cb5a33b5c2f458543"},
-    {file = "httplib2-0.20.4.tar.gz", hash = "sha256:58a98e45b4b1a48273073f905d2961666ecf0fbac4250ea5b47aef259eb5c585"},
 ]
 httptools = [
     {file = "httptools-0.4.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:fcddfe70553be717d9745990dfdb194e22ee0f60eb8f48c0794e7bfeda30d2d5"},
@@ -3340,10 +3295,6 @@ numpy = [
     {file = "numpy-1.22.4-cp39-cp39-win_amd64.whl", hash = "sha256:f0725df166cf4785c0bc4cbfb320203182b1ecd30fee6e541c8752a92df6aa32"},
     {file = "numpy-1.22.4-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0791fbd1e43bf74b3502133207e378901272f3c156c4df4954cad833b1380207"},
     {file = "numpy-1.22.4.zip", hash = "sha256:425b390e4619f58d8526b3dcf656dde069133ae5c240229821f01b5f44ea07af"},
-]
-oauth2 = [
-    {file = "oauth2-1.9.0.post1-py2.py3-none-any.whl", hash = "sha256:15b5c42301f46dd63113f1214b0d81a8b16254f65a86d3c32a1b52297f3266e6"},
-    {file = "oauth2-1.9.0.post1.tar.gz", hash = "sha256:c006a85e7c60107c7cc6da1b184b5c719f6dd7202098196dfa6e55df669b59bf"},
 ]
 oauthlib = [
     {file = "oauthlib-3.2.0-py3-none-any.whl", hash = "sha256:6db33440354787f9b7f3a6dbd4febf5d0f93758354060e802f6c06cb493022fe"},
@@ -3659,10 +3610,6 @@ pytz = [
     {file = "pytz-2022.1-py2.py3-none-any.whl", hash = "sha256:e68985985296d9a66a881eb3193b0906246245294a881e7c8afe623866ac6a5c"},
     {file = "pytz-2022.1.tar.gz", hash = "sha256:1e760e2fe6a8163bc0b3d9a19c4f84342afa0a2affebfaa84b01b978a02ecaa7"},
 ]
-pyupgrade = [
-    {file = "pyupgrade-2.34.0-py2.py3-none-any.whl", hash = "sha256:16617805b8d1138f96a1ff9cdb4b302b39b51804b3fc5474dc36c0326387445a"},
-    {file = "pyupgrade-2.34.0.tar.gz", hash = "sha256:ed0d9f282fa6282d0ca3bc0596a022aeb95435edab9daf3fc04c2ba118687b68"},
-]
 pyvips = [
     {file = "pyvips-2.2.1.tar.gz", hash = "sha256:b51dbb45b057a282925015d540c5597560993e2986df20a778646a6b37e7cbb5"},
 ]
@@ -3829,10 +3776,6 @@ tldextract = [
     {file = "tldextract-3.3.0-py3-none-any.whl", hash = "sha256:5d88321b1b528ebb8f678c72ab023f37caf6381f6af9576b4e60fd266cff178c"},
     {file = "tldextract-3.3.0.tar.gz", hash = "sha256:adcd24abf21ce3450417cd5a00f23b7e57554ce8ae827334dd12bfcbb6274cf1"},
 ]
-tokenize-rt = [
-    {file = "tokenize_rt-4.2.1-py2.py3-none-any.whl", hash = "sha256:08a27fa032a81cf45e8858d0ac706004fcd523e8463415ddf1442be38e204ea8"},
-    {file = "tokenize_rt-4.2.1.tar.gz", hash = "sha256:0d4f69026fed520f8a1e0103aa36c406ef4661417f20ca643f913e33531b3b94"},
-]
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
@@ -3908,8 +3851,8 @@ urllib3 = [
     {file = "urllib3-1.26.9.tar.gz", hash = "sha256:aabaf16477806a5e1dd19aa41f8c2b7950dd3c746362d7e3223dbe6de6ac448e"},
 ]
 uvicorn = [
-    {file = "uvicorn-0.18.0-py3-none-any.whl", hash = "sha256:ba66bccb012a1662ef0de7d8c5ec416a6dcf5d9f64c274f8df67d2df44a4b0b1"},
-    {file = "uvicorn-0.18.0.tar.gz", hash = "sha256:fde065bc11c05025fbb33f7602826e7520237c45a67ffa040993ae04ad4d7ab3"},
+    {file = "uvicorn-0.18.1-py3-none-any.whl", hash = "sha256:013c4ea0787cc2dc456ef4368e18c01982e6be57903e4d3183218e543eb889b7"},
+    {file = "uvicorn-0.18.1.tar.gz", hash = "sha256:35703e6518105cfe53f16a5a9435db3e2e227d0784f1fd8fbc1214b1fdc108df"},
 ]
 uvloop = [
     {file = "uvloop-0.16.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:6224f1401025b748ffecb7a6e2652b17768f30b1a6a3f7b44660e5b5b690b12d"},
