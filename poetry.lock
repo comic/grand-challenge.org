@@ -39,7 +39,7 @@ python-versions = "*"
 
 [[package]]
 name = "amass"
-version = "0.1.3"
+version = "0.1.4"
 description = "Vendor libraries from cdnjs"
 category = "dev"
 optional = false
@@ -2489,8 +2489,8 @@ alabaster = [
     {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
 ]
 amass = [
-    {file = "amass-0.1.3-py3-none-any.whl", hash = "sha256:a8abbfa61605267d717c6d4551f3c7bd09abc31537436817f08852725b79f41c"},
-    {file = "amass-0.1.3.tar.gz", hash = "sha256:f149bd0ede02f53a3e4df955c5f7859d8dd1a07c1792e80bf2e6654d7055b585"},
+    {file = "amass-0.1.4-py3-none-any.whl", hash = "sha256:7b80c60c7fc4fd327c3b3b4df93ca51b3b822875279868ddcf1cf5028c51bfab"},
+    {file = "amass-0.1.4.tar.gz", hash = "sha256:cdc05335322ba1cd185d2f09331841fb06c24884cf069e11173e2b99f8b9a3d4"},
 ]
 amqp = [
     {file = "amqp-5.1.1-py3-none-any.whl", hash = "sha256:6f0956d2c23d8fa6e7691934d8c3930eadb44972cbbd1a7ae3a520f735d43359"},
