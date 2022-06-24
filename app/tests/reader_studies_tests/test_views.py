@@ -91,7 +91,7 @@ def test_example_ground_truth(client, tmpdir):
 
 
 @pytest.mark.django_db
-def test_answer_remove(client):
+def test_answer_remove_for_user(client):
     rs = ReaderStudyFactory()
     r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
     rs.add_reader(r1)
@@ -110,9 +110,9 @@ def test_answer_remove(client):
     response = get_view_for_user(
         viewname="reader-studies:answers-remove",
         client=client,
-        method=client.post,
+        method=client.delete,
         reverse_kwargs={"slug": rs.slug},
-        data={"user": r1.id},
+        data=f"user={r1.id}",
         follow=True,
         user=r1,
     )
@@ -122,9 +122,9 @@ def test_answer_remove(client):
     response = get_view_for_user(
         viewname="reader-studies:answers-remove",
         client=client,
-        method=client.post,
+        method=client.delete,
         reverse_kwargs={"slug": rs.slug},
-        data={"user": r1.id},
+        data=f"user={r1.id}",
         follow=True,
         user=editor,
     )
@@ -133,6 +133,43 @@ def test_answer_remove(client):
     assert Answer.objects.count() == 1
     assert Answer.objects.filter(creator=r1).count() == 0
     assert Answer.objects.filter(creator=r2).count() == 1
+
+
+@pytest.mark.django_db
+def test_answer_remove_ground_truth(client):
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(reader_study=rs)
+    reader, editor = UserFactory.create_batch(2)
+    rs.add_reader(reader)
+    rs.add_editor(editor)
+    a, gt = AnswerFactory(
+        question=q, display_set=ds, is_ground_truth=False
+    ), AnswerFactory(question=q, display_set=ds, is_ground_truth=True)
+
+    response = get_view_for_user(
+        viewname="reader-studies:ground-truth-remove",
+        reverse_kwargs={"slug": rs.slug},
+        user=reader,
+        client=client,
+        method=client.delete,
+        content_type="application/json",
+    )
+    assert response.status_code == 403
+    assert Answer.objects.filter(pk=a.pk).exists()
+    assert Answer.objects.filter(pk=gt.pk).exists()
+
+    response = get_view_for_user(
+        viewname="reader-studies:ground-truth-remove",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+        client=client,
+        method=client.delete,
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert Answer.objects.filter(pk=a.pk).exists()
+    assert not Answer.objects.filter(pk=gt.pk).exists()
 
 
 @pytest.mark.django_db
