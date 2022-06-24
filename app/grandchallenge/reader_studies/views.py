@@ -21,6 +21,7 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
+    QueryDict,
 )
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -82,7 +83,6 @@ from grandchallenge.reader_studies.filters import (
     ReaderStudyFilter,
 )
 from grandchallenge.reader_studies.forms import (
-    AnswersRemoveForm,
     CategoricalOptionFormSet,
     DisplaySetForm,
     GroundTruthForm,
@@ -113,6 +113,10 @@ from grandchallenge.reader_studies.tasks import (
     create_display_sets_for_upload_session,
 )
 from grandchallenge.subdomains.utils import reverse
+
+
+class HttpResponseSeeOther(HttpResponseRedirect):
+    status_code = 303
 
 
 class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
@@ -826,33 +830,74 @@ class UsersProgress(
         return context
 
 
-class AnswersRemove(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
-    template_name = "reader_studies/readerstudy_user_groups_form.html"
-    form_class = AnswersRemoveForm
-    success_message = "Answers removed"
+class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+        f"{Answer._meta.app_label}.delete_{Answer._meta.model_name}"
     )
     raise_exception = True
+    success_message = "Answers removed"
 
-    def get_permission_object(self):
-        return self.reader_study
+    def get_permission_objects(self, request, **kwargs):
+        raise NotImplementedError
+
+    def check_permissions(self, request):
+        permission_objects = self.get_permission_objects(request)
+        forbidden = any(
+            not request.user.has_perm(self.permission_required, obj)
+            for obj in permission_objects
+        )
+        if forbidden:
+            raise PermissionDenied()
+        return permission_objects
+
+    def get_queryset(self):
+        return Answer.objects.filter(question__reader_study=self.reader_study)
+
+    def delete(self, request, *args, **kwargs):
+        objects = self.check_permissions(request)
+        objects.delete()
+        messages.add_message(request, messages.SUCCESS, self.success_message)
+        return HttpResponse(
+            self.get_success_url(),
+            headers={
+                "HX-Redirect": self.get_success_url(),
+                "HX-Refresh": True,
+            },
+        )
 
     @property
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
-    def form_valid(self, form):
-        form.remove_answers(reader_study=self.reader_study)
-        return super().form_valid(form)
-
     def get_success_url(self):
         return self.reader_study.get_absolute_url()
+
+
+class AnswersRemoveForUser(AnswerBatchDelete):
+    def get_permission_objects(self, request):
+        data = QueryDict(request.body)
+        user = data["user"]
+        return Answer.objects.filter(
+            question__reader_study=self.reader_study,
+            creator=user,
+            is_ground_truth=False,
+        )
+
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:users-progress",
+            kwargs={"slug": self.kwargs["slug"]},
+        )
+
+
+class AnswersRemoveGroundTruth(AnswerBatchDelete):
+    success_message = "Ground truth removed"
+
+    def get_permission_objects(self, request):
+        return Answer.objects.filter(
+            question__reader_study=self.reader_study,
+            is_ground_truth=True,
+        )
 
 
 class ReaderStudyPermissionRequestCreate(
@@ -975,17 +1020,6 @@ class ReaderStudyViewSet(ModelViewSet):
         if self.action == "remove_ground_truth":
             return [DeleteGroundTruthPermission()]
         return super().get_permissions(*args, **kwargs)
-
-    @action(detail=True, url_path="delete-ground-truth", methods=["post"])
-    def remove_ground_truth(self, request, pk=None):
-        reader_study = self.get_object()
-        Answer.objects.filter(
-            question__reader_study=reader_study, is_ground_truth=True
-        ).delete()
-        messages.add_message(
-            request, messages.SUCCESS, "Ground truth deleted successfully"
-        )
-        return Response(status=204)
 
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
     def ground_truth(self, request, pk=None, case_pk=None):

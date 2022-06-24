@@ -5,7 +5,8 @@ from grandchallenge.reader_studies.views import (
     AddGroundTruthToReaderStudy,
     AddImagesToReaderStudy,
     AddQuestionToReaderStudy,
-    AnswersRemove,
+    AnswersRemoveForUser,
+    AnswersRemoveGroundTruth,
     DisplaySetDetail,
     DisplaySetUpdate,
     EditorsUpdate,
@@ -72,8 +73,13 @@ urlpatterns = [
     path("<slug>/copy/", ReaderStudyCopy.as_view(), name="copy"),
     path(
         "<slug>/remove-answers/",
-        AnswersRemove.as_view(),
+        AnswersRemoveForUser.as_view(),
         name="answers-remove",
+    ),
+    path(
+        "<slug>/remove-ground-truth/",
+        AnswersRemoveGroundTruth.as_view(),
+        name="ground-truth-remove",
     ),
     path(
         "<slug>/ground-truth/add/",

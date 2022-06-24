@@ -1353,6 +1353,11 @@ class Answer(UUIDModel):
             self.question.reader_study.editors_group,
             self,
         )
+        assign_perm(
+            f"delete_{self._meta.model_name}",
+            self.question.reader_study.editors_group,
+            self,
+        )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
         assign_perm(f"change_{self._meta.model_name}", self.creator, self)
 

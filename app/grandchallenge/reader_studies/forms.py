@@ -12,7 +12,6 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     BooleanField,
@@ -49,7 +48,6 @@ from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     CASE_TEXT_SCHEMA,
-    Answer,
     CategoricalOption,
     Question,
     ReaderStudy,
@@ -403,21 +401,6 @@ class ReadersForm(UserGroupForm):
             permission_request.status = ReaderStudyPermissionRequest.ACCEPTED
 
         permission_request.save()
-
-
-class AnswersRemoveForm(Form):
-    user = ModelChoiceField(
-        queryset=get_user_model().objects.all().order_by("username"),
-        required=True,
-    )
-
-    def remove_answers(self, *, reader_study):
-        user = self.cleaned_data["user"]
-        Answer.objects.filter(
-            question__reader_study=reader_study,
-            creator=user,
-            is_ground_truth=False,
-        ).delete()
 
 
 class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):

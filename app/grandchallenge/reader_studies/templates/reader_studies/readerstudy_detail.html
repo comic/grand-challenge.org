@@ -327,7 +327,7 @@
                             <i class="fas fa-download"></i> Download Example CSV
                         </a>
                     </div>
-                    <button class="btn btn-danger" onclick="deleteGroundTruth()">
+                    <button class="btn btn-danger" hx-delete="{% url 'reader-studies:ground-truth-remove' slug=object.slug %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'>
                         <i class="fas fa-trash-alt"></i> Delete ground truth
                     </button>
                 </div>
@@ -423,16 +423,6 @@
 
 {% block script %}
     {{ block.super }}
-
-    {% url 'api:reader-study-remove-ground-truth' pk=object.pk  as remove_url %}
-    {{ remove_url|json_script:"removeUrl" }}
     <script src="{% static "js/refresh_sidebar.js" %}"></script>
-    <script>
-        window.drf = {
-            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
-            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
-        };
-    </script>
-    <script src="{% static 'reader_studies/js/remove_ground_truth.js' %}"></script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
 {% endblock %}
