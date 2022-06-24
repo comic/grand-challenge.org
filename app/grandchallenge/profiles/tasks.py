@@ -28,8 +28,13 @@ def deactivate_user(*, user_pk):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
-def delete_users_who_dont_signin():
-    """Remove users who do not sign in after 2 weeks"""
-    get_user_model().objects.filter(
-        last_login__isnull=True, date_joined__lt=now() - timedelta(weeks=2)
+def delete_users_who_dont_login():
+    """Remove users who do not sign in after USER_LOGIN_TIMEOUT_DAYS"""
+    get_user_model().objects.exclude(
+        username=settings.ANONYMOUS_USER_NAME
+    ).filter(
+        last_login__isnull=True,
+        date_joined__lt=(
+            now() - timedelta(days=settings.USER_LOGIN_TIMEOUT_DAYS)
+        ),
     ).delete()
