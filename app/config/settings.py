@@ -83,6 +83,7 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 
 ANONYMOUS_USER_NAME = "AnonymousUser"
+USER_LOGIN_TIMEOUT_DAYS = 14
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 
@@ -1155,6 +1156,10 @@ CELERY_BEAT_SCHEDULE = {
     "update_components_filesystem": {
         "task": "grandchallenge.components.tasks.update_filesystem",
         "schedule": timedelta(hours=COMPONENTS_AMAZON_EFS_TARGET_HOURS),
+    },
+    "delete_users_who_dont_login": {
+        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
+        "schedule": timedelta(days=1),
     },
     **{
         f"stop_expired_services_{region}": {

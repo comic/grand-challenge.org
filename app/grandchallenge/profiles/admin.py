@@ -33,7 +33,12 @@ class UserProfileAdmin(UserAdmin):
         "last_name",
         "is_staff",
     )
-    list_filter = ("is_staff", "is_superuser", "is_active")
+    list_filter = (
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        "user_profile__country",
+    )
     actions = (deactivate_users,)
 
 
