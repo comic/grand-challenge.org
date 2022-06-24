@@ -5,6 +5,6 @@
   <div>
         <label class="label mt-3 mb-0" for="{{ field.id_for_label }}"><h5>{{ field.label }}</h5></label>
         <span id="hint_{{ field.auto_id }}" class="form-text text-muted mb-2">{{ field.help_text|clean }}</span>
-        {% crispy_field field 'class' 'textarea' %}
+        {% crispy_field field 'class' 'textarea form-control' %}
   </div>
 </div>
