@@ -120,10 +120,12 @@ class RepoNameValidationMixin:
 class AlgorithmPublishValidation:
     def clean_public(self):
         public = self.cleaned_data.get("public")
+        # presence of a contact email is already checked
         if public and (
             not self.instance.summary
             or not self.instance.public_test_case
             or not self.instance.mechanism
+            or not self.instance.display_editors
         ):
             raise ValidationError(
                 "To publish this algorithm you need at least 1 public test case with a successful result from the latest version of the algorithm. You also need a summary and description of the mechanism of your algorithm. The link to update your algorithm description can be found on the algorithm information page."

@@ -402,11 +402,18 @@ def test_publish_algorithm():
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid() is False
 
+    # set display editors to true
+    algorithm.display_editors = True
+    algorithm.save()
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid() is False
+
     # add a public result
     ai = AlgorithmImageFactory(algorithm=algorithm, ready=True)
     _ = AlgorithmJobFactory(
         algorithm_image=ai, status=Job.SUCCESS, public=True
     )
     del algorithm.latest_ready_image
+    del algorithm.public_test_case
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid()
