@@ -241,9 +241,9 @@ def test_question_delete_disabled_for_questions_with_answers(client):
     get_view_for_user(
         viewname="reader-studies:answers-remove",
         client=client,
-        method=client.post,
+        method=client.delete,
         reverse_kwargs={"slug": rs.slug},
-        data={"user": r1.id},
+        data=f"user={r1.id}",
         follow=True,
         user=editor,
     )
