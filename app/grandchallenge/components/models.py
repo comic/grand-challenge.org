@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
+import numpy as np
 from celery import signature
 from django import forms
 from django.conf import settings
@@ -28,6 +29,8 @@ from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
+from panimg.image_builders.metaio_utils import load_sitk_image
+from SimpleITK import GetArrayViewFromImage
 
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import (
@@ -868,6 +871,23 @@ class ComponentInterfaceValue(models.Model):
     def clean(self):
         super().clean()
 
+        if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
+            image_file = self.image_file
+            if image_file != ImageFile.IMAGE_TYPE_MHD:
+                raise ValidationError(
+                    "Only MHA type files are supported for segmentation"
+                )
+            if self.interface.overlay_segments:
+                with NamedTemporaryFile() as ntf:
+                    ntf.write(image_file.read())
+                    sitk_img = load_sitk_image(Path(ntf.name))
+                pixel_values = np.unique(GetArrayViewFromImage(sitk_img))
+                if not set(pixel_values).is_subset(
+                    self.interface.pixel_values
+                ):
+                    raise ValidationError(
+                        "Segmentation does not match pixel values provided in overlay segments."
+                    )
         if self.interface.is_image_kind:
             self._validate_image_only()
         elif self.interface.is_file_kind:

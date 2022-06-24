@@ -72,9 +72,14 @@ def add_image_to_display_set(
         display_set.values.remove(
             *display_set.values.filter(interface=interface)
         )
-        civ, _ = ComponentInterfaceValue.objects.get_or_create(
+        civ = ComponentInterfaceValue.objects.filter(
             interface=interface, image=image
-        )
+        ).first()
+        if civ is None:
+            civ = ComponentInterfaceValue(interface=interface)
+        civ.image = image
+        civ.full_clean()
+        civ.save()
         display_set.values.add(civ)
 
 
@@ -87,9 +92,14 @@ def create_display_sets_for_upload_session(
     interface = ComponentInterface.objects.get(pk=interface_pk)
     with transaction.atomic():
         for image in images:
-            civ, _ = ComponentInterfaceValue.objects.get_or_create(
+            civ = ComponentInterfaceValue.objects.filter(
                 interface=interface, image=image
-            )
+            ).first()
+            if civ is None:
+                civ = ComponentInterfaceValue(interface=interface)
+            civ.image = image
+            civ.full_clean()
+            civ.save()
             if DisplaySet.objects.filter(
                 reader_study=reader_study, values=civ
             ).exists():
