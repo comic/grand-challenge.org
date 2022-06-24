@@ -248,7 +248,7 @@ CACHES = {
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
 RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
-DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
+DEFAULT_SCHEME = "https"  # use https in dev and prod
 
 # Workaround for https://github.com/ellmetha/django-machina/issues/219
 ABSOLUTE_URL_OVERRIDES = {
@@ -294,7 +294,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
 SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
-X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
+X_FRAME_OPTIONS = "DENY"
 # "strict-origin-when-cross-origin" required for uploads for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin"
