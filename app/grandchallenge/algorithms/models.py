@@ -391,6 +391,15 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
 
+    @cached_property
+    def public_test_case(self):
+        try:
+            return self.latest_ready_image.job_set.filter(
+                status=Job.SUCCESS, public=True
+            ).exists()
+        except AttributeError:
+            return False
+
 
 @receiver(post_delete, sender=Algorithm)
 def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
