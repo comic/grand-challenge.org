@@ -837,11 +837,8 @@ class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
     raise_exception = True
     success_message = "Answers removed"
 
-    def get_permission_objects(self, request, **kwargs):
-        raise NotImplementedError
-
     def check_permissions(self, request):
-        permission_objects = self.get_permission_objects(request)
+        permission_objects = self.get_queryset()
         forbidden = any(
             not request.user.has_perm(self.permission_required, obj)
             for obj in permission_objects
@@ -851,7 +848,7 @@ class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
         return permission_objects
 
     def get_queryset(self):
-        return Answer.objects.filter(question__reader_study=self.reader_study)
+        raise NotImplementedError
 
     def delete(self, request, *args, **kwargs):
         objects = self.check_permissions(request)
@@ -874,8 +871,8 @@ class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
 
 
 class AnswersRemoveForUser(AnswerBatchDelete):
-    def get_permission_objects(self, request):
-        data = QueryDict(request.body)
+    def get_queryset(self):
+        data = QueryDict(self.request.body)
         user = data["user"]
         return Answer.objects.filter(
             question__reader_study=self.reader_study,
@@ -893,7 +890,7 @@ class AnswersRemoveForUser(AnswerBatchDelete):
 class AnswersRemoveGroundTruth(AnswerBatchDelete):
     success_message = "Ground truth removed"
 
-    def get_permission_objects(self, request):
+    def get_queryset(self):
         return Answer.objects.filter(
             question__reader_study=self.reader_study,
             is_ground_truth=True,
