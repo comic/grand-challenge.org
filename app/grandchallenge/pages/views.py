@@ -185,13 +185,13 @@ class ChallengeStatistics(
             try:
                 compute_costs_dict[phase.title] = round(
                     phase.archive_item_count
-                    * avg_duration["average_duration"]
+                    * (avg_duration["average_duration"]).seconds
                     * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-                    / 60
+                    / 3600
                     / 100,
                     ndigits=2,
                 )
-            except TypeError:
+            except AttributeError:
                 compute_costs_dict[phase.title] = None
 
         context.update(
