@@ -248,6 +248,8 @@ class TwoFactorRemove(ValidTOTPDeviceRequiredMixin, FormView):
 
 
 class TwoFactorAuthenticate(TwoFactorAuthenticate):
+    form_class = TOTPAuthenticateForm
+
     def form_valid(self, form):
         adapter = get_adapter(self.request)
         # 2fa kicked in at `pre_login()`, so we need to continue from there.

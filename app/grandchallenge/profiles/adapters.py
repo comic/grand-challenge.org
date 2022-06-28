@@ -55,7 +55,7 @@ class AccountAdapter(DefaultAccountAdapter):
         return email
 
     def pre_login(self, request, user, **kwargs):
-        # this is copied from the following PR on django-allauth-2fa repo:
+        # this is copied (and slightly adapted) from the a pending PR on django-allauth-2fa repo:
         # https://github.com/valohai/django-allauth-2fa/pull/131
 
         response = super().pre_login(request, user, **kwargs)
@@ -65,6 +65,7 @@ class AccountAdapter(DefaultAccountAdapter):
         # Require two-factor authentication if it has been configured or if the user is staff user.
         if self.has_2fa_enabled(user) or user.is_staff or user.is_superuser:
             self.stash_pending_login(request, user, **kwargs)
+            # For the social login the Require2FA middleware does not work, so check here again
             if (
                 user.is_staff or user.is_superuser
             ) and not self.has_2fa_enabled(user):
