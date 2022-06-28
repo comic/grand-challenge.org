@@ -1,4 +1,5 @@
 from base64 import b32encode
+from time import sleep
 
 import pytest
 from allauth.socialaccount.models import SocialAccount
@@ -238,6 +239,10 @@ def test_2fa_setup(client):
 
     # with the correct token, authentication succeeds and user is
     # redirected to the back-up tokens page
+    device = user.totpdevice_set.get()
+    device.step = 1
+    device.save()
+
     token = get_token_from_totp_device(user.totpdevice_set.get())
     response = get_view_for_user(
         viewname="two-factor-setup",
@@ -250,16 +255,16 @@ def test_2fa_setup(client):
 
     # upon next sign-in 2fa will be prompted
     client.logout()
+
+    # ensure that enough time has passed since the last token was issued
+    sleep(device.step)
     response = client.post(
         reverse("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
     )
     assert "/accounts/two-factor-authenticate" in response.url
 
-    token = get_token_from_totp_device(user.totpdevice_set.get())
-    response = client.post(response.url, {"otp_token": token})
-    resp = client.post(response.url)
-    assert (
-        reverse("profile-detail", kwargs={"username": user.username})
-        in resp.url
-    )
+    # providing the token redirects the user to their profile page
+    new_token = get_token_from_totp_device(user.totpdevice_set.get())
+    response = client.post(response.url, {"otp_token": new_token})
+    assertRedirects(response, "/users/profile/", fetch_redirect_response=False)
