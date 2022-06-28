@@ -699,8 +699,23 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def clean(self):
         super().clean()
+        self._clean_overlay_segments()
         self._clean_store_in_database()
         self._clean_relative_path()
+
+    def _clean_overlay_segments(self):
+        try:
+            ci = ComponentInterface.objects.get(pk=self.pk)
+        except ComponentInterface.DoesNotExist:
+            return
+        if (
+            ComponentInterfaceValue.objects.filter(interface=self).exists()
+            and ci.overlay_segments != self.overlay_segments
+        ):
+            raise ValidationError(
+                "Overlay segements cannot be changed, as values for this "
+                "ComponentInterface exist."
+            )
 
     def _clean_relative_path(self):
         if self.is_json_kind:
@@ -898,7 +913,7 @@ class ComponentInterfaceValue(models.Model):
         super().clean()
 
         if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
-            self._validate_pixel_values(self.image_file)
+            self.interface._validate_pixel_values(self.image_file)
         if self.interface.is_image_kind:
             self._validate_image_only()
         elif self.interface.is_file_kind:

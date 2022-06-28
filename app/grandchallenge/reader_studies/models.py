@@ -1020,7 +1020,13 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         this ``Question`` is fully editable, an empty list otherwise.
         """
         if not self.is_fully_editable:
-            return ["question_text", "answer_type", "image_port", "required"]
+            return [
+                "question_text",
+                "answer_type",
+                "image_port",
+                "required",
+                "overlay_segments",
+            ]
         return []
 
     @property
