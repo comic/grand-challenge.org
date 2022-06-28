@@ -285,7 +285,7 @@ def create_algorithm_jobs(
         civ_sets = civ_sets[:max_jobs]
 
     if time_limit is None:
-        time_limit = settings.CELERY_TASK_TIME_LIMIT
+        time_limit = settings.ALGORITHMS_JOB_TIME_LIMIT_SECONDS
 
     jobs = []
     job_count = 0
