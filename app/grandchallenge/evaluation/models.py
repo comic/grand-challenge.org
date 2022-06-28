@@ -39,6 +39,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
+from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -95,7 +96,7 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
-class Phase(UUIDModel):
+class Phase(UUIDModel, ViewContentMixin):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
     ASCENDING = "asc"
@@ -415,6 +416,24 @@ class Phase(UUIDModel):
             "Note that hiding a phase is only possible if submissions for "
             "this phase are closed for participants."
         ),
+    )
+    workstation = models.ForeignKey(
+        "workstations.Workstation",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+    )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
 
     class Meta:

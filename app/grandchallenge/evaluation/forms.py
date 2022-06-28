@@ -1,7 +1,7 @@
 from bleach import clean
 from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import ButtonHolder, Layout, Submit
+from crispy_forms.layout import HTML, ButtonHolder, Layout, Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -25,6 +25,7 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
@@ -67,6 +68,13 @@ leaderboard_options = (
 
 result_detail_options = ("display_all_metrics",)
 
+algorithm_setting_options = (
+    "workstation",
+    "workstation_config",
+    "hanging_protocol",
+    "view_content",
+)
+
 
 class PhaseTitleMixin:
     def __init__(self, *args, challenge, **kwargs):
@@ -103,7 +111,7 @@ class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
         }
 
 
-class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
+class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm, ViewContentMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -117,6 +125,22 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
             ),
             ButtonHolder(Submit("save", "Save")),
         )
+        if self.instance.submission_kind == SubmissionKindChoices.ALGORITHM:
+            self.helper.layout[0].append(
+                Tab(
+                    "Algorithm",
+                    HTML(
+                        "<p>Use the settings below to define which "
+                        "<a href='https://grand-challenge.org/documentation/viewers/'>viewer</a>, "
+                        "<a href='https://grand-challenge.org/documentation/how-to-configure-your-viewer/'>"
+                        "viewer configuration</a> and "
+                        "<a href='https://grand-challenge.org/documentation/viewer-layout/'>hanging protocol</a> "
+                        "the algorithms submitted to this phase should use. Providing these settings is optional "
+                        "but recommended. It will ensure that all algorithms are configured in the same way. </p>"
+                    ),
+                    *algorithm_setting_options,
+                )
+            )
 
     class Meta:
         model = Phase
@@ -126,6 +150,7 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
             *scoring_options,
             *leaderboard_options,
             *result_detail_options,
+            *algorithm_setting_options,
         )
         widgets = {
             "submission_page_html": SummernoteInplaceWidget(),
@@ -138,6 +163,34 @@ class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
             "submissions_close_at": forms.DateTimeInput(
                 format=("%Y-%m-%dT%H:%M"), attrs={"type": "datetime-local"}
             ),
+        }
+        widgets.update(ViewContentMixin.Meta.widgets)
+        help_texts = {
+            "workstation_config": format_lazy(
+                (
+                    "The viewer configuration to use for the algorithms submitted to this phase. "
+                    "If a suitable configuration does not exist you can "
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'configurations, go <a href="{}">here</a>.'
+                ),
+                reverse_lazy("workstation-configs:create"),
+                reverse_lazy("workstation-configs:list"),
+            ),
+            "hanging_protocol": format_lazy(
+                (
+                    "The hanging protocol to use for the algorithms submitted to this phase. "
+                    "If a suitable protocol does not exist you can "
+                    '<a href="{}">create a new one</a>. For a list of existing '
+                    'hanging protocols, go <a href="{}">here</a>.'
+                ),
+                reverse_lazy("hanging-protocols:create"),
+                reverse_lazy("hanging-protocols:list"),
+            ),
+        }
+        help_texts.update(ViewContentMixin.Meta.help_texts)
+        labels = {
+            "workstation": "Viewer",
+            "workstation_config": "Viewer Configuration",
         }
 
 
