@@ -535,7 +535,50 @@ class InterfaceKind:
             raise RuntimeError(f"Unknown kind {kind}")
 
 
-class ComponentInterface(models.Model):
+class OverlaySegmentsMixin(models.Model):
+    overlay_segments = models.JSONField(
+        blank=True,
+        null=True,
+        default=None,
+        help_text=(
+            "The schema that defines how categories of values in the overlay "
+            "images are differentiated."
+        ),
+        validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+    )
+    look_up_table = models.ForeignKey(
+        to=LookUpTable,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="The look-up table that is applied when an overlay image is first shown",
+    )
+
+    @property
+    def pixel_values(self):
+        return [x["voxel_value"] for x in self.overlay_segments]
+
+    def _validate_pixel_values(self, image_file):
+        if not self.overlay_segments:
+            return
+        if image_file != ImageFile.IMAGE_TYPE_MHD:
+            raise ValidationError(
+                "Only MHA type files are supported for segmentation"
+            )
+        with NamedTemporaryFile() as ntf:
+            ntf.write(image_file.read())
+            sitk_img = load_sitk_image(Path(ntf.name))
+        pixel_values = np.unique(GetArrayViewFromImage(sitk_img))
+        if not set(pixel_values).is_subset(self.pixel_values):
+            raise ValidationError(
+                "Segmentation does not match pixel values provided in overlay segments."
+            )
+
+    class Meta:
+        abstract = True
+
+
+class ComponentInterface(OverlaySegmentsMixin):
     Kind = InterfaceKind.InterfaceKindChoices
 
     title = models.CharField(
@@ -562,23 +605,6 @@ class ComponentInterface(models.Model):
             "Only Draft 7, 6, 4 or 3 are supported."
         ),
         validators=[JSONSchemaValidator()],
-    )
-    overlay_segments = models.JSONField(
-        blank=True,
-        null=True,
-        default=None,
-        help_text=(
-            "The schema that defines how categories of values in the overlay "
-            "images are differentiated."
-        ),
-        validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
-    )
-    look_up_table = models.ForeignKey(
-        to=LookUpTable,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        help_text="The look-up table that is applied when an overlay image is first shown",
     )
     kind = models.CharField(
         blank=False,
@@ -872,22 +898,7 @@ class ComponentInterfaceValue(models.Model):
         super().clean()
 
         if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
-            image_file = self.image_file
-            if image_file != ImageFile.IMAGE_TYPE_MHD:
-                raise ValidationError(
-                    "Only MHA type files are supported for segmentation"
-                )
-            if self.interface.overlay_segments:
-                with NamedTemporaryFile() as ntf:
-                    ntf.write(image_file.read())
-                    sitk_img = load_sitk_image(Path(ntf.name))
-                pixel_values = np.unique(GetArrayViewFromImage(sitk_img))
-                if not set(pixel_values).is_subset(
-                    self.interface.pixel_values
-                ):
-                    raise ValidationError(
-                        "Segmentation does not match pixel values provided in overlay segments."
-                    )
+            self._validate_pixel_values(self.image_file)
         if self.interface.is_image_kind:
             self._validate_image_only()
         elif self.interface.is_file_kind:
