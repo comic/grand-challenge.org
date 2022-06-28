@@ -1,9 +1,10 @@
 import contextlib
 from base64 import b32encode
 
+from allauth.account.adapter import get_adapter
 from allauth_2fa.forms import TOTPAuthenticateForm
 from allauth_2fa.mixins import ValidTOTPDeviceRequiredMixin
-from allauth_2fa.views import TwoFactorSetup
+from allauth_2fa.views import TwoFactorAuthenticate, TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
@@ -244,3 +245,12 @@ class TwoFactorRemove(ValidTOTPDeviceRequiredMixin, FormView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+
+class TwoFactorAuthenticate(TwoFactorAuthenticate):
+    def form_valid(self, form):
+        adapter = get_adapter(self.request)
+        # 2fa kicked in at `pre_login()`, so we need to continue from there.
+        login_kwargs = adapter.unstash_pending_login_kwargs(self.request)
+        adapter.login(self.request, form.user)
+        return adapter.post_login(self.request, form.user, **login_kwargs)

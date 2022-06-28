@@ -112,6 +112,14 @@ class SocialLoginTests(OAuth2TestsMixin, TestCase):
         resp = self.login(resp_mock=self.get_mocked_response())
         assert "two-factor-authenticate" in resp.url
 
+        token = get_token_from_totp_device(user.totpdevice_set.get())
+        resp = self.client.post(resp.url, {"otp_token": token})
+        resp = self.client.post(resp.url)
+        assert (
+            reverse("profile-detail", kwargs={"username": user.username})
+            in resp.url
+        )
+
 
 @override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
 @pytest.mark.django_db
@@ -123,7 +131,7 @@ def test_2fa_reset_flow(client):
         reverse_lazy("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
     )
-    assert "/accounts/two-factor-authenticate" == response.url
+    assert "/accounts/two-factor-authenticate" in response.url
 
     # The user ID should be in the session.
     assert client.session.get("allauth_2fa_user_id")
@@ -138,7 +146,7 @@ def test_2fa_reset_flow(client):
     # redirect to login.
     resp = client.get(reverse_lazy("two-factor-authenticate"))
 
-    assert "/accounts/login/" == resp.url
+    assert "/accounts/login/" in resp.url
 
     # navigate to a subdomain page
     client.post(
@@ -238,7 +246,7 @@ def test_2fa_setup(client):
         data={"token": token},
         user=user,
     )
-    assert "/accounts/two_factor/backup_tokens" == response.url
+    assert "/accounts/two_factor/backup_tokens" in response.url
 
     # upon next sign-in 2fa will be prompted
     client.logout()
@@ -246,8 +254,12 @@ def test_2fa_setup(client):
         reverse("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
     )
-    assertRedirects(
-        response,
-        "/accounts/two-factor-authenticate",
-        fetch_redirect_response=False,
+    assert "/accounts/two-factor-authenticate" in response.url
+
+    token = get_token_from_totp_device(user.totpdevice_set.get())
+    response = client.post(response.url, {"otp_token": token})
+    resp = client.post(response.url)
+    assert (
+        reverse("profile-detail", kwargs={"username": user.username})
+        in resp.url
     )
