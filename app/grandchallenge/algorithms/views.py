@@ -189,6 +189,12 @@ class PhaseAlgorithmCreate(
     def phase(self):
         return Phase.objects.get(pk=self.kwargs["phase_pk"])
 
+    def get_success_url(self):
+        return (
+            reverse("algorithms:detail", kwargs={"slug": self.object.slug})
+            + "#containers"
+        )
+
 
 class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     model = Algorithm
