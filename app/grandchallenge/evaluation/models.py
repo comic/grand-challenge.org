@@ -503,6 +503,21 @@ class Phase(UUIDModel, ViewContentMixin):
             )
 
         if (
+            self.submission_limit > 0
+            and self.submission_kind == SubmissionKindChoices.ALGORITHM
+            and (
+                not self.archive
+                or not self.algorithm_inputs
+                or not self.algorithm_outputs
+            )
+        ):
+            raise ValidationError(
+                "To change the submission limit to above 0, you need to first link an archive containing the secret "
+                "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
+                "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
+            )
+
+        if (
             self.submissions_open_at
             and self.submissions_close_at
             and self.submissions_close_at < self.submissions_open_at

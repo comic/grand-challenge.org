@@ -5,7 +5,10 @@ from typing import Dict
 import requests
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import (
@@ -94,10 +97,30 @@ from grandchallenge.verifications.views import VerificationRequiredMixin
 logger = logging.getLogger(__name__)
 
 
-class UserCanSubmitToChallengeMixin(VerificationRequiredMixin):
+class PhaseConfiguredForAlgorithmSubmissionMixin(UserPassesTestMixin):
+    def test_func(self):
+        if self.phase.inputs and self.phase.outputs and self.phase.archive:
+            return True
+        else:
+            error_message = (
+                "This phase is not configured for algorithm submission. "
+            )
+            if self.phase.challenge.is_admin(self.request.user):
+                error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
+            else:
+                error_message += "Please come back later."
+
+            messages.error(
+                self.request,
+                error_message,
+            )
+            return False
+
+
+class UserCanSubmitToPhaseMixin(VerificationRequiredMixin):
     """
     Mixin that checks if a user is either an admin of a challenge
-    or a participant of the challenge and the phase is open.
+    or a participant of the challenge.
     """
 
     def test_func(self):
@@ -137,7 +160,8 @@ class AlgorithmCreate(
 
 class PhaseAlgorithmCreate(
     LoginRequiredMixin,
-    UserCanSubmitToChallengeMixin,
+    PhaseConfiguredForAlgorithmSubmissionMixin,
+    UserCanSubmitToPhaseMixin,
     CreateView,
 ):
     model = Algorithm
@@ -147,7 +171,6 @@ class PhaseAlgorithmCreate(
         response = super().form_valid(form=form)
         self.object.add_editor(self.request.user)
         self.object.logo = self.phase.challenge.logo
-        self.object.workstation = self.phase.workstation
         self.object.workstation_config = self.phase.workstation_config
         self.object.hanging_protocol = self.phase.hanging_protocol
         self.object.view_content = self.phase.view_content
@@ -157,6 +180,8 @@ class PhaseAlgorithmCreate(
         self.object.structures.set(self.phase.challenge.structures.all())
         self.object.inputs.set(self.phase.algorithm_inputs.all())
         self.object.outputs.set(self.phase.algorithm_outputs.all())
+        if self.phase.workstation:
+            self.object.workstation = self.phase.workstation
         self.object.save()
         return response
 
