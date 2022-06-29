@@ -18,7 +18,6 @@ from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.models import ImageFile
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -1308,17 +1307,6 @@ class Answer(UUIDModel):
         ):
             raise ValidationError(
                 "Answer for required question cannot be None"
-            )
-
-        if question.overlay_segments:
-            image_file = answer.answer_image.files.filter(
-                image_type__in=[
-                    ImageFile.IMAGE_TYPE_MHD,
-                    ImageFile.IMAGE_TYPE_TIFF,
-                ]
-            ).get()
-            question._validate_pixel_values(
-                image_file.file, image_file.image_type
             )
 
     @property

@@ -1,9 +1,10 @@
 from celery import shared_task
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from grandchallenge.algorithms.exceptions import ImageImportError
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -112,12 +113,31 @@ def create_display_sets_for_upload_session(
 def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
+    question = answer.question
 
     if (
         str(answer.answer["upload_session_pk"]).casefold()
         == str(upload_session_pk).casefold()
     ):
-        add_image(answer, image)
+        image_file = image.files.filter(
+            image_type__in=[
+                ImageFile.IMAGE_TYPE_MHD,
+                ImageFile.IMAGE_TYPE_TIFF,
+            ]
+        ).get()
+        try:
+            question._validate_pixel_values(
+                image_file.file, image_file.image_type
+            )
+        except ValidationError as e:
+            upload_session = RawImageUploadSession.objects.get(
+                pk=upload_session_pk
+            )
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = e.message
+            upload_session.save()
+        else:
+            add_image(answer, image)
     else:
         raise ValueError("Upload session for answer does not match")
 
