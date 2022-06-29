@@ -1,7 +1,6 @@
 import itertools
 import json
 import logging
-import os
 import shlex
 import subprocess
 import tarfile
@@ -42,6 +41,54 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 60 * 24  # 1 day assuming 60 seconds delay
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_sagemaker_shim_version():
+    """Updates existing images to new versions of sagemaker shim"""
+    with transaction.atomic():
+        for app_label, model_name in (
+            ("algorithms", "algorithmimage"),
+            ("evaluation", "method"),
+        ):
+            model = apps.get_model(app_label=app_label, model_name=model_name)
+
+            for instance in model.objects.filter(ready=True).exclude(
+                latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+            ):
+                on_commit(
+                    shim_image.signature(
+                        kwargs={
+                            "pk": str(instance.pk),
+                            "app_label": instance._meta.app_label,
+                            "model_name": instance._meta.model_name,
+                        }
+                    ).apply_async
+                )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+    """Shim an existing container image"""
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if (
+        instance.ready
+        and instance.SHIM_IMAGE
+        and instance.latest_shimmed_version
+        != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        and settings.COMPONENTS_SHIM_IMAGES
+    ):
+        shim_container_image(instance=instance)
+
+        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
+            # Only create SageMaker models for shimmed images for now
+            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+
+        model.objects.filter(pk=instance.pk).update(
+            latest_shimmed_version=instance.latest_shimmed_version,
+        )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -128,8 +175,8 @@ def shim_container_image(*, instance):
 
     # Set the new version, so we can then get the value of the new tag.
     # Do not save the instance until the container image has been mutated.
-    instance.latest_shimmed_version = os.environ.get(
-        "GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION"
+    instance.latest_shimmed_version = (
+        settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     )
     new_repo_tag = instance.shimmed_repo_tag
     original_repo_tag = instance.original_repo_tag
