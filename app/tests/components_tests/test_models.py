@@ -18,7 +18,10 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ImageFactory
 
@@ -724,3 +727,23 @@ def test_runtime_metrics_chart():
             "color": {"field": "Metric", "type": "nominal"},
         },
     }
+
+
+@pytest.mark.django_db
+def test_clean_overlay_segments():
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
+    ci.overlay_segments = [{"category": "cat", "voxel_value": 1}]
+    ci._clean_overlay_segments()
+    ci.save()
+
+    ComponentInterfaceValueFactory(interface=ci)
+    ci.overlay_segments = [
+        {"category": "cat", "voxel_value": 1},
+        {"category": "cat2", "voxel_value": 2},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert e.value.message == (
+        "Overlay segments cannot be changed, as values for this "
+        "ComponentInterface exist."
+    )

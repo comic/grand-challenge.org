@@ -713,7 +713,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             and ci.overlay_segments != self.overlay_segments
         ):
             raise ValidationError(
-                "Overlay segements cannot be changed, as values for this "
+                "Overlay segments cannot be changed, as values for this "
                 "ComponentInterface exist."
             )
 
