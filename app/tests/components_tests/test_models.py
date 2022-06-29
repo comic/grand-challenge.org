@@ -736,14 +736,14 @@ def test_runtime_metrics_chart():
 @pytest.mark.django_db
 def test_clean_overlay_segments():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
-    ci.overlay_segments = [{"category": "cat", "voxel_value": 1}]
+    ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci._clean_overlay_segments()
     ci.save()
 
     ComponentInterfaceValueFactory(interface=ci)
     ci.overlay_segments = [
-        {"category": "cat", "voxel_value": 1},
-        {"category": "cat2", "voxel_value": 2},
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
     ]
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
@@ -759,7 +759,7 @@ def test_validate_pixel_values():
     file = ImageFileFactoryWithTiff()
     assert ci._validate_pixel_values(file.file, file.image_type) is None
 
-    ci.overlay_segments = [{"category": "cat", "voxel_value": 1}]
+    ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci.save()
 
     file = ImageFileFactoryWithTiff()
@@ -777,8 +777,8 @@ def test_validate_pixel_values():
     )
 
     ci.overlay_segments = [
-        {"category": "cat0", "voxel_value": 0},
-        {"category": "cat", "voxel_value": 1},
+        {"name": "s1", "visible": True, "voxel_value": 0},
+        {"name": "s2", "visible": True, "voxel_value": 1},
     ]
     ci.save()
     file = ImageFileFactoryWithMask()

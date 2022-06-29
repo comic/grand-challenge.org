@@ -1025,13 +1025,13 @@ def test_ground_truth(client):
     (
         (None, None),
         (
-            [{"category": "cat0", "voxel_value": 0}],
+            [{"name": "s1", "visible": True, "voxel_value": 0}],
             "Segmentation does not match pixel values provided in overlay segments.",
         ),
         (
             [
-                {"category": "cat0", "voxel_value": 0},
-                {"category": "cat1", "voxel_value": 1},
+                {"name": "s1", "visible": True, "voxel_value": 0},
+                {"name": "s2", "visible": True, "voxel_value": 1},
             ],
             None,
         ),

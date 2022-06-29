@@ -290,6 +290,10 @@ def test_question_update(client):
             "question_text": "bar",
             "answer_type": Question.AnswerType.BOOL,
             "direction": Question.Direction.VERTICAL,
+            "overlay_segments": "["
+            '{"name": "s1", "visible": true, "voxel_value": 0},'
+            '{"name": "s2", "visible": true, "voxel_value": 1}'
+            "]",
             "order": 200,
             "interface": str(ci_bool.pk),
             "options-TOTAL_FORMS": 2,
@@ -306,12 +310,17 @@ def test_question_update(client):
     assert question.question_text == "bar"
     assert question.answer_type == Question.AnswerType.BOOL
     assert question.direction == Question.Direction.VERTICAL
+    assert question.overlay_segments == [
+        {"name": "s1", "visible": True, "voxel_value": 0},
+        {"name": "s2", "visible": True, "voxel_value": 1},
+    ]
     assert question.order == 200
     assert question.interface == ci_bool
 
     AnswerFactory(question=question, answer="true")
 
-    # An answer is added, so changing the question text should no longer be possible
+    # An answer is added, so changing the question text or overlay segments
+    # should no longer be possible
     get_view_for_user(
         viewname="reader-studies:question-update",
         client=client,
@@ -320,6 +329,7 @@ def test_question_update(client):
             "question_text": "foo",
             "answer_type": Question.AnswerType.SINGLE_LINE_TEXT,
             "direction": Question.Direction.HORIZONTAL,
+            "overlay_segments": '[{"name": "s1", "visible": true, "voxel_value": 0}]',
             "order": 100,
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
@@ -335,6 +345,10 @@ def test_question_update(client):
     assert question.question_text == "bar"
     assert question.answer_type == Question.AnswerType.BOOL
     assert question.direction == Question.Direction.HORIZONTAL
+    assert question.overlay_segments == [
+        {"name": "s1", "visible": True, "voxel_value": 0},
+        {"name": "s2", "visible": True, "voxel_value": 1},
+    ]
     assert question.order == 100
 
 
