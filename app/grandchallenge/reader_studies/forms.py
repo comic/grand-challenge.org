@@ -283,6 +283,18 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def initial_interface(self):
         return self.interface_choices().first()
 
+    def clean(self):
+        interface = self.cleaned_data.get("interface")
+        overlay_segments = self.cleaned_data.get("overlay_segments")
+        if interface and overlay_segments != interface.overlay_segments:
+            self.add_error(
+                error=ValidationError(
+                    f"Overlay segments do not match those of {interface.title}."
+                ),
+                field=None,
+            )
+        return super().clean()
+
     def full_clean(self):
         """Override of the form's full_clean method.
 
