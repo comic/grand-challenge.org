@@ -88,7 +88,9 @@ class PhaseUpdate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"challenge": self.request.challenge})
+        kwargs.update(
+            {"challenge": self.request.challenge, "user": self.request.user}
+        )
         return kwargs
 
     def get_success_url(self):

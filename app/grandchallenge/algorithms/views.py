@@ -47,6 +47,7 @@ from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
     AlgorithmDescriptionForm,
     AlgorithmForm,
+    AlgorithmForPhaseForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmInputsForm,
@@ -83,6 +84,7 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.evaluation.models import Phase
 from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -90,6 +92,30 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
+
+
+class UserCanSubmitToChallengeMixin(VerificationRequiredMixin):
+    """
+    Mixin that checks if a user is either an admin of a challenge
+    or a participant of the challenge and the phase is open.
+    """
+
+    def test_func(self):
+        super().test_func()
+        if self.phase.challenge.is_admin(self.request.user):
+            return True
+        elif (
+            self.phase.challenge.is_participant(self.request.user)
+            and self.phase.open_for_submissions
+        ):
+            return True
+        else:
+            messages.error(
+                self.request,
+                "You need to be either an admin or a participant of the challenge in order to create an algorithm for "
+                "this phase. The phase also needs to be open for submissions.",
+            )
+            return False
 
 
 class AlgorithmCreate(
@@ -107,6 +133,36 @@ class AlgorithmCreate(
         response = super().form_valid(form=form)
         self.object.add_editor(self.request.user)
         return response
+
+
+class PhaseAlgorithmCreate(
+    LoginRequiredMixin,
+    UserCanSubmitToChallengeMixin,
+    CreateView,
+):
+    model = Algorithm
+    form_class = AlgorithmForPhaseForm
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        self.object.add_editor(self.request.user)
+        self.object.logo = self.phase.challenge.logo
+        self.object.workstation = self.phase.workstation
+        self.object.workstation_config = self.phase.workstation_config
+        self.object.hanging_protocol = self.phase.hanging_protocol
+        self.object.view_content = self.phase.view_content
+        self.object.display_editors = True
+        self.object.contact_email = self.request.user.email
+        self.object.modalities.set(self.phase.challenge.modalities.all())
+        self.object.structures.set(self.phase.challenge.structures.all())
+        self.object.inputs.set(self.phase.algorithm_inputs.all())
+        self.object.outputs.set(self.phase.algorithm_outputs.all())
+        self.object.save()
+        return response
+
+    @cached_property
+    def phase(self):
+        return Phase.objects.get(pk=self.kwargs["phase_pk"])
 
 
 class AlgorithmList(FilterMixin, PermissionListMixin, ListView):

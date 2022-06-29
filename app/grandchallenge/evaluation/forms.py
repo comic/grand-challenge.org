@@ -14,7 +14,10 @@ from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.components.forms import ContainerImageForm
-from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.forms import (
+    SaveFormInitMixin,
+    WorkstationUserFilterMixin,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
@@ -111,7 +114,12 @@ class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
         }
 
 
-class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm, ViewContentMixin):
+class PhaseUpdateForm(
+    PhaseTitleMixin,
+    WorkstationUserFilterMixin,
+    forms.ModelForm,
+    ViewContentMixin,
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -237,12 +245,6 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
     )
     algorithm = ModelChoiceField(
         queryset=None,
-        help_text=format_lazy(
-            "Select one of your algorithms to submit as a solution to this "
-            "challenge. If you have not created your algorithm yet you can "
-            "do so <a href={}>on this page</a>.",
-            reverse_lazy("algorithms:create"),
-        ),
     )
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
@@ -252,6 +254,14 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             pk=user.pk
         )
         self.fields["creator"].initial = user
+        self.fields["algorithm"].help_text = format_lazy(
+            "Select one of your algorithms to submit as a solution to this "
+            "challenge. If you have not created your algorithm yet you can "
+            "do so <a href={}>on this page</a>.",
+            reverse_lazy(
+                "algorithms:create-for-phase", kwargs={"phase_pk": phase.pk}
+            ),
+        )
 
         # Note that the validation of creator and algorithm require
         # access to the phase properties, so those validations

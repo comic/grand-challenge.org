@@ -332,6 +332,23 @@ class AlgorithmForm(
         self.fields["display_editors"].required = True
 
 
+class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = Algorithm
+        fields = (
+            "title",
+            "description",
+            "image_requires_gpu",
+            "image_requires_memory_gb",
+        )
+        widgets = {
+            "description": TextInput,
+        }
+        help_texts = {
+            "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
+        }
+
+
 class AlgorithmDescriptionForm(ModelForm):
     class Meta:
         model = Algorithm
