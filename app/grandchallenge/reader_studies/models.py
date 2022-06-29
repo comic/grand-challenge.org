@@ -1311,17 +1311,15 @@ class Answer(UUIDModel):
             )
 
         if question.overlay_segments:
-            image_file = (
-                answer.answer_image.files.filter(
-                    image_type__in=[
-                        ImageFile.IMAGE_TYPE_MHD,
-                        ImageFile.IMAGE_TYPE_TIFF,
-                    ]
-                )
-                .get()
-                .file
+            image_file = answer.answer_image.files.filter(
+                image_type__in=[
+                    ImageFile.IMAGE_TYPE_MHD,
+                    ImageFile.IMAGE_TYPE_TIFF,
+                ]
+            ).get()
+            question._validate_pixel_values(
+                image_file.file, image_file.image_type
             )
-            question._validate_pixel_values(image_file)
 
     @property
     def answer_text(self):

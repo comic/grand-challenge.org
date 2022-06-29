@@ -3,13 +3,22 @@ import datetime
 import factory
 from factory import fuzzy
 
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import (
     ImageFactory,
     ImageFileFactory,
     ImagingModalityFactory,
 )
+
+
+class ImageFileFactoryWithMask(ImageFileFactory):
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "mask.mha")
+
+
+class ImageFileFactoryWithTiff(ImageFileFactory):
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "valid_tiff.tif")
+    image_type = ImageFile.IMAGE_TYPE_TIFF
 
 
 class ImageFileFactoryWithMHDFile(ImageFileFactory):

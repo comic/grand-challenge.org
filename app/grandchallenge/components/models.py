@@ -558,10 +558,10 @@ class OverlaySegmentsMixin(models.Model):
     def pixel_values(self):
         return [x["voxel_value"] for x in self.overlay_segments]
 
-    def _validate_pixel_values(self, image_file):
+    def _validate_pixel_values(self, image_file, image_type):
         if not self.overlay_segments:
             return
-        if image_file != ImageFile.IMAGE_TYPE_MHD:
+        if image_type != ImageFile.IMAGE_TYPE_MHD:
             raise ValidationError(
                 "Only MHA type files are supported for segmentation"
             )
@@ -569,7 +569,7 @@ class OverlaySegmentsMixin(models.Model):
             ntf.write(image_file.read())
             sitk_img = load_sitk_image(Path(ntf.name))
         pixel_values = np.unique(GetArrayViewFromImage(sitk_img))
-        if not set(pixel_values).is_subset(self.pixel_values):
+        if not set(pixel_values).issubset(self.pixel_values):
             raise ValidationError(
                 "Segmentation does not match pixel values provided in overlay segments."
             )
@@ -863,18 +863,18 @@ class ComponentInterfaceValue(models.Model):
         return self.interface.kind == InterfaceKindChoices.ZIP
 
     @cached_property
+    def _image_file(self):
+        return self.image.files.filter(
+            image_type__in=[
+                ImageFile.IMAGE_TYPE_MHD,
+                ImageFile.IMAGE_TYPE_TIFF,
+            ]
+        ).get()
+
+    @cached_property
     def image_file(self):
         """The single image file for this interface"""
-        return (
-            self.image.files.filter(
-                image_type__in=[
-                    ImageFile.IMAGE_TYPE_MHD,
-                    ImageFile.IMAGE_TYPE_TIFF,
-                ]
-            )
-            .get()
-            .file
-        )
+        return self._image_file.file
 
     @property
     def input_file(self):
@@ -913,7 +913,9 @@ class ComponentInterfaceValue(models.Model):
         super().clean()
 
         if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
-            self.interface._validate_pixel_values(self.image_file)
+            self.interface._validate_pixel_values(
+                self.image_file, self._image_file.image_type
+            )
         if self.interface.is_image_kind:
             self._validate_image_only()
         elif self.interface.is_file_kind:

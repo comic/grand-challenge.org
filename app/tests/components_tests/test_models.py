@@ -18,6 +18,10 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.cases_tests.factories import (
+    ImageFileFactoryWithMask,
+    ImageFileFactoryWithTiff,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -747,3 +751,35 @@ def test_clean_overlay_segments():
         "Overlay segments cannot be changed, as values for this "
         "ComponentInterface exist."
     )
+
+
+@pytest.mark.django_db
+def test_validate_pixel_values():
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
+    file = ImageFileFactoryWithTiff()
+    assert ci._validate_pixel_values(file.file, file.image_type) is None
+
+    ci.overlay_segments = [{"category": "cat", "voxel_value": 1}]
+    ci.save()
+
+    file = ImageFileFactoryWithTiff()
+    with pytest.raises(ValidationError) as e:
+        ci._validate_pixel_values(file.file, file.image_type)
+    assert e.value.message == (
+        "Only MHA type files are supported for segmentation"
+    )
+
+    file = ImageFileFactoryWithMask()
+    with pytest.raises(ValidationError) as e:
+        ci._validate_pixel_values(file.file, file.image_type)
+    assert e.value.message == (
+        "Segmentation does not match pixel values provided in overlay segments."
+    )
+
+    ci.overlay_segments = [
+        {"category": "cat0", "voxel_value": 0},
+        {"category": "cat", "voxel_value": 1},
+    ]
+    ci.save()
+    file = ImageFileFactoryWithMask()
+    assert ci._validate_pixel_values(file.file, file.image_type) is None
