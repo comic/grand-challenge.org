@@ -37,7 +37,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
-from grandchallenge.components.schemas import OVERLAY_SEGMENTS_SCHEMA
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -57,6 +56,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
 

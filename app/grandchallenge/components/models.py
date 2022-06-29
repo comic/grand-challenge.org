@@ -33,10 +33,7 @@ from panimg.image_builders.metaio_utils import load_sitk_image
 from SimpleITK import GetArrayViewFromImage
 
 from grandchallenge.cases.models import Image, ImageFile
-from grandchallenge.components.schemas import (
-    INTERFACE_VALUE_SCHEMA,
-    OVERLAY_SEGMENTS_SCHEMA,
-)
+from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     deprovision_job,
     provision_job,
@@ -57,7 +54,10 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.workstation_configs.models import LookUpTable
+from grandchallenge.workstation_configs.models import (
+    OVERLAY_SEGMENTS_SCHEMA,
+    LookUpTable,
+)
 
 logger = logging.getLogger(__name__)
 
