@@ -12,7 +12,7 @@ from uuid import UUID
 import boto3
 import botocore
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.db import transaction
 from django.utils._os import safe_join
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
@@ -212,8 +212,12 @@ class Executor(ABC):
 
         with TemporaryDirectory() as tmpdir:
             for file in output_files:
-                key = safe_join("/", file["Key"])
-                dest = safe_join(tmpdir, Path(key).relative_to(prefix))
+                try:
+                    key = safe_join("/", file["Key"])
+                    dest = safe_join(tmpdir, Path(key).relative_to(prefix))
+                except (SuspiciousFileOperation, ValueError):
+                    logger.warning(f"Skipping {file=} for {interface=}")
+                    continue
 
                 logger.info(
                     f"Downloading {key} to {dest} from "
