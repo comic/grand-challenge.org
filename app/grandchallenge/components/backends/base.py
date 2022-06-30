@@ -204,7 +204,7 @@ class Executor(ABC):
                 f"Too many files produced in '{interface.relative_path}'"
             )
 
-        output_files = response["Contents"]
+        output_files = response.get("Contents", [])
         if not output_files:
             raise ComponentException(
                 f"Output directory '{interface.relative_path}' is empty"
