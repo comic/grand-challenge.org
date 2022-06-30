@@ -98,46 +98,68 @@ logger = logging.getLogger(__name__)
 
 
 class PhaseConfiguredForAlgorithmSubmissionMixin(UserPassesTestMixin):
-    def test_func(self):
-        if self.phase.inputs and self.phase.outputs and self.phase.archive:
-            return True
-        else:
-            error_message = (
-                "This phase is not configured for algorithm submission. "
-            )
-            if self.phase.challenge.is_admin(self.request.user):
-                error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
-            else:
-                error_message += "Please come back later."
+    """Mixin that checks if a phase has been configured for algorithm submission."""
 
-            messages.error(
-                self.request,
-                error_message,
-            )
+    def test_func(self):
+        response = super().test_func()
+        if response:
+            if self.phase.inputs and self.phase.outputs and self.phase.archive:
+                return True
+            else:
+                error_message = (
+                    "This phase is not configured for algorithm submission. "
+                )
+                if self.phase.challenge.is_admin(self.request.user):
+                    error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
+                else:
+                    error_message += "Please come back later."
+
+                messages.error(
+                    self.request,
+                    error_message,
+                )
+                return False
+        else:
             return False
 
 
-class UserCanSubmitToPhaseMixin(VerificationRequiredMixin):
+class UserCanSubmitToPhaseMixin(
+    PhaseConfiguredForAlgorithmSubmissionMixin, VerificationRequiredMixin
+):
     """
     Mixin that checks if a user is either an admin of a challenge
-    or a participant of the challenge.
+    or a participant of the challenge and in the latter case that the phase
+    is also open for submissions.
     """
 
     def test_func(self):
-        super().test_func()
-        if self.phase.challenge.is_admin(self.request.user):
-            return True
-        elif (
-            self.phase.challenge.is_participant(self.request.user)
-            and self.phase.open_for_submissions
-        ):
-            return True
+        response = super().test_func()
+        if response:
+            if self.phase.challenge.is_admin(self.request.user):
+                return True
+            elif (
+                self.phase.challenge.is_participant(self.request.user)
+                and self.phase.open_for_submissions
+            ):
+                return True
+            elif (
+                self.phase.challenge.is_participant(self.request.user)
+                and not self.phase.open_for_submissions
+            ):
+                messages.error(
+                    self.request,
+                    "The phase is currently not open for submissions. "
+                    "Please come back later.",
+                )
+                return False
+            else:
+                messages.error(
+                    self.request,
+                    "You need to be either an admin or a participant of the challenge in order to create an algorithm for "
+                    "this phase.",
+                )
+                return False
         else:
-            messages.error(
-                self.request,
-                "You need to be either an admin or a participant of the challenge in order to create an algorithm for "
-                "this phase. The phase also needs to be open for submissions.",
-            )
             return False
 
 
@@ -160,7 +182,6 @@ class AlgorithmCreate(
 
 class PhaseAlgorithmCreate(
     LoginRequiredMixin,
-    PhaseConfiguredForAlgorithmSubmissionMixin,
     UserCanSubmitToPhaseMixin,
     CreateView,
 ):
