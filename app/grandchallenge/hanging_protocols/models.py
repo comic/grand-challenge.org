@@ -4,7 +4,6 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.workstation_configs.models import WorkstationConfig
 
 
 class ImagePort(models.TextChoices):
@@ -28,6 +27,12 @@ class ImagePort(models.TextChoices):
     OCTODENARY = "OCTODENARY", "Octodenary"
     NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
     VIGINTENARY = "VIGINTENARY", "Vigintenary"
+
+
+class Orientation(models.TextChoices):
+    axial = "axial"
+    coronal = "coronal"
+    sagittal = "sagittal"
 
 
 HANGING_PROTOCOL_SCHEMA = {
@@ -91,10 +96,7 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "orientation": {
                 "type": "string",
-                "enum": [
-                    orientation.lower()
-                    for orientation in WorkstationConfig.Orientation.labels
-                ],
+                "enum": Orientation.values,
             },
             "parent_id": {
                 "type": "string",
