@@ -476,7 +476,7 @@ def execute_job(  # noqa: C901
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
     else:
-        executor.deprovision()
+        deprovision_job.signature(**job.signature_kwargs).apply_async()
         raise PriorStepFailed("Job is not set to be executed")
 
     if not job.container.ready:
@@ -578,7 +578,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     executor = job.get_executor(backend=backend)
 
     if job.status != job.EXECUTING:
-        executor.deprovision()
+        deprovision_job.signature(**job.signature_kwargs).apply_async()
         raise PriorStepFailed("Job is not executing")
 
     try:
@@ -644,7 +644,7 @@ def parse_job_outputs(
     if job.status == job.EXECUTED and not job.outputs.exists():
         job.update_status(status=job.PARSING)
     else:
-        executor.deprovision()
+        deprovision_job.signature(**job.signature_kwargs).apply_async()
         raise PriorStepFailed("Job is not ready for output parsing")
 
     try:
@@ -666,13 +666,26 @@ def parse_job_outputs(
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def deprovision_job(
-    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
+    *,
+    job_pk: uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+    retries: int = 0,
 ):
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
     executor = job.get_executor(backend=backend)
-    executor.deprovision()
+
+    try:
+        executor.deprovision()
+    except RetryStep:
+        _retry(
+            task=deprovision_job,
+            signature_kwargs=job.signature_kwargs,
+            retries=retries,
+        )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
