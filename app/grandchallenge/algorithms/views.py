@@ -88,6 +88,7 @@ from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.models import Phase
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -103,7 +104,12 @@ class PhaseConfiguredForAlgorithmSubmissionMixin(UserPassesTestMixin):
     def test_func(self):
         response = super().test_func()
         if response:
-            if self.phase.inputs and self.phase.outputs and self.phase.archive:
+            if (
+                self.phase.submission_kind == SubmissionKindChoices.ALGORITHM
+                and self.phase.inputs
+                and self.phase.outputs
+                and self.phase.archive
+            ):
                 return True
             else:
                 error_message = (
