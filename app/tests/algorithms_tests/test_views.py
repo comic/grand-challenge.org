@@ -8,6 +8,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from config import settings
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -579,6 +580,8 @@ def test_create_algorithm_for_phase_permission(client):
         response.content
     )
 
+    phase.submission_kind = SubmissionKindChoices.ALGORITHM
+    phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
     phase.algorithm_inputs.set([ComponentInterfaceFactory()])
     phase.algorithm_outputs.set([ComponentInterfaceFactory()])
@@ -651,6 +654,8 @@ def test_create_algorithm_for_phase_presets(client):
     phase.challenge.add_admin(admin)
     VerificationFactory(user=admin, is_verified=True)
 
+    phase.submission_kind = SubmissionKindChoices.ALGORITHM
+    phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
     ci1 = ComponentInterfaceFactory()
     ci2 = ComponentInterfaceFactory()
