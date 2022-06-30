@@ -76,7 +76,6 @@ def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         and instance.SHIM_IMAGE
         and instance.latest_shimmed_version
         != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
-        and settings.COMPONENTS_SHIM_IMAGES
     ):
         shim_container_image(instance=instance)
 
@@ -116,7 +115,7 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     push_container_image(instance=instance)
 
-    if instance.SHIM_IMAGE and settings.COMPONENTS_SHIM_IMAGES:
+    if instance.SHIM_IMAGE:
         shim_container_image(instance=instance)
 
         if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
