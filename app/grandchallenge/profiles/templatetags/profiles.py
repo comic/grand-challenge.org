@@ -1,5 +1,6 @@
 from typing import Union
 
+from allauth_2fa.utils import user_has_valid_totp_device
 from django import template
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
@@ -64,3 +65,8 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
 def user_profile_link_username(username: str) -> str:
     User = get_user_model()  # noqa: N806
     return user_profile_link(User.objects.get(username=username))
+
+
+@register.filter
+def has_2fa_enabled(user):
+    return user_has_valid_totp_device(user)

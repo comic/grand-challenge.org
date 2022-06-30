@@ -976,11 +976,11 @@ class ComponentJob(models.Model):
         help_text="Serialized task that is run on job failure",
     )
     time_limit = models.PositiveSmallIntegerField(
-        default=2 * 60 * 60,
+        default=60 * 60,
         help_text="Time limit for the job in seconds",
         validators=[
             MinValueValidator(limit_value=60),
-            MaxValueValidator(limit_value=4 * 60 * 60),
+            MaxValueValidator(limit_value=60 * 60),
         ],
     )
 
@@ -1043,18 +1043,9 @@ class ComponentJob(models.Model):
 
     @property
     def executor_kwargs(self):
-        if (
-            settings.COMPONENTS_DEFAULT_BACKEND
-            == "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
-        ):
-            # TODO can be removed when backend is gone
-            repo_tag = self.container.original_repo_tag
-        else:
-            repo_tag = self.container.shimmed_repo_tag
-
         return {
             "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            "exec_image_repo_tag": repo_tag,
+            "exec_image_repo_tag": self.container.shimmed_repo_tag,
             "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,
             "requires_gpu": self.container.requires_gpu,

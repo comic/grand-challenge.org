@@ -440,6 +440,13 @@ class TestObjectPermissionRequiredViews:
                 ai.algorithm,
                 None,
             ),
+            (
+                "publish",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
         ]:
 
             def _get_view():

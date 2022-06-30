@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.contrib.sitemaps.views import sitemap
 from django.template.response import TemplateResponse
-from django.urls import path
+from django.urls import path, re_path
 from django.views.generic import TemplateView
 from machina import urls as machina_urls
 
@@ -17,6 +17,7 @@ from grandchallenge.core.views import HomeTemplate
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
+from grandchallenge.profiles.views import TwoFactorRemove, TwoFactorSetup
 from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
 
 admin.autodiscover()
@@ -58,6 +59,17 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path(settings.ADMIN_URL, admin.site.urls),
+    re_path(
+        r"accounts/two_factor/setup/?$",
+        TwoFactorSetup.as_view(),
+        name="two-factor-setup",
+    ),
+    re_path(
+        r"accounts/two_factor/remove/?$",
+        TwoFactorRemove.as_view(),
+        name="two-factor-remove",
+    ),
+    path("accounts/", include("allauth_2fa.urls")),
     path("accounts/", include("allauth.urls")),
     path(
         "stats/",

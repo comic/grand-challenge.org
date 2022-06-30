@@ -12,7 +12,9 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_upload_some_images(client: Client, challenge_set, settings):
+def test_upload_some_images(
+    client: Client, challenge_set, settings, authenticated_staff_user
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -64,6 +66,6 @@ def test_upload_some_images(client: Client, challenge_set, settings):
     response = get_view_for_user(
         url=sessions[0].get_absolute_url(),
         client=client,
-        user=UserFactory(is_staff=True),
+        user=authenticated_staff_user,
     )
     assert response.status_code == 403

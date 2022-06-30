@@ -85,7 +85,13 @@ def stop_container(*, name):
 def remove_container(*, name):
     try:
         container_id = get_container_id(name=name)
-        _run_docker_command("rm", container_id)
+        try:
+            _run_docker_command("rm", container_id)
+        except CalledProcessError as error:
+            if "Error: No such container" in error.stderr:
+                raise ObjectDoesNotExist from error
+            else:
+                raise
     except ObjectDoesNotExist:
         return
 
@@ -140,8 +146,6 @@ def run_container(
         f"{mem_limit}g",
         "--memory-swap",
         f"{mem_limit}g",
-        "--shm-size",
-        f"{settings.COMPONENTS_SHARED_MEMORY_SIZE}m",
         "--cpu-period",
         str(settings.COMPONENTS_CPU_PERIOD),
         "--cpu-quota",
