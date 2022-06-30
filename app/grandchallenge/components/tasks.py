@@ -27,10 +27,8 @@ from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
-    EventError,
     RetryStep,
     TaskCancelled,
-    TaskStillExecuting,
 )
 from grandchallenge.components.backends.utils import get_sagemaker_model_name
 from grandchallenge.components.emails import send_invalid_dockerfile_email
@@ -78,7 +76,6 @@ def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         and instance.SHIM_IMAGE
         and instance.latest_shimmed_version
         != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
-        and settings.COMPONENTS_SHIM_IMAGES
     ):
         shim_container_image(instance=instance)
 
@@ -118,7 +115,7 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     push_container_image(instance=instance)
 
-    if instance.SHIM_IMAGE and settings.COMPONENTS_SHIM_IMAGES:
+    if instance.SHIM_IMAGE:
         shim_container_image(instance=instance)
 
         if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
@@ -571,11 +568,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
     """
     Backend = import_string(backend)  # noqa: N806
 
-    try:
-        job_params = Backend.get_job_params(event=event)
-    except EventError:
-        logger.warning("Event not handled by backend")
-        return
+    job_params = Backend.get_job_params(event=event)
 
     job = get_model_instance(
         pk=job_params.pk,
@@ -590,9 +583,6 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
 
     try:
         executor.handle_event(event=event)
-    except TaskStillExecuting:
-        # Nothing to do here, this will be called when it is finished
-        return
     except TaskCancelled:
         job.update_status(status=job.CANCELLED)
         return

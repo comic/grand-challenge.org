@@ -146,8 +146,6 @@ def run_container(
         f"{mem_limit}g",
         "--memory-swap",
         f"{mem_limit}g",
-        "--shm-size",
-        f"{settings.COMPONENTS_SHARED_MEMORY_SIZE}m",
         "--cpu-period",
         str(settings.COMPONENTS_CPU_PERIOD),
         "--cpu-quota",
