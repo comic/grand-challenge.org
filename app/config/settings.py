@@ -953,6 +953,9 @@ COMPONENTS_REGISTRY_INSECURE = strtobool(
 COMPONENTS_SHIM_IMAGES = strtobool(
     os.environ.get("COMPONENTS_SHIM_IMAGES", "True")
 )
+COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
+    "GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION"
+)
 COMPONENTS_CREATE_SAGEMAKER_MODEL = strtobool(
     os.environ.get("COMPONENTS_CREATE_SAGEMAKER_MODEL", "False")
 )
@@ -1154,10 +1157,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": timedelta(days=1),
     },
-    "update_components_filesystem": {
-        "task": "grandchallenge.components.tasks.update_filesystem",
-        "schedule": timedelta(hours=COMPONENTS_AMAZON_EFS_TARGET_HOURS),
-    },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
         "schedule": timedelta(days=1),
@@ -1188,9 +1187,12 @@ ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 # Number of jobs that can be scheduled in one task
 ALGORITHMS_JOB_BATCH_LIMIT = 256
 # Maximum and minimum values the user can set for algorithm requirements
-# Current limits of 4g/30g are restrictions from the instance types used on ECS
 ALGORITHMS_MIN_MEMORY_GB = 4
 ALGORITHMS_MAX_MEMORY_GB = 30
+# The SageMaker backend currently has a maximum limit of 3600s
+ALGORITHMS_JOB_TIME_LIMIT_SECONDS = os.environ.get(
+    "ALGORITHMS_JOB_TIME_LIMIT_SECONDS", "3600"
+)
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {
