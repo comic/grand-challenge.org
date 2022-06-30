@@ -129,13 +129,11 @@ class PhaseConfiguredForAlgorithmSubmissionMixin(UserPassesTestMixin):
             return False
 
 
-class UserCanSubmitToPhaseMixin(
-    PhaseConfiguredForAlgorithmSubmissionMixin, VerificationRequiredMixin
-):
+class UserCanSubmitToPhaseMixin(UserPassesTestMixin):
     """
     Mixin that checks if a user is either an admin of a challenge
-    or a participant of the challenge and in the latter case that the phase
-    is also open for submissions.
+    or a participant of the challenge. In the latter case, it also checks that the phase
+    is open for submissions.
     """
 
     def test_func(self):
@@ -188,7 +186,9 @@ class AlgorithmCreate(
 
 class PhaseAlgorithmCreate(
     LoginRequiredMixin,
+    PhaseConfiguredForAlgorithmSubmissionMixin,
     UserCanSubmitToPhaseMixin,
+    VerificationRequiredMixin,
     CreateView,
 ):
     model = Algorithm
