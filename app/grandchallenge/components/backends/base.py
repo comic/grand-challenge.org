@@ -184,13 +184,26 @@ class Executor(ABC):
                 civ=civ, input_prefixes=input_prefixes
             )
 
-            with civ.input_file.open("rb") as f:
-                # TODO replace this with server side copy
-                self._s3_client.upload_fileobj(
-                    Fileobj=f,
-                    Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    Key=key,
-                )
+            if civ.image:
+                self._copy_input_file(src=civ.image_file, dest_key=key)
+            elif civ.file:
+                self._copy_input_file(src=civ.file, dest_key=key)
+            else:
+                with io.BytesIO() as f:
+                    f.write(json.dumps(civ.value).encode("utf-8"))
+                    f.seek(0)
+                    self._s3_client.upload_fileobj(
+                        Fileobj=f,
+                        Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                        Key=key,
+                    )
+
+    def _copy_input_file(self, *, src, dest_key):
+        self._s3_client.copy(
+            CopySource={"Bucket": src.storage.bucket.name, "Key": src.name},
+            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            Key=dest_key,
+        )
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)

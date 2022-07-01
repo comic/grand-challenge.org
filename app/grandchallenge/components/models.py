@@ -4,7 +4,6 @@ import re
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Optional
 
 from celery import signature
@@ -810,19 +809,6 @@ class ComponentInterfaceValue(models.Model):
             .get()
             .file
         )
-
-    @property
-    def input_file(self):
-        """The file to use as component input"""
-        if self.image:
-            return self.image_file
-        elif self.file:
-            return self.file
-        else:
-            src = NamedTemporaryFile(delete=True)
-            src.write(bytes(json.dumps(self.value), "utf-8"))
-            src.flush()
-            return File(src, name=self.relative_path.name)
 
     @property
     def relative_path(self):
