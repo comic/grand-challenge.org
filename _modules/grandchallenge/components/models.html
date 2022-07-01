@@ -1206,16 +1206,28 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">runtime_metrics_chart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">instance_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;instance&quot;</span><span class="p">]</span>
+        <span class="n">cpu_limit</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;gpus&quot;</span><span class="p">]:</span>
+            <span class="n">gpu_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;gpus&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">x </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;gpu_type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gpu_str</span> <span class="o">=</span> <span class="s2">&quot;No&quot;</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;cpu&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> CPU / </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;memory&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> GB Memory / </span><span class="si">{</span><span class="n">gpu_str</span><span class="si">}</span><span class="s2"> GPU&quot;</span>
+
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;https://vega.github.io/schema/vega-lite/v5.json&quot;</span><span class="p">,</span>
             <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="s2">&quot;container&quot;</span><span class="p">,</span>
             <span class="s2">&quot;padding&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
             <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span>
                     <span class="p">{</span>
                         <span class="s2">&quot;Metric&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
                         <span class="s2">&quot;Timestamp&quot;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
-                        <span class="s2">&quot;Percent&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                        <span class="s2">&quot;Percent&quot;</span><span class="p">:</span> <span class="n">value</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">,</span>
                     <span class="p">}</span>
                     <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">]</span>
                     <span class="k">for</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
@@ -1223,12 +1235,108 @@
                     <span class="p">)</span>
                 <span class="p">]</span>
             <span class="p">},</span>
-            <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="s2">&quot;point&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-            <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;timeUnit&quot;</span><span class="p">:</span> <span class="s2">&quot;hoursminutesseconds&quot;</span><span class="p">,</span> <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;Percent&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;quantitative&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;Metric&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;nominal&quot;</span><span class="p">},</span>
-            <span class="p">},</span>
+            <span class="s2">&quot;layer&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;transform&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">{</span><span class="s2">&quot;calculate&quot;</span><span class="p">:</span> <span class="s2">&quot;100*datum.Percent&quot;</span><span class="p">,</span> <span class="s2">&quot;as&quot;</span><span class="p">:</span> <span class="s2">&quot;Percent100&quot;</span><span class="p">},</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;timeUnit&quot;</span><span class="p">:</span> <span class="s2">&quot;hoursminutesseconds&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Local Time / HH:MM:SS&quot;</span><span class="p">,</span>
+                        <span class="p">},</span>
+                        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;Percent100&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;quantitative&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Utilization / %&quot;</span><span class="p">,</span>
+                        <span class="p">},</span>
+                        <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;Metric&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;nominal&quot;</span><span class="p">},</span>
+                    <span class="p">},</span>
+                    <span class="s2">&quot;layer&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">{</span><span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="s2">&quot;line&quot;</span><span class="p">},</span>
+                        <span class="p">{</span>
+                            <span class="s2">&quot;transform&quot;</span><span class="p">:</span> <span class="p">[</span>
+                                <span class="p">{</span><span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;param&quot;</span><span class="p">:</span> <span class="s2">&quot;hover&quot;</span><span class="p">,</span> <span class="s2">&quot;empty&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}}</span>
+                            <span class="p">],</span>
+                            <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="s2">&quot;point&quot;</span><span class="p">,</span>
+                        <span class="p">},</span>
+                    <span class="p">],</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;transform&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">{</span>
+                            <span class="s2">&quot;pivot&quot;</span><span class="p">:</span> <span class="s2">&quot;Metric&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;Percent&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;groupby&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">],</span>
+                        <span class="p">}</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="s2">&quot;rule&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;opacity&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+                                <span class="s2">&quot;param&quot;</span><span class="p">:</span> <span class="s2">&quot;hover&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;empty&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                            <span class="p">},</span>
+                            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                        <span class="p">},</span>
+                        <span class="s2">&quot;tooltip&quot;</span><span class="p">:</span> <span class="p">[</span>
+                            <span class="p">{</span>
+                                <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
+                                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;quantitative&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;.2%&quot;</span><span class="p">,</span>
+                            <span class="p">}</span>
+                            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">]</span>
+                        <span class="p">],</span>
+                        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;timeUnit&quot;</span><span class="p">:</span> <span class="s2">&quot;hoursminutesseconds&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Local Time / HH:MM:SS&quot;</span><span class="p">,</span>
+                        <span class="p">},</span>
+                    <span class="p">},</span>
+                    <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">{</span>
+                            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;hover&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;select&quot;</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;point&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">],</span>
+                                <span class="s2">&quot;nearest&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                                <span class="s2">&quot;on&quot;</span><span class="p">:</span> <span class="s2">&quot;mouseover&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;clear&quot;</span><span class="p">:</span> <span class="s2">&quot;mouseout&quot;</span><span class="p">,</span>
+                            <span class="p">},</span>
+                        <span class="p">}</span>
+                    <span class="p">],</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[{}]},</span>
+                    <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;rule&quot;</span><span class="p">,</span> <span class="s2">&quot;strokeDash&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">]},</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;datum&quot;</span><span class="p">:</span> <span class="n">cpu_limit</span><span class="p">}},</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[{}]},</span>
+                    <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="s2">&quot;line-top&quot;</span><span class="p">},</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;datum&quot;</span><span class="p">:</span> <span class="s2">&quot;CPU Utilization Limit&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;datum&quot;</span><span class="p">:</span> <span class="n">cpu_limit</span><span class="p">},</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[{}]},</span>
+                    <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;rule&quot;</span><span class="p">,</span> <span class="s2">&quot;strokeDash&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">]},</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;datum&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}},</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[{}]},</span>
+                    <span class="s2">&quot;mark&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="s2">&quot;line-top&quot;</span><span class="p">},</span>
+                    <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">&quot;datum&quot;</span><span class="p">:</span> <span class="s2">&quot;Memory / GPU / GPU Memory Utilization Limit&quot;</span>
+                        <span class="p">},</span>
+                        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;datum&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
         <span class="p">}</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
