@@ -815,7 +815,7 @@ def test_runtime_metrics_chart():
             },
             {
                 "data": {"values": [{}]},
-                "mark": {"type": "text", "baseline": "line-top"},
+                "mark": {"type": "text", "baseline": "line-bottom"},
                 "encoding": {
                     "text": {
                         "datum": "Memory / GPU / GPU Memory Utilization Limit"
