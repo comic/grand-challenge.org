@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.http import Http404
 from django.views.generic import (
     CreateView,
@@ -15,8 +15,6 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from config import settings
-from grandchallenge.algorithms.models import Job
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -150,17 +148,6 @@ class PageDelete(
         return super().delete(request, *args, **kwargs)
 
 
-def get_average_job_duration_for_phase(phase):
-    jobs = Job.objects.filter(
-        outputs__evaluation_evaluations_as_input__submission__phase=phase,
-    ).distinct()
-    duration_dict = {
-        "average_duration": jobs.average_duration(),
-        "total_duration": jobs.total_duration(),
-    }
-    return duration_dict
-
-
 class ChallengeStatistics(
     LoginRequiredMixin, UserPassesTestMixin, TemplateView
 ):
@@ -168,37 +155,12 @@ class ChallengeStatistics(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        phases = (
-            self.request.challenge.phase_set.filter(
-                submission_kind=SubmissionKindChoices.ALGORITHM
-            )
-            .annotate(archive_item_count=Count("archive__items"))
-            .all()
-        )
-        duration_dict = {}
-        archive_items_dict = {}
-        compute_costs_dict = {}
-        for phase in phases:
-            avg_duration = get_average_job_duration_for_phase(phase=phase)
-            duration_dict[phase.title] = avg_duration
-            archive_items_dict[phase.title] = phase.archive_item_count
-            try:
-                compute_costs_dict[phase.title] = round(
-                    phase.archive_item_count
-                    * (avg_duration["average_duration"]).seconds
-                    * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-                    / 3600
-                    / 100,
-                    ndigits=2,
-                )
-            except AttributeError:
-                compute_costs_dict[phase.title] = None
-
+        phases = self.request.challenge.phase_set.filter(
+            submission_kind=SubmissionKindChoices.ALGORITHM
+        ).all()
         context.update(
             {
-                "average_job_durations": duration_dict,
-                "num_archive_items": archive_items_dict,
-                "compute_costs": compute_costs_dict,
+                "phases": phases,
             }
         )
 

@@ -416,6 +416,21 @@ class Phase(UUIDModel):
             "this phase are closed for participants."
         ),
     )
+    cached_average_algorithm_run_time = models.DurationField(
+        editable=False, blank=True, null=True
+    )
+    cached_total_algorithm_run_time = models.DurationField(
+        editable=False, blank=True, null=True
+    )
+    cached_archive_item_count = models.PositiveIntegerField(
+        editable=False, blank=True, null=True
+    )
+    cached_average_compute_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, editable=False, blank=True, null=True
+    )
+    cached_total_compute_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, editable=False, blank=True, null=True
+    )
 
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))

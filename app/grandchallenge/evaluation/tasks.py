@@ -17,7 +17,11 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.utils import Metric, rank_results
+from grandchallenge.evaluation.utils import (
+    Metric,
+    SubmissionKindChoices,
+    rank_results,
+)
 from grandchallenge.notifications.models import Notification, NotificationType
 
 logger = logging.getLogger(__name__)
@@ -493,3 +497,72 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
     )
     for sub in Submission.objects.filter(phase__id=phase_pk):
         sub.assign_permissions()
+
+
+def get_average_job_duration_for_phase(phase):
+    Job = apps.get_model(  # noqa: N806
+        app_label="algorithms", model_name="Job"
+    )
+    jobs = Job.objects.filter(
+        outputs__evaluation_evaluations_as_input__submission__phase=phase,
+    ).distinct()
+    duration_dict = {
+        "average_duration": jobs.average_duration(),
+        "total_duration": jobs.total_duration(),
+    }
+    return duration_dict
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_phase_statistics():
+    Phase = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Phase"
+    )
+    phases = (
+        Phase.objects.filter(submission_kind=SubmissionKindChoices.ALGORITHM)
+        .annotate(archive_item_count=Count("archive__items"))
+        .all()
+    )
+    avg_duration = {
+        phase.pk: get_average_job_duration_for_phase(phase) for phase in phases
+    }
+
+    for phase in phases:
+        phase.cached_average_algorithm_run_time = avg_duration.get(
+            phase.pk, {}
+        ).get("average_duration", None)
+        phase.cached_total_algorithm_run_time = avg_duration.get(
+            phase.pk, {}
+        ).get("total_duration", None)
+        phase.cached_archive_item_count = phase.archive_item_count
+        try:
+            phase.cached_average_compute_cost = round(
+                phase.cached_archive_item_count
+                * (phase.cached_average_algorithm_run_time).seconds
+                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+                / 3600
+                / 100,
+                ndigits=2,
+            )
+            phase.cached_total_compute_cost = round(
+                phase.cached_archive_item_count
+                * (phase.cached_total_algorithm_run_time).seconds
+                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+                / 3600
+                / 100,
+                ndigits=2,
+            )
+        except AttributeError:
+            phase.cached_average_compute_cost = None
+            phase.cached_total_compute_cost = None
+
+    Phase.objects.bulk_update(
+        phases,
+        [
+            "cached_average_algorithm_run_time",
+            "cached_total_algorithm_run_time",
+            "cached_archive_item_count",
+            "cached_average_compute_cost",
+            "cached_total_compute_cost",
+        ],
+    )
