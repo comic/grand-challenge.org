@@ -1227,7 +1227,7 @@ class ComponentJob(models.Model):
                 },
                 {
                     "data": {"values": [{}]},
-                    "mark": {"type": "text", "baseline": "line-top"},
+                    "mark": {"type": "text", "baseline": "line-bottom"},
                     "encoding": {
                         "text": {"datum": "CPU Utilization Limit"},
                         "y": {"datum": cpu_limit},
