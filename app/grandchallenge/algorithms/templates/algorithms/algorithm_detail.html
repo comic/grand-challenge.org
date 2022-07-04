@@ -94,18 +94,26 @@
 {% block content %}
     {% get_obj_perms request.user for object as "algorithm_perms" %}
 
-    {% if 'change_algorithm' in algorithm_perms and not object.display_editors and not object.contact_email %}
-        <div class="alert alert-warning" role="alert">
-            Please update your algorithm settings. Grand Challenge now requires a <u>contact email address</u> for all algorithms.<br>
-            You will also need to indicate whether you want the algorithm editors to be displayed on the Information page.
-        </div>
-    {% endif %}
+    {% if 'change_algorithm' in algorithm_perms %}
+        {% if not object.display_editors or not object.contact_email %}
+            <div class="alert alert-warning" role="alert">
+                Please update your algorithm settings. Grand Challenge now requires a <u>contact email address</u> for all algorithms.<br>
+                You will also need to indicate whether you want the algorithm editors to be displayed on the Information page.
+            </div>
+        {% endif %}
 
-    {% if 'change_algorithm' in algorithm_perms and object.public and not object.summary or object.public and not object.mechanism or object.public and not object.public_test_case %}
-        <div class="alert alert-danger" role="alert">
-            <i class="fas fa-exclamation-triangle mr-1"></i>{% if not object.summary or not object.mechanism %}Please update your algorithm description and add at least a summary and description of your algorithm's mechanism
-            <a href="{% url 'algorithms:description-update' slug=object.slug %}">here</a>.{% endif %} {% if not object.public_test_case %}Please also upload a public test case <a href="{% url 'algorithms:execution-session-create' slug=object.slug %}">here</a>.{% endif %}
-        </div>
+        {% if object.public and not object.summary or object.public and not object.mechanism %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle mr-1"></i>Please update your algorithm description and add at least a summary and description of your algorithm's mechanism
+                <a href="{% url 'algorithms:description-update' slug=object.slug %}">here</a>.
+            </div>
+        {% endif %}
+
+        {% if object.public and not object.public_test_case %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle mr-1"></i> Please upload a public test case <a href="{% url 'algorithms:execution-session-create' slug=object.slug %}">here</a>.
+            </div>
+        {% endif %}
     {% endif %}
 
     <div class="tab-content" id="v-pills-tabContent">
