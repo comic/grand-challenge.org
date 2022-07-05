@@ -428,6 +428,14 @@ def provision_job(
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
 
 
+def _delay(*, task, signature_kwargs):
+    """Create a task signature for the delay queue"""
+    step = task.signature(**signature_kwargs)
+    queue = step.options.get("queue", task.queue)
+    step.options["queue"] = f"{queue}-delay"
+    return step
+
+
 def _retry(*, task, signature_kwargs, retries):
     """
     Retry a task using the delay queue
@@ -447,9 +455,7 @@ def _retry(*, task, signature_kwargs, retries):
     is that we need to track retries via the kwargs of the task.
     """
     if retries < MAX_RETRIES:
-        step = task.signature(**signature_kwargs)
-        queue = step.options.get("queue", task.queue)
-        step.options["queue"] = f"{queue}-delay"
+        step = _delay(task=task, signature_kwargs=signature_kwargs)
         step.kwargs["retries"] = retries + 1
         on_commit(step.apply_async)
     else:
@@ -614,7 +620,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             raise
     except RetryTask:
         job.update_status(status=job.PROVISIONED)
-        on_commit(retry_task.signature(**job.signature_kwargs).apply_async)
+        step = _delay(task=retry_task, signature_kwargs=job.signature_kwargs)
+        on_commit(step.apply_async)
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
