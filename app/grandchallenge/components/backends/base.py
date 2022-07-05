@@ -100,10 +100,6 @@ class Executor(ABC):
     def get_job_params(*, event):
         ...
 
-    @classmethod
-    def update_filesystem(cls):
-        pass
-
     @property
     def stdout(self):
         return "\n".join(self._stdout)
