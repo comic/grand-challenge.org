@@ -93,6 +93,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "method",
         "inputs",
         "outputs",
+        "attempt",
         "stdout",
         "stderr",
         "error_message",

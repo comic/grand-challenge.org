@@ -28,6 +28,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
+    RetryTask,
     TaskCancelled,
 )
 from grandchallenge.components.backends.utils import get_sagemaker_model_name
@@ -299,7 +300,6 @@ def _validate_docker_image_manifest(*, instance) -> str:
     config = json.loads(config)
 
     user = str(config["config"].get("User", "")).lower()
-
     if (
         user in ["", "root", "0"]
         or user.startswith("0:")
@@ -310,6 +310,13 @@ def _validate_docker_image_manifest(*, instance) -> str:
             "USER instruction to your Dockerfile, rebuild, test and "
             "upload the container again, see "
             "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user"
+        )
+
+    architecture = config.get("architecture")
+    if architecture != "amd64":
+        raise ValidationError(
+            f"Architecture type '{architecture}' is not supported. "
+            "Please provide a container image built for amd64."
         )
 
     return f"sha256:{image_sha256}"
@@ -383,9 +390,9 @@ def retry_if_dropped(func):
 
 
 @retry_if_dropped
-def get_model_instance(*, pk, app_label, model_name):
+def get_model_instance(*, app_label, model_name, **kwargs):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    return model.objects.get(pk=pk)
+    return model.objects.get(**kwargs)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -421,6 +428,14 @@ def provision_job(
         on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
 
 
+def _delay(*, task, signature_kwargs):
+    """Create a task signature for the delay queue"""
+    step = task.signature(**signature_kwargs)
+    queue = step.options.get("queue", task.queue)
+    step.options["queue"] = f"{queue}-delay"
+    return step
+
+
 def _retry(*, task, signature_kwargs, retries):
     """
     Retry a task using the delay queue
@@ -440,9 +455,7 @@ def _retry(*, task, signature_kwargs, retries):
     is that we need to track retries via the kwargs of the task.
     """
     if retries < MAX_RETRIES:
-        step = task.signature(**signature_kwargs)
-        queue = step.options.get("queue", task.queue)
-        step.options["queue"] = f"{queue}-delay"
+        step = _delay(task=task, signature_kwargs=signature_kwargs)
         step.kwargs["retries"] = retries + 1
         on_commit(step.apply_async)
     else:
@@ -574,6 +587,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         pk=job_params.pk,
         app_label=job_params.app_label,
         model_name=job_params.model_name,
+        attempt=job_params.attempt,
     )
     executor = job.get_executor(backend=backend)
 
@@ -601,14 +615,22 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 status=job.FAILURE,
                 stdout=executor.stdout,
                 stderr=executor.stderr,
+                duration=executor.duration,
+                runtime_metrics=executor.runtime_metrics,
                 error_message="Time limit exceeded",
             )
             raise
+    except RetryTask:
+        job.update_status(status=job.PROVISIONED)
+        step = _delay(task=retry_task, signature_kwargs=job.signature_kwargs)
+        on_commit(step.apply_async)
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
+            duration=executor.duration,
+            runtime_metrics=executor.runtime_metrics,
             error_message=str(e),
         )
     except Exception:
@@ -616,6 +638,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
+            duration=executor.duration,
+            runtime_metrics=executor.runtime_metrics,
             error_message="An unexpected error occurred",
         )
         raise
@@ -665,6 +689,41 @@ def parse_job_outputs(
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def retry_task(
+    *,
+    job_pk: uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+    retries: int = 0,
+):
+    """Retries an existing task that was previously provisioned"""
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
+    executor = job.get_executor(backend=backend)
+
+    if job.status != job.PROVISIONED:
+        raise PriorStepFailed("Job is not provisioned")
+
+    try:
+        executor.deprovision()
+    except RetryStep:
+        _retry(
+            task=retry_task,
+            signature_kwargs=job.signature_kwargs,
+            retries=retries,
+        )
+
+    with transaction.atomic():
+        job.status = job.PENDING
+        job.attempts += 1
+        job.save()
+
+        on_commit(provision_job.signature(**job.signature_kwargs).apply_async)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def deprovision_job(
     *,
     job_pk: uuid.UUID,
@@ -686,18 +745,6 @@ def deprovision_job(
             signature_kwargs=job.signature_kwargs,
             retries=retries,
         )
-
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def update_filesystem():
-    """
-    Periodic task that runs to update the underlying filesystem
-
-    Backends could use this for setting throughput limits, cleaning up data,
-    etc.
-    """
-    Backend = import_string(settings.COMPONENTS_DEFAULT_BACKEND)  # noqa: N806
-    return Backend.update_filesystem()
 
 
 @shared_task

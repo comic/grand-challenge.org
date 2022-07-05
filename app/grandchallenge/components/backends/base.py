@@ -29,6 +29,7 @@ class JobParams(NamedTuple):
     app_label: str
     model_name: str
     pk: UUID
+    attempt: int
 
 
 class Executor(ABC):
@@ -99,10 +100,6 @@ class Executor(ABC):
     @abstractmethod
     def get_job_params(*, event):
         ...
-
-    @classmethod
-    def update_filesystem(cls):
-        pass
 
     @property
     def stdout(self):

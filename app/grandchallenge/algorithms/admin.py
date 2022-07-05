@@ -70,6 +70,7 @@ class JobAdmin(GuardedModelAdmin):
         "inputs",
         "outputs",
         "viewers",
+        "attempt",
         "stdout",
         "stderr",
         "error_message",

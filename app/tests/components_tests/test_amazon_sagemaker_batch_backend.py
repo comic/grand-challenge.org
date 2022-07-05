@@ -66,13 +66,14 @@ def test_instance_type_incompatible():
 def test_get_job_params_match(key, model_name, app_label):
     pk = uuid4()
     event = {
-        "TransformJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}"
+        "TransformJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}-00"
     }
     job_params = AmazonSageMakerBatchExecutor.get_job_params(event=event)
 
     assert job_params.pk == str(pk)
     assert job_params.model_name == model_name
     assert job_params.app_label == app_label
+    assert job_params.attempt == 0
 
 
 def test_invocation_prefix():
@@ -109,7 +110,7 @@ def test_transform_job_name(model, container, container_model, key):
 
     assert (
         executor._transform_job_name
-        == f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{j.pk}"
+        == f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{j.pk}-00"
     )
 
     event = {"TransformJobName": executor._transform_job_name}
@@ -118,6 +119,7 @@ def test_transform_job_name(model, container, container_model, key):
     assert job_params.pk == str(j.pk)
     assert job_params.model_name == j._meta.model_name
     assert job_params.app_label == j._meta.app_label
+    assert job_params.attempt == 0
 
 
 def test_execute(settings):
@@ -570,7 +572,7 @@ def test_handle_failed_job(settings):
         )
 
         with pytest.raises(ComponentException) as error:
-            executor._handle_failed_job()
+            executor._handle_failed_job(event={})
 
     assert "Time limit exceeded" in str(error)
 
