@@ -76,22 +76,6 @@ class AccountAdapter(DefaultAccountAdapter):
                 response=HttpResponseRedirect(redirect_url)
             )
 
-    def post_login(self, request, user, **kwargs):
-        # BaseRequire2FAMiddleware does not work with social login,
-        # so force 2FA set-up post login for users coming through
-        # the social login route
-        if (
-            user.socialaccount_set.exists()
-            and (user.is_staff or user.is_superuser)
-            and not self.has_2fa_enabled(user)
-        ):
-            redirect_url = reverse("two-factor-setup")
-            raise ImmediateHttpResponse(
-                response=HttpResponseRedirect(redirect_url)
-            )
-        else:
-            return super().post_login(request, user, **kwargs)
-
     def stash_pending_login(self, request, user, **kwargs):
         # this is copied from the a pending PR on django-allauth-2fa repo:
         # https://github.com/valohai/django-allauth-2fa/pull/131

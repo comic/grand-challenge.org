@@ -32,6 +32,7 @@ class UserProfileAdmin(UserAdmin):
         "first_name",
         "last_name",
         "is_staff",
+        "has_2fa_enabled",
     )
     list_filter = (
         "is_staff",
@@ -40,6 +41,12 @@ class UserProfileAdmin(UserAdmin):
         "user_profile__country",
     )
     actions = (deactivate_users,)
+
+    @admin.display(description="User has 2FA enabled")
+    def has_2fa_enabled(self, obj):
+        return obj.totpdevice_set.filter(confirmed=True).exists()
+
+    has_2fa_enabled.boolean = True
 
 
 User = get_user_model()

@@ -90,20 +90,8 @@ class SocialLoginTests(OAuth2TestsMixin, TestCase):
         assert SocialAccount.objects.count() == 1
         assertRedirects(resp, "/users/profile/", fetch_redirect_response=False)
 
-        # make this user staff user
-        user = get_user_model().objects.last()
-        assert user.email == "jane.doe@example.com"
-        user.is_staff = True
-        user.save()
-
-        # log user out
-        self.client.logout()
-
-        # log back in, check that redirect is now to 2fa setup page
-        resp = self.login(resp_mock=self.get_mocked_response())
-        assert "two_factor/setup" in resp.url
-
         # enable 2fa for the user (mimicks the 2fa setup)
+        user = get_user_model().objects.last()
         user.totpdevice_set.create()
 
         # log user out
