@@ -23,7 +23,6 @@ from grandchallenge.algorithms.views import (
     JobsList,
     JobUpdate,
     JobViewersUpdate,
-    PhaseAlgorithmCreate,
     UsersUpdate,
 )
 
@@ -32,11 +31,6 @@ app_name = "algorithms"
 urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
     path("create/", AlgorithmCreate.as_view(), name="create"),
-    path(
-        "create-for-phase/<phase_pk>/",
-        PhaseAlgorithmCreate.as_view(),
-        name="create-for-phase",
-    ),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
     path("<slug>/update/", AlgorithmUpdate.as_view(), name="update"),
     path("<slug>/publish/", AlgorithmPublishView.as_view(), name="publish"),

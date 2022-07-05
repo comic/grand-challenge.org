@@ -557,8 +557,8 @@ def test_create_algorithm_for_phase_permission(client):
     # admin can make a submission only if they are verified
     # and if the phase has been configured properly
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         user=admin,
     )
@@ -570,8 +570,8 @@ def test_create_algorithm_for_phase_permission(client):
 
     VerificationFactory(user=admin, is_verified=True)
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         user=admin,
     )
@@ -587,8 +587,8 @@ def test_create_algorithm_for_phase_permission(client):
     phase.algorithm_outputs.set([ComponentInterfaceFactory()])
     phase.save()
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         user=admin,
     )
@@ -598,8 +598,8 @@ def test_create_algorithm_for_phase_permission(client):
     # when phase is open for submission and
     # when the phase has been configured properly (already the case here)
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         user=participant,
     )
@@ -611,8 +611,8 @@ def test_create_algorithm_for_phase_permission(client):
 
     VerificationFactory(user=participant, is_verified=True)
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         user=participant,
     )
@@ -625,8 +625,8 @@ def test_create_algorithm_for_phase_permission(client):
     phase.save()
 
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         user=participant,
     )
@@ -635,8 +635,8 @@ def test_create_algorithm_for_phase_permission(client):
     # normal user cannot create algorithm for phase
     VerificationFactory(user=user, is_verified=True)
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         user=user,
     )
@@ -667,8 +667,8 @@ def test_create_algorithm_for_phase_presets(client):
     phase.save()
 
     response = get_view_for_user(
-        viewname="algorithms:create-for-phase",
-        reverse_kwargs={"phase_pk": phase.pk},
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={"slug": phase.slug},
         client=client,
         method=client.post,
         user=admin,

@@ -5,10 +5,7 @@ from typing import Dict
 import requests
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import (
@@ -50,7 +47,6 @@ from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
     AlgorithmDescriptionForm,
     AlgorithmForm,
-    AlgorithmForPhaseForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmInputsForm,
@@ -87,8 +83,6 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.evaluation.models import Phase
-from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -96,75 +90,6 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
-
-
-class PhaseConfiguredForAlgorithmSubmissionMixin(UserPassesTestMixin):
-    """Mixin that checks if a phase has been configured for algorithm submission."""
-
-    def test_func(self):
-        response = super().test_func()
-        if response:
-            if (
-                self.phase.submission_kind == SubmissionKindChoices.ALGORITHM
-                and self.phase.inputs
-                and self.phase.outputs
-                and self.phase.archive
-            ):
-                return True
-            else:
-                error_message = (
-                    "This phase is not configured for algorithm submission. "
-                )
-                if self.phase.challenge.is_admin(self.request.user):
-                    error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
-                else:
-                    error_message += "Please come back later."
-
-                messages.error(
-                    self.request,
-                    error_message,
-                )
-                return False
-        else:
-            return False
-
-
-class UserCanSubmitToPhaseMixin(UserPassesTestMixin):
-    """
-    Mixin that checks if a user is either an admin of a challenge
-    or a participant of the challenge. In the latter case, it also checks that the phase
-    is open for submissions.
-    """
-
-    def test_func(self):
-        response = super().test_func()
-        if response:
-            if self.phase.challenge.is_admin(self.request.user):
-                return True
-            elif (
-                self.phase.challenge.is_participant(self.request.user)
-                and self.phase.open_for_submissions
-            ):
-                return True
-            elif (
-                self.phase.challenge.is_participant(self.request.user)
-                and not self.phase.open_for_submissions
-            ):
-                messages.error(
-                    self.request,
-                    "The phase is currently not open for submissions. "
-                    "Please come back later.",
-                )
-                return False
-            else:
-                messages.error(
-                    self.request,
-                    "You need to be either an admin or a participant of the challenge in order to create an algorithm for "
-                    "this phase.",
-                )
-                return False
-        else:
-            return False
 
 
 class AlgorithmCreate(
@@ -182,45 +107,6 @@ class AlgorithmCreate(
         response = super().form_valid(form=form)
         self.object.add_editor(self.request.user)
         return response
-
-
-class PhaseAlgorithmCreate(
-    LoginRequiredMixin,
-    PhaseConfiguredForAlgorithmSubmissionMixin,
-    UserCanSubmitToPhaseMixin,
-    VerificationRequiredMixin,
-    CreateView,
-):
-    model = Algorithm
-    form_class = AlgorithmForPhaseForm
-
-    def form_valid(self, form):
-        response = super().form_valid(form=form)
-        self.object.add_editor(self.request.user)
-        self.object.logo = self.phase.challenge.logo
-        self.object.workstation_config = self.phase.workstation_config
-        self.object.hanging_protocol = self.phase.hanging_protocol
-        self.object.view_content = self.phase.view_content
-        self.object.display_editors = True
-        self.object.contact_email = self.request.user.email
-        self.object.modalities.set(self.phase.challenge.modalities.all())
-        self.object.structures.set(self.phase.challenge.structures.all())
-        self.object.inputs.set(self.phase.algorithm_inputs.all())
-        self.object.outputs.set(self.phase.algorithm_outputs.all())
-        if self.phase.workstation:
-            self.object.workstation = self.phase.workstation
-        self.object.save()
-        return response
-
-    @cached_property
-    def phase(self):
-        return Phase.objects.get(pk=self.kwargs["phase_pk"])
-
-    def get_success_url(self):
-        return (
-            reverse("algorithms:detail", kwargs={"slug": self.object.slug})
-            + "#containers"
-        )
 
 
 class AlgorithmList(FilterMixin, PermissionListMixin, ListView):

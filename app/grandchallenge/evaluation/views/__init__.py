@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
+from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,6 +22,8 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -41,6 +44,64 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
+
+
+class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
+    """
+    Mixin that checks if a user is either an admin of a challenge
+    or a participant of the challenge and that the phase is configured for
+    algorithm submission. If the user is a participant, it also checks that the phase
+    is open for submissions.
+    """
+
+    def test_func(self):
+        response = super().test_func()
+        if response:
+            if not self.phase.challenge.is_admin(
+                self.request.user
+            ) or not self.phase.challenge.is_participant(self.request.user):
+                error_message = (
+                    "You need to be either an admin or a participant of "
+                    "the challenge in order to create an algorithm for this phase."
+                )
+                messages.error(
+                    self.request,
+                    error_message,
+                )
+                return False
+            elif (
+                self.phase.challenge.is_participant(self.request.user)
+                and not self.phase.open_for_submissions
+            ):
+                error_message = "The phase is currently not open for submissions. Please come back later."
+                messages.error(
+                    self.request,
+                    error_message,
+                )
+                return False
+
+            if (
+                not self.phase.submission_kind
+                == SubmissionKindChoices.ALGORITHM
+                or not self.phase.inputs
+                or not self.phase.outputs
+                or not self.phase.archive
+            ):
+                error_message = (
+                    "This phase is not configured for algorithm submission. "
+                )
+                if self.phase.challenge.is_admin(self.request.user):
+                    error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
+                else:
+                    error_message += "Please come back later."
+
+                messages.error(
+                    self.request,
+                    error_message,
+                )
+                return False
+        else:
+            return False
 
 
 class PhaseCreate(
@@ -556,3 +617,40 @@ class EvaluationUpdate(
     permission_required = "change_evaluation"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+
+class PhaseAlgorithmCreate(
+    LoginRequiredMixin,
+    UserCanSubmitAlgorithmToPhaseMixin,
+    CreateView,
+):
+    model = Algorithm
+    form_class = AlgorithmForPhaseForm
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        self.object.add_editor(self.request.user)
+        self.object.logo = self.phase.challenge.logo
+        self.object.workstation_config = self.phase.workstation_config
+        self.object.hanging_protocol = self.phase.hanging_protocol
+        self.object.view_content = self.phase.view_content
+        self.object.display_editors = True
+        self.object.contact_email = self.request.user.email
+        self.object.modalities.set(self.phase.challenge.modalities.all())
+        self.object.structures.set(self.phase.challenge.structures.all())
+        self.object.inputs.set(self.phase.algorithm_inputs.all())
+        self.object.outputs.set(self.phase.algorithm_outputs.all())
+        if self.phase.workstation:
+            self.object.workstation = self.phase.workstation
+        self.object.save()
+        return response
+
+    @cached_property
+    def phase(self):
+        return Phase.objects.get(pk=self.kwargs["phase_pk"])
+
+    def get_success_url(self):
+        return (
+            reverse("algorithms:detail", kwargs={"slug": self.object.slug})
+            + "#containers"
+        )
