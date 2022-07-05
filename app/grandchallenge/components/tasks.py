@@ -615,6 +615,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 status=job.FAILURE,
                 stdout=executor.stdout,
                 stderr=executor.stderr,
+                duration=executor.duration,
+                runtime_metrics=executor.runtime_metrics,
                 error_message="Time limit exceeded",
             )
             raise
@@ -627,6 +629,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
+            duration=executor.duration,
+            runtime_metrics=executor.runtime_metrics,
             error_message=str(e),
         )
     except Exception:
@@ -634,6 +638,8 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
+            duration=executor.duration,
+            runtime_metrics=executor.runtime_metrics,
             error_message="An unexpected error occurred",
         )
         raise
