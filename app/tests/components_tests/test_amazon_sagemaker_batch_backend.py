@@ -572,7 +572,7 @@ def test_handle_failed_job(settings):
         )
 
         with pytest.raises(ComponentException) as error:
-            executor._handle_failed_job()
+            executor._handle_failed_job(event={})
 
     assert "Time limit exceeded" in str(error)
 
