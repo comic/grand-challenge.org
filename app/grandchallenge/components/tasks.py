@@ -299,7 +299,6 @@ def _validate_docker_image_manifest(*, instance) -> str:
     config = json.loads(config)
 
     user = str(config["config"].get("User", "")).lower()
-
     if (
         user in ["", "root", "0"]
         or user.startswith("0:")
@@ -310,6 +309,13 @@ def _validate_docker_image_manifest(*, instance) -> str:
             "USER instruction to your Dockerfile, rebuild, test and "
             "upload the container again, see "
             "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user"
+        )
+
+    architecture = config.get("architecture")
+    if architecture != "amd64":
+        raise ValidationError(
+            f"Architecture type '{architecture}' is not supported. "
+            "Please provide a container image built for amd64."
         )
 
     return f"sha256:{image_sha256}"
