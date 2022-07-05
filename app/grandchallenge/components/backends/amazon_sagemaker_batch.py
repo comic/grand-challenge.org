@@ -295,7 +295,7 @@ class AmazonSageMakerBatchExecutor(Executor):
 
         prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
         model_regex = r"|".join(ModelChoices.values)
-        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})\-(?P<attempt>\d{{3}})$"
+        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})\-(?P<attempt>\d{{2}})$"
 
         result = re.match(pattern, job_name)
 
