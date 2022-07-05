@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import F
 from django.db.transaction import on_commit
 from guardian.admin import GuardedModelAdmin
 
@@ -60,12 +61,18 @@ admin.site.register(ComponentInterfaceValue, ComponentInterfaceValueAdmin)
 
 
 def requeue_jobs(modeladmin, request, queryset):
-    queryset.update(status=ComponentJob.RETRY)
+    queryset.filter(
+        status__in=[
+            ComponentJob.FAILURE,
+            ComponentJob.CANCELLED,
+        ]
+    ).update(status=ComponentJob.RETRY, attempt=F("attempt") + 1)
+
     for job in queryset:
         on_commit(job.execute)
 
 
-requeue_jobs.short_description = "Requeue selected jobs"
+requeue_jobs.short_description = "Requeue selected Failed/Cancelled jobs"
 requeue_jobs.allowed_permissions = ("change",)
 
 

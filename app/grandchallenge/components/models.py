@@ -934,6 +934,7 @@ class ComponentJob(models.Model):
     status = models.PositiveSmallIntegerField(
         choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
+    attempt = models.PositiveSmallIntegerField(editable=False, default=0)
     stdout = models.TextField()
     stderr = models.TextField(default="")
     runtime_metrics = models.JSONField(default=dict, editable=False)
@@ -1030,7 +1031,7 @@ class ComponentJob(models.Model):
     @property
     def executor_kwargs(self):
         return {
-            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}-{self.attempt:05}",
             "exec_image_repo_tag": self.container.shimmed_repo_tag,
             "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,

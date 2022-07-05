@@ -29,6 +29,7 @@ class JobParams(NamedTuple):
     app_label: str
     model_name: str
     pk: UUID
+    attempt: int
 
 
 class Executor(ABC):

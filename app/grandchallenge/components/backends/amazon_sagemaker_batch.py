@@ -290,7 +290,7 @@ class AmazonSageMakerBatchExecutor(Executor):
 
         prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
         model_regex = r"|".join(ModelChoices.values)
-        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})$"
+        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})\-(?P<attempt>\d{{5}})$"
 
         result = re.match(pattern, job_name)
 
@@ -300,8 +300,12 @@ class AmazonSageMakerBatchExecutor(Executor):
             job_model = ModelChoices(result.group("job_model")).label
             job_app_label, job_model_name = job_model.split("-")
             job_pk = result.group("job_pk")
+            attempt = int(result.group("attempt"))
             return JobParams(
-                app_label=job_app_label, model_name=job_model_name, pk=job_pk
+                app_label=job_app_label,
+                model_name=job_model_name,
+                pk=job_pk,
+                attempt=attempt,
             )
 
     @property

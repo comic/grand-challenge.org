@@ -389,9 +389,9 @@ def retry_if_dropped(func):
 
 
 @retry_if_dropped
-def get_model_instance(*, pk, app_label, model_name):
+def get_model_instance(*, app_label, model_name, **kwargs):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    return model.objects.get(pk=pk)
+    return model.objects.get(**kwargs)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -580,6 +580,7 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
         pk=job_params.pk,
         app_label=job_params.app_label,
         model_name=job_params.model_name,
+        attempt=job_params.attempt,
     )
     executor = job.get_executor(backend=backend)
 
