@@ -61,12 +61,13 @@ admin.site.register(ComponentInterfaceValue, ComponentInterfaceValueAdmin)
 
 
 def requeue_jobs(modeladmin, request, queryset):
-    queryset.filter(
+    queryset = queryset.filter(
         status__in=[
             ComponentJob.FAILURE,
             ComponentJob.CANCELLED,
         ]
-    ).update(status=ComponentJob.RETRY, attempt=F("attempt") + 1)
+    )
+    queryset.update(status=ComponentJob.RETRY, attempt=F("attempt") + 1)
 
     for job in queryset:
         on_commit(job.execute)
