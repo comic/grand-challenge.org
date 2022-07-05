@@ -55,35 +55,47 @@ class AccountAdapter(DefaultAccountAdapter):
         return email
 
     def pre_login(self, request, user, **kwargs):
-        # this is copied (and slightly adapted) from the a pending PR on django-allauth-2fa repo:
+        # this is copied from the a pending PR on django-allauth-2fa repo:
         # https://github.com/valohai/django-allauth-2fa/pull/131
 
         response = super().pre_login(request, user, **kwargs)
         if response:
             return response
 
-        # Require two-factor authentication if it has been configured or if the user is staff user.
-        if self.has_2fa_enabled(user) or user.is_staff or user.is_superuser:
+        # Require two-factor authentication if it has been configured
+        if self.has_2fa_enabled(user):
             self.stash_pending_login(request, user, **kwargs)
-            # For the social login the Require2FA middleware does not work, so check here again
-            if (
-                user.is_staff or user.is_superuser
-            ) and not self.has_2fa_enabled(user):
-                redirect_url = reverse("two-factor-setup")
-            else:
-                redirect_url = reverse("two-factor-authenticate")
+            redirect_url = reverse("two-factor-authenticate")
             query_params = request.GET.copy()
             next_url = get_next_redirect_url(request)
             if next_url:
                 query_params["next"] = next_url
             if query_params:
                 redirect_url += "?" + urlencode(query_params)
-
             raise ImmediateHttpResponse(
                 response=HttpResponseRedirect(redirect_url)
             )
 
+    def post_login(self, request, user, **kwargs):
+        # BaseRequire2FAMiddleware does not work with social login,
+        # so force 2FA set-up post login for users coming through
+        # the social login route
+        if (
+            user.socialaccount_set.exists()
+            and (user.is_staff or user.is_superuser)
+            and not self.has_2fa_enabled(user)
+        ):
+            redirect_url = reverse("two-factor-setup")
+            raise ImmediateHttpResponse(
+                response=HttpResponseRedirect(redirect_url)
+            )
+        else:
+            return super().post_login(request, user, **kwargs)
+
     def stash_pending_login(self, request, user, **kwargs):
+        # this is copied from the a pending PR on django-allauth-2fa repo:
+        # https://github.com/valohai/django-allauth-2fa/pull/131
+
         # Cast to string for the case when this is not a JSON serializable
         # object, e.g. a UUID.
         request.session["allauth_2fa_user_id"] = str(user.id)
@@ -98,6 +110,9 @@ class AccountAdapter(DefaultAccountAdapter):
         request.session["allauth_2fa_login"] = login_kwargs
 
     def unstash_pending_login_kwargs(self, request):
+        # this is copied from the a pending PR on django-allauth-2fa repo:
+        # https://github.com/valohai/django-allauth-2fa/pull/131
+
         login_kwargs = request.session.pop("allauth_2fa_login", None)
         if login_kwargs is None:
             raise PermissionDenied()

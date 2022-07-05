@@ -185,7 +185,7 @@ def test_2fa_removal(client):
     )
 
     # check that token is required
-    assert 'required id="id_otp_token"' in response.rendered_content
+    assert 'required id="id_token"' in response.rendered_content
     # submitting without a token does not work
     response = get_view_for_user(
         viewname="two-factor-remove",
@@ -193,9 +193,7 @@ def test_2fa_removal(client):
         method=client.post,
         user=user,
     )
-    assert "Please enter your OTP token." in str(
-        response.context["form"].errors
-    )
+    assert "This field is required." in str(response.context["form"].errors)
 
     # when correct token is entered, the totp device and any backup tokens are deleted
     token = get_token_from_totp_device(totp_device)
@@ -203,7 +201,7 @@ def test_2fa_removal(client):
         viewname="two-factor-remove",
         client=client,
         method=client.post,
-        data={"otp_token": token},
+        data={"token": token},
         user=user,
     )
     user.refresh_from_db()
