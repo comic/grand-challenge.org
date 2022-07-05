@@ -4,7 +4,6 @@ import re
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Optional
 
 from celery import signature
@@ -812,19 +811,6 @@ class ComponentInterfaceValue(models.Model):
         )
 
     @property
-    def input_file(self):
-        """The file to use as component input"""
-        if self.image:
-            return self.image_file
-        elif self.file:
-            return self.file
-        else:
-            src = NamedTemporaryFile(delete=True)
-            src.write(bytes(json.dumps(self.value), "utf-8"))
-            src.flush()
-            return File(src, name=self.relative_path.name)
-
-    @property
     def relative_path(self):
         """
         Where should the file be located?
@@ -1132,16 +1118,28 @@ class ComponentJob(models.Model):
 
     @property
     def runtime_metrics_chart(self):
+        instance_metrics = self.runtime_metrics["instance"]
+        cpu_limit = 100 * instance_metrics["cpu"]
+
+        if instance_metrics["gpus"]:
+            gpu_str = (
+                f"{instance_metrics['gpus']}x {instance_metrics['gpu_type']}"
+            )
+        else:
+            gpu_str = "No"
+        title = f"{instance_metrics['name']} / {instance_metrics['cpu']} CPU / {instance_metrics['memory']} GB Memory / {gpu_str} GPU"
+
         return {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
             "width": "container",
             "padding": 0,
+            "title": title,
             "data": {
                 "values": [
                     {
                         "Metric": metric["label"],
                         "Timestamp": timestamp,
-                        "Percent": value,
+                        "Percent": value / 100.0,
                     }
                     for metric in self.runtime_metrics["metrics"]
                     for timestamp, value in zip(
@@ -1149,12 +1147,108 @@ class ComponentJob(models.Model):
                     )
                 ]
             },
-            "mark": {"type": "line", "point": True},
-            "encoding": {
-                "x": {"timeUnit": "hoursminutesseconds", "field": "Timestamp"},
-                "y": {"field": "Percent", "type": "quantitative"},
-                "color": {"field": "Metric", "type": "nominal"},
-            },
+            "layer": [
+                {
+                    "transform": [
+                        {"calculate": "100*datum.Percent", "as": "Percent100"},
+                    ],
+                    "encoding": {
+                        "x": {
+                            "timeUnit": "hoursminutesseconds",
+                            "field": "Timestamp",
+                            "title": "Local Time / HH:MM:SS",
+                        },
+                        "y": {
+                            "field": "Percent100",
+                            "type": "quantitative",
+                            "title": "Utilization / %",
+                        },
+                        "color": {"field": "Metric", "type": "nominal"},
+                    },
+                    "layer": [
+                        {"mark": "line"},
+                        {
+                            "transform": [
+                                {"filter": {"param": "hover", "empty": False}}
+                            ],
+                            "mark": "point",
+                        },
+                    ],
+                },
+                {
+                    "transform": [
+                        {
+                            "pivot": "Metric",
+                            "value": "Percent",
+                            "groupby": ["Timestamp"],
+                        }
+                    ],
+                    "mark": "rule",
+                    "encoding": {
+                        "opacity": {
+                            "condition": {
+                                "value": 0.3,
+                                "param": "hover",
+                                "empty": False,
+                            },
+                            "value": 0,
+                        },
+                        "tooltip": [
+                            {
+                                "field": metric["label"],
+                                "type": "quantitative",
+                                "format": ".2%",
+                            }
+                            for metric in self.runtime_metrics["metrics"]
+                        ],
+                        "x": {
+                            "timeUnit": "hoursminutesseconds",
+                            "field": "Timestamp",
+                            "title": "Local Time / HH:MM:SS",
+                        },
+                    },
+                    "params": [
+                        {
+                            "name": "hover",
+                            "select": {
+                                "type": "point",
+                                "fields": ["Timestamp"],
+                                "nearest": True,
+                                "on": "mouseover",
+                                "clear": "mouseout",
+                            },
+                        }
+                    ],
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "rule", "strokeDash": [8, 8]},
+                    "encoding": {"y": {"datum": cpu_limit}},
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "text", "baseline": "line-bottom"},
+                    "encoding": {
+                        "text": {"datum": "CPU Utilization Limit"},
+                        "y": {"datum": cpu_limit},
+                    },
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "rule", "strokeDash": [8, 8]},
+                    "encoding": {"y": {"datum": 100}},
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "text", "baseline": "line-bottom"},
+                    "encoding": {
+                        "text": {
+                            "datum": "Memory / GPU / GPU Memory Utilization Limit"
+                        },
+                        "y": {"datum": 100},
+                    },
+                },
+            ],
         }
 
     class Meta:
