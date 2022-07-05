@@ -12,7 +12,7 @@ from uuid import UUID
 import boto3
 import botocore
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.db import transaction
 from django.utils._os import safe_join
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
@@ -184,13 +184,26 @@ class Executor(ABC):
                 civ=civ, input_prefixes=input_prefixes
             )
 
-            with civ.input_file.open("rb") as f:
-                # TODO replace this with server side copy
-                self._s3_client.upload_fileobj(
-                    Fileobj=f,
-                    Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    Key=key,
-                )
+            if civ.image:
+                self._copy_input_file(src=civ.image_file, dest_key=key)
+            elif civ.file:
+                self._copy_input_file(src=civ.file, dest_key=key)
+            else:
+                with io.BytesIO() as f:
+                    f.write(json.dumps(civ.value).encode("utf-8"))
+                    f.seek(0)
+                    self._s3_client.upload_fileobj(
+                        Fileobj=f,
+                        Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                        Key=key,
+                    )
+
+    def _copy_input_file(self, *, src, dest_key):
+        self._s3_client.copy(
+            CopySource={"Bucket": src.storage.bucket.name, "Key": src.name},
+            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            Key=dest_key,
+        )
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)
@@ -204,7 +217,7 @@ class Executor(ABC):
                 f"Too many files produced in '{interface.relative_path}'"
             )
 
-        output_files = response["Contents"]
+        output_files = response.get("Contents", [])
         if not output_files:
             raise ComponentException(
                 f"Output directory '{interface.relative_path}' is empty"
@@ -212,8 +225,12 @@ class Executor(ABC):
 
         with TemporaryDirectory() as tmpdir:
             for file in output_files:
-                key = safe_join("/", file["Key"])
-                dest = safe_join(tmpdir, Path(key).relative_to(prefix))
+                try:
+                    key = safe_join("/", file["Key"])
+                    dest = safe_join(tmpdir, Path(key).relative_to(prefix))
+                except (SuspiciousFileOperation, ValueError):
+                    logger.warning(f"Skipping {file=} for {interface=}")
+                    continue
 
                 logger.info(
                     f"Downloading {key} to {dest} from "

@@ -468,6 +468,11 @@ class AmazonSageMakerBatchExecutor(Executor):
             )
         except self._sagemaker_client.exceptions.ResourceLimitExceeded as error:
             raise RetryStep("Capacity Limit Exceeded") from error
+        except botocore.exceptions.ClientError as error:
+            if error.response["Error"]["Code"] == "ThrottlingException":
+                raise RetryStep("Request throttled") from error
+            else:
+                raise error
 
     def _set_duration(self, *, event):
         try:
@@ -654,7 +659,9 @@ class AmazonSageMakerBatchExecutor(Executor):
                 "Could not find job to update with name",
             }
 
-            if error.response["Error"][
+            if error.response["Error"]["Code"] == "ThrottlingException":
+                raise RetryStep("Request throttled") from error
+            elif error.response["Error"][
                 "Code"
             ] == "ValidationException" and any(
                 okay_message in error.response["Error"]["Message"]

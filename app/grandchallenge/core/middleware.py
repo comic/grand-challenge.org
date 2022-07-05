@@ -17,9 +17,6 @@ class TwoFactorMiddleware(MiddlewareMixin):
     half logged in by mistake.
     """
 
-    def __init__(self, get_response):
-        self.get_response = get_response
-
     def process_request(self, request):
         try:
             match = get_resolver(request.urlconf).resolve(request.path)
@@ -33,4 +30,4 @@ class TwoFactorMiddleware(MiddlewareMixin):
                 except KeyError:
                     pass
         except Resolver404:
-            return self.get_response(request)
+            pass

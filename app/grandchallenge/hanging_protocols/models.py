@@ -29,6 +29,12 @@ class ImagePort(models.TextChoices):
     VIGINTENARY = "VIGINTENARY", "Vigintenary"
 
 
+class Orientation(models.TextChoices):
+    axial = "axial"
+    coronal = "coronal"
+    sagittal = "sagittal"
+
+
 HANGING_PROTOCOL_SCHEMA = {
     "definitions": {},
     "$schema": "http://json-schema.org/draft-06/schema#",
@@ -87,6 +93,10 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "label": {
                 "type": "string",
+            },
+            "orientation": {
+                "type": "string",
+                "enum": Orientation.values,
             },
             "parent_id": {
                 "type": "string",
