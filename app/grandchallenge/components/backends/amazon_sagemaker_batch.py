@@ -16,6 +16,7 @@ from grandchallenge.components.backends.base import Executor, JobParams
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
+    RetryTask,
     TaskCancelled,
 )
 from grandchallenge.components.backends.utils import (
@@ -33,6 +34,10 @@ logger = logging.getLogger(__name__)
 UUID4_REGEX = (
     r"[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}"
 )
+
+
+class LogStreamNotFound(Exception):
+    """Raised when a log stream could not be found"""
 
 
 class GPUChoices(TextChoices):
@@ -290,7 +295,7 @@ class AmazonSageMakerBatchExecutor(Executor):
 
         prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
         model_regex = r"|".join(ModelChoices.values)
-        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})\-(?P<attempt>\d{{5}})$"
+        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})\-(?P<attempt>\d{{3}})$"
 
         result = re.match(pattern, job_name)
 
@@ -410,7 +415,7 @@ class AmazonSageMakerBatchExecutor(Executor):
             if job_status == "Completed":
                 self._handle_completed_job()
             else:
-                self._handle_failed_job()
+                self._handle_failed_job(event=event)
         else:
             raise ValueError("Invalid job status")
 
@@ -494,7 +499,7 @@ class AmazonSageMakerBatchExecutor(Executor):
         )
 
         if "nextToken" in response:
-            raise RuntimeError("Too many log streams found")
+            raise LogStreamNotFound("Too many log streams found")
 
         log_streams = {
             s["logStreamName"]
@@ -505,12 +510,18 @@ class AmazonSageMakerBatchExecutor(Executor):
         if len(log_streams) == 1:
             return log_streams.pop()
         else:
-            raise RuntimeError("Log stream not found")
+            raise LogStreamNotFound("Log stream not found")
 
     def _set_task_logs(self):
+        try:
+            log_stream_name = self._get_log_stream_name(data_log=False)
+        except LogStreamNotFound as error:
+            logger.warning(str(error))
+            return
+
         response = self._logs_client.get_log_events(
             logGroupName=self._log_group_name,
-            logStreamName=self._get_log_stream_name(data_log=False),
+            logStreamName=log_stream_name,
             limit=LOGLINES,
             startFromHead=False,
         )
@@ -638,17 +649,23 @@ class AmazonSageMakerBatchExecutor(Executor):
         else:
             raise ComponentException(user_error(self.stderr))
 
-    def _handle_failed_job(self):
-        data_log = self._get_job_data_log()
+    def _handle_failed_job(self, *, event):
+        failure_reason = event.get("FailureReason")
+        if failure_reason == (
+            "CapacityError: Unable to provision requested ML compute capacity. "
+            "Please retry using a different ML instance type."
+        ):
+            raise RetryTask("No current capacity for the chosen instance type")
 
+        data_log = self._get_job_data_log()
         if any(
             "Model server did not respond to /invocations request within" in e
             for e in data_log
         ):
             raise ComponentException("Time limit exceeded")
-        else:
-            # Needs investigation by a site administrator, could be permissions
-            raise RuntimeError("Job failed for an unknown reason")
+
+        # Anything else needs investigation by a site administrator
+        raise RuntimeError("Job failed for an unknown reason")
 
     def _stop_running_jobs(self):
         try:

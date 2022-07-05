@@ -66,7 +66,7 @@ def test_instance_type_incompatible():
 def test_get_job_params_match(key, model_name, app_label):
     pk = uuid4()
     event = {
-        "TransformJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}-00000"
+        "TransformJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}-000"
     }
     job_params = AmazonSageMakerBatchExecutor.get_job_params(event=event)
 
@@ -110,7 +110,7 @@ def test_transform_job_name(model, container, container_model, key):
 
     assert (
         executor._transform_job_name
-        == f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{j.pk}-00000"
+        == f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{j.pk}-000"
     )
 
     event = {"TransformJobName": executor._transform_job_name}

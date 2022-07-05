@@ -28,6 +28,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
+    RetryTask,
     TaskCancelled,
 )
 from grandchallenge.components.backends.utils import get_sagemaker_model_name
@@ -611,6 +612,9 @@ def handle_event(*, event, backend, retries=0):  # noqa: C901
                 error_message="Time limit exceeded",
             )
             raise
+    except RetryTask:
+        job.update_status(status=job.PROVISIONED)
+        on_commit(retry_task.signature(**job.signature_kwargs).apply_async)
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
@@ -669,6 +673,41 @@ def parse_job_outputs(
     else:
         job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def retry_task(
+    *,
+    job_pk: uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+    retries: int = 0,
+):
+    """Retries an existing task that was previously provisioned"""
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
+    executor = job.get_executor(backend=backend)
+
+    if job.status != job.PROVISIONED:
+        raise PriorStepFailed("Job is not provisioned")
+
+    try:
+        executor.deprovision()
+    except RetryStep:
+        _retry(
+            task=retry_task,
+            signature_kwargs=job.signature_kwargs,
+            retries=retries,
+        )
+
+    with transaction.atomic():
+        job.status = job.PENDING
+        job.attempts += 1
+        job.save()
+
+        on_commit(provision_job.signature(**job.signature_kwargs).apply_async)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
