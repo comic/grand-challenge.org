@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.cache import cache
 from django.db.models import Q
 from django.http import Http404
 from django.views.generic import (
@@ -161,6 +162,7 @@ class ChallengeStatistics(
         context.update(
             {
                 "phases": phases,
+                "statistics_for_phases": cache.get("statistics_for_phases"),
             }
         )
 

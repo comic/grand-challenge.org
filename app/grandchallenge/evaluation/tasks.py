@@ -1,10 +1,13 @@
+import datetime
 import logging
 import uuid
 from statistics import mean, median
+from typing import NamedTuple
 
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
@@ -513,6 +516,14 @@ def get_average_job_duration_for_phase(phase):
     return duration_dict
 
 
+class PhaseStatistics(NamedTuple):
+    average_algorithm_run_time: datetime.timedelta
+    total_algorithm_run_time: datetime.timedelta
+    average_compute_cost: float
+    total_compute_cost: float
+    archive_item_count: int
+
+
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def update_phase_statistics():
     Phase = apps.get_model(  # noqa: N806
@@ -523,46 +534,38 @@ def update_phase_statistics():
         .annotate(archive_item_count=Count("archive__items"))
         .all()
     )
-    avg_duration = {
-        phase.pk: get_average_job_duration_for_phase(phase) for phase in phases
-    }
-
+    phase_dict = {}
     for phase in phases:
-        phase.cached_average_algorithm_run_time = avg_duration.get(
-            phase.pk, {}
-        ).get("average_duration", None)
-        phase.cached_total_algorithm_run_time = avg_duration.get(
-            phase.pk, {}
-        ).get("total_duration", None)
-        phase.cached_archive_item_count = phase.archive_item_count
+        avg_duration = get_average_job_duration_for_phase(phase)
+        average_duration = avg_duration.get("average_duration", None)
+        total_duration = avg_duration.get("total_duration", None)
         try:
-            phase.cached_average_compute_cost = round(
-                phase.cached_archive_item_count
-                * (phase.cached_average_algorithm_run_time).seconds
+            average_compute_cost = round(
+                phase.archive_item_count
+                * average_duration.seconds
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
-            phase.cached_total_compute_cost = round(
-                phase.cached_archive_item_count
-                * (phase.cached_total_algorithm_run_time).seconds
+            total_compute_cost = round(
+                phase.archive_item_count
+                * total_duration.seconds
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
         except AttributeError:
-            phase.cached_average_compute_cost = None
-            phase.cached_total_compute_cost = None
+            average_compute_cost = None
+            total_compute_cost = None
 
-    Phase.objects.bulk_update(
-        phases,
-        [
-            "cached_average_algorithm_run_time",
-            "cached_total_algorithm_run_time",
-            "cached_archive_item_count",
-            "cached_average_compute_cost",
-            "cached_total_compute_cost",
-        ],
-    )
+        phase_dict[phase.pk] = PhaseStatistics(
+            average_duration,
+            total_duration,
+            average_compute_cost,
+            total_compute_cost,
+            phase.archive_item_count,
+        )
+
+    cache.set("statistics_for_phases", phase_dict, timeout=None)
