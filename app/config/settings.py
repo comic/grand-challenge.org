@@ -1120,6 +1120,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
         "schedule": timedelta(days=1),
     },
+    "update_phase_statistics": {
+        "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
+        "schedule": timedelta(days=1),
+    },
     **{
         f"stop_expired_services_{region}": {
             "task": "grandchallenge.components.tasks.stop_expired_services",
