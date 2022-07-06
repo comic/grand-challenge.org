@@ -38,6 +38,7 @@ from django.views.generic import (
     View,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
@@ -834,8 +835,10 @@ class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
 
     def check_permissions(self, request):
         permission_objects = self.get_queryset()
+        checker = ObjectPermissionChecker(request.user)
+        checker.prefetch_perms(permission_objects)
         forbidden = any(
-            not request.user.has_perm(self.permission_required, obj)
+            not checker.has_perm(self.permission_required, obj)
             for obj in permission_objects
         )
         if forbidden:
