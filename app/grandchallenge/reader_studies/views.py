@@ -50,11 +50,7 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework.viewsets import (
-    GenericViewSet,
-    ModelViewSet,
-    ReadOnlyModelViewSet,
-)
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
@@ -985,7 +981,7 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
-class ReaderStudyViewSet(ModelViewSet):
+class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
         "questions__options",
