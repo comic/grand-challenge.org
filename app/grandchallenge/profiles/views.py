@@ -1,17 +1,14 @@
-import contextlib
 from base64 import b32encode
 
-from allauth_2fa.forms import TOTPAuthenticateForm
-from allauth_2fa.mixins import ValidTOTPDeviceRequiredMixin
-from allauth_2fa.views import TwoFactorSetup
+from allauth.account.adapter import get_adapter
+from allauth_2fa.views import TwoFactorAuthenticate, TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import DetailView, FormView, UpdateView
-from django_otp.plugins.otp_totp.models import TOTPDevice
+from django.views.generic import DetailView, UpdateView
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
@@ -31,7 +28,7 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.profiles.forms import NewsletterSignupForm, UserProfileForm
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.profiles.serializers import UserProfileSerializer
-from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.subdomains.utils import reverse
 
 
 def profile(request):
@@ -216,31 +213,12 @@ class TwoFactorSetup(TwoFactorSetup):
         return response
 
 
-class TwoFactorRemove(ValidTOTPDeviceRequiredMixin, FormView):
-    form_class = TOTPAuthenticateForm
-    template_name = "allauth_2fa/remove.html"
-
-    def get_success_url(self):
-        return reverse_lazy(
-            "profile-detail", kwargs={"username": self.request.user.username}
-        )
-
+class TwoFactorAuthenticate(TwoFactorAuthenticate):
+    # this is copied from the a pending PR on django-allauth-2fa repo:
+    # https://github.com/valohai/django-allauth-2fa/pull/131
     def form_valid(self, form):
-        response = super().form_valid(form)
-        with contextlib.suppress(ObjectDoesNotExist):
-            # Delete any backup tokens and their related static device.
-            static_device = self.request.user.staticdevice_set.get(
-                name="backup"
-            )
-            static_device.token_set.all().delete()
-            static_device.delete()
-
-        # Delete TOTP device.
-        device = TOTPDevice.objects.get(user=self.request.user)
-        device.delete()
-        return response
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
+        adapter = get_adapter(self.request)
+        # 2fa kicked in at `pre_login()`, so we need to continue from there.
+        login_kwargs = adapter.unstash_pending_login_kwargs(self.request)
+        adapter.login(self.request, form.user)
+        return adapter.post_login(self.request, form.user, **login_kwargs)
