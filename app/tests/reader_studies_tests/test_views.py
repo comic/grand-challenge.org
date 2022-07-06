@@ -111,8 +111,7 @@ def test_answer_remove_for_user(client):
         viewname="reader-studies:answers-remove",
         client=client,
         method=client.delete,
-        reverse_kwargs={"slug": rs.slug},
-        data=f"user={r1.id}",
+        reverse_kwargs={"slug": rs.slug, "username": r1.username},
         follow=True,
         user=r1,
     )
@@ -123,8 +122,7 @@ def test_answer_remove_for_user(client):
         viewname="reader-studies:answers-remove",
         client=client,
         method=client.delete,
-        reverse_kwargs={"slug": rs.slug},
-        data=f"user={r1.id}",
+        reverse_kwargs={"slug": rs.slug, "username": r1.username},
         follow=True,
         user=editor,
     )

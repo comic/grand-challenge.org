@@ -49,6 +49,7 @@
                                 &nbsp;{{ user.progress.questions|floatformat }}%
                             </div>
                         </div>
+                values: {csrfmiddlewaretoken: target.data("csrf")},
                     </div>
                     <div class="col-6 col-md-3 p-1">
                         <div class="d-flex justify-content-md-end justify-content-start align-items-center">
@@ -67,7 +68,7 @@
                                     data-target="#warningModal"
                                     data-title="Delete Answers"
                                     data-warning="This will delete all answers for user '{{ user.obj }}'. This action cannot be undone."
-                                    data-user="{{ user.obj.id }}"
+                                    data-user="{{ user.obj }}"
                                     data-action="Delete Answers">
                                 <i class="fa fa-trash-alt"></i>&nbsp;Delete User's Answers
                             </button>
@@ -104,7 +105,7 @@
                             data-dismiss="modal">Cancel
                     </button>
                     <button type="button" class="btn btn-danger"
-                            id="proceed" data-url="{% url 'reader-studies:answers-remove' slug=reader_study.slug %}" data-csrf="{{ csrf_token }}">
+                            id="proceed" data-baseurl="{{ reader_study.get_absolute_url }}" data-csrf="{{ csrf_token }}">
                         <i class="fa fa-trash"></i> <span class="modal-action"></span>
                     </button>
                 </div>

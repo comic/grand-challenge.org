@@ -11,12 +11,11 @@ $(document).ready(() => {
     });
     $('#proceed').on('click', (e) => {
         const target = $(e.currentTarget);
-        debugger;
         htmx.ajax(
             "DELETE",
-            target.data("url"),
+            `${target.data("baseurl")}remove-answers/${user}/`,
             {
-                values: {user: user, csrfmiddlewaretoken: target.data("csrf")},
+                values: {csrfmiddlewaretoken: target.data("csrf")},
                 headers: {
                     'X-CSRFToken': target.data("csrf"),
                     'Content-Type': 'application/json'

@@ -72,7 +72,7 @@ urlpatterns = [
     ),
     path("<slug>/copy/", ReaderStudyCopy.as_view(), name="copy"),
     path(
-        "<slug>/remove-answers/",
+        "<slug>/remove-answers/<username>/",
         AnswersRemoveForUser.as_view(),
         name="answers-remove",
     ),

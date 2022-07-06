@@ -21,7 +21,6 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
-    QueryDict,
 )
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -868,11 +867,9 @@ class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
 
 class AnswersRemoveForUser(AnswerBatchDelete):
     def get_queryset(self):
-        data = QueryDict(self.request.body)
-        user = data["user"]
         return Answer.objects.filter(
             question__reader_study=self.reader_study,
-            creator=user,
+            creator__username=self.kwargs["username"],
             is_ground_truth=False,
         )
 
