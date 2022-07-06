@@ -7,8 +7,6 @@ if __name__ == "__main__":
     res = {"score": 1}  # dummy metric for ranking on leaderboard
     files = {x for x in Path("/input").rglob("*") if x.is_file()}
 
-    raise ValueError
-
     for file in files:
         try:
             with open(file) as f:
