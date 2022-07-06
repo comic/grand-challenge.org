@@ -270,8 +270,7 @@ def test_question_delete_disabled_for_questions_with_answers(client):
         viewname="reader-studies:answers-remove",
         client=client,
         method=client.delete,
-        reverse_kwargs={"slug": rs.slug},
-        data=f"user={r1.id}",
+        reverse_kwargs={"slug": rs.slug, "username": r1.username},
         follow=True,
         user=editor,
     )
