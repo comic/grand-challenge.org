@@ -90,6 +90,11 @@ def remove_container(*, name):
         except CalledProcessError as error:
             if "Error: No such container" in error.stderr:
                 raise ObjectDoesNotExist from error
+            elif (
+                f"Error response from daemon: removal of container {container_id} is already in progress"
+                in error.stderr
+            ):
+                return
             else:
                 raise
     except ObjectDoesNotExist:
