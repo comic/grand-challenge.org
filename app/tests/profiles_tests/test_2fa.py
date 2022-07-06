@@ -7,7 +7,6 @@ from allauth.socialaccount.tests import OAuth2TestsMixin
 from allauth.tests import MockedResponse
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
-from django_otp.plugins.otp_static.models import StaticToken
 from pytest_django.asserts import assertRedirects
 
 from config.settings import LOGIN_REDIRECT_URL
@@ -151,50 +150,6 @@ def test_2fa_reset_flow(client):
     assert not client.session.get("allauth_2fa_user_id")
     resp = client.get(reverse_lazy("two-factor-authenticate"))
     assert "/accounts/login/" == resp.url
-
-
-@override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
-@pytest.mark.django_db
-def test_2fa_removal(client):
-    user = UserFactory()
-    # enable 2fa
-    totp_device = user.totpdevice_set.create()
-
-    # generate some backup tokens
-    static_device = user.staticdevice_set.create(name="backup")
-    static_device.token_set.create(token=StaticToken.random_token())
-    assert static_device.token_set.count() == 1
-
-    # Navigate to 2FA removal view
-    response = get_view_for_user(
-        viewname="two-factor-remove",
-        client=client,
-        user=user,
-    )
-
-    # check that token is required
-    assert 'required id="id_token"' in response.rendered_content
-    # submitting without a token does not work
-    response = get_view_for_user(
-        viewname="two-factor-remove",
-        client=client,
-        method=client.post,
-        user=user,
-    )
-    assert "This field is required." in str(response.context["form"].errors)
-
-    # when correct token is entered, the totp device and any backup tokens are deleted
-    token = get_token_from_totp_device(totp_device)
-    _ = get_view_for_user(
-        viewname="two-factor-remove",
-        client=client,
-        method=client.post,
-        data={"token": token},
-        user=user,
-    )
-    user.refresh_from_db()
-    assert not user.totpdevice_set.exists()
-    assert static_device.token_set.count() == 0
 
 
 @override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
