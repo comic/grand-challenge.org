@@ -4,7 +4,6 @@ import boto3
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
-from django.db.models.fields.files import FieldFile
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.datetime_safe import strftime
@@ -14,7 +13,7 @@ from django_summernote.models import AbstractAttachment
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.storage import copy_s3_object, public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 
@@ -278,29 +277,13 @@ class UserUpload(UUIDModel):
 
     def copy_object(self, *, to_field, save=True):
         """Copies the object to a Django file field on a model"""
-        if not isinstance(to_field, FieldFile):
-            raise ValueError("to_field must be a FieldFile")
-
-        target_client = to_field.storage.connection.meta.client
-        target_bucket = to_field.storage.bucket.name
-        target_key = to_field.field.generate_filename(
-            instance=to_field.instance, filename=self.filename
+        copy_s3_object(
+            to_field=to_field,
+            dest_filename=self.filename,
+            src_key=self.key,
+            src_bucket=self.bucket,
+            save=save,
         )
-        target_key = to_field.storage.get_available_name(
-            name=target_key, max_length=to_field.field.max_length
-        )
-
-        target_client.copy(
-            CopySource={"Bucket": self.bucket, "Key": self.key},
-            Bucket=target_bucket,
-            Key=target_key,
-        )
-
-        to_field.name = target_key
-
-        # Save the object because it has changed, unless save is False
-        if save:
-            to_field.instance.save()
 
     def delete_object(self):
         if self.status != self.StatusChoices.COMPLETED:
