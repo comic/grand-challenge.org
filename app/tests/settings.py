@@ -11,6 +11,7 @@ from config.settings import *  # noqa: F401, F403, E402
 
 SESSION_COOKIE_DOMAIN = ".testserver"
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
+SECURE_SSL_REDIRECT = False
 
 # Speed up token generation in tests
 REST_KNOX[  # noqa F405

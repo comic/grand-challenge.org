@@ -1,10 +1,11 @@
 import pytest
 from actstream.actions import is_following
 
-from grandchallenge.algorithms.forms import AlgorithmForm
+from grandchallenge.algorithms.forms import AlgorithmForm, AlgorithmPublishForm
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmPermissionRequest,
+    Job,
 )
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.utils.access_requests import (
@@ -12,6 +13,8 @@ from grandchallenge.core.utils.access_requests import (
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
@@ -382,3 +385,35 @@ def test_disjoint_interfaces():
     )
     assert form.is_valid() is False
     assert "The sets of Inputs and Outputs must be unique" in str(form.errors)
+
+
+@pytest.mark.django_db
+def test_publish_algorithm():
+    algorithm = AlgorithmFactory()
+
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid() is False
+
+    # add a summary and a mechanism
+    algorithm.summary = "Summary"
+    algorithm.mechanism = "Mechanism"
+    algorithm.save()
+
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid() is False
+
+    # set display editors to true
+    algorithm.display_editors = True
+    algorithm.save()
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid() is False
+
+    # add a public result
+    ai = AlgorithmImageFactory(algorithm=algorithm, ready=True)
+    _ = AlgorithmJobFactory(
+        algorithm_image=ai, status=Job.SUCCESS, public=True
+    )
+    del algorithm.latest_ready_image
+    del algorithm.public_test_case
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid()

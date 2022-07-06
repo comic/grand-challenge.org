@@ -83,6 +83,7 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 
 ANONYMOUS_USER_NAME = "AnonymousUser"
+USER_LOGIN_TIMEOUT_DAYS = 14
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 
@@ -247,7 +248,7 @@ CACHES = {
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
 RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
-DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
+DEFAULT_SCHEME = "https"  # use https in dev and prod
 
 # Workaround for https://github.com/ellmetha/django-machina/issues/219
 ABSOLUTE_URL_OVERRIDES = {
@@ -277,6 +278,7 @@ CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
 CSRF_TRUSTED_ORIGINS = [SESSION_COOKIE_DOMAIN]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = True
 
 # Set the allowed hosts to the cookie domain
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
@@ -293,7 +295,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
 SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
-X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
+X_FRAME_OPTIONS = "DENY"
 # "strict-origin-when-cross-origin" required for uploads for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin"
@@ -401,6 +403,8 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Django-otp middleware must be after the AuthenticationMiddleware.
+    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -411,6 +415,14 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
     "grandchallenge.timezones.middleware.TimezoneMiddleware",
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
+    # 2FA middleware, needs to be after subdomain middleware
+    # TwoFactorMiddleware resets the login flow if another page is loaded
+    # between login and successfully entering two-factor credentials. We're using
+    # a modified version of the original allauth_2fa middleware to pass the
+    # correct urlconf.
+    "grandchallenge.core.middleware.TwoFactorMiddleware",
+    # Force 2FA for staff users
+    "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     # Redirects last as they're a last resort
@@ -480,6 +492,12 @@ THIRD_PARTY_APPS = [
     # Overridden apps
     "grandchallenge.forum_conversation",
     "grandchallenge.forum_member",
+    # Configure the django-otp package
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
+    # Enable two-factor auth
+    "allauth_2fa",
 ]
 
 LOCAL_APPS = [
@@ -576,6 +594,9 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
+
+# django-allauth-2fa
+ALLAUTH_2FA_ALWAYS_REVEAL_BACKUP_TOKENS = False
 
 ##############################################################################
 #
@@ -716,6 +737,7 @@ MARKDOWNX_MARKDOWNIFY_FUNCTION = (
 )
 MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
+MARKDOWNX_EDITOR_RESIZABLE = "False"
 
 HAYSTACK_CONNECTIONS = {
     "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"}
@@ -917,7 +939,7 @@ CELERY_EMAIL_TASK_CONFIG = {"ignore_result": False}
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
-    "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor",
+    "grandchallenge.components.backends.amazon_sagemaker_batch.AmazonSageMakerBatchExecutor",
 )
 COMPONENTS_REGISTRY_URL = os.environ.get(
     "COMPONENTS_REGISTRY_URL", "registry:5000"
@@ -928,8 +950,8 @@ COMPONENTS_REGISTRY_PREFIX = os.environ.get(
 COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
-COMPONENTS_SHIM_IMAGES = strtobool(
-    os.environ.get("COMPONENTS_SHIM_IMAGES", "True")
+COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
+    "GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION"
 )
 COMPONENTS_CREATE_SAGEMAKER_MODEL = strtobool(
     os.environ.get("COMPONENTS_CREATE_SAGEMAKER_MODEL", "False")
@@ -941,42 +963,7 @@ COMPONENTS_OUTPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_OUTPUT_BUCKET_NAME", "grand-challenge-components-outputs"
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10 * GIGABYTE
-COMPONENTS_AMAZON_EFS_BLOCK_SIZE = 16 * MEGABYTE
-COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES = int(
-    os.environ.get(
-        "COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES", 2.1 * TERABYTE
-    )
-)
-COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE = int(
-    os.environ.get("COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE", 100 * GIGABYTE)
-)
-# Minimum of 6 as there is no payback below this
-COMPONENTS_AMAZON_EFS_TARGET_HOURS = max(
-    int(os.environ.get("COMPONENTS_AMAZON_EFS_TARGET_HOURS", 24)), 6
-)
-COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID = os.environ.get(
-    "COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID"
-)
 COMPONENTS_AMAZON_ECR_REGION = os.environ.get("COMPONENTS_AMAZON_ECR_REGION")
-COMPONENTS_AMAZON_ECS_REGION = os.environ.get("COMPONENTS_AMAZON_ECS_REGION")
-COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT", "/mnt/aws-batch-nfs/"
-)
-COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME", ""
-)
-COMPONENTS_AMAZON_ECS_LOGS_REGION = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_LOGS_REGION"
-)
-COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN", ""
-)
-COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN", ""
-)
-COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN", ""
-)
 COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN = os.environ.get(
     "COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN", ""
 )
@@ -1004,9 +991,6 @@ COMPONENTS_PUBLISH_PORTS = strtobool(
 COMPONENTS_PORT_ADDRESS = os.environ.get("COMPONENTS_PORT_ADDRESS", "0.0.0.0")
 
 COMPONENTS_MEMORY_LIMIT = int(os.environ.get("COMPONENTS_MEMORY_LIMIT", "4"))
-COMPONENTS_SHARED_MEMORY_SIZE = int(
-    os.environ.get("COMPONENTS_SHARED_MEMORY_SIZE", "64")
-)
 COMPONENTS_CPU_QUOTA = int(os.environ.get("COMPONENTS_CPU_QUOTA", "100000"))
 COMPONENTS_CPU_PERIOD = int(os.environ.get("COMPONENTS_CPU_PERIOD", "100000"))
 COMPONENTS_PIDS_LIMIT = int(os.environ.get("COMPONENTS_PIDS_LIMIT", "128"))
@@ -1132,9 +1116,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": timedelta(days=1),
     },
-    "update_components_filesystem": {
-        "task": "grandchallenge.components.tasks.update_filesystem",
-        "schedule": timedelta(hours=COMPONENTS_AMAZON_EFS_TARGET_HOURS),
+    "delete_users_who_dont_login": {
+        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
+        "schedule": timedelta(days=1),
+    },
+    "update_phase_statistics": {
+        "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
+        "schedule": timedelta(days=1),
     },
     **{
         f"stop_expired_services_{region}": {
@@ -1162,9 +1150,12 @@ ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 # Number of jobs that can be scheduled in one task
 ALGORITHMS_JOB_BATCH_LIMIT = 256
 # Maximum and minimum values the user can set for algorithm requirements
-# Current limits of 4g/30g are restrictions from the instance types used on ECS
 ALGORITHMS_MIN_MEMORY_GB = 4
 ALGORITHMS_MAX_MEMORY_GB = 30
+# The SageMaker backend currently has a maximum limit of 3600s
+ALGORITHMS_JOB_TIME_LIMIT_SECONDS = os.environ.get(
+    "ALGORITHMS_JOB_TIME_LIMIT_SECONDS", "3600"
+)
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {

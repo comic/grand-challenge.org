@@ -4,14 +4,15 @@ from itertools import chain
 import pytest
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.timezone import now
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.evaluation.tasks import get_average_job_duration_for_phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
-from grandchallenge.pages.views import get_average_job_duration_for_phase
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -321,11 +322,13 @@ def test_create_page_with_same_title(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_challenge_statistics_page_permissions(client):
+def test_challenge_statistics_page_permissions(
+    client, authenticated_staff_user
+):
     challenge = ChallengeFactory()
-    staff = UserFactory(is_staff=True)
-    admin, user = UserFactory.create_batch(2)
+    admin, reviewer, user = UserFactory.create_batch(3)
     challenge.add_admin(admin)
+    assign_perm("challenges.view_challengerequest", reviewer)
 
     response = get_view_for_user(
         viewname="pages:statistics",
@@ -346,7 +349,15 @@ def test_challenge_statistics_page_permissions(client):
     response = get_view_for_user(
         viewname="pages:statistics",
         client=client,
-        user=staff,
+        user=authenticated_staff_user,
+        challenge=challenge,
+    )
+    response.status_code = 200
+
+    response = get_view_for_user(
+        viewname="pages:statistics",
+        client=client,
+        user=reviewer,
         challenge=challenge,
     )
     response.status_code = 200

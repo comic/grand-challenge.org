@@ -75,6 +75,18 @@ from tests.factories import UserFactory
             ],
             nullcontext(),
         ),
+        *[  # All valid orientations
+            (
+                [
+                    {
+                        "viewport_name": "main",
+                        "orientation": orientation,
+                    }
+                ],
+                nullcontext(),
+            )
+            for orientation in ["axial", "coronal", "sagittal"]
+        ],
         # invalid json missing the main viewport
         (
             [

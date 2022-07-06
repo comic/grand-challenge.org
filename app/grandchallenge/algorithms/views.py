@@ -4,6 +4,7 @@ from typing import Dict
 
 import requests
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
@@ -14,7 +15,7 @@ from django.core.exceptions import (
 )
 from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -50,6 +51,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageUpdateForm,
     AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
+    AlgorithmPublishForm,
     AlgorithmRepoForm,
     AlgorithmUpdateForm,
     JobForm,
@@ -916,3 +918,25 @@ class AlgorithmAddRepo(
 
         kwargs.update({"repos": repos})
         return kwargs
+
+
+class AlgorithmPublishView(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = Algorithm
+    form_class = AlgorithmPublishForm
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            "Your algorithm has been published successfully.",
+        )
+        return response

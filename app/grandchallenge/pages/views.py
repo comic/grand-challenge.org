@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.cache import cache
 from django.db.models import Q
 from django.http import Http404
 from django.views.generic import (
@@ -15,8 +16,6 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.algorithms.models import Job
-from grandchallenge.core.mixins import UserIsStaffMixin
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -150,18 +149,9 @@ class PageDelete(
         return super().delete(request, *args, **kwargs)
 
 
-def get_average_job_duration_for_phase(phase):
-    jobs = Job.objects.filter(
-        outputs__evaluation_evaluations_as_input__submission__phase=phase,
-    ).distinct()
-    duration_dict = {
-        "average_duration": jobs.average_duration(),
-        "total_duration": jobs.total_duration(),
-    }
-    return duration_dict
-
-
-class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
+class ChallengeStatistics(
+    LoginRequiredMixin, UserPassesTestMixin, TemplateView
+):
     template_name = "pages/challenge_statistics.html"
 
     def get_context_data(self, **kwargs):
@@ -169,16 +159,16 @@ class ChallengeStatistics(LoginRequiredMixin, UserIsStaffMixin, TemplateView):
         phases = self.request.challenge.phase_set.filter(
             submission_kind=SubmissionKindChoices.ALGORITHM
         ).all()
-        duration_dict = {}
-        for phase in phases:
-            duration_dict[phase.title] = get_average_job_duration_for_phase(
-                phase=phase
-            )
-
         context.update(
             {
-                "average_job_durations": duration_dict,
+                "phases": phases,
+                "statistics_for_phases": cache.get("statistics_for_phases"),
             }
         )
 
         return context
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.has_perm(
+            "challenges.view_challengerequest"
+        )

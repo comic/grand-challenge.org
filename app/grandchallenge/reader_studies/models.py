@@ -1,6 +1,5 @@
 import json
 
-import numpy as np
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -16,7 +15,6 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from simple_history.models import HistoricalRecords
-from sklearn.metrics import accuracy_score
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -42,6 +40,7 @@ from grandchallenge.hanging_protocols.models import ImagePort, ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
+from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
 
 __doc__ = """
@@ -1058,16 +1057,17 @@ class Question(UUIDModel):
         ):
             if len(answer) == 0 and len(ground_truth) == 0:
                 return 1.0
-            ans = np.zeros(max(len(answer), len(ground_truth)), dtype=int)
-            gt = ans.copy()
+
+            elements = max(len(answer), len(ground_truth))
+            ans = [0] * elements
+            gt = [0] * elements
+
             ans[: len(answer)] = answer
             gt[: len(ground_truth)] = ground_truth
         else:
             ans = [answer]
             gt = [ground_truth]
-        return self.SCORING_FUNCTIONS[self.scoring_function](
-            ans, gt, normalize=True
-        )
+        return self.SCORING_FUNCTIONS[self.scoring_function](gt, ans)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

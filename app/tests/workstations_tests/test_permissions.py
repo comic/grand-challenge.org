@@ -46,7 +46,7 @@ def test_create_view_permission(client):
     ],
 )
 def test_workstation_editor_permissions(
-    client, two_workstation_sets, viewname
+    client, two_workstation_sets, viewname, authenticated_staff_user
 ):
     tests = (
         (two_workstation_sets.ws1.editor, 200),
@@ -54,7 +54,7 @@ def test_workstation_editor_permissions(
         (two_workstation_sets.ws2.editor, 403),
         (two_workstation_sets.ws2.user, 403),
         (UserFactory(), 403),
-        (UserFactory(is_staff=True), 403),
+        (authenticated_staff_user, 403),
         (None, 302),
     )
 
@@ -82,14 +82,16 @@ def test_workstation_editor_permissions(
         "session-detail",
     ],
 )
-def test_workstation_user_permissions(client, two_workstation_sets, viewname):
+def test_workstation_user_permissions(
+    client, two_workstation_sets, viewname, authenticated_staff_user
+):
     tests = (
         (two_workstation_sets.ws1.editor, 200),
         (two_workstation_sets.ws1.user, 200),
         (two_workstation_sets.ws2.editor, 403),
         (two_workstation_sets.ws2.user, 403),
         (UserFactory(), 403),
-        (UserFactory(is_staff=True), 403),
+        (authenticated_staff_user, 403),
         (None, 302),
     )
 
@@ -126,7 +128,7 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     ],
 )
 def test_workstation_redirect_permissions(
-    client, two_workstation_sets, viewname
+    client, two_workstation_sets, viewname, authenticated_staff_user
 ):
     # Make ws1 the default
     Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG).delete()
@@ -145,7 +147,7 @@ def test_workstation_redirect_permissions(
         (two_workstation_sets.ws2.editor, 403),
         (two_workstation_sets.ws2.user, 403),
         (UserFactory(), 403),
-        (UserFactory(is_staff=True), 403),
+        (authenticated_staff_user, 403),
         (None, 302),
     )
 
@@ -177,7 +179,9 @@ def test_workstation_redirect_permissions(
 
 
 @pytest.mark.django_db
-def test_session_proxy_permissions(client, two_workstation_sets):
+def test_session_proxy_permissions(
+    client, two_workstation_sets, authenticated_staff_user
+):
     tests = (
         (two_workstation_sets.ws1.editor, 403),
         (two_workstation_sets.ws1.user, 200),
@@ -185,7 +189,7 @@ def test_session_proxy_permissions(client, two_workstation_sets):
         (two_workstation_sets.ws2.editor, 403),
         (two_workstation_sets.ws2.user, 403),
         (UserFactory(), 403),
-        (UserFactory(is_staff=True), 403),
+        (authenticated_staff_user, 403),
         (None, 403),
     )
 
@@ -213,7 +217,9 @@ def test_session_proxy_permissions(client, two_workstation_sets):
 @pytest.mark.parametrize(
     "viewname", ["api:session-detail", "api:session-list"]
 )
-def test_session_api_permissions(client, two_workstation_sets, viewname):
+def test_session_api_permissions(
+    client, two_workstation_sets, viewname, authenticated_staff_user
+):
     tests = (
         (two_workstation_sets.ws1.editor, 200),
         (two_workstation_sets.ws1.user, 200),
@@ -221,7 +227,7 @@ def test_session_api_permissions(client, two_workstation_sets, viewname):
         (two_workstation_sets.ws2.editor, 404),
         (two_workstation_sets.ws2.user, 404),
         (UserFactory(), 404),
-        (UserFactory(is_staff=True), 404),
+        (authenticated_staff_user, 404),
         (None, 404),
     )
 
@@ -252,7 +258,9 @@ def test_session_api_permissions(client, two_workstation_sets, viewname):
 
 
 @pytest.mark.django_db
-def test_session_api_patch_permissions(client, two_workstation_sets):
+def test_session_api_patch_permissions(
+    client, two_workstation_sets, authenticated_staff_user
+):
     tests = (
         (two_workstation_sets.ws1.editor, 200, True),
         (two_workstation_sets.ws1.user, 200, True),
@@ -260,7 +268,7 @@ def test_session_api_patch_permissions(client, two_workstation_sets):
         (two_workstation_sets.ws2.editor, 404, False),
         (two_workstation_sets.ws2.user, 404, False),
         (UserFactory(), 404, False),
-        (UserFactory(is_staff=True), 404, False),
+        (authenticated_staff_user, 404, False),
         (None, 401, False),
     )
 

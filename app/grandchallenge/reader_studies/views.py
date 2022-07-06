@@ -38,6 +38,12 @@ from django.views.generic import (
     View,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
@@ -1027,6 +1033,16 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "unanswered_by_user", OpenApiTypes.BOOL, OpenApiParameter.QUERY
+            ),
+            OpenApiParameter("user", OpenApiTypes.STR, OpenApiParameter.QUERY),
+        ],
+    ),
+)
 class DisplaySetViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
