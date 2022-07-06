@@ -77,7 +77,7 @@ class Build(UUIDModel):
     def add_image_to_algorithm(self):
         # TODO, this would be much faster using S3 copy, can then run on a smaller queue
         with private_s3_storage.open(
-            f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz"
+            f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.xz"
         ) as file:
             with NamedTemporaryFile(delete=True) as tmp_file:
                 with open(tmp_file.name, "wb") as fd:
