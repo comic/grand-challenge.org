@@ -643,8 +643,7 @@ class AmazonSageMakerBatchExecutor(Executor):
             return
         elif return_code == 137:
             raise ComponentException(
-                "The container was killed as it exceeded the memory limit "
-                f"of {self._memory_limit}g."
+                "The container was killed as it consumed all available memory."
             )
         else:
             raise ComponentException(user_error(self.stderr))
