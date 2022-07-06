@@ -520,7 +520,7 @@ class InterfaceKind:
                 "application/vnd.sqlite3",
             )
         elif kind == InterfaceKind.InterfaceKindChoices.OBJ:
-            return ("text/plain",)
+            return ("text/plain", "application/octet-stream")
         elif kind == InterfaceKind.InterfaceKindChoices.MP4:
             return ("video/mp4",)
         else:
