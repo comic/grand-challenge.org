@@ -57,9 +57,10 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
     def test_func(self):
         response = super().test_func()
         if response:
-            if not self.phase.challenge.is_admin(
-                self.request.user
-            ) or not self.phase.challenge.is_participant(self.request.user):
+            if not (
+                self.phase.challenge.is_admin(self.request.user)
+                or self.phase.challenge.is_participant(self.request.user)
+            ):
                 error_message = (
                     "You need to be either an admin or a participant of "
                     "the challenge in order to create an algorithm for this phase."
@@ -100,6 +101,8 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
                     error_message,
                 )
                 return False
+
+            return True
         else:
             return False
 
@@ -647,7 +650,9 @@ class PhaseAlgorithmCreate(
 
     @cached_property
     def phase(self):
-        return Phase.objects.get(pk=self.kwargs["phase_pk"])
+        return Phase.objects.get(
+            slug=self.kwargs["slug"], challenge=self.request.challenge
+        )
 
     def get_success_url(self):
         return (

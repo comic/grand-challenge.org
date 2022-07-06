@@ -258,9 +258,12 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             "Select one of your algorithms to submit as a solution to this "
             "challenge. If you have not created your algorithm yet you can "
             "do so <a href={}>on this page</a>.",
-            reverse_lazy(
+            reverse(
                 "evaluation:phase-algorithm-create",
-                kwargs={"slug": phase.slug},
+                kwargs={
+                    "slug": phase.slug,
+                    "challenge_short_name": phase.challenge.short_name,
+                },
             ),
         )
 

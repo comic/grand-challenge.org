@@ -6,9 +6,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
-from config import settings
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -16,12 +14,8 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
 )
-from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.components_tests.factories import ComponentInterfaceFactory
-from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import UserFactory, WorkstationConfigFactory
-from tests.hanging_protocols_tests.factories import HangingProtocolFactory
+from tests.factories import UserFactory
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
@@ -545,147 +539,3 @@ class TestJobDetailView:
             assert content in response.rendered_content
 
             remove_perm(permission, u, permission_object)
-
-
-@pytest.mark.django_db
-def test_create_algorithm_for_phase_permission(client):
-    phase = PhaseFactory()
-    admin, participant, user = UserFactory.create_batch(3)
-    phase.challenge.add_admin(admin)
-    phase.challenge.add_participant(participant)
-
-    # admin can make a submission only if they are verified
-    # and if the phase has been configured properly
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        user=admin,
-    )
-    assert response.status_code == 403
-    assert (
-        "You need to verify your account before you can do this, you can request this from your profile page."
-        in str(response.content)
-    )
-
-    VerificationFactory(user=admin, is_verified=True)
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        user=admin,
-    )
-    assert response.status_code == 403
-    assert "This phase is not configured for algorithm submission" in str(
-        response.content
-    )
-
-    phase.submission_kind = SubmissionKindChoices.ALGORITHM
-    phase.creator_must_be_verified = True
-    phase.archive = ArchiveFactory()
-    phase.algorithm_inputs.set([ComponentInterfaceFactory()])
-    phase.algorithm_outputs.set([ComponentInterfaceFactory()])
-    phase.save()
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        user=admin,
-    )
-    assert response.status_code == 200
-
-    # participant can only create algorithm when verified,
-    # when phase is open for submission and
-    # when the phase has been configured properly (already the case here)
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        user=participant,
-    )
-    assert response.status_code == 403
-    assert (
-        "You need to verify your account before you can do this, you can request this from your profile page."
-        in str(response.content)
-    )
-
-    VerificationFactory(user=participant, is_verified=True)
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        user=participant,
-    )
-    assert response.status_code == 403
-    assert "The phase is currently not open for submissions." in str(
-        response.content
-    )
-
-    phase.submission_limit = 1
-    phase.save()
-
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        user=participant,
-    )
-    assert response.status_code == 200
-
-    # normal user cannot create algorithm for phase
-    VerificationFactory(user=user, is_verified=True)
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        user=user,
-    )
-    assert response.status_code == 403
-    assert (
-        "You need to be either an admin or a participant of the challenge in order to create an algorithm for this phase."
-        in str(response.content)
-    )
-
-
-@pytest.mark.django_db
-def test_create_algorithm_for_phase_presets(client):
-    phase = PhaseFactory()
-    admin = UserFactory()
-    phase.challenge.add_admin(admin)
-    VerificationFactory(user=admin, is_verified=True)
-
-    phase.submission_kind = SubmissionKindChoices.ALGORITHM
-    phase.creator_must_be_verified = True
-    phase.archive = ArchiveFactory()
-    ci1 = ComponentInterfaceFactory()
-    ci2 = ComponentInterfaceFactory()
-    phase.algorithm_inputs.set([ci1])
-    phase.algorithm_outputs.set([ci2])
-    phase.hanging_protocol = HangingProtocolFactory()
-    phase.workstation_config = WorkstationConfigFactory()
-    phase.view_content = {"main": ci1.slug}
-    phase.save()
-
-    response = get_view_for_user(
-        viewname="evaluation:phase-algorithm-create",
-        reverse_kwargs={"slug": phase.slug},
-        client=client,
-        method=client.post,
-        user=admin,
-        data={
-            "title": "Test algorithm",
-            "image_requires_memory_gb": 1,
-        },
-    )
-    assert response.status_code == 302
-    assert Algorithm.objects.count() == 1
-    algorithm = Algorithm.objects.get()
-    assert algorithm.inputs.get() == ci1
-    assert algorithm.outputs.get() == ci2
-    assert algorithm.hanging_protocol == phase.hanging_protocol
-    assert algorithm.workstation_config == phase.workstation_config
-    assert algorithm.view_content == phase.view_content
-    assert algorithm.contact_email == admin.email
-    assert algorithm.logo == phase.challenge.logo
-    assert algorithm.display_editors
-    assert algorithm.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
