@@ -642,9 +642,7 @@ class AmazonSageMakerBatchExecutor(Executor):
             # Job's a good un
             return
         elif return_code == 137:
-            raise ComponentException(
-                "The container was killed as it consumed all available memory."
-            )
+            raise ComponentException("The container ran out of memory.")
         else:
             raise ComponentException(user_error(self.stderr))
 
