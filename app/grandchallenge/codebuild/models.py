@@ -75,7 +75,7 @@ class Build(UUIDModel):
     def add_image_to_algorithm(self):
         copy_s3_object(
             to_field=self.algorithm_image.image,
-            dest_filename=f"{str(self.pk)}.tar.gz",
+            dest_filename=f"{str(self.pk)}.tar.xz",
             src_bucket=private_s3_storage.storage.bucket.name,
             src_key=f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.xz",
             save=True,
