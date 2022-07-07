@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from grandchallenge.algorithms.exceptions import ImageImportError
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -119,16 +119,8 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
         str(answer.answer["upload_session_pk"]).casefold()
         == str(upload_session_pk).casefold()
     ):
-        image_file = image.files.filter(
-            image_type__in=[
-                ImageFile.IMAGE_TYPE_MHD,
-                ImageFile.IMAGE_TYPE_TIFF,
-            ]
-        ).get()
         try:
-            question._validate_pixel_values(
-                image_file.file, image_file.image_type
-            )
+            question._validate_pixel_values(image)
         except ValidationError as e:
             upload_session = RawImageUploadSession.objects.get(
                 pk=upload_session_pk

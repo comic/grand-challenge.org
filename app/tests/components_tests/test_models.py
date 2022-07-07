@@ -7,6 +7,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import (
@@ -18,10 +19,6 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.cases_tests.factories import (
-    ImageFileFactoryWithMask,
-    ImageFileFactoryWithTiff,
-)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -756,22 +753,25 @@ def test_clean_overlay_segments():
 @pytest.mark.django_db
 def test_validate_pixel_values():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
-    file = ImageFileFactoryWithTiff()
-    assert ci._validate_pixel_values(file.file, file.image_type) is None
+    im = ImageFactory(segments=None)
+    assert ci._validate_pixel_values(im) is None
 
     ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci.save()
 
-    file = ImageFileFactoryWithTiff()
-    with pytest.raises(ValidationError) as e:
-        ci._validate_pixel_values(file.file, file.image_type)
-    assert e.value.message == (
-        "Only MHA type files are supported for segmentation"
+    error_msg = (
+        "Image segments could not be determined, ensure the file is "
+        "not a tiff file, its pixel values are integers and that it "
+        f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
     )
-
-    file = ImageFileFactoryWithMask()
+    im = ImageFactory(segments=None)
     with pytest.raises(ValidationError) as e:
-        ci._validate_pixel_values(file.file, file.image_type)
+        ci._validate_pixel_values(im)
+    assert e.value.message == error_msg
+
+    im = ImageFactory(segments=[0, 1])
+    with pytest.raises(ValidationError) as e:
+        ci._validate_pixel_values(im)
     assert e.value.message == (
         "Segmentation does not match pixel values provided in overlay segments."
     )
@@ -781,5 +781,5 @@ def test_validate_pixel_values():
         {"name": "s2", "visible": True, "voxel_value": 1},
     ]
     ci.save()
-    file = ImageFileFactoryWithMask()
-    assert ci._validate_pixel_values(file.file, file.image_type) is None
+    im = ImageFactory(segments=[0, 1])
+    assert ci._validate_pixel_values(im) is None

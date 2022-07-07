@@ -7,7 +7,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
-import numpy as np
 from celery import signature
 from django import forms
 from django.conf import settings
@@ -29,8 +28,7 @@ from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
-from panimg.image_builders.metaio_utils import load_sitk_image
-from SimpleITK import GetArrayViewFromImage
+from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
@@ -558,18 +556,16 @@ class OverlaySegmentsMixin(models.Model):
     def pixel_values(self):
         return [x["voxel_value"] for x in self.overlay_segments]
 
-    def _validate_pixel_values(self, image_file, image_type):
+    def _validate_pixel_values(self, image):
         if not self.overlay_segments:
             return
-        if image_type != ImageFile.IMAGE_TYPE_MHD:
+        if image.segments is None:
             raise ValidationError(
-                "Only MHA type files are supported for segmentation"
+                "Image segments could not be determined, ensure the file is "
+                "not a tiff file, its pixel values are integers and that it "
+                f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
             )
-        with NamedTemporaryFile() as ntf:
-            ntf.write(image_file.read())
-            sitk_img = load_sitk_image(Path(ntf.name))
-        pixel_values = np.unique(GetArrayViewFromImage(sitk_img))
-        if not set(pixel_values).issubset(self.pixel_values):
+        if not set(image.segments).issubset(self.pixel_values):
             raise ValidationError(
                 "Segmentation does not match pixel values provided in overlay segments."
             )
@@ -863,18 +859,18 @@ class ComponentInterfaceValue(models.Model):
         return self.interface.kind == InterfaceKindChoices.ZIP
 
     @cached_property
-    def _image_file(self):
-        return self.image.files.filter(
-            image_type__in=[
-                ImageFile.IMAGE_TYPE_MHD,
-                ImageFile.IMAGE_TYPE_TIFF,
-            ]
-        ).get()
-
-    @cached_property
     def image_file(self):
         """The single image file for this interface"""
-        return self._image_file.file
+        return (
+            self.image.files.filter(
+                image_type__in=[
+                    ImageFile.IMAGE_TYPE_MHD,
+                    ImageFile.IMAGE_TYPE_TIFF,
+                ]
+            )
+            .get()
+            .file
+        )
 
     @property
     def input_file(self):
@@ -912,12 +908,10 @@ class ComponentInterfaceValue(models.Model):
     def clean(self):
         super().clean()
 
-        if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
-            self.interface._validate_pixel_values(
-                self.image_file, self._image_file.image_type
-            )
         if self.interface.is_image_kind:
             self._validate_image_only()
+            if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
+                self.interface._validate_pixel_values(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()
         else:
