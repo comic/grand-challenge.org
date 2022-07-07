@@ -384,7 +384,7 @@ class AlgorithmExecutionSessionCreate(
             {
                 "linked_task": create_algorithm_jobs_for_session.signature(
                     kwargs={
-                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk
+                        "algorithm_image_pk": self.algorithm.latest_executable_image.pk
                     },
                     immutable=True,
                 )
@@ -396,7 +396,7 @@ class AlgorithmExecutionSessionCreate(
         return self.algorithm
 
     def get_initial(self):
-        if self.algorithm.latest_ready_image is None:
+        if self.algorithm.latest_executable_image is None:
             raise Http404()
         return super().get_initial()
 
@@ -462,7 +462,7 @@ class AlgorithmExperimentCreate(
 
         job = Job.objects.create(
             creator=self.request.user,
-            algorithm_image=self.algorithm.latest_ready_image,
+            algorithm_image=self.algorithm.latest_executable_image,
         )
 
         # TODO AUG2021 JM permission management should be done in 1 place

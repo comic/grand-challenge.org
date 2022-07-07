@@ -52,7 +52,7 @@ def update_sagemaker_shim_version():
         ):
             model = apps.get_model(app_label=app_label, model_name=model_name)
 
-            for instance in model.objects.filter(ready=True).exclude(
+            for instance in model.objects.executable_images().exclude(
                 latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
             ):
                 on_commit(
@@ -73,7 +73,7 @@ def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     instance = model.objects.get(pk=pk)
 
     if (
-        instance.ready
+        instance.can_execute
         and instance.SHIM_IMAGE
         and instance.latest_shimmed_version
         != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
@@ -107,30 +107,39 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     try:
         image_sha256 = _validate_docker_image_manifest(instance=instance)
+        instance.is_manifest_valid = True
     except ValidationError as e:
         model.objects.filter(pk=instance.pk).update(
-            image_sha256="", ready=False, status=oxford_comma(e)
+            image_sha256="", is_manifest_valid=False, status=oxford_comma(e)
         )
         send_invalid_dockerfile_email(container_image=instance)
         return
 
     push_container_image(instance=instance)
+    instance.is_in_registry = True
 
     if instance.SHIM_IMAGE:
         shim_container_image(instance=instance)
 
         if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
             # Only create SageMaker models for shimmed images for now
+            # See ComponentImageManager
             create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+            instance.is_on_sagemaker = True
 
     model.objects.filter(pk=instance.pk).update(
         image_sha256=image_sha256,
         latest_shimmed_version=instance.latest_shimmed_version,
-        ready=True,
+        is_manifest_valid=instance.is_manifest_valid,
+        is_in_registry=instance.is_in_registry,
+        is_on_sagemaker=instance.is_on_sagemaker,
     )
 
 
 def push_container_image(*, instance):
+    if not instance.is_manifest_valid:
+        raise RuntimeError("Cannot push invalid instance to registry")
+
     with NamedTemporaryFile(suffix=".tar") as o:
         with instance.image.open(mode="rb") as im:
             # Rewrite to tar as crane cannot handle gz
@@ -170,6 +179,11 @@ def _repo_login_and_run(*, command):
 
 def shim_container_image(*, instance):
     """Patches a container image with the SageMaker Shim executable"""
+
+    if not instance.is_in_registry:
+        raise RuntimeError(
+            "The instance must be in the registry to create a SageMaker model"
+        )
 
     # Set the new version, so we can then get the value of the new tag.
     # Do not save the instance until the container image has been mutated.
@@ -492,7 +506,7 @@ def execute_job(  # noqa: C901
         deprovision_job.signature(**job.signature_kwargs).apply_async()
         raise PriorStepFailed("Job is not set to be executed")
 
-    if not job.container.ready:
+    if not job.container.can_execute:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
         raise PriorStepFailed(msg)

@@ -77,9 +77,11 @@ def test_get_workstation_image_or_404():
         slug=settings.DEFAULT_WORKSTATION_SLUG
     )
     default_wsi = WorkstationImageFactory(
-        workstation=default_workstation, ready=True
+        workstation=default_workstation,
+        is_manifest_valid=True,
+        is_in_registry=True,
     )
-    wsi = WorkstationImageFactory(ready=True)
+    wsi = WorkstationImageFactory(is_manifest_valid=True, is_in_registry=True)
 
     found_wsi = get_workstation_image_or_404()
     assert found_wsi == default_wsi

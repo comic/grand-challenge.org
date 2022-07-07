@@ -49,7 +49,7 @@
                             href="{% url 'profile-detail' method.creator.username %}">{{ method.creator }}</a>
                     </td>
                     <td>{{ method.image_sha256 }}</td>
-                    <td>{{ method.ready }}</td>
+                    <td>{{ method.can_execute }}</td>
                     <td>{{ method.status }}</td>
                 </tr>
             {% endfor %}

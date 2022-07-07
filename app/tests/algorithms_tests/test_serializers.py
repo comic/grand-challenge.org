@@ -106,7 +106,9 @@ def test_algorithm_job_post_serializer_validations(
             kind=ComponentInterface.Kind.STRING, title="TestInterface 2"
         ),
     }
-    algorithm_image = AlgorithmImageFactory(ready=image_ready)
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=image_ready, is_in_registry=image_ready
+    )
     algorithm_image.algorithm.title = title
     algorithm_image.algorithm.inputs.set(
         [interfaces[title] for title in algorithm_interface_titles]
@@ -154,7 +156,9 @@ def test_algorithm_job_post_serializer_create(rf):
     upload_2.image_set.set([image])
     assign_perm("view_image", user, image)
     assert user.has_perm("view_image", image)
-    algorithm_image = AlgorithmImageFactory(ready=True)
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True
+    )
     interfaces = {
         ComponentInterfaceFactory(
             kind=ComponentInterface.Kind.STRING,

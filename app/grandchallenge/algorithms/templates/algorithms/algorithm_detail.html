@@ -42,7 +42,7 @@
                    aria-controls="v-pills-containers"
                    aria-selected="false">
                     {# @formatter:off #}
-                    <i class="fab fa-docker fa-fw"></i>&nbsp;Containers{% if not object.latest_ready_image %}&nbsp;
+                    <i class="fab fa-docker fa-fw"></i>&nbsp;Containers{% if not object.latest_executable_image %}&nbsp;
                     <i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
                     {# @formatter:on #}
                 </a>
@@ -61,7 +61,7 @@
                 </a>
             {% endif %}
 
-            {% if "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
+            {% if "execute_algorithm" in algorithm_perms and object.latest_executable_image %}
                 {% if object.supports_batch_upload %}
                     <a class="nav-link"
                        href="{% url 'algorithms:execution-session-create-batch' slug=object.slug %}">
@@ -164,14 +164,14 @@
                     <div class="col-9"><a href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a></div>
                 </div>
             {% endif %}
-            {% if object.latest_ready_image %}
+            {% if object.latest_executable_image %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Version:</div>
-                    <div class="col-9">{{ object.latest_ready_image.pk }}</div>
+                    <div class="col-9">{{ object.latest_executable_image.pk }}</div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Last updated:</div>
-                    <div class="col-9">{{ object.latest_ready_image.created }}</div>
+                    <div class="col-9">{{ object.latest_executable_image.created }}</div>
                 </div>
             {% endif %}
             {% if object.publications.all %}
@@ -354,7 +354,7 @@
 
                 <h2>Container Images</h2>
 
-                {% if not object.latest_ready_image %}
+                {% if not object.latest_executable_image %}
                     <p>
                         You need to link your algorithm to a GitHub repo and create a new tag,
                         or upload a valid algorithm container image.
@@ -409,7 +409,7 @@
                             {% else %}
                                 Container image uploaded by {{ image.creator }} {{ image.created|naturaltime }}
                             {% endif %}
-                            {% if image.ready and image == object.latest_ready_image %}
+                            {% if image.can_execute and image == object.latest_executable_image %}
                                 <span class="badge badge-success">
                                     Active
                                 </span>

@@ -1278,10 +1278,27 @@ class ImportStatusChoices(IntegerChoices):
     COMPLETED = 6, "Completed"
 
 
+class ComponentImageManager(models.Manager):
+    def executable_images(self):
+        queryset = self.filter(is_manifest_valid=True, is_in_registry=True)
+
+        if (
+            self.model.SHIM_IMAGE
+            and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
+        ):
+            # SageMaker models are only created for shimmed images
+            # See validate_docker_image
+            return queryset.filter(is_on_sagemaker=True)
+        else:
+            return queryset
+
+
 class ComponentImage(models.Model):
     SHIM_IMAGE = True
 
     ImportStatusChoices = ImportStatusChoices
+
+    objects = ComponentImageManager()
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -1319,7 +1336,7 @@ class ComponentImage(models.Model):
         default=ImportStatusChoices.INITIALIZED,
         db_index=True,
     )
-    manifest_is_valid = models.BooleanField(
+    is_manifest_valid = models.BooleanField(
         default=None,
         null=True,
         editable=False,
@@ -1353,13 +1370,21 @@ class ComponentImage(models.Model):
         super().__init__(*args, **kwargs)
         self._image_orig = self.image
 
+    @cached_property
+    def can_execute(self):
+        return (
+            self.__class__.objects.executable_images()
+            .filter(pk=self.pk)
+            .exists()
+        )
+
     def save(self, *args, **kwargs):
         if self.image != self._image_orig:
-            self.ready = False
+            self.is_manifest_valid = None
 
         super().save(*args, **kwargs)
 
-        if not self.ready:
+        if self.is_manifest_valid is None:
             on_commit(
                 lambda: validate_docker_image.apply_async(
                     kwargs={

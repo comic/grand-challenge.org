@@ -30,7 +30,7 @@
 
     {% get_obj_perms request.user for object as "algorithm_image_perms" %}
 
-    {% if object.ready and "change_algorithmimage" in algorithm_image_perms %}
+    {% if object.can_execute and "change_algorithmimage" in algorithm_image_perms %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
@@ -69,8 +69,8 @@
 
         <dt>Ready</dt>
         <dd>
-            <span class="badge badge-{{ object.ready|yesno:'success,danger' }}">
-                {{ object.ready }}
+            <span class="badge badge-{{ object.can_execute|yesno:'success,danger' }}">
+                {{ object.can_execute }}
             </span>
         </dd>
 

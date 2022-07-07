@@ -370,7 +370,7 @@ def test_average_job_duration_calculation():
         2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
     )
 
-    ai = AlgorithmImageFactory(ready=True)
+    ai = AlgorithmImageFactory()
 
     j1 = AlgorithmJobFactory(
         algorithm_image=ai,

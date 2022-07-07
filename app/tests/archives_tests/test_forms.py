@@ -275,7 +275,9 @@ def test_archive_item_form(client, settings):
     assert Job.objects.count() == 0
 
     alg = AlgorithmFactory()
-    AlgorithmImageFactory(algorithm=alg, ready=True)
+    AlgorithmImageFactory(
+        algorithm=alg, is_manifest_valid=True, is_in_registry=True
+    )
     alg.inputs.set([ci])
     with capture_on_commit_callbacks(execute=True):
         archive.algorithms.add(alg)
