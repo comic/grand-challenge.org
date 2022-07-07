@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models.fields.files import FieldFile
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import filepath_to_uri
 from django.utils.text import get_valid_filename
@@ -150,3 +151,30 @@ def get_mugshot_path(instance, filename):
     time_prefix = now().strftime("%Y/%m/%d")
     extension = filename.split(".")[-1].lower()
     return f"mugshots/{time_prefix}/{uuid4()}.{extension}"
+
+
+def copy_s3_object(*, to_field, dest_filename, src_bucket, src_key, save):
+    """Copies an S3 object to a Django file field on a model"""
+    if not isinstance(to_field, FieldFile):
+        raise ValueError("to_field must be a FieldFile")
+
+    target_client = to_field.storage.connection.meta.client
+    target_bucket = to_field.storage.bucket.name
+    target_key = to_field.field.generate_filename(
+        instance=to_field.instance, filename=dest_filename
+    )
+    target_key = to_field.storage.get_available_name(
+        name=target_key, max_length=to_field.field.max_length
+    )
+
+    target_client.copy(
+        CopySource={"Bucket": src_bucket, "Key": src_key},
+        Bucket=target_bucket,
+        Key=target_key,
+    )
+
+    to_field.name = target_key
+
+    # Save the object because it has changed, unless save is False
+    if save:
+        to_field.instance.save()

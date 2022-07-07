@@ -939,7 +939,7 @@ CELERY_EMAIL_TASK_CONFIG = {"ignore_result": False}
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
-    "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor",
+    "grandchallenge.components.backends.amazon_sagemaker_batch.AmazonSageMakerBatchExecutor",
 )
 COMPONENTS_REGISTRY_URL = os.environ.get(
     "COMPONENTS_REGISTRY_URL", "registry:5000"
@@ -949,9 +949,6 @@ COMPONENTS_REGISTRY_PREFIX = os.environ.get(
 )
 COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
-)
-COMPONENTS_SHIM_IMAGES = strtobool(
-    os.environ.get("COMPONENTS_SHIM_IMAGES", "True")
 )
 COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
     "GRAND_CHALLENGE_SAGEMAKER_SHIM_VERSION"
@@ -966,42 +963,7 @@ COMPONENTS_OUTPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_OUTPUT_BUCKET_NAME", "grand-challenge-components-outputs"
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10 * GIGABYTE
-COMPONENTS_AMAZON_EFS_BLOCK_SIZE = 16 * MEGABYTE
-COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES = int(
-    os.environ.get(
-        "COMPONENTS_AMAZON_EFS_BALANCE_TARGET_BYTES", 2.1 * TERABYTE
-    )
-)
-COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE = int(
-    os.environ.get("COMPONENTS_AMAZON_EFS_MAX_FILE_SIZE", 100 * GIGABYTE)
-)
-# Minimum of 6 as there is no payback below this
-COMPONENTS_AMAZON_EFS_TARGET_HOURS = max(
-    int(os.environ.get("COMPONENTS_AMAZON_EFS_TARGET_HOURS", 24)), 6
-)
-COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID = os.environ.get(
-    "COMPONENTS_AMAZON_EFS_FILE_SYSTEM_ID"
-)
 COMPONENTS_AMAZON_ECR_REGION = os.environ.get("COMPONENTS_AMAZON_ECR_REGION")
-COMPONENTS_AMAZON_ECS_REGION = os.environ.get("COMPONENTS_AMAZON_ECS_REGION")
-COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_NFS_MOUNT_POINT", "/mnt/aws-batch-nfs/"
-)
-COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_LOG_GROUP_NAME", ""
-)
-COMPONENTS_AMAZON_ECS_LOGS_REGION = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_LOGS_REGION"
-)
-COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_CPU_CLUSTER_ARN", ""
-)
-COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_GPU_CLUSTER_ARN", ""
-)
-COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN = os.environ.get(
-    "COMPONENTS_AMAZON_ECS_TASK_ROLE_ARN", ""
-)
 COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN = os.environ.get(
     "COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN", ""
 )
@@ -1029,9 +991,6 @@ COMPONENTS_PUBLISH_PORTS = strtobool(
 COMPONENTS_PORT_ADDRESS = os.environ.get("COMPONENTS_PORT_ADDRESS", "0.0.0.0")
 
 COMPONENTS_MEMORY_LIMIT = int(os.environ.get("COMPONENTS_MEMORY_LIMIT", "4"))
-COMPONENTS_SHARED_MEMORY_SIZE = int(
-    os.environ.get("COMPONENTS_SHARED_MEMORY_SIZE", "64")
-)
 COMPONENTS_CPU_QUOTA = int(os.environ.get("COMPONENTS_CPU_QUOTA", "100000"))
 COMPONENTS_CPU_PERIOD = int(os.environ.get("COMPONENTS_CPU_PERIOD", "100000"))
 COMPONENTS_PIDS_LIMIT = int(os.environ.get("COMPONENTS_PIDS_LIMIT", "128"))
@@ -1157,12 +1116,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": timedelta(days=1),
     },
-    "update_components_filesystem": {
-        "task": "grandchallenge.components.tasks.update_filesystem",
-        "schedule": timedelta(hours=COMPONENTS_AMAZON_EFS_TARGET_HOURS),
-    },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
+        "schedule": timedelta(days=1),
+    },
+    "update_phase_statistics": {
+        "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
         "schedule": timedelta(days=1),
     },
     **{

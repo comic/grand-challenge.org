@@ -1,15 +1,13 @@
 import gzip
-from tempfile import NamedTemporaryFile
 
 import boto3
 from django.conf import settings
-from django.core import files
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import private_s3_storage
+from grandchallenge.core.storage import copy_s3_object, private_s3_storage
 from grandchallenge.github.models import GitHubWebhookMessage
 
 
@@ -75,20 +73,13 @@ class Build(UUIDModel):
             self.build_log = "Log file not available."
 
     def add_image_to_algorithm(self):
-        # TODO, this would be much faster using S3 copy, can then run on a smaller queue
-        with private_s3_storage.open(
-            f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.gz"
-        ) as file:
-            with NamedTemporaryFile(delete=True) as tmp_file:
-                with open(tmp_file.name, "wb") as fd:
-                    for chunk in file.chunks():
-                        fd.write(chunk)
-
-                tmp_file.flush()
-                temp_file = files.File(tmp_file, name=f"{str(self.pk)}.tar.gz")
-
-                self.algorithm_image.image = temp_file
-                self.algorithm_image.save()
+        copy_s3_object(
+            to_field=self.algorithm_image.image,
+            dest_filename=f"{str(self.pk)}.tar.xz",
+            src_bucket=private_s3_storage.bucket.name,
+            src_key=f"codebuild/artifacts/{self.build_number}/{self.build_config['projectName']}/container-image.tar.xz",
+            save=True,
+        )
 
     def _create_build(self):
         self.build_config = {

@@ -697,36 +697,137 @@ def test_runtime_metrics_chart():
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "width": "container",
         "padding": 0,
+        "title": "ml.m5.large / 2 CPU / 8 GB Memory / No GPU",
         "data": {
             "values": [
                 {
                     "Metric": "CPUUtilization",
                     "Timestamp": "2022-06-09T09:38:00+00:00",
-                    "Percent": 0.677884,
+                    "Percent": 0.00677884,
                 },
                 {
                     "Metric": "CPUUtilization",
                     "Timestamp": "2022-06-09T09:37:00+00:00",
-                    "Percent": 0.130367,
+                    "Percent": 0.00130367,
                 },
                 {
                     "Metric": "MemoryUtilization",
                     "Timestamp": "2022-06-09T09:38:00+00:00",
-                    "Percent": 1.14447,
+                    "Percent": 0.0114447,
                 },
                 {
                     "Metric": "MemoryUtilization",
                     "Timestamp": "2022-06-09T09:37:00+00:00",
-                    "Percent": 0.875619,
+                    "Percent": 0.00875619,
                 },
             ]
         },
-        "mark": {"type": "line", "point": True},
-        "encoding": {
-            "x": {"timeUnit": "hoursminutesseconds", "field": "Timestamp"},
-            "y": {"field": "Percent", "type": "quantitative"},
-            "color": {"field": "Metric", "type": "nominal"},
-        },
+        "layer": [
+            {
+                "transform": [
+                    {"calculate": "100*datum.Percent", "as": "Percent100"},
+                ],
+                "encoding": {
+                    "x": {
+                        "timeUnit": "hoursminutesseconds",
+                        "field": "Timestamp",
+                        "title": "Local Time / HH:MM:SS",
+                    },
+                    "y": {
+                        "field": "Percent100",
+                        "type": "quantitative",
+                        "title": "Utilization / %",
+                    },
+                    "color": {"field": "Metric", "type": "nominal"},
+                },
+                "layer": [
+                    {"mark": "line"},
+                    {
+                        "transform": [
+                            {"filter": {"param": "hover", "empty": False}}
+                        ],
+                        "mark": "point",
+                    },
+                ],
+            },
+            {
+                "transform": [
+                    {
+                        "pivot": "Metric",
+                        "value": "Percent",
+                        "groupby": ["Timestamp"],
+                    }
+                ],
+                "mark": "rule",
+                "encoding": {
+                    "opacity": {
+                        "condition": {
+                            "value": 0.3,
+                            "param": "hover",
+                            "empty": False,
+                        },
+                        "value": 0,
+                    },
+                    "tooltip": [
+                        {
+                            "field": "CPUUtilization",
+                            "type": "quantitative",
+                            "format": ".2%",
+                        },
+                        {
+                            "field": "MemoryUtilization",
+                            "type": "quantitative",
+                            "format": ".2%",
+                        },
+                    ],
+                    "x": {
+                        "timeUnit": "hoursminutesseconds",
+                        "field": "Timestamp",
+                        "title": "Local Time / HH:MM:SS",
+                    },
+                },
+                "params": [
+                    {
+                        "name": "hover",
+                        "select": {
+                            "type": "point",
+                            "fields": ["Timestamp"],
+                            "nearest": True,
+                            "on": "mouseover",
+                            "clear": "mouseout",
+                        },
+                    }
+                ],
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "rule", "strokeDash": [8, 8]},
+                "encoding": {"y": {"datum": 200}},
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "text", "baseline": "line-bottom"},
+                "encoding": {
+                    "text": {"datum": "CPU Utilization Limit"},
+                    "y": {"datum": 200},
+                },
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "rule", "strokeDash": [8, 8]},
+                "encoding": {"y": {"datum": 100}},
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "text", "baseline": "line-bottom"},
+                "encoding": {
+                    "text": {
+                        "datum": "Memory / GPU / GPU Memory Utilization Limit"
+                    },
+                    "y": {"datum": 100},
+                },
+            },
+        ],
     }
 
 

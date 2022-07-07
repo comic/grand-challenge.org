@@ -50,7 +50,7 @@ uvicorn = {version = "*", extras = ["standard"]}
 django-celery-email = "*"
 "psycopg2" = "*"
 "django-select2" = "*"
-django-celery-results = "*"
+django-celery-results = "!=2.4.0"
 django-summernote = "*"
 bleach = { extras = ["css"], version = "*" }
 jsonschema = "*"
