@@ -14,15 +14,33 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-from panimg.models import ColorSpace, ImageType, PatientSex
+from panimg.models import (
+    MAXIMUM_SEGMENTS_LENGTH,
+    ColorSpace,
+    ImageType,
+    PatientSex,
+)
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
+
+
+SEGMENTS_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "array",
+    "title": "The Segments Schema",
+    "items": {
+        "$id": "#/items",
+        "type": "integer",
+        "maxItems": MAXIMUM_SEGMENTS_LENGTH,
+    },
+}
 
 
 class RawImageUploadSession(UUIDModel):
@@ -277,7 +295,11 @@ class Image(UUIDModel):
     series_description = models.CharField(
         max_length=64, default="", blank=True
     )
-
+    segments = models.JSONField(
+        null=True,
+        blank=True,
+        validators=[JSONValidator(schema=SEGMENTS_SCHEMA)],
+    )
     eye_choice = models.CharField(
         max_length=2,
         choices=EYE_CHOICES,
