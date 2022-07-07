@@ -17,14 +17,21 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "pk",
         "created",
         "creator",
-        "ready",
+        "is_manifest_valid",
+        "is_in_registry",
+        "is_on_sagemaker",
         "image_sha256",
         "requires_gpu",
         "requires_memory_gb",
         "status",
         "latest_shimmed_version",
     )
-    list_filter = ("ready", "requires_gpu")
+    list_filter = (
+        "requires_gpu",
+        "is_manifest_valid",
+        "is_in_registry",
+        "is_on_sagemaker",
+    )
     search_fields = ("pk", "creator__username", "image_sha256")
 
 
