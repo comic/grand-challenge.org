@@ -20,6 +20,7 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "is_manifest_valid",
         "is_in_registry",
         "is_on_sagemaker",
+        "import_status",
         "image_sha256",
         "requires_gpu",
         "requires_memory_gb",
@@ -31,6 +32,7 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "is_manifest_valid",
         "is_in_registry",
         "is_on_sagemaker",
+        "import_status",
     )
     search_fields = ("pk", "creator__username", "image_sha256")
 
