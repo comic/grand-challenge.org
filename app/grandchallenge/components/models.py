@@ -1382,6 +1382,9 @@ class ComponentImage(models.Model):
         if self.image != self._image_orig:
             self.is_manifest_valid = None
 
+        if self.is_manifest_valid is None:
+            self.import_status = ImportStatusChoices.QUEUED
+
         super().save(*args, **kwargs)
 
         if self.is_manifest_valid is None:

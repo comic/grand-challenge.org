@@ -110,7 +110,10 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         instance.is_manifest_valid = True
     except ValidationError as e:
         model.objects.filter(pk=instance.pk).update(
-            image_sha256="", is_manifest_valid=False, status=oxford_comma(e)
+            image_sha256="",
+            is_manifest_valid=False,
+            status=oxford_comma(e),
+            import_status=instance.ImportStatusChoices.COMPLETED,
         )
         send_invalid_dockerfile_email(container_image=instance)
         return
@@ -133,6 +136,7 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         is_manifest_valid=instance.is_manifest_valid,
         is_in_registry=instance.is_in_registry,
         is_on_sagemaker=instance.is_on_sagemaker,
+        import_status=instance.ImportStatusChoices.COMPLETED,
     )
 
 
