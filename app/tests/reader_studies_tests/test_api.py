@@ -1084,7 +1084,7 @@ def test_assign_answer_image(client, settings, overlay_segments, error):
             data={"answer": str(answer.pk), "uploads": [upload.api_url]},
             content_type="application/json",
         )
-    # assert response.status_code == 201
+    assert response.status_code == 201
 
     # Validate
     answer.refresh_from_db()
