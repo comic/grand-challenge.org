@@ -4,7 +4,6 @@ import re
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Optional
 
 from celery import signature
@@ -521,7 +520,7 @@ class InterfaceKind:
                 "application/vnd.sqlite3",
             )
         elif kind == InterfaceKind.InterfaceKindChoices.OBJ:
-            return ("text/plain",)
+            return ("text/plain", "application/octet-stream")
         elif kind == InterfaceKind.InterfaceKindChoices.MP4:
             return ("video/mp4",)
         else:
@@ -812,19 +811,6 @@ class ComponentInterfaceValue(models.Model):
         )
 
     @property
-    def input_file(self):
-        """The file to use as component input"""
-        if self.image:
-            return self.image_file
-        elif self.file:
-            return self.file
-        else:
-            src = NamedTemporaryFile(delete=True)
-            src.write(bytes(json.dumps(self.value), "utf-8"))
-            src.flush()
-            return File(src, name=self.relative_path.name)
-
-    @property
     def relative_path(self):
         """
         Where should the file be located?
@@ -948,6 +934,7 @@ class ComponentJob(models.Model):
     status = models.PositiveSmallIntegerField(
         choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
+    attempt = models.PositiveSmallIntegerField(editable=False, default=0)
     stdout = models.TextField()
     stderr = models.TextField(default="")
     runtime_metrics = models.JSONField(default=dict, editable=False)
@@ -1043,18 +1030,9 @@ class ComponentJob(models.Model):
 
     @property
     def executor_kwargs(self):
-        if (
-            settings.COMPONENTS_DEFAULT_BACKEND
-            == "grandchallenge.components.backends.amazon_ecs.AmazonECSExecutor"
-        ):
-            # TODO can be removed when backend is gone
-            repo_tag = self.container.original_repo_tag
-        else:
-            repo_tag = self.container.shimmed_repo_tag
-
         return {
-            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            "exec_image_repo_tag": repo_tag,
+            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}-{self.attempt:02}",
+            "exec_image_repo_tag": self.container.shimmed_repo_tag,
             "memory_limit": self.container.requires_memory_gb,
             "time_limit": self.time_limit,
             "requires_gpu": self.container.requires_gpu,
@@ -1141,16 +1119,28 @@ class ComponentJob(models.Model):
 
     @property
     def runtime_metrics_chart(self):
+        instance_metrics = self.runtime_metrics["instance"]
+        cpu_limit = 100 * instance_metrics["cpu"]
+
+        if instance_metrics["gpus"]:
+            gpu_str = (
+                f"{instance_metrics['gpus']}x {instance_metrics['gpu_type']}"
+            )
+        else:
+            gpu_str = "No"
+        title = f"{instance_metrics['name']} / {instance_metrics['cpu']} CPU / {instance_metrics['memory']} GB Memory / {gpu_str} GPU"
+
         return {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
             "width": "container",
             "padding": 0,
+            "title": title,
             "data": {
                 "values": [
                     {
                         "Metric": metric["label"],
                         "Timestamp": timestamp,
-                        "Percent": value,
+                        "Percent": value / 100.0,
                     }
                     for metric in self.runtime_metrics["metrics"]
                     for timestamp, value in zip(
@@ -1158,12 +1148,108 @@ class ComponentJob(models.Model):
                     )
                 ]
             },
-            "mark": {"type": "line", "point": True},
-            "encoding": {
-                "x": {"timeUnit": "hoursminutesseconds", "field": "Timestamp"},
-                "y": {"field": "Percent", "type": "quantitative"},
-                "color": {"field": "Metric", "type": "nominal"},
-            },
+            "layer": [
+                {
+                    "transform": [
+                        {"calculate": "100*datum.Percent", "as": "Percent100"},
+                    ],
+                    "encoding": {
+                        "x": {
+                            "timeUnit": "hoursminutesseconds",
+                            "field": "Timestamp",
+                            "title": "Local Time / HH:MM:SS",
+                        },
+                        "y": {
+                            "field": "Percent100",
+                            "type": "quantitative",
+                            "title": "Utilization / %",
+                        },
+                        "color": {"field": "Metric", "type": "nominal"},
+                    },
+                    "layer": [
+                        {"mark": "line"},
+                        {
+                            "transform": [
+                                {"filter": {"param": "hover", "empty": False}}
+                            ],
+                            "mark": "point",
+                        },
+                    ],
+                },
+                {
+                    "transform": [
+                        {
+                            "pivot": "Metric",
+                            "value": "Percent",
+                            "groupby": ["Timestamp"],
+                        }
+                    ],
+                    "mark": "rule",
+                    "encoding": {
+                        "opacity": {
+                            "condition": {
+                                "value": 0.3,
+                                "param": "hover",
+                                "empty": False,
+                            },
+                            "value": 0,
+                        },
+                        "tooltip": [
+                            {
+                                "field": metric["label"],
+                                "type": "quantitative",
+                                "format": ".2%",
+                            }
+                            for metric in self.runtime_metrics["metrics"]
+                        ],
+                        "x": {
+                            "timeUnit": "hoursminutesseconds",
+                            "field": "Timestamp",
+                            "title": "Local Time / HH:MM:SS",
+                        },
+                    },
+                    "params": [
+                        {
+                            "name": "hover",
+                            "select": {
+                                "type": "point",
+                                "fields": ["Timestamp"],
+                                "nearest": True,
+                                "on": "mouseover",
+                                "clear": "mouseout",
+                            },
+                        }
+                    ],
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "rule", "strokeDash": [8, 8]},
+                    "encoding": {"y": {"datum": cpu_limit}},
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "text", "baseline": "line-bottom"},
+                    "encoding": {
+                        "text": {"datum": "CPU Utilization Limit"},
+                        "y": {"datum": cpu_limit},
+                    },
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "rule", "strokeDash": [8, 8]},
+                    "encoding": {"y": {"datum": 100}},
+                },
+                {
+                    "data": {"values": [{}]},
+                    "mark": {"type": "text", "baseline": "line-bottom"},
+                    "encoding": {
+                        "text": {
+                            "datum": "Memory / GPU / GPU Memory Utilization Limit"
+                        },
+                        "y": {"datum": 100},
+                    },
+                },
+            ],
         }
 
     class Meta:
@@ -1200,7 +1286,7 @@ class ComponentImage(models.Model):
         ],
         help_text=(
             ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
+            "'docker save IMAGE | xz -T0 -c > IMAGE.tar.xz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
         storage=private_s3_storage,

@@ -1,4 +1,5 @@
 from base64 import b32encode
+from time import sleep
 
 import pytest
 from allauth.socialaccount.models import SocialAccount
@@ -6,7 +7,6 @@ from allauth.socialaccount.tests import OAuth2TestsMixin
 from allauth.tests import MockedResponse
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
-from django_otp.plugins.otp_static.models import StaticToken
 from pytest_django.asserts import assertRedirects
 
 from config.settings import LOGIN_REDIRECT_URL
@@ -89,20 +89,8 @@ class SocialLoginTests(OAuth2TestsMixin, TestCase):
         assert SocialAccount.objects.count() == 1
         assertRedirects(resp, "/users/profile/", fetch_redirect_response=False)
 
-        # make this user staff user
-        user = get_user_model().objects.last()
-        assert user.email == "jane.doe@example.com"
-        user.is_staff = True
-        user.save()
-
-        # log user out
-        self.client.logout()
-
-        # log back in, check that redirect is now to 2fa setup page
-        resp = self.login(resp_mock=self.get_mocked_response())
-        assert "two_factor/setup" in resp.url
-
         # enable 2fa for the user (mimicks the 2fa setup)
+        user = get_user_model().objects.last()
         user.totpdevice_set.create()
 
         # log user out
@@ -111,6 +99,14 @@ class SocialLoginTests(OAuth2TestsMixin, TestCase):
         # sign in again, check that redirect is now to 2fa authenticate page
         resp = self.login(resp_mock=self.get_mocked_response())
         assert "two-factor-authenticate" in resp.url
+
+        token = get_token_from_totp_device(user.totpdevice_set.get())
+        resp = self.client.post(resp.url, {"otp_token": token})
+        resp = self.client.post(resp.url)
+        assert (
+            reverse("profile-detail", kwargs={"username": user.username})
+            in resp.url
+        )
 
 
 @override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
@@ -123,7 +119,7 @@ def test_2fa_reset_flow(client):
         reverse_lazy("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
     )
-    assert "/accounts/two-factor-authenticate" == response.url
+    assert "/accounts/two-factor-authenticate" in response.url
 
     # The user ID should be in the session.
     assert client.session.get("allauth_2fa_user_id")
@@ -138,7 +134,7 @@ def test_2fa_reset_flow(client):
     # redirect to login.
     resp = client.get(reverse_lazy("two-factor-authenticate"))
 
-    assert "/accounts/login/" == resp.url
+    assert "/accounts/login/" in resp.url
 
     # navigate to a subdomain page
     client.post(
@@ -154,52 +150,6 @@ def test_2fa_reset_flow(client):
     assert not client.session.get("allauth_2fa_user_id")
     resp = client.get(reverse_lazy("two-factor-authenticate"))
     assert "/accounts/login/" == resp.url
-
-
-@override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
-@pytest.mark.django_db
-def test_2fa_removal(client):
-    user = UserFactory()
-    # enable 2fa
-    totp_device = user.totpdevice_set.create()
-
-    # generate some backup tokens
-    static_device = user.staticdevice_set.create(name="backup")
-    static_device.token_set.create(token=StaticToken.random_token())
-    assert static_device.token_set.count() == 1
-
-    # Navigate to 2FA removal view
-    response = get_view_for_user(
-        viewname="two-factor-remove",
-        client=client,
-        user=user,
-    )
-
-    # check that token is required
-    assert 'required id="id_otp_token"' in response.rendered_content
-    # submitting without a token does not work
-    response = get_view_for_user(
-        viewname="two-factor-remove",
-        client=client,
-        method=client.post,
-        user=user,
-    )
-    assert "Please enter your OTP token." in str(
-        response.context["form"].errors
-    )
-
-    # when correct token is entered, the totp device and any backup tokens are deleted
-    token = get_token_from_totp_device(totp_device)
-    _ = get_view_for_user(
-        viewname="two-factor-remove",
-        client=client,
-        method=client.post,
-        data={"otp_token": token},
-        user=user,
-    )
-    user.refresh_from_db()
-    assert not user.totpdevice_set.exists()
-    assert static_device.token_set.count() == 0
 
 
 @override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
@@ -230,6 +180,10 @@ def test_2fa_setup(client):
 
     # with the correct token, authentication succeeds and user is
     # redirected to the back-up tokens page
+    device = user.totpdevice_set.get()
+    device.step = 1
+    device.save()
+
     token = get_token_from_totp_device(user.totpdevice_set.get())
     response = get_view_for_user(
         viewname="two-factor-setup",
@@ -238,16 +192,20 @@ def test_2fa_setup(client):
         data={"token": token},
         user=user,
     )
-    assert "/accounts/two_factor/backup_tokens" == response.url
+    assert "/accounts/two_factor/backup_tokens" in response.url
 
     # upon next sign-in 2fa will be prompted
     client.logout()
+
+    # ensure that enough time has passed since the last token was issued
+    sleep(device.step)
     response = client.post(
         reverse("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
     )
-    assertRedirects(
-        response,
-        "/accounts/two-factor-authenticate",
-        fetch_redirect_response=False,
-    )
+    assert "/accounts/two-factor-authenticate" in response.url
+
+    # providing the token redirects the user to their profile page
+    new_token = get_token_from_totp_device(user.totpdevice_set.get())
+    response = client.post(response.url, {"otp_token": new_token})
+    assertRedirects(response, "/users/profile/", fetch_redirect_response=False)

@@ -60,12 +60,26 @@ admin.site.register(ComponentInterfaceValue, ComponentInterfaceValueAdmin)
 
 
 def requeue_jobs(modeladmin, request, queryset):
-    queryset.update(status=ComponentJob.RETRY)
+    queryset = queryset.filter(
+        status__in=[
+            ComponentJob.FAILURE,
+            ComponentJob.CANCELLED,
+        ]
+    )
+
+    jobs = []
+
     for job in queryset:
+        job.status = ComponentJob.RETRY
+        job.attempt += 1
+        jobs.append(job)
+
         on_commit(job.execute)
 
+    queryset.model.objects.bulk_update(jobs, fields=["status", "attempt"])
 
-requeue_jobs.short_description = "Requeue selected jobs"
+
+requeue_jobs.short_description = "Requeue selected Failed/Cancelled jobs"
 requeue_jobs.allowed_permissions = ("change",)
 
 

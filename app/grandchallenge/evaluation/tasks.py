@@ -1,10 +1,13 @@
+import datetime
 import logging
 import uuid
 from statistics import mean, median
+from typing import NamedTuple
 
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
@@ -17,7 +20,11 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.utils import Metric, rank_results
+from grandchallenge.evaluation.utils import (
+    Metric,
+    SubmissionKindChoices,
+    rank_results,
+)
 from grandchallenge.notifications.models import Notification, NotificationType
 
 logger = logging.getLogger(__name__)
@@ -493,3 +500,72 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
     )
     for sub in Submission.objects.filter(phase__id=phase_pk):
         sub.assign_permissions()
+
+
+def get_average_job_duration_for_phase(phase):
+    Job = apps.get_model(  # noqa: N806
+        app_label="algorithms", model_name="Job"
+    )
+    jobs = Job.objects.filter(
+        outputs__evaluation_evaluations_as_input__submission__phase=phase,
+    ).distinct()
+    duration_dict = {
+        "average_duration": jobs.average_duration(),
+        "total_duration": jobs.total_duration(),
+    }
+    return duration_dict
+
+
+class PhaseStatistics(NamedTuple):
+    average_algorithm_run_time: datetime.timedelta
+    total_algorithm_run_time: datetime.timedelta
+    average_compute_cost: float
+    total_compute_cost: float
+    archive_item_count: int
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_phase_statistics():
+    Phase = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Phase"
+    )
+    phases = (
+        Phase.objects.filter(submission_kind=SubmissionKindChoices.ALGORITHM)
+        .annotate(archive_item_count=Count("archive__items"))
+        .all()
+    )
+    phase_dict = {}
+    for phase in phases:
+        avg_duration = get_average_job_duration_for_phase(phase)
+        average_duration = avg_duration.get("average_duration", None)
+        total_duration = avg_duration.get("total_duration", None)
+        try:
+            average_compute_cost = round(
+                phase.archive_item_count
+                * average_duration.seconds
+                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+                / 3600
+                / 100,
+                ndigits=2,
+            )
+            total_compute_cost = round(
+                phase.archive_item_count
+                * total_duration.seconds
+                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+                / 3600
+                / 100,
+                ndigits=2,
+            )
+        except AttributeError:
+            average_compute_cost = None
+            total_compute_cost = None
+
+        phase_dict[phase.pk] = PhaseStatistics(
+            average_duration,
+            total_duration,
+            average_compute_cost,
+            total_compute_cost,
+            phase.archive_item_count,
+        )
+
+    cache.set("statistics_for_phases", phase_dict, timeout=None)

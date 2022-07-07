@@ -90,6 +90,11 @@ def remove_container(*, name):
         except CalledProcessError as error:
             if "Error: No such container" in error.stderr:
                 raise ObjectDoesNotExist from error
+            elif (
+                f"Error response from daemon: removal of container {container_id} is already in progress"
+                in error.stderr
+            ):
+                return
             else:
                 raise
     except ObjectDoesNotExist:
@@ -146,8 +151,6 @@ def run_container(
         f"{mem_limit}g",
         "--memory-swap",
         f"{mem_limit}g",
-        "--shm-size",
-        f"{settings.COMPONENTS_SHARED_MEMORY_SIZE}m",
         "--cpu-period",
         str(settings.COMPONENTS_CPU_PERIOD),
         "--cpu-quota",

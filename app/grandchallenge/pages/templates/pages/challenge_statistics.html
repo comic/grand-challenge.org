@@ -22,17 +22,19 @@
 
 {% block content %}
     <h3 class="mb-3">Challenge statistics</h3>
-    {% if average_job_durations %}
+    {% if phases %}
         <div class="row equal-height mx-n2">
-            {% for phase, durations in average_job_durations.items %}
+            {% for phase in phases %}
                 <div class="card m-1">
-                    <div class="card-header">{{ phase }}</div>
+                    <div class="card-header">{{ phase.title }}</div>
+                    {% get_dict_values statistics_for_phases phase.pk as phase_stats %}
                     <div class="card-body">
                         <ul>
-                            <li>Average algorithm job duration: {{ durations.average_duration|naturaldelta }}</li>
-                            <li>Total duration of all jobs for this phase: {{ durations.total_duration|naturaldelta }}</li>
-                            <li>Number of archive items: {% get_dict_values num_archive_items phase as item_count %} {{ item_count }}</li>
-                            <li>Average compute cost per algorithm job: {% get_dict_values compute_costs phase as cost %} {% if cost %}{{ cost }} €{% else %} NA {% endif %}</li>
+                            <li>Average algorithm job duration: {{ phase_stats.average_algorithm_run_time|naturaldelta }}</li>
+                            <li>Total duration of all jobs for this phase: {{ phase_stats.total_algorithm_run_time|naturaldelta }}</li>
+                            <li>Number of archive items: {{ phase_stats.archive_item_count }}</li>
+                            <li>Average compute cost per algorithm job: {% if phase_stats.average_compute_cost %}{{ phase_stats.average_compute_cost }} €{% else %} NA {% endif %}</li>
+                            <li>Total compute cost for this phase so far: {% if phase_stats.total_compute_cost %}{{ phase_stats.total_compute_cost }} €{% else %} NA {% endif %}</li>
                         </ul>
                     </div>
                 </div>

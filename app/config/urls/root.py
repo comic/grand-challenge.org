@@ -17,7 +17,7 @@ from grandchallenge.core.views import HomeTemplate
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
-from grandchallenge.profiles.views import TwoFactorRemove, TwoFactorSetup
+from grandchallenge.profiles.views import TwoFactorAuthenticate, TwoFactorSetup
 from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
 
 admin.autodiscover()
@@ -65,9 +65,9 @@ urlpatterns = [
         name="two-factor-setup",
     ),
     re_path(
-        r"accounts/two_factor/remove/?$",
-        TwoFactorRemove.as_view(),
-        name="two-factor-remove",
+        r"accounts/two-factor-authenticate/?$",
+        TwoFactorAuthenticate.as_view(),
+        name="two-factor-authenticate",
     ),
     path("accounts/", include("allauth_2fa.urls")),
     path("accounts/", include("allauth.urls")),

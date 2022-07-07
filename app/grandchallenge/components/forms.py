@@ -23,7 +23,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         queryset=None,
         help_text=(
             ".tar.xz archive of the container image produced from the command "
-            "'docker save IMAGE | xz -c > IMAGE.tar.xz'. See "
+            "'docker save IMAGE | xz -T0 -c > IMAGE.tar.xz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
