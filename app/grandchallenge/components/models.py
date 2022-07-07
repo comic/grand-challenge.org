@@ -18,7 +18,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
-from django.db.models import Avg, F, QuerySet, Sum
+from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField, ModelMultipleChoiceField
 from django.utils.functional import cached_property
@@ -26,6 +26,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image, ImageFile
@@ -1267,8 +1268,20 @@ def docker_image_path(instance, filename):
     )
 
 
+class ImportStatusChoices(IntegerChoices):
+    INITIALIZED = 0, "Initialized"
+    QUEUED = 1, "Queued"
+    RETRY = 2, "Re-Queued"
+    STARTED = 3, "Started"
+    CANCELLED = 4, "Cancelled"
+    FAILED = 5, "Failed"
+    COMPLETED = 6, "Completed"
+
+
 class ComponentImage(models.Model):
     SHIM_IMAGE = True
+
+    ImportStatusChoices = ImportStatusChoices
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -1301,14 +1314,39 @@ class ComponentImage(models.Model):
         editable=False,
         help_text="Is this image ready to be used?",
     )
+    import_status = models.PositiveSmallIntegerField(
+        choices=ImportStatusChoices.choices,
+        default=ImportStatusChoices.INITIALIZED,
+        db_index=True,
+    )
+    manifest_is_valid = models.BooleanField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Is this image's manifest valid?",
+    )
+    is_in_registry = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="Is this image in the container registry?",
+    )
+    is_on_sagemaker = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="Does a SageMaker model for this image exist?",
+    )
     status = models.TextField(editable=False)
 
     requires_gpu = models.BooleanField(default=False)
-    requires_gpu_memory_gb = models.PositiveIntegerField(default=4)
+    requires_gpu_memory_gb = deprecate_field(
+        models.PositiveIntegerField(default=4)
+    )
     requires_memory_gb = models.PositiveIntegerField(default=4)
     # Support up to 99.99 cpu cores
-    requires_cpu_cores = models.DecimalField(
-        default=Decimal("1.0"), max_digits=4, decimal_places=2
+    requires_cpu_cores = deprecate_field(
+        models.DecimalField(
+            default=Decimal("1.0"), max_digits=4, decimal_places=2
+        )
     )
 
     def __init__(self, *args, **kwargs):
@@ -1347,3 +1385,26 @@ class ComponentImage(models.Model):
 
     class Meta:
         abstract = True
+
+    @property
+    def animate(self):
+        return self.import_status == self.ImportStatusChoices.STARTED
+
+    @property
+    def status_context(self):
+        if self.import_status == self.ImportStatusChoices.COMPLETED:
+            return "success"
+        elif self.import_status in {
+            self.ImportStatusChoices.FAILED,
+            self.ImportStatusChoices.CANCELLED,
+        }:
+            return "danger"
+        elif self.import_status in {
+            self.ImportStatusChoices.INITIALIZED,
+            self.ImportStatusChoices.QUEUED,
+            self.ImportStatusChoices.RETRY,
+            self.ImportStatusChoices.STARTED,
+        }:
+            return "info"
+        else:
+            return "secondary"
