@@ -633,19 +633,6 @@ class PhaseAlgorithmCreate(
     def form_valid(self, form):
         response = super().form_valid(form=form)
         self.object.add_editor(self.request.user)
-        self.object.logo = self.phase.challenge.logo
-        self.object.workstation_config = self.phase.workstation_config
-        self.object.hanging_protocol = self.phase.hanging_protocol
-        self.object.view_content = self.phase.view_content
-        self.object.display_editors = True
-        self.object.contact_email = self.request.user.email
-        self.object.modalities.set(self.phase.challenge.modalities.all())
-        self.object.structures.set(self.phase.challenge.structures.all())
-        self.object.inputs.set(self.phase.algorithm_inputs.all())
-        self.object.outputs.set(self.phase.algorithm_outputs.all())
-        if self.phase.workstation:
-            self.object.workstation = self.phase.workstation
-        self.object.save()
         return response
 
     @cached_property
@@ -659,3 +646,23 @@ class PhaseAlgorithmCreate(
             reverse("algorithms:detail", kwargs={"slug": self.object.slug})
             + "#containers"
         )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "workstation_config": self.phase.workstation_config,
+                "hanging_protocol": self.phase.hanging_protocol,
+                "view_content": self.phase.view_content,
+                "display_editors": True,
+                "contact_email": self.request.user.email,
+                "workstation": self.phase.workstation,
+                "inputs": self.phase.algorithm_inputs.all(),
+                "outputs": self.phase.algorithm_outputs.all(),
+                "modalities": self.phase.challenge.modalities.all(),
+                "structures": self.phase.challenge.structures.all(),
+                "logo": self.phase.challenge.logo,
+            }
+        )
+
+        return kwargs

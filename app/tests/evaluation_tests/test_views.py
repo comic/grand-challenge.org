@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 
 import factory
@@ -10,6 +11,7 @@ from config import settings
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.workstations.models import Workstation
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
@@ -22,6 +24,7 @@ from tests.factories import (
     ChallengeFactory,
     UserFactory,
     WorkstationConfigFactory,
+    WorkstationFactory,
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.utils import get_view_for_user
@@ -578,7 +581,9 @@ def test_create_algorithm_for_phase_permission(client):
 
 @pytest.mark.django_db
 def test_create_algorithm_for_phase_presets(client):
-    phase = PhaseFactory()
+    phase = PhaseFactory(
+        challenge__logo=factory.django.ImageField(filename="test.jpeg")
+    )
     admin = UserFactory()
     phase.challenge.add_admin(admin)
     VerificationFactory(user=admin, is_verified=True)
@@ -592,8 +597,46 @@ def test_create_algorithm_for_phase_presets(client):
     phase.algorithm_outputs.set([ci2])
     phase.hanging_protocol = HangingProtocolFactory()
     phase.workstation_config = WorkstationConfigFactory()
-    phase.view_content = {"main": ci1.slug}
+    phase.view_content = {"main": [ci1.slug]}
     phase.save()
+
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=admin,
+    )
+    assert response.context_data["form"]["inputs"].initial.get() == ci1
+    assert response.context_data["form"]["outputs"].initial.get() == ci2
+    assert response.context_data["form"][
+        "workstation"
+    ].initial == Workstation.objects.get(
+        slug=settings.DEFAULT_WORKSTATION_SLUG
+    )
+    assert (
+        response.context_data["form"]["hanging_protocol"].initial
+        == phase.hanging_protocol
+    )
+    assert (
+        response.context_data["form"]["workstation_config"].initial
+        == phase.workstation_config
+    )
+    assert (
+        response.context_data["form"]["view_content"].initial
+        == phase.view_content
+    )
+    assert (
+        response.context_data["form"]["contact_email"].initial == admin.email
+    )
+    assert response.context_data["form"]["display_editors"].initial
+    assert (
+        response.context_data["form"]["logo"].initial == phase.challenge.logo
+    )
+    assert list(response.context_data["form"]["modalities"].initial) == []
+    assert list(response.context_data["form"]["structures"].initial) == []
 
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
@@ -607,8 +650,28 @@ def test_create_algorithm_for_phase_presets(client):
         data={
             "title": "Test algorithm",
             "image_requires_memory_gb": 1,
+            "inputs": [
+                response.context_data["form"]["inputs"].initial.get().pk
+            ],
+            "outputs": [
+                response.context_data["form"]["outputs"].initial.get().pk
+            ],
+            "workstation": response.context_data["form"][
+                "workstation"
+            ].initial.pk,
+            "hanging_protocol": response.context_data["form"][
+                "hanging_protocol"
+            ].initial.pk,
+            "workstation_config": response.context_data["form"][
+                "workstation_config"
+            ].initial.pk,
+            "view_content": json.dumps(
+                response.context_data["form"]["view_content"].initial
+            ),
+            "logo": response.context_data["form"]["logo"].initial,
         },
     )
+
     assert response.status_code == 302
     assert Algorithm.objects.count() == 1
     algorithm = Algorithm.objects.get()
@@ -617,7 +680,52 @@ def test_create_algorithm_for_phase_presets(client):
     assert algorithm.hanging_protocol == phase.hanging_protocol
     assert algorithm.workstation_config == phase.workstation_config
     assert algorithm.view_content == phase.view_content
-    assert algorithm.contact_email == admin.email
-    assert algorithm.logo == phase.challenge.logo
-    assert algorithm.display_editors
     assert algorithm.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
+    assert algorithm.contact_email == admin.email
+    assert algorithm.display_editors
+    assert list(algorithm.structures.all()) == []
+    assert list(algorithm.modalities.all()) == []
+    assert algorithm.logo == phase.challenge.logo
+
+    # try to set different values
+    ci3, ci4 = ComponentInterfaceFactory.create_batch(2)
+    hp = HangingProtocolFactory()
+    ws = WorkstationFactory()
+    wsc = WorkstationConfigFactory()
+
+    _ = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        method=client.post,
+        user=admin,
+        data={
+            "title": "Test algorithm",
+            "image_requires_memory_gb": 1,
+            "inputs": [ci3.pk],
+            "outputs": [ci2.pk],
+            "workstation": ws.pk,
+            "hanging_protocol": hp.pk,
+            "workstation_config": wsc.pk,
+            "view_content": "{}",
+        },
+    )
+
+    # created algorithm has the initial values set, not the modified ones
+    alg2 = Algorithm.objects.last()
+    assert alg2.inputs.get() == ci1
+    assert alg2.outputs.get() == ci2
+    assert alg2.hanging_protocol == phase.hanging_protocol
+    assert alg2.workstation_config == phase.workstation_config
+    assert alg2.view_content == phase.view_content
+    assert alg2.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
+    assert alg2.inputs.get() != ci3
+    assert alg2.outputs.get() != ci4
+    assert alg2.hanging_protocol != hp
+    assert alg2.workstation_config != wsc
+    assert alg2.view_content != "{}"
+    assert alg2.workstation.slug != ws
+    assert alg2.logo == phase.challenge.logo

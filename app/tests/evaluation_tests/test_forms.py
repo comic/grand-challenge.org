@@ -1,5 +1,6 @@
 import pytest
 
+from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.evaluation.forms import SubmissionForm
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -8,8 +9,14 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import UserFactory
+from tests.factories import (
+    UserFactory,
+    WorkstationConfigFactory,
+    WorkstationFactory,
+)
+from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -184,3 +191,53 @@ class TestSubmissionFormOptions:
             form.fields["supplementary_url"].help_text
             == "&lt;script&gt;TEST&lt;/script&gt;"
         )
+
+
+def test_algorithm_for_phase_form():
+    form = AlgorithmForPhaseForm(
+        workstation_config=WorkstationConfigFactory.build(),
+        hanging_protocol=HangingProtocolFactory.build(),
+        view_content="{}",
+        display_editors=True,
+        contact_email="test@test.com",
+        workstation=WorkstationFactory.build(),
+        inputs=[ComponentInterfaceFactory.build()],
+        outputs=[ComponentInterfaceFactory.build()],
+        structures=[],
+        modalities=[],
+    )
+
+    assert form.fields["inputs"].disabled
+    assert form.fields["outputs"].disabled
+    assert form.fields["workstation_config"].disabled
+    assert form.fields["hanging_protocol"].disabled
+    assert form.fields["view_content"].disabled
+    assert form.fields["display_editors"].disabled
+    assert form.fields["workstation"].disabled
+    assert form.fields["structures"].disabled
+    assert form.fields["modalities"].disabled
+    assert form.fields["contact_email"].disabled
+    assert not form.fields["title"].disabled
+    assert not form.fields["description"].disabled
+    assert not form.fields["image_requires_gpu"].disabled
+    assert not form.fields["image_requires_memory_gb"].disabled
+
+    assert {
+        form.fields["inputs"],
+        form.fields["outputs"],
+        form.fields["workstation_config"],
+        form.fields["hanging_protocol"],
+        form.fields["view_content"],
+        form.fields["display_editors"],
+        form.fields["workstation"],
+        form.fields["structures"],
+        form.fields["modalities"],
+        form.fields["contact_email"],
+    } == {field.field for field in form.hidden_fields()}
+
+    assert {
+        form.fields["title"],
+        form.fields["description"],
+        form.fields["image_requires_gpu"],
+        form.fields["image_requires_memory_gb"],
+    } == {field.field for field in form.visible_fields()}

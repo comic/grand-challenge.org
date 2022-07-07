@@ -117,8 +117,8 @@ class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
 class PhaseUpdateForm(
     PhaseTitleMixin,
     WorkstationUserFilterMixin,
-    forms.ModelForm,
     ViewContentMixin,
+    forms.ModelForm,
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
