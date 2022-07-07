@@ -124,7 +124,7 @@ def test_method_validation(evaluation_image):
 @pytest.mark.django_db
 def test_container_pushing(evaluation_image):
     container, sha256 = evaluation_image
-    method = MethodFactory(image__from_path=container)
+    method = MethodFactory(image__from_path=container, is_manifest_valid=True)
 
     push_container_image(instance=method)
 
