@@ -5,6 +5,7 @@ import factory
 import pytest
 from django.db.models import signals
 from django.utils import timezone
+from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 
 from config import settings
@@ -581,9 +582,7 @@ def test_create_algorithm_for_phase_permission(client):
 
 @pytest.mark.django_db
 def test_create_algorithm_for_phase_presets(client):
-    phase = PhaseFactory(
-        challenge__logo=factory.django.ImageField(filename="test.jpeg")
-    )
+    phase = PhaseFactory(challenge__logo=ImageField(filename="test.jpeg"))
     admin = UserFactory()
     phase.challenge.add_admin(admin)
     VerificationFactory(user=admin, is_verified=True)

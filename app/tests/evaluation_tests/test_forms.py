@@ -1,4 +1,5 @@
 import pytest
+from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.evaluation.forms import SubmissionForm
@@ -205,6 +206,7 @@ def test_algorithm_for_phase_form():
         outputs=[ComponentInterfaceFactory.build()],
         structures=[],
         modalities=[],
+        logo=ImageField(filename="test.jpeg"),
     )
 
     assert form.fields["inputs"].disabled
@@ -217,6 +219,7 @@ def test_algorithm_for_phase_form():
     assert form.fields["structures"].disabled
     assert form.fields["modalities"].disabled
     assert form.fields["contact_email"].disabled
+    assert form.fields["logo"].disabled
     assert not form.fields["title"].disabled
     assert not form.fields["description"].disabled
     assert not form.fields["image_requires_gpu"].disabled
@@ -233,6 +236,7 @@ def test_algorithm_for_phase_form():
         form.fields["structures"],
         form.fields["modalities"],
         form.fields["contact_email"],
+        form.fields["logo"],
     } == {field.field for field in form.hidden_fields()}
 
     assert {
