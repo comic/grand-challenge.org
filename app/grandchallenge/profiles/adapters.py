@@ -116,8 +116,8 @@ class AccountAdapter(DefaultAccountAdapter):
         site = Site.objects.get_current()
         if user.is_staff or user.is_superuser:
             send_mail(
-                subject=f"[{site.domain.lower()}] New login with 2FA",
-                message=f"Dear {user.username}, \n There was a new login for your account using 2FA. \n Regards,\n {site.name}\n This is an automated service email from {site.domain}.",
+                subject=f"[{site.domain.lower()}] Security Alert",
+                message=f"Dear {user.username}, \n We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device. \n Regards,\n {site.name}\n This is an automated service email from {site.domain}.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
             )

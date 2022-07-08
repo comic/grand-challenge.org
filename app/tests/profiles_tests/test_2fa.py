@@ -224,11 +224,8 @@ def test_email_after_2fa_login_for_staff(client):
     token = get_token_from_totp_device(totp_device)
     client.post(reverse_lazy("two-factor-authenticate"), {"otp_token": token})
     assert len(mail.outbox) == 1
-    assert "New login with 2FA" in mail.outbox[0].subject
-    assert (
-        "There was a new login for your account using 2FA."
-        in mail.outbox[0].body
-    )
+    assert "Security Alert" in mail.outbox[0].subject
+    assert "We noticed a new login to your account." in mail.outbox[0].body
     assert mail.outbox[0].to == [user.email]
 
     mail.outbox.clear()
