@@ -30,6 +30,7 @@ from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
@@ -56,6 +57,8 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 
 logger = logging.getLogger(__name__)
 
@@ -469,9 +472,13 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         return values
 
 
+class SelectUploadWidget(Select):
+    template_name = "reader_studies/select_upload_widget.html"
+
+
 class DisplaySetForm(Form):
     _possible_widgets = {
-        Select,  # Default for ModelChoiceField
+        SelectUploadWidget,
         *InterfaceFormField._possible_widgets,
     }
 
@@ -483,16 +490,33 @@ class DisplaySetForm(Form):
                 civ,
             ) in instance.reader_study.values_for_interfaces.items():
                 val = instance.values.filter(interface__slug=slug).first()
-
+                interface = ComponentInterface.objects.get(slug=slug)
                 if civ["kind"] in InterfaceKind.interface_type_json():
-                    # Use the field/widget provided by InterfaceFormField,
-                    # which includes proper validation
-                    self.fields[slug] = InterfaceFormField(
-                        kind=civ["kind"],
-                        schema=civ["schema"],
-                        initial=val.value if val else None,
-                        required=False,
-                    ).field
+                    if not interface.store_in_database:
+                        self.fields[slug] = ModelChoiceField(
+                            queryset=ComponentInterfaceValue.objects.filter(
+                                id__in=civ["values"]
+                            ),
+                            initial=val,
+                            required=False,
+                            widget=SelectUploadWidget(
+                                attrs={
+                                    "reader_study_slug": instance.reader_study.slug,
+                                    "display_set_pk": instance.pk,
+                                    "interface_pk": interface.pk,
+                                }
+                            ),
+                        )
+
+                    else:
+                        # Use the field/widget provided by InterfaceFormField,
+                        # which includes proper validation
+                        self.fields[slug] = InterfaceFormField(
+                            kind=civ["kind"],
+                            schema=civ["schema"],
+                            initial=val.json_value if val else None,
+                            required=False,
+                        ).field
                 else:
                     # Use a ModelChoiceField here, as InterfaceFormField would
                     # provide an upload wodget, but we do not want to add new
@@ -504,6 +528,41 @@ class DisplaySetForm(Form):
                         ),
                         initial=val,
                         required=False,
+                        widget=SelectUploadWidget(
+                            attrs={
+                                "reader_study_slug": instance.reader_study.slug,
+                                "display_set_pk": instance.pk,
+                                "interface_pk": interface.pk,
+                            }
+                        ),
                     )
 
             self.fields["order"] = IntegerField(initial=instance.order)
+
+
+class FileForm(Form):
+
+    user_upload = ModelChoiceField(
+        widget=UserUploadSingleWidget,
+        label="File",
+        queryset=None,
+    )
+
+    def __init__(
+        self, *args, user, display_set, interface, instance=None, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user, "uploads.change_userupload", accept_global_perms=False
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        self.interface = interface
+        self.display_set = display_set
+
+    def save(self):
+        civ = self.display_set.values.get(interface=self.interface)
+        user_upload = self.cleaned_data["user_upload"]
+        user_upload.copy_object(to_field=civ.file)
+        civ.full_clean()
+        civ.save()
+        return civ

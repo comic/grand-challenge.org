@@ -87,6 +87,7 @@ from grandchallenge.reader_studies.forms import (
     AnswersRemoveForm,
     CategoricalOptionFormSet,
     DisplaySetForm,
+    FileForm,
     GroundTruthForm,
     QuestionForm,
     ReadersForm,
@@ -111,6 +112,7 @@ from grandchallenge.reader_studies.serializers import (
     ReaderStudySerializer,
 )
 from grandchallenge.reader_studies.tasks import (
+    add_image_to_display_set,
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
 )
@@ -1417,3 +1419,76 @@ class DisplaySetUpdate(
             instance.save()
 
         return HttpResponseRedirect(self.get_success_url())
+
+
+class AddImagesToDisplaySet(CreateView):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+    template_name = "reader_studies/display_set_add_images.html"
+    type_to_add = "images"
+
+    def get_form_class(self):
+        if self.interface.is_image_kind:
+            return UploadRawImagesForm
+        else:
+            return FileForm
+
+    @cached_property
+    def interface(self):
+        return ComponentInterface.objects.get(pk=self.kwargs["interface_pk"])
+
+    @cached_property
+    def display_set(self):
+        return DisplaySet.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context.update(
+            {
+                "display_set": self.kwargs["pk"],
+                "reader_study": self.kwargs["slug"],
+                "interface": self.kwargs["interface_pk"],
+            }
+        )
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.interface.is_image_kind:
+            linked_task = add_image_to_display_set.signature(
+                kwargs={
+                    "display_set_pk": self.kwargs["pk"],
+                    "interface_pk": self.kwargs["interface_pk"],
+                },
+                immutable=True,
+            )
+            kwargs.update(
+                {
+                    "user": self.request.user,
+                    "linked_task": linked_task,
+                    "auto_id": f"id-{self.kwargs['pk']}-%s",
+                }
+            )
+        else:
+            kwargs.update(
+                {
+                    "user": self.request.user,
+                    "display_set": self.display_set,
+                    "interface": self.interface,
+                    "auto_id": f"id-{self.kwargs['pk']}-%s",
+                }
+            )
+        return kwargs
+
+    def form_valid(self, form):
+        # TODO add message using js
+        messages.add_message(
+            self.request, messages.SUCCESS, "Image import started."
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:display-set-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
