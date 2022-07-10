@@ -40,16 +40,23 @@ class InterfaceFormField:
         *,
         kind: InterfaceKind.InterfaceKindChoices,
         schema: Dict,
+        use_file_widget=None,
         initial=None,
         user=None,
         required=None,
         help_text="",
     ):
-        field_type = InterfaceKind.get_default_field(kind=kind)
         kwargs = {"required": required}
 
         if initial is not None:
             kwargs["initial"] = initial
+
+        if use_file_widget is None:
+            use_file_widget = kind in InterfaceKind.interface_type_file()
+
+        field_type = InterfaceKind.get_default_field(
+            kind=kind, use_file_widget=use_file_widget
+        )
 
         if kind in InterfaceKind.interface_type_image():
             kwargs["widget"] = UserUploadMultipleWidget()
@@ -57,7 +64,7 @@ class InterfaceFormField:
                 user, "uploads.change_userupload", accept_global_perms=False
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
             extra_help = IMAGE_UPLOAD_HELP_TEXT
-        elif kind in InterfaceKind.interface_type_file():
+        elif use_file_widget:
             kwargs["widget"] = UserUploadSingleWidget(
                 allowed_file_types=InterfaceKind.get_file_mimetypes(kind=kind)
             )

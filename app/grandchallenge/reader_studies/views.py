@@ -1037,6 +1037,34 @@ class DisplaySetViewSet(
             return DisplaySetPostSerializer
         return DisplaySetSerializer
 
+    def create_civ(self, data):
+        interface = data.pop("interface", None)
+        value = data.pop("value", None)
+        image = data.pop("image", None)
+        user_upload = data.pop("user_upload", None)
+        with transaction.atomic():
+            if interface.is_image_kind:
+                civ = ComponentInterfaceValue.objects.create(
+                    interface=interface
+                )
+                if image:
+                    civ.image = image
+                    civ.full_clean()
+                civ.save()
+                return civ
+            elif interface.is_file_kind:
+                civ = ComponentInterfaceValue.objects.create(
+                    interface=interface
+                )
+                user_upload.copy_object(to_field=civ.file)
+                civ.full_clean()
+                civ.save()
+                user_upload.delete()
+                return civ
+            else:
+                civ = interface.create_instance(value=value)
+                return civ
+
     def partial_update(self, request, pk=None):
         instance = self.get_object()
         if not instance.is_editable:
@@ -1055,7 +1083,9 @@ class DisplaySetViewSet(
                 many=True, data=values
             )
             if serialized_data.is_valid():
-                civs = serialized_data.create(serialized_data.validated_data)
+                civs = []
+                for value in serialized_data.validated_data:
+                    civs.append(self.create_civ(value))
                 assigned_civs = instance.values.filter(
                     interface__in=[civ.interface for civ in civs]
                 )

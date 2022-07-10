@@ -477,8 +477,8 @@ class InterfaceKind:
         }
 
     @classmethod
-    def get_default_field(cls, *, kind):
-        if kind in cls.interface_type_file():
+    def get_default_field(cls, *, kind, use_file_widget):
+        if use_file_widget:
             return ModelChoiceField
         elif kind in cls.interface_type_image():
             return ModelMultipleChoiceField
@@ -521,6 +521,11 @@ class InterfaceKind:
             )
         elif kind == InterfaceKind.InterfaceKindChoices.OBJ:
             return ("text/plain", "application/octet-stream")
+        elif kind in InterfaceKind.interface_type_json():
+            return (
+                "text/plain",
+                "application/json",
+            )
         elif kind == InterfaceKind.InterfaceKindChoices.MP4:
             return ("video/mp4",)
         else:
@@ -600,11 +605,18 @@ class ComponentInterface(models.Model):
 
     @property
     def is_json_kind(self):
-        return self.kind in InterfaceKind.interface_type_json()
+        return (
+            self.kind in InterfaceKind.interface_type_json()
+            and self.store_in_database
+        )
 
     @property
     def is_file_kind(self):
-        return self.kind in InterfaceKind.interface_type_file()
+        return (
+            self.kind in InterfaceKind.interface_type_file()
+            or self.kind in InterfaceKind.interface_type_json()
+            and not self.store_in_database
+        )
 
     @property
     def super_kind(self):
@@ -865,8 +877,7 @@ class ComponentInterfaceValue(models.Model):
             )
 
     def _validate_value(self):
-        if self.interface.saved_in_object_store:
-            self._validate_file_only()
+        if self.interface.saved_in_object_store and self.file:
             with self.file.open("r") as f:
                 value = json.loads(f.read().decode("utf-8"))
         else:
