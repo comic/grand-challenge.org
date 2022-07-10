@@ -515,7 +515,7 @@ class DisplaySetForm(Form):
                         self.fields[slug] = InterfaceFormField(
                             kind=civ["kind"],
                             schema=civ["schema"],
-                            initial=val.json_value if val else None,
+                            initial=val.value if val else None,
                             required=False,
                         ).field
                 else:

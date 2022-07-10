@@ -664,7 +664,10 @@ class ComponentInterface(models.Model):
         self._clean_relative_path()
 
     def _clean_relative_path(self):
-        if self.is_json_kind:
+        if (
+            self.is_file_kind
+            and self.kind in InterfaceKind.interface_type_json()
+        ):
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
         elif self.is_file_kind and not self.relative_path.endswith(
@@ -849,6 +852,8 @@ class ComponentInterfaceValue(models.Model):
             self._validate_image_only()
         elif self.interface.is_file_kind:
             self._validate_file_only()
+            if self.interface.kind in InterfaceKind.interface_type_json():
+                self._validate_value()
         else:
             self._validate_value()
 
