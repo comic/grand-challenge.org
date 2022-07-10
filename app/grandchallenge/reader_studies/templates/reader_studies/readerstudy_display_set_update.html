@@ -2,9 +2,10 @@
 
 <div class="card-body py-1" id="ds-content-{{ object.id }}">
   {% if object.is_editable %}
-    <form action="{% url 'reader-studies:display-set-update' pk=object.pk %}" method="post" class="ds-form" data-hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk %}" data-hx-target="#ds-content-{{ object.id }}" data-hx-swap="outerHTML">
+    <form action="{% url 'reader-studies:display-set-update' pk=object.pk %}" method="post" class="ds-form" data-hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk %}" data-hx-target="#ds-content-{{ object.id }}" data-hx-swap="outerHTML" id="form-{{ object.pk }}">
       {% csrf_token %}
       {{ form|crispy }}
+      <button type="button" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-add-interface' pk=object.pk %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Add value for new interface</button>
       <div class="d-flex justify-content-between pb-2">
         <div>
           <button type="button" class="btn btn-outline-primary" hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Back</button>

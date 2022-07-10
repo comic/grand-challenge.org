@@ -86,6 +86,7 @@ from grandchallenge.reader_studies.filters import (
 from grandchallenge.reader_studies.forms import (
     AnswersRemoveForm,
     CategoricalOptionFormSet,
+    DisplaySetAddInterfaceForm,
     DisplaySetForm,
     FileForm,
     GroundTruthForm,
@@ -1490,5 +1491,62 @@ class AddImagesToDisplaySet(CreateView):
     def get_success_url(self):
         return reverse(
             "reader-studies:display-set-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
+
+
+class DisplaySetAddInterface(FormView):
+    form_class = DisplaySetAddInterfaceForm
+    template_name = "reader_studies/display_set_add_interface.html"
+
+    @property
+    def display_set(self):
+        return DisplaySet.objects.get(pk=self.kwargs["pk"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "pk": self.kwargs["pk"],
+                "interface": self.request.GET.get("interface"),
+                "user": self.request.user,
+            }
+        )
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"object": self.display_set})
+        return context
+
+    def form_valid(self, form):
+        interface = form.cleaned_data["interface"]
+        value = form.cleaned_data["value"]
+        if interface.is_image_kind:
+            us = RawImageUploadSession.objects.create(
+                user_uploads=value,
+                creator=self.request.user,
+            )
+            us.process_images(
+                linked_task=add_image_to_display_set.signature(
+                    kwargs={
+                        "display_set_pk": self.kwargs["pk"],
+                        "interface_pk": self.kwargs["interface_pk"],
+                    },
+                    immutable=True,
+                )
+            )
+        elif interface.is_file_kind:
+            civ = ComponentInterfaceValue.objects.create(interface=interface)
+            value.copy_object(to_field=civ.file)
+            civ.full_clean()
+            civ.save()
+        else:
+            interface.create_instance(value=value)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:display-set-update",
             kwargs={"pk": self.kwargs["pk"]},
         )

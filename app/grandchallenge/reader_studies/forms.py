@@ -52,6 +52,7 @@ from grandchallenge.reader_studies.models import (
     CASE_TEXT_SCHEMA,
     Answer,
     CategoricalOption,
+    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -566,3 +567,44 @@ class FileForm(Form):
         civ.full_clean()
         civ.save()
         return civ
+
+
+class DisplaySetAddInterfaceForm(Form):
+    _possible_widgets = {
+        *InterfaceFormField._possible_widgets,
+    }
+
+    def __init__(self, *args, pk, interface, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        selected_interface = None
+        if interface:
+            selected_interface = ComponentInterface.objects.get(pk=interface)
+        data = kwargs.get("data")
+        if data and data.get("interface"):
+            selected_interface = ComponentInterface.objects.get(
+                pk=data["interface"]
+            )
+        ds = DisplaySet.objects.get(pk=pk)
+        self.fields["interface"] = ModelChoiceField(
+            initial=selected_interface,
+            queryset=ComponentInterface.objects.exclude(
+                slug__in=ds.reader_study.values_for_interfaces.keys()
+            ),
+            widget=Select(
+                attrs={
+                    "hx-get": reverse_lazy(
+                        "reader-studies:display-set-add-interface",
+                        kwargs={"pk": pk},
+                    ),
+                    "hx-target": f"#ds-content-{pk}",
+                }
+            ),
+        )
+
+        if selected_interface is not None:
+            self.fields["value"] = InterfaceFormField(
+                kind=selected_interface.kind,
+                use_file_widget=selected_interface.is_file_kind,
+                schema=selected_interface.schema,
+                user=user,
+            ).field
