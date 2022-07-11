@@ -468,7 +468,8 @@ class AmazonSageMakerBatchExecutor(Executor):
                     "InstanceCount": 1,
                 },
                 Environment={  # Up to 16 pairs
-                    "LOGLEVEL": "INFO",
+                    "LOG_LEVEL": "INFO",
+                    "no_proxy": "amazonaws.com",
                 },
                 ModelClientConfig={
                     "InvocationsTimeoutInSeconds": self._time_limit,
@@ -642,10 +643,7 @@ class AmazonSageMakerBatchExecutor(Executor):
             # Job's a good un
             return
         elif return_code == 137:
-            raise ComponentException(
-                "The container was killed as it exceeded the memory limit "
-                f"of {self._memory_limit}g."
-            )
+            raise ComponentException("The container ran out of memory.")
         else:
             raise ComponentException(user_error(self.stderr))
 
