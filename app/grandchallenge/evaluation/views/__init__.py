@@ -80,8 +80,7 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
                     error_message,
                 )
                 return False
-
-            if (
+            elif (
                 not self.phase.submission_kind
                 == SubmissionKindChoices.ALGORITHM
                 or not self.phase.inputs
