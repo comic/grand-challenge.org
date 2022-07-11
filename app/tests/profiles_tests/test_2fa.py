@@ -6,6 +6,7 @@ from allauth.socialaccount.models import SocialAccount
 from allauth.socialaccount.tests import OAuth2TestsMixin
 from allauth.tests import MockedResponse
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import TestCase, override_settings
 from pytest_django.asserts import assertRedirects
 
@@ -209,3 +210,31 @@ def test_2fa_setup(client):
     new_token = get_token_from_totp_device(user.totpdevice_set.get())
     response = client.post(response.url, {"otp_token": new_token})
     assertRedirects(response, "/users/profile/", fetch_redirect_response=False)
+
+
+@override_settings(ACCOUNT_EMAIL_VERIFICATION=None)
+@pytest.mark.django_db
+def test_email_after_2fa_login_for_staff(client):
+    user = UserFactory(is_staff=True)
+    totp_device = user.totpdevice_set.create()
+    client.post(
+        reverse("account_login"),
+        {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
+    )
+    token = get_token_from_totp_device(totp_device)
+    client.post(reverse_lazy("two-factor-authenticate"), {"otp_token": token})
+    assert len(mail.outbox) == 1
+    assert "Security Alert" in mail.outbox[0].subject
+    assert "We noticed a new login to your account." in mail.outbox[0].body
+    assert mail.outbox[0].to == [user.email]
+
+    mail.outbox.clear()
+    user2 = UserFactory()
+    totp_device = user2.totpdevice_set.create()
+    client.post(
+        reverse("account_login"),
+        {"login": user2.username, "password": SUPER_SECURE_TEST_PASSWORD},
+    )
+    token = get_token_from_totp_device(totp_device)
+    client.post(reverse_lazy("two-factor-authenticate"), {"otp_token": token})
+    assert len(mail.outbox) == 0
