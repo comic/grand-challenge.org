@@ -1,6 +1,17 @@
 {% load crispy_forms_tags %}
 
 <div class="card-body py-1" id="ds-content-{{ object.id }}">
+   {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.level_tag }}">
+            {{ message }}
+            <button type="button" class="close"
+                    data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+  {% endif %}
   {% if object.is_editable %}
     <form action="{% url 'reader-studies:display-set-update' pk=object.pk %}" method="post" class="ds-form" data-hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk %}" data-hx-target="#ds-content-{{ object.id }}" data-hx-swap="outerHTML" id="form-{{ object.pk }}">
       {% csrf_token %}

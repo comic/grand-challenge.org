@@ -1491,7 +1491,6 @@ class AddImagesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
         return kwargs
 
     def form_valid(self, form):
-        # TODO add message using js
         messages.add_message(
             self.request, messages.SUCCESS, "Image import started."
         )
@@ -1551,6 +1550,9 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
                     },
                     immutable=True,
                 )
+            )
+            messages.add_message(
+                self.request, messages.SUCCESS, "Image import started."
             )
         elif interface.is_file_kind:
             civ = ComponentInterfaceValue.objects.create(interface=interface)
