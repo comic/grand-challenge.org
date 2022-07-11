@@ -637,6 +637,10 @@ class ComponentInterface(OverlaySegmentsMixin):
         ),
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._overlay_segments_orig = self.overlay_segments
+
     def __str__(self):
         return f"{self.title} ({self.get_kind_display()})"
 
@@ -699,13 +703,9 @@ class ComponentInterface(OverlaySegmentsMixin):
         self._clean_relative_path()
 
     def _clean_overlay_segments(self):
-        try:
-            ci = ComponentInterface.objects.get(pk=self.pk)
-        except ComponentInterface.DoesNotExist:
-            return
         if (
             ComponentInterfaceValue.objects.filter(interface=self).exists()
-            and ci.overlay_segments != self.overlay_segments
+            and self._overlay_segments_orig != self.overlay_segments
         ):
             raise ValidationError(
                 "Overlay segments cannot be changed, as values for this "
