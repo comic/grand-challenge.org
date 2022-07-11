@@ -79,9 +79,15 @@ def add_image_to_display_set(
         if civ is None:
             civ = ComponentInterfaceValue(interface=interface)
         civ.image = image
-        civ.full_clean()
-        civ.save()
-        display_set.values.add(civ)
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = e.message
+            upload_session.save()
+        else:
+            civ.save()
+            display_set.values.add(civ)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -91,6 +97,7 @@ def create_display_sets_for_upload_session(
     images = Image.objects.filter(origin_id=upload_session_pk)
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
+    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
     with transaction.atomic():
         for image in images:
             civ = ComponentInterfaceValue.objects.filter(
@@ -99,14 +106,20 @@ def create_display_sets_for_upload_session(
             if civ is None:
                 civ = ComponentInterfaceValue(interface=interface)
             civ.image = image
-            civ.full_clean()
-            civ.save()
-            if DisplaySet.objects.filter(
-                reader_study=reader_study, values=civ
-            ).exists():
-                continue
-            ds = DisplaySet.objects.create(reader_study=reader_study)
-            ds.values.add(civ)
+            try:
+                civ.full_clean()
+            except ValidationError as e:
+                upload_session.status = RawImageUploadSession.FAILURE
+                upload_session.error_message = e.message
+                upload_session.save()
+            else:
+                civ.save()
+                if DisplaySet.objects.filter(
+                    reader_study=reader_study, values=civ
+                ).exists():
+                    continue
+                ds = DisplaySet.objects.create(reader_study=reader_study)
+                ds.values.add(civ)
 
 
 @shared_task
