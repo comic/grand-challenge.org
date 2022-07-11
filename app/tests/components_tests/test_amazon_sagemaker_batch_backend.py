@@ -140,7 +140,10 @@ def test_execute(settings):
             service_response={"TransformJobArn": "string"},
             expected_params={
                 "TransformJobName": executor._transform_job_name,
-                "Environment": {"LOGLEVEL": "INFO"},
+                "Environment": {
+                    "LOG_LEVEL": "INFO",
+                    "no_proxy": "s3.eu-central-1.amazonaws.com",
+                },
                 "ModelClientConfig": {
                     "InvocationsMaxRetries": 0,
                     "InvocationsTimeoutInSeconds": 60,
