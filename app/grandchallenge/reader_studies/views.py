@@ -1345,7 +1345,11 @@ class DisplaySetUpdate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"auto_id": f"id-{self.kwargs['pk']}-%s"})
+        kwargs.update(
+            {
+                "auto_id": f"id-{self.kwargs['pk']}-%s",
+            }
+        )
         return kwargs
 
     def get_success_url(self):
@@ -1422,11 +1426,16 @@ class DisplaySetUpdate(
         return HttpResponseRedirect(self.get_success_url())
 
 
-class AddImagesToDisplaySet(CreateView):
+class AddImagesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
     model = RawImageUploadSession
-    form_class = UploadRawImagesForm
     template_name = "reader_studies/display_set_add_images.html"
-    type_to_add = "images"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.display_set
 
     def get_form_class(self):
         if self.interface.is_image_kind:
@@ -1442,8 +1451,8 @@ class AddImagesToDisplaySet(CreateView):
     def display_set(self):
         return DisplaySet.objects.get(pk=self.kwargs["pk"])
 
-    def get_context_data(self):
-        context = super().get_context_data()
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
         context.update(
             {
                 "display_set": self.kwargs["pk"],
@@ -1495,9 +1504,16 @@ class AddImagesToDisplaySet(CreateView):
         )
 
 
-class DisplaySetAddInterface(FormView):
+class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
     form_class = DisplaySetAddInterfaceForm
     template_name = "reader_studies/display_set_add_interface.html"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.display_set
 
     @property
     def display_set(self):
@@ -1524,14 +1540,14 @@ class DisplaySetAddInterface(FormView):
         value = form.cleaned_data["value"]
         if interface.is_image_kind:
             us = RawImageUploadSession.objects.create(
-                user_uploads=value,
                 creator=self.request.user,
             )
+            us.user_uploads.set(value)
             us.process_images(
                 linked_task=add_image_to_display_set.signature(
                     kwargs={
                         "display_set_pk": self.kwargs["pk"],
-                        "interface_pk": self.kwargs["interface_pk"],
+                        "interface_pk": interface.pk,
                     },
                     immutable=True,
                 )
@@ -1541,8 +1557,10 @@ class DisplaySetAddInterface(FormView):
             value.copy_object(to_field=civ.file)
             civ.full_clean()
             civ.save()
+            self.display_set.values.add(civ)
         else:
-            interface.create_instance(value=value)
+            civ = interface.create_instance(value=value)
+            self.display_set.values.add(civ)
         return super().form_valid(form)
 
     def get_success_url(self):

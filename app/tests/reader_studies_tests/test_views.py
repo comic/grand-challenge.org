@@ -1,8 +1,11 @@
 import io
 
 import pytest
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from requests import put
 
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -14,6 +17,10 @@ from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
+)
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
 )
 from tests.utils import get_view_for_user
 
@@ -363,3 +370,157 @@ def test_display_set_update(client):
 
     # A new ds should have been created for civ_img
     assert DisplaySet.objects.count() == 3
+
+
+@pytest.mark.django_db
+def test_add_images_to_display_set(client, settings):
+    settings.task_always_eager = (True,)
+    settings.task_eager_propagates = (True,)
+
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(u1)
+    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+    im_upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "test_grayscale.jpg",
+        creator=u1,
+    )
+    civ_json = ComponentInterfaceValueFactory(
+        interface=ci_json,
+    )
+    ds.values.add(civ_json)
+    upload = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-images-to-display-set",
+        client=client,
+        reverse_kwargs={
+            "slug": rs.slug,
+            "pk": ds.pk,
+            "interface_pk": ci_json.pk,
+        },
+        user=u2,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-images-to-display-set",
+        client=client,
+        reverse_kwargs={
+            "slug": rs.slug,
+            "pk": ds.pk,
+            "interface_pk": ci_json.pk,
+        },
+        data={"user_upload": str(upload.pk)},
+        user=u1,
+        method=client.post,
+    )
+
+    assert response.status_code == 302
+    civ_json.refresh_from_db()
+    assert civ_json.file.read() == b'{"foo": "bar"}'
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:add-images-to-display-set",
+            client=client,
+            reverse_kwargs={
+                "slug": rs.slug,
+                "pk": ds.pk,
+                "interface_pk": ci_img.pk,
+            },
+            data={"user_uploads": str(im_upload.pk)},
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    civ_img = ds.values.get(interface=ci_img)
+    assert civ_img.image.name == "test_grayscale.jpg"
+
+
+@pytest.mark.django_db
+def test_display_set_add_interface(client, settings):
+    settings.task_always_eager = (True,)
+    settings.task_eager_propagates = (True,)
+
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(u1)
+
+    ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
+    ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-add-interface",
+        client=client,
+        reverse_kwargs={"pk": ds.pk},
+        user=u2,
+    )
+
+    assert response.status_code == 403
+
+    assert not ds.values.filter(interface=ci_value).exists()
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-add-interface",
+        client=client,
+        reverse_kwargs={"pk": ds.pk},
+        data={"interface": str(ci_value.pk), "value": '{"foo": "bar"}'},
+        user=u1,
+        method=client.post,
+    )
+
+    assert response.status_code == 302
+    civ = ds.values.get(interface=ci_value)
+    assert civ.value == {"foo": "bar"}
+
+    assert not ds.values.filter(interface=ci_file).exists()
+    upload = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-add-interface",
+        client=client,
+        reverse_kwargs={"pk": ds.pk},
+        data={"interface": str(ci_file.pk), "value": str(upload.pk)},
+        user=u1,
+        method=client.post,
+    )
+
+    assert response.status_code == 302
+    civ = ds.values.get(interface=ci_file)
+    assert civ.file.read() == b'{"foo": "bar"}'
+
+    assert not ds.values.filter(interface=ci_image).exists()
+    upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "test_grayscale.jpg",
+        creator=u1,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-add-interface",
+            client=client,
+            reverse_kwargs={"pk": ds.pk},
+            data={"interface": str(ci_image.pk), "value": str(upload.pk)},
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    civ = ds.values.get(interface=ci_image)
+    assert civ.image.name == "test_grayscale.jpg"

@@ -1028,7 +1028,7 @@ def test_file_form():
 
 
 @pytest.mark.django_db
-def test__display_set_add_interface_form():
+def test_display_set_add_interface_form():
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     user = UserFactory()
