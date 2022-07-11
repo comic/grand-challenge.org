@@ -113,6 +113,7 @@
     <span class="n">StatusChoices</span><span class="p">,</span>
     <span class="n">SubmissionKindChoices</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">ViewContentMixin</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.notifications.models</span> <span class="kn">import</span> <span class="n">Notification</span><span class="p">,</span> <span class="n">NotificationType</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
@@ -169,7 +170,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="Phase"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a><span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a><span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ViewContentMixin</span><span class="p">):</span>
     <span class="c1"># This must match the syntax used in jquery datatables</span>
     <span class="c1"># https://datatables.net/reference/option/order</span>
     <span class="n">ASCENDING</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
@@ -490,6 +491,24 @@
             <span class="s2">&quot;this phase are closed for participants.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">workstation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;workstations.Workstation&quot;</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">workstation_config</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;workstation_configs.WorkstationConfig&quot;</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">hanging_protocol</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;hanging_protocols.HangingProtocol&quot;</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">))</span>
@@ -555,6 +574,21 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;You need to first add a valid method for this phase before you &quot;</span>
                 <span class="s2">&quot;can change the submission limit to above 0.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive</span>
+                <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span>
+                <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_outputs</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;To change the submission limit to above 0, you need to first link an archive containing the secret &quot;</span>
+                <span class="s2">&quot;test data to this phase and define the inputs and outputs that the submitted algorithms need to &quot;</span>
+                <span class="s2">&quot;read/write. To configure these settings, please get in touch with support@grand-challenge.org.&quot;</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
