@@ -12,7 +12,6 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     BooleanField,
@@ -50,7 +49,6 @@ from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     CASE_TEXT_SCHEMA,
-    Answer,
     CategoricalOption,
     DisplaySet,
     Question,
@@ -409,21 +407,6 @@ class ReadersForm(UserGroupForm):
         permission_request.save()
 
 
-class AnswersRemoveForm(Form):
-    user = ModelChoiceField(
-        queryset=get_user_model().objects.all().order_by("username"),
-        required=True,
-    )
-
-    def remove_answers(self, *, reader_study):
-        user = self.cleaned_data["user"]
-        Answer.objects.filter(
-            question__reader_study=reader_study,
-            creator=user,
-            is_ground_truth=False,
-        ).delete()
-
-
 class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
     class Meta(PermissionRequestUpdateForm.Meta):
         model = ReaderStudyPermissionRequest
@@ -455,14 +438,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         headers = rdr.fieldnames
         if sorted(
             filter(lambda x: not x.endswith("__explanation"), headers)
-        ) != sorted(
-            ["case"]
-            + list(
-                self.reader_study.questions.values_list(
-                    "question_text", flat=True
-                )
-            )
-        ):
+        ) != sorted(self.reader_study.ground_truth_file_headers):
             raise ValidationError(
                 f"Fields provided do not match with reader study. Fields should "
                 f"be: {','.join(self.reader_study.ground_truth_file_headers)}"

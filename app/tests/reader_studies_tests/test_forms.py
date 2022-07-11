@@ -779,8 +779,14 @@ def test_reader_study_add_ground_truth(client, settings):
         question_text="mchoice",
         answer_type=Question.AnswerType.MULTIPLE_CHOICE,
     )
+    q3 = QuestionFactory(
+        reader_study=rs,
+        question_text="choice_optional",
+        answer_type=Question.AnswerType.CHOICE,
+        required=False,
+    )
     options = {}
-    for i, q_ in enumerate([q1, q2]):
+    for i, q_ in enumerate([q1, q2, q3]):
         for x in range(3):
             options[f"{i}-{x}"] = CategoricalOptionFactory(
                 question=q_, title=f"option{x}"
@@ -888,7 +894,7 @@ def test_reader_study_add_ground_truth(client, settings):
         )
     assert response.status_code == 200
 
-    answer_count = rs.display_sets.count() * rs.answerable_question_count
+    answer_count = 12  # 4 questions * 3 ds (q3 is optional and has no gt)
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
     assert Answer.objects.get(display_set=ds1, question=q).answer == "yes"
