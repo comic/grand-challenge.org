@@ -374,8 +374,8 @@ def test_display_set_update(client):
 
 @pytest.mark.django_db
 def test_add_images_to_display_set(client, settings):
-    settings.task_always_eager = (True,)
     settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
 
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
@@ -450,8 +450,8 @@ def test_add_images_to_display_set(client, settings):
 
 @pytest.mark.django_db
 def test_display_set_add_interface(client, settings):
-    settings.task_always_eager = (True,)
     settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
 
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
