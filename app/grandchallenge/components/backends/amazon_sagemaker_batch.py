@@ -468,7 +468,8 @@ class AmazonSageMakerBatchExecutor(Executor):
                     "InstanceCount": 1,
                 },
                 Environment={  # Up to 16 pairs
-                    "LOGLEVEL": "INFO",
+                    "LOG_LEVEL": "INFO",
+                    "no_proxy": f"s3.{settings.AWS_DEFAULT_REGION}.amazonaws.com",
                 },
                 ModelClientConfig={
                     "InvocationsTimeoutInSeconds": self._time_limit,
