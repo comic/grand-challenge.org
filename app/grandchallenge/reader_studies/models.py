@@ -753,6 +753,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 )
             }
         )
+        # Filter out any emtpy display sets, which can exist because we create
+        # the ds before assinging images. None values cause the sorting to error
         values_for_interfaces = {
             interface: {
                 "kind": interfaces[interface][0],
@@ -763,7 +765,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                     if x["values__interface__slug"] == interface
                 ],
             }
-            for interface in sorted(interfaces.keys())
+            for interface in sorted(x for x in interfaces.keys() if x)
         }
 
         return values_for_interfaces
