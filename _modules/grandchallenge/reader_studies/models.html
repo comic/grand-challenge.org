@@ -580,6 +580,8 @@
                     <span class="k">continue</span>
                 <span class="n">question</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">question_text</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
                 <span class="n">_answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">_answer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">question</span><span class="o">.</span><span class="n">required</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="k">continue</span>
                 <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">option</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">_answer</span><span class="p">)</span>
@@ -676,10 +678,19 @@
             <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="n">questions</span> <span class="o">-</span> <span class="n">hangings</span><span class="p">,</span>
         <span class="p">}</span></div>
 
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">questions_with_ground__truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">gt_count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;answer&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">answer__is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">gt_count__gte</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
 <div class="viewcode-block" id="ReaderStudy.score_for_user"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.score_for_user">[docs]</a>    <span class="k">def</span> <span class="nf">score_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the average and total score for answers given by ``user``.&quot;&quot;&quot;</span>
+
         <span class="k">return</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span>
+            <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+            <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">questions_with_ground__truth</span><span class="p">,</span>
+            <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">))</span></div>
 
     <span class="nd">@cached_property</span>
@@ -687,7 +698,8 @@
         <span class="sd">&quot;&quot;&quot;The average and total scores for this ``ReaderStudy`` grouped by user.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span>
+                <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">questions_with_ground__truth</span><span class="p">,</span>
+                <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;creator_id&quot;</span><span class="p">)</span>
             <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;creator__username&quot;</span><span class="p">)</span>
@@ -1412,6 +1424,11 @@
         <span class="c1"># Allow the editors and creator to view this answer</span>
         <span class="n">assign_perm</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;delete_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
             <span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
