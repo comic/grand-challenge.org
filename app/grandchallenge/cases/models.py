@@ -298,6 +298,7 @@ class Image(UUIDModel):
     segments = models.JSONField(
         null=True,
         blank=True,
+        default=None,
         validators=[JSONValidator(schema=SEGMENTS_SCHEMA)],
     )
     eye_choice = models.CharField(
