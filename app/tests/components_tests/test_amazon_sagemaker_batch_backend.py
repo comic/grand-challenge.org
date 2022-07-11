@@ -142,7 +142,7 @@ def test_execute(settings):
                 "TransformJobName": executor._transform_job_name,
                 "Environment": {
                     "LOG_LEVEL": "INFO",
-                    "no_proxy": "s3.eu-central-1.amazonaws.com",
+                    "no_proxy": "amazonaws.com",
                 },
                 "ModelClientConfig": {
                     "InvocationsMaxRetries": 0,
