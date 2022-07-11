@@ -1374,6 +1374,23 @@ def test_display_set_add_and_edit(client, settings):
     rs.add_editor(r1)
     rs.add_reader(r2)
 
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        user=r1,
+        client=client,
+        method=client.post,
+        content_type="application/json",
+        data={
+            "reader_study": rs.slug,
+            "values": [{"interface": ci.slug, "value": True}],
+        },
+    )
+    assert response.json() == ["Values can only be added via update"]
+
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         user=r1,
@@ -1442,10 +1459,6 @@ def test_display_set_add_and_edit(client, settings):
     assert new != initial_value
     assert new.interface.slug == "generic-medical-image"
     assert new.image.name == "test_grayscale.png"
-
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
