@@ -17,3 +17,4 @@ def test_get_ground_truth(reader_study_with_mc_gt):
                     question=q, display_set=ds, is_ground_truth=True
                 ).answer_text
             )
+    assert get_ground_truth(rs, "i-dont-exist", "i-dont-exist") == ""
