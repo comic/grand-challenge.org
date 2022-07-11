@@ -10,7 +10,9 @@ from allauth.socialaccount.models import SocialLogin
 from allauth_2fa.utils import user_has_valid_totp_device
 from django import forms
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 
@@ -108,6 +110,18 @@ class AccountAdapter(DefaultAccountAdapter):
                     sociallogin
                 )
         return login_kwargs
+
+    def post_login(self, request, user, **kwargs):
+        response = super().post_login(request, user, **kwargs)
+        site = Site.objects.get_current()
+        if user.is_staff or user.is_superuser:
+            send_mail(
+                subject=f"[{site.domain.lower()}] Security Alert",
+                message=f"Dear {user.username}, \n We noticed a new login to your account. If this was you, you don't need to do anything. If not, please change your password and update your 2FA device. \n Regards,\n {site.name}\n This is an automated service email from {site.domain}.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+            )
+        return response
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
