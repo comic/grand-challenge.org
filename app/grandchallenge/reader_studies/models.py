@@ -22,6 +22,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKindChoices,
+    OverlaySegmentsMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -948,7 +949,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 }
 
 
-class Question(UUIDModel):
+class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
 
     # What is the orientation of the question form when presented on the
@@ -1032,7 +1033,13 @@ class Question(UUIDModel):
         this ``Question`` is fully editable, an empty list otherwise.
         """
         if not self.is_fully_editable:
-            return ["question_text", "answer_type", "image_port", "required"]
+            return [
+                "question_text",
+                "answer_type",
+                "image_port",
+                "required",
+                "overlay_segments",
+            ]
         return []
 
     @property

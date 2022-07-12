@@ -273,8 +273,15 @@ class ConversionResult:
 def _convert_panimg_to_django(
     *, new_images, new_image_files, new_folders
 ) -> ConversionResult:
-    new_images = {Image(**asdict(im)) for im in new_images}
-    new_image_files = {
+
+    output_images = set()
+    for im in new_images:
+        new_image = Image(**asdict(im))
+        if new_image.segments is not None:
+            new_image.segments = list(new_image.segments)
+        output_images.add(new_image)
+
+    output_image_files = {
         ImageFile(
             image_id=f.image_id,
             image_type=f.image_type,
@@ -282,12 +289,13 @@ def _convert_panimg_to_django(
         )
         for f in new_image_files
     }
-    new_folders = {FolderUpload(**asdict(f)) for f in new_folders}
+
+    output_folders = {FolderUpload(**asdict(f)) for f in new_folders}
 
     return ConversionResult(
-        new_images=new_images,
-        new_image_files=new_image_files,
-        new_folders=new_folders,
+        new_images=output_images,
+        new_image_files=output_image_files,
+        new_folders=output_folders,
     )
 
 
