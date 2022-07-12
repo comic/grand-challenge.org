@@ -1362,7 +1362,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 name = "panimg"
-version = "0.9.0"
+version = "0.9.1"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
@@ -3365,8 +3365,8 @@ packaging = [
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
 ]
 panimg = [
-    {file = "panimg-0.9.0-py3-none-any.whl", hash = "sha256:7a36ff5e28e7d31d94a6da22bc8ff57c6e2205084a1ed0f60a1e585dcef17b07"},
-    {file = "panimg-0.9.0.tar.gz", hash = "sha256:09b5814b3b8fc086f9cb85ec2233bf076b22bb0d4007b83eefd8282d42eef337"},
+    {file = "panimg-0.9.1-py3-none-any.whl", hash = "sha256:50e04a1eae1a2903e57e6fcd314475c83bcde4d38ef98cf1904fa5b4746eb5a7"},
+    {file = "panimg-0.9.1.tar.gz", hash = "sha256:fcdcc1ab4fc17e00705c6fe150f37b961a542fca9e6db9dfc4c2e62e5986e917"},
 ]
 pillow = [
     {file = "Pillow-9.2.0-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:a9c9bc489f8ab30906d7a85afac4b4944a572a7432e00698a7239f44a44e6efb"},
