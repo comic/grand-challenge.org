@@ -54,6 +54,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
 
@@ -262,6 +263,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("direction"),
                 Field("order"),
                 Field("interface"),
+                Field("overlay_segments"),
+                Field("look_up_table"),
                 HTML("<br>"),
                 ButtonHolder(Submit("save", "Save")),
             )
@@ -277,6 +280,18 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def initial_interface(self):
         return self.interface_choices().first()
+
+    def clean(self):
+        interface = self.cleaned_data.get("interface")
+        overlay_segments = self.cleaned_data.get("overlay_segments")
+        if interface and overlay_segments != interface.overlay_segments:
+            self.add_error(
+                error=ValidationError(
+                    f"Overlay segments do not match those of {interface.title}."
+                ),
+                field=None,
+            )
+        return super().clean()
 
     def full_clean(self):
         """Override of the form's full_clean method.
@@ -302,6 +317,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "direction",
             "order",
             "interface",
+            "overlay_segments",
+            "look_up_table",
         )
         help_texts = {
             "question_text": (
@@ -342,6 +359,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         }
         widgets = {
             "question_text": TextInput,
+            "overlay_segments": JSONEditorWidget(
+                schema=OVERLAY_SEGMENTS_SCHEMA
+            ),
             "answer_type": Select(
                 attrs={
                     "hx-get": reverse_lazy(

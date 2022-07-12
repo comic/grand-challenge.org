@@ -53,7 +53,7 @@ def test_add_image_to_display_set(settings):
 
     ds = DisplaySetFactory()
     us = RawImageUploadSessionFactory()
-    ci = ComponentInterfaceFactory()
+    ci = ComponentInterfaceFactory(kind="IMG")
 
     error_message = "Image imports should result in a single image"
 

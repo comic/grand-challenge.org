@@ -8,6 +8,7 @@ from django.core.validators import (
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
+from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONValidator
@@ -35,6 +36,7 @@ OVERLAY_SEGMENTS_SCHEMA = {
         ],
         "required": ["voxel_value", "name", "visible"],
         "additionalProperties": False,
+        "maxItems": MAXIMUM_SEGMENTS_LENGTH,
         "properties": {
             "voxel_value": {
                 "$id": "#/items/properties/voxel_value",
@@ -71,6 +73,7 @@ OVERLAY_SEGMENTS_SCHEMA = {
         },
     },
 }
+
 
 KEY_BINDINGS_SCHEMA = {
     "$schema": "http://json-schema.org/draft-06/schema",
