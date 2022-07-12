@@ -562,7 +562,7 @@ class OverlaySegmentsMixin(models.Model):
         if image.segments is None:
             raise ValidationError(
                 "Image segments could not be determined, ensure the file is "
-                "not a tiff file, its pixel values are integers and that it "
+                "not a tiff file, its voxel values are integers and that it "
                 f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
             )
 
@@ -570,8 +570,8 @@ class OverlaySegmentsMixin(models.Model):
         if invalid_values:
             raise ValidationError(
                 f"The valid voxel values for this segmentation are: "
-                f"'{self.voxel_values}'. This segmentation is invalid as "
-                f"it contains the voxel values: '{invalid_values}'."
+                f"{self.voxel_values}. This segmentation is invalid as "
+                f"it contains the voxel values: {invalid_values}."
             )
 
     class Meta:

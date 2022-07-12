@@ -846,7 +846,7 @@ def test_clean_overlay_segments():
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
     assert e.value.message == (
-        "Overlay segments cannot be changed, as values for this "
+        "Overlay segments cannot be changed, as values or questions for this "
         "ComponentInterface exist."
     )
 
@@ -862,7 +862,7 @@ def test_validate_voxel_values():
 
     error_msg = (
         "Image segments could not be determined, ensure the file is "
-        "not a tiff file, its pixel values are integers and that it "
+        "not a tiff file, its voxel values are integers and that it "
         f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
     )
     im = ImageFactory(segments=None)
@@ -874,7 +874,8 @@ def test_validate_voxel_values():
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "Segmentation does not match pixel values provided in overlay segments."
+        "The valid voxel values for this segmentation are: {1}. "
+        "This segmentation is invalid as it contains the voxel values: {0}."
     )
 
     ci.overlay_segments = [

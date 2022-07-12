@@ -310,7 +310,11 @@ def test_question_update(client):
         form.save()
 
     assert form.errors == {
-        "__all__": [f"Overlay segments do not match those of {ci.title}."]
+        "__all__": [
+            f"Overlay segments do not match those of {ci.title}. "
+            'Please use [{"name": "s1", "visible": true, "voxel_value": 0}, '
+            '{"name": "s2", "visible": true, "voxel_value": 1}].'
+        ]
     }
 
     form = QuestionForm(
@@ -467,7 +471,7 @@ def test_image_port_only_with_bounding_box(
         data={
             "question_text": "What?",
             "answer_type": answer_type,
-            "overlay_segments": "",
+            "overlay_segments": [],
             "order": 1,
             "image_port": port,
             "direction": "H",
