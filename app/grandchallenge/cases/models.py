@@ -345,12 +345,6 @@ class Image(UUIDModel):
         result.append(self.width)
         return result
 
-    def full_clean(self):
-        if self.segments is not None:
-            # panimg returns a tuple, which does not play nicely with jsonschema
-            self.segments = list(self.segments)
-        return super().full_clean()
-
     @property
     def shape(self) -> List[int]:
         """
