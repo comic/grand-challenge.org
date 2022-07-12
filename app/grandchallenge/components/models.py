@@ -28,6 +28,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
+from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
@@ -51,6 +52,10 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.workstation_configs.models import (
+    OVERLAY_SEGMENTS_SCHEMA,
+    LookUpTable,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -528,7 +533,48 @@ class InterfaceKind:
             raise RuntimeError(f"Unknown kind {kind}")
 
 
-class ComponentInterface(models.Model):
+class OverlaySegmentsMixin(models.Model):
+    overlay_segments = models.JSONField(
+        blank=True,
+        null=True,
+        default=None,
+        help_text=(
+            "The schema that defines how categories of values in the overlay "
+            "images are differentiated."
+        ),
+        validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+    )
+    look_up_table = models.ForeignKey(
+        to=LookUpTable,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="The look-up table that is applied when an overlay image is first shown",
+    )
+
+    @property
+    def pixel_values(self):
+        return [x["voxel_value"] for x in self.overlay_segments]
+
+    def _validate_pixel_values(self, image):
+        if not self.overlay_segments:
+            return
+        if image.segments is None:
+            raise ValidationError(
+                "Image segments could not be determined, ensure the file is "
+                "not a tiff file, its pixel values are integers and that it "
+                f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
+            )
+        if not set(image.segments).issubset(self.pixel_values):
+            raise ValidationError(
+                "Segmentation does not match pixel values provided in overlay segments."
+            )
+
+    class Meta:
+        abstract = True
+
+
+class ComponentInterface(OverlaySegmentsMixin):
     Kind = InterfaceKind.InterfaceKindChoices
 
     title = models.CharField(
@@ -592,6 +638,10 @@ class ComponentInterface(models.Model):
         ),
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._overlay_segments_orig = self.overlay_segments
+
     def __str__(self):
         return f"{self.title} ({self.get_kind_display()})"
 
@@ -649,8 +699,19 @@ class ComponentInterface(models.Model):
 
     def clean(self):
         super().clean()
+        self._clean_overlay_segments()
         self._clean_store_in_database()
         self._clean_relative_path()
+
+    def _clean_overlay_segments(self):
+        if (
+            ComponentInterfaceValue.objects.filter(interface=self).exists()
+            and self._overlay_segments_orig != self.overlay_segments
+        ):
+            raise ValidationError(
+                "Overlay segments cannot be changed, as values for this "
+                "ComponentInterface exist."
+            )
 
     def _clean_relative_path(self):
         if self.is_json_kind:
@@ -836,6 +897,8 @@ class ComponentInterfaceValue(models.Model):
 
         if self.interface.is_image_kind:
             self._validate_image_only()
+            if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
+                self.interface._validate_pixel_values(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()
         else:

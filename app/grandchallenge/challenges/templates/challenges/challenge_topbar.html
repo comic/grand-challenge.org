@@ -46,7 +46,7 @@
                                 </li>
                             {% endif %}
                             <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' %}active{% endif %}"
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}"
                                    href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
                                     <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit</a>
                             </li>
@@ -90,7 +90,7 @@
                             </a>
                         </div>
                     {% endif %}
-                    {% if request.user.is_staff %}
+                    {% if request.user.is_staff or perms.challenges.view_challengerequest %}
                         <div class="nav-item">
                             <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics'  %}active{% endif %}"
                                href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">

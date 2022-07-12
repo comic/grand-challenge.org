@@ -39,6 +39,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
+from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -95,7 +96,7 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
-class Phase(UUIDModel):
+class Phase(UUIDModel, ViewContentMixin):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
     ASCENDING = "asc"
@@ -416,6 +417,24 @@ class Phase(UUIDModel):
             "this phase are closed for participants."
         ),
     )
+    workstation = models.ForeignKey(
+        "workstations.Workstation",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+    )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    hanging_protocol = models.ForeignKey(
+        "hanging_protocols.HangingProtocol",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
 
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
@@ -481,6 +500,21 @@ class Phase(UUIDModel):
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "
                 "can change the submission limit to above 0."
+            )
+
+        if (
+            self.submission_limit > 0
+            and self.submission_kind == SubmissionKindChoices.ALGORITHM
+            and (
+                not self.archive
+                or not self.algorithm_inputs
+                or not self.algorithm_outputs
+            )
+        ):
+            raise ValidationError(
+                "To change the submission limit to above 0, you need to first link an archive containing the secret "
+                "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
+                "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
             )
 
         if (

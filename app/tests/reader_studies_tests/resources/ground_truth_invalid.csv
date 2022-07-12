@@ -1,4 +1,4 @@
-case,foo,bool,choice,mchoice
-00000000-0000-0000-0000-0000000000d1,'"yes'",'true','"option3"','["option1", "option2"]'
-00000000-0000-0000-0000-0000000000d2,'"no"','false','"option1"','["option1", "option2"]'
-00000000-0000-0000-0000-0000000000d3,'"yes"','true','"option1"','["option1", "option2"]'
+case,foo,bool,choice,mchoice,choice_optional
+00000000-0000-0000-0000-0000000000d1,'"yes'",'true','"option3"','["option1", "option2"]',null
+00000000-0000-0000-0000-0000000000d2,'"no"','false','"option1"','["option1", "option2"]',null
+00000000-0000-0000-0000-0000000000d3,'"yes"','true','"option1"','["option1", "option2"]',null

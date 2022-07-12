@@ -33,6 +33,9 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
 )
 from grandchallenge.reader_studies.tasks import add_scores_for_display_set
+from grandchallenge.workstation_configs.serializers import (
+    LookUpTableSerializer,
+)
 
 
 class CategoricalOptionSerializer(ModelSerializer):
@@ -50,6 +53,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     image_port = CharField(source="get_image_port_display", read_only=True)
     options = CategoricalOptionSerializer(many=True, read_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
+    look_up_table = LookUpTableSerializer(read_only=True)
 
     class Meta:
         model = Question
@@ -65,6 +69,8 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "required",
             "options",
             "interface",
+            "overlay_segments",
+            "look_up_table",
         )
 
 
