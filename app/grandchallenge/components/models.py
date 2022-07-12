@@ -558,15 +558,20 @@ class OverlaySegmentsMixin(models.Model):
     def _validate_voxel_values(self, image):
         if not self.overlay_segments:
             return
+
         if image.segments is None:
             raise ValidationError(
                 "Image segments could not be determined, ensure the file is "
                 "not a tiff file, its pixel values are integers and that it "
                 f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
             )
-        if not set(image.segments).issubset(self.voxel_values):
+
+        invalid_values = set(image.segments) - self.voxel_values
+        if invalid_values:
             raise ValidationError(
-                "Segmentation does not match pixel values provided in overlay segments."
+                f"The valid voxel values for this segmentation are: "
+                f"'{self.voxel_values}'. This segmentation is invalid as "
+                f"it contains the voxel values: '{invalid_values}'."
             )
 
     class Meta:
