@@ -852,10 +852,10 @@ def test_clean_overlay_segments():
 
 
 @pytest.mark.django_db
-def test_validate_pixel_values():
+def test_validate_voxel_values():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
     im = ImageFactory(segments=None)
-    assert ci._validate_pixel_values(im) is None
+    assert ci._validate_voxel_values(im) is None
 
     ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci.save()
@@ -867,12 +867,12 @@ def test_validate_pixel_values():
     )
     im = ImageFactory(segments=None)
     with pytest.raises(ValidationError) as e:
-        ci._validate_pixel_values(im)
+        ci._validate_voxel_values(im)
     assert e.value.message == error_msg
 
     im = ImageFactory(segments=[0, 1])
     with pytest.raises(ValidationError) as e:
-        ci._validate_pixel_values(im)
+        ci._validate_voxel_values(im)
     assert e.value.message == (
         "Segmentation does not match pixel values provided in overlay segments."
     )
@@ -883,4 +883,4 @@ def test_validate_pixel_values():
     ]
     ci.save()
     im = ImageFactory(segments=[0, 1])
-    assert ci._validate_pixel_values(im) is None
+    assert ci._validate_voxel_values(im) is None

@@ -552,10 +552,10 @@ class OverlaySegmentsMixin(models.Model):
     )
 
     @property
-    def pixel_values(self):
-        return [x["voxel_value"] for x in self.overlay_segments]
+    def voxel_values(self):
+        return {x["voxel_value"] for x in self.overlay_segments}
 
-    def _validate_pixel_values(self, image):
+    def _validate_voxel_values(self, image):
         if not self.overlay_segments:
             return
         if image.segments is None:
@@ -564,7 +564,7 @@ class OverlaySegmentsMixin(models.Model):
                 "not a tiff file, its pixel values are integers and that it "
                 f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
             )
-        if not set(image.segments).issubset(self.pixel_values):
+        if not set(image.segments).issubset(self.voxel_values):
             raise ValidationError(
                 "Segmentation does not match pixel values provided in overlay segments."
             )
@@ -907,7 +907,7 @@ class ComponentInterfaceValue(models.Model):
         if self.interface.is_image_kind:
             self._validate_image_only()
             if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
-                self.interface._validate_pixel_values(self.image)
+                self.interface._validate_voxel_values(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()
         else:
