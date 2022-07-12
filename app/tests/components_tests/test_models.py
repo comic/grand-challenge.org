@@ -870,18 +870,18 @@ def test_validate_voxel_values():
         ci._validate_voxel_values(im)
     assert e.value.message == error_msg
 
-    im = ImageFactory(segments=[0, 1])
+    im = ImageFactory(segments=[0, 1, 2])
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "The valid voxel values for this segmentation are: {1}. "
-        "This segmentation is invalid as it contains the voxel values: {0}."
+        "The valid voxel values for this segmentation are: {0, 1}. "
+        "This segmentation is invalid as it contains the voxel values: {2}."
     )
 
     ci.overlay_segments = [
-        {"name": "s1", "visible": True, "voxel_value": 0},
-        {"name": "s2", "visible": True, "voxel_value": 1},
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
     ]
     ci.save()
-    im = ImageFactory(segments=[0, 1])
+    im = ImageFactory(segments=[0, 1, 2])
     assert ci._validate_voxel_values(im) is None
