@@ -96,6 +96,7 @@
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentInterfaceValue</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="p">,</span>
+    <span class="n">OverlaySegmentsMixin</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
@@ -1020,7 +1021,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+<div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">AnswerType</span> <span class="o">=</span> <span class="n">AnswerType</span>
 
     <span class="c1"># What is the orientation of the question form when presented on the</span>
@@ -1104,7 +1105,13 @@
 <span class="sd">        this ``Question`` is fully editable, an empty list otherwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fully_editable</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;question_text&quot;</span><span class="p">,</span> <span class="s2">&quot;answer_type&quot;</span><span class="p">,</span> <span class="s2">&quot;image_port&quot;</span><span class="p">,</span> <span class="s2">&quot;required&quot;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="s2">&quot;question_text&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;answer_type&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;image_port&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;required&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;overlay_segments&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
         <span class="k">return</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>

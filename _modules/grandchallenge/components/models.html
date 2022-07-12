@@ -101,6 +101,7 @@
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">now</span>
 <span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
+<span class="kn">from</span> <span class="nn">panimg.models</span> <span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">INTERFACE_VALUE_SCHEMA</span>
@@ -124,6 +125,10 @@
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.uploads.models</span> <span class="kn">import</span> <span class="n">UserUpload</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.workstation_configs.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OVERLAY_SEGMENTS_SCHEMA</span><span class="p">,</span>
+    <span class="n">LookUpTable</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -601,7 +606,48 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown kind </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ComponentInterface"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a><span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">OverlaySegmentsMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">overlay_segments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The schema that defines how categories of values in the overlay &quot;</span>
+            <span class="s2">&quot;images are differentiated.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">OVERLAY_SEGMENTS_SCHEMA</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="n">look_up_table</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">LookUpTable</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The look-up table that is applied when an overlay image is first shown&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pixel_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;voxel_value&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_validate_pixel_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">segments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Image segments could not be determined, ensure the file is &quot;</span>
+                <span class="s2">&quot;not a tiff file, its pixel values are integers and that it &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;contains no more than </span><span class="si">{</span><span class="n">MAXIMUM_SEGMENTS_LENGTH</span><span class="si">}</span><span class="s2"> segments.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pixel_values</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Segmentation does not match pixel values provided in overlay segments.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="ComponentInterface"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a><span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">Kind</span> <span class="o">=</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span>
 
     <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
@@ -665,6 +711,10 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
+<div class="viewcode-block" id="ComponentInterface.__init__"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span></div>
+
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_kind_display</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
 
@@ -722,8 +772,19 @@
 
 <div class="viewcode-block" id="ComponentInterface.clean"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_overlay_segments</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_store_in_database</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_relative_path</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_clean_overlay_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Overlay segments cannot be changed, as values for this &quot;</span>
+                <span class="s2">&quot;ComponentInterface exist.&quot;</span>
+            <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_clean_relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span><span class="p">:</span>
@@ -909,6 +970,8 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_image_only</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_validate_pixel_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_file_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_only</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
