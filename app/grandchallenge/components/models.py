@@ -8,6 +8,7 @@ from typing import Optional
 
 from celery import signature
 from django import forms
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -535,8 +536,7 @@ class InterfaceKind:
 class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(
         blank=True,
-        null=True,
-        default=None,
+        default=list,
         help_text=(
             "The schema that defines how categories of values in the overlay "
             "images are differentiated."
@@ -704,12 +704,22 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def _clean_overlay_segments(self):
         if (
-            ComponentInterfaceValue.objects.filter(interface=self).exists()
-            and self._overlay_segments_orig != self.overlay_segments
+            self.kind == InterfaceKindChoices.SEGMENTATION
+            and not self.overlay_segments
         ):
             raise ValidationError(
-                "Overlay segments cannot be changed, as values for this "
-                "ComponentInterface exist."
+                "Overlay segments must be set for this interface"
+            )
+
+        Question = apps.get_model("reader_studies", "question")  # noqa: N806
+
+        if self._overlay_segments_orig != self.overlay_segments and (
+            ComponentInterfaceValue.objects.filter(interface=self).exists()
+            or Question.objects.filter(interface=self).exists()
+        ):
+            raise ValidationError(
+                "Overlay segments cannot be changed, as values or questions "
+                "for this ComponentInterface exist."
             )
 
     def _clean_relative_path(self):

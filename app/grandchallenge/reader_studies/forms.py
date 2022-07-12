@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import logging
 
 from crispy_forms.helper import FormHelper
@@ -287,7 +288,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if interface and overlay_segments != interface.overlay_segments:
             self.add_error(
                 error=ValidationError(
-                    f"Overlay segments do not match those of {interface.title}."
+                    f"Overlay segments do not match those of {interface.title}. "
+                    f"Please use {json.dumps(interface.overlay_segments)}."
                 ),
                 field=None,
             )
