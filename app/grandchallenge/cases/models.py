@@ -40,6 +40,7 @@ SEGMENTS_SCHEMA = {
         "type": "integer",
         "maxItems": MAXIMUM_SEGMENTS_LENGTH,
     },
+    "uniqueItems": True,
 }
 
 

@@ -30,6 +30,7 @@ class Migration(migrations.Migration):
                             },
                             "title": "The Segments Schema",
                             "type": "array",
+                            "uniqueItems": True,
                         }
                     )
                 ],
