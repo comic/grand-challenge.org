@@ -49,6 +49,7 @@ from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
     CASE_TEXT_SCHEMA,
+    AnswerType,
     CategoricalOption,
     Question,
     ReaderStudy,
@@ -283,8 +284,18 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         return self.interface_choices().first()
 
     def clean(self):
+        answer_type = self.cleaned_data.get("answer_type")
         interface = self.cleaned_data.get("interface")
         overlay_segments = self.cleaned_data.get("overlay_segments")
+
+        if overlay_segments and answer_type != AnswerType.MASK:
+            self.add_error(
+                error=ValidationError(
+                    "Overlay segments should only be set for Mask answers"
+                ),
+                field=None,
+            )
+
         if interface and overlay_segments != interface.overlay_segments:
             self.add_error(
                 error=ValidationError(

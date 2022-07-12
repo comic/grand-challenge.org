@@ -716,6 +716,14 @@ class ComponentInterface(OverlaySegmentsMixin):
                 "Overlay segments must be set for this interface"
             )
 
+        if (
+            self.kind != InterfaceKindChoices.SEGMENTATION
+            and self.overlay_segments
+        ):
+            raise ValidationError(
+                "Overlay segments should only be set for segmentations"
+            )
+
         Question = apps.get_model("reader_studies", "question")  # noqa: N806
 
         if self._overlay_segments_orig != self.overlay_segments and (
