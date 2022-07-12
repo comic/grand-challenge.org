@@ -553,7 +553,13 @@ class OverlaySegmentsMixin(models.Model):
 
     @property
     def voxel_values(self):
-        return {x["voxel_value"] for x in self.overlay_segments}
+        allowed_values = {x["voxel_value"] for x in self.overlay_segments}
+
+        # An implicit background value of 0 is always allowed, this saves the
+        # user having to declare it and the annotator mark it
+        allowed_values.add(0)
+
+        return allowed_values
 
     def _validate_voxel_values(self, image):
         if not self.overlay_segments:
