@@ -5,6 +5,7 @@ import shlex
 import subprocess
 import tarfile
 import uuid
+import zlib
 from base64 import b64encode
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -406,7 +407,7 @@ def _extract_docker_image_file(*, instance, filename: str):
             f"{filename} not found at the root of the container image "
             f"file. Was this created with docker save?"
         )
-    except EOFError:
+    except (EOFError, zlib.error):
         raise ValidationError("Could not decompress the container image file.")
 
 
