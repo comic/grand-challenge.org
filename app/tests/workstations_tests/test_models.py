@@ -222,7 +222,8 @@ def test_workstation_ready(http_image, settings):
 
     # Do not execute the callbacks as the image should not be ready
     wsi = WorkstationImageFactory(image__from_path=http_image)
-    assert wsi.ready is False
+    assert wsi.is_manifest_valid is None
+    assert wsi.can_execute is False
 
     with capture_on_commit_callbacks(execute=True):
         s = SessionFactory(workstation_image=wsi)

@@ -233,10 +233,17 @@ def test_session_create(client):
     ws.add_user(user=user)
 
     # Create some workstations and pretend that they're ready
-    WorkstationImageFactory(workstation=ws, ready=True)  # Old WSI
-    wsi_new = WorkstationImageFactory(workstation=ws, ready=True)
+    # TODO test if not in registry
+    WorkstationImageFactory(
+        workstation=ws, is_manifest_valid=True, is_in_registry=True
+    )  # Old WSI
+    wsi_new = WorkstationImageFactory(
+        workstation=ws, is_manifest_valid=True, is_in_registry=True
+    )
     WorkstationImageFactory(workstation=ws)  # WSI not ready
-    WorkstationImageFactory(ready=True)  # Image for some other ws
+    WorkstationImageFactory(
+        is_manifest_valid=True, is_in_registry=True
+    )  # Image for some other ws
 
     assert Session.objects.count() == 0
 
@@ -266,7 +273,11 @@ def test_session_redirect(client):
     default_workstation = Workstation.objects.get(
         slug=settings.DEFAULT_WORKSTATION_SLUG
     )
-    wsi = WorkstationImageFactory(workstation=default_workstation, ready=True)
+    wsi = WorkstationImageFactory(
+        workstation=default_workstation,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
 
     wsi.workstation.add_user(user=user)
 

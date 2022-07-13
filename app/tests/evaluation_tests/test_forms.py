@@ -96,7 +96,9 @@ class TestSubmissionForm:
         alg.inputs.clear()
         alg.outputs.clear()
 
-        ai = AlgorithmImageFactory(ready=True, algorithm=alg)
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True, is_in_registry=True, algorithm=alg
+        )
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 
         p = PhaseFactory(

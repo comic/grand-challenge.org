@@ -342,14 +342,14 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
                 f"{oxford_comma(self._algorithm_outputs)}. "
             )
 
-        if algorithm.latest_ready_image is None:
+        if algorithm.latest_executable_image is None:
             raise ValidationError(
                 "This algorithm does not have a usable container image. "
                 "Please add one and try again."
             )
 
         if Submission.objects.filter(
-            algorithm_image__image_sha256=algorithm.latest_ready_image.image_sha256,
+            algorithm_image__image_sha256=algorithm.latest_executable_image.image_sha256,
             phase=self._phase,
         ).exists():
             raise ValidationError(
@@ -359,7 +359,7 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
 
         if (
             Evaluation.objects.filter(
-                submission__algorithm_image__image_sha256=algorithm.latest_ready_image.image_sha256
+                submission__algorithm_image__image_sha256=algorithm.latest_executable_image.image_sha256
             )
             .exclude(
                 status__in=[

@@ -19,7 +19,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
-from django.db.models import Avg, F, QuerySet, Sum
+from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField, ModelMultipleChoiceField
 from django.utils.functional import cached_property
@@ -27,12 +27,14 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
+    assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
     validate_docker_image,
@@ -1359,8 +1361,37 @@ def docker_image_path(instance, filename):
     )
 
 
+class ImportStatusChoices(IntegerChoices):
+    INITIALIZED = 0, "Initialized"
+    QUEUED = 1, "Queued"
+    RETRY = 2, "Re-Queued"
+    STARTED = 3, "Started"
+    CANCELLED = 4, "Cancelled"
+    FAILED = 5, "Failed"
+    COMPLETED = 6, "Completed"
+
+
+class ComponentImageManager(models.Manager):
+    def executable_images(self):
+        queryset = self.filter(is_manifest_valid=True, is_in_registry=True)
+
+        if (
+            self.model.SHIM_IMAGE
+            and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
+        ):
+            # SageMaker models are only created for shimmed images
+            # See validate_docker_image
+            return queryset.filter(is_on_sagemaker=True)
+        else:
+            return queryset
+
+
 class ComponentImage(models.Model):
     SHIM_IMAGE = True
+
+    ImportStatusChoices = ImportStatusChoices
+
+    objects = ComponentImageManager()
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -1393,36 +1424,95 @@ class ComponentImage(models.Model):
         editable=False,
         help_text="Is this image ready to be used?",
     )
+    import_status = models.PositiveSmallIntegerField(
+        choices=ImportStatusChoices.choices,
+        default=ImportStatusChoices.INITIALIZED,
+        db_index=True,
+    )
+    is_manifest_valid = models.BooleanField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Is this image's manifest valid?",
+    )
+    is_in_registry = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="Is this image in the container registry?",
+    )
+    is_on_sagemaker = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="Does a SageMaker model for this image exist?",
+    )
     status = models.TextField(editable=False)
 
     requires_gpu = models.BooleanField(default=False)
-    requires_gpu_memory_gb = models.PositiveIntegerField(default=4)
+    requires_gpu_memory_gb = deprecate_field(
+        models.PositiveIntegerField(default=4)
+    )
     requires_memory_gb = models.PositiveIntegerField(default=4)
     # Support up to 99.99 cpu cores
-    requires_cpu_cores = models.DecimalField(
-        default=Decimal("1.0"), max_digits=4, decimal_places=2
+    requires_cpu_cores = deprecate_field(
+        models.DecimalField(
+            default=Decimal("1.0"), max_digits=4, decimal_places=2
+        )
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._image_orig = self.image
 
+    @cached_property
+    def can_execute(self):
+        return (
+            self.__class__.objects.executable_images()
+            .filter(pk=self.pk)
+            .exists()
+        )
+
     def save(self, *args, **kwargs):
-        if self.image != self._image_orig:
-            self.ready = False
+        image_needs_validation = (
+            self.import_status == ImportStatusChoices.INITIALIZED
+            and self.is_manifest_valid is None
+        )
+        validate_image_now = False
+
+        if self._image_orig:
+            if self.image != self._image_orig:
+                raise RuntimeError("The image cannot be changed")
+
+            if image_needs_validation:
+                self.import_status = ImportStatusChoices.QUEUED
+                validate_image_now = True
+
+        elif self.image and image_needs_validation:
+            self.import_status = ImportStatusChoices.QUEUED
+            validate_image_now = True
 
         super().save(*args, **kwargs)
 
-        if not self.ready:
+        if validate_image_now:
             on_commit(
-                lambda: validate_docker_image.apply_async(
+                validate_docker_image.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
                         "model_name": self._meta.model_name,
                         "pk": self.pk,
                     }
-                )
+                ).apply_async
             )
+
+    def assign_docker_image_from_upload(self):
+        on_commit(
+            assign_docker_image_from_upload.signature(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "pk": self.pk,
+                }
+            ).apply_async
+        )
 
     @property
     def original_repo_tag(self):
@@ -1439,3 +1529,26 @@ class ComponentImage(models.Model):
 
     class Meta:
         abstract = True
+
+    @property
+    def animate(self):
+        return self.import_status == self.ImportStatusChoices.STARTED
+
+    @property
+    def import_status_context(self):
+        if self.import_status == self.ImportStatusChoices.COMPLETED:
+            return "success"
+        elif self.import_status in {
+            self.ImportStatusChoices.FAILED,
+            self.ImportStatusChoices.CANCELLED,
+        }:
+            return "danger"
+        elif self.import_status in {
+            self.ImportStatusChoices.INITIALIZED,
+            self.ImportStatusChoices.QUEUED,
+            self.ImportStatusChoices.RETRY,
+            self.ImportStatusChoices.STARTED,
+        }:
+            return "info"
+        else:
+            return "secondary"

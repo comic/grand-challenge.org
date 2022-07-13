@@ -7,18 +7,24 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    ImportStatusChoices,
     InterfaceKind,
     InterfaceKindChoices,
     InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from grandchallenge.components.tasks import remove_image_from_registry
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -885,3 +891,142 @@ def test_validate_voxel_values():
     ci.save()
     im = ImageFactory(segments=[0, 1, 2])
     assert ci._validate_voxel_values(im) is None
+
+
+@pytest.mark.django_db
+def test_can_execute():
+    ai = AlgorithmImageFactory()
+
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = True
+    ai.is_in_registry = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = False
+    ai.is_in_registry = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = True
+    ai.is_in_registry = False
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+
+@pytest.mark.django_db
+def test_can_execute_with_sagemaker(settings):
+    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = False
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_on_sagemaker=False
+    )
+
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
+
+    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = True
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_on_sagemaker = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
+
+
+@pytest.mark.django_db
+def test_no_job_without_image():
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image=None)
+
+    assert len(callbacks) == 0
+    assert ai.import_status == ImportStatusChoices.INITIALIZED
+
+
+@pytest.mark.django_db
+def test_one_job_with_image(algorithm_image):
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    assert len(callbacks) == 1
+    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+        callbacks[0]
+    )
+    assert ai.import_status == ImportStatusChoices.QUEUED
+
+
+@pytest.mark.django_db
+def test_can_change_from_empty():
+    ai = AlgorithmImageFactory(image=None)
+
+    with capture_on_commit_callbacks() as callbacks:
+        ai.image = "blah"
+        ai.save()
+
+    assert len(callbacks) == 1
+    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+        callbacks[0]
+    )
+    assert ai.import_status == ImportStatusChoices.QUEUED
+
+
+@pytest.mark.django_db
+def test_cannot_change_image(algorithm_image):
+    ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    with pytest.raises(RuntimeError):
+        ai.image = "blah"
+        ai.save()
+
+
+@pytest.mark.django_db
+def test_remove_image_from_registry(algorithm_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with capture_on_commit_callbacks(execute=True):
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    ai.refresh_from_db()
+
+    assert ai.can_execute is True
+    assert ai.is_manifest_valid is True
+    assert (
+        ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+    )
+    assert ai.is_in_registry is True
+
+    with capture_on_commit_callbacks() as callbacks:
+        remove_image_from_registry(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+    assert len(callbacks) == 0
+
+    ai.refresh_from_db()
+    del ai.can_execute
+
+    assert ai.can_execute is False
+    assert ai.is_manifest_valid is True
+    assert ai.latest_shimmed_version == ""
+    assert ai.is_in_registry is False
+    assert ai.is_on_sagemaker is False

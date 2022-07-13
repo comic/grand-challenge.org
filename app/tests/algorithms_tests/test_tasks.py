@@ -434,7 +434,7 @@ def test_algorithm_input_image_multiple_files(
     assert Job.objects.count() == 0
 
     # Create the algorithm image
-    alg = AlgorithmImageFactory(ready=True)
+    alg = AlgorithmImageFactory()
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
@@ -503,7 +503,7 @@ def test_execute_algorithm_job_for_inputs(client, settings):
     creator = UserFactory()
 
     # Create the algorithm image
-    alg = AlgorithmImageFactory(ready=True)
+    alg = AlgorithmImageFactory()
     alg.algorithm.add_editor(creator)
 
     # create the job without value for the ComponentInterfaceValues
@@ -614,7 +614,7 @@ def test_failed_job_notifications(client, settings):
     editor = UserFactory()
 
     # Create the algorithm image
-    alg = AlgorithmImageFactory(ready=True)
+    alg = AlgorithmImageFactory()
     alg.algorithm.add_editor(editor)
 
     job = Job.objects.create(creator=creator, algorithm_image=alg)

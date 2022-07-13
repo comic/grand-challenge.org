@@ -35,7 +35,6 @@ from grandchallenge.components.backends.utils import get_sagemaker_model_name
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ def update_sagemaker_shim_version():
         ):
             model = apps.get_model(app_label=app_label, model_name=model_name)
 
-            for instance in model.objects.filter(ready=True).exclude(
+            for instance in model.objects.executable_images().exclude(
                 latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
             ):
                 on_commit(
@@ -73,20 +72,33 @@ def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     instance = model.objects.get(pk=pk)
 
     if (
-        instance.ready
+        instance.is_manifest_valid
+        and instance.is_in_registry
         and instance.SHIM_IMAGE
         and instance.latest_shimmed_version
         != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     ):
         shim_container_image(instance=instance)
+        instance.is_on_sagemaker = False
+        instance.save()
 
         if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
             # Only create SageMaker models for shimmed images for now
             create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+            instance.is_on_sagemaker = True
+            instance.save()
 
-        model.objects.filter(pk=instance.pk).update(
-            latest_shimmed_version=instance.latest_shimmed_version,
-        )
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def assign_docker_image_from_upload(
+    *, pk: uuid.UUID, app_label: str, model_name: str
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    with transaction.atomic():
+        instance.user_upload.copy_object(to_field=instance.image)
+        instance.user_upload.delete()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -94,43 +106,84 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
-    if not instance.image:
-        if instance.user_upload:
-            with transaction.atomic():
-                instance.user_upload.copy_object(to_field=instance.image)
-                instance.user_upload.delete()
-                # Another validation job will be launched to validate this
-                return
-        else:
-            # No image to validate
-            return
+    instance.import_status = instance.ImportStatusChoices.STARTED
+    instance.save()
 
-    try:
-        image_sha256 = _validate_docker_image_manifest(instance=instance)
-    except ValidationError as e:
-        model.objects.filter(pk=instance.pk).update(
-            image_sha256="", ready=False, status=oxford_comma(e)
-        )
-        send_invalid_dockerfile_email(container_image=instance)
+    if instance.is_manifest_valid is None:
+        try:
+            instance.image_sha256 = _validate_docker_image_manifest(
+                instance=instance
+            )
+            instance.is_manifest_valid = True
+            instance.save()
+        except ValidationError as error:
+            instance.image_sha256 = ""
+            instance.is_manifest_valid = False
+            instance.status = str(error)
+            instance.import_status = instance.ImportStatusChoices.FAILED
+            instance.save()
+            send_invalid_dockerfile_email(container_image=instance)
+            return
+    elif instance.is_manifest_valid is False:
+        # Nothing to do
         return
 
-    push_container_image(instance=instance)
+    if not instance.is_in_registry:
+        push_container_image(instance=instance)
+        instance.is_in_registry = True
+        instance.save()
 
     if instance.SHIM_IMAGE:
-        shim_container_image(instance=instance)
+        if (
+            instance.latest_shimmed_version
+            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        ):
+            shim_container_image(instance=instance)
+            instance.is_on_sagemaker = False
+            instance.save()
 
-        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
+        if (
+            settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
+            and not instance.is_on_sagemaker
+        ):
             # Only create SageMaker models for shimmed images for now
+            # See ComponentImageManager
             create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+            instance.is_on_sagemaker = True
+            instance.save()
 
-    model.objects.filter(pk=instance.pk).update(
-        image_sha256=image_sha256,
-        latest_shimmed_version=instance.latest_shimmed_version,
-        ready=True,
-    )
+    instance.import_status = instance.ImportStatusChoices.COMPLETED
+    instance.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def remove_image_from_registry(
+    *, pk: uuid.UUID, app_label: str, model_name: str
+):
+    """Remove an image from the registry"""
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if instance.is_on_sagemaker:
+        delete_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+        instance.is_on_sagemaker = False
+        instance.save()
+
+    if instance.latest_shimmed_version:
+        remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
+        instance.latest_shimmed_version = ""
+        instance.save()
+
+    if instance.is_in_registry:
+        remove_tag_from_registry(repo_tag=instance.original_repo_tag)
+        instance.is_in_registry = False
+        instance.save()
 
 
 def push_container_image(*, instance):
+    if not instance.is_manifest_valid:
+        raise RuntimeError("Cannot push invalid instance to registry")
+
     with NamedTemporaryFile(suffix=".tar") as o:
         with instance.image.open(mode="rb") as im:
             # Rewrite to tar as crane cannot handle gz
@@ -138,6 +191,17 @@ def push_container_image(*, instance):
 
         _repo_login_and_run(
             command=["crane", "push", o.name, instance.original_repo_tag]
+        )
+
+
+def remove_tag_from_registry(*, repo_tag):
+    digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
+
+    digests = digest_cmd.stdout.decode("utf-8").splitlines()
+
+    for digest in digests:
+        _repo_login_and_run(
+            command=["crane", "delete", f"{repo_tag}@{digest}"]
         )
 
 
@@ -170,6 +234,11 @@ def _repo_login_and_run(*, command):
 
 def shim_container_image(*, instance):
     """Patches a container image with the SageMaker Shim executable"""
+
+    if not instance.is_in_registry:
+        raise RuntimeError(
+            "The instance must be in the registry to create a SageMaker model"
+        )
 
     # Set the new version, so we can then get the value of the new tag.
     # Do not save the instance until the container image has been mutated.
@@ -214,6 +283,7 @@ def _get_shim_env_vars(*, original_config):
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
+        "no_proxy": "amazonaws.com",
     }
 
 
@@ -336,6 +406,8 @@ def _extract_docker_image_file(*, instance, filename: str):
             f"{filename} not found at the root of the container image "
             f"file. Was this created with docker save?"
         )
+    except EOFError:
+        raise ValidationError("Could not decompress the container image file.")
 
 
 def create_sagemaker_model(*, repo_tag):
@@ -355,6 +427,17 @@ def create_sagemaker_model(*, repo_tag):
             ],
             "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
         },
+    )
+
+
+def delete_sagemaker_model(*, repo_tag):
+    sagemaker_client = boto3.client(
+        "sagemaker",
+        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
+    )
+
+    sagemaker_client.delete_model(
+        ModelName=get_sagemaker_model_name(repo_tag=repo_tag)
     )
 
 
@@ -492,7 +575,7 @@ def execute_job(  # noqa: C901
         deprovision_job.signature(**job.signature_kwargs).apply_async()
         raise PriorStepFailed("Job is not set to be executed")
 
-    if not job.container.ready:
+    if not job.container.can_execute:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
         raise PriorStepFailed(msg)

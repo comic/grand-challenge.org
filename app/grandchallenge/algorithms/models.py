@@ -338,14 +338,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 )
 
     @cached_property
-    def latest_ready_image(self):
+    def latest_executable_image(self):
         """
         Returns
         -------
             The most recent container image for this algorithm
         """
         return (
-            self.algorithm_container_images.filter(ready=True)
+            self.algorithm_container_images.executable_images()
             .order_by("-created")
             .first()
         )
@@ -394,7 +394,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @cached_property
     def public_test_case(self):
         try:
-            return self.latest_ready_image.job_set.filter(
+            return self.latest_executable_image.job_set.filter(
                 status=Job.SUCCESS, public=True
             ).exists()
         except AttributeError:

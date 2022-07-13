@@ -165,7 +165,7 @@ def test_algorithm_image_create_detail(client):
 @pytest.mark.django_db
 def test_algorithm_run(client):
     user = UserFactory()
-    ai1 = AlgorithmImageFactory(ready=True)
+    ai1 = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
     ai1.algorithm.users_group.user_set.add(user)
 
     response = get_view_for_user(
@@ -322,7 +322,7 @@ def test_algorithm_jobs_list_view(client):
 @pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
-        ai = AlgorithmImageFactory(ready=True)
+        ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         s = RawImageUploadSessionFactory()
         u = UserFactory()
         j = AlgorithmJobFactory(algorithm_image=ai)
@@ -472,7 +472,7 @@ class TestObjectPermissionRequiredViews:
             remove_perm(permission, u, obj)
 
     def test_permission_required_list_views(self, client):
-        ai = AlgorithmImageFactory(ready=True)
+        ai = AlgorithmImageFactory()
         u = UserFactory()
         j = AlgorithmJobFactory(algorithm_image=ai)
 

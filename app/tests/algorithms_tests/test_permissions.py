@@ -274,7 +274,7 @@ class TestJobPermissions(TestCase):
     """The permissions for jobs will depend on their creation"""
 
     def test_job_permissions_for_session(self):
-        ai = AlgorithmImageFactory(ready=True)
+        ai = AlgorithmImageFactory()
 
         u = UserFactory()
         s = UploadSessionFactory(creator=u)
@@ -301,7 +301,7 @@ class TestJobPermissions(TestCase):
         assert {*job.viewers.user_set.all()} == {u}
 
     def test_job_permissions_for_archive(self):
-        ai = AlgorithmImageFactory(ready=True)
+        ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         archive = ArchiveFactory()
 
         # Fake an image upload via a session
@@ -344,7 +344,7 @@ class TestJobPermissions(TestCase):
         assert {*job.viewers.user_set.all()} == set()
 
     def test_job_permissions_for_challenge(self):
-        ai = AlgorithmImageFactory(ready=True)
+        ai = AlgorithmImageFactory()
         archive = ArchiveFactory()
         evaluation = EvaluationFactory(
             submission__phase__archive=archive, submission__algorithm_image=ai

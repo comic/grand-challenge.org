@@ -83,7 +83,7 @@ def get_workstation_image_or_404(
     else:
         workstation = get_object_or_404(Workstation, slug=slug)
 
-        workstation_image = workstation.latest_ready_image
+        workstation_image = workstation.latest_executable_image
         if workstation_image is None:
             raise Http404("No container images found for this workstation")
 

@@ -209,7 +209,7 @@ def create_algorithm_jobs_for_archive(
 
         for algorithm in algorithms:
             create_algorithm_jobs(
-                algorithm_image=algorithm.latest_ready_image,
+                algorithm_image=algorithm.latest_executable_image,
                 civ_sets=[
                     {*ai.values.all()}
                     for ai in archive_items.prefetch_related(

@@ -409,11 +409,13 @@ def test_publish_algorithm():
     assert form.is_valid() is False
 
     # add a public result
-    ai = AlgorithmImageFactory(algorithm=algorithm, ready=True)
+    ai = AlgorithmImageFactory(
+        algorithm=algorithm, is_manifest_valid=True, is_in_registry=True
+    )
     _ = AlgorithmJobFactory(
         algorithm_image=ai, status=Job.SUCCESS, public=True
     )
-    del algorithm.latest_ready_image
+    del algorithm.latest_executable_image
     del algorithm.public_test_case
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid()

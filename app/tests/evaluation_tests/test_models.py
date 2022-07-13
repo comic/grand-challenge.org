@@ -28,7 +28,9 @@ from tests.factories import ImageFactory, UserFactory
 class TestSubmission(TestCase):
     def setUp(self) -> None:
         self.method = MethodFactory(
-            ready=True, phase__archive=ArchiveFactory()
+            is_manifest_valid=True,
+            is_in_registry=True,
+            phase__archive=ArchiveFactory(),
         )
         self.algorithm_image = AlgorithmImageFactory()
 
