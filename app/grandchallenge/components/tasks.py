@@ -90,31 +90,36 @@ def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def assign_docker_image_from_upload(
+    *, pk: uuid.UUID, app_label: str, model_name: str
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    with transaction.atomic():
+        instance.user_upload.copy_object(to_field=instance.image)
+        instance.user_upload.delete()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
-    if not instance.image:
-        if instance.user_upload:
-            with transaction.atomic():
-                instance.user_upload.copy_object(to_field=instance.image)
-                instance.user_upload.delete()
-                # Another validation job will be launched to validate this
-                return
-        else:
-            # No image to validate
-            return
+    instance.import_status = instance.ImportStatusChoices.STARTED
+    instance.save()
 
     try:
-        image_sha256 = _validate_docker_image_manifest(instance=instance)
+        instance.image_sha256 = _validate_docker_image_manifest(
+            instance=instance
+        )
         instance.is_manifest_valid = True
     except ValidationError as e:
-        model.objects.filter(pk=instance.pk).update(
-            image_sha256="",
-            is_manifest_valid=False,
-            status=oxford_comma(e),
-            import_status=instance.ImportStatusChoices.COMPLETED,
-        )
+        instance.image_sha256 = ""
+        instance.is_manifest_valid = False
+        instance.status = oxford_comma(e)
+        instance.import_status = instance.ImportStatusChoices.COMPLETED
+        instance.save()
         send_invalid_dockerfile_email(container_image=instance)
         return
 
@@ -130,14 +135,8 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
             create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
             instance.is_on_sagemaker = True
 
-    model.objects.filter(pk=instance.pk).update(
-        image_sha256=image_sha256,
-        latest_shimmed_version=instance.latest_shimmed_version,
-        is_manifest_valid=instance.is_manifest_valid,
-        is_in_registry=instance.is_in_registry,
-        is_on_sagemaker=instance.is_on_sagemaker,
-        import_status=instance.ImportStatusChoices.COMPLETED,
-    )
+    instance.import_status = instance.ImportStatusChoices.COMPLETED
+    instance.save()
 
 
 def push_container_image(*, instance):

@@ -7,12 +7,14 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    ImportStatusChoices,
     InterfaceKind,
     InterfaceKindChoices,
     InterfaceSuperKindChoices,
@@ -945,3 +947,48 @@ def test_can_execute_with_sagemaker(settings):
     del ai.can_execute
     assert ai.can_execute is True
     assert ai in AlgorithmImage.objects.executable_images()
+
+
+@pytest.mark.django_db
+def test_no_job_without_image():
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image=None)
+
+    assert len(callbacks) == 0
+    assert ai.import_status == ImportStatusChoices.INITIALIZED
+
+
+@pytest.mark.django_db
+def test_one_job_with_image(algorithm_image):
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    assert len(callbacks) == 1
+    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+        callbacks[0]
+    )
+    assert ai.import_status == ImportStatusChoices.QUEUED
+
+
+@pytest.mark.django_db
+def test_can_change_from_empty():
+    ai = AlgorithmImageFactory(image=None)
+
+    with capture_on_commit_callbacks() as callbacks:
+        ai.image = "blah"
+        ai.save()
+
+    assert len(callbacks) == 1
+    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+        callbacks[0]
+    )
+    assert ai.import_status == ImportStatusChoices.QUEUED
+
+
+@pytest.mark.django_db
+def test_cannot_change_image(algorithm_image):
+    ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    with pytest.raises(RuntimeError):
+        ai.image = "blah"
+        ai.save()

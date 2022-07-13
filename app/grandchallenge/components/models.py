@@ -34,6 +34,7 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
+    assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
     validate_docker_image,
@@ -1471,24 +1472,47 @@ class ComponentImage(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        if self.image != self._image_orig:
-            self.is_manifest_valid = None
+        image_needs_validation = (
+            self.import_status == ImportStatusChoices.INITIALIZED
+            and self.is_manifest_valid is None
+        )
+        validate_image_now = False
 
-        if self.is_manifest_valid is None:
+        if self._image_orig:
+            if self.image != self._image_orig:
+                raise RuntimeError("The image cannot be changed")
+
+            if image_needs_validation:
+                self.import_status = ImportStatusChoices.QUEUED
+                validate_image_now = True
+
+        elif self.image and image_needs_validation:
             self.import_status = ImportStatusChoices.QUEUED
+            validate_image_now = True
 
         super().save(*args, **kwargs)
 
-        if self.is_manifest_valid is None:
+        if validate_image_now:
             on_commit(
-                lambda: validate_docker_image.apply_async(
+                validate_docker_image.signature(
                     kwargs={
                         "app_label": self._meta.app_label,
                         "model_name": self._meta.model_name,
                         "pk": self.pk,
                     }
-                )
+                ).apply_async
             )
+
+    def assign_docker_image_from_upload(self):
+        on_commit(
+            assign_docker_image_from_upload.signature(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "pk": self.pk,
+                }
+            ).apply_async
+        )
 
     @property
     def original_repo_tag(self):

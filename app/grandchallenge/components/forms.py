@@ -45,5 +45,10 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
         self.fields["creator"].initial = user
 
+    def save(self, *args, **kwargs):
+        instance = super().save(*args, **kwargs)
+        instance.assign_docker_image_from_upload()
+        return instance
+
     class Meta:
         fields = ("user_upload", "creator")
