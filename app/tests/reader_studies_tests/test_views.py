@@ -437,7 +437,7 @@ def test_display_set_update(client):
 
 
 @pytest.mark.django_db
-def test_add_images_to_display_set(client, settings):
+def test_add_files_to_display_set(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -464,10 +464,9 @@ def test_add_images_to_display_set(client, settings):
     upload.save()
 
     response = get_view_for_user(
-        viewname="reader-studies:add-images-to-display-set",
+        viewname="reader-studies:add-files-to-display-set",
         client=client,
         reverse_kwargs={
-            "slug": rs.slug,
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
         },
@@ -477,10 +476,9 @@ def test_add_images_to_display_set(client, settings):
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname="reader-studies:add-images-to-display-set",
+        viewname="reader-studies:add-files-to-display-set",
         client=client,
         reverse_kwargs={
-            "slug": rs.slug,
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
         },
@@ -495,10 +493,9 @@ def test_add_images_to_display_set(client, settings):
 
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
-            viewname="reader-studies:add-images-to-display-set",
+            viewname="reader-studies:add-files-to-display-set",
             client=client,
             reverse_kwargs={
-                "slug": rs.slug,
                 "pk": ds.pk,
                 "interface_pk": ci_img.pk,
             },

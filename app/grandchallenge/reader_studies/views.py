@@ -1498,7 +1498,7 @@ class AddFilesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
         context.update(
             {
                 "display_set": self.kwargs["pk"],
-                "reader_study": self.kwargs["slug"],
+                "reader_study": self.display_set.reader_study.slug,
                 "interface": self.kwargs["interface_pk"],
             }
         )
