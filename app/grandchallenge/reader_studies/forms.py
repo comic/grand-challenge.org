@@ -529,6 +529,7 @@ class DisplaySetBaseForm(Form):
             kind=interface.kind,
             schema=interface.schema,
             initial=current_value.value if current_value else None,
+            use_file_widget=interface.is_file_kind,
             required=False,
             user=self.user,
         ).field
@@ -563,7 +564,7 @@ class DisplaySetUpdateForm(DisplaySetBaseForm):
 
 
 class DisplaySetCreateForm(DisplaySetBaseForm):
-    def __init__(self, *args, instance, reader_study, **kwargs):
+    def __init__(self, *args, instance=None, reader_study, **kwargs):
         super().__init__(
             *args, instance=None, reader_study=reader_study, **kwargs
         )

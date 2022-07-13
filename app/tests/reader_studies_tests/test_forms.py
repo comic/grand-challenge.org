@@ -18,6 +18,7 @@ from grandchallenge.core.utils.access_requests import (
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetAddInterfaceForm,
+    DisplaySetCreateForm,
     DisplaySetUpdateForm,
     FileForm,
     QuestionForm,
@@ -1026,8 +1027,17 @@ def test_reader_study_add_ground_truth_ds(client, settings):
 
 
 @pytest.mark.django_db
-def test_display_set_form():
+@pytest.mark.parametrize(
+    "form_class, file_widget",
+    (
+        (DisplaySetCreateForm, UserUploadSingleWidget),
+        (DisplaySetUpdateForm, SelectUploadWidget),
+    ),
+)
+def test_display_set_update_form(form_class, file_widget):
     rs = ReaderStudyFactory()
+    user = UserFactory()
+    rs.add_editor(user)
     for slug, store_in_db in [("slug-1", False), ("slug-2", True)]:
         ci = ComponentInterfaceFactory(
             title=slug, kind="JSON", store_in_database=store_in_db
@@ -1035,15 +1045,21 @@ def test_display_set_form():
         civ = ComponentInterfaceValueFactory(interface=ci)
         ds = DisplaySetFactory(reader_study=rs)
         ds.values.add(civ)
-    form = DisplaySetUpdateForm(instance=ds)
+
+    kwargs = (
+        {"instance": ds}
+        if form_class == DisplaySetUpdateForm
+        else {"reader_study": rs}
+    )
+    form = form_class(user=user, **kwargs)
     assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
-    assert isinstance(form.fields["slug-1"].widget, SelectUploadWidget)
+    assert isinstance(form.fields["slug-1"].widget, file_widget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
     QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
     del rs.values_for_interfaces
-    form = DisplaySetUpdateForm(instance=ds)
+    form = form_class(user=user, **kwargs)
     assert sorted(form.fields.keys()) == [
         "order",
         "slug-1",

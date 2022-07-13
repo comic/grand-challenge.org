@@ -97,8 +97,6 @@ def set_display_set_order(sender, instance, created, **_):
     """Set to first multiple of 10 that is higher than the highest in this rs."""
     if not created:
         return
-    if instance.order != 0:
-        return
     instance.order = instance.reader_study.next_display_set_order
     instance.save()
 

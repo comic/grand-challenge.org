@@ -1698,9 +1698,9 @@ class AddDisplaySetToReaderStudy(AddObjectToReaderStudyMixin, CreateView):
         return validated_data
 
     def create_display_set(self, data):
-        ds = DisplaySet.objects.create(
-            reader_study=self.reader_study, order=data.pop("order")
-        )
+        ds = DisplaySet.objects.create(reader_study=self.reader_study)
+        ds.order = data.pop("order")
+        ds.save()
         for slug in data:
             interface = ComponentInterface.objects.get(slug=slug)
             civ = ComponentInterfaceValue(interface=interface)
