@@ -13,3 +13,8 @@ def naturaldelta(value):
 @register.filter
 def timedifference(value):
     return (timezone.now() - value).days
+
+
+@register.filter
+def naturalsize(value):
+    return humanize.naturalsize(value)

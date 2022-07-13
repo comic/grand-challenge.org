@@ -5,6 +5,7 @@
 {% load guardian_tags %}
 {% load humanize %}
 {% load user_profile_link from profiles %}
+{% load naturaldelta %}
 
 {% block title %}
     Algorithm Image - {{ block.super }}
@@ -61,27 +62,55 @@
             <dd>{{ object.image.name }}</dd>
 
             <dt>Image Size</dt>
-            <dd>{{ object.image.size|intcomma }} Bytes</dd>
+            <dd>{{ object.image.size|naturalsize }}</dd>
         {% endif %}
 
-        <dt>Image SHA256</dt>
-        <dd>{{ object.image_sha256 }}</dd>
+        {% if object.image_sha256 %}
+            <dt>Image SHA256</dt>
+            <dd>{{ object.image_sha256 }}</dd>
+        {% endif %}
 
-        <dt>Ready</dt>
+        <dt>Import Status</dt>
+        <dd>
+            <span class="badge badge-{{ object.import_status_context }}">
+                {% if object.animate %}
+                    <span class="spinner-border spinner-border-sm" role="status"
+                          aria-hidden="true"></span>
+                {% endif %}
+                {{ object.get_import_status_display }}
+            </span>
+        </dd>
+
+        {% if object.is_manifest_valid is not None %}
+        <dt>Image Is Valid</dt>
+        <dd>
+            <span class="badge badge-{{ object.is_manifest_valid|yesno:'success,danger' }}">
+                {{ object.is_manifest_valid }}
+            </span>
+        </dd>
+        {% endif %}
+
+        {% if object.status %}
+            <dt>Validation Errors</dt>
+            <dd>{{ object.status }}</dd>
+        {% endif %}
+
+        <dt>Image Can Be Used</dt>
         <dd>
             <span class="badge badge-{{ object.can_execute|yesno:'success,danger' }}">
                 {{ object.can_execute }}
             </span>
         </dd>
 
-        <dt>Status</dt>
-        <dd>{{ object.status }}</dd>
-
         <dt>Requires GPU</dt>
-        <dd>{{ object.requires_gpu }}</dd>
+        <dd>
+            <span class="badge badge-{{ object.requires_gpu|yesno:'success,danger' }}">
+                {{ object.requires_gpu }}
+            </span>
+        </dd>
 
         <dt>Requires Memory</dt>
-        <dd>{{ object.requires_memory_gb }}g</dd>
+        <dd>{{ object.requires_memory_gb }} GB</dd>
     </dl>
 
     {% if object.build %}

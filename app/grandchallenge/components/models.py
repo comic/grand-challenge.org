@@ -1535,7 +1535,7 @@ class ComponentImage(models.Model):
         return self.import_status == self.ImportStatusChoices.STARTED
 
     @property
-    def status_context(self):
+    def import_status_context(self):
         if self.import_status == self.ImportStatusChoices.COMPLETED:
             return "success"
         elif self.import_status in {
