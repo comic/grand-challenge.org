@@ -413,8 +413,8 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             user=creator
         )
 
-        can_submit = is_challenge_admin or (
-            has_remaining_submissions and not has_pending_evaluations
+        can_submit = not has_pending_evaluations and (
+            has_remaining_submissions or is_challenge_admin
         )
 
         if not can_submit:
@@ -431,14 +431,26 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
 
 
 class LegacySubmissionForm(SubmissionForm):
-    def __init__(self, *args, challenge, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields[
             "creator"
-        ].queryset = challenge.participants_group.user_set.all().order_by(
+        ].queryset = self._phase.challenge.participants_group.user_set.all().order_by(
             Lower("username")
         )
+
+    def clean(self):
+        if Evaluation.objects.filter(
+            submission__phase__challenge=self._phase.challenge,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+        ).exists():
+            raise ValidationError(
+                "An evaluation for this challenge is still running, please "
+                "wait for it to finish."
+            )
+
+        return super().clean()
 
     class Meta(SubmissionForm.Meta):
         widgets = {"creator": Select2Widget, "phase": forms.HiddenInput}
