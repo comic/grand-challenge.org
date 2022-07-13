@@ -431,12 +431,12 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
 
 
 class LegacySubmissionForm(SubmissionForm):
-    def __init__(self, *args, challenge, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields[
             "creator"
-        ].queryset = challenge.participants_group.user_set.all().order_by(
+        ].queryset = self._phase.challenge.participants_group.user_set.all().order_by(
             Lower("username")
         )
 

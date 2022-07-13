@@ -285,11 +285,6 @@ class LegacySubmissionCreate(
     def get_permission_object(self):
         return self.request.challenge
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"challenge": self.request.challenge})
-        return kwargs
-
 
 class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Submission
