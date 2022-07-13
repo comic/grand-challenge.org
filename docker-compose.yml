@@ -212,6 +212,8 @@ services:
 
   registry:
     image: registry:2.7
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: 'true'
 
   flower:
     image: mher/flower

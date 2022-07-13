@@ -108,34 +108,75 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     instance.import_status = instance.ImportStatusChoices.STARTED
     instance.save()
 
-    try:
-        instance.image_sha256 = _validate_docker_image_manifest(
-            instance=instance
-        )
-        instance.is_manifest_valid = True
-    except ValidationError as error:
-        instance.image_sha256 = ""
-        instance.is_manifest_valid = False
-        instance.status = str(error)
-        instance.import_status = instance.ImportStatusChoices.FAILED
-        instance.save()
-        send_invalid_dockerfile_email(container_image=instance)
+    if instance.is_manifest_valid is None:
+        try:
+            instance.image_sha256 = _validate_docker_image_manifest(
+                instance=instance
+            )
+            instance.is_manifest_valid = True
+            instance.save()
+        except ValidationError as error:
+            instance.image_sha256 = ""
+            instance.is_manifest_valid = False
+            instance.status = str(error)
+            instance.import_status = instance.ImportStatusChoices.FAILED
+            instance.save()
+            send_invalid_dockerfile_email(container_image=instance)
+            return
+    elif instance.is_manifest_valid is False:
+        # Nothing to do
         return
 
-    push_container_image(instance=instance)
-    instance.is_in_registry = True
+    if not instance.is_in_registry:
+        push_container_image(instance=instance)
+        instance.is_in_registry = True
+        instance.save()
 
     if instance.SHIM_IMAGE:
-        shim_container_image(instance=instance)
+        if (
+            instance.latest_shimmed_version
+            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        ):
+            shim_container_image(instance=instance)
+            instance.is_on_sagemaker = False
+            instance.save()
 
-        if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
+        if (
+            settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
+            and not instance.is_on_sagemaker
+        ):
             # Only create SageMaker models for shimmed images for now
             # See ComponentImageManager
             create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
             instance.is_on_sagemaker = True
+            instance.save()
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def remove_image_from_registry(
+    *, pk: uuid.UUID, app_label: str, model_name: str
+):
+    """Remove an image from the registry"""
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if instance.is_on_sagemaker:
+        delete_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+        instance.is_on_sagemaker = False
+        instance.save()
+
+    if instance.latest_shimmed_version:
+        remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
+        instance.latest_shimmed_version = ""
+        instance.save()
+
+    if instance.is_in_registry:
+        remove_tag_from_registry(repo_tag=instance.original_repo_tag)
+        instance.is_in_registry = False
+        instance.save()
 
 
 def push_container_image(*, instance):
@@ -149,6 +190,17 @@ def push_container_image(*, instance):
 
         _repo_login_and_run(
             command=["crane", "push", o.name, instance.original_repo_tag]
+        )
+
+
+def remove_tag_from_registry(*, repo_tag):
+    digest_cmd = _repo_login_and_run(command=["crane", "digest", repo_tag])
+
+    digests = digest_cmd.stdout.decode("utf-8").splitlines()
+
+    for digest in digests:
+        _repo_login_and_run(
+            command=["crane", "delete", f"{repo_tag}@{digest}"]
         )
 
 
@@ -374,6 +426,17 @@ def create_sagemaker_model(*, repo_tag):
             ],
             "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
         },
+    )
+
+
+def delete_sagemaker_model(*, repo_tag):
+    sagemaker_client = boto3.client(
+        "sagemaker",
+        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
+    )
+
+    sagemaker_client.delete_model(
+        ModelName=get_sagemaker_model_name(repo_tag=repo_tag)
     )
 
 

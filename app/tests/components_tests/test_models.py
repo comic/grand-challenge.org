@@ -20,6 +20,7 @@ from grandchallenge.components.models import (
     InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.tasks import remove_image_from_registry
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -992,3 +993,40 @@ def test_cannot_change_image(algorithm_image):
     with pytest.raises(RuntimeError):
         ai.image = "blah"
         ai.save()
+
+
+@pytest.mark.django_db
+def test_remove_image_from_registry(algorithm_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with capture_on_commit_callbacks(execute=True):
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    ai.refresh_from_db()
+
+    assert ai.can_execute is True
+    assert ai.is_manifest_valid is True
+    assert (
+        ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+    )
+    assert ai.is_in_registry is True
+
+    with capture_on_commit_callbacks() as callbacks:
+        remove_image_from_registry(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+    assert len(callbacks) == 0
+
+    ai.refresh_from_db()
+    del ai.can_execute
+
+    assert ai.can_execute is False
+    assert ai.is_manifest_valid is True
+    assert ai.latest_shimmed_version == ""
+    assert ai.is_in_registry is False
+    assert ai.is_on_sagemaker is False
