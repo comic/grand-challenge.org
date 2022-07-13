@@ -1630,11 +1630,19 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
         )
 
 
-class AddDisplaySetToReaderStudy(AddObjectToReaderStudyMixin, CreateView):
+class AddDisplaySetToReaderStudy(
+    AddObjectToReaderStudyMixin, ObjectPermissionRequiredMixin, CreateView
+):
     model = DisplaySet
     form_class = DisplaySetCreateForm
     template_name = "reader_studies/readerstudy_display_set_create.html"
     type_to_add = "case"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+
+    def get_permission_object(self):
+        return self.reader_study
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
