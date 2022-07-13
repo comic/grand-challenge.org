@@ -36,7 +36,6 @@ from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -486,68 +485,91 @@ class SelectUploadWidget(Select):
     template_name = "reader_studies/select_upload_widget.html"
 
 
-class DisplaySetForm(Form):
+class DisplaySetBaseForm(Form):
     _possible_widgets = {
         SelectUploadWidget,
         *InterfaceFormField._possible_widgets,
     }
+    user = None
 
-    def __init__(self, *args, instance=None, **kwargs):
+    def __init__(self, *args, instance, reader_study, user, **kwargs):
         super().__init__(*args, **kwargs)
-        if instance is not None:
-            for (
-                slug,
-                civ,
-            ) in instance.reader_study.values_for_interfaces.items():
-                val = instance.values.filter(interface__slug=slug).first()
-                interface = ComponentInterface.objects.get(slug=slug)
-                if civ["kind"] in InterfaceKind.interface_type_json():
-                    if not interface.store_in_database:
-                        self.fields[slug] = ModelChoiceField(
-                            queryset=ComponentInterfaceValue.objects.filter(
-                                id__in=civ["values"]
-                            ),
-                            initial=val,
-                            required=False,
-                            widget=SelectUploadWidget(
-                                attrs={
-                                    "reader_study_slug": instance.reader_study.slug,
-                                    "display_set_pk": instance.pk,
-                                    "interface_pk": interface.pk,
-                                }
-                            ),
-                        )
+        self.instance = instance
+        self.reader_study = reader_study
+        self.user = user
+        for slug, values in reader_study.values_for_interfaces.items():
+            current_value = None
+            if instance:
+                current_value = instance.values.filter(
+                    interface__slug=slug
+                ).first()
+            interface = ComponentInterface.objects.get(slug=slug)
+            if interface.is_file_kind:
+                self.fields[slug] = self._get_file_field(
+                    interface, values, current_value
+                )
+            elif interface.is_json_kind:
+                self.fields[slug] = self._get_json_field(
+                    interface, current_value
+                )
+            else:
+                self.fields[slug] = self._get_image_field(
+                    interface, values, current_value
+                )
 
-                    else:
-                        # Use the field/widget provided by InterfaceFormField,
-                        # which includes proper validation
-                        self.fields[slug] = InterfaceFormField(
-                            kind=civ["kind"],
-                            schema=civ["schema"],
-                            initial=val.value if val else None,
-                            required=False,
-                        ).field
-                else:
-                    # Use a ModelChoiceField here, as InterfaceFormField would
-                    # provide an upload wodget, but we do not want to add new
-                    # images/files here, but rather assign existing values to
-                    # the proper display sets.
-                    self.fields[slug] = ModelChoiceField(
-                        queryset=ComponentInterfaceValue.objects.filter(
-                            id__in=civ["values"]
-                        ),
-                        initial=val,
-                        required=False,
-                        widget=SelectUploadWidget(
-                            attrs={
-                                "reader_study_slug": instance.reader_study.slug,
-                                "display_set_pk": instance.pk,
-                                "interface_pk": interface.pk,
-                            }
-                        ),
-                    )
+            order = (
+                instance.order
+                if instance
+                else reader_study.next_display_set_order
+            )
+            self.fields["order"] = IntegerField(initial=order)
 
-            self.fields["order"] = IntegerField(initial=instance.order)
+    def _get_json_field(self, interface, current_value):
+        return InterfaceFormField(
+            kind=interface.kind,
+            schema=interface.schema,
+            initial=current_value.value if current_value else None,
+            required=False,
+            user=self.user,
+        ).field
+
+    def _get_image_field(self, interface, values, current_value):
+        return ModelChoiceField(
+            queryset=ComponentInterfaceValue.objects.filter(id__in=values),
+            initial=current_value,
+            required=False,
+            widget=SelectUploadWidget(
+                attrs={
+                    "reader_study_slug": self.reader_study.slug,
+                    "display_set_pk": self.instance.pk,
+                    "interface_pk": interface.pk,
+                }
+            ),
+        )
+
+    def _get_file_field(self, interface, values, current_value):
+        return self._get_image_field(interface, values, current_value)
+
+
+class DisplaySetUpdateForm(DisplaySetBaseForm):
+    def __init__(self, *args, instance, user, **kwargs):
+        super().__init__(
+            *args,
+            instance=instance,
+            reader_study=instance.reader_study,
+            user=user,
+            **kwargs,
+        )
+
+
+class DisplaySetCreateForm(DisplaySetBaseForm):
+    def __init__(self, *args, instance, reader_study, **kwargs):
+        super().__init__(
+            *args, instance=None, reader_study=reader_study, **kwargs
+        )
+
+    def _get_image_field(self, interface, values, current_value):
+        return self._get_json_field(interface, current_value)
 
 
 class FileForm(Form):
@@ -593,21 +615,31 @@ class DisplaySetAddInterfaceForm(Form):
             selected_interface = ComponentInterface.objects.get(
                 pk=data["interface"]
             )
-        ds = DisplaySet.objects.get(pk=pk)
+        if pk is not None:
+            ds = DisplaySet.objects.get(pk=pk)
+            qs = ComponentInterface.objects.exclude(
+                slug__in=ds.reader_study.values_for_interfaces.keys()
+            )
+            attrs = {
+                "hx-get": reverse_lazy(
+                    "reader-studies:display-set-add-interface",
+                    kwargs={"pk": pk},
+                ),
+                "hx-target": f"#ds-content-{pk}",
+            }
+        else:
+            qs = ComponentInterface.objects.all()
+            attrs = {
+                "hx-get": reverse_lazy(
+                    "reader-studies:display-set-new-add-interface",
+                ),
+                "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
+                "hx-swap": "outerHTML",
+            }
         self.fields["interface"] = ModelChoiceField(
             initial=selected_interface,
-            queryset=ComponentInterface.objects.exclude(
-                slug__in=ds.reader_study.values_for_interfaces.keys()
-            ),
-            widget=Select(
-                attrs={
-                    "hx-get": reverse_lazy(
-                        "reader-studies:display-set-add-interface",
-                        kwargs={"pk": pk},
-                    ),
-                    "hx-target": f"#ds-content-{pk}",
-                }
-            ),
+            queryset=qs,
+            widget=Select(attrs=attrs),
         )
 
         if selected_interface is not None:

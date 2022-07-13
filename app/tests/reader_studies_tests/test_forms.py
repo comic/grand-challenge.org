@@ -18,7 +18,7 @@ from grandchallenge.core.utils.access_requests import (
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetAddInterfaceForm,
-    DisplaySetForm,
+    DisplaySetUpdateForm,
     FileForm,
     QuestionForm,
     SelectUploadWidget,
@@ -1035,7 +1035,7 @@ def test_display_set_form():
         civ = ComponentInterfaceValueFactory(interface=ci)
         ds = DisplaySetFactory(reader_study=rs)
         ds.values.add(civ)
-    form = DisplaySetForm(instance=ds)
+    form = DisplaySetUpdateForm(instance=ds)
     assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
     assert isinstance(form.fields["slug-1"].widget, SelectUploadWidget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
@@ -1043,7 +1043,7 @@ def test_display_set_form():
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
     QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
     del rs.values_for_interfaces
-    form = DisplaySetForm(instance=ds)
+    form = DisplaySetUpdateForm(instance=ds)
     assert sorted(form.fields.keys()) == [
         "order",
         "slug-1",

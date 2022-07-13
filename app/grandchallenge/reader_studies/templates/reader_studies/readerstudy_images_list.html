@@ -15,7 +15,11 @@
     <p>
         <a class="btn btn-primary"
            href="{% url 'reader-studies:add-displaysets' slug=reader_study.slug %}"
-        ><i class="fas fa-plus"></i> Add Cases
+        ><i class="fas fa-plus"></i> Add Cases (batch)
+        </a>
+        <a class="btn btn-outline-primary"
+           href="{% url 'reader-studies:add-displayset' slug=reader_study.slug %}"
+        ><i class="fas fa-plus"></i> Add Case (single)
         </a>
     </p>
 
@@ -100,6 +104,25 @@
                 })
 
             });
+
+            $('#add-new').on('click', (e) => {
+                e.preventDefault();
+                debugger;
+                const target = $(e.currentTarget);
+                const formData = target.serialize();
+                $.ajax({
+                    type: 'POST',
+                    url:  target.attr("action"),
+                    data: formData,
+                    success: (response) => {
+                        const elem = target.data("hx-target");
+                        $(elem).html(response);
+                        htmx.process(elem);
+                    }
+                })
+
+            });
+
 
             // Trigger htmx ajax request here, because using hx- attributes does not work in html loaded by datatables.js
             // TODO: replace datatables.js with htmx?

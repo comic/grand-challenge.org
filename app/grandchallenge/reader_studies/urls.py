@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.reader_studies.views import (
     AddDisplaySetsToReaderStudy,
+    AddDisplaySetToReaderStudy,
     AddFilesToDisplaySet,
     AddGroundTruthToReaderStudy,
     AddImagesToReaderStudy,
@@ -52,6 +53,11 @@ urlpatterns = [
         "display-sets/<uuid:pk>/update/",
         DisplaySetUpdate.as_view(),
         name="display-set-update",
+    ),
+    path(
+        "display-sets/new/add-interface/",
+        DisplaySetAddInterface.as_view(),
+        name="display-set-new-add-interface",
     ),
     path(
         "display-sets/<uuid:pk>/add-interface/",
@@ -109,6 +115,19 @@ urlpatterns = [
         name="add-displaysets",
     ),
     path(
+<<<<<<< HEAD
+=======
+        "<slug>/display-sets/add-single/",
+        AddDisplaySetToReaderStudy.as_view(),
+        name="add-displayset",
+    ),
+    path(
+        "<slug>/display-sets/<uuid:pk>/<interface_pk>/images/update/",
+        AddImagesToDisplaySet.as_view(),
+        name="add-images-to-display-set",
+    ),
+    path(
+>>>>>>> Add create view for single display sets
         "<slug>/images/add/",
         AddImagesToReaderStudy.as_view(),
         name="add-images",

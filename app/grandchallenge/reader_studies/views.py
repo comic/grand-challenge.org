@@ -1,4 +1,6 @@
 import csv
+import json
+import random
 
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
@@ -87,7 +89,8 @@ from grandchallenge.reader_studies.filters import (
 from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
     DisplaySetAddInterfaceForm,
-    DisplaySetForm,
+    DisplaySetCreateForm,
+    DisplaySetUpdateForm,
     FileForm,
     GroundTruthForm,
     QuestionForm,
@@ -389,14 +392,14 @@ class ReaderStudyDisplaySetList(
     ]
     text_align = "left"
     default_sort_order = "asc"
-    form_class = DisplaySetForm
+    form_class = DisplaySetUpdateForm
 
     @cached_property
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def render_row(self, *, object_, page_context):
-        form = self.form_class(instance=object_)
+        form = self.form_class(instance=object_, user=self.request.user)
 
         all_media = page_context["form_media"] + form.media
         if all_media.render() != page_context["form_media"].render():
@@ -1379,7 +1382,7 @@ class DisplaySetUpdate(
 ):
     template_name = "reader_studies/readerstudy_display_set_update.html"
     model = DisplaySet
-    form_class = DisplaySetForm
+    form_class = DisplaySetUpdateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
@@ -1389,6 +1392,7 @@ class DisplaySetUpdate(
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
+                "user": self.request.user,
                 "auto_id": f"id-{self.kwargs['pk']}-%s",
             }
         )
@@ -1558,15 +1562,23 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
 
     @property
     def display_set(self):
-        return DisplaySet.objects.get(pk=self.kwargs["pk"])
+        if self.kwargs.get("pk"):
+            return DisplaySet.objects.get(pk=self.kwargs["pk"])
+
+    def get_template_names(self):
+        if self.kwargs.get("pk"):
+            return ["reader_studies/display_set_add_interface.html"]
+        else:
+            return ["reader_studies/display_set_append_interface.html"]
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
-                "pk": self.kwargs["pk"],
+                "pk": self.kwargs.get("pk"),
                 "interface": self.request.GET.get("interface"),
                 "user": self.request.user,
+                "auto_id": f"id-{random.randint(0, 10**10)}-%s",
             }
         )
         return kwargs
@@ -1576,9 +1588,7 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
         context.update({"object": self.display_set})
         return context
 
-    def form_valid(self, form):
-        interface = form.cleaned_data["interface"]
-        value = form.cleaned_data["value"]
+    def update_display_set(self, interface, value):
         if interface.is_image_kind:
             us = RawImageUploadSession.objects.create(
                 creator=self.request.user,
@@ -1605,10 +1615,149 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
         else:
             civ = interface.create_instance(value=value)
             self.display_set.values.add(civ)
+
+    def form_valid(self, form):
+        interface = form.cleaned_data["interface"]
+        value = form.cleaned_data["value"]
+        if self.display_set:
+            self.update_display_set(interface, value)
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
             "reader-studies:display-set-update",
             kwargs={"pk": self.kwargs["pk"]},
+        )
+
+
+class AddDisplaySetToReaderStudy(AddObjectToReaderStudyMixin, CreateView):
+    model = DisplaySet
+    form_class = DisplaySetCreateForm
+    template_name = "reader_studies/readerstudy_display_set_create.html"
+    type_to_add = "case"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "reader_study": self.reader_study,
+                "user": self.request.user,
+            }
+        )
+        if self.request.method in ("POST", "PUT"):
+            data = json.loads(self.request.body)
+            for key in data:
+                if key in ["order", "csrfmiddlewaretoken", "new_interfaces"]:
+                    continue
+                interface = ComponentInterface.objects.get(slug=key)
+                if interface.is_image_kind:
+                    data[key] = [data[key]]
+            kwargs.update(
+                {
+                    "data": data,
+                }
+            )
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        media = Media()
+        for widget in self.form_class._possible_widgets:
+            media = media + widget().media
+        context.update(
+            {
+                "reader_study": self.reader_study,
+                "form_media": media,
+            }
+        )
+        return context
+
+    def _process_new_interfaces(self):
+        data = json.loads(self.request.body)
+        new_interfaces = data["new_interfaces"]
+        validated_data = {}
+        errors = {}
+        for entry in new_interfaces:
+            interface = ComponentInterface.objects.get(pk=entry["interface"])
+            if interface.is_image_kind:
+                entry["value"] = [entry["value"]]
+            form = DisplaySetAddInterfaceForm(
+                data=entry,
+                pk=None,
+                interface=interface.pk,
+                user=self.request.user,
+                auto_id="%s",
+            )
+            if form.is_valid():
+                cleaned = form.cleaned_data
+                validated_data[cleaned["interface"].slug] = cleaned["value"]
+            else:
+                errors.update({entry["interface"]: form.errors["value"]})
+        if errors:
+            raise ValidationError(errors)
+        return validated_data
+
+    def create_display_set(self, data):
+        ds = DisplaySet.objects.create(
+            reader_study=self.reader_study, order=data.pop("order")
+        )
+        for slug in data:
+            interface = ComponentInterface.objects.get(slug=slug)
+            civ = ComponentInterfaceValue(interface=interface)
+            if interface.is_json_kind:
+                civ = ComponentInterfaceValue.objects.create(
+                    value=data[slug], interface=interface
+                )
+                ds.values.add(civ)
+            elif interface.is_file_kind:
+                civ = ComponentInterfaceValue.objects.create(
+                    interface=interface
+                )
+                data[slug].copy_object(to_field=civ.file)
+                civ.full_clean()
+                civ.save()
+                ds.values.add(civ)
+            elif interface.is_image_kind:
+                us = RawImageUploadSession.objects.create(
+                    creator=self.request.user,
+                )
+                us.user_uploads.set(data[slug])
+                us.process_images(
+                    linked_task=add_image_to_display_set.signature(
+                        kwargs={
+                            "display_set_pk": ds.pk,
+                            "interface_pk": interface.pk,
+                        },
+                        immutable=True,
+                    )
+                )
+
+    def return_errors(self, errors):
+        return JsonResponse(errors, status=400)
+
+    def form_invalid(self, form):
+        errors = form.errors
+        try:
+            self._process_new_interfaces()
+        except ValidationError as e:
+            errors.update(e.message_dict)
+        return self.return_errors(errors)
+
+    def form_valid(self, form):
+        try:
+            data = self._process_new_interfaces()
+        except ValidationError as e:
+            return self.return_errors(e.message_dict)
+        else:
+            data.update(form.cleaned_data)
+            self.create_display_set(data)
+            messages.success(
+                self.request,
+                "Display set created. Image import jobs have been queued.",
+            )
+            return JsonResponse({"redirect": self.get_success_url()})
+
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:display_sets", kwargs={"slug": self.kwargs["slug"]}
         )

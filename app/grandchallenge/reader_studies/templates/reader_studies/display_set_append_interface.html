@@ -1,0 +1,5 @@
+{% load crispy_forms_tags %}
+<form class="extra-interface-form" id="form-{{ form.auto_id|slice:':-3' }}">
+  {% csrf_token %}
+  {{ form|crispy }}
+</form>
