@@ -133,7 +133,7 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
         == str(upload_session_pk).casefold()
     ):
         try:
-            question._validate_pixel_values(image)
+            question._validate_voxel_values(image)
         except ValidationError as e:
             upload_session = RawImageUploadSession.objects.get(
                 pk=upload_session_pk

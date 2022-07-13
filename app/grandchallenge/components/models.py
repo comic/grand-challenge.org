@@ -8,6 +8,7 @@ from typing import Optional
 
 from celery import signature
 from django import forms
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -536,8 +537,7 @@ class InterfaceKind:
 class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(
         blank=True,
-        null=True,
-        default=None,
+        default=list,
         help_text=(
             "The schema that defines how categories of values in the overlay "
             "images are differentiated."
@@ -553,21 +553,32 @@ class OverlaySegmentsMixin(models.Model):
     )
 
     @property
-    def pixel_values(self):
-        return [x["voxel_value"] for x in self.overlay_segments]
+    def voxel_values(self):
+        allowed_values = {x["voxel_value"] for x in self.overlay_segments}
 
-    def _validate_pixel_values(self, image):
+        # An implicit background value of 0 is always allowed, this saves the
+        # user having to declare it and the annotator mark it
+        allowed_values.add(0)
+
+        return allowed_values
+
+    def _validate_voxel_values(self, image):
         if not self.overlay_segments:
             return
+
         if image.segments is None:
             raise ValidationError(
                 "Image segments could not be determined, ensure the file is "
-                "not a tiff file, its pixel values are integers and that it "
+                "not a tiff file, its voxel values are integers and that it "
                 f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
             )
-        if not set(image.segments).issubset(self.pixel_values):
+
+        invalid_values = set(image.segments) - self.voxel_values
+        if invalid_values:
             raise ValidationError(
-                "Segmentation does not match pixel values provided in overlay segments."
+                f"The valid voxel values for this segmentation are: "
+                f"{self.voxel_values}. This segmentation is invalid as "
+                f"it contains the voxel values: {invalid_values}."
             )
 
     class Meta:
@@ -705,12 +716,30 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def _clean_overlay_segments(self):
         if (
-            ComponentInterfaceValue.objects.filter(interface=self).exists()
-            and self._overlay_segments_orig != self.overlay_segments
+            self.kind == InterfaceKindChoices.SEGMENTATION
+            and not self.overlay_segments
         ):
             raise ValidationError(
-                "Overlay segments cannot be changed, as values for this "
-                "ComponentInterface exist."
+                "Overlay segments must be set for this interface"
+            )
+
+        if (
+            self.kind != InterfaceKindChoices.SEGMENTATION
+            and self.overlay_segments
+        ):
+            raise ValidationError(
+                "Overlay segments should only be set for segmentations"
+            )
+
+        Question = apps.get_model("reader_studies", "question")  # noqa: N806
+
+        if self._overlay_segments_orig != self.overlay_segments and (
+            ComponentInterfaceValue.objects.filter(interface=self).exists()
+            or Question.objects.filter(interface=self).exists()
+        ):
+            raise ValidationError(
+                "Overlay segments cannot be changed, as values or questions "
+                "for this ComponentInterface exist."
             )
 
     def _clean_relative_path(self):
@@ -898,7 +927,7 @@ class ComponentInterfaceValue(models.Model):
         if self.interface.is_image_kind:
             self._validate_image_only()
             if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
-                self.interface._validate_pixel_values(self.image)
+                self.interface._validate_voxel_values(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()
         else:

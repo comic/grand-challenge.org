@@ -33,9 +33,8 @@ class Migration(migrations.Migration):
             name="overlay_segments",
             field=models.JSONField(
                 blank=True,
-                default=None,
+                default=list,
                 help_text="The schema that defines how categories of values in the overlay images are differentiated.",
-                null=True,
                 validators=[
                     grandchallenge.core.validators.JSONValidator(
                         schema={

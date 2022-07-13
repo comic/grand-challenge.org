@@ -1023,10 +1023,13 @@ def test_ground_truth(client):
 @pytest.mark.parametrize(
     "overlay_segments,error",
     (
-        (None, None),
+        ([], None),
         (
             [{"name": "s1", "visible": True, "voxel_value": 0}],
-            "Segmentation does not match pixel values provided in overlay segments.",
+            (
+                "The valid voxel values for this segmentation are: {0}. "
+                "This segmentation is invalid as it contains the voxel values: {1}."
+            ),
         ),
         (
             [

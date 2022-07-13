@@ -846,41 +846,42 @@ def test_clean_overlay_segments():
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
     assert e.value.message == (
-        "Overlay segments cannot be changed, as values for this "
+        "Overlay segments cannot be changed, as values or questions for this "
         "ComponentInterface exist."
     )
 
 
 @pytest.mark.django_db
-def test_validate_pixel_values():
+def test_validate_voxel_values():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
     im = ImageFactory(segments=None)
-    assert ci._validate_pixel_values(im) is None
+    assert ci._validate_voxel_values(im) is None
 
     ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci.save()
 
     error_msg = (
         "Image segments could not be determined, ensure the file is "
-        "not a tiff file, its pixel values are integers and that it "
+        "not a tiff file, its voxel values are integers and that it "
         f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
     )
     im = ImageFactory(segments=None)
     with pytest.raises(ValidationError) as e:
-        ci._validate_pixel_values(im)
+        ci._validate_voxel_values(im)
     assert e.value.message == error_msg
 
-    im = ImageFactory(segments=[0, 1])
+    im = ImageFactory(segments=[0, 1, 2])
     with pytest.raises(ValidationError) as e:
-        ci._validate_pixel_values(im)
+        ci._validate_voxel_values(im)
     assert e.value.message == (
-        "Segmentation does not match pixel values provided in overlay segments."
+        "The valid voxel values for this segmentation are: {0, 1}. "
+        "This segmentation is invalid as it contains the voxel values: {2}."
     )
 
     ci.overlay_segments = [
-        {"name": "s1", "visible": True, "voxel_value": 0},
-        {"name": "s2", "visible": True, "voxel_value": 1},
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
     ]
     ci.save()
-    im = ImageFactory(segments=[0, 1])
-    assert ci._validate_pixel_values(im) is None
+    im = ImageFactory(segments=[0, 1, 2])
+    assert ci._validate_voxel_values(im) is None
