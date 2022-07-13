@@ -115,19 +115,11 @@ urlpatterns = [
         name="add-displaysets",
     ),
     path(
-<<<<<<< HEAD
-=======
         "<slug>/display-sets/add-single/",
         AddDisplaySetToReaderStudy.as_view(),
         name="add-displayset",
     ),
     path(
-        "<slug>/display-sets/<uuid:pk>/<interface_pk>/images/update/",
-        AddImagesToDisplaySet.as_view(),
-        name="add-images-to-display-set",
-    ),
-    path(
->>>>>>> Add create view for single display sets
         "<slug>/images/add/",
         AddImagesToReaderStudy.as_view(),
         name="add-images",
