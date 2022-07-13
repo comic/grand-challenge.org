@@ -1468,7 +1468,7 @@ class DisplaySetUpdate(
         return HttpResponseRedirect(self.get_success_url())
 
 
-class AddImagesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
+class AddFilesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
     model = RawImageUploadSession
     template_name = "reader_studies/display_set_add_images.html"
     permission_required = (
