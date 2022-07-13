@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 from django.utils import timezone
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -18,7 +18,10 @@ from grandchallenge.components.models import (
     InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -885,3 +888,60 @@ def test_validate_voxel_values():
     ci.save()
     im = ImageFactory(segments=[0, 1, 2])
     assert ci._validate_voxel_values(im) is None
+
+
+@pytest.mark.django_db
+def test_can_execute():
+    ai = AlgorithmImageFactory()
+
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = True
+    ai.is_in_registry = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = False
+    ai.is_in_registry = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = True
+    ai.is_in_registry = False
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+
+@pytest.mark.django_db
+def test_can_execute_with_sagemaker(settings):
+    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = False
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_on_sagemaker=False
+    )
+
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
+
+    settings.COMPONENTS_CREATE_SAGEMAKER_MODEL = True
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_on_sagemaker = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
