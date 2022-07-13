@@ -231,6 +231,7 @@ def _get_shim_env_vars(*, original_config):
         "GRAND_CHALLENGE_COMPONENT_ENTRYPOINT_B64J": encode_b64j(
             val=entrypoint
         ),
+        "no_proxy": "amazonaws.com",
     }
 
 
@@ -298,9 +299,13 @@ def _decompress_tarball(*, in_fileobj, out_fileobj):
 
 
 def _validate_docker_image_manifest(*, instance) -> str:
-    manifest = _extract_docker_image_file(
-        instance=instance, filename="manifest.json"
-    )
+    try:
+        manifest = _extract_docker_image_file(
+            instance=instance, filename="manifest.json"
+        )
+    except EOFError:
+        raise ValidationError("Could not decompress container image file.")
+
     manifest = json.loads(manifest)
 
     if len(manifest) != 1:
