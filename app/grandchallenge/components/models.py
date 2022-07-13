@@ -2,7 +2,6 @@ import json
 import logging
 import re
 from datetime import timedelta
-from decimal import Decimal
 from pathlib import Path
 from typing import Optional
 
@@ -1419,10 +1418,12 @@ class ComponentImage(models.Model):
         editable=False, max_length=8, default=""
     )
 
-    ready = models.BooleanField(
-        default=False,
-        editable=False,
-        help_text="Is this image ready to be used?",
+    ready = deprecate_field(
+        models.BooleanField(
+            default=False,
+            editable=False,
+            help_text="Is this image ready to be used?",
+        )
     )
     import_status = models.PositiveSmallIntegerField(
         choices=ImportStatusChoices.choices,
@@ -1448,16 +1449,7 @@ class ComponentImage(models.Model):
     status = models.TextField(editable=False)
 
     requires_gpu = models.BooleanField(default=False)
-    requires_gpu_memory_gb = deprecate_field(
-        models.PositiveIntegerField(default=4)
-    )
     requires_memory_gb = models.PositiveIntegerField(default=4)
-    # Support up to 99.99 cpu cores
-    requires_cpu_cores = deprecate_field(
-        models.DecimalField(
-            default=Decimal("1.0"), max_digits=4, decimal_places=2
-        )
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
