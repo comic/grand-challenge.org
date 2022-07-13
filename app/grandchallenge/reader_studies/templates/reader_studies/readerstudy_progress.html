@@ -67,7 +67,7 @@
                                     data-target="#warningModal"
                                     data-title="Delete Answers"
                                     data-warning="This will delete all answers for user '{{ user.obj }}'. This action cannot be undone."
-                                    data-user="{{ user.obj.id }}"
+                                    data-user="{{ user.obj }}"
                                     data-action="Delete Answers">
                                 <i class="fa fa-trash-alt"></i>&nbsp;Delete User's Answers
                             </button>
@@ -104,7 +104,7 @@
                             data-dismiss="modal">Cancel
                     </button>
                     <button type="button" class="btn btn-danger"
-                            id="proceed">
+                            id="proceed" data-baseurl="{{ reader_study.get_absolute_url }}" data-csrf="{{ csrf_token }}">
                         <i class="fa fa-trash"></i> <span class="modal-action"></span>
                     </button>
                 </div>
@@ -116,33 +116,6 @@
 
 {% block script %}
     {{ block.super }}
-    <script>
-        window.drf = {
-            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
-            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
-        };
-
-        let user;
-
-        $(document).ready(() => {
-            $('#warningModal').on('show.bs.modal', function (event) {
-                const button = $(event.relatedTarget);
-                const modal = $(this);
-                modal.find(".warning-text").text(button.data("warning"));
-                modal.find(".modal-action").text(button.data("action"));
-                $("#warningModalLabel").text(button.data("title"));
-                user = button.data("user");
-            });
-            $('#proceed').on('click', () => {
-                $.post({
-                    url: "{% url 'reader-studies:answers-remove' slug=reader_study.slug %}",
-                    data: {user: user, csrfmiddlewaretoken: window.drf.csrfToken},
-                    success: () => {
-                        window.location.replace(window.location.href);
-                    }
-                })
-            });
-        });
-    </script>
+    <script src="{% static 'reader_studies/js/remove_answers.js' %}"></script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
 {% endblock %}

@@ -294,60 +294,102 @@ def test_question_update(client):
     assert question.order == 100
     assert question.interface is None
 
-    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
-    get_view_for_user(
-        viewname="reader-studies:question-update",
-        client=client,
-        method=client.post,
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.SEGMENTATION,
+        overlay_segments=[
+            {"name": "s1", "visible": True, "voxel_value": 0},
+            {"name": "s2", "visible": True, "voxel_value": 1},
+        ],
+    )
+    form = QuestionForm(
+        instance=question,
         data={
             "question_text": "bar",
-            "answer_type": Question.AnswerType.BOOL,
+            "answer_type": Question.AnswerType.MASK,
             "direction": Question.Direction.VERTICAL,
+            "overlay_segments": "["
+            '{"name": "s1", "visible": true, "voxel_value": 0}'
+            "]",
+            "image_port": "M",
             "order": 200,
-            "interface": str(ci_bool.pk),
+            "interface": str(ci.pk),
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
         },
-        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
-        follow=True,
-        user=editor,
     )
+    with pytest.raises(ValueError):
+        form.save()
+
+    assert form.errors == {
+        "__all__": [
+            f"Overlay segments do not match those of {ci.title}. "
+            'Please use [{"name": "s1", "visible": true, "voxel_value": 0}, '
+            '{"name": "s2", "visible": true, "voxel_value": 1}].'
+        ]
+    }
+
+    form = QuestionForm(
+        instance=question,
+        data={
+            "question_text": "bar",
+            "answer_type": Question.AnswerType.MASK,
+            "direction": Question.Direction.VERTICAL,
+            "overlay_segments": "["
+            '{"name": "s1", "visible": true, "voxel_value": 0},'
+            '{"name": "s2", "visible": true, "voxel_value": 1}'
+            "]",
+            "image_port": "M",
+            "order": 200,
+            "interface": str(ci.pk),
+            "options-TOTAL_FORMS": 2,
+            "options-INITIAL_FORMS": 1,
+            "options-MIN_NUM_FORMS": 0,
+            "options-MAX_NUM_FORMS": 1000,
+        },
+    )
+    form.save()
 
     question.refresh_from_db()
     assert question.question_text == "bar"
-    assert question.answer_type == Question.AnswerType.BOOL
+    assert question.answer_type == Question.AnswerType.MASK
     assert question.direction == Question.Direction.VERTICAL
+    assert question.overlay_segments == [
+        {"name": "s1", "visible": True, "voxel_value": 0},
+        {"name": "s2", "visible": True, "voxel_value": 1},
+    ]
     assert question.order == 200
-    assert question.interface == ci_bool
+    assert question.interface == ci
 
     AnswerFactory(question=question, answer="true")
 
-    # An answer is added, so changing the question text should no longer be possible
-    get_view_for_user(
-        viewname="reader-studies:question-update",
-        client=client,
-        method=client.post,
+    # An answer is added, so changing the question text or overlay segments
+    # should no longer be possible
+    form = QuestionForm(
+        instance=question,
         data={
             "question_text": "foo",
             "answer_type": Question.AnswerType.SINGLE_LINE_TEXT,
             "direction": Question.Direction.HORIZONTAL,
+            "overlay_segments": '[{"name": "s1", "visible": true, "voxel_value": 0}]',
             "order": 100,
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
             "options-MIN_NUM_FORMS": 0,
             "options-MAX_NUM_FORMS": 1000,
         },
-        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
-        follow=True,
-        user=editor,
     )
+    form.save()
 
     question.refresh_from_db()
     assert question.question_text == "bar"
-    assert question.answer_type == Question.AnswerType.BOOL
+    assert question.answer_type == Question.AnswerType.MASK
     assert question.direction == Question.Direction.HORIZONTAL
+    assert question.overlay_segments == [
+        {"name": "s1", "visible": True, "voxel_value": 0},
+        {"name": "s2", "visible": True, "voxel_value": 1},
+    ]
     assert question.order == 100
 
 
@@ -442,6 +484,7 @@ def test_image_port_only_with_bounding_box(
         data={
             "question_text": "What?",
             "answer_type": answer_type,
+            "overlay_segments": "[]",
             "order": 1,
             "image_port": port,
             "direction": "H",
@@ -779,8 +822,14 @@ def test_reader_study_add_ground_truth(client, settings):
         question_text="mchoice",
         answer_type=Question.AnswerType.MULTIPLE_CHOICE,
     )
+    q3 = QuestionFactory(
+        reader_study=rs,
+        question_text="choice_optional",
+        answer_type=Question.AnswerType.CHOICE,
+        required=False,
+    )
     options = {}
-    for i, q_ in enumerate([q1, q2]):
+    for i, q_ in enumerate([q1, q2, q3]):
         for x in range(3):
             options[f"{i}-{x}"] = CategoricalOptionFactory(
                 question=q_, title=f"option{x}"
@@ -888,7 +937,7 @@ def test_reader_study_add_ground_truth(client, settings):
         )
     assert response.status_code == 200
 
-    answer_count = rs.display_sets.count() * rs.answerable_question_count
+    answer_count = 12  # 4 questions * 3 ds (q3 is optional and has no gt)
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
     assert Answer.objects.get(display_set=ds1, question=q).answer == "yes"

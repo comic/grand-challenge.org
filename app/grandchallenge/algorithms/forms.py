@@ -22,6 +22,7 @@ from django.forms import (
     Select,
     TextInput,
 )
+from django.forms.widgets import MultipleHiddenInput
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
@@ -49,6 +50,7 @@ from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.workstations.models import Workstation
 
 
 class ModelFactsTextField(Field):
@@ -330,6 +332,91 @@ class AlgorithmForm(
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
+
+
+class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = Algorithm
+        fields = (
+            "title",
+            "description",
+            "modalities",
+            "structures",
+            "inputs",
+            "outputs",
+            "workstation",
+            "workstation_config",
+            "hanging_protocol",
+            "view_content",
+            "image_requires_gpu",
+            "image_requires_memory_gb",
+            "contact_email",
+            "display_editors",
+            "logo",
+        )
+        widgets = {
+            "description": TextInput,
+            "workstation_config": HiddenInput(),
+            "hanging_protocol": HiddenInput(),
+            "view_content": HiddenInput(),
+            "display_editors": HiddenInput(),
+            "contact_email": HiddenInput(),
+            "workstation": HiddenInput(),
+            "inputs": MultipleHiddenInput(),
+            "outputs": MultipleHiddenInput(),
+            "modalities": MultipleHiddenInput(),
+            "structures": MultipleHiddenInput(),
+            "logo": HiddenInput(),
+        }
+        help_texts = {
+            "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
+        }
+
+    def __init__(
+        self,
+        workstation_config,
+        hanging_protocol,
+        view_content,
+        display_editors,
+        contact_email,
+        workstation,
+        inputs,
+        outputs,
+        structures,
+        modalities,
+        logo,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.fields["workstation_config"].initial = workstation_config
+        self.fields["workstation_config"].disabled = True
+        self.fields["hanging_protocol"].initial = hanging_protocol
+        self.fields["hanging_protocol"].disabled = True
+        self.fields["view_content"].initial = view_content
+        self.fields["view_content"].disabled = True
+        self.fields["display_editors"].initial = display_editors
+        self.fields["display_editors"].disabled = True
+        self.fields["contact_email"].initial = contact_email
+        self.fields["contact_email"].disabled = True
+        self.fields["workstation"].initial = (
+            workstation
+            if workstation
+            else Workstation.objects.get(
+                slug=settings.DEFAULT_WORKSTATION_SLUG
+            )
+        )
+        self.fields["workstation"].disabled = True
+        self.fields["inputs"].initial = inputs
+        self.fields["inputs"].disabled = True
+        self.fields["outputs"].initial = outputs
+        self.fields["outputs"].disabled = True
+        self.fields["modalities"].initial = modalities
+        self.fields["modalities"].disabled = True
+        self.fields["structures"].initial = structures
+        self.fields["structures"].disabled = True
+        self.fields["logo"].initial = logo
+        self.fields["logo"].disabled = True
 
 
 class AlgorithmDescriptionForm(ModelForm):

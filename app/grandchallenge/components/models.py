@@ -8,6 +8,7 @@ from typing import Optional
 
 from celery import signature
 from django import forms
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -27,6 +28,7 @@ from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
+from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
@@ -50,6 +52,10 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.workstation_configs.models import (
+    OVERLAY_SEGMENTS_SCHEMA,
+    LookUpTable,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -532,7 +538,58 @@ class InterfaceKind:
             raise RuntimeError(f"Unknown kind {kind}")
 
 
-class ComponentInterface(models.Model):
+class OverlaySegmentsMixin(models.Model):
+    overlay_segments = models.JSONField(
+        blank=True,
+        default=list,
+        help_text=(
+            "The schema that defines how categories of values in the overlay "
+            "images are differentiated."
+        ),
+        validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+    )
+    look_up_table = models.ForeignKey(
+        to=LookUpTable,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="The look-up table that is applied when an overlay image is first shown",
+    )
+
+    @property
+    def voxel_values(self):
+        allowed_values = {x["voxel_value"] for x in self.overlay_segments}
+
+        # An implicit background value of 0 is always allowed, this saves the
+        # user having to declare it and the annotator mark it
+        allowed_values.add(0)
+
+        return allowed_values
+
+    def _validate_voxel_values(self, image):
+        if not self.overlay_segments:
+            return
+
+        if image.segments is None:
+            raise ValidationError(
+                "Image segments could not be determined, ensure the file is "
+                "not a tiff file, its voxel values are integers and that it "
+                f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
+            )
+
+        invalid_values = set(image.segments) - self.voxel_values
+        if invalid_values:
+            raise ValidationError(
+                f"The valid voxel values for this segmentation are: "
+                f"{self.voxel_values}. This segmentation is invalid as "
+                f"it contains the voxel values: {invalid_values}."
+            )
+
+    class Meta:
+        abstract = True
+
+
+class ComponentInterface(OverlaySegmentsMixin):
     Kind = InterfaceKind.InterfaceKindChoices
 
     title = models.CharField(
@@ -595,6 +652,10 @@ class ComponentInterface(models.Model):
             "only valid for outputs."
         ),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._overlay_segments_orig = self.overlay_segments
 
     def __str__(self):
         return f"{self.title} ({self.get_kind_display()})"
@@ -660,8 +721,37 @@ class ComponentInterface(models.Model):
 
     def clean(self):
         super().clean()
+        self._clean_overlay_segments()
         self._clean_store_in_database()
         self._clean_relative_path()
+
+    def _clean_overlay_segments(self):
+        if (
+            self.kind == InterfaceKindChoices.SEGMENTATION
+            and not self.overlay_segments
+        ):
+            raise ValidationError(
+                "Overlay segments must be set for this interface"
+            )
+
+        if (
+            self.kind != InterfaceKindChoices.SEGMENTATION
+            and self.overlay_segments
+        ):
+            raise ValidationError(
+                "Overlay segments should only be set for segmentations"
+            )
+
+        Question = apps.get_model("reader_studies", "question")  # noqa: N806
+
+        if self._overlay_segments_orig != self.overlay_segments and (
+            ComponentInterfaceValue.objects.filter(interface=self).exists()
+            or Question.objects.filter(interface=self).exists()
+        ):
+            raise ValidationError(
+                "Overlay segments cannot be changed, as values or questions "
+                "for this ComponentInterface exist."
+            )
 
     def _clean_relative_path(self):
         if (
@@ -850,6 +940,8 @@ class ComponentInterfaceValue(models.Model):
 
         if self.interface.is_image_kind:
             self._validate_image_only()
+            if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
+                self.interface._validate_voxel_values(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()
             if self.interface.kind in InterfaceKind.interface_type_json():

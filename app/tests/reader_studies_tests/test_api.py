@@ -1020,8 +1020,27 @@ def test_ground_truth(client):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("answer_type", ("MASK",))
-def test_assign_answer_image(client, settings, answer_type):
+@pytest.mark.parametrize(
+    "overlay_segments,error",
+    (
+        ([], None),
+        (
+            [{"name": "s1", "visible": True, "voxel_value": 0}],
+            (
+                "The valid voxel values for this segmentation are: {0}. "
+                "This segmentation is invalid as it contains the voxel values: {1}."
+            ),
+        ),
+        (
+            [
+                {"name": "s1", "visible": True, "voxel_value": 0},
+                {"name": "s2", "visible": True, "voxel_value": 1},
+            ],
+            None,
+        ),
+    ),
+)
+def test_assign_answer_image(client, settings, overlay_segments, error):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
     rs = ReaderStudyFactory()
@@ -1031,7 +1050,9 @@ def test_assign_answer_image(client, settings, answer_type):
     rs.add_editor(editor)
     rs.add_reader(reader)
 
-    question = QuestionFactory(reader_study=rs, answer_type=answer_type)
+    question = QuestionFactory(
+        reader_study=rs, answer_type="MASK", overlay_segments=overlay_segments
+    )
 
     # First post/patch the answer (ReaderStudyAnswersAPI in gcapi)
     response = get_view_for_user(
@@ -1054,7 +1075,7 @@ def test_assign_answer_image(client, settings, answer_type):
         file_path=Path(__file__).parent.parent
         / "cases_tests"
         / "resources"
-        / "image10x10x10.mha",
+        / "mask.mha",
         creator=reader,
     )
     with capture_on_commit_callbacks(execute=True):
@@ -1070,13 +1091,12 @@ def test_assign_answer_image(client, settings, answer_type):
 
     # Validate
     answer.refresh_from_db()
-    image = RawImageUploadSession.objects.get(
-        pk=response.json()["pk"]
-    ).image_set.first()
-
-    assert answer.answer_image == image
-    assert reader.has_perm("view_image", image)
-    assert editor.has_perm("view_image", image)
+    us = RawImageUploadSession.objects.get(pk=response.json()["pk"])
+    image = us.image_set.first()
+    assert us.error_message == error
+    assert (answer.answer_image == image) is not error
+    assert reader.has_perm("view_image", image) is not error
+    assert editor.has_perm("view_image", image) is not error
 
 
 @pytest.mark.django_db

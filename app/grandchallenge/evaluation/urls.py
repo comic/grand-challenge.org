@@ -10,6 +10,7 @@ from grandchallenge.evaluation.views import (
     MethodCreate,
     MethodDetail,
     MethodList,
+    PhaseAlgorithmCreate,
     PhaseCreate,
     PhaseUpdate,
     SubmissionCreate,
@@ -25,6 +26,11 @@ urlpatterns = [
     # UUID should be matched before slugs
     path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
     path("phase/create/", PhaseCreate.as_view(), name="phase-create"),
+    path(
+        "<slug>/algorithms/create/",
+        PhaseAlgorithmCreate.as_view(),
+        name="phase-algorithm-create",
+    ),
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
     ),

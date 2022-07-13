@@ -178,11 +178,6 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
         self.fields["items"].queryset = self.archive.items.all()
         self.fields["items"].initial = self.fields["items"].queryset
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        return cleaned_data
-
 
 class AddCasesForm(UploadRawImagesForm):
     interface = ModelChoiceField(

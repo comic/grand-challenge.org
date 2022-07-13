@@ -75,6 +75,7 @@ def test_read_only_fields():
         "answer_type",
         "image_port",
         "required",
+        "overlay_segments",
     ]
 
 

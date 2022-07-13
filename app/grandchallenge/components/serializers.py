@@ -9,11 +9,15 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.workstation_configs.serializers import (
+    LookUpTableSerializer,
+)
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
     kind = serializers.CharField(source="get_kind_display", read_only=True)
     super_kind = SerializerMethodField()
+    look_up_table = LookUpTableSerializer(read_only=True)
 
     class Meta:
         model = ComponentInterface
@@ -26,6 +30,8 @@ class ComponentInterfaceSerializer(serializers.ModelSerializer):
             "default_value",
             "super_kind",
             "relative_path",
+            "overlay_segments",
+            "look_up_table",
         ]
 
     def get_super_kind(self, obj: ComponentInterface) -> str:
