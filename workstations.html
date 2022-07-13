@@ -341,7 +341,6 @@ workstation</p></li>
 <li><p><strong>image</strong> (<em>FileField</em>) – Image. .tar.xz archive of the container image produced from the command ‘docker save IMAGE | xz -T0 -c &gt; IMAGE.tar.xz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
 <li><p><strong>image_sha256</strong> (<em>CharField</em>) – Image sha256</p></li>
 <li><p><strong>latest_shimmed_version</strong> (<em>CharField</em>) – Latest shimmed version</p></li>
-<li><p><strong>ready</strong> (<em>BooleanField</em>) – Ready. Is this image ready to be used?</p></li>
 <li><p><strong>import_status</strong> (<em>PositiveSmallIntegerField</em>) – Import status</p></li>
 <li><p><strong>is_manifest_valid</strong> (<em>BooleanField</em>) – Is manifest valid. Is this image’s manifest valid?</p></li>
 <li><p><strong>is_in_registry</strong> (<em>BooleanField</em>) – Is in registry. Is this image in the container registry?</p></li>
