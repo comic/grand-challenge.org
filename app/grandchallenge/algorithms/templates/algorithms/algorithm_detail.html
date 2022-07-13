@@ -395,6 +395,7 @@
                                href="{{ image.get_absolute_url }}">
                                 <i class="fas fa-info-circle"></i>
                             </a>
+
                             {% if image.build %}
                                 <a class="btn btn-sm btn-{{ image.build.status_context }}"
                                     href="{{ image.get_absolute_url }}">
@@ -409,6 +410,15 @@
                             {% else %}
                                 Container image uploaded by {{ image.creator }} {{ image.created|naturaltime }}
                             {% endif %}
+
+                            <span class="badge badge-{{ image.import_status_context }}">
+                                {% if image.animate %}
+                                    <span class="spinner-border spinner-border-sm" role="status"
+                                          aria-hidden="true"></span>
+                                {% endif %}
+                                Import {{ image.get_import_status_display }}
+                            </span>
+
                             {% if image.can_execute and image == object.latest_executable_image %}
                                 <span class="badge badge-success">
                                     Active
