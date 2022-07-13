@@ -72,20 +72,21 @@ def shim_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     instance = model.objects.get(pk=pk)
 
     if (
-        instance.can_execute
+        instance.is_manifest_valid
+        and instance.is_in_registry
         and instance.SHIM_IMAGE
         and instance.latest_shimmed_version
         != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     ):
         shim_container_image(instance=instance)
+        instance.is_on_sagemaker = False
+        instance.save()
 
         if settings.COMPONENTS_CREATE_SAGEMAKER_MODEL:
             # Only create SageMaker models for shimmed images for now
             create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-
-        model.objects.filter(pk=instance.pk).update(
-            latest_shimmed_version=instance.latest_shimmed_version,
-        )
+            instance.is_on_sagemaker = True
+            instance.save()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
