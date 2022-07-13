@@ -299,13 +299,9 @@ def _decompress_tarball(*, in_fileobj, out_fileobj):
 
 
 def _validate_docker_image_manifest(*, instance) -> str:
-    try:
-        manifest = _extract_docker_image_file(
-            instance=instance, filename="manifest.json"
-        )
-    except EOFError:
-        raise ValidationError("Could not decompress container image file.")
-
+    manifest = _extract_docker_image_file(
+        instance=instance, filename="manifest.json"
+    )
     manifest = json.loads(manifest)
 
     if len(manifest) != 1:
@@ -358,6 +354,8 @@ def _extract_docker_image_file(*, instance, filename: str):
             f"{filename} not found at the root of the container image "
             f"file. Was this created with docker save?"
         )
+    except EOFError:
+        raise ValidationError("Could not decompress the container image file.")
 
 
 def create_sagemaker_model(*, repo_tag):
