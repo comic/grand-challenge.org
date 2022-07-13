@@ -93,7 +93,7 @@
     <span class="n">RegexValidator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">,</span> <span class="n">Sum</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">IntegerChoices</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">,</span> <span class="n">Sum</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelChoiceField</span><span class="p">,</span> <span class="n">ModelMultipleChoiceField</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
@@ -101,12 +101,14 @@
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">now</span>
 <span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">django_deprecate_fields</span> <span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span> <span class="nn">panimg.models</span> <span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">INTERFACE_VALUE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">assign_docker_image_from_upload</span><span class="p">,</span>
     <span class="n">deprovision_job</span><span class="p">,</span>
     <span class="n">provision_job</span><span class="p">,</span>
     <span class="n">validate_docker_image</span><span class="p">,</span>
@@ -1433,8 +1435,37 @@
     <span class="p">)</span>
 
 
+<div class="viewcode-block" id="ImportStatusChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ImportStatusChoices">[docs]</a><span class="k">class</span> <span class="nc">ImportStatusChoices</span><span class="p">(</span><span class="n">IntegerChoices</span><span class="p">):</span>
+    <span class="n">INITIALIZED</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Initialized&quot;</span>
+    <span class="n">QUEUED</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Queued&quot;</span>
+    <span class="n">RETRY</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Re-Queued&quot;</span>
+    <span class="n">STARTED</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Started&quot;</span>
+    <span class="n">CANCELLED</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;Cancelled&quot;</span>
+    <span class="n">FAILED</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;Failed&quot;</span>
+    <span class="n">COMPLETED</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;Completed&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">ComponentImageManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">executable_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_manifest_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_in_registry</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">SHIM_IMAGE</span>
+            <span class="ow">and</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_CREATE_SAGEMAKER_MODEL</span>
+        <span class="p">):</span>
+            <span class="c1"># SageMaker models are only created for shimmed images</span>
+            <span class="c1"># See validate_docker_image</span>
+            <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_on_sagemaker</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">queryset</span>
+
+
 <span class="k">class</span> <span class="nc">ComponentImage</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">SHIM_IMAGE</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">ImportStatusChoices</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">ComponentImageManager</span><span class="p">()</span>
 
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
@@ -1467,36 +1498,95 @@
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Is this image ready to be used?&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">import_status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span><span class="p">,</span>
+        <span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">is_manifest_valid</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Is this image&#39;s manifest valid?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">is_in_registry</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Is this image in the container registry?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">is_on_sagemaker</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Does a SageMaker model for this image exist?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="n">requires_gpu</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">requires_gpu_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">requires_gpu_memory_gb</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
     <span class="c1"># Support up to 99.99 cpu cores</span>
-    <span class="n">requires_cpu_cores</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">),</span> <span class="n">max_digits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span>
+    <span class="n">requires_cpu_cores</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">),</span> <span class="n">max_digits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span>
 
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">can_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">executable_images</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">image_needs_validation</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_manifest_valid</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The image cannot be changed&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">image_needs_validation</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span>
+                <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">and</span> <span class="n">image_needs_validation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">=</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span>
+            <span class="n">validate_image_now</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ready</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">validate_image_now</span><span class="p">:</span>
             <span class="n">on_commit</span><span class="p">(</span>
-                <span class="k">lambda</span><span class="p">:</span> <span class="n">validate_docker_image</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
+                <span class="n">validate_docker_image</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                         <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
                         <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
                         <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
                     <span class="p">}</span>
-                <span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
             <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">assign_docker_image_from_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">on_commit</span><span class="p">(</span>
+            <span class="n">assign_docker_image_from_upload</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
+                    <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+                    <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+        <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">original_repo_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1513,6 +1603,29 @@
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">STARTED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">import_status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+        <span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">&quot;danger&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">QUEUED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span>
+        <span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">&quot;info&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
 </pre></div>
 
            </div>
