@@ -762,7 +762,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
         return values_for_interfaces
 
-    @cached_property
+    @property
     def next_display_set_order(self):
         last = self.display_sets.last()
         highest = getattr(last, "order", 0)
