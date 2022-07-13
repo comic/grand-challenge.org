@@ -13,7 +13,7 @@
     {% endfor %}
   {% endif %}
   {% if object.is_editable %}
-    <form action="{% url 'reader-studies:display-set-update' pk=object.pk %}" method="post" class="ds-form" data-hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk %}" data-hx-target="#ds-content-{{ object.id }}" data-hx-swap="outerHTML" id="form-{{ object.pk }}">
+    <form action="{% url 'reader-studies:display-set-update' pk=object.pk %}" method="post" class="ds-form" data-hx-target="#ds-content-{{ object.id }}" id="form-{{ object.pk }}">
       {% csrf_token %}
       {{ form|crispy }}
       <button type="button" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-add-interface' pk=object.pk %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Add value for new interface</button>
