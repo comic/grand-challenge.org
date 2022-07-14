@@ -51,7 +51,6 @@ from grandchallenge.reader_studies.models import (
     CASE_TEXT_SCHEMA,
     AnswerType,
     CategoricalOption,
-    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -610,7 +609,7 @@ class DisplaySetAddInterfaceForm(Form):
         *InterfaceFormField._possible_widgets,
     }
 
-    def __init__(self, *args, pk, interface, user, **kwargs):
+    def __init__(self, *args, pk, interface, reader_study, user, **kwargs):
         super().__init__(*args, **kwargs)
         selected_interface = None
         if interface:
@@ -620,11 +619,10 @@ class DisplaySetAddInterfaceForm(Form):
             selected_interface = ComponentInterface.objects.get(
                 pk=data["interface"]
             )
+        qs = ComponentInterface.objects.exclude(
+            slug__in=reader_study.values_for_interfaces.keys()
+        )
         if pk is not None:
-            ds = DisplaySet.objects.get(pk=pk)
-            qs = ComponentInterface.objects.exclude(
-                slug__in=ds.reader_study.values_for_interfaces.keys()
-            )
             attrs = {
                 "hx-get": reverse_lazy(
                     "reader-studies:display-set-add-interface",
@@ -633,13 +631,14 @@ class DisplaySetAddInterfaceForm(Form):
                 "hx-target": f"#ds-content-{pk}",
             }
         else:
-            qs = ComponentInterface.objects.all()
             attrs = {
                 "hx-get": reverse_lazy(
                     "reader-studies:display-set-new-add-interface",
+                    kwargs={"slug": reader_study.slug},
                 ),
                 "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
                 "hx-swap": "outerHTML",
+                "disabled": selected_interface is not None,
             }
         self.fields["interface"] = ModelChoiceField(
             initial=selected_interface,

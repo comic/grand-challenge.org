@@ -55,11 +55,6 @@ urlpatterns = [
         name="display-set-update",
     ),
     path(
-        "display-sets/new/add-interface/",
-        DisplaySetAddInterface.as_view(),
-        name="display-set-new-add-interface",
-    ),
-    path(
         "display-sets/<uuid:pk>/add-interface/",
         DisplaySetAddInterface.as_view(),
         name="display-set-add-interface",
@@ -118,6 +113,11 @@ urlpatterns = [
         "<slug>/display-sets/add-single/",
         AddDisplaySetToReaderStudy.as_view(),
         name="add-displayset",
+    ),
+    path(
+        "<slug>/display-sets/new/add-interface/",
+        DisplaySetAddInterface.as_view(),
+        name="display-set-new-add-interface",
     ),
     path(
         "<slug>/images/add/",

@@ -1555,6 +1555,13 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
         if self.kwargs.get("pk"):
             return DisplaySet.objects.get(pk=self.kwargs["pk"])
 
+    @property
+    def reader_study(self):
+        if self.display_set:
+            return self.display_set.reader_study
+        else:
+            return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+
     def get_template_names(self):
         if self.kwargs.get("pk"):
             return ["reader_studies/display_set_add_interface.html"]
@@ -1566,6 +1573,7 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
         kwargs.update(
             {
                 "pk": self.kwargs.get("pk"),
+                "reader_study": self.reader_study,
                 "interface": self.request.GET.get("interface"),
                 "user": self.request.user,
                 "auto_id": f"id-{random.randint(0, 10**10)}-%s",
@@ -1684,6 +1692,7 @@ class AddDisplaySetToReaderStudy(
                 pk=None,
                 interface=interface.pk,
                 user=self.request.user,
+                reader_study=self.reader_study,
                 auto_id="%s",
             )
             if form.is_valid():

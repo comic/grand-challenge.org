@@ -1103,23 +1103,25 @@ def test_display_set_add_interface_form():
     ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
-    form = DisplaySetAddInterfaceForm(pk=ds.pk, interface=None, user=user)
+    form = DisplaySetAddInterfaceForm(
+        pk=ds.pk, reader_study=rs, interface=None, user=user
+    )
     assert sorted(form.fields.keys()) == ["interface"]
 
     form = DisplaySetAddInterfaceForm(
-        pk=ds.pk, interface=ci_file.pk, user=user
+        pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
     )
     assert sorted(form.fields.keys()) == ["interface", "value"]
     assert isinstance(form.fields["value"].widget, UserUploadSingleWidget)
 
     form = DisplaySetAddInterfaceForm(
-        pk=ds.pk, interface=ci_value.pk, user=user
+        pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
     )
     assert sorted(form.fields.keys()) == ["interface", "value"]
     assert isinstance(form.fields["value"].widget, JSONEditorWidget)
 
     form = DisplaySetAddInterfaceForm(
-        pk=ds.pk, interface=ci_image.pk, user=user
+        pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
     )
     assert sorted(form.fields.keys()) == ["interface", "value"]
     assert isinstance(form.fields["value"].widget, UserUploadMultipleWidget)

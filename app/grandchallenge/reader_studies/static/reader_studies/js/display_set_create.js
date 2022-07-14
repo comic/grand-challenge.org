@@ -1,5 +1,21 @@
 $(document).ready(() => {
-   $('#form-new-ds').on('submit', (e) => {
+  $(document).on('click', '.remove-form', (e) => {
+    $(e.currentTarget).parents("form.extra-interface-form").remove();
+  });
+
+  htmx.onLoad((elem) => {
+    $('form').not($("#form-new-ds")).each((i, form) => {
+      const selected = $("option:selected", form);
+      if (selected.val()) {
+        $('form').not($("#form-new-ds")).each((_, _form) => {
+          if (_form != form) {
+            $(_form).find(`option[value='${selected.val()}']`).remove();
+          }
+        });
+      }
+    });
+  });
+  $('#form-new-ds').on('submit', (e) => {
       e.preventDefault();
       const target = $(e.currentTarget);
       $(".is-invalid").removeClass("is-invalid");
