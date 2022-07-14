@@ -1,3 +1,13 @@
+$.fn.serializeAll = function () {
+  const data = $(this).serializeArray();
+
+  $(':disabled[name]', this).each(function () {
+      data.push({ name: this.name, value: $(this).val() });
+  });
+
+  return data;
+}
+
 $(document).ready(() => {
   $(document).on('click', '.remove-form', (e) => {
     $(e.currentTarget).parents("form.extra-interface-form").remove();
@@ -29,7 +39,7 @@ $(document).ready(() => {
       $(".extra-interface-form").each(
           (i, interfaceForm) => {
               const data = {}
-              $.each($(interfaceForm).serializeArray(), (i, entry) =>{
+              $.each($(interfaceForm).serializeAll(), (i, entry) =>{
                   data[entry.name] = entry.value
               });
               interfaces.push(data)
