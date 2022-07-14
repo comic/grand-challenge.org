@@ -982,7 +982,9 @@
     <span class="n">MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span>
     <span class="n">MASK</span> <span class="o">=</span> <span class="s2">&quot;MASK&quot;</span><span class="p">,</span> <span class="s2">&quot;Mask&quot;</span>
     <span class="n">LINE</span> <span class="o">=</span> <span class="s2">&quot;LINE&quot;</span><span class="p">,</span> <span class="s2">&quot;Line&quot;</span>
-    <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple lines&quot;</span></div>
+    <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple lines&quot;</span>
+    <span class="n">ANGLE</span> <span class="o">=</span> <span class="s2">&quot;ANGL&quot;</span><span class="p">,</span> <span class="s2">&quot;Angle&quot;</span>
+    <span class="n">MULTIPLE_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;MANG&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple angles&quot;</span></div>
 
 
 <span class="n">ANSWER_TYPE_TO_INTERFACE_KIND_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -1018,6 +1020,8 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[</span>
         <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
     <span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">:</span> <span class="p">[</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">],</span>
 <span class="p">}</span>
 
 
@@ -1213,6 +1217,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
         <span class="p">]</span>
 
     <span class="nd">@property</span>

@@ -161,6 +161,8 @@
     <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple polygons&quot;</span><span class="p">)</span>
     <span class="n">LINE</span> <span class="o">=</span> <span class="s2">&quot;LINE&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Line&quot;</span><span class="p">)</span>
     <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple lines&quot;</span><span class="p">)</span>
+    <span class="n">ANGLE</span> <span class="o">=</span> <span class="s2">&quot;ANGL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Angle&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;MANG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple angles&quot;</span><span class="p">)</span>
 
     <span class="c1"># Choice Types</span>
     <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Choice&quot;</span><span class="p">)</span>
@@ -214,6 +216,8 @@
 <span class="sd">        * Multiple polygons</span>
 <span class="sd">        * Lines</span>
 <span class="sd">        * Multiple lines</span>
+<span class="sd">        * Angle</span>
+<span class="sd">        * Multiple angles</span>
 <span class="sd">        * Choice (string)</span>
 <span class="sd">        * Multiple choice (array of strings)</span>
 <span class="sd">        * Chart</span>
@@ -406,6 +410,40 @@
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
+
+<span class="sd">        Example json for Angle annotation</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;type&quot;: &quot;Angle&quot;,</span>
+<span class="sd">                &quot;lines&quot;: [[[180, 10, 0.5], [190, 10, 0.5]],[[180, 25, 0.5], [190, 15, 0.5]]],</span>
+<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Example json for Multiple angles annotation</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;type&quot;: &quot;Multiple angles&quot;,</span>
+<span class="sd">                &quot;angles&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;lines&quot;: [[[110, 135, 0.5], [60, 165, 0.5]],[[70, 25, 0.5], [85, 65, 0.5]]],</span>
+<span class="sd">                        &quot;name&quot;: &quot;First angle&quot;</span>
+<span class="sd">                    },</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;lines&quot;: [[[130, 210, 0.5], [160, 130, 0.5]], [[140, 40, 0.5], [180, 75, 0.5]]],</span>
+<span class="sd">                        &quot;name&quot;: &quot;Second angle&quot;</span>
+<span class="sd">                    },</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;lines&quot;: [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],</span>
+<span class="sd">                        &quot;name&quot;: &quot;Third angle&quot;</span>
+<span class="sd">                    }</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
+<span class="sd">            }</span>
+
 <span class="sd">        Example json for Chart (for more examples, see `here&lt;https://vega.github.io/vega-lite/examples/&gt;` and `here&lt;https://grand-challenge.org/blogs/visualisations-for-challenges/&gt;`)</span>
 
 <span class="sd">        .. code-block:: json</span>
@@ -517,6 +555,8 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
         <span class="p">}</span></div>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_image"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>    <span class="nd">@staticmethod</span>
@@ -852,6 +892,7 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="n">object_store_required</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
