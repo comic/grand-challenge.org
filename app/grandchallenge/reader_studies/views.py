@@ -1551,7 +1551,6 @@ class AddFilesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
 
 class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
     form_class = DisplaySetAddInterfaceForm
-    template_name = "reader_studies/display_set_add_interface.html"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
