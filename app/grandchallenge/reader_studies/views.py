@@ -1709,6 +1709,9 @@ class AddDisplaySetToReaderStudy(
         ds.order = data.pop("order")
         ds.save()
         for slug in data:
+            if not data[slug]:
+                # Field is not filled in the form
+                continue
             interface = ComponentInterface.objects.get(slug=slug)
             civ = ComponentInterfaceValue(interface=interface)
             if interface.is_json_kind:
