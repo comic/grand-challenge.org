@@ -564,9 +564,13 @@ class DisplaySetUpdateForm(DisplaySetBaseForm):
 
 
 class DisplaySetCreateForm(DisplaySetBaseForm):
-    def __init__(self, *args, instance=None, reader_study, **kwargs):
+    def __init__(self, *args, instance=None, reader_study, user, **kwargs):
         super().__init__(
-            *args, instance=None, reader_study=reader_study, **kwargs
+            *args,
+            instance=None,
+            reader_study=reader_study,
+            user=user,
+            **kwargs,
         )
 
     def _get_image_field(self, interface, values, current_value):
