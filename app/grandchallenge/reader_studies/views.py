@@ -399,18 +399,9 @@ class ReaderStudyDisplaySetList(
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def render_row(self, *, object_, page_context):
-        form = self.form_class(instance=object_, user=self.request.user)
-
-        all_media = page_context["form_media"] + form.media
-        if all_media.render() != page_context["form_media"].render():
-            raise RuntimeError(
-                "Media is missing for this form, ensure that all widgets "
-                "have been declared in _possible_widgets on the forms class."
-            )
-
         return render_to_string(
             self.row_template,
-            context={**page_context, "object": object_, "form": form},
+            context={**page_context, "object": object_},
         ).split("<split></split>")
 
     def get_permission_object(self):
@@ -1092,15 +1083,14 @@ class DisplaySetViewSet(
         user_upload = data.pop("user_upload", None)
         with transaction.atomic():
             if interface.is_image_kind:
-                civ = ComponentInterfaceValue.objects.create(
-                    interface=interface
-                )
+                # New images can also be added via the rawimageupload endpoint
                 if image:
+                    civ = ComponentInterfaceValue(interface=interface)
                     civ.image = image
                     civ.full_clean()
-                civ.save()
-                return civ
-            elif interface.is_file_kind:
+                    civ.save()
+                    return civ
+            elif user_upload and interface.is_file_kind:
                 civ = ComponentInterfaceValue.objects.create(
                     interface=interface
                 )
@@ -1109,7 +1099,7 @@ class DisplaySetViewSet(
                 civ.save()
                 user_upload.delete()
                 return civ
-            else:
+            elif interface.is_json_kind:
                 civ = interface.create_instance(value=value)
                 return civ
 
@@ -1128,12 +1118,13 @@ class DisplaySetViewSet(
         assigned_civs = []
         if values:
             serialized_data = ComponentInterfaceValuePostSerializer(
-                many=True, data=values
+                many=True, data=values, context={"request": request}
             )
             if serialized_data.is_valid():
                 civs = []
                 for value in serialized_data.validated_data:
                     civs.append(self.create_civ(value))
+                civs = [x for x in civs if x]
                 assigned_civs = instance.values.filter(
                     interface__in=[civ.interface for civ in civs]
                 )
