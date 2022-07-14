@@ -79,6 +79,9 @@ HANGING_PROTOCOL_SCHEMA = {
             "selectable": {
                 "type": "boolean",
             },
+            "linkable": {
+                "type": "boolean",
+            },
             "order": {
                 "type": "integer",
             },
