@@ -396,18 +396,9 @@ class ReaderStudyDisplaySetList(
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def render_row(self, *, object_, page_context):
-        form = self.form_class(instance=object_)
-
-        all_media = page_context["form_media"] + form.media
-        if all_media.render() != page_context["form_media"].render():
-            raise RuntimeError(
-                "Media is missing for this form, ensure that all widgets "
-                "have been declared in _possible_widgets on the forms class."
-            )
-
         return render_to_string(
             self.row_template,
-            context={**page_context, "object": object_, "form": form},
+            context={**page_context, "object": object_},
         ).split("<split></split>")
 
     def get_permission_object(self):
