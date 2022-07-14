@@ -972,7 +972,7 @@ class ComponentInterfaceValue(models.Model):
         ordering = ("pk",)
 
 
-class DurationQuerySet(models.QuerySet):
+class ComponentJobManager(models.QuerySet):
     def with_duration(self):
         """Annotate the queryset with the duration of completed jobs"""
         return self.annotate(duration=F("completed_at") - F("started_at"))
@@ -990,6 +990,15 @@ class DurationQuerySet(models.QuerySet):
             self.with_duration()
             .exclude(duration=None)
             .aggregate(Sum("duration"))["duration__sum"]
+        )
+
+    def active(self):
+        return self.exclude(
+            status__in=[
+                ComponentJob.SUCCESS,
+                ComponentJob.CANCELLED,
+                ComponentJob.FAILURE,
+            ]
         )
 
 
@@ -1073,7 +1082,7 @@ class ComponentJob(models.Model):
         related_name="%(app_label)s_%(class)ss_as_output",
     )
 
-    objects = DurationQuerySet.as_manager()
+    objects = ComponentJobManager.as_manager()
 
     def update_status(
         self,

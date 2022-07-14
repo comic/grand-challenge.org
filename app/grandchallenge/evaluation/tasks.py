@@ -14,11 +14,13 @@ from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
+from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.components.tasks import _retry
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import (
     Metric,
@@ -126,8 +128,13 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
+    throws=(TooManyJobsScheduled,),
+)
+def create_algorithm_jobs_for_evaluation(
+    *, evaluation_pk, max_jobs=1, retries=0
+):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -142,6 +149,24 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     max_jobs
         The maximum number of jobs to create
     """
+
+    def retry_with_delay():
+        _retry(
+            task=create_algorithm_jobs_for_evaluation,
+            signature_kwargs={
+                "kwargs": {
+                    "evaluation_pk": evaluation_pk,
+                    "max_jobs": max_jobs,
+                },
+                "immutable": True,
+            },
+            retries=retries,
+        )
+
+    if Job.objects.active().count() >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+        retry_with_delay()
+        raise TooManyJobsScheduled
+
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
@@ -200,11 +225,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             ).apply_async()
 
     except TooManyJobsScheduled:
-        # Re-run the task
-        create_algorithm_jobs_for_evaluation.signature(
-            kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": max_jobs},
-            immutable=True,
-        ).apply_async()
+        retry_with_delay()
+        raise
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
