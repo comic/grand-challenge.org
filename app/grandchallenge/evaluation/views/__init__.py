@@ -72,6 +72,7 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
                 return False
             elif (
                 self.phase.challenge.is_participant(self.request.user)
+                and not self.phase.challenge.is_admin(self.request.user)
                 and not self.phase.open_for_submissions
             ):
                 error_message = "The phase is currently not open for submissions. Please come back later."
