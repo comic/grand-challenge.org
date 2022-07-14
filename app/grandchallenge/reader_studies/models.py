@@ -738,50 +738,35 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 "values", "values__interface", "values__image"
             )
             .values(
-                "values__interface__kind",
                 "values__interface__slug",
-                "values__interface__schema",
                 "values__id",
             )
             .order_by("values__id")
             .distinct()
         )
-        interfaces = {
-            x["values__interface__slug"]: (
-                x["values__interface__kind"],
-                x["values__interface__schema"],
-            )
-            for x in vals
-        }
-        interfaces.update(
-            {
-                val["interface__slug"]: (
-                    val["interface__kind"],
-                    val["interface__schema"],
-                )
-                for val in self.questions.filter(
-                    interface__isnull=False
-                ).values(
-                    "interface__slug", "interface__kind", "interface__schema"
-                )
-            }
-        )
+        interfaces = [x["values__interface__slug"] for x in vals]
+        interfaces += self.questions.filter(
+            interface__isnull=False
+        ).values_list("interface__slug", flat=True)
+        interfaces = set(interfaces)
         # Filter out any emtpy display sets, which can exist because we create
         # the ds before assinging images. None values cause the sorting to error
         values_for_interfaces = {
-            interface: {
-                "kind": interfaces[interface][0],
-                "schema": interfaces[interface][1],
-                "values": [
-                    x["values__id"]
-                    for x in vals
-                    if x["values__interface__slug"] == interface
-                ],
-            }
-            for interface in sorted(x for x in interfaces.keys() if x)
+            interface: [
+                x["values__id"]
+                for x in vals
+                if x["values__interface__slug"] == interface
+            ]
+            for interface in sorted(x for x in interfaces if x)
         }
 
         return values_for_interfaces
+
+    @property
+    def next_display_set_order(self):
+        last = self.display_sets.last()
+        highest = getattr(last, "order", 0)
+        return (highest + 10) // 10 * 10
 
 
 @receiver(post_delete, sender=ReaderStudy)

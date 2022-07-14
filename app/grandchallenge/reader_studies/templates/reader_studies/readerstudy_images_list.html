@@ -15,7 +15,11 @@
     <p>
         <a class="btn btn-primary"
            href="{% url 'reader-studies:add-displaysets' slug=reader_study.slug %}"
-        ><i class="fas fa-plus"></i> Add Cases
+        ><i class="fas fa-plus"></i> Add Cases (batch)
+        </a>
+        <a class="btn btn-outline-primary"
+           href="{% url 'reader-studies:add-displayset' slug=reader_study.slug %}"
+        ><i class="fas fa-plus"></i> Add Case (single)
         </a>
     </p>
 
