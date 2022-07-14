@@ -115,6 +115,8 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.CHART, False, False),
         (InterfaceKindChoices.LINE, False, False),
         (InterfaceKindChoices.MULTIPLE_LINES, False, False),
+        (InterfaceKindChoices.ANGLE, False, False),
+        (InterfaceKindChoices.MULTIPLE_ANGLES, False, False),
         # Image types
         (InterfaceKindChoices.IMAGE, True, True),
         (InterfaceKindChoices.HEAT_MAP, True, True),
@@ -175,6 +177,8 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.CHART, False),
         (InterfaceKindChoices.LINE, False),
         (InterfaceKindChoices.MULTIPLE_LINES, True),
+        (InterfaceKindChoices.ANGLE, False),
+        (InterfaceKindChoices.MULTIPLE_ANGLES, True),
         # Image types
         (InterfaceKindChoices.IMAGE, True),
         (InterfaceKindChoices.HEAT_MAP, True),
@@ -424,6 +428,34 @@ def test_invalid_schema_raises_error():
             },
             nullcontext(),
         ),
+        (
+            InterfaceKindChoices.ANGLE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Angle",
+                "name": "test",
+                "lines": [[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 5, 6]]],
+            },
+            nullcontext(),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_ANGLES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple angles",
+                "name": "test",
+                "angles": [
+                    {
+                        "name": "test",
+                        "lines": [
+                            [[1, 2, 3], [4, 5, 6]],
+                            [[1, 2, 3], [4, 5, 6]],
+                        ],
+                    }
+                ],
+            },
+            nullcontext(),
+        ),
         (InterfaceKindChoices.CHOICE, "First", nullcontext()),
         (InterfaceKindChoices.CHOICE, 1, pytest.raises(ValidationError)),
         (InterfaceKindChoices.MULTIPLE_CHOICE, ["1", "2"], nullcontext()),
@@ -631,6 +663,39 @@ def test_default_validation(kind, value, expectation, use_file):
                         "sub_type": "poly",
                         "groups": ["a", "b"],
                     }
+                ],
+            },
+            {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
+        ),
+        (
+            InterfaceKindChoices.ANGLE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Angle",
+                "name": "test",
+                "lines": [[[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 5, 6]]],
+            },
+            {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_ANGLES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple angles",
+                "name": "test",
+                "angles": [
+                    {
+                        "lines": [
+                            [[1, 2, 3], [4, 5, 6]],
+                            [[1, 2, 3], [4, 5, 6]],
+                        ]
+                    },
+                    {
+                        "lines": [
+                            [[1, 2, 3], [4, 5, 6]],
+                            [[1, 2, 3], [4, 5, 6]],
+                        ]
+                    },
                 ],
             },
             {"properties": {"name": {"pattern": "^[A-Z]+$"}}},

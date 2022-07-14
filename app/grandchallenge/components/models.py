@@ -87,6 +87,8 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
     LINE = "LINE", _("Line")
     MULTIPLE_LINES = "MLIN", _("Multiple lines")
+    ANGLE = "ANGL", _("Angle")
+    MULTIPLE_ANGLES = "MANG", _("Multiple angles")
 
     # Choice Types
     CHOICE = "CHOI", _("Choice")
@@ -140,6 +142,8 @@ class InterfaceKind:
         * Multiple polygons
         * Lines
         * Multiple lines
+        * Angle
+        * Multiple angles
         * Choice (string)
         * Multiple choice (array of strings)
         * Chart
@@ -332,6 +336,40 @@ class InterfaceKind:
                 ],
                 "version": { "major": 1, "minor": 0 }
             }
+
+        Example json for Angle annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Angle",
+                "lines": [[[180, 10, 0.5], [190, 10, 0.5]],[[180, 25, 0.5], [190, 15, 0.5]]],
+                "version": {"major": 1, "minor": 0}
+            }
+
+        Example json for Multiple angles annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Multiple angles",
+                "angles": [
+                    {
+                        "lines": [[[110, 135, 0.5], [60, 165, 0.5]],[[70, 25, 0.5], [85, 65, 0.5]]],
+                        "name": "First angle"
+                    },
+                    {
+                        "lines": [[[130, 210, 0.5], [160, 130, 0.5]], [[140, 40, 0.5], [180, 75, 0.5]]],
+                        "name": "Second angle"
+                    },
+                    {
+                        "lines": [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],
+                        "name": "Third angle"
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
+
         Example json for Chart (for more examples, see `here<https://vega.github.io/vega-lite/examples/>` and `here<https://grand-challenge.org/blogs/visualisations-for-challenges/>`)
 
         .. code-block:: json
@@ -443,6 +481,8 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.CHART,
             InterfaceKind.InterfaceKindChoices.LINE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKind.InterfaceKindChoices.ANGLE,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
         }
 
     @staticmethod
@@ -778,6 +818,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
         }
 
         if object_store_required and self.store_in_database:
