@@ -55,6 +55,7 @@ from tests.factories import UserFactory
                     "fullsizable": True,
                     "draggable": False,
                     "selectable": True,
+                    "linkable": True,
                     "order": 0,
                     "show_current_slice": True,
                     "show_mouse_coordinate": True,
