@@ -60,23 +60,27 @@ $(document).ready(() => {
               window.location.href = response.redirect;
           },
           error: (response) => {
-              const errors = response.responseJSON;
-              for (key in errors) {
-                  if (parseInt(key) === NaN) {
-                      input = $(`[name='${key}']`);
-                      formGroup = input.parents(".form-group");
-                      input.addClass("is-invalid");
-                      formGroup.append(`<div class="invalid-feedback">${errors[key].join('; ')}</div>`);
+              let message;
+              if (response.status == 400) {
+                const errors = response.responseJSON;
+                for (key in errors) {
+                    if (parseInt(key) === NaN) {
+                        input = $(`[name='${key}']`);
+                        formGroup = input.parents(".form-group");
+                        input.addClass("is-invalid");
+                        formGroup.append(`<div class="invalid-feedback">${errors[key].join('; ')}</div>`);
 
-                  } else {
-                      form = $(`[name='interface'] option[value='${key}']:selected`).parents("form.extra-interface-form");
-                      form.find("input[name='value']").addClass("is-invalid");
-                      form.append(`<div class="invalid-feedback">${errors[key].join('; ')}</div>`);
-                  }
-              }
+                    } else {
+                        form = $(`[name='interface'] option[value='${key}']:selected`).parents("form.extra-interface-form");
+                        form.find("input[name='value']").addClass("is-invalid");
+                        form.append(`<div class="invalid-feedback">${errors[key].join('; ')}</div>`);
+                    }
+                }
+                message = 'Please correct the errors below.'
+              } else message = 'Unexpected error.'
               $("#messages").append(
                   '<div class="alert alert-danger" id="form-error-message">' +
-                      'Please correct the errors below.' +
+                      `${message}` +
                       '<button type="button" class="close"' +
                       'data-dismiss="alert" aria-label="Close">' +
                           '<span aria-hidden="true">&times;</span>' +
