@@ -36,6 +36,7 @@ from grandchallenge.components.backends.utils import get_sagemaker_model_name
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +121,7 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         except ValidationError as error:
             instance.image_sha256 = ""
             instance.is_manifest_valid = False
-            instance.status = str(error)
+            instance.status = oxford_comma(error)
             instance.import_status = instance.ImportStatusChoices.FAILED
             instance.save()
             send_invalid_dockerfile_email(container_image=instance)
