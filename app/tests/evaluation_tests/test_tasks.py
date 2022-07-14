@@ -4,9 +4,11 @@ import pytest
 import requests
 from actstream.actions import unfollow
 from django.conf import settings
+from django.core.cache import cache
 from django.test import TestCase
 from django.utils.html import format_html
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterface
@@ -394,3 +396,13 @@ def test_evaluation_notifications(
     assert str(submission.phase.challenge.creator) not in str(
         Notification.objects.all()
     )
+
+
+def test_cache_lock():
+    # Used in create_algorithm_jobs_for_evaluation
+    with cache.lock("foo", timeout=5, blocking_timeout=1):
+        try:
+            with cache.lock("foo", timeout=5, blocking_timeout=1):
+                raise RuntimeError("Test failed, shouldn't hit this line")
+        except LockError:
+            assert True
