@@ -408,6 +408,8 @@ def test_question_update(client):
         (AnswerType.MULTIPLE_POLYGONS, InterfaceKindChoices.MULTIPLE_POLYGONS),
         (AnswerType.LINE, InterfaceKindChoices.LINE),
         (AnswerType.MULTIPLE_LINES, InterfaceKindChoices.MULTIPLE_LINES),
+        (AnswerType.ANGLE, InterfaceKindChoices.ANGLE),
+        (AnswerType.MULTIPLE_ANGLES, InterfaceKindChoices.MULTIPLE_ANGLES),
         (AnswerType.CHOICE, InterfaceKindChoices.CHOICE),
         (AnswerType.MULTIPLE_CHOICE, InterfaceKindChoices.MULTIPLE_CHOICE),
         (

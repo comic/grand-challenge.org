@@ -129,6 +129,39 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
+    "ANGL": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Angle",
+        "name": "test_name",
+        "lines": [
+            [[0, 0, 0], [0, 0, 0]],
+            [[1, 1, 1], [1, 1, 1]],
+        ],
+        "probability": 0.3,
+    },
+    "MANG": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple angles",
+        "name": "test_name",
+        "angles": [
+            {
+                "name": "test_name",
+                "lines": [
+                    [[0, 0, 0], [0, 0, 0]],
+                    [[1, 1, 1], [1, 1, 1]],
+                ],
+                "probability": 0.54,
+            },
+            {
+                "name": "test_name",
+                "lines": [
+                    [[0, 0, 0], [0, 0, 0]],
+                    [[1, 1, 1], [1, 1, 1]],
+                ],
+                "probability": 0.54,
+            },
+        ],
+    },
 }
 
 
@@ -189,6 +222,8 @@ def test_new_answer_type_listed():
         ["MASK", True],
         ["LINE", True],
         ["MLIN", True],
+        ["ANGL", True],
+        ["MANG", True],
     ],
 )
 def test_answer_type_allows_null(answer_type, allow_null):
