@@ -887,7 +887,7 @@ class DisplaySet(UUIDModel):
                 interface__slug=interface_slug
             ).values_list("image__name", flat=True)[0]
         except (KeyError, IndexError):
-            return self.values.values_list("image__name", flat=True)[0]
+            return self.values.values_list("image__name", flat=True).first()
 
 
 class AnswerType(models.TextChoices):
