@@ -405,13 +405,22 @@ def test_display_set_update(client):
 
     assert DisplaySet.objects.count() == 2
     response = get_view_for_user(
-        viewname="reader-studies:display-set-detail",
+        viewname="reader-studies:display-set-update",
         client=client,
         reverse_kwargs={"pk": ds1.pk},
         user=u2,
     )
 
     assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-update",
+        client=client,
+        reverse_kwargs={"pk": ds1.pk},
+        user=u1,
+    )
+
+    assert response.status_code == 200
 
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
@@ -468,6 +477,15 @@ def test_add_display_set_to_reader_study(client, settings):
     )
 
     assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-displayset",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=u1,
+    )
+
+    assert response.status_code == 200
 
     im_upload = create_upload_from_file(
         file_path=RESOURCE_PATH / "test_grayscale.jpg",
@@ -567,6 +585,18 @@ def test_add_files_to_display_set(client, settings):
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
         },
+        user=u1,
+    )
+
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-files-to-display-set",
+        client=client,
+        reverse_kwargs={
+            "pk": ds.pk,
+            "interface_pk": ci_json.pk,
+        },
         data={"user_upload": str(upload.pk)},
         user=u1,
         method=client.post,
@@ -616,6 +646,15 @@ def test_display_set_add_interface(client, settings):
     )
 
     assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-add-interface",
+        client=client,
+        reverse_kwargs={"pk": ds.pk},
+        user=u1,
+    )
+
+    assert response.status_code == 200
 
     assert not ds.values.filter(interface=ci_value).exists()
     response = get_view_for_user(
