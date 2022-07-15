@@ -67,7 +67,6 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -1411,7 +1410,7 @@ class DisplaySetUpdate(
             ci = ComponentInterface.objects.get(slug=ci_slug)
             current_value = instance.values.filter(interface=ci).first()
 
-            if ci.kind in InterfaceKind.interface_type_json():
+            if ci.is_json_kind:
                 if current_value:
                     current_value.value = civ
                     current_value.save()
