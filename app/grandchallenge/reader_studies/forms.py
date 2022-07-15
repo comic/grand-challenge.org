@@ -516,12 +516,10 @@ class DisplaySetBaseForm(Form):
                     interface, values, current_value
                 )
 
-            order = (
-                instance.order
-                if instance
-                else reader_study.next_display_set_order
-            )
-            self.fields["order"] = IntegerField(initial=order)
+        order = (
+            instance.order if instance else reader_study.next_display_set_order
+        )
+        self.fields["order"] = IntegerField(initial=order)
 
     def _get_json_field(self, interface, current_value):
         return InterfaceFormField(
