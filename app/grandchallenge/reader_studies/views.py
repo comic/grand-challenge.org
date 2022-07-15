@@ -1526,9 +1526,10 @@ class AddFilesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
         return kwargs
 
     def form_valid(self, form):
-        messages.add_message(
-            self.request, messages.SUCCESS, "Image import started."
-        )
+        if self.interface.is_image_kind:
+            messages.add_message(
+                self.request, messages.SUCCESS, "Image import started."
+            )
         return super().form_valid(form)
 
     def get_success_url(self):
