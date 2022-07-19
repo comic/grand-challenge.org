@@ -1154,7 +1154,10 @@ if strtobool(os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")):
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 # Number of jobs that can be scheduled in one task
 ALGORITHMS_JOB_BATCH_LIMIT = int(
-    os.environ.get("ALGORITHMS_JOB_BATCH_LIMIT", "64")
+    os.environ.get("ALGORITHMS_JOB_BATCH_LIMIT", "32")
+)
+ALGORITHMS_MAX_ACTIVE_JOBS = int(
+    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS", "96")
 )
 # Maximum and minimum values the user can set for algorithm requirements
 ALGORITHMS_MIN_MEMORY_GB = 4

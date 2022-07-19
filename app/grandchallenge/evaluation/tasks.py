@@ -22,6 +22,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import _retry
+from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import (
     Metric,
@@ -129,10 +130,6 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-def _cache_key_from_method(method):
-    return f"lock.{method.__module__}.{method.__name__}"
-
-
 @shared_task(
     **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
     throws=(
@@ -171,7 +168,7 @@ def create_algorithm_jobs_for_evaluation(
             retries=retries,
         )
 
-    if Job.objects.active().count() >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
         logger.info("Retrying task as too many jobs scheduled")
         retry_with_delay()
         raise TooManyJobsScheduled
