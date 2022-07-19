@@ -1,10 +1,12 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.http import Http404
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
+from grandchallenge.workstations.views import SessionCreate
 from tests.factories import (
     SessionFactory,
     UserFactory,
@@ -391,3 +393,36 @@ def test_workstation_group_update(client, two_workstation_sets, new_user):
     assert not two_workstation_sets.ws1.workstation.is_user(user=u)
     assert not two_workstation_sets.ws2.workstation.is_editor(user=u)
     assert not two_workstation_sets.ws2.workstation.is_user(user=u)
+
+
+@pytest.mark.django_db
+def test_workstation_image(rf):
+    request = rf.get("/")
+    view = SessionCreate()
+    view.setup(request)
+
+    with pytest.raises(Http404):
+        # No default workstation
+        _ = view.workstation_image
+
+    default_workstation = Workstation.objects.get(
+        slug=settings.DEFAULT_WORKSTATION_SLUG
+    )
+    default_wsi = WorkstationImageFactory(
+        workstation=default_workstation,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    wsi = WorkstationImageFactory(is_manifest_valid=True, is_in_registry=True)
+
+    assert view.workstation_image == default_wsi
+
+    view.setup(request, slug=wsi.workstation.slug)
+    del view.workstation_image
+    assert view.workstation_image == wsi
+
+    # No images for workstation
+    with pytest.raises(Http404):
+        view.setup(request, slug=WorkstationFactory().slug)
+        del view.workstation_image
+        _ = view.workstation_image

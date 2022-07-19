@@ -9,8 +9,15 @@ from grandchallenge.components.tasks import (
     civ_value_to_file,
     encode_b64j,
     execute_job,
+    remove_inactive_container_images,
+)
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.evaluation_tests.factories import MethodFactory
+from tests.factories import WorkstationImageFactory
 
 
 @pytest.mark.django_db
@@ -99,3 +106,28 @@ def test_civ_value_to_file():
 )
 def test_encode_b64j(val, expected):
     assert encode_b64j(val=val) == expected
+
+
+@pytest.mark.django_db
+def test_remove_inactive_container_images():
+    MethodFactory(is_in_registry=True, is_manifest_valid=True)
+    WorkstationImageFactory(is_in_registry=True, is_manifest_valid=True)
+    alg = AlgorithmFactory()
+    ai1 = AlgorithmImageFactory(
+        is_in_registry=True, is_manifest_valid=True, algorithm=alg
+    )
+    AlgorithmImageFactory(
+        is_in_registry=True, is_manifest_valid=True, algorithm=alg
+    )
+
+    with capture_on_commit_callbacks() as callbacks:
+        remove_inactive_container_images()
+
+    assert len(callbacks) == 1
+    # Ensure only the first algorithm image is deleted
+    assert repr(callbacks[0]) == (
+        "<bound method Signature.apply_async of "
+        "grandchallenge.components.tasks.remove_container_image_from_registry"
+        f"(pk=UUID('{ai1.pk}'), "
+        "app_label='algorithms', model_name='algorithmimage')>"
+    )

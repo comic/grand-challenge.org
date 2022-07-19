@@ -30,11 +30,6 @@ urlpatterns = [
         name="workstation-session-create",
     ),
     path(
-        "<slug>/<uuid:pk>/sessions/create/",
-        SessionCreate.as_view(),
-        name="workstation-image-session-create",
-    ),
-    path(
         "<slug>/editors/update/",
         WorkstationEditorsUpdate.as_view(),
         name="editors-update",

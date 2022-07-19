@@ -20,7 +20,9 @@ from grandchallenge.components.models import (
     InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
-from grandchallenge.components.tasks import remove_image_from_registry
+from grandchallenge.components.tasks import (
+    remove_container_image_from_registry,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -1061,7 +1063,7 @@ def test_cannot_change_image(algorithm_image):
 
 
 @pytest.mark.django_db
-def test_remove_image_from_registry(algorithm_image, settings):
+def test_remove_container_image_from_registry(algorithm_image, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -1079,7 +1081,7 @@ def test_remove_image_from_registry(algorithm_image, settings):
     assert ai.is_in_registry is True
 
     with capture_on_commit_callbacks() as callbacks:
-        remove_image_from_registry(
+        remove_container_image_from_registry(
             pk=ai.pk,
             app_label=ai._meta.app_label,
             model_name=ai._meta.model_name,
