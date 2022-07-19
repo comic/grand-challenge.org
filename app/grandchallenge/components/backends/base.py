@@ -19,7 +19,6 @@ from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
-from grandchallenge.components.models import InterfaceKind
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +77,7 @@ class Executor(ABC):
             for interface in output_interfaces:
                 if interface.is_image_kind:
                     res = self._create_images_result(interface=interface)
-                elif interface.kind in InterfaceKind.interface_type_json():
+                elif interface.is_json_kind:
                     res = self._create_json_result(interface=interface)
                 else:
                     res = self._create_file_result(interface=interface)

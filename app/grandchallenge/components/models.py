@@ -666,18 +666,11 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_json_kind(self):
-        return (
-            self.kind in InterfaceKind.interface_type_json()
-            and self.store_in_database
-        )
+        return self.kind in InterfaceKind.interface_type_json()
 
     @property
     def is_file_kind(self):
-        return (
-            self.kind in InterfaceKind.interface_type_file()
-            or self.kind in InterfaceKind.interface_type_json()
-            and not self.store_in_database
-        )
+        return self.kind in InterfaceKind.interface_type_file()
 
     @property
     def super_kind(self):
@@ -754,10 +747,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_relative_path(self):
-        if (
-            self.is_file_kind
-            and self.kind in InterfaceKind.interface_type_json()
-        ):
+        if self.is_json_kind:
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
         elif self.is_file_kind and not self.relative_path.endswith(
@@ -944,8 +934,6 @@ class ComponentInterfaceValue(models.Model):
                 self.interface._validate_voxel_values(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()
-            if self.interface.kind in InterfaceKind.interface_type_json():
-                self._validate_value()
         else:
             self._validate_value()
 

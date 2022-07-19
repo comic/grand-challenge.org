@@ -504,16 +504,16 @@ class DisplaySetBaseForm(Form):
                     interface__slug=slug
                 ).first()
             interface = ComponentInterface.objects.get(slug=slug)
-            if interface.is_file_kind:
-                self.fields[slug] = self._get_file_field(
+            if interface.is_image_kind:
+                self.fields[slug] = self._get_image_field(
                     interface, values, current_value
                 )
-            elif interface.is_json_kind:
-                self.fields[slug] = self._get_json_field(
+            elif interface.is_file_kind or not interface.store_in_database:
+                self.fields[slug] = self._get_file_field(
                     interface, current_value
                 )
             else:
-                self.fields[slug] = self._get_image_field(
+                self.fields[slug] = self._get_json_field(
                     interface, values, current_value
                 )
 
@@ -522,15 +522,19 @@ class DisplaySetBaseForm(Form):
         )
         self.fields["order"] = IntegerField(initial=order)
 
-    def _get_json_field(self, interface, current_value):
+    def _get_default_field(self, interface, current_value):
         return InterfaceFormField(
             kind=interface.kind,
             schema=interface.schema,
             initial=current_value.value if current_value else None,
-            use_file_widget=interface.is_file_kind,
+            use_file_widget=interface.is_file_kind
+            or not interface.store_in_database,
             required=False,
             user=self.user,
         ).field
+
+    def _get_json_field(self, interface, current_value):
+        return self._get_default_field(interface, current_value)
 
     def _get_image_field(self, interface, values, current_value):
         return ModelChoiceField(
@@ -572,7 +576,7 @@ class DisplaySetCreateForm(DisplaySetBaseForm):
         )
 
     def _get_image_field(self, interface, values, current_value):
-        return self._get_json_field(interface, current_value)
+        return self._get_default_field(interface, current_value)
 
 
 class FileForm(Form):
@@ -651,7 +655,8 @@ class DisplaySetAddInterfaceForm(Form):
         if selected_interface is not None:
             self.fields["value"] = InterfaceFormField(
                 kind=selected_interface.kind,
-                use_file_widget=selected_interface.is_file_kind,
+                use_file_widget=selected_interface.is_file_kind
+                or not selected_interface.store_in_database,
                 schema=selected_interface.schema,
                 user=user,
             ).field
