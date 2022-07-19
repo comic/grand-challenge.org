@@ -1125,6 +1125,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
         "schedule": timedelta(days=1),
     },
+    "remove_inactive_container_images": {
+        "task": "grandchallenge.components.tasks.remove_inactive_container_images",
+        "schedule": timedelta(days=1),
+    },
     **{
         f"stop_expired_services_{region}": {
             "task": "grandchallenge.components.tasks.stop_expired_services",

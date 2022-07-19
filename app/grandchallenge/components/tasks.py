@@ -159,10 +159,40 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def remove_image_from_registry(
+def remove_inactive_container_images():
+    """Removes inactive container images from the registry"""
+    for app_label, model_name, related_name in (
+        ("algorithms", "algorithm", "algorithm_container_images"),
+        ("evaluation", "phase", "method_set"),
+        ("workstations", "workstation", "workstationimage_set"),
+    ):
+        model = apps.get_model(app_label=app_label, model_name=model_name)
+
+        for instance in model.objects.all():
+            latest = instance.latest_executable_image
+
+            if latest is not None:
+                for image in (
+                    getattr(instance, related_name)
+                    .exclude(pk=latest.pk)
+                    .filter(is_in_registry=True)
+                ):
+                    on_commit(
+                        remove_container_image_from_registry.signature(
+                            kwargs={
+                                "pk": image.pk,
+                                "app_label": image._meta.app_label,
+                                "model_name": image._meta.model_name,
+                            }
+                        ).apply_async
+                    )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def remove_container_image_from_registry(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
-    """Remove an image from the registry"""
+    """Remove a container image from the registry"""
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 

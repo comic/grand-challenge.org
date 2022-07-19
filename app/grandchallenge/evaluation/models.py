@@ -496,7 +496,7 @@ class Phase(UUIDModel, ViewContentMixin):
                 "the creator_must_be_verified box needs to be checked."
             )
 
-        if self.submission_limit > 0 and not self.latest_executable_method:
+        if self.submission_limit > 0 and not self.latest_executable_image:
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "
                 "can change the submission limit to above 0."
@@ -683,7 +683,7 @@ class Phase(UUIDModel, ViewContentMixin):
         )
 
     @property
-    def latest_executable_method(self):
+    def latest_executable_image(self):
         if self.method_set.all():
             return (
                 self.method_set.executable_images()
