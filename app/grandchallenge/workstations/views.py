@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
@@ -36,10 +36,7 @@ from grandchallenge.workstations.models import (
     WorkstationImage,
 )
 from grandchallenge.workstations.serializers import SessionSerializer
-from grandchallenge.workstations.utils import (
-    get_or_create_active_session,
-    get_workstation_image_or_404,
-)
+from grandchallenge.workstations.utils import get_or_create_active_session
 
 
 class SessionViewSet(ReadOnlyModelViewSet):
@@ -264,7 +261,15 @@ class SessionCreate(
 
     @cached_property
     def workstation_image(self):
-        return get_workstation_image_or_404(**self.kwargs)
+        slug = self.kwargs.get("slug", settings.DEFAULT_WORKSTATION_SLUG)
+
+        workstation = get_object_or_404(Workstation, slug=slug)
+        workstation_image = workstation.latest_executable_image
+
+        if workstation_image is None:
+            raise Http404("No container images found for this workstation")
+
+        return workstation_image
 
     def get_permission_object(self):
         return self.workstation_image.workstation

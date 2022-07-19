@@ -125,7 +125,6 @@ def test_workstation_user_permissions(
     [
         "workstations:default-session-create",
         "workstations:workstation-session-create",
-        "workstations:workstation-image-session-create",
     ],
 )
 def test_workstation_redirect_permissions(
@@ -155,14 +154,8 @@ def test_workstation_redirect_permissions(
 
     kwargs = {}
 
-    if viewname in [
-        "workstations:workstation-session-create",
-        "workstations:workstation-image-session-create",
-    ]:
+    if viewname == "workstations:workstation-session-create":
         kwargs.update({"slug": two_workstation_sets.ws1.workstation.slug})
-
-    if viewname == "workstations:workstation-image-session-create":
-        kwargs.update({"pk": two_workstation_sets.ws1.image.pk})
 
     for test in tests:
         response = get_view_for_user(
