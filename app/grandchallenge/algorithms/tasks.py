@@ -31,9 +31,9 @@ from grandchallenge.components.tasks import (
     _retry,
     add_images_to_component_interface_value,
 )
+from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
-from grandchallenge.evaluation.tasks import _cache_key_from_method
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 

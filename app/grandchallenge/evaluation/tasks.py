@@ -22,6 +22,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import _retry
+from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import (
     Metric,
@@ -127,10 +128,6 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         on_commit(evaluation.execute)
     else:
         raise RuntimeError("No algorithm or predictions file found")
-
-
-def _cache_key_from_method(method):
-    return f"lock.{method.__module__}.{method.__name__}"
 
 
 @shared_task(
