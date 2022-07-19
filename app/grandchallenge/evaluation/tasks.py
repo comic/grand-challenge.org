@@ -171,7 +171,7 @@ def create_algorithm_jobs_for_evaluation(
             retries=retries,
         )
 
-    if Job.objects.active().count() >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
         logger.info("Retrying task as too many jobs scheduled")
         retry_with_delay()
         raise TooManyJobsScheduled
