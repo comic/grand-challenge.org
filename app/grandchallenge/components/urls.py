@@ -1,6 +1,7 @@
 from django.urls import path
 
 from grandchallenge.components.views import (
+    ComponentInterfaceAutocomplete,
     ComponentInterfaceIOSwitch,
     ComponentInterfaceList,
     InterfaceListTypeOptions,
@@ -46,5 +47,10 @@ urlpatterns = [
             object_type=InterfaceObjectTypeOptions.ALGORITHM,
         ),
         name="component-interface-list-output",
+    ),
+    path(
+        "interfaces/autocomplete/",
+        ComponentInterfaceAutocomplete.as_view(),
+        name="component-interface-autocomplete",
     ),
 ]

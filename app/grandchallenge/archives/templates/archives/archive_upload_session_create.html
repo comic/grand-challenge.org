@@ -2,6 +2,7 @@
 {% load crispy_forms_tags %}
 {% load url %}
 {% load bleach %}
+{% load static %}
 
 {% block title %}
     Add Items to Archive - {{ block.super }}
@@ -25,4 +26,8 @@
     <h2>Add Items to Archive</h2>
 
     {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
 {% endblock %}
