@@ -791,10 +791,18 @@ class EditorsUpdate(ReaderStudyUserGroupUpdateMixin):
     form_class = EditorsForm
     success_message = "Editors successfully updated"
 
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#editors"
+
 
 class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     form_class = ReadersForm
     success_message = "Readers successfully updated"
+
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#readers"
 
 
 class UsersProgress(
@@ -1308,9 +1316,10 @@ class QuestionDelete(
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def get_success_url(self):
-        return reverse(
+        url = reverse(
             "reader-studies:detail", kwargs={"slug": self.kwargs["slug"]}
         )
+        return f"{url}#questions"
 
     def delete(self, request, *args, **kwargs):
         question = self.get_object()

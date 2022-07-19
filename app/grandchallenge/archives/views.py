@@ -215,15 +215,27 @@ class ArchiveEditorsUpdate(ArchiveGroupUpdateMixin):
     form_class = EditorsForm
     success_message = "Editors successfully updated"
 
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#editors"
+
 
 class ArchiveUploadersUpdate(ArchiveGroupUpdateMixin):
     form_class = UploadersForm
     success_message = "Uploaders successfully updated"
 
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#uploaders"
+
 
 class ArchiveUsersUpdate(ArchiveGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#users"
 
 
 class ArchivePermissionRequestCreate(
