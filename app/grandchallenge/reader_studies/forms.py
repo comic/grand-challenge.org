@@ -508,13 +508,13 @@ class DisplaySetBaseForm(Form):
                 self.fields[slug] = self._get_image_field(
                     interface, values, current_value
                 )
-            elif interface.is_file_kind or not interface.store_in_database:
+            elif interface.requires_file:
                 self.fields[slug] = self._get_file_field(
-                    interface, current_value
+                    interface, values, current_value
                 )
             else:
                 self.fields[slug] = self._get_json_field(
-                    interface, values, current_value
+                    interface, current_value
                 )
 
         order = (
@@ -527,8 +527,7 @@ class DisplaySetBaseForm(Form):
             kind=interface.kind,
             schema=interface.schema,
             initial=current_value.value if current_value else None,
-            use_file_widget=interface.is_file_kind
-            or not interface.store_in_database,
+            use_file_widget=interface.requires_file,
             required=False,
             user=self.user,
         ).field
@@ -655,8 +654,7 @@ class DisplaySetAddInterfaceForm(Form):
         if selected_interface is not None:
             self.fields["value"] = InterfaceFormField(
                 kind=selected_interface.kind,
-                use_file_widget=selected_interface.is_file_kind
-                or not selected_interface.store_in_database,
+                use_file_widget=selected_interface.requires_file,
                 schema=selected_interface.schema,
                 user=user,
             ).field

@@ -691,6 +691,14 @@ class ComponentInterface(OverlaySegmentsMixin):
             or not self.store_in_database
         )
 
+    @property
+    def requires_file(self):
+        return (
+            self.is_file_kind
+            or self.is_json_kind
+            and not self.store_in_database
+        )
+
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)
 

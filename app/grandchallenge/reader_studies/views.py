@@ -1603,7 +1603,7 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
             messages.add_message(
                 self.request, messages.SUCCESS, "Image import started."
             )
-        elif interface.is_file_kind:
+        elif interface.requires_file:
             civ = ComponentInterfaceValue.objects.create(interface=interface)
             value.copy_object(to_field=civ.file)
             civ.full_clean()
@@ -1713,18 +1713,18 @@ class AddDisplaySetToReaderStudy(
                 continue
             interface = ComponentInterface.objects.get(slug=slug)
             civ = ComponentInterfaceValue(interface=interface)
-            if interface.is_json_kind:
-                civ = ComponentInterfaceValue.objects.create(
-                    value=data[slug], interface=interface
-                )
-                ds.values.add(civ)
-            elif interface.is_file_kind:
+            if interface.requires_file:
                 civ = ComponentInterfaceValue.objects.create(
                     interface=interface
                 )
                 data[slug].copy_object(to_field=civ.file)
                 civ.full_clean()
                 civ.save()
+                ds.values.add(civ)
+            elif interface.is_json_kind:
+                civ = ComponentInterfaceValue.objects.create(
+                    value=data[slug], interface=interface
+                )
                 ds.values.add(civ)
             elif interface.is_image_kind:
                 us = RawImageUploadSession.objects.create(
