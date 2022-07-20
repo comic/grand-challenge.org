@@ -572,7 +572,7 @@ def test_add_files_to_display_set(client, settings):
         reverse_kwargs={
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
-            "slug": ds.slug,
+            "slug": rs.slug,
         },
         user=u2,
     )
@@ -585,7 +585,7 @@ def test_add_files_to_display_set(client, settings):
         reverse_kwargs={
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
-            "slug": ds.slug,
+            "slug": rs.slug,
         },
         user=u1,
     )
@@ -598,7 +598,7 @@ def test_add_files_to_display_set(client, settings):
         reverse_kwargs={
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
-            "slug": ds.slug,
+            "slug": rs.slug,
         },
         data={"user_upload": str(upload.pk)},
         user=u1,
@@ -616,7 +616,7 @@ def test_add_files_to_display_set(client, settings):
             reverse_kwargs={
                 "pk": ds.pk,
                 "interface_pk": ci_img.pk,
-                "slug": ds.slug,
+                "slug": rs.slug,
             },
             data={"user_uploads": str(im_upload.pk)},
             user=u1,

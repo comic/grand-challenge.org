@@ -107,7 +107,7 @@ urlpatterns = [
     path(
         "<slug>/display-sets/new/interfaces/create/",
         DisplaySetInterfacesCreate.as_view(),
-        name="display-set-new-add-interface",
+        name="display-set-new-interfaces-create",
     ),
     path(
         "<slug>/display-sets/<uuid:pk>/interface/create/",

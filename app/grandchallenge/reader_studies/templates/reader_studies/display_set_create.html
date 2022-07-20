@@ -24,7 +24,7 @@
       {% csrf_token %}
       {{ form|crispy }}
       <div id="new-interfaces"></div>
-      <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-new-add-interface' slug=reader_study.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
+      <button type="button" id="add-new" class="btn btn-outline-primary mb-2" hx-get="{% url 'reader-studies:display-set-new-interfaces-create' slug=reader_study.slug %}" hx-target="#new-interfaces" hx-swap="beforeend">Add value for new interface</button>
       <div class="d-flex justify-content-between pb-2">
         <div>
           <a href="{% url 'reader-studies:display_sets' slug=reader_study.slug %}" class="btn btn-outline-primary">Back</a>

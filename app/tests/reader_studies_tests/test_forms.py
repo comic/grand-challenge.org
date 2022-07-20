@@ -1046,12 +1046,8 @@ def test_display_set_update_form(form_class, file_widget):
         ds = DisplaySetFactory(reader_study=rs)
         ds.values.add(civ)
 
-    kwargs = (
-        {"instance": ds}
-        if form_class == DisplaySetUpdateForm
-        else {"reader_study": rs}
-    )
-    form = form_class(user=user, **kwargs)
+    instance = None if form_class == DisplaySetCreateForm else ds
+    form = form_class(user=user, instance=instance, reader_study=rs)
     assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
     assert isinstance(form.fields["slug-1"].widget, file_widget)
     assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
@@ -1059,7 +1055,7 @@ def test_display_set_update_form(form_class, file_widget):
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
     QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
     del rs.values_for_interfaces
-    form = form_class(user=user, **kwargs)
+    form = form_class(user=user, instance=instance, reader_study=rs)
     assert sorted(form.fields.keys()) == [
         "order",
         "slug-1",
