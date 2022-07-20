@@ -30,11 +30,11 @@
                     {% get_dict_values statistics_for_phases phase.pk as phase_stats %}
                     <div class="card-body">
                         <ul>
-                            <li>Average algorithm job duration: {{ phase_stats.average_algorithm_run_time|naturaldelta }}</li>
-                            <li>Total duration of all jobs for this phase: {{ phase_stats.total_algorithm_run_time|naturaldelta }}</li>
+                            <li>Average algorithm job duration: {{ phase_stats.average_algorithm_job_run_time|naturaldelta }}</li>
+                            <li>Total duration of all jobs for this phase: {{ phase_stats.accumulated_algorithm_job_run_time|naturaldelta }}</li>
                             <li>Number of archive items: {{ phase_stats.archive_item_count }}</li>
-                            <li>Average compute cost for a submission: {% if phase_stats.average_compute_cost %}{{ phase_stats.average_compute_cost }} €{% else %} NA {% endif %}</li>
-                            <li>Total compute cost for this phase so far: {% if phase_stats.total_compute_cost %}{{ phase_stats.total_compute_cost }} €{% else %} NA {% endif %}</li>
+                            <li>Average compute cost for a submission: {% if phase_stats.average_submission_compute_cost %}{{ phase_stats.average_submission_compute_cost }} €{% else %} NA {% endif %}</li>
+                            <li>Total compute cost for this phase so far: {% if phase_stats.total_phase_compute_cost %}{{ phase_stats.total_phase_compute_cost }} €{% else %} NA {% endif %}</li>
                         </ul>
                     </div>
                 </div>
