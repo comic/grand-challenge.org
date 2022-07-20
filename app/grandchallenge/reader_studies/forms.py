@@ -525,7 +525,6 @@ class DisplaySetBaseForm(Form):
         return InterfaceFormField(
             instance=interface,
             initial=current_value.value if current_value else None,
-            use_file_widget=interface.requires_file,
             required=False,
             user=self.user,
         ).field
@@ -650,6 +649,5 @@ class DisplaySetAddInterfaceForm(Form):
         if selected_interface is not None:
             self.fields["value"] = InterfaceFormField(
                 instance=selected_interface,
-                schema=selected_interface.schema,
                 user=user,
             ).field
