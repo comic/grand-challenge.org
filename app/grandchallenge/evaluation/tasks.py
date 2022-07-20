@@ -585,8 +585,7 @@ def update_phase_statistics():
                 ndigits=2,
             )
             total_compute_cost = round(
-                phase.archive_item_count
-                * total_duration.seconds
+                total_duration.seconds
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
