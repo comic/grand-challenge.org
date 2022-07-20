@@ -601,7 +601,7 @@ class FileForm(Form):
         return civ
 
 
-class DisplaySetAddInterfaceForm(Form):
+class DisplaySetInterfacesCreateForm(Form):
     _possible_widgets = {
         *InterfaceFormField._possible_widgets,
     }
