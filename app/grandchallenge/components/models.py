@@ -482,61 +482,6 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MP4,
         }
 
-    @classmethod
-    def get_default_field(cls, *, kind, use_file_widget):
-        if use_file_widget:
-            return ModelChoiceField
-        elif kind in cls.interface_type_image():
-            return ModelMultipleChoiceField
-        elif kind in {
-            InterfaceKind.InterfaceKindChoices.STRING,
-            InterfaceKind.InterfaceKindChoices.CHOICE,
-        }:
-            return forms.CharField
-        elif kind == InterfaceKind.InterfaceKindChoices.INTEGER:
-            return forms.IntegerField
-        elif kind == InterfaceKind.InterfaceKindChoices.FLOAT:
-            return forms.FloatField
-        elif kind == InterfaceKind.InterfaceKindChoices.BOOL:
-            return forms.BooleanField
-        else:
-            return forms.JSONField
-
-    @classmethod
-    def get_file_mimetypes(cls, *, kind):
-        if kind == InterfaceKind.InterfaceKindChoices.CSV:
-            return (
-                "application/csv",
-                "application/vnd.ms-excel",
-                "text/csv",
-                "text/plain",
-            )
-        elif kind == InterfaceKind.InterfaceKindChoices.ZIP:
-            return ("application/zip", "application/x-zip-compressed")
-        elif kind == InterfaceKind.InterfaceKindChoices.PDF:
-            return ("application/pdf",)
-        elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG:
-            return ("image/jpeg",)
-        elif kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG:
-            return ("image/png",)
-        elif kind == InterfaceKind.InterfaceKindChoices.SQREG:
-            return (
-                "application/octet-stream",
-                "application/x-sqlite3",
-                "application/vnd.sqlite3",
-            )
-        elif kind == InterfaceKind.InterfaceKindChoices.OBJ:
-            return ("text/plain", "application/octet-stream")
-        elif kind in InterfaceKind.interface_type_json():
-            return (
-                "text/plain",
-                "application/json",
-            )
-        elif kind == InterfaceKind.InterfaceKindChoices.MP4:
-            return ("video/mp4",)
-        else:
-            raise RuntimeError(f"Unknown kind {kind}")
-
 
 class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(
@@ -698,6 +643,59 @@ class ComponentInterface(OverlaySegmentsMixin):
             or self.is_json_kind
             and not self.store_in_database
         )
+
+    def get_default_field(self):
+        if self.requires_file:
+            return ModelChoiceField
+        elif self.is_image_kind:
+            return ModelMultipleChoiceField
+        elif self.kind in {
+            InterfaceKind.InterfaceKindChoices.STRING,
+            InterfaceKind.InterfaceKindChoices.CHOICE,
+        }:
+            return forms.CharField
+        elif self.kind == InterfaceKind.InterfaceKindChoices.INTEGER:
+            return forms.IntegerField
+        elif self.kind == InterfaceKind.InterfaceKindChoices.FLOAT:
+            return forms.FloatField
+        elif self.kind == InterfaceKind.InterfaceKindChoices.BOOL:
+            return forms.BooleanField
+        else:
+            return forms.JSONField
+
+    def get_file_mimetypes(self):
+        if self.kind == InterfaceKind.InterfaceKindChoices.CSV:
+            return (
+                "application/csv",
+                "application/vnd.ms-excel",
+                "text/csv",
+                "text/plain",
+            )
+        elif self.kind == InterfaceKind.InterfaceKindChoices.ZIP:
+            return ("application/zip", "application/x-zip-compressed")
+        elif self.kind == InterfaceKind.InterfaceKindChoices.PDF:
+            return ("application/pdf",)
+        elif self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG:
+            return ("image/jpeg",)
+        elif self.kind == InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG:
+            return ("image/png",)
+        elif self.kind == InterfaceKind.InterfaceKindChoices.SQREG:
+            return (
+                "application/octet-stream",
+                "application/x-sqlite3",
+                "application/vnd.sqlite3",
+            )
+        elif self.kind == InterfaceKind.InterfaceKindChoices.OBJ:
+            return ("text/plain", "application/octet-stream")
+        elif self.kind in InterfaceKind.interface_type_json():
+            return (
+                "text/plain",
+                "application/json",
+            )
+        elif self.kind == InterfaceKind.InterfaceKindChoices.MP4:
+            return ("video/mp4",)
+        else:
+            raise RuntimeError(f"Unknown kind {self.kind}")
 
     def create_instance(self, *, image=None, value=None, fileobj=None):
         civ = ComponentInterfaceValue.objects.create(interface=self)

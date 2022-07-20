@@ -36,7 +36,6 @@ from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -524,8 +523,7 @@ class DisplaySetBaseForm(Form):
 
     def _get_default_field(self, interface, current_value):
         return InterfaceFormField(
-            kind=interface.kind,
-            schema=interface.schema,
+            instance=interface,
             initial=current_value.value if current_value else None,
             use_file_widget=interface.requires_file,
             required=False,
@@ -590,9 +588,7 @@ class FileForm(Form):
     ):
         super().__init__(*args, **kwargs)
         self.fields["user_upload"].widget = UserUploadSingleWidget(
-            allowed_file_types=InterfaceKind.get_file_mimetypes(
-                kind=interface.kind
-            )
+            allowed_file_types=interface.get_file_mimetypes()
         )
         self.fields["user_upload"].queryset = get_objects_for_user(
             user, "uploads.change_userupload", accept_global_perms=False
@@ -653,8 +649,7 @@ class DisplaySetAddInterfaceForm(Form):
 
         if selected_interface is not None:
             self.fields["value"] = InterfaceFormField(
-                kind=selected_interface.kind,
-                use_file_widget=selected_interface.requires_file,
+                instance=selected_interface,
                 schema=selected_interface.schema,
                 user=user,
             ).field
