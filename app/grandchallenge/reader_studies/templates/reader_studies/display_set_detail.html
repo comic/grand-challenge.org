@@ -43,7 +43,7 @@
   <div class="d-flex justify-content-between px-1 py-2">
       <button
           class="btn btn-primary"
-          hx-get="{% url 'reader-studies:display-set-update' pk=object.pk %}"
+          hx-get="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}"
           hx-target="#ds-content-{{ object.id }}"
           hx-swap="outerHTML"
           {% if not object.is_editable %}

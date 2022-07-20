@@ -622,8 +622,8 @@ class DisplaySetAddInterfaceForm(Form):
         if pk is not None:
             attrs = {
                 "hx-get": reverse_lazy(
-                    "reader-studies:display-set-add-interface",
-                    kwargs={"pk": pk},
+                    "reader-studies:display-set-interfaces-create",
+                    kwargs={"pk": pk, "slug": reader_study.slug},
                 ),
                 "hx-target": f"#ds-content-{pk}",
             }

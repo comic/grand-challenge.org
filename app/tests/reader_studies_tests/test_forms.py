@@ -17,8 +17,8 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
-    DisplaySetAddInterfaceForm,
     DisplaySetCreateForm,
+    DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
     FileForm,
     QuestionForm,
@@ -1103,24 +1103,24 @@ def test_display_set_add_interface_form():
     ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
-    form = DisplaySetAddInterfaceForm(
+    form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=None, user=user
     )
     assert sorted(form.fields.keys()) == ["interface"]
 
-    form = DisplaySetAddInterfaceForm(
+    form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
     )
     assert sorted(form.fields.keys()) == ["interface", "value"]
     assert isinstance(form.fields["value"].widget, UserUploadSingleWidget)
 
-    form = DisplaySetAddInterfaceForm(
+    form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
     )
     assert sorted(form.fields.keys()) == ["interface", "value"]
     assert isinstance(form.fields["value"].widget, JSONEditorWidget)
 
-    form = DisplaySetAddInterfaceForm(
+    form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
     )
     assert sorted(form.fields.keys()) == ["interface", "value"]

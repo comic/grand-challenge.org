@@ -87,8 +87,8 @@ from grandchallenge.reader_studies.filters import (
 )
 from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
-    DisplaySetAddInterfaceForm,
     DisplaySetCreateForm,
+    DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
     FileForm,
     GroundTruthForm,
@@ -1357,7 +1357,7 @@ class QuestionInterfacesView(View):
 class DisplaySetDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
-    template_name = "reader_studies/readerstudy_display_set_detail.html"
+    template_name = "reader_studies/display_set_detail.html"
     model = DisplaySet
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}"
@@ -1370,7 +1370,7 @@ class DisplaySetUpdate(
     ObjectPermissionRequiredMixin,
     UpdateView,
 ):
-    template_name = "reader_studies/readerstudy_display_set_update.html"
+    template_name = "reader_studies/display_set_update.html"
     model = DisplaySet
     form_class = DisplaySetUpdateForm
     permission_required = (
@@ -1391,7 +1391,7 @@ class DisplaySetUpdate(
     def get_success_url(self):
         return reverse(
             "reader-studies:display-set-detail",
-            kwargs={"pk": self.kwargs["pk"]},
+            kwargs={"pk": self.kwargs["pk"], "slug": self.kwargs["slug"]},
         )
 
     def form_valid(self, form):
@@ -1462,9 +1462,9 @@ class DisplaySetUpdate(
         return HttpResponseRedirect(self.get_success_url())
 
 
-class AddFilesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
+class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, CreateView):
     model = RawImageUploadSession
-    template_name = "reader_studies/display_set_add_images.html"
+    template_name = "reader_studies/display_set_files_update.html"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
@@ -1493,6 +1493,7 @@ class AddFilesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
             {
                 "display_set": self.kwargs["pk"],
                 "interface": self.kwargs["interface_pk"],
+                "slug": self.kwargs["slug"],
             }
         )
         return context
@@ -1535,12 +1536,12 @@ class AddFilesToDisplaySet(ObjectPermissionRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse(
             "reader-studies:display-set-detail",
-            kwargs={"pk": self.kwargs["pk"]},
+            kwargs={"pk": self.kwargs["pk"], "slug": self.kwargs["slug"]},
         )
 
 
-class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
-    form_class = DisplaySetAddInterfaceForm
+class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
+    form_class = DisplaySetInterfacesCreateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
     )
@@ -1563,9 +1564,9 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
 
     def get_template_names(self):
         if self.kwargs.get("pk"):
-            return ["reader_studies/display_set_add_interface.html"]
+            return ["reader_studies/display_set_interface_create.html"]
         else:
-            return ["reader_studies/display_set_append_interface.html"]
+            return ["reader_studies/display_set_new_interface_create.html"]
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1623,7 +1624,7 @@ class DisplaySetAddInterface(ObjectPermissionRequiredMixin, FormView):
     def get_success_url(self):
         return reverse(
             "reader-studies:display-set-update",
-            kwargs={"pk": self.kwargs["pk"]},
+            kwargs={"pk": self.kwargs["pk"], "slug": self.kwargs["slug"]},
         )
 
 
@@ -1632,7 +1633,7 @@ class AddDisplaySetToReaderStudy(
 ):
     model = DisplaySet
     form_class = DisplaySetCreateForm
-    template_name = "reader_studies/readerstudy_display_set_create.html"
+    template_name = "reader_studies/display_set_create.html"
     type_to_add = "case"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
@@ -1686,7 +1687,7 @@ class AddDisplaySetToReaderStudy(
             interface = ComponentInterface.objects.get(pk=entry["interface"])
             if interface.is_image_kind:
                 entry["value"] = [entry["value"]]
-            form = DisplaySetAddInterfaceForm(
+            form = DisplaySetInterfacesCreateForm(
                 data=entry,
                 pk=None,
                 interface=interface.pk,

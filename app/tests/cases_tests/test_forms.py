@@ -27,7 +27,7 @@ def test_upload_some_images(
 
     response = get_view_for_user(
         client=client,
-        viewname="reader-studies:add-displaysets",
+        viewname="reader-studies:display-sets-create",
         user=user,
         reverse_kwargs={"slug": rs.slug},
     )
@@ -47,7 +47,7 @@ def test_upload_some_images(
                 "interface": ComponentInterface.objects.first().pk,
             },
             client=client,
-            viewname="reader-studies:add-displaysets",
+            viewname="reader-studies:display-sets-create",
             user=user,
             reverse_kwargs={"slug": rs.slug},
             method=client.post,

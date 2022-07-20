@@ -368,7 +368,7 @@ def test_display_set_detail(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-detail",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u2,
     )
 
@@ -377,7 +377,7 @@ def test_display_set_detail(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-detail",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u1,
     )
 
@@ -407,7 +407,7 @@ def test_display_set_update(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
         client=client,
-        reverse_kwargs={"pk": ds1.pk},
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         user=u2,
     )
 
@@ -416,7 +416,7 @@ def test_display_set_update(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
         client=client,
-        reverse_kwargs={"pk": ds1.pk},
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         user=u1,
     )
 
@@ -425,7 +425,7 @@ def test_display_set_update(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
         client=client,
-        reverse_kwargs={"pk": ds1.pk},
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         data={
             ci_str.slug: "new-title",
             ci_img.slug: str(civ_img_new.pk),
@@ -470,7 +470,7 @@ def test_add_display_set_to_reader_study(client, settings):
 
     assert DisplaySet.objects.count() == 1
     response = get_view_for_user(
-        viewname="reader-studies:add-displayset",
+        viewname="reader-studies:display-set-create",
         client=client,
         reverse_kwargs={"slug": rs.slug},
         user=u2,
@@ -479,7 +479,7 @@ def test_add_display_set_to_reader_study(client, settings):
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname="reader-studies:add-displayset",
+        viewname="reader-studies:display-set-create",
         client=client,
         reverse_kwargs={"slug": rs.slug},
         user=u1,
@@ -505,7 +505,7 @@ def test_add_display_set_to_reader_study(client, settings):
 
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
-            viewname="reader-studies:add-displayset",
+            viewname="reader-studies:display-set-create",
             client=client,
             reverse_kwargs={"slug": rs.slug},
             content_type="application/json",
@@ -567,11 +567,12 @@ def test_add_files_to_display_set(client, settings):
     upload.save()
 
     response = get_view_for_user(
-        viewname="reader-studies:add-files-to-display-set",
+        viewname="reader-studies:display-set-files-update",
         client=client,
         reverse_kwargs={
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
+            "slug": ds.slug,
         },
         user=u2,
     )
@@ -579,11 +580,12 @@ def test_add_files_to_display_set(client, settings):
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname="reader-studies:add-files-to-display-set",
+        viewname="reader-studies:display-set-files-update",
         client=client,
         reverse_kwargs={
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
+            "slug": ds.slug,
         },
         user=u1,
     )
@@ -591,11 +593,12 @@ def test_add_files_to_display_set(client, settings):
     assert response.status_code == 200
 
     response = get_view_for_user(
-        viewname="reader-studies:add-files-to-display-set",
+        viewname="reader-studies:display-set-files-update",
         client=client,
         reverse_kwargs={
             "pk": ds.pk,
             "interface_pk": ci_json.pk,
+            "slug": ds.slug,
         },
         data={"user_upload": str(upload.pk)},
         user=u1,
@@ -608,11 +611,12 @@ def test_add_files_to_display_set(client, settings):
 
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
-            viewname="reader-studies:add-files-to-display-set",
+            viewname="reader-studies:display-set-files-update",
             client=client,
             reverse_kwargs={
                 "pk": ds.pk,
                 "interface_pk": ci_img.pk,
+                "slug": ds.slug,
             },
             data={"user_uploads": str(im_upload.pk)},
             user=u1,
@@ -625,7 +629,7 @@ def test_add_files_to_display_set(client, settings):
 
 
 @pytest.mark.django_db
-def test_display_set_add_interface(client, settings):
+def test_display_set_interfaces_create(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -639,18 +643,18 @@ def test_display_set_add_interface(client, settings):
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
     response = get_view_for_user(
-        viewname="reader-studies:display-set-add-interface",
+        viewname="reader-studies:display-set-interfaces-create",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u2,
     )
 
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname="reader-studies:display-set-add-interface",
+        viewname="reader-studies:display-set-interfaces-create",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u1,
     )
 
@@ -658,9 +662,9 @@ def test_display_set_add_interface(client, settings):
 
     assert not ds.values.filter(interface=ci_value).exists()
     response = get_view_for_user(
-        viewname="reader-studies:display-set-add-interface",
+        viewname="reader-studies:display-set-interfaces-create",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         data={"interface": str(ci_value.pk), "value": '{"foo": "bar"}'},
         user=u1,
         method=client.post,
@@ -679,9 +683,9 @@ def test_display_set_add_interface(client, settings):
     )
     upload.save()
     response = get_view_for_user(
-        viewname="reader-studies:display-set-add-interface",
+        viewname="reader-studies:display-set-interfaces-create",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         data={"interface": str(ci_file.pk), "value": str(upload.pk)},
         user=u1,
         method=client.post,
@@ -698,9 +702,9 @@ def test_display_set_add_interface(client, settings):
     )
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
-            viewname="reader-studies:display-set-add-interface",
+            viewname="reader-studies:display-set-interfaces-create",
             client=client,
-            reverse_kwargs={"pk": ds.pk},
+            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
             data={"interface": str(ci_image.pk), "value": str(upload.pk)},
             user=u1,
             method=client.post,

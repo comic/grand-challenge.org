@@ -20,7 +20,7 @@
 {% block content %}
     <h2>Add {{ type_to_add }} to {{ object }}</h2>
 
-    <form action="{% url 'reader-studies:add-displayset' slug=reader_study.slug %}" method="post" id="form-new-ds">
+    <form action="{% url 'reader-studies:display-set-create' slug=reader_study.slug %}" method="post" id="form-new-ds">
       {% csrf_token %}
       {{ form|crispy }}
       <div id="new-interfaces"></div>

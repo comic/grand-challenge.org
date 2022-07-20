@@ -3,4 +3,4 @@
   {% include option.template_name with widget=option %}{% endfor %}{% if group_name %}
   </optgroup>{% endif %}{% endfor %}
 </select>
-<a href="" hx-get="{% url 'reader-studies:add-files-to-display-set' pk=widget.attrs.display_set_pk interface_pk=widget.attrs.interface_pk %}" hx-target="#form-{{ widget.attrs.display_set_pk }}" hx-swap="outerHTML">Upload new</a>
+<a href="" hx-get="{% url 'reader-studies:display-set-files-update' pk=widget.attrs.display_set_pk interface_pk=widget.attrs.interface_pk slug=widget.attrs.reader_study_slug %}" hx-target="#form-{{ widget.attrs.display_set_pk }}" hx-swap="outerHTML">Upload new</a>
