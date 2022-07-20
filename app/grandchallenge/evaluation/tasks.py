@@ -582,14 +582,14 @@ def update_phase_statistics():
         try:
             average_submission_compute_cost = round(
                 phase.archive_item_count
-                * average_algorithm_job_run_time.seconds
+                * average_algorithm_job_run_time.total_seconds()
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
             total_phase_compute_cost = round(
-                accumulated_algorithm_job_run_time.seconds
+                accumulated_algorithm_job_run_time.total_seconds()
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
