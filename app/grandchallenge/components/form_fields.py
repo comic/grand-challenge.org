@@ -46,7 +46,7 @@ class InterfaceFormField:
         if initial is not None:
             kwargs["initial"] = initial
 
-        field_type = instance.get_default_field()
+        field_type = instance.default_field
 
         if instance.is_image_kind:
             kwargs["widget"] = UserUploadMultipleWidget()
@@ -56,7 +56,7 @@ class InterfaceFormField:
             extra_help = IMAGE_UPLOAD_HELP_TEXT
         elif instance.requires_file:
             kwargs["widget"] = UserUploadSingleWidget(
-                allowed_file_types=instance.get_file_mimetypes()
+                allowed_file_types=instance.file_mimetypes
             )
             kwargs["queryset"] = get_objects_for_user(
                 user, "uploads.change_userupload", accept_global_perms=False

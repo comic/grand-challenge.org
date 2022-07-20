@@ -587,7 +587,7 @@ class FileForm(Form):
     ):
         super().__init__(*args, **kwargs)
         self.fields["user_upload"].widget = UserUploadSingleWidget(
-            allowed_file_types=interface.get_file_mimetypes()
+            allowed_file_types=interface.file_mimetypes
         )
         self.fields["user_upload"].queryset = get_objects_for_user(
             user, "uploads.change_userupload", accept_global_perms=False

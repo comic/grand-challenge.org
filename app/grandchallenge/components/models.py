@@ -644,7 +644,8 @@ class ComponentInterface(OverlaySegmentsMixin):
             and not self.store_in_database
         )
 
-    def get_default_field(self):
+    @property
+    def default_field(self):
         if self.requires_file:
             return ModelChoiceField
         elif self.is_image_kind:
@@ -663,7 +664,8 @@ class ComponentInterface(OverlaySegmentsMixin):
         else:
             return forms.JSONField
 
-    def get_file_mimetypes(self):
+    @property
+    def file_mimetypes(self):
         if self.kind == InterfaceKind.InterfaceKindChoices.CSV:
             return (
                 "application/csv",
