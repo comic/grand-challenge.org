@@ -481,12 +481,11 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         return values
 
 
-class DisplaySetBaseForm(Form):
+class DisplaySetCreateForm(Form):
     _possible_widgets = {
         SelectUploadWidget,
         *InterfaceFormField._possible_widgets,
     }
-    user = None
 
     def __init__(self, *args, instance, reader_study, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -526,10 +525,9 @@ class DisplaySetBaseForm(Form):
             user=self.user,
         ).field
 
-    def _get_json_field(self, interface, current_value):
-        return self._get_default_field(interface, current_value)
-
-    def _get_image_field(self, interface, values, current_value):
+    def _get_select_upload_widget_field(
+        self, interface, values, current_value
+    ):
         return ModelChoiceField(
             queryset=ComponentInterfaceValue.objects.filter(id__in=values),
             initial=current_value,
@@ -543,33 +541,26 @@ class DisplaySetBaseForm(Form):
             ),
         )
 
-    def _get_file_field(self, interface, values, current_value):
-        return self._get_image_field(interface, values, current_value)
-
-
-class DisplaySetUpdateForm(DisplaySetBaseForm):
-    def __init__(self, *args, instance, user, **kwargs):
-        super().__init__(
-            *args,
-            instance=instance,
-            reader_study=instance.reader_study,
-            user=user,
-            **kwargs,
-        )
-
-
-class DisplaySetCreateForm(DisplaySetBaseForm):
-    def __init__(self, *args, instance=None, reader_study, user, **kwargs):
-        super().__init__(
-            *args,
-            instance=None,
-            reader_study=reader_study,
-            user=user,
-            **kwargs,
-        )
+    def _get_json_field(self, interface, current_value):
+        return self._get_default_field(interface, current_value)
 
     def _get_image_field(self, interface, values, current_value):
         return self._get_default_field(interface, current_value)
+
+    def _get_file_field(self, interface, values, current_value):
+        return self._get_default_field(interface, current_value)
+
+
+class DisplaySetUpdateForm(DisplaySetCreateForm):
+    def _get_image_field(self, interface, values, current_value):
+        return self._get_select_upload_widget_field(
+            interface, values, current_value
+        )
+
+    def _get_file_field(self, interface, values, current_value):
+        return self._get_select_upload_widget_field(
+            interface, values, current_value
+        )
 
 
 class FileForm(Form):
@@ -630,7 +621,7 @@ class DisplaySetInterfacesCreateForm(Form):
         else:
             attrs = {
                 "hx-get": reverse_lazy(
-                    "reader-studies:display-set-new-add-interface",
+                    "reader-studies:display-set-new-interfaces-create",
                     kwargs={"slug": reader_study.slug},
                 ),
                 "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
