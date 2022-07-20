@@ -14,6 +14,7 @@ from crispy_forms.layout import (
     Submit,
 )
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.transaction import on_commit
 from django.forms import (
     BooleanField,
     CharField,
@@ -55,6 +56,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
+from grandchallenge.reader_studies.tasks import add_file_to_display_set
 from grandchallenge.reader_studies.widgets import SelectUploadWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -586,9 +588,16 @@ class FileForm(Form):
     def save(self):
         civ = self.display_set.values.get(interface=self.interface)
         user_upload = self.cleaned_data["user_upload"]
-        user_upload.copy_object(to_field=civ.file)
-        civ.full_clean()
-        civ.save()
+        on_commit(
+            lambda: add_file_to_display_set.apply_async(
+                kwargs={
+                    "user_upload_pk": str(user_upload.pk),
+                    "interface_pk": str(self.interface.pk),
+                    "display_set_pk": str(self.display_set.pk),
+                    "civ_pk": str(civ.pk),
+                }
+            )
+        )
         return civ
 
 

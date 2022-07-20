@@ -115,6 +115,7 @@ from grandchallenge.reader_studies.serializers import (
     ReaderStudySerializer,
 )
 from grandchallenge.reader_studies.tasks import (
+    add_file_to_display_set,
     add_image_to_display_set,
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
@@ -1079,7 +1080,6 @@ class DisplaySetViewSet(
         interface = data.pop("interface", None)
         value = data.pop("value", None)
         image = data.pop("image", None)
-        user_upload = data.pop("user_upload", None)
         with transaction.atomic():
             if interface.is_image_kind:
                 # New images can also be added via the rawimageupload endpoint
@@ -1089,15 +1089,6 @@ class DisplaySetViewSet(
                     civ.full_clean()
                     civ.save()
                     return civ
-            elif user_upload and interface.is_file_kind:
-                civ = ComponentInterfaceValue.objects.create(
-                    interface=interface
-                )
-                user_upload.copy_object(to_field=civ.file)
-                civ.full_clean()
-                civ.save()
-                user_upload.delete()
-                return civ
             elif interface.is_json_kind:
                 civ = interface.create_instance(value=value)
                 return civ
@@ -1121,8 +1112,23 @@ class DisplaySetViewSet(
             )
             if serialized_data.is_valid():
                 civs = []
+                interfaces = []
                 for value in serialized_data.validated_data:
-                    civs.append(self.create_civ(value))
+                    interface = value.get("interface", None)
+                    user_upload = value.get("user_upload", None)
+                    if interface.requires_file and user_upload:
+                        interfaces.append(interface)
+                        transaction.on_commit(
+                            lambda: add_file_to_display_set.apply_async(
+                                kwargs={
+                                    "user_upload_pk": str(user_upload.pk),
+                                    "interface_pk": str(interface.pk),
+                                    "display_set_pk": str(instance.pk),
+                                }
+                            )
+                        )
+                    else:
+                        civs.append(self.create_civ(value))
                 civs = [x for x in civs if x]
                 assigned_civs = instance.values.filter(
                     interface__in=[civ.interface for civ in civs]
@@ -1597,20 +1603,27 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
                 linked_task=add_image_to_display_set.signature(
                     kwargs={
                         "display_set_pk": self.kwargs["pk"],
-                        "interface_pk": interface.pk,
+                        "interface_pk": str(interface.pk),
                     },
                     immutable=True,
                 )
             )
             messages.add_message(
-                self.request, messages.SUCCESS, "Image import started."
+                self.request, messages.SUCCESS, "Image import queued."
             )
         elif interface.requires_file:
-            civ = ComponentInterfaceValue.objects.create(interface=interface)
-            value.copy_object(to_field=civ.file)
-            civ.full_clean()
-            civ.save()
-            self.display_set.values.add(civ)
+            transaction.on_commit(
+                lambda: add_file_to_display_set.apply_async(
+                    kwargs={
+                        "user_upload_pk": str(value.pk),
+                        "interface_pk": str(interface.pk),
+                        "display_set_pk": self.kwargs["pk"],
+                    }
+                )
+            )
+            messages.add_message(
+                self.request, messages.SUCCESS, "File copy queued."
+            )
         else:
             civ = interface.create_instance(value=value)
             self.display_set.values.add(civ)
@@ -1717,13 +1730,19 @@ class AddDisplaySetToReaderStudy(
             interface = ComponentInterface.objects.get(slug=slug)
             civ = ComponentInterfaceValue(interface=interface)
             if interface.requires_file:
-                civ = ComponentInterfaceValue.objects.create(
-                    interface=interface
+                user_upload = data[slug]
+                from functools import partial
+
+                transaction.on_commit(
+                    partial(
+                        add_file_to_display_set.apply_async,
+                        kwargs={
+                            "user_upload_pk": str(user_upload.pk),
+                            "interface_pk": str(interface.pk),
+                            "display_set_pk": str(ds.pk),
+                        },
+                    )
                 )
-                data[slug].copy_object(to_field=civ.file)
-                civ.full_clean()
-                civ.save()
-                ds.values.add(civ)
             elif interface.is_json_kind:
                 civ = ComponentInterfaceValue.objects.create(
                     value=data[slug], interface=interface
@@ -1737,8 +1756,8 @@ class AddDisplaySetToReaderStudy(
                 us.process_images(
                     linked_task=add_image_to_display_set.signature(
                         kwargs={
-                            "display_set_pk": ds.pk,
-                            "interface_pk": interface.pk,
+                            "display_set_pk": str(ds.pk),
+                            "interface_pk": str(interface.pk),
                         },
                         immutable=True,
                     )
@@ -1765,7 +1784,7 @@ class AddDisplaySetToReaderStudy(
             self.create_display_set(data)
             messages.success(
                 self.request,
-                "Display set created. Image import jobs have been queued.",
+                "Display set created. Image and file import jobs have been queued.",
             )
             return JsonResponse({"redirect": self.get_success_url()})
 

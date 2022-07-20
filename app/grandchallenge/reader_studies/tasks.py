@@ -14,6 +14,7 @@ from grandchallenge.reader_studies.models import (
     DisplaySet,
     ReaderStudy,
 )
+from grandchallenge.uploads.models import UserUpload
 
 
 @transaction.atomic
@@ -88,6 +89,28 @@ def add_image_to_display_set(
         else:
             civ.save()
             display_set.values.add(civ)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def add_file_to_display_set(
+    *,
+    user_upload_pk,
+    display_set_pk,
+    interface_pk,
+    civ_pk=None,
+):
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    display_set = DisplaySet.objects.get(pk=display_set_pk)
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    with transaction.atomic():
+        if civ_pk is None:
+            civ = ComponentInterfaceValue.objects.create(interface=interface)
+        else:
+            civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
+        user_upload.copy_object(to_field=civ.file)
+        civ.full_clean()
+        civ.save()
+        display_set.values.add(civ)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

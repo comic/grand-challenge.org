@@ -1083,7 +1083,8 @@ def test_file_form():
 
     form = FileForm(user=user, display_set=ds, interface=ci)
     form.cleaned_data = {"user_upload": upload}
-    form.save()
+    with capture_on_commit_callbacks(execute=True):
+        form.save()
     civ.refresh_from_db()
     assert civ.file.read() == b'{"foo": "bar"}'
 
