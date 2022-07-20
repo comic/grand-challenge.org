@@ -553,10 +553,10 @@ def get_average_job_duration_for_phase(phase):
 
 
 class PhaseStatistics(NamedTuple):
-    average_algorithm_run_time: datetime.timedelta
-    total_algorithm_run_time: datetime.timedelta
-    average_compute_cost: float
-    total_compute_cost: float
+    average_algorithm_job_run_time: datetime.timedelta
+    accumulated_algorithm_job_run_time: datetime.timedelta
+    average_submission_compute_cost: float
+    total_phase_compute_cost: float
     archive_item_count: int
 
 
@@ -573,33 +573,37 @@ def update_phase_statistics():
     phase_dict = {}
     for phase in phases:
         avg_duration = get_average_job_duration_for_phase(phase)
-        average_duration = avg_duration.get("average_duration", None)
-        total_duration = avg_duration.get("total_duration", None)
+        average_algorithm_job_run_time = avg_duration.get(
+            "average_duration", None
+        )
+        accumulated_algorithm_job_run_time = avg_duration.get(
+            "total_duration", None
+        )
         try:
-            average_compute_cost = round(
+            average_submission_compute_cost = round(
                 phase.archive_item_count
-                * average_duration.seconds
+                * average_algorithm_job_run_time.seconds
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
-            total_compute_cost = round(
-                total_duration.seconds
+            total_phase_compute_cost = round(
+                accumulated_algorithm_job_run_time.seconds
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
         except AttributeError:
-            average_compute_cost = None
-            total_compute_cost = None
+            average_submission_compute_cost = None
+            total_phase_compute_cost = None
 
         phase_dict[phase.pk] = PhaseStatistics(
-            average_duration,
-            total_duration,
-            average_compute_cost,
-            total_compute_cost,
+            average_algorithm_job_run_time,
+            accumulated_algorithm_job_run_time,
+            average_submission_compute_cost,
+            total_phase_compute_cost,
             phase.archive_item_count,
         )
 
