@@ -55,6 +55,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
+from grandchallenge.reader_studies.widgets import SelectUploadWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
@@ -478,10 +479,6 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         values = [x for x in rdr]
 
         return values
-
-
-class SelectUploadWidget(Select):
-    template_name = "reader_studies/select_upload_widget.html"
 
 
 class DisplaySetBaseForm(Form):
