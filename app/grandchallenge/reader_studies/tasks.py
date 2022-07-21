@@ -121,7 +121,7 @@ def add_file_to_display_set(
                         "error": str(e),
                     },
                     immutable=True,
-                )
+                ).apply_async
             )
         else:
             civ.save()

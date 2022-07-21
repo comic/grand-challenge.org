@@ -1,7 +1,6 @@
 import csv
 import json
 import uuid
-from functools import partial
 
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
@@ -1120,13 +1119,13 @@ class DisplaySetViewSet(
                     if interface.requires_file and user_upload:
                         interfaces.append(interface)
                         transaction.on_commit(
-                            lambda: add_file_to_display_set.apply_async(
+                            add_file_to_display_set.signature(
                                 kwargs={
                                     "user_upload_pk": str(user_upload.pk),
                                     "interface_pk": str(interface.pk),
                                     "display_set_pk": str(instance.pk),
                                 }
-                            )
+                            ).apply_async
                         )
                     else:
                         civs.append(self.create_civ(value))
@@ -1616,14 +1615,15 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
             )
         elif interface.requires_file:
             transaction.on_commit(
-                lambda: add_file_to_display_set.apply_async(
+                add_file_to_display_set.signature(
                     kwargs={
                         "user_upload_pk": str(value.pk),
                         "interface_pk": str(interface.pk),
                         "display_set_pk": self.kwargs["pk"],
                     }
-                )
+                ).apply_async
             )
+
             messages.add_message(
                 self.request, messages.SUCCESS, "File copy queued."
             )
@@ -1735,14 +1735,13 @@ class AddDisplaySetToReaderStudy(
             if interface.requires_file:
                 user_upload = data[slug]
                 transaction.on_commit(
-                    partial(
-                        add_file_to_display_set.apply_async,
+                    add_file_to_display_set.signature(
                         kwargs={
                             "user_upload_pk": str(user_upload.pk),
                             "interface_pk": str(interface.pk),
                             "display_set_pk": str(ds.pk),
-                        },
-                    )
+                        }
+                    ).apply_async
                 )
             elif interface.is_json_kind:
                 civ = ComponentInterfaceValue.objects.create(
