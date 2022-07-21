@@ -1489,7 +1489,9 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, CreateView):
 
     @cached_property
     def interface(self):
-        return ComponentInterface.objects.get(pk=self.kwargs["interface_pk"])
+        return ComponentInterface.objects.get(
+            slug=self.kwargs["interface_slug"]
+        )
 
     @cached_property
     def display_set(self):
@@ -1500,7 +1502,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, CreateView):
         context.update(
             {
                 "display_set": self.kwargs["pk"],
-                "interface": self.kwargs["interface_pk"],
+                "interface": self.kwargs["interface_slug"],
                 "slug": self.kwargs["slug"],
             }
         )
@@ -1512,7 +1514,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, CreateView):
             linked_task = add_image_to_display_set.signature(
                 kwargs={
                     "display_set_pk": self.kwargs["pk"],
-                    "interface_pk": self.kwargs["interface_pk"],
+                    "interface_pk": self.interface.pk,
                 },
                 immutable=True,
             )

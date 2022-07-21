@@ -538,7 +538,7 @@ class DisplaySetCreateForm(Form):
                 attrs={
                     "reader_study_slug": self.reader_study.slug,
                     "display_set_pk": self.instance.pk,
-                    "interface_pk": interface.pk,
+                    "interface_slug": interface.slug,
                 }
             ),
         )
