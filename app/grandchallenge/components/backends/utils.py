@@ -61,13 +61,6 @@ def parse_structured_log(*, log: str) -> Optional[ParsedLog]:
     if structured_log["internal"] is False:
         # Defensive, in case the type of structured_log["internal"] is str
         return ParsedLog(message=message, source=source)
-    else:
-        if source == SourceChoices.STDOUT:
-            logger.info(f"Internal log: {message}")
-        elif source == SourceChoices.STDERR:
-            logger.warning(f"Internal log: {message}")
-        else:
-            raise ValueError("Invalid log structure")
 
 
 def safe_extract(*, src: File, dest: Path):

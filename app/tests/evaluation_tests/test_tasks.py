@@ -235,19 +235,6 @@ class TestSetEvaluationInputs(TestCase):
         self.jobs = jobs
         self.output_civs = output_civs
 
-    def test_unsuccessful_jobs_fail_evaluation(self):
-        self.jobs[0].status = Job.FAILURE
-        self.jobs[0].save()
-
-        set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
-
-        self.evaluation.refresh_from_db()
-        assert self.evaluation.status == self.evaluation.FAILURE
-        assert (
-            self.evaluation.error_message
-            == "The algorithm failed on one or more cases."
-        )
-
     def test_set_evaluation_inputs(self):
         set_evaluation_inputs(evaluation_pk=self.evaluation.pk)
 
