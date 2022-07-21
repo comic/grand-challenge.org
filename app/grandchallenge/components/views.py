@@ -1,4 +1,5 @@
-from django.db.models import TextChoices
+from dal import autocomplete
+from django.db.models import Q, TextChoices
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -6,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 
 
@@ -54,3 +55,24 @@ class ComponentInterfaceList(LoginRequiredMixin, ListView):
             }
         )
         return context
+
+
+class ComponentInterfaceAutocomplete(
+    LoginRequiredMixin, autocomplete.Select2QuerySetView
+):
+    def get_queryset(self):
+        qs = ComponentInterface.objects.filter(
+            kind__in=InterfaceKind.interface_type_image()
+        ).order_by("title")
+
+        if self.q:
+            qs = qs.filter(
+                Q(title__icontains=self.q)
+                | Q(slug__icontains=self.q)
+                | Q(description__icontains=self.q)
+            )
+
+        return qs
+
+    def get_result_label(self, result):
+        return result.title

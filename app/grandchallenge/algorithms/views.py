@@ -248,10 +248,18 @@ class EditorsUpdate(AlgorithmUserGroupUpdateMixin):
     form_class = EditorsForm
     success_message = "Editors successfully updated"
 
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#editors"
+
 
 class UsersUpdate(AlgorithmUserGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#users"
 
 
 class JobViewersUpdate(JobUserGroupUpdateMixin):

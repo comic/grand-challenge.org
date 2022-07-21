@@ -1,4 +1,6 @@
 from crispy_forms.helper import FormHelper
+from dal import autocomplete
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import (
     Form,
@@ -54,6 +56,11 @@ class ArchiveForm(
                 accept_global_perms=False,
             )
         ).distinct()
+        if self.instance:
+            self.fields["view_content"].help_text += (
+                " The following interfaces are used in your archive: "
+                f"{', '.join(self.instance.items.values_list('values__interface__slug', flat=True).distinct())}."
+            )
 
     class Meta:
         model = Archive
@@ -183,6 +190,15 @@ class AddCasesForm(UploadRawImagesForm):
     interface = ModelChoiceField(
         queryset=ComponentInterface.objects.filter(
             kind__in=InterfaceKind.interface_type_image()
+        ).order_by("title"),
+        widget=autocomplete.ModelSelect2(
+            url="components:component-interface-autocomplete",
+            attrs={
+                "data-placeholder": "Search for an interface ...",
+                "data-minimum-input-length": 3,
+                "data-theme": settings.CRISPY_TEMPLATE_PACK,
+                "data-html": True,
+            },
         ),
     )
 
