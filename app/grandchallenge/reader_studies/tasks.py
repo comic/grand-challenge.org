@@ -9,6 +9,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
@@ -104,13 +105,46 @@ def add_file_to_display_set(
     interface = ComponentInterface.objects.get(pk=interface_pk)
     with transaction.atomic():
         if civ_pk is None:
-            civ = ComponentInterfaceValue.objects.create(interface=interface)
+            civ = ComponentInterfaceValue(interface=interface)
         else:
             civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
         user_upload.copy_object(to_field=civ.file)
-        civ.full_clean()
-        civ.save()
-        display_set.values.add(civ)
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            transaction.on_commit(
+                send_failed_file_copy_notification.signature(
+                    kwargs={
+                        "display_set_pk": display_set_pk,
+                        "interface_pk": interface_pk,
+                        "user_upload_pk": user_upload_pk,
+                        "error": str(e),
+                    },
+                    immutable=True,
+                )
+            )
+        else:
+            civ.save()
+            display_set.values.add(civ)
+
+
+@shared_task
+def send_failed_file_copy_notification(
+    *, display_set_pk, interface_pk, user_upload_pk, error
+):
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    display_set = DisplaySet.objects.get(pk=display_set_pk)
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    Notification.send(
+        type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+        actor=user_upload.creator,
+        message=(
+            f"File for interface {interface.title} added to {display_set_pk} "
+            f"in {display_set.reader_study.title} failed validation: {error}."
+        ),
+        target=display_set.reader_study,
+        description=display_set.reader_study.get_absolute_url(),
+    )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

@@ -27,6 +27,7 @@ class NotificationTypeChoices(models.TextChoices):
     MISSING_METHOD = "MISSING-METHOD", _("Missing method")
     JOB_STATUS = "JOB-STATUS", _("Job status update")
     IMAGE_IMPORT_STATUS = "IMAGE-IMPORT", _("Image import status update")
+    FILE_COPY_STATUS = "FILE-COPY", _("Validation failed while copying file")
 
 
 class NotificationType:
@@ -187,6 +188,8 @@ class Notification(UUIDModel):
             == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
         ):
             receivers = followers(action_object)
+        elif type == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS:
+            receivers = [actor]
 
         for receiver in set(receivers):
             Notification.objects.create(
@@ -418,3 +421,8 @@ class Notification(UUIDModel):
                 naturaltime(self.created),
                 self.message,
             )
+        elif (
+            self.type
+            == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
+        ):
+            return self.message
