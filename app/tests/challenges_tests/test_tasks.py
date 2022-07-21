@@ -78,7 +78,7 @@ def test_challenge_request_budget_calculation(type_2_challenge_request):
     ] == round(
         type_2_challenge_request.phase_1_number_of_test_images
         * type_2_challenge_request.average_size_of_test_image_in_mb
-        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+        * settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
         / 1000000
         / 100,
         ndigits=2,
@@ -112,7 +112,7 @@ def test_challenge_request_budget_calculation(type_2_challenge_request):
     ] == round(
         type_2_challenge_request.phase_2_number_of_test_images
         * type_2_challenge_request.average_size_of_test_image_in_mb
-        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+        * settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
         / 1000000
         / 100,
         ndigits=2,
@@ -126,7 +126,7 @@ def test_challenge_request_budget_calculation(type_2_challenge_request):
         type_2_challenge_request.average_algorithm_container_size_in_gb
         * type_2_challenge_request.average_number_of_containers_per_team
         * type_2_challenge_request.expected_number_of_teams
-        * settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+        * settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
         / 1000
         / 100,
         ndigits=2,

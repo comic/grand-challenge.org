@@ -778,7 +778,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         default=10, help_text="Average algorithm container size in GB."
     )
     average_number_of_containers_per_team = models.IntegerField(
-        default=10,
+        default=5,
         help_text="Average number of algorithm containers per team.",
     )
     inference_time_limit_in_minutes = models.IntegerField(
@@ -909,8 +909,11 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         budget = None
         if self.challenge_type == ChallengeTypeChoices.T2:
             compute_costs = settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-            storage_costs = (
-                settings.CHALLENGES_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+            s3_storage_costs = (
+                settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+            )
+            ecr_storage_costs = (
+                settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
             )
 
             budget = {
@@ -928,7 +931,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             budget["Data storage cost for phase 1"] = round(
                 self.phase_1_number_of_test_images
                 * self.average_size_of_test_image_in_mb
-                * storage_costs
+                * s3_storage_costs
                 / 1000000
                 / 100,
                 ndigits=2,
@@ -956,7 +959,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             budget["Data storage cost for phase 2"] = round(
                 self.phase_2_number_of_test_images
                 * self.average_size_of_test_image_in_mb
-                * storage_costs
+                * s3_storage_costs
                 / 1000000
                 / 100,
                 ndigits=2,
@@ -984,7 +987,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
                 self.average_algorithm_container_size_in_gb
                 * self.average_number_of_containers_per_team
                 * self.expected_number_of_teams
-                * storage_costs
+                * ecr_storage_costs
                 / 1000
                 / 100,
                 ndigits=2,
