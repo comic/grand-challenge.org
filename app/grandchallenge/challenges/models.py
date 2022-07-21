@@ -778,7 +778,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         default=10, help_text="Average algorithm container size in GB."
     )
     average_number_of_containers_per_team = models.IntegerField(
-        default=10,
+        default=5,
         help_text="Average number of algorithm containers per team.",
     )
     inference_time_limit_in_minutes = models.IntegerField(
