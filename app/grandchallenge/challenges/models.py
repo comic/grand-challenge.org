@@ -985,6 +985,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
 
             budget["Docker storage cost"] = round(
                 self.average_algorithm_container_size_in_gb
+                * self.average_number_of_containers_per_team
                 * self.expected_number_of_teams
                 * ecr_storage_costs
                 / 1000

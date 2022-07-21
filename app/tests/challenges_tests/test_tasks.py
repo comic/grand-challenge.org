@@ -124,6 +124,7 @@ def test_challenge_request_budget_calculation(type_2_challenge_request):
     )
     assert type_2_challenge_request.budget["Docker storage cost"] == round(
         type_2_challenge_request.average_algorithm_container_size_in_gb
+        * type_2_challenge_request.average_number_of_containers_per_team
         * type_2_challenge_request.expected_number_of_teams
         * settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
         / 1000
