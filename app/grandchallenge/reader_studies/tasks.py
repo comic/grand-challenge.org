@@ -105,13 +105,14 @@ def add_file_to_display_set(
     interface = ComponentInterface.objects.get(pk=interface_pk)
     with transaction.atomic():
         if civ_pk is None:
-            civ = ComponentInterfaceValue(interface=interface)
+            civ = ComponentInterfaceValue.objects.create(interface=interface)
         else:
             civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
         user_upload.copy_object(to_field=civ.file)
         try:
             civ.full_clean()
         except ValidationError as e:
+            civ.delete()
             transaction.on_commit(
                 send_failed_file_copy_notification.signature(
                     kwargs={
