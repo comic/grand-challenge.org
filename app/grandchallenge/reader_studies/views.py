@@ -1748,9 +1748,7 @@ class AddDisplaySetToReaderStudy(
                     ).apply_async
                 )
             elif interface.is_json_kind:
-                civ = ComponentInterfaceValue.objects.create(
-                    value=data[slug], interface=interface
-                )
+                civ = interface.create_instance(value=data[slug])
                 ds.values.add(civ)
             elif interface.is_image_kind:
                 us = RawImageUploadSession.objects.create(
@@ -1779,13 +1777,21 @@ class AddDisplaySetToReaderStudy(
         return self.return_errors(errors)
 
     def form_valid(self, form):
+        errors = {}
         try:
             data = self._process_new_interfaces()
         except ValidationError as e:
-            return self.return_errors(e.message_dict)
-        else:
+            errors.update(e.message_dict)
+
+        try:
             data.update(form.cleaned_data)
             self.create_display_set(data)
+        except ValidationError as e:
+            errors.update(e.message_dict)
+
+        if errors:
+            return self.return_errors(errors)
+        else:
             messages.success(
                 self.request,
                 "Display set created. Image and file import jobs have been queued.",
