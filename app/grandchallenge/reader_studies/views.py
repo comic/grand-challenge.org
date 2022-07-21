@@ -1,6 +1,7 @@
 import csv
 import json
 import random
+from functools import partial
 
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
@@ -1731,8 +1732,6 @@ class AddDisplaySetToReaderStudy(
             civ = ComponentInterfaceValue(interface=interface)
             if interface.requires_file:
                 user_upload = data[slug]
-                from functools import partial
-
                 transaction.on_commit(
                     partial(
                         add_file_to_display_set.apply_async,

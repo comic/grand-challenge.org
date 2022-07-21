@@ -1067,7 +1067,10 @@ def test_display_set_update_form(form_class, file_widget):
 
 
 @pytest.mark.django_db
-def test_file_form():
+def test_file_form(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = ReaderStudyFactory()
     ci = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
     civ = ComponentInterfaceValueFactory(interface=ci)
