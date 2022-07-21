@@ -115,7 +115,7 @@ urlpatterns = [
         name="display-set-interfaces-create",
     ),
     path(
-        "<slug>/display-sets/<uuid:pk>/interfaces/<interface_pk>/files/update/",
+        "<slug>/display-sets/<uuid:pk>/interfaces/<slug:interface_slug>/files/update/",
         DisplaySetFilesUpdate.as_view(),
         name="display-set-files-update",
     ),
