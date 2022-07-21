@@ -425,4 +425,4 @@ class Notification(UUIDModel):
             self.type
             == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
         ):
-            return self.message
+            return self.description

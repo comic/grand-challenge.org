@@ -139,12 +139,12 @@ def send_failed_file_copy_notification(
     Notification.send(
         type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
         actor=user_upload.creator,
-        message=(
+        message=f"File for interface {interface.title} failed validation.",
+        target=display_set.reader_study,
+        description=(
             f"File for interface {interface.title} added to {display_set_pk} "
             f"in {display_set.reader_study.title} failed validation: {error}."
         ),
-        target=display_set.reader_study,
-        description=display_set.reader_study.get_absolute_url(),
     )
 
 
