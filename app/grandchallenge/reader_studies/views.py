@@ -1,6 +1,6 @@
 import csv
 import json
-import random
+import uuid
 from functools import partial
 
 from django.contrib import messages
@@ -1584,7 +1584,7 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
                 "reader_study": self.reader_study,
                 "interface": self.request.GET.get("interface"),
                 "user": self.request.user,
-                "auto_id": f"id-{random.randint(0, 10**10)}-%s",
+                "auto_id": f"id-{uuid.uuid4()}-%s",
             }
         )
         return kwargs
