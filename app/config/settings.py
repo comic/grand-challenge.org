@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from itertools import product
 
 import sentry_sdk
+from celery.schedules import crontab
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.urls import reverse
@@ -1089,45 +1090,45 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 WORKSTATIONS_GRACE_MINUTES = 5
 
 CELERY_BEAT_SCHEDULE = {
+    "delete_users_who_dont_login": {
+        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
+        "schedule": crontab(minute=0, hour=0),
+    },
     "ping_google": {
         "task": "grandchallenge.core.tasks.ping_google",
-        "schedule": timedelta(days=1),
-    },
-    "update_publication_metadata": {
-        "task": "grandchallenge.publications.tasks.update_publication_metadata",
-        "schedule": timedelta(days=1),
-    },
-    "send_unread_notification_emails": {
-        "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
-        "schedule": timedelta(days=1),
-    },
-    "delete_old_user_uploads": {
-        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
-        "schedule": timedelta(hours=1),
+        "schedule": crontab(minute=30, hour=0),
     },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",
-        "schedule": timedelta(days=1),
+        "schedule": crontab(minute=0, hour=1),
     },
-    "update_challenge_results_cache": {
-        "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
-        "schedule": timedelta(minutes=5),
+    "update_publication_metadata": {
+        "task": "grandchallenge.publications.tasks.update_publication_metadata",
+        "schedule": crontab(minute=30, hour=1),
     },
-    "update_associated_challenges": {
-        "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
-        "schedule": timedelta(days=1),
-    },
-    "delete_users_who_dont_login": {
-        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
-        "schedule": timedelta(days=1),
-    },
-    "update_phase_statistics": {
-        "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
-        "schedule": timedelta(days=1),
+    "delete_old_user_uploads": {
+        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
+        "schedule": crontab(minute=0, hour=2),
     },
     "remove_inactive_container_images": {
         "task": "grandchallenge.components.tasks.remove_inactive_container_images",
-        "schedule": timedelta(days=1),
+        "schedule": crontab(minute=30, hour=2),
+    },
+    "update_associated_challenges": {
+        "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
+        "schedule": crontab(minute=0, hour=3),
+    },
+    "update_phase_statistics": {
+        "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
+        "schedule": crontab(minute=30, hour=3),
+    },
+    "send_unread_notification_emails": {
+        "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
+        "schedule": crontab(minute=0, hour=4),
+    },
+    "update_challenge_results_cache": {
+        "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
+        "schedule": crontab(minute="*/5"),
     },
     **{
         f"stop_expired_services_{region}": {
@@ -1138,7 +1139,7 @@ CELERY_BEAT_SCHEDULE = {
                 "region": region,
             },
             "options": {"queue": f"workstations-{region}"},
-            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
+            "schedule": crontab(minute=f"*/{WORKSTATIONS_GRACE_MINUTES}"),
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },
@@ -1147,7 +1148,7 @@ CELERY_BEAT_SCHEDULE = {
 if strtobool(os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")):
     CELERY_BEAT_SCHEDULE["push_metrics_to_cloudwatch"] = {
         "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
-        "schedule": timedelta(seconds=15),
+        "schedule": timedelta(seconds=30),
     }
 
 # The name of the group whose members will be able to create algorithms
