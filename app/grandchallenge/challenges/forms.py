@@ -451,7 +451,9 @@ class ChallengeRequestForm(
                         "support your challenge.</p>"
                         "<p>Before you fill out this form, please read our <a href="
                         "'https://grand-challenge.org/documentation/challenges/'"
-                        "target='_blank'>challenge documentation</a>.</p><br>"
+                        "target='_blank'>challenge documentation</a> and our <a href="
+                        "'https://grand-challenge.org/challenge-policy-and-pricing/'"
+                        "target='_blank'>challenge pricing policy</a>.</p><br>"
                     ),
                 ),
                 *general_information_items_1,
@@ -492,8 +494,11 @@ class ChallengeRequestForm(
                         "containers on our AWS infrastructure on a hidden test "
                         "set, we need to know how computationally expensive "
                         "your challenge submissions will be and how much data "
-                        "storage your challenge requires. We will use the "
-                        "below information to calculate a rough cost estimate.</p>"
+                        "storage your challenge requires. Please read our "
+                        "<a href="
+                        "'https://grand-challenge.org/challenge-policy-and-pricing/'"
+                        "target='_blank'>challenge pricing policy</a> before you continue. We will use the "
+                        "below information to calculate a rough compute and storage cost estimate.</p>"
                         "<p> If you are unfamiliar with what a Type 2 challenge"
                         " entails, please <a href="
                         "'https://grand-challenge.org/documentation/type-ii-challenge-setup/'"
