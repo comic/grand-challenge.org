@@ -147,12 +147,12 @@ class JobPostSerializer(JobSerializer):
         alg = data.pop("algorithm")
         user = self.context["request"].user
 
-        if not alg.latest_ready_image:
+        if not alg.latest_executable_image:
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"
             )
         data["creator"] = user
-        data["algorithm_image"] = alg.latest_ready_image
+        data["algorithm_image"] = alg.latest_executable_image
 
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided

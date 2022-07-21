@@ -128,6 +128,32 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["seed_points", "path_point_lists"],
             "additionalProperties": False,
         },
+        "angle-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Angle"]},
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "minItems": 3,
+                            "maxItems": 3,
+                        },
+                        "minItems": 2,
+                        "maxItems": 2,
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["lines"],
+            "additionalProperties": False,
+        },
         "DIST": {
             "type": "object",
             "properties": {
@@ -294,6 +320,47 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["type", "version", "lines"],
             "additionalProperties": False,
         },
+        "ANGL": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Angle"]},
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "minItems": 3,
+                            "maxItems": 3,
+                        },
+                        "minItems": 2,
+                        "maxItems": 2,
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                },
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["lines", "version"],
+            "additionalProperties": False,
+        },
+        "MANG": {
+            "type": "object",
+            "properties": {
+                "type": {"enum": ["Multiple angles"]},
+                "name": {"type": "string"},
+                "angles": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/angle-object"},
+                },
+                "version": {"$ref": "#/definitions/version-object"},
+            },
+            "required": ["type", "version", "angles"],
+            "additionalProperties": False,
+        },
         "MASK": {
             "type": "object",
             "properties": {
@@ -373,6 +440,8 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MASK"},
         {"$ref": "#/definitions/LINE"},
         {"$ref": "#/definitions/MLIN"},
+        {"$ref": "#/definitions/ANGL"},
+        {"$ref": "#/definitions/MANG"},
     ],
 }
 
@@ -399,6 +468,8 @@ INTERFACE_VALUE_SCHEMA = {
         "MPOL": ANSWER_TYPE_SCHEMA["definitions"]["MPOL"],
         "LINE": ANSWER_TYPE_SCHEMA["definitions"]["LINE"],
         "MLIN": ANSWER_TYPE_SCHEMA["definitions"]["MLIN"],
+        "ANGL": ANSWER_TYPE_SCHEMA["definitions"]["ANGL"],
+        "MANG": ANSWER_TYPE_SCHEMA["definitions"]["MANG"],
         "CHOI": {"type": "string"},
         "MCHO": {"type": "array", "items": {"type": "string"}},
         "CHART": VEGA_LITE_SCHEMA,
@@ -411,6 +482,7 @@ INTERFACE_VALUE_SCHEMA = {
         "point-object": ANSWER_TYPE_SCHEMA["definitions"]["point-object"],
         "polygon-object": ANSWER_TYPE_SCHEMA["definitions"]["polygon-object"],
         "spline-object": ANSWER_TYPE_SCHEMA["definitions"]["spline-object"],
+        "angle-object": ANSWER_TYPE_SCHEMA["definitions"]["angle-object"],
     },
     "anyOf": [
         {"$ref": "#/definitions/STR"},
@@ -431,5 +503,7 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/CHART"},
         {"$ref": "#/definitions/LINE"},
         {"$ref": "#/definitions/MLIN"},
+        {"$ref": "#/definitions/ANGL"},
+        {"$ref": "#/definitions/MANG"},
     ],
 }

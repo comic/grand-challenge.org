@@ -79,14 +79,14 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         ordering = ("created", "title")
 
     @cached_property
-    def latest_ready_image(self):
+    def latest_executable_image(self):
         """
         Returns
         -------
             The most recent container image for this workstation
         """
         return (
-            self.workstationimage_set.filter(ready=True)
+            self.workstationimage_set.executable_images()
             .order_by("-created")
             .first()
         )
@@ -450,7 +450,7 @@ class Session(UUIDModel):
             If the service cannot be started.
         """
         try:
-            if not self.workstation_image.ready:
+            if not self.workstation_image.can_execute:
                 raise ComponentException("Workstation image was not ready")
 
             if (

@@ -896,6 +896,8 @@ class AnswerType(models.TextChoices):
     MASK = "MASK", "Mask"
     LINE = "LINE", "Line"
     MULTIPLE_LINES = "MLIN", "Multiple lines"
+    ANGLE = "ANGL", "Angle"
+    MULTIPLE_ANGLES = "MANG", "Multiple angles"
 
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
@@ -931,6 +933,8 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.MASK: [
         InterfaceKindChoices.SEGMENTATION,
     ],
+    AnswerType.ANGLE: [InterfaceKindChoices.ANGLE],
+    AnswerType.MULTIPLE_ANGLES: [InterfaceKindChoices.MULTIPLE_ANGLES],
 }
 
 
@@ -1126,6 +1130,8 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             self.AnswerType.MASK,
             self.AnswerType.LINE,
             self.AnswerType.MULTIPLE_LINES,
+            self.AnswerType.ANGLE,
+            self.AnswerType.MULTIPLE_ANGLES,
         ]
 
     @property

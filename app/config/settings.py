@@ -1125,6 +1125,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
         "schedule": timedelta(days=1),
     },
+    "remove_inactive_container_images": {
+        "task": "grandchallenge.components.tasks.remove_inactive_container_images",
+        "schedule": timedelta(days=1),
+    },
     **{
         f"stop_expired_services_{region}": {
             "task": "grandchallenge.components.tasks.stop_expired_services",
@@ -1149,7 +1153,12 @@ if strtobool(os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")):
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 # Number of jobs that can be scheduled in one task
-ALGORITHMS_JOB_BATCH_LIMIT = 256
+ALGORITHMS_JOB_BATCH_LIMIT = int(
+    os.environ.get("ALGORITHMS_JOB_BATCH_LIMIT", "32")
+)
+ALGORITHMS_MAX_ACTIVE_JOBS = int(
+    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS", "96")
+)
 # Maximum and minimum values the user can set for algorithm requirements
 ALGORITHMS_MIN_MEMORY_GB = 4
 ALGORITHMS_MAX_MEMORY_GB = 30

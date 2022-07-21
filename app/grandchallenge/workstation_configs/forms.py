@@ -30,7 +30,6 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "key_bindings",
             "default_zoom_scale",
             "auto_jump_center_of_gravity",
-            "link_images",
             "show_image_info_plugin",
             "show_display_plugin",
             "show_image_switcher_plugin",
@@ -45,6 +44,14 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "show_lut_selection_tool",
             "show_annotation_counter_tool",
             "enable_contrast_enhancement",
+            "link_images",
+            "link_panning",
+            "link_zooming",
+            "link_slicing",
+            "link_orienting",
+            "link_windowing",
+            "link_inverting",
+            "link_flipping",
         )
 
         widgets = {

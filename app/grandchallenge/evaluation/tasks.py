@@ -12,13 +12,17 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
+from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
+from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.components.tasks import _retry
+from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import (
     Metric,
@@ -59,7 +63,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         submission.user_upload.delete()
 
     # TODO - move this to the form and make it an input here
-    method = submission.phase.latest_ready_method
+    method = submission.phase.latest_executable_image
     if not method:
         logger.info("No method ready for this submission")
         Notification.send(
@@ -126,8 +130,16 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         raise RuntimeError("No algorithm or predictions file found")
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
+    throws=(
+        TooManyJobsScheduled,
+        LockError,
+    ),
+)
+def create_algorithm_jobs_for_evaluation(
+    *, evaluation_pk, max_jobs=1, retries=0
+):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -142,6 +154,25 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     max_jobs
         The maximum number of jobs to create
     """
+
+    def retry_with_delay():
+        _retry(
+            task=create_algorithm_jobs_for_evaluation,
+            signature_kwargs={
+                "kwargs": {
+                    "evaluation_pk": evaluation_pk,
+                    "max_jobs": max_jobs,
+                },
+                "immutable": True,
+            },
+            retries=retries,
+        )
+
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+        logger.info("Retrying task as too many jobs scheduled")
+        retry_with_delay()
+        raise TooManyJobsScheduled
+
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
@@ -175,36 +206,41 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
 
     try:
-        jobs = create_algorithm_jobs(
-            algorithm_image=evaluation.submission.algorithm_image,
-            civ_sets=[
-                {*ai.values.all()}
-                for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                    "values__interface"
-                )
-            ],
-            creator=None,
-            extra_viewer_groups=challenge_admins,
-            extra_logs_viewer_groups=challenge_admins,
-            task_on_success=task_on_success,
-            task_on_failure=task_on_failure,
-            max_jobs=max_jobs,
-            time_limit=evaluation.submission.phase.algorithm_time_limit,
-        )
+        # Method is expensive so only allow one process at a time
+        with cache.lock(
+            _cache_key_from_method(create_algorithm_jobs),
+            timeout=settings.CELERY_TASK_TIME_LIMIT,
+            blocking_timeout=10,
+        ):
+            jobs = create_algorithm_jobs(
+                algorithm_image=evaluation.submission.algorithm_image,
+                civ_sets=[
+                    {*ai.values.all()}
+                    for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                        "values__interface"
+                    )
+                ],
+                creator=None,
+                extra_viewer_groups=challenge_admins,
+                extra_logs_viewer_groups=challenge_admins,
+                task_on_success=task_on_success,
+                task_on_failure=task_on_failure,
+                max_jobs=max_jobs,
+                time_limit=evaluation.submission.phase.algorithm_time_limit,
+            )
 
-        if not jobs:
-            # No more jobs created from this task, so everything must be ready
-            # for evaluation
-            set_evaluation_inputs.signature(
-                kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
-            ).apply_async()
+            if not jobs:
+                # No more jobs created from this task, so everything must be ready
+                # for evaluation
+                set_evaluation_inputs.signature(
+                    kwargs={"evaluation_pk": str(evaluation.pk)},
+                    immutable=True,
+                ).apply_async()
 
-    except TooManyJobsScheduled:
-        # Re-run the task
-        create_algorithm_jobs_for_evaluation.signature(
-            kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": max_jobs},
-            immutable=True,
-        ).apply_async()
+    except (TooManyJobsScheduled, LockError) as error:
+        logger.info(f"Retrying task due to: {error}")
+        retry_with_delay()
+        raise
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
@@ -517,10 +553,10 @@ def get_average_job_duration_for_phase(phase):
 
 
 class PhaseStatistics(NamedTuple):
-    average_algorithm_run_time: datetime.timedelta
-    total_algorithm_run_time: datetime.timedelta
-    average_compute_cost: float
-    total_compute_cost: float
+    average_algorithm_job_run_time: datetime.timedelta
+    accumulated_algorithm_job_run_time: datetime.timedelta
+    average_submission_compute_cost: float
+    total_phase_compute_cost: float
     archive_item_count: int
 
 
@@ -537,34 +573,37 @@ def update_phase_statistics():
     phase_dict = {}
     for phase in phases:
         avg_duration = get_average_job_duration_for_phase(phase)
-        average_duration = avg_duration.get("average_duration", None)
-        total_duration = avg_duration.get("total_duration", None)
+        average_algorithm_job_run_time = avg_duration.get(
+            "average_duration", None
+        )
+        accumulated_algorithm_job_run_time = avg_duration.get(
+            "total_duration", None
+        )
         try:
-            average_compute_cost = round(
+            average_submission_compute_cost = round(
                 phase.archive_item_count
-                * average_duration.seconds
+                * average_algorithm_job_run_time.total_seconds()
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
-            total_compute_cost = round(
-                phase.archive_item_count
-                * total_duration.seconds
+            total_phase_compute_cost = round(
+                accumulated_algorithm_job_run_time.total_seconds()
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
         except AttributeError:
-            average_compute_cost = None
-            total_compute_cost = None
+            average_submission_compute_cost = None
+            total_phase_compute_cost = None
 
         phase_dict[phase.pk] = PhaseStatistics(
-            average_duration,
-            total_duration,
-            average_compute_cost,
-            total_compute_cost,
+            average_algorithm_job_run_time,
+            accumulated_algorithm_job_run_time,
+            average_submission_compute_cost,
+            total_phase_compute_cost,
             phase.archive_item_count,
         )
 

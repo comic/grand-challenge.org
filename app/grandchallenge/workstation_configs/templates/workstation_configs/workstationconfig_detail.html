@@ -101,12 +101,6 @@
                 <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
-        <tr data-toggle="tooltip" title="{% get_help_text object 'link_images' %}">
-            <td class="font-weight-bold">Start with images linked</td>
-            <td>
-                <i class="fas {% if object.link_images %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
-            </td>
-        </tr>
     </table>
 
     <h2>Plugin and Tools</h2>
@@ -199,6 +193,71 @@
             </td>
         </tr>
     </table>
+
+    <h2>Linking Configuration</h2>
+
+    <p class="text-muted">Linked images share tool interactions and display properties,
+        it is possible to manually (un)link them during viewing.</p>
+
+
+    <table class="table table-hover my-3" >
+
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_images' %}">
+            <td class="font-weight-bold">Start with images linked</td>
+            <td>
+                <i class="fas {% if object.link_images %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_panning' %}">
+            <td class="font-weight-bold">Panning</td>
+            <td>
+                <i class="fas {% if object.link_panning %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_zooming' %}">
+            <td class="font-weight-bold">Zooming</td>
+            <td>
+                <i class="fas {% if object.link_zooming %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_slicing' %}">
+            <td class="font-weight-bold">Slicing</td>
+            <td>
+                <i class="fas {% if object.link_slicing %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_orienting' %}">
+            <td class="font-weight-bold">Orienting</td>
+            <td>
+                <i class="fas {% if object.link_orienting %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_windowing' %}">
+            <td class="font-weight-bold">Windowing</td>
+            <td>
+                <i class="fas {% if object.link_windowing %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_inverting' %}">
+            <td class="font-weight-bold">Inverting</td>
+            <td>
+                <i class="fas {% if object.link_inverting %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+
+        <tr data-toggle="tooltip" title="{% get_help_text object 'link_flipping' %}">
+            <td class="font-weight-bold">Flipping</td>
+            <td>
+                <i class="fas {% if object.link_flipping %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+    </table>
+
 
     {% if "change_workstationconfig" in config_perms %}
         <div class="d-flex justify-content-start align-items-center">

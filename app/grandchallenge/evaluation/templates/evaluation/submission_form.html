@@ -72,7 +72,7 @@
                         <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The submission limit for this phase is 0, but the start and end dates indicate that this phase should be open to submissions now. The submission limit needs to be above 0 for participants to submit to this phase.</p>
                 </div>
             {% endif %}
-            {% if not phase.latest_ready_method %}
+            {% if not phase.latest_executable_image %}
                 <div class="alert alert-danger pb-1" role="alert">
                     <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> There is no valid evaluation method for this phase. Please upload a method container <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name %}">here</a>. </p>
                 </div>

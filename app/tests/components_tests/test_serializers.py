@@ -135,6 +135,39 @@ TEST_DATA = {
             },
         ],
     },
+    "ANGL": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Angle",
+        "name": "test_name",
+        "lines": [
+            [[0, 0, 0], [0, 0, 0]],
+            [[1, 1, 1], [1, 1, 1]],
+        ],
+        "probability": 0.3,
+    },
+    "MANG": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple angles",
+        "name": "test_name",
+        "angles": [
+            {
+                "name": "test_name",
+                "lines": [
+                    [[0, 0, 0], [0, 0, 0]],
+                    [[1, 1, 1], [1, 1, 1]],
+                ],
+                "probability": 0.54,
+            },
+            {
+                "name": "test_name",
+                "lines": [
+                    [[0, 0, 0], [0, 0, 0]],
+                    [[1, 1, 1], [1, 1, 1]],
+                ],
+                "probability": 0.54,
+            },
+        ],
+    },
 }
 
 
@@ -177,6 +210,8 @@ def test_civ_post_objects_do_not_exist(civ, error_message):
         InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
         InterfaceKind.InterfaceKindChoices.LINE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
+        InterfaceKind.InterfaceKindChoices.ANGLE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
     ),
 )
 def test_civ_post_value_validation(kind):
@@ -222,6 +257,8 @@ def test_civ_post_value_validation(kind):
         InterfaceKind.InterfaceKindChoices.BOOL,
         InterfaceKind.InterfaceKindChoices.CHOICE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
+        InterfaceKind.InterfaceKindChoices.ANGLE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
         # Do not test ANY type here as that is always valid
     ),
 )

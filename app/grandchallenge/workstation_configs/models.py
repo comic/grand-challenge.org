@@ -329,8 +329,41 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     link_images = models.BooleanField(
         default=True,
-        help_text="Linked images share tool interactions and display properties, "
-        "it is possible to manually (un)link them during viewing",
+        help_text="Start with the images linked",
+    )
+
+    link_panning = models.BooleanField(
+        default=True,
+        help_text="When panning and the images are linked, they share any new position",
+    )
+
+    link_zooming = models.BooleanField(
+        default=True,
+        help_text="When zooming and the images are linked, they share any new zoom level",
+    )
+
+    link_slicing = models.BooleanField(
+        default=True,
+        help_text="When scrolling and the images are linked, they share any slice changes",
+    )
+
+    link_orienting = models.BooleanField(
+        default=True,
+        help_text="When orienting and the images are linked, they share any new orientation",
+    )
+    link_windowing = models.BooleanField(
+        default=True,
+        help_text="When changing window setting and the images are linked, they share any new window width/center",
+    )
+
+    link_inverting = models.BooleanField(
+        default=True,
+        help_text="When inverting images and the images are linked, they share any new invert state",
+    )
+
+    link_flipping = models.BooleanField(
+        default=True,
+        help_text="When flipping images and the images are linked, they share any new flip state",
     )
 
     enable_contrast_enhancement = models.BooleanField(

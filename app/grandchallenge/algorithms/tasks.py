@@ -1,3 +1,4 @@
+import logging
 from typing import NamedTuple
 
 from celery import chain, chord, group, shared_task
@@ -7,6 +8,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from guardian.shortcuts import assign_perm
+from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import (
     ImageImportError,
@@ -26,12 +28,16 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import (
+    _retry,
     add_images_to_component_interface_value,
 )
+from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -184,10 +190,35 @@ def create_algorithm_jobs_for_session(
             )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
+    throws=(
+        TooManyJobsScheduled,
+        LockError,
+    ),
+)
 def create_algorithm_jobs_for_archive(
-    *, archive_pks, archive_item_pks=None, algorithm_pks=None
+    *, archive_pks, archive_item_pks=None, algorithm_pks=None, retries=0
 ):
+    def retry_with_delay():
+        _retry(
+            task=create_algorithm_jobs_for_archive,
+            signature_kwargs={
+                "kwargs": {
+                    "archive_pks": archive_pks,
+                    "archive_item_pks": archive_item_pks,
+                    "algorithm_pks": algorithm_pks,
+                },
+                "immutable": True,
+            },
+            retries=retries,
+        )
+
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+        logger.info("Retrying task as too many jobs scheduled")
+        retry_with_delay()
+        raise TooManyJobsScheduled
+
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
         # Only the archive groups should be able to view the job
         # Can be shared with the algorithm editor if needed
@@ -208,20 +239,30 @@ def create_algorithm_jobs_for_archive(
             archive_items = archive.items.all()
 
         for algorithm in algorithms:
-            create_algorithm_jobs(
-                algorithm_image=algorithm.latest_ready_image,
-                civ_sets=[
-                    {*ai.values.all()}
-                    for ai in archive_items.prefetch_related(
-                        "values__interface"
+            try:
+                with cache.lock(
+                    _cache_key_from_method(create_algorithm_jobs),
+                    timeout=settings.CELERY_TASK_TIME_LIMIT,
+                    blocking_timeout=10,
+                ):
+                    create_algorithm_jobs(
+                        algorithm_image=algorithm.latest_executable_image,
+                        civ_sets=[
+                            {*ai.values.all()}
+                            for ai in archive_items.prefetch_related(
+                                "values__interface"
+                            )
+                        ],
+                        creator=None,
+                        extra_viewer_groups=archive_groups,
+                        # NOTE: no emails in case the logs leak data
+                        # to the algorithm editors
+                        task_on_success=None,
                     )
-                ],
-                creator=None,
-                extra_viewer_groups=archive_groups,
-                # NOTE: no emails in case the logs leak data
-                # to the algorithm editors
-                task_on_success=None,
-            )
+            except (TooManyJobsScheduled, LockError) as error:
+                logger.info(f"Retrying task due to: {error}")
+                retry_with_delay()
+                raise
 
 
 def create_algorithm_jobs(

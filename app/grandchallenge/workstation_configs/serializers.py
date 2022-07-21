@@ -111,6 +111,13 @@ class WorkstationConfigSerializer(ModelSerializer):
             "enabled_preprocessors",
             "auto_jump_center_of_gravity",
             "link_images",
+            "link_panning",
+            "link_zooming",
+            "link_slicing",
+            "link_orienting",
+            "link_windowing",
+            "link_inverting",
+            "link_flipping",
         ]
 
     def get_enabled_preprocessors(self, obj):

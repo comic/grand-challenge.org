@@ -4,9 +4,11 @@ import pytest
 import requests
 from actstream.actions import unfollow
 from django.conf import settings
+from django.core.cache import cache
 from django.test import TestCase
 from django.utils.html import format_html
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterface
@@ -104,7 +106,9 @@ def test_method_validation(evaluation_image):
 
     # The method factory fakes the sha256 on creation
     assert method.image_sha256 != sha256
-    assert method.ready is False
+    assert method.is_manifest_valid is None
+    assert method.is_in_registry is False
+    assert method.can_execute is False
 
     validate_docker_image(
         pk=method.pk,
@@ -114,13 +118,15 @@ def test_method_validation(evaluation_image):
 
     method = Method.objects.get(pk=method.pk)
     assert method.image_sha256 == sha256
-    assert method.ready is True
+    assert method.is_manifest_valid is True
+    assert method.is_in_registry is True
+    assert method.can_execute is True
 
 
 @pytest.mark.django_db
 def test_container_pushing(evaluation_image):
     container, sha256 = evaluation_image
-    method = MethodFactory(image__from_path=container)
+    method = MethodFactory(image__from_path=container, is_manifest_valid=True)
 
     push_container_image(instance=method)
 
@@ -143,7 +149,7 @@ def test_container_pushing(evaluation_image):
 def test_method_validation_invalid_dockerfile(alpine_images):
     """Uploading two images in a tar archive should fail."""
     method = MethodFactory(image__from_path=alpine_images)
-    assert method.ready is False
+    assert method.is_manifest_valid is None
 
     validate_docker_image(
         pk=method.pk,
@@ -152,7 +158,7 @@ def test_method_validation_invalid_dockerfile(alpine_images):
     )
 
     method = Method.objects.get(pk=method.pk)
-    assert method.ready is False
+    assert method.is_manifest_valid is False
     assert "should only have 1 image" in method.status
 
 
@@ -160,7 +166,7 @@ def test_method_validation_invalid_dockerfile(alpine_images):
 def test_method_validation_root_dockerfile(root_image):
     """Uploading two images in a tar archive should fail."""
     method = MethodFactory(image__from_path=root_image)
-    assert method.ready is False
+    assert method.is_manifest_valid is None
 
     validate_docker_image(
         pk=method.pk,
@@ -169,7 +175,7 @@ def test_method_validation_root_dockerfile(root_image):
     )
 
     method = Method.objects.get(pk=method.pk)
-    assert method.ready is False
+    assert method.is_manifest_valid is False
     assert "runs as root" in method.status
 
 
@@ -177,7 +183,7 @@ def test_method_validation_root_dockerfile(root_image):
 def test_method_validation_not_a_docker_tar(submission_file):
     """Upload something that isn't a docker file should be invalid."""
     method = MethodFactory(image__from_path=submission_file)
-    assert method.ready is False
+    assert method.is_manifest_valid is None
 
     validate_docker_image(
         pk=method.pk,
@@ -186,7 +192,7 @@ def test_method_validation_not_a_docker_tar(submission_file):
     )
 
     method = Method.objects.get(pk=method.pk)
-    assert method.ready is False
+    assert method.is_manifest_valid is False
     assert "manifest.json not found" in method.status
 
 
@@ -266,7 +272,10 @@ def test_non_zip_submission_failure(
     # Upload a submission and create an evaluation
     eval_container, sha256 = evaluation_image
     method = MethodFactory(
-        image__from_path=eval_container, image_sha256=sha256, ready=True
+        image__from_path=eval_container,
+        image_sha256=sha256,
+        is_manifest_valid=True,
+        is_in_registry=True,
     )
 
     # Try with a 7z file
@@ -387,3 +396,13 @@ def test_evaluation_notifications(
     assert str(submission.phase.challenge.creator) not in str(
         Notification.objects.all()
     )
+
+
+def test_cache_lock():
+    # Used in create_algorithm_jobs_for_evaluation
+    with cache.lock("foo", timeout=5, blocking_timeout=1):
+        try:
+            with cache.lock("foo", timeout=5, blocking_timeout=1):
+                raise RuntimeError("Test failed, shouldn't hit this line")
+        except LockError:
+            assert True

@@ -638,6 +638,151 @@ def test_answer_creator_is_reader(client):
             },
             201,
         ),
+        (
+            Question.AnswerType.ANGLE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Angle",
+                "name": "test",
+                "lines": (((1, 2, 3), (4, 5, 6)), ((7, 8, 9), (10, 11, 12))),
+            },
+            201,
+        ),
+        (
+            Question.AnswerType.ANGLE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Angle",
+                "name": "test",
+                "lines": (
+                    ((1, 2, 3), (4, 5, 6), (7, 8, 9)),
+                    ((7, 8, 9), (10, 11, 12)),
+                ),
+            },
+            400,
+        ),
+        (
+            Question.AnswerType.ANGLE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Angle",
+                "name": "test",
+                "lines": (((1, 2, 3), (4, 5, 6)),),
+            },
+            400,
+        ),
+        (
+            Question.AnswerType.ANGLE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Angle",
+                "name": "test",
+                "lines": (
+                    ((1, 2, 3), (4, 5, 6, 7)),
+                    ((7, 8, 9), (10, 11, 12)),
+                ),
+            },
+            400,
+        ),
+        (
+            Question.AnswerType.MULTIPLE_ANGLES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple angles",
+                "name": "test",
+                "angles": [
+                    {
+                        "lines": (
+                            ((1, 2, 3), (4, 5, 6)),
+                            ((7, 8, 9), (10, 11, 12)),
+                        ),
+                    },
+                    {
+                        "lines": (
+                            ((1, 2, 3), (4, 5, 6)),
+                            ((7, 8, 9), (10, 11, 12)),
+                        )
+                    },
+                ],
+            },
+            201,
+        ),
+        (
+            Question.AnswerType.MULTIPLE_ANGLES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple angles",
+                "name": "test",
+                "angles": [],
+            },
+            201,
+        ),
+        (
+            Question.AnswerType.MULTIPLE_ANGLES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple angles",
+                "name": "test",
+                "angles": [
+                    {
+                        "lines": (
+                            ((1, 2, 3), (4, 5, 6)),
+                            ((7, 8, 9), (10, 11, 12), (13, 14, 15)),
+                        ),
+                    },
+                    {
+                        "lines": (
+                            ((1, 2, 3), (4, 5, 6)),
+                            ((7, 8, 9), (10, 11, 12)),
+                        )
+                    },
+                ],
+            },
+            400,
+        ),
+        (
+            Question.AnswerType.MULTIPLE_ANGLES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple angles",
+                "name": "test",
+                "angles": [
+                    {
+                        "lines": (((1, 2, 3), (4, 5, 6)),),
+                    },
+                    {
+                        "lines": (
+                            ((1, 2, 3), (4, 5, 6)),
+                            ((7, 8, 9), (10, 11, 12)),
+                        )
+                    },
+                ],
+            },
+            400,
+        ),
+        (
+            Question.AnswerType.MULTIPLE_ANGLES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple angles",
+                "name": "test",
+                "angles": [
+                    {
+                        "lines": (
+                            ((1, 2, 3, 4), (4, 5, 6)),
+                            ((7, 8, 9), (10, 11, 12)),
+                        ),
+                    },
+                    {
+                        "lines": (
+                            ((1, 2, 3), (4, 5, 6)),
+                            ((7, 8, 9), (10, 11, 12)),
+                        )
+                    },
+                ],
+            },
+            400,
+        ),
         (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
         (Question.AnswerType.BOOL, None, 400),
@@ -651,6 +796,8 @@ def test_answer_creator_is_reader(client):
         (Question.AnswerType.MULTIPLE_POINTS, None, 201),
         (Question.AnswerType.POLYGON, None, 201),
         (Question.AnswerType.MULTIPLE_POLYGONS, None, 201),
+        (Question.AnswerType.ANGLE, None, 201),
+        (Question.AnswerType.MULTIPLE_ANGLES, None, 201),
         (Question.AnswerType.CHOICE, None, 400),
         (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
         (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),

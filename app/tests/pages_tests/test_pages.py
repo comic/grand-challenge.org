@@ -370,11 +370,11 @@ def test_average_job_duration_calculation():
         2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
     )
 
-    ai = AlgorithmImageFactory(ready=True)
+    ai = AlgorithmImageFactory()
 
     j1 = AlgorithmJobFactory(
         algorithm_image=ai,
-        started_at=now() - timedelta(minutes=1),
+        started_at=now() - timedelta(days=2),
         completed_at=now(),
     )
     _ = AlgorithmJobFactory(
@@ -393,5 +393,11 @@ def test_average_job_duration_calculation():
 
     duration = get_average_job_duration_for_phase(phase=phase1)
 
-    assert duration["average_duration"].seconds == timedelta(minutes=1).seconds
-    assert duration["total_duration"].seconds == timedelta(minutes=1).seconds
+    assert (
+        round(duration["average_duration"].total_seconds(), ndigits=2)
+        == timedelta(days=2).total_seconds()
+    )
+    assert (
+        round(duration["total_duration"].total_seconds(), ndigits=2)
+        == timedelta(days=2).total_seconds()
+    )
