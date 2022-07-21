@@ -61,7 +61,8 @@ class InterfaceFormField:
             kwargs["queryset"] = get_objects_for_user(
                 user, "uploads.change_userupload", accept_global_perms=False
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
-            extra_help = f"{file_upload_text} .{instance.kind.lower()}"
+            ext = "json" if instance.is_json_kind else instance.kind.lower()
+            extra_help = f"{file_upload_text} .{ext}"
         elif instance.is_json_kind:
             default_schema = {
                 **INTERFACE_VALUE_SCHEMA,

@@ -118,5 +118,5 @@ def test_send_failed_file_copy_notification(settings):
     assert (
         notification.print_notification(user=notification.user)
         == f"File for interface foo-interface added to {ds.pk} "
-        f"in foo-study failed validation: validation failed."
+        f"in foo-study failed validation:\nvalidation failed."
     )

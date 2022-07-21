@@ -143,7 +143,7 @@ def send_failed_file_copy_notification(
         target=display_set.reader_study,
         description=(
             f"File for interface {interface.title} added to {display_set_pk} "
-            f"in {display_set.reader_study.title} failed validation: {error}."
+            f"in {display_set.reader_study.title} failed validation:\n{error}."
         ),
     )
 
