@@ -13,6 +13,8 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
+from dal import autocomplete
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.transaction import on_commit
 from django.forms import (
@@ -492,6 +494,8 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 
 class DisplaySetCreateForm(Form):
     _possible_widgets = {
+        SelectUploadWidget,
+        autocomplete.ModelSelect2,
         *InterfaceFormField._possible_widgets,
     }
 
@@ -628,6 +632,7 @@ class FileForm(Form):
 class DisplaySetInterfacesCreateForm(Form):
     _possible_widgets = {
         *InterfaceFormField._possible_widgets,
+        autocomplete.ModelSelect2,
     }
 
     def __init__(self, *args, pk, interface, reader_study, user, **kwargs):
@@ -643,28 +648,55 @@ class DisplaySetInterfacesCreateForm(Form):
         qs = ComponentInterface.objects.exclude(
             slug__in=reader_study.values_for_interfaces.keys()
         )
-        if pk is not None:
-            attrs = {
-                "hx-get": reverse_lazy(
-                    "reader-studies:display-set-interfaces-create",
-                    kwargs={"pk": pk, "slug": reader_study.slug},
-                ),
-                "hx-target": f"#ds-content-{pk}",
-            }
+        widget_kwargs = {}
+        attrs = {}
+        if pk is None and selected_interface is not None:
+            widget = Select
         else:
-            attrs = {
-                "hx-get": reverse_lazy(
-                    "reader-studies:display-set-new-interfaces-create",
-                    kwargs={"slug": reader_study.slug},
-                ),
-                "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
-                "hx-swap": "outerHTML",
-                "disabled": selected_interface is not None,
-            }
+            widget = autocomplete.ModelSelect2
+            attrs.update(
+                {
+                    "data-placeholder": "Search for an interface ...",
+                    "data-minimum-input-length": 3,
+                    "data-theme": settings.CRISPY_TEMPLATE_PACK,
+                    "data-html": True,
+                }
+            )
+            widget_kwargs[
+                "url"
+            ] = "components:component-interface-autocomplete"
+            widget_kwargs["forward"] = ["interface"]
+
+        if pk is not None:
+            attrs.update(
+                {
+                    "hx-get": reverse_lazy(
+                        "reader-studies:display-set-interfaces-create",
+                        kwargs={"pk": pk, "slug": reader_study.slug},
+                    ),
+                    "hx-target": f"#ds-content-{pk}",
+                    "hx-trigger": "interfaceSelected",
+                }
+            )
+        else:
+            attrs.update(
+                {
+                    "hx-get": reverse_lazy(
+                        "reader-studies:display-set-new-interfaces-create",
+                        kwargs={"slug": reader_study.slug},
+                    ),
+                    "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
+                    "hx-swap": "outerHTML",
+                    "hx-trigger": "interfaceSelected",
+                    "disabled": selected_interface is not None,
+                }
+            )
+        widget_kwargs["attrs"] = attrs
+
         self.fields["interface"] = ModelChoiceField(
             initial=selected_interface,
             queryset=qs,
-            widget=Select(attrs=attrs),
+            widget=widget(**widget_kwargs),
         )
 
         if selected_interface is not None:

@@ -1,8 +1,15 @@
 import pytest
 from django.conf import settings
 
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import UserFactory
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    ReaderStudyFactory,
+)
 from tests.utils import get_view_for_user
 
 
@@ -72,3 +79,34 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img.id) not in ids
     assert str(ci_img_2.id) in ids
     assert str(ci_json.id) not in ids
+
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    civ = ComponentInterfaceValueFactory(interface=ci_img)
+    ds.values.add(civ)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="components:component-interface-autocomplete",
+        user=user,
+        data={"forward": f'{{"reader-study": "{rs.slug}"}}'},
+    )
+    assert response.status_code == 200
+    ids = [x["id"] for x in response.json()["results"]]
+    assert str(ci_img.id) not in ids
+    assert str(ci_img_2.id) in ids
+    assert str(ci_json.id) in ids
+
+    response = get_view_for_user(
+        client=client,
+        viewname="components:component-interface-autocomplete",
+        user=user,
+        data={
+            "forward": f'{{"reader-study": "{rs.slug}", "interface-0": "{str(ci_img_2.pk)}"}}'
+        },
+    )
+    assert response.status_code == 200
+    ids = [x["id"] for x in response.json()["results"]]
+    assert str(ci_img.id) not in ids
+    assert str(ci_img_2.id) not in ids
+    assert str(ci_json.id) in ids
