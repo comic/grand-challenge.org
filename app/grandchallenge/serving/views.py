@@ -2,7 +2,7 @@ import posixpath
 
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
-from django.db.models import F, Q
+from django.db.models import F
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from guardian.shortcuts import get_objects_for_user
@@ -84,47 +84,29 @@ def serve_component_interface_value(
         user = request.user
 
     try:
-        # output should only be connected to a single job; throw error if not?
         civ = ComponentInterfaceValue.objects.get(
             pk=component_interface_value_pk
         )
     except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
         raise Http404("No ComponentInterfaceValue found.")
 
-    if (
-        get_objects_for_user(
-            user=user, perms="algorithms.view_job", accept_global_perms=False
-        )
-        .filter(
-            Q(outputs__pk=component_interface_value_pk)
-            | Q(inputs__pk=component_interface_value_pk)
-        )
-        .exists()
+    for perm, lookup in (
+        ("algorithms.view_job", "outputs"),
+        ("algorithms.view_job", "inputs"),
+        ("evaluation.view_evaluation", "outputs"),
+        ("evaluation.view_evaluation", "inputs"),
+        ("archives.view_archiveitem", "values"),
     ):
-        return protected_storage_redirect(name=civ.file.name)
-    elif (
-        get_objects_for_user(
-            user=user,
-            perms="evaluation.view_evaluation",
-            accept_global_perms=False,
-        )
-        .filter(
-            Q(outputs__pk=component_interface_value_pk)
-            | Q(inputs__pk=component_interface_value_pk)
-        )
-        .exists()
-    ):
-        return protected_storage_redirect(name=civ.file.name)
-    elif (
-        get_objects_for_user(
-            user=user,
-            perms="archives.view_archive",
-            accept_global_perms=False,
-        )
-        .filter(items__values__pk=component_interface_value_pk)
-        .exists()
-    ):
-        return protected_storage_redirect(name=civ.file.name)
+        # Q | Q filters are very slow, this potentially does several db calls
+        # but each is quite performant. Could be optimised later.
+        if (
+            get_objects_for_user(
+                user=user, perms=perm, accept_global_perms=False
+            )
+            .filter(**{lookup: civ})
+            .exists()
+        ):
+            return protected_storage_redirect(name=civ.file.name)
 
     raise PermissionDenied
 
