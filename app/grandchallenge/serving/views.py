@@ -95,7 +95,7 @@ def serve_component_interface_value(
         ("algorithms.view_job", "inputs"),
         ("evaluation.view_evaluation", "outputs"),
         ("evaluation.view_evaluation", "inputs"),
-        ("archive.view_archiveitem", "values"),
+        ("archives.view_archiveitem", "values"),
     ):
         # Q | Q filters are very slow, this potentially does several db calls
         # but each is quite performant. Could be optimised later.
