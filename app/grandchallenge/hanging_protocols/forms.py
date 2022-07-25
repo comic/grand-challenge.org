@@ -47,7 +47,7 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             ButtonHolder(Submit("save", "Save")),
         )
 
-    def clean_json(self):
+    def clean_json(self):  # noqa: C901
         value = self.cleaned_data["json"]
         viewports = [x["viewport_name"] for x in value]
         if len(set(viewports)) != len(viewports):
@@ -82,6 +82,18 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             if "draggable" not in viewport or not viewport["draggable"]:
                 self.add_error(
                     error=f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable.",
+                    field="json",
+                )
+
+        for viewport in [v for v in value if "slice_plane_indicator" in v]:
+            if viewport["slice_plane_indicator"] not in viewports:
+                self.add_error(
+                    error=f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that does not exist.",
+                    field="json",
+                )
+            if viewport["slice_plane_indicator"] == viewport["viewport_name"]:
+                self.add_error(
+                    error=f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that is the same as the viewport_name.",
                     field="json",
                 )
 

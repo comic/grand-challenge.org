@@ -110,6 +110,10 @@ HANGING_PROTOCOL_SCHEMA = {
                 "minimum": 0,
                 "maximum": 1,
             },
+            "slice_plane_indicator": {
+                "type": "string",
+                "enum": [port.lower() for port in ImagePort.labels],
+            },
         },
         "additionalProperties": False,
     },

@@ -161,6 +161,16 @@ from tests.factories import UserFactory
             ],
             pytest.raises(ValidationError),
         ),
+        # invalid json containing slice_plane_indicator that is not a viewitem name
+        (
+            [
+                {
+                    "viewport_name": "main",
+                    "slice_plane_indicator": "invalid",
+                }
+            ],
+            pytest.raises(ValidationError),
+        ),
     ],
 )
 def test_hanging_protocol_schema_validation(client, json, expectation):
