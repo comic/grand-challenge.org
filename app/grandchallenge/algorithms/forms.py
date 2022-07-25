@@ -593,6 +593,7 @@ class DisplaySetFromJobForm(SaveFormInitMixin, Form):
         queryset=Job.objects.none(),
         disabled=True,
         required=True,
+        widget=HiddenInput(),
     )
 
     def __init__(self, *args, user, job, **kwargs):
@@ -609,7 +610,7 @@ class DisplaySetFromJobForm(SaveFormInitMixin, Form):
             "algorithms.view_job",
             accept_global_perms=False,
         ).filter(pk=job.pk)
-        self.fields["job"].initial = self.fields["job"].queryset
+        self.fields["job"].initial = job
 
 
 class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
