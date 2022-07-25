@@ -413,6 +413,13 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "display-set-from-job-create",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "view_job",
+                j,
+                None,
+            ),
+            (
                 "job-viewers-update",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "change_job",

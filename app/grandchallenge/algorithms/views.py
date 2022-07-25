@@ -10,10 +10,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
+    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
-from django.db.models import OuterRef, Subquery
+from django.db.models import Count, OuterRef, Q, Subquery
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -765,7 +766,7 @@ class DisplaySetFromJobCreate(
     @cached_property
     def job(self):
         return get_object_or_404(
-            Job.objects.prefetch_related(
+            Job.objects.filter(status=Job.SUCCESS).prefetch_related(
                 "inputs", "outputs", "algorithm_image__algorithm"
             ),
             pk=self.kwargs["pk"],
@@ -788,8 +789,23 @@ class DisplaySetFromJobCreate(
         reader_study = form.cleaned_data["reader_study"]
         job = form.cleaned_data["job"]
 
-        ds = DisplaySet.objects.create(reader_study=reader_study)
-        ds.values.set({*job.inputs.all(), *job.outputs.all()})
+        values = {*job.inputs.all(), *job.outputs.all()}
+
+        try:
+            ds = (
+                reader_study.display_sets.filter(values__in=values)
+                .annotate(
+                    values_match_count=Count(
+                        "values",
+                        filter=Q(values__in=values),
+                    )
+                )
+                .filter(values_match_count=len(values))
+                .get()
+            )
+        except ObjectDoesNotExist:
+            ds = DisplaySet.objects.create(reader_study=reader_study)
+            ds.values.set(values)
 
         url = reverse(
             "workstations:workstation-session-create",
