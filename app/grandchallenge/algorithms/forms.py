@@ -26,6 +26,7 @@ from django.forms.widgets import MultipleHiddenInput
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -49,6 +50,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstations.models import Workstation
 
@@ -581,6 +583,33 @@ class JobForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = Job
         fields = ("comment", "public")
+
+
+class DisplaySetFromJobForm(SaveFormInitMixin, Form):
+    reader_study = ModelChoiceField(
+        queryset=ReaderStudy.objects.none(), required=True
+    )
+    job = ModelChoiceField(
+        queryset=Job.objects.none(),
+        disabled=True,
+        required=True,
+    )
+
+    def __init__(self, *args, user, job, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["reader_study"].queryset = get_objects_for_user(
+            user,
+            "reader_studies.change_readerstudy",
+            accept_global_perms=False,
+        ).order_by("title")
+
+        self.fields["job"].queryset = get_objects_for_user(
+            user,
+            "algorithms.view_job",
+            accept_global_perms=False,
+        ).filter(pk=job.pk)
+        self.fields["job"].initial = self.fields["job"].queryset
 
 
 class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):

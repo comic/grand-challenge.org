@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+
+{% block title %}
+    Create Display Set - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
+        </a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Create a Display Set</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Create a Display Set from this Result</h2>
+
+    <p>
+        Use this form to create a new display set in a reader study from this result.
+        <b>
+            Users with read access to the selected reader study will be able to see this algorithm's inputs and outputs,
+            please select the reader study carefully.
+        </b>
+    </p>
+
+    {% crispy form %}
+{% endblock %}

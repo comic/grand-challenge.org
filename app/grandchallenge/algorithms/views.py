@@ -54,6 +54,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmPublishForm,
     AlgorithmRepoForm,
     AlgorithmUpdateForm,
+    DisplaySetFromJobForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -86,6 +87,7 @@ from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
+from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
@@ -745,6 +747,52 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     form_class = JobForm
     permission_required = "algorithms.change_job"
     raise_exception = True
+
+
+class DisplaySetFromJobCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = DisplaySetFromJobForm
+    permission_required = "algorithms.view_job"
+    raise_exception = True
+    template_name = "algorithms/display_set_from_job_form.html"
+
+    @cached_property
+    def job(self):
+        return get_object_or_404(
+            Job.objects.prefetch_related(
+                "inputs", "outputs", "algorithm_image__algorithm"
+            ),
+            pk=self.kwargs["pk"],
+        )
+
+    def get_permission_object(self):
+        return self.job
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.job})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user, "job": self.job})
+        return kwargs
+
+    def form_valid(self, form):
+        reader_study = form.cleaned_data["reader_study"]
+        job = form.cleaned_data["job"]
+
+        ds = DisplaySet.objects.create(reader_study=reader_study)
+        ds.values.set({*job.inputs.all(), *job.outputs.all()})
+
+        self.success_url = reader_study.get_absolute_url()
+        self.success_message = f"Added display set {ds.pk} from job {job.pk}"
+
+        return super().form_valid(form)
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):

@@ -17,6 +17,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmPermissionRequestUpdate,
     AlgorithmPublishView,
     AlgorithmUpdate,
+    DisplaySetFromJobCreate,
     EditorsUpdate,
     JobDetail,
     JobExperimentDetail,
@@ -74,6 +75,11 @@ urlpatterns = [
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
         "<slug>/jobs/<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"
+    ),
+    path(
+        "<slug>/jobs/<uuid:pk>/display-set/create/",
+        DisplaySetFromJobCreate.as_view(),
+        name="display-set-from-job-create",
     ),
     path(
         "<slug>/jobs/<uuid:pk>/experiment/",
