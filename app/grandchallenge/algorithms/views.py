@@ -90,6 +90,9 @@ from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.views import VerificationRequiredMixin
+from grandchallenge.workstations.templatetags.workstations import (
+    workstation_query,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -752,7 +755,6 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
 class DisplaySetFromJobCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
     FormView,
 ):
     form_class = DisplaySetFromJobForm
@@ -789,8 +791,13 @@ class DisplaySetFromJobCreate(
         ds = DisplaySet.objects.create(reader_study=reader_study)
         ds.values.set({*job.inputs.all(), *job.outputs.all()})
 
-        self.success_url = reader_study.get_absolute_url()
-        self.success_message = f"Added display set {ds.pk} from job {job.pk}"
+        url = reverse(
+            "workstations:workstation-session-create",
+            kwargs={"slug": reader_study.workstation.slug},
+        )
+        query = workstation_query(display_set=ds)
+
+        self.success_url = f"{url}?{query}"
 
         return super().form_valid(form)
 
