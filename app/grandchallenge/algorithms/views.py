@@ -10,11 +10,10 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
-    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
-from django.db.models import Count, OuterRef, Q, Subquery
+from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -88,12 +87,8 @@ from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.views import VerificationRequiredMixin
-from grandchallenge.workstations.templatetags.workstations import (
-    workstation_query,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -786,34 +781,12 @@ class DisplaySetFromJobCreate(
         return kwargs
 
     def form_valid(self, form):
-        reader_study = form.cleaned_data["reader_study"]
         job = form.cleaned_data["job"]
 
-        values = {*job.inputs.all(), *job.outputs.all()}
-
-        try:
-            ds = (
-                reader_study.display_sets.filter(values__in=values)
-                .annotate(
-                    values_match_count=Count(
-                        "values",
-                        filter=Q(values__in=values),
-                    )
-                )
-                .filter(values_match_count=len(values))
-                .get()
-            )
-        except ObjectDoesNotExist:
-            ds = DisplaySet.objects.create(reader_study=reader_study)
-            ds.values.set(values)
-
-        url = reverse(
-            "workstations:workstation-session-create",
-            kwargs={"slug": reader_study.workstation.slug},
+        display_set = job.get_or_create_display_set(
+            reader_study=form.cleaned_data["reader_study"]
         )
-        query = workstation_query(display_set=ds)
-
-        self.success_url = f"{url}?{query}"
+        self.success_url = display_set.workstation_url
 
         return super().form_valid(form)
 
