@@ -15,7 +15,9 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import UserFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
@@ -546,3 +548,48 @@ class TestJobDetailView:
             assert content in response.rendered_content
 
             remove_perm(permission, u, permission_object)
+
+
+@pytest.mark.django_db
+def test_display_set_from_job(client):
+    u = UserFactory()
+    rs = ReaderStudyFactory()
+    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)
+    j.inputs.set([civ1])
+    j.outputs.set([civ2])
+
+    j.add_viewer(user=u)
+
+    def create_display_set_from_job():
+        return get_view_for_user(
+            client=client,
+            viewname="algorithms:display-set-from-job-create",
+            reverse_kwargs={
+                "slug": j.algorithm_image.algorithm.slug,
+                "pk": j.pk,
+            },
+            user=u,
+            method=client.post,
+            data={"reader_study": rs.pk},
+        )
+
+    # User must have reader study edit permissions
+    rs.add_reader(user=u)
+    response = create_display_set_from_job()
+    assert response.status_code == 200
+    assert response.context_data["form"].errors == {
+        "reader_study": [
+            "Select a valid choice. That choice is not one of the available choices."
+        ]
+    }
+
+    rs.add_editor(user=u)
+    response = create_display_set_from_job()
+    assert response.status_code == 302
+    created_display_set = rs.display_sets.get()
+    assert response.url == created_display_set.workstation_url
+
+    # Check idempotency
+    response = create_display_set_from_job()
+    assert response.url == created_display_set.workstation_url

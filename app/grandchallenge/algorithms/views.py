@@ -777,13 +777,11 @@ class DisplaySetFromJobCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user, "job": self.job})
+        kwargs.update({"user": self.request.user})
         return kwargs
 
     def form_valid(self, form):
-        job = form.cleaned_data["job"]
-
-        display_set = job.get_or_create_display_set(
+        display_set = self.job.get_or_create_display_set(
             reader_study=form.cleaned_data["reader_study"]
         )
         self.success_url = display_set.workstation_url

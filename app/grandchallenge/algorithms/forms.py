@@ -589,14 +589,8 @@ class DisplaySetFromJobForm(SaveFormInitMixin, Form):
     reader_study = ModelChoiceField(
         queryset=ReaderStudy.objects.none(), required=True
     )
-    job = ModelChoiceField(
-        queryset=Job.objects.none(),
-        disabled=True,
-        required=True,
-        widget=HiddenInput(),
-    )
 
-    def __init__(self, *args, user, job, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["reader_study"].queryset = get_objects_for_user(
@@ -604,13 +598,6 @@ class DisplaySetFromJobForm(SaveFormInitMixin, Form):
             "reader_studies.change_readerstudy",
             accept_global_perms=False,
         ).order_by("title")
-
-        self.fields["job"].queryset = get_objects_for_user(
-            user,
-            "algorithms.view_job",
-            accept_global_perms=False,
-        ).filter(pk=job.pk)
-        self.fields["job"].initial = job
 
 
 class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
