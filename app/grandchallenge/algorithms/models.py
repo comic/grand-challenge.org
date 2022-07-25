@@ -658,6 +658,11 @@ class Job(UUIDModel, ComponentJob):
 
     def get_or_create_display_set(self, *, reader_study):
         """Get or create a display set from this job for a reader study"""
+        if self.status != self.SUCCESS:
+            raise RuntimeError(
+                "Display sets can only be created from successful jobs"
+            )
+
         values = {*self.inputs.all(), *self.outputs.all()}
 
         try:
