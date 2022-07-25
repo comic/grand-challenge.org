@@ -325,7 +325,7 @@ class TestObjectPermissionRequiredViews:
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         s = RawImageUploadSessionFactory()
         u = UserFactory()
-        j = AlgorithmJobFactory(algorithm_image=ai)
+        j = AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
 
         VerificationFactory(user=u, is_verified=True)

@@ -49,7 +49,7 @@
                 </a>
             {% endif %}
 
-            {% if perms.reader_studies.add_readerstudy %}
+            {% if object.status == object.SUCCESS and perms.reader_studies.add_readerstudy %}
                 <a class="nav-link"
                    href="{% url "algorithms:display-set-from-job-create" slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
                     <i class="fas fa-edit fa-fw"></i>&nbsp;Edit in Reader Study
