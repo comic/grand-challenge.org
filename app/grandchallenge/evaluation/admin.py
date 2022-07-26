@@ -41,10 +41,26 @@ class PhaseAdminForm(ModelForm):
 
 class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
-    list_display = ("pk", "challenge", "title", "slug", "modified")
-    search_fields = ("pk", "title", "challenge__short_name")
-    list_filter = ("submission_kind",)
+    list_display = (
+        "slug",
+        "title",
+        "challenge",
+        "submission_kind",
+        "open_for_submissions",
+        "submissions_open_at",
+        "submissions_close_at",
+        "submission_limit",
+    )
+    search_fields = ("pk", "title", "slug", "challenge__short_name")
+    list_filter = (
+        "submission_kind",
+        "challenge__short_name",
+    )
     form = PhaseAdminForm
+
+    @admin.display(boolean=True)
+    def open_for_submissions(self, instance):
+        return instance.open_for_submissions
 
 
 def reevaluate_submissions(modeladmin, request, queryset):
