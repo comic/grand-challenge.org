@@ -104,7 +104,9 @@ def assign_docker_image_from_upload(
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+def validate_docker_image(  # noqa: C901
+    *, pk: uuid.UUID, app_label: str, model_name: str
+):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
@@ -143,24 +145,24 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
             send_invalid_dockerfile_email(container_image=instance)
             return
 
-    if instance.SHIM_IMAGE and (
-        instance.latest_shimmed_version
-        != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
-    ):
-        shim_container_image(instance=instance)
-        instance.is_on_sagemaker = False
-        instance.save()
+    if instance.SHIM_IMAGE:
+        if (
+            instance.latest_shimmed_version
+            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+        ):
+            shim_container_image(instance=instance)
+            instance.is_on_sagemaker = False
+            instance.save()
 
-    if (
-        instance.SHIM_IMAGE
-        and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
-        and not instance.is_on_sagemaker
-    ):
-        # Only create SageMaker models for shimmed images for now
-        # See ComponentImageManager
-        create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-        instance.is_on_sagemaker = True
-        instance.save()
+        if (
+            settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
+            and not instance.is_on_sagemaker
+        ):
+            # Only create SageMaker models for shimmed images for now
+            # See ComponentImageManager
+            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+            instance.is_on_sagemaker = True
+            instance.save()
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
