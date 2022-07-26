@@ -1,4 +1,4 @@
-from rest_framework.fields import CharField, URLField
+from rest_framework.fields import CharField
 from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
@@ -15,10 +15,17 @@ class SessionSerializer(ModelSerializer):
 
 class FeedbackSerializer(ModelSerializer):
     session = HyperlinkedRelatedField(
-        read_only=True, view_name="api:session-detail"
+        queryset=Session.objects.all(), view_name="api:session-detail"
     )
-    screenshot = URLField(source="screenshot.url", read_only=True)
 
     class Meta:
         model = Feedback
         fields = ("session", "screenshot", "user_comment", "context")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "request" in self.context:
+            user = self.context["request"].user
+            self.fields["session"].queryset = Session.objects.filter(
+                creator=user
+            ).all()

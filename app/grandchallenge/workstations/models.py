@@ -584,7 +584,7 @@ class Feedback(UUIDModel):
             self.assign_permissions()
             # TODO send email to staff
 
-    def assign_permission(self):
+    def assign_permissions(self):
         assign_perm(
             f"view_{self._meta.model_name}", self.session.creator, self
         )

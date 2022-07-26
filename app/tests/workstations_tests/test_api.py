@@ -1,10 +1,14 @@
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from django.utils.timezone import now
 
+from grandchallenge.workstations.models import Feedback
+from tests.cases_tests import RESOURCE_PATH
 from tests.factories import SessionFactory, UserFactory
 from tests.utils import get_view_for_user
+from tests.workstations_tests.factories import FeedbackFactory
 
 
 @pytest.mark.django_db
@@ -142,3 +146,105 @@ def test_session_keep_alive_limit(client, settings):
     assert s.maximum_duration == timedelta(
         seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT
     )
+
+
+@pytest.mark.django_db
+def test_session_feedback_api_view_permissions(client):
+    user1, user2 = UserFactory.create_batch(2)
+    session = SessionFactory(creator=user1)
+    feedback = FeedbackFactory(session=session)
+    assert user1.has_perm("view_feedback", feedback)
+
+    response = get_view_for_user(
+        viewname="api:feedback-detail",
+        reverse_kwargs={"pk": feedback.pk},
+        client=client,
+        user=user1,
+        follow=True,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="api:feedback-detail",
+        reverse_kwargs={"pk": feedback.pk},
+        client=client,
+        user=user2,
+        follow=True,
+    )
+    assert response.status_code == 404
+
+    response = get_view_for_user(
+        viewname="api:feedback-list",
+        client=client,
+        user=user1,
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 1
+
+    response = get_view_for_user(
+        viewname="api:feedback-list",
+        client=client,
+        user=user2,
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+
+
+@pytest.mark.django_db
+def test_create_session_feedback(client):
+    user = UserFactory()
+    session = SessionFactory(creator=user)
+
+    with open(Path(RESOURCE_PATH / "test_grayscale.jpg"), "rb") as file:
+        response = get_view_for_user(
+            viewname="api:feedback-list",
+            client=client,
+            method=client.post,
+            data={
+                "session": session.api_url,
+                "user_comment": "Some comment",
+                "screenshot": file,
+            },
+            user=user,
+            follow=True,
+        )
+
+    assert response.status_code == 201
+    assert Feedback.objects.count() == 1
+    feedback = Feedback.objects.get()
+    assert feedback.session == session
+    assert feedback.user_comment == "Some comment"
+    assert "test_grayscale.jpg" in feedback.screenshot.name
+
+
+@pytest.mark.django_db
+def test_only_session_creator_can_create_session_feedback(client):
+    user1, user2 = UserFactory.create_batch(2)
+    session = SessionFactory(creator=user1)
+
+    response = get_view_for_user(
+        viewname="api:feedback-list",
+        client=client,
+        method=client.post,
+        data={"session": session.api_url, "user_comment": "Some comment"},
+        user=user2,
+        follow=True,
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "session": ["Invalid hyperlink - Object does not exist."]
+    }
+    assert Feedback.objects.count() == 0
+
+    response = get_view_for_user(
+        viewname="api:feedback-list",
+        client=client,
+        method=client.post,
+        data={"session": session.api_url, "user_comment": "Some comment"},
+        user=user1,
+        follow=True,
+    )
+    assert response.status_code == 201
+    assert Feedback.objects.count() == 1
