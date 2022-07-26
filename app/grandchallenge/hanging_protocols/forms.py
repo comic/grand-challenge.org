@@ -109,15 +109,17 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
         ]
         for viewport in json:
             if "parent_id" in viewport:
-                errors.append(
-                    *self._validate_parent_id(viewport, viewport_names)
-                )
+                errors = [
+                    *errors,
+                    *self._validate_parent_id(viewport, viewport_names),
+                ]
             if "slice_plane_indicator" in viewport:
-                errors.append(
+                errors = [
+                    *errors,
                     *self._validate_slice_plane_indicator(
                         viewport, viewport_names
-                    )
-                )
+                    ),
+                ]
         for error in errors:
             self.add_error(error=error, field="json")
         return json
