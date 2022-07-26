@@ -243,21 +243,13 @@ def create_algorithm_jobs_for_evaluation(
         raise
 
     if not jobs:
-        if max_jobs is None:
-            # No more jobs created from this task, so everything must be
-            # ready for evaluation, handles archives with only one item
-            set_evaluation_inputs.signature(
-                kwargs={"evaluation_pk": str(evaluation.pk)},
-                immutable=True,
-            ).apply_async()
-        else:
-            evaluation.update_status(
-                status=Evaluation.FAILURE,
-                error_message=(
-                    "No jobs could be scheduled for this evaluation, "
-                    "do the archive items have the correct interfaces?"
-                ),
-            )
+        # No more jobs created from this task, so everything must be
+        # ready for evaluation, handles archives with only one item
+        # and re-evaluation of existing submissions with new methods
+        set_evaluation_inputs.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk)},
+            immutable=True,
+        ).apply_async()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
