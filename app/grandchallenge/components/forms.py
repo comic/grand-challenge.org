@@ -3,9 +3,12 @@ from django.contrib.auth import get_user_model
 from django.forms import HiddenInput, ModelChoiceField, ModelForm
 from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.evaluation.models import Method
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
+from grandchallenge.workstations.models import WorkstationImage
 
 
 class ContainerImageForm(SaveFormInitMixin, ModelForm):
@@ -44,6 +47,29 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
         self.fields["creator"].initial = user
+
+    def clean_creator(self):
+        creator = self.cleaned_data["creator"]
+
+        for model in (AlgorithmImage, Method, WorkstationImage):
+            if model.objects.filter(
+                import_status__in=[
+                    model.ImportStatusChoices.INITIALIZED,
+                    model.ImportStatusChoices.QUEUED,
+                    model.ImportStatusChoices.STARTED,
+                ],
+                creator=creator,
+            ).exists():
+                self.add_error(
+                    None,
+                    (
+                        "You have an existing container image importing, "
+                        "please wait for it to complete"
+                    ),
+                )
+                break
+
+        return creator
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
