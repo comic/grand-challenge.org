@@ -23,6 +23,7 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
+FORUMS_MIN_ACCOUNT_AGE_DAYS = 0
 ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 0
 ACCOUNT_RATE_LIMITS = {}
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

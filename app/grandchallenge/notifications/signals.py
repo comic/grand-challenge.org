@@ -1,13 +1,28 @@
 from actstream.actions import follow
 from actstream.models import Follow
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.signals import post_save, pre_delete
+from django.core.exceptions import PermissionDenied
+from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
+from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 from machina.apps.forum.models import Forum
 from machina.apps.forum_conversation.models import Post, Topic
 
 from grandchallenge.notifications.models import Notification, NotificationType
+
+
+@receiver(pre_save, sender=Topic)
+@receiver(pre_save, sender=Post)
+def disallow_spam(sender, *, instance, **_):
+    account_age = now() - instance.poster.date_joined
+
+    if account_age.days < settings.FORUMS_MIN_ACCOUNT_AGE_DAYS:
+        raise PermissionDenied(
+            "Your account is too new to create a forum post, "
+            "please try again later"
+        )
 
 
 @receiver(post_save, sender=Topic)

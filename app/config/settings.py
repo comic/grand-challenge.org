@@ -751,6 +751,9 @@ HAYSTACK_CONNECTIONS = {
     "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"}
 }
 
+FORUMS_MIN_ACCOUNT_AGE_DAYS = int(
+    os.environ.get("FORUMS_MIN_ACCOUNT_AGE_DAYS", "2")
+)
 FORUMS_CHALLENGE_CATEGORY_NAME = "Challenges"
 MACHINA_BASE_TEMPLATE_NAME = "base.html"
 MACHINA_PROFILE_AVATARS_ENABLED = False
