@@ -4,7 +4,7 @@ from django.conf import settings
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.hanging_protocols.models import ImagePort
+from grandchallenge.hanging_protocols.models import ViewportNames
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
 from grandchallenge.profiles.forms import NewsletterSignupForm
@@ -81,4 +81,4 @@ def newsletter_signup(*_, **__):
 
 
 def viewport_names(*_, **__):
-    return {"viewport_names": [p.lower() for p in ImagePort.labels]}
+    return {"viewport_names": ViewportNames.values}

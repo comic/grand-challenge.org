@@ -6,27 +6,27 @@ from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
 
 
-class ImagePort(models.TextChoices):
-    MAIN = "M", "Main"
-    SECONDARY = "S", "Secondary"
-    TERTIARY = "TERTIARY", "Tertiary"
-    QUATERNARY = "QUATERNARY", "Quaternary"
-    QUINARY = "QUINARY", "Quinary"
-    SENARY = "SENARY", "Senary"
-    SEPTENARY = "SEPTENARY", "Septenary"
-    OCTONARY = "OCTONARY", "Octonary"
-    NONARY = "NONARY", "Nonary"
-    DENARY = "DENARY", "Denary"
-    UNDENARY = "UNDENARY", "Undenary"
-    DUODENARY = "DUODENARY", "Duodenary"
-    TREDENARY = "TREDENARY", "Tredenary"
-    QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
-    QUINDENARY = "QUINDENARY", "Quindenary"
-    SEXDENARY = "SEXDENARY", "Sexdenary"
-    SEPTENDENARY = "SEPTENDENARY", "Septendenary"
-    OCTODENARY = "OCTODENARY", "Octodenary"
-    NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
-    VIGINTENARY = "VIGINTENARY", "Vigintenary"
+class ViewportNames(models.TextChoices):
+    main = "main"
+    secondary = "secondary"
+    tertiary = "tertiary"
+    quaternary = "quaternary"
+    quinary = "quinary"
+    senary = "senary"
+    septenary = "septenary"
+    octonary = "octonary"
+    nonary = "nonary"
+    denary = "denary"
+    undenary = "undenary"
+    duodenary = "duodenary"
+    tredenary = "tredenary"
+    quattuordenary = "quattuordenary"
+    quindenary = "quindenary"
+    sexdenary = "sexdenary"
+    septendenary = "septendenary"
+    octodenary = "octodenary"
+    novemdenary = "novemdenary"
+    vigintenary = "vigintenary"
 
 
 class Orientation(models.TextChoices):
@@ -56,7 +56,7 @@ HANGING_PROTOCOL_SCHEMA = {
         "properties": {
             "viewport_name": {
                 "type": "string",
-                "enum": [port.lower() for port in ImagePort.labels],
+                "enum": ViewportNames.values,
             },
             "x": {
                 "type": "integer",
@@ -103,7 +103,7 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "parent_id": {
                 "type": "string",
-                "enum": [port.lower() for port in ImagePort.labels],
+                "enum": ViewportNames.values,
             },
             "opacity": {
                 "type": "number",
@@ -112,7 +112,7 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "slice_plane_indicator": {
                 "type": "string",
-                "enum": [port.lower() for port in ImagePort.labels],
+                "enum": ViewportNames.values,
             },
         },
         "additionalProperties": False,
@@ -134,7 +134,7 @@ VIEW_CONTENT_SCHEMA = {
             "minItems": 1,
             "uniqueItems": True,
         }
-        for port in ImagePort.labels
+        for port in ViewportNames.values
     },
     "additionalProperties": False,
 }
