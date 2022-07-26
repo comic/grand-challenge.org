@@ -592,7 +592,9 @@ SOCIALACCOUNT_PROVIDERS = {
         "APP": {
             "client_id": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
             "secret": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""),
-        }
+        },
+        # Require confirmation of email due to problems with spam users
+        "VERIFIED_EMAIL": False,
     }
 }
 
