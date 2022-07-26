@@ -8,7 +8,7 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Min, Q, Sum
+from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -42,6 +42,7 @@ from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
+from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -654,6 +655,33 @@ class Job(UUIDModel, ComponentJob):
             outputs[output.interface.slug] = output
 
         return outputs
+
+    def get_or_create_display_set(self, *, reader_study):
+        """Get or create a display set from this job for a reader study"""
+        if self.status != self.SUCCESS:
+            raise RuntimeError(
+                "Display sets can only be created from successful jobs"
+            )
+
+        values = {*self.inputs.all(), *self.outputs.all()}
+
+        try:
+            display_set = (
+                reader_study.display_sets.filter(values__in=values)
+                .annotate(
+                    values_match_count=Count(
+                        "values",
+                        filter=Q(values__in=values),
+                    )
+                )
+                .filter(values_match_count=len(values))
+                .get()
+            )
+        except ObjectDoesNotExist:
+            display_set = DisplaySet.objects.create(reader_study=reader_study)
+            display_set.values.set(values)
+
+        return display_set
 
 
 @receiver(post_delete, sender=Job)

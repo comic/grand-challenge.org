@@ -5,6 +5,7 @@
 {% load pathlib %}
 {% load workstations %}
 {% load static %}
+{% load url %}
 
 {% block title %}
     Algorithm Result - {{ block.super }}
@@ -45,6 +46,13 @@
                 <a class="nav-link" id="v-pills-logs-tab" data-toggle="pill"
                    href="#v-pills-logs" role="tab" aria-controls="v-pills-logs"
                    aria-selected="false"><i class="fas fa-terminal fa-fw"></i>&nbsp;Logs
+                </a>
+            {% endif %}
+
+            {% if object.status == object.SUCCESS and perms.reader_studies.add_readerstudy %}
+                <a class="nav-link"
+                   href="{% url "algorithms:display-set-from-job-create" slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
+                    <i class="fas fa-edit fa-fw"></i>&nbsp;Edit in Reader Study
                 </a>
             {% endif %}
         </div>

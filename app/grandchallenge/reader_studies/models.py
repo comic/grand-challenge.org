@@ -144,6 +144,10 @@ based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
 
+from grandchallenge.workstations.templatetags.workstations import (
+    workstation_query,
+)
+
 CASE_TEXT_SCHEMA = {
     "type": "object",
     "properties": {},
@@ -852,6 +856,16 @@ class DisplaySet(UUIDModel):
         return reverse(
             "api:reader-studies-display-set-detail", kwargs={"pk": self.pk}
         )
+
+    @cached_property
+    def workstation_url(self):
+        """The URL to answer this display set in a workstation"""
+        url = reverse(
+            "workstations:workstation-session-create",
+            kwargs={"slug": self.reader_study.workstation.slug},
+        )
+        query = workstation_query(display_set=self)
+        return f"{url}?{query}"
 
     @property
     def description(self):

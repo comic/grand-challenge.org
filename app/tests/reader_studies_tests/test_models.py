@@ -17,7 +17,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     DisplaySetFactory,
@@ -502,3 +502,15 @@ def test_main_image_from_ds():
     ds.refresh_from_db()
     del ds.main_image_title
     assert im1.name == ds.main_image_title
+
+
+@pytest.mark.django_db
+def test_workstation_url():
+    workstation = WorkstationFactory()
+    reader_study = ReaderStudyFactory(workstation=workstation)
+    display_set = DisplaySetFactory(reader_study=reader_study)
+
+    assert (
+        display_set.workstation_url
+        == f"https://testserver/viewers/{workstation.slug}/sessions/create/?displaySet={display_set.pk}"
+    )
