@@ -13,6 +13,7 @@ from guardian.mixins import LoginRequiredMixin, PermissionListMixin
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -31,11 +32,15 @@ from grandchallenge.workstations.forms import (
     WorkstationImageForm,
 )
 from grandchallenge.workstations.models import (
+    Feedback,
     Session,
     Workstation,
     WorkstationImage,
 )
-from grandchallenge.workstations.serializers import SessionSerializer
+from grandchallenge.workstations.serializers import (
+    FeedbackSerializer,
+    SessionSerializer,
+)
 from grandchallenge.workstations.utils import get_or_create_active_session
 
 
@@ -327,3 +332,10 @@ def session_proxy(request, *, pk, path, **_):
     response["X-Accel-Redirect"] = path
 
     return response
+
+
+class FeedbackViewSet(mixins.CreateModelMixin, ReadOnlyModelViewSet):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = (ObjectPermissionsFilter,)

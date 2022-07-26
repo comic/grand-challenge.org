@@ -1,8 +1,10 @@
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.components.admin import ComponentImageAdmin
 from grandchallenge.workstations.models import (
+    Feedback,
     Session,
     Workstation,
     WorkstationImage,
@@ -36,6 +38,19 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
     ]
 
 
+class FeedbackAdmin(ModelAdmin):
+    readonly_fields = ("user_comment", "session", "screenshot", "context")
+    list_display = ("session",)
+    search_fields = [
+        "session",
+        "user_comment",
+    ]
+
+    class Meta:
+        model = Feedback
+
+
 admin.site.register(Workstation)
 admin.site.register(WorkstationImage, ComponentImageAdmin)
 admin.site.register(Session, SessionHistoryAdmin)
+admin.site.register(Feedback, FeedbackAdmin)
