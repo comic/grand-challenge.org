@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.conf import settings
+from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
@@ -15,10 +16,12 @@ from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
     SessionFactory,
+    UserFactory,
     WorkstationFactory,
     WorkstationImageFactory,
 )
 from tests.utils import recurse_callbacks
+from tests.workstations_tests.factories import FeedbackFactory
 
 
 def stop_all_sessions():
@@ -301,3 +304,18 @@ def test_all_regions_are_in_settings(settings):
     for region in Session.Region.values:
         assert region in settings.WORKSTATIONS_RENDERING_SUBDOMAINS
         assert region in settings.DISALLOWED_CHALLENGE_NAMES
+
+
+@pytest.mark.django_db
+def test_staff_email_for_new_feedback():
+    staff = UserFactory(is_staff=True)
+    user = UserFactory()
+
+    assert len(mail.outbox) == 0
+
+    _ = FeedbackFactory()
+
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == [staff.email]
+    assert mail.outbox[0].to != [user.email]
+    assert "New Session Feedback" in mail.outbox[0].subject

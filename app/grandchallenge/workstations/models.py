@@ -29,6 +29,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.workstations.tasks import send_new_feedback_email_to_staff
 
 __doc__ = """
 Workstations are used to view, annotate and upload images to grand challenge.
@@ -582,7 +583,7 @@ class Feedback(UUIDModel):
 
         if created:
             self.assign_permissions()
-            # TODO send email to staff
+            send_new_feedback_email_to_staff(feedback=self)
 
     def assign_permissions(self):
         assign_perm(

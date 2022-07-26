@@ -42,7 +42,8 @@ class FeedbackAdmin(ModelAdmin):
     readonly_fields = ("user_comment", "session", "screenshot", "context")
     list_display = ("session",)
     search_fields = [
-        "session",
+        "session__pk",
+        "session__creator__username",
         "user_comment",
     ]
 
