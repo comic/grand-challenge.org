@@ -49,8 +49,10 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
 
     @staticmethod
     def _validate_viewport_uniqueness(viewports):
+        errors = []
         if len(set(viewports)) != len(viewports):
-            return ["Each viewport can only be used once."]
+            errors.append("Each viewport can only be used once.")
+        return errors
 
     @staticmethod
     def _validate_dimensions(value):
