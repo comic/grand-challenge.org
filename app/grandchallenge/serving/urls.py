@@ -65,7 +65,7 @@ urlpatterns = [
         serve_structured_challenge_submission_form,
     ),
     path(
-        ("session-feedback/" "<uuid:feedback_pk>/" "<path:path>"),
+        ("session-feedback/<uuid:feedback_pk>/<path:path>"),
         serve_session_feedback_screenshot,
     ),
 ]
