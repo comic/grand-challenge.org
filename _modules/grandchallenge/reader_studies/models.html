@@ -111,7 +111,7 @@
     <span class="n">process_access_request</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="n">JSONValidator</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">ImagePort</span><span class="p">,</span> <span class="n">ViewContentMixin</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">ViewContentMixin</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.modalities.models</span> <span class="kn">import</span> <span class="n">ImagingModality</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.organizations.models</span> <span class="kn">import</span> <span class="n">Organization</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.publications.models</span> <span class="kn">import</span> <span class="n">Publication</span>
@@ -1041,6 +1041,28 @@
 
 <div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">AnswerType</span> <span class="o">=</span> <span class="n">AnswerType</span>
+
+<div class="viewcode-block" id="Question.ImagePort"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ImagePort">[docs]</a>    <span class="k">class</span> <span class="nc">ImagePort</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+        <span class="n">MAIN</span> <span class="o">=</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;Main&quot;</span>
+        <span class="n">SECONDARY</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;Secondary&quot;</span>
+        <span class="n">TERTIARY</span> <span class="o">=</span> <span class="s2">&quot;TERTIARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tertiary&quot;</span>
+        <span class="n">QUATERNARY</span> <span class="o">=</span> <span class="s2">&quot;QUATERNARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quaternary&quot;</span>
+        <span class="n">QUINARY</span> <span class="o">=</span> <span class="s2">&quot;QUINARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quinary&quot;</span>
+        <span class="n">SENARY</span> <span class="o">=</span> <span class="s2">&quot;SENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Senary&quot;</span>
+        <span class="n">SEPTENARY</span> <span class="o">=</span> <span class="s2">&quot;SEPTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Septenary&quot;</span>
+        <span class="n">OCTONARY</span> <span class="o">=</span> <span class="s2">&quot;OCTONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Octonary&quot;</span>
+        <span class="n">NONARY</span> <span class="o">=</span> <span class="s2">&quot;NONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Nonary&quot;</span>
+        <span class="n">DENARY</span> <span class="o">=</span> <span class="s2">&quot;DENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Denary&quot;</span>
+        <span class="n">UNDENARY</span> <span class="o">=</span> <span class="s2">&quot;UNDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Undenary&quot;</span>
+        <span class="n">DUODENARY</span> <span class="o">=</span> <span class="s2">&quot;DUODENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Duodenary&quot;</span>
+        <span class="n">TREDENARY</span> <span class="o">=</span> <span class="s2">&quot;TREDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tredenary&quot;</span>
+        <span class="n">QUATTUORDENARY</span> <span class="o">=</span> <span class="s2">&quot;QUATTUORDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quattuordenary&quot;</span>
+        <span class="n">QUINDENARY</span> <span class="o">=</span> <span class="s2">&quot;QUINDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quindenary&quot;</span>
+        <span class="n">SEXDENARY</span> <span class="o">=</span> <span class="s2">&quot;SEXDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Sexdenary&quot;</span>
+        <span class="n">SEPTENDENARY</span> <span class="o">=</span> <span class="s2">&quot;SEPTENDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Septendenary&quot;</span>
+        <span class="n">OCTODENARY</span> <span class="o">=</span> <span class="s2">&quot;OCTODENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Octodenary&quot;</span>
+        <span class="n">NOVEMDENARY</span> <span class="o">=</span> <span class="s2">&quot;NOVEMDENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Novemdenary&quot;</span>
+        <span class="n">VIGINTENARY</span> <span class="o">=</span> <span class="s2">&quot;VIGINTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Vigintenary&quot;</span></div>
 
     <span class="c1"># What is the orientation of the question form when presented on the</span>
     <span class="c1"># front end?</span>
