@@ -1,10 +1,12 @@
 import csv
+import os
 
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.staticfiles import finders
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
     PermissionDenied,
@@ -23,7 +25,7 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
+from django.template.loader import get_template, render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -58,7 +60,9 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
+from xhtml2pdf import pisa
 
+from config import settings
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
@@ -1438,3 +1442,56 @@ class DisplaySetUpdate(
             instance.save()
 
         return HttpResponseRedirect(self.get_success_url())
+
+
+def link_callback(uri, rel):
+    """
+    Convert HTML URIs to absolute system paths so xhtml2pdf can access those
+    resources
+    """
+    result = finders.find(uri)
+    if result:
+        if not isinstance(result, (list, tuple)):
+            result = [result]
+        result = list(os.path.realpath(path) for path in result)
+        path = result[0]
+    else:
+        s_url = settings.STATIC_URL
+        s_root = settings.STATIC_ROOT
+        m_url = settings.MEDIA_URL
+        m_root = settings.MEDIA_ROOT
+
+        if uri.startswith(m_url):
+            path = os.path.join(m_root, uri.replace(m_url, ""))
+        elif uri.startswith(s_url):
+            path = os.path.join(s_root, uri.replace(s_url, ""))
+        else:
+            return uri
+
+    # make sure that file exists
+    if not os.path.isfile(path):
+        raise Exception(f"media URI must start with {s_url} or {m_url}")
+    return path
+
+
+class DisplaySetPDFReport(View):
+    template_name = "reader_studies/readerstudy_display_set_pdf_report.html"
+
+    def get(self, request, *args, **kwargs):
+        # Create a Django response object, and specify content_type as pdf
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="report.pdf"'
+
+        # find the template and render it.
+        template = get_template(self.template_name)
+        html = template.render()
+
+        # create a pdf
+        pisa_status = pisa.CreatePDF(
+            html, dest=response, link_callback=link_callback
+        )
+
+        if pisa_status.err:
+            return HttpResponse("We had some errors <pre>" + html + "</pre>")
+
+        return response
