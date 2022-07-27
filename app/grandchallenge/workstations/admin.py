@@ -60,6 +60,10 @@ class FeedbackAdmin(ModelAdmin):
     class Meta:
         model = Feedback
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("session__creator")
+
     @admin.display(description="Github link")
     def github_link(self, obj):
         params = {
