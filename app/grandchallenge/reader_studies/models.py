@@ -37,7 +37,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.hanging_protocols.models import ImagePort, ViewContentMixin
+from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -967,6 +967,28 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
+
+    class ImagePort(models.TextChoices):
+        MAIN = "M", "Main"
+        SECONDARY = "S", "Secondary"
+        TERTIARY = "TERTIARY", "Tertiary"
+        QUATERNARY = "QUATERNARY", "Quaternary"
+        QUINARY = "QUINARY", "Quinary"
+        SENARY = "SENARY", "Senary"
+        SEPTENARY = "SEPTENARY", "Septenary"
+        OCTONARY = "OCTONARY", "Octonary"
+        NONARY = "NONARY", "Nonary"
+        DENARY = "DENARY", "Denary"
+        UNDENARY = "UNDENARY", "Undenary"
+        DUODENARY = "DUODENARY", "Duodenary"
+        TREDENARY = "TREDENARY", "Tredenary"
+        QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
+        QUINDENARY = "QUINDENARY", "Quindenary"
+        SEXDENARY = "SEXDENARY", "Sexdenary"
+        SEPTENDENARY = "SEPTENDENARY", "Septendenary"
+        OCTODENARY = "OCTODENARY", "Octodenary"
+        NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
+        VIGINTENARY = "VIGINTENARY", "Vigintenary"
 
     # What is the orientation of the question form when presented on the
     # front end?
