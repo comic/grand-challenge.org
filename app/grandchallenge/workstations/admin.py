@@ -56,13 +56,10 @@ class FeedbackAdmin(ModelAdmin):
         "session__creator__username",
         "user_comment",
     ]
+    list_select_related = ("session__creator",)
 
     class Meta:
         model = Feedback
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.select_related("session__creator")
 
     @admin.display(description="Github link")
     def github_link(self, obj):
@@ -79,7 +76,7 @@ class FeedbackAdmin(ModelAdmin):
         }
         return format_html(
             '<a href="{}">{}</a>',
-            "https://github.com/comic/grand-challenge.org/issues/new?"
+            "https://github.com/diagnijmegen/rse-cirrus-core/issues/new?"
             + urlencode(params),
             "Create issue",
         )

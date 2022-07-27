@@ -174,8 +174,10 @@ router.register(
     WorkstationConfigViewSet,
     basename="workstations-config",
 )
+router.register(
+    r"workstations/feedback", FeedbackViewSet, basename="workstations-feedback"
+)
 router.register(r"workstations/sessions", SessionViewSet)
-router.register(r"workstations/feedback", FeedbackViewSet, basename="feedback")
 
 
 class SchemaView(SpectacularAPIView):

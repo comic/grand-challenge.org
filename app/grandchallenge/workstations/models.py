@@ -29,7 +29,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.tasks import send_new_feedback_email_to_staff
+from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
 __doc__ = """
 Workstations are used to view, annotate and upload images to grand challenge.
@@ -562,7 +562,7 @@ class Session(UUIDModel):
 def feedback_screenshot_filepath(instance, filename):
     return (
         f"session-feedback/"
-        f"{instance.session.pk}/"
+        f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
 
@@ -578,10 +578,10 @@ class Feedback(UUIDModel):
     context = models.TextField(blank=True)
 
     def save(self, *args, **kwargs) -> None:
-        created = self._state.adding
+        adding = self._state.adding
         super().save(*args, **kwargs)
 
-        if created:
+        if adding:
             self.assign_permissions()
             send_new_feedback_email_to_staff(feedback=self)
 
