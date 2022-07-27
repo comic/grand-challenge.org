@@ -101,25 +101,23 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
         return errors
 
     def clean_json(self):
+        def add_errors(errors):
+            for error in errors:
+                self.add_error(error=error, field="json")
+
         json = self.cleaned_data["json"]
         viewport_names = [x["viewport_name"] for x in json]
-        errors = [
-            *self._validate_viewport_uniqueness(viewport_names),
-            *self._validate_dimensions(json),
-        ]
+        add_errors(self._validate_viewport_uniqueness(viewport_names))
+        add_errors(self._validate_dimensions(json))
         for viewport in json:
             if "parent_id" in viewport:
-                errors.extend(
-                    self._validate_parent_id(viewport, viewport_names)
-                )
+                add_errors(self._validate_parent_id(viewport, viewport_names))
             if "slice_plane_indicator" in viewport:
-                errors.extend(
+                add_errors(
                     self._validate_slice_plane_indicator(
                         viewport, viewport_names
                     )
                 )
-        for error in errors:
-            self.add_error(error=error, field="json")
         return json
 
 
