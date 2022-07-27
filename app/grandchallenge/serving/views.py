@@ -15,6 +15,7 @@ from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.serving.models import Download
+from grandchallenge.workstations.models import Feedback
 
 
 def protected_storage_redirect(*, name):
@@ -140,5 +141,17 @@ def serve_structured_challenge_submission_form(
         return protected_storage_redirect(
             name=challenge_request.structured_challenge_submission_form.name
         )
+    else:
+        raise PermissionDenied
+
+
+def serve_session_feedback_screenshot(request, *, feedback_pk, **_):
+    try:
+        feedback = Feedback.objects.get(pk=feedback_pk)
+    except Feedback.DoesNotExist:
+        raise Http404("Feedback not found.")
+
+    if request.user.is_staff:
+        return protected_storage_redirect(name=feedback.screenshot.name)
     else:
         raise PermissionDenied

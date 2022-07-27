@@ -11,6 +11,7 @@ from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django.utils.text import get_valid_filename
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
@@ -22,8 +23,13 @@ from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import get_logo_path, public_s3_storage
+from grandchallenge.core.storage import (
+    get_logo_path,
+    protected_s3_storage,
+    public_s3_storage,
+)
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
 __doc__ = """
 Workstations are used to view, annotate and upload images to grand challenge.
@@ -506,6 +512,10 @@ class Session(UUIDModel):
             },
         )
 
+    @property
+    def api_url(self):
+        return reverse("api:session-detail", kwargs={"pk": self.pk})
+
     def assign_permissions(self):
         # Allow the editors group to view and change this session
         assign_perm(
@@ -547,3 +557,35 @@ class Session(UUIDModel):
                     queue=f"workstations-{self.region}",
                 )
             )
+
+
+def feedback_screenshot_filepath(instance, filename):
+    return (
+        f"session-feedback/"
+        f"{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class Feedback(UUIDModel):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    screenshot = models.ImageField(
+        upload_to=feedback_screenshot_filepath,
+        storage=protected_s3_storage,
+        blank=True,
+    )
+    user_comment = models.TextField()
+    context = models.TextField(blank=True)
+
+    def save(self, *args, **kwargs) -> None:
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+            send_new_feedback_email_to_staff(feedback=self)
+
+    def assign_permissions(self):
+        assign_perm(
+            f"view_{self._meta.model_name}", self.session.creator, self
+        )
