@@ -1,8 +1,12 @@
+from urllib.parse import urlencode
+
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
+from django.utils.html import format_html
 from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.components.admin import ComponentImageAdmin
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import (
     Feedback,
     Session,
@@ -39,8 +43,14 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
 
 
 class FeedbackAdmin(ModelAdmin):
-    readonly_fields = ("user_comment", "session", "screenshot", "context")
-    list_display = ("session",)
+    readonly_fields = (
+        "user_comment",
+        "session",
+        "screenshot",
+        "context",
+        "github_link",
+    )
+    list_display = ("session", "github_link")
     search_fields = [
         "session__pk",
         "session__creator__username",
@@ -49,6 +59,26 @@ class FeedbackAdmin(ModelAdmin):
 
     class Meta:
         model = Feedback
+
+    @admin.display(description="Github link")
+    def github_link(self, obj):
+        params = {
+            "labels": "bug",
+            "title": "Bug report for session: " + str(obj.session.pk),
+            "body": "Admin link: "
+            + reverse(
+                "admin:workstations_feedback_change",
+                kwargs={"object_id": obj.pk},
+            )
+            + "\n\n"
+            + obj.user_comment,
+        }
+        return format_html(
+            '<a href="{}">{}</a>',
+            "https://github.com/comic/grand-challenge.org/issues/new?"
+            + urlencode(params),
+            "Create issue",
+        )
 
 
 admin.site.register(Workstation)
