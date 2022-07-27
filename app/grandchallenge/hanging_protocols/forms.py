@@ -47,78 +47,73 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             ButtonHolder(Submit("save", "Save")),
         )
 
-    @staticmethod
-    def _validate_viewport_uniqueness(viewports):
-        errors = []
-        if len(set(viewports)) != len(viewports):
-            errors.append("Each viewport can only be used once.")
-        return errors
+    def clean_json(self):
+        json = self.cleaned_data["json"]
+        viewport_names = [x["viewport_name"] for x in json]
 
-    @staticmethod
-    def _validate_dimensions(value):
-        errors = []
+        self._validate_viewport_uniqueness(viewport_names=viewport_names)
+        self._validate_dimensions(value=json)
+
+        for viewport in json:
+            if "parent_id" in viewport:
+                self._validate_parent_id(
+                    viewport=viewport, viewport_names=viewport_names
+                )
+            if "slice_plane_indicator" in viewport:
+                self._validate_slice_plane_indicator(
+                    viewport=viewport, viewport_names=viewport_names
+                )
+
+        return json
+
+    def _validate_viewport_uniqueness(self, *, viewport_names):
+        if len(set(viewport_names)) != len(viewport_names):
+            self.add_error(
+                error="Each viewport can only be used once.", field="json"
+            )
+
+    def _validate_dimensions(self, *, value):
         dims = ["x", "y", "w", "h"]
         if any(d in [k for v in value for k in v.keys()] for d in dims):
             for viewport in value:
                 if not all(d in viewport for d in dims):
                     missing_dims = [d for d in dims if d not in viewport]
-                    errors.append(
-                        f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}."
+                    self.add_error(
+                        error=f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}.",
+                        field="json",
                     )
         else:
             for viewport in value:
                 if any(d in viewport for d in dims):
                     missing_dims = [d for d in dims if d not in viewport]
-                    errors.append(
-                        f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}."
+                    self.add_error(
+                        error=f"Either none or all viewports must have x, y, w, and h keys. Viewport {viewport['viewport_name']} missing {', '.join(missing_dims)}.",
+                        field="json",
                     )
-        return errors
 
-    @staticmethod
-    def _validate_parent_id(viewport, viewports):
-        errors = []
+    def _validate_parent_id(self, *, viewport, viewport_names):
         if viewport.get("draggable", False) is False:
-            errors.append(
-                f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable."
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable.",
+                field="json",
             )
-        if viewport["parent_id"] not in viewports:
-            errors.append(
-                f"Viewport {viewport['viewport_name']} has a parent_id that does not exist."
+        if viewport["parent_id"] not in viewport_names:
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a parent_id that does not exist.",
+                field="json",
             )
-        return errors
 
-    @staticmethod
-    def _validate_slice_plane_indicator(viewport, viewports):
-        errors = []
-        if viewport["slice_plane_indicator"] not in viewports:
-            errors.append(
-                f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that does not exist."
+    def _validate_slice_plane_indicator(self, *, viewport, viewport_names):
+        if viewport["slice_plane_indicator"] not in viewport_names:
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that does not exist.",
+                field="json",
             )
         if viewport["slice_plane_indicator"] == viewport["viewport_name"]:
-            errors.append(
-                f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that is the same as the viewport_name."
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that is the same as the viewport_name.",
+                field="json",
             )
-        return errors
-
-    def clean_json(self):
-        def add_errors(errors):
-            for error in errors:
-                self.add_error(error=error, field="json")
-
-        json = self.cleaned_data["json"]
-        viewport_names = [x["viewport_name"] for x in json]
-        add_errors(self._validate_viewport_uniqueness(viewport_names))
-        add_errors(self._validate_dimensions(json))
-        for viewport in json:
-            if "parent_id" in viewport:
-                add_errors(self._validate_parent_id(viewport, viewport_names))
-            if "slice_plane_indicator" in viewport:
-                add_errors(
-                    self._validate_slice_plane_indicator(
-                        viewport, viewport_names
-                    )
-                )
-        return json
 
 
 class ViewContentMixin:
