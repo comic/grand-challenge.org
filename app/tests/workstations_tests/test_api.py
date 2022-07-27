@@ -156,7 +156,7 @@ def test_session_feedback_api_view_permissions(client):
     assert user1.has_perm("view_feedback", feedback)
 
     response = get_view_for_user(
-        viewname="api:feedback-detail",
+        viewname="api:workstations-feedback-detail",
         reverse_kwargs={"pk": feedback.pk},
         client=client,
         user=user1,
@@ -165,7 +165,7 @@ def test_session_feedback_api_view_permissions(client):
     assert response.status_code == 200
 
     response = get_view_for_user(
-        viewname="api:feedback-detail",
+        viewname="api:workstations-feedback-detail",
         reverse_kwargs={"pk": feedback.pk},
         client=client,
         user=user2,
@@ -174,7 +174,7 @@ def test_session_feedback_api_view_permissions(client):
     assert response.status_code == 404
 
     response = get_view_for_user(
-        viewname="api:feedback-list",
+        viewname="api:workstations-feedback-list",
         client=client,
         user=user1,
         follow=True,
@@ -183,7 +183,7 @@ def test_session_feedback_api_view_permissions(client):
     assert response.json()["count"] == 1
 
     response = get_view_for_user(
-        viewname="api:feedback-list",
+        viewname="api:workstations-feedback-list",
         client=client,
         user=user2,
         follow=True,
@@ -199,7 +199,7 @@ def test_create_session_feedback(client):
 
     with open(Path(RESOURCE_PATH / "test_grayscale.jpg"), "rb") as file:
         response = get_view_for_user(
-            viewname="api:feedback-list",
+            viewname="api:workstations-feedback-list",
             client=client,
             method=client.post,
             data={
@@ -225,7 +225,7 @@ def test_only_session_creator_can_create_session_feedback(client):
     session = SessionFactory(creator=user1)
 
     response = get_view_for_user(
-        viewname="api:feedback-list",
+        viewname="api:workstations-feedback-list",
         client=client,
         method=client.post,
         data={"session": session.api_url, "user_comment": "Some comment"},
@@ -239,7 +239,7 @@ def test_only_session_creator_can_create_session_feedback(client):
     assert Feedback.objects.count() == 0
 
     response = get_view_for_user(
-        viewname="api:feedback-list",
+        viewname="api:workstations-feedback-list",
         client=client,
         method=client.post,
         data={"session": session.api_url, "user_comment": "Some comment"},
