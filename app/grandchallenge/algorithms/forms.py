@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlparse
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
@@ -20,6 +21,7 @@ from django.forms import (
     ModelForm,
     ModelMultipleChoiceField,
     Select,
+    SlugField,
     TextInput,
 )
 from django.forms.widgets import MultipleHiddenInput
@@ -27,6 +29,7 @@ from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from guardian.shortcuts import get_objects_for_user
+from requests import get
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -34,6 +37,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
+from grandchallenge.algorithms.serializers import AlgorithmSerializer
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -51,7 +55,7 @@ from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import ReaderStudy
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstations.models import Workstation
 
 
@@ -622,3 +626,60 @@ class AlgorithmPublishForm(AlgorithmPublishValidation, ModelForm):
     class Meta:
         model = Algorithm
         fields = ("public",)
+
+
+class AlgorithmImportForm(SaveFormInitMixin, Form):
+    algorithm_slug = SlugField()
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.algorithm_serializer = None
+        self.algorithm = None
+
+    def clean_algorithm_slug(self):
+        algorithm_slug = self.cleaned_data["algorithm_slug"]
+
+        if Algorithm.objects.filter(slug=algorithm_slug).exists():
+            raise ValidationError("An algorithm with that slug already exists")
+
+        self._build_algorithm(algorithm_slug=algorithm_slug)
+
+        return algorithm_slug
+
+    def _build_algorithm(self, *, algorithm_slug):
+        remote_host = "grand-challenge.org"
+        url = urlparse(reverse(viewname="api:algorithm-list"))
+
+        # TODO AUTH, NETLOC customisation
+        response = get(
+            url=url._replace(scheme="https", netloc=remote_host).geturl(),
+            params={"slug": algorithm_slug},
+            timeout=5,
+        )
+
+        if response.status_code != 200:
+            raise ValidationError(
+                f"{response.status_code} Response from {remote_host}"
+            )
+
+        algorithms_list = response.json()
+
+        if algorithms_list["count"] != 1:
+            raise ValidationError(f"Algorithm {algorithm_slug} not found")
+
+        algorithm_serializer = AlgorithmSerializer(
+            data=algorithms_list["results"][0]
+        )
+
+        if not algorithm_serializer.is_valid():
+            raise ValidationError("Algorithm is invalid")
+
+        self.algorithm_serializer = algorithm_serializer
+
+        # TODO logo, description
+
+    def save(self):
+        # TODO I/O
+        self.algorithm = self.algorithm_serializer.save()
+        self.algorithm.add_editor(user=self.user)

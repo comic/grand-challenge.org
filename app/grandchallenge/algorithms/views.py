@@ -49,6 +49,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
+    AlgorithmImportForm,
     AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
@@ -990,3 +991,21 @@ class AlgorithmPublishView(
             "Your algorithm has been published successfully.",
         )
         return response
+
+
+class AlgorithmImportView(LoginRequiredMixin, FormView):
+    # TODO permissions
+    form_class = AlgorithmImportForm
+    template_name = "algorithms/algorithm_import_form.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+
+        self.success_url = form.algorithm.get_absolute_url()
+
+        return super().form_valid(form=form)
