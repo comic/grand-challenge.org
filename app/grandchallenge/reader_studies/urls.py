@@ -98,7 +98,7 @@ urlpatterns = [
         name="add-displaysets",
     ),
     path(
-        "<slug>/display-sets/<uuid:pk>/report/<str:username>",
+        "<slug>/display-sets/<uuid:pk>/report/<str:username>/",
         DisplaySetPDFReport.as_view(),
         name="display-set-pdf-report",
     ),
