@@ -203,7 +203,7 @@ def test_create_session_feedback(client):
             client=client,
             method=client.post,
             data={
-                "session": session.api_url,
+                "session": session.pk,
                 "user_comment": "Some comment",
                 "screenshot": file,
             },
@@ -228,13 +228,13 @@ def test_only_session_creator_can_create_session_feedback(client):
         viewname="api:workstations-feedback-list",
         client=client,
         method=client.post,
-        data={"session": session.api_url, "user_comment": "Some comment"},
+        data={"session": session.pk, "user_comment": "Some comment"},
         user=user2,
         follow=True,
     )
     assert response.status_code == 400
     assert response.json() == {
-        "session": ["Invalid hyperlink - Object does not exist."]
+        "session": [f'Invalid pk "{session.pk}" - object does not exist.']
     }
     assert Feedback.objects.count() == 0
 
@@ -242,7 +242,7 @@ def test_only_session_creator_can_create_session_feedback(client):
         viewname="api:workstations-feedback-list",
         client=client,
         method=client.post,
-        data={"session": session.api_url, "user_comment": "Some comment"},
+        data={"session": session.pk, "user_comment": "Some comment"},
         user=user1,
         follow=True,
     )

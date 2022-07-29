@@ -1,6 +1,5 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from grandchallenge.core.serializer_fields import PkToHyperlinkedRelatedField
@@ -15,8 +14,10 @@ def test_pk_to_hyperlinked_serializer():
         )
 
     serializer = TestSerializer(data={"related_user": -1})
-    with pytest.raises(ObjectDoesNotExist):
-        serializer.is_valid()
+    assert not serializer.is_valid()
+    assert serializer.errors["related_user"] == [
+        'Invalid pk "-1" - object does not exist.'
+    ]
 
     u = get_user_model().objects.create(username="test")
     serializer = TestSerializer(data={"related_user": u.pk})
