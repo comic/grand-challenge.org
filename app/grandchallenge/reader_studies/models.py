@@ -1136,7 +1136,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     def clean(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
-        if (self.answer_type in self.annotation_types()) != bool(
+        if (self.answer_type in AnswerType.annotation_types()) != bool(
             self.image_port
         ):
             raise ValidationError(
