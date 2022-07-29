@@ -926,6 +926,24 @@ class AnswerType(models.TextChoices):
     ANGLE = "ANGL", "Angle"
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
 
+    @staticmethod
+    def annotation_types():
+        return [
+            AnswerType.BOUNDING_BOX_2D,
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            AnswerType.DISTANCE_MEASUREMENT,
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            AnswerType.POINT,
+            AnswerType.MULTIPLE_POINTS,
+            AnswerType.POLYGON,
+            AnswerType.MULTIPLE_POLYGONS,
+            AnswerType.MASK,
+            AnswerType.LINE,
+            AnswerType.MULTIPLE_LINES,
+            AnswerType.ANGLE,
+            AnswerType.MULTIPLE_ANGLES,
+        ]
+
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
@@ -1143,28 +1161,10 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 f"question type ({self.answer_type})"
             )
 
-    @classmethod
-    def annotation_types(cls):
-        return [
-            AnswerType.BOUNDING_BOX_2D,
-            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-            AnswerType.DISTANCE_MEASUREMENT,
-            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-            AnswerType.POINT,
-            AnswerType.MULTIPLE_POINTS,
-            AnswerType.POLYGON,
-            AnswerType.MULTIPLE_POLYGONS,
-            AnswerType.MASK,
-            AnswerType.LINE,
-            AnswerType.MULTIPLE_LINES,
-            AnswerType.ANGLE,
-            AnswerType.MULTIPLE_ANGLES,
-        ]
-
     @property
     def allow_null_types(self):
         return [
-            *self.annotation_types(),
+            *AnswerType.annotation_types(),
             self.AnswerType.CHOICE,
             self.AnswerType.NUMBER,
         ]
