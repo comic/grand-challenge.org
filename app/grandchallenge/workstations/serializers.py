@@ -1,7 +1,7 @@
 from rest_framework.fields import CharField
-from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
+from grandchallenge.core.serializer_fields import PkToHyperlinkedRelatedField
 from grandchallenge.workstations.models import Feedback, Session
 
 
@@ -14,7 +14,7 @@ class SessionSerializer(ModelSerializer):
 
 
 class FeedbackSerializer(ModelSerializer):
-    session = HyperlinkedRelatedField(
+    session = PkToHyperlinkedRelatedField(
         queryset=Session.objects.all(), view_name="api:session-detail"
     )
 
