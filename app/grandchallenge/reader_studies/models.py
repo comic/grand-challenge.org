@@ -1118,7 +1118,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     def clean(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
-        if (self.answer_type in self.annotation_types) != bool(
+        if (self.answer_type in self.annotation_types()) != bool(
             self.image_port
         ):
             raise ValidationError(
@@ -1143,28 +1143,28 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 f"question type ({self.answer_type})"
             )
 
-    @property
-    def annotation_types(self):
+    @classmethod
+    def annotation_types(cls):
         return [
-            self.AnswerType.BOUNDING_BOX_2D,
-            self.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-            self.AnswerType.DISTANCE_MEASUREMENT,
-            self.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-            self.AnswerType.POINT,
-            self.AnswerType.MULTIPLE_POINTS,
-            self.AnswerType.POLYGON,
-            self.AnswerType.MULTIPLE_POLYGONS,
-            self.AnswerType.MASK,
-            self.AnswerType.LINE,
-            self.AnswerType.MULTIPLE_LINES,
-            self.AnswerType.ANGLE,
-            self.AnswerType.MULTIPLE_ANGLES,
+            AnswerType.BOUNDING_BOX_2D,
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            AnswerType.DISTANCE_MEASUREMENT,
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            AnswerType.POINT,
+            AnswerType.MULTIPLE_POINTS,
+            AnswerType.POLYGON,
+            AnswerType.MULTIPLE_POLYGONS,
+            AnswerType.MASK,
+            AnswerType.LINE,
+            AnswerType.MULTIPLE_LINES,
+            AnswerType.ANGLE,
+            AnswerType.MULTIPLE_ANGLES,
         ]
 
     @property
     def allow_null_types(self):
         return [
-            *self.annotation_types,
+            *self.annotation_types(),
             self.AnswerType.CHOICE,
             self.AnswerType.NUMBER,
         ]

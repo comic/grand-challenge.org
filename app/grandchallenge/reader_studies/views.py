@@ -1,12 +1,10 @@
 import csv
-import os
 
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.contrib.staticfiles import finders
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
     PermissionDenied,
@@ -22,6 +20,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
+    HttpResponseServerError,
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
@@ -62,7 +61,6 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 from xhtml2pdf import pisa
 
-from config import settings
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
@@ -1444,54 +1442,69 @@ class DisplaySetUpdate(
         return HttpResponseRedirect(self.get_success_url())
 
 
-def link_callback(uri, rel):
-    """
-    Convert HTML URIs to absolute system paths so xhtml2pdf can access those
-    resources
-    """
-    result = finders.find(uri)
-    if result:
-        if not isinstance(result, (list, tuple)):
-            result = [result]
-        result = list(os.path.realpath(path) for path in result)
-        path = result[0]
-    else:
-        s_url = settings.STATIC_URL
-        s_root = settings.STATIC_ROOT
-        m_url = settings.MEDIA_URL
-        m_root = settings.MEDIA_ROOT
-
-        if uri.startswith(m_url):
-            path = os.path.join(m_root, uri.replace(m_url, ""))
-        elif uri.startswith(s_url):
-            path = os.path.join(s_root, uri.replace(s_url, ""))
-        else:
-            return uri
-
-    # make sure that file exists
-    if not os.path.isfile(path):
-        raise Exception(f"media URI must start with {s_url} or {m_url}")
-    return path
-
-
-class DisplaySetPDFReport(View):
+class DisplaySetPDFReport(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, View
+):
     template_name = "reader_studies/readerstudy_display_set_pdf_report.html"
+    permission_required = "reader_studies.change_readerstudy"
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    @cached_property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    @cached_property
+    def display_set(self):
+        return get_object_or_404(DisplaySet, pk=self.kwargs["pk"])
+
+    @cached_property
+    def user(self):
+        return get_object_or_404(
+            get_user_model(), username=self.kwargs["username"]
+        )
 
     def get(self, request, *args, **kwargs):
         # Create a Django response object, and specify content_type as pdf
         response = HttpResponse(content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="report.pdf"'
+        filename = "Report_" + str(self.display_set.pk) + ".pdf"
+        response["Content-Disposition"] = f"attachment; filename={filename}"
 
         # find the template and render it.
         template = get_template(self.template_name)
-        html = template.render()
+        html = template.render(self.get_context_data())
 
         # create a pdf
-        pisa_status = pisa.CreatePDF(
-            html, dest=response, link_callback=link_callback
-        )
+        pisa_status = pisa.CreatePDF(html, dest=response)
 
         if pisa_status.err:
-            return HttpResponse("We had some errors <pre>" + html + "</pre>")
+            return HttpResponseServerError(
+                "We encountered some errors <pre>" + html + "</pre>"
+            )
 
         return response
+
+    def get_context_data(self):
+        answer_dict = {
+            answer.question.question_text: answer.answer
+            for answer in self.display_set.answers.select_related(
+                "creator", "question", "answer_image"
+            )
+            .filter(
+                Q(creator=self.user),
+                Q(is_ground_truth=False),
+                ~Q(question__answer_type__in=Question.annotation_types()),
+                Q(answer_image__isnull=True),
+            )
+            .all()
+        }
+        context = {
+            "reader_study": self.reader_study,
+            "display_set": self.display_set,
+            "user": self.user,
+            "created": now(),
+            "answers": answer_dict,
+        }
+        return context

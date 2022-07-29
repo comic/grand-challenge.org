@@ -427,3 +427,148 @@ def test_display_set_update(client):
 
     # A new ds should have been created for civ_img
     assert DisplaySet.objects.count() == 3
+
+
+@pytest.mark.django_db
+def test_pdf_report_permissions(client):
+    editor, reader = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+    display_set = DisplaySetFactory(reader_study=rs)
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-pdf-report",
+        reverse_kwargs={
+            "slug": rs.slug,
+            "pk": display_set.pk,
+            "username": reader.username,
+        },
+        client=client,
+        user=reader,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-pdf-report",
+        reverse_kwargs={
+            "slug": rs.slug,
+            "pk": display_set.pk,
+            "username": reader.username,
+        },
+        client=client,
+        user=editor,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_pdf_report_content(client):
+    editor, reader = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+    ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
+
+    q1 = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.NUMBER,
+        question_text="Number question",
+    )
+    q2 = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.BOUNDING_BOX_2D,
+        question_text="Bounding box question",
+    )
+    q3 = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.MASK,
+        question_text="Mask question",
+    )
+    number_gt_answer = AnswerFactory(
+        question=q1,
+        creator=reader,
+        answer=1,
+        is_ground_truth=True,
+        display_set=ds1,
+    )
+    number_answer_reader = AnswerFactory(
+        question=q1,
+        creator=reader,
+        answer=2,
+        is_ground_truth=False,
+        display_set=ds1,
+    )
+    number_answer_editor = AnswerFactory(
+        question=q1,
+        creator=editor,
+        answer=3,
+        is_ground_truth=False,
+        display_set=ds1,
+    )
+    number_answer_ds2 = AnswerFactory(
+        question=q1,
+        creator=reader,
+        answer=4,
+        is_ground_truth=False,
+        display_set=ds2,
+    )
+    annotation_answer = AnswerFactory(
+        question=q2,
+        creator=reader,
+        answer={
+            "version": {"major": 1, "minor": 0},
+            "type": "2D bounding box",
+            "name": "test_name",
+            "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+        },
+        is_ground_truth=False,
+        display_set=ds1,
+    )
+    img = ImageFactory()
+    image_answer = AnswerFactory(
+        question=q3,
+        creator=reader,
+        answer_image=img,
+        is_ground_truth=False,
+        display_set=ds1,
+    )
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-pdf-report",
+        reverse_kwargs={
+            "slug": rs.slug,
+            "pk": ds1.pk,
+            "username": reader.username,
+        },
+        client=client,
+        user=editor,
+    )
+    assert response.status_code == 200
+    assert str(rs) in str(response.context["reader_study"])
+    assert str(ds1) in str(response.context["display_set"])
+    assert str(ds2) not in str(response.context["display_set"])
+    assert str(reader) in str(response.context["user"])
+    assert number_answer_reader.question.question_text in str(
+        response.context["answers"]
+    )
+    assert str(number_answer_reader.answer) in str(response.context["answers"])
+
+    assert str(number_answer_editor.answer) not in str(
+        response.context["answers"]
+    )
+    assert str(number_gt_answer.answer) not in str(response.context["answers"])
+    assert str(number_answer_ds2.answer) not in str(
+        response.context["answers"]
+    )
+    assert str(annotation_answer.answer) not in str(
+        response.context["answers"]
+    )
+    assert annotation_answer.question.question_text not in str(
+        response.context["answers"]
+    )
+    assert str(image_answer.answer_image) not in str(
+        response.context["answers"]
+    )
+    assert image_answer.question.question_text not in str(
+        response.context["answers"]
+    )
