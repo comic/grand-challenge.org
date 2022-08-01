@@ -1489,7 +1489,7 @@ class DisplaySetPDFReport(
 
     def get_context_data(self):
         answer_dict = {
-            answer.question.question_text: answer.answer
+            answer.question.question_text: answer.answer_text
             for answer in self.display_set.answers.select_related(
                 "creator", "question", "answer_image"
             )
