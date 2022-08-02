@@ -329,9 +329,19 @@ def set_evaluation_inputs(*, evaluation_pk):
             )
             return
 
+        algorithm_inputs = {
+            *evaluation.submission.phase.algorithm_inputs.all()
+        }
+
         civ_sets = {
             i.values.all()
-            for i in evaluation.submission.phase.archive.items.all()
+            for i in evaluation.submission.phase.archive.items.annotate(
+                interface_match_count=Count(
+                    "values", filter=Q(values__interface__in=algorithm_inputs)
+                )
+            )
+            .filter(interface_match_count=len(algorithm_inputs))
+            .prefetch_related("values")
         }
 
         successful_jobs = (
