@@ -63,10 +63,23 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
     algorithm = HyperlinkedRelatedField(
         read_only=True, view_name="api:algorithm-detail"
     )
+    url = URLField(source="get_absolute_url", read_only=True)
+    import_status = CharField(
+        source="get_import_status_display", read_only=True
+    )
 
     class Meta:
         model = AlgorithmImage
-        fields = ["pk", "api_url", "algorithm"]
+        fields = [
+            "pk",
+            "url",
+            "api_url",
+            "algorithm",
+            "created",
+            "requires_gpu",
+            "requires_memory_gb",
+            "import_status",
+        ]
 
 
 class JobSerializer(serializers.ModelSerializer):
