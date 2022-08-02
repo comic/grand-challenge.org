@@ -998,7 +998,25 @@
     <span class="n">LINE</span> <span class="o">=</span> <span class="s2">&quot;LINE&quot;</span><span class="p">,</span> <span class="s2">&quot;Line&quot;</span>
     <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple lines&quot;</span>
     <span class="n">ANGLE</span> <span class="o">=</span> <span class="s2">&quot;ANGL&quot;</span><span class="p">,</span> <span class="s2">&quot;Angle&quot;</span>
-    <span class="n">MULTIPLE_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;MANG&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple angles&quot;</span></div>
+    <span class="n">MULTIPLE_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;MANG&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple angles&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_annotation_types</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">POINT</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
+        <span class="p">]</span></div>
 
 
 <span class="n">ANSWER_TYPE_TO_INTERFACE_KIND_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -1214,9 +1232,9 @@
 <div class="viewcode-block" id="Question.clean"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Make sure that the image port is only set when using drawn</span>
         <span class="c1"># annotations.</span>
-        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotation_types</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">bool</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">image_port</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">get_annotation_types</span><span class="p">()</span>
+        <span class="p">)</span> <span class="o">!=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_port</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;The image port must (only) be set for annotation questions.&quot;</span>
             <span class="p">)</span>
@@ -1240,27 +1258,9 @@
             <span class="p">)</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">annotation_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POINT</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
-        <span class="p">]</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">allow_null_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation_types</span><span class="p">,</span>
+            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">get_annotation_types</span><span class="p">(),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">,</span>
         <span class="p">]</span>
