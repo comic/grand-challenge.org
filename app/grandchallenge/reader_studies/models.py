@@ -927,7 +927,7 @@ class AnswerType(models.TextChoices):
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
 
     @staticmethod
-    def annotation_types():
+    def get_annotation_types():
         return [
             AnswerType.BOUNDING_BOX_2D,
             AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
@@ -1136,9 +1136,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     def clean(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
-        if (self.answer_type in AnswerType.annotation_types()) != bool(
-            self.image_port
-        ):
+        if (
+            self.answer_type in self.AnswerType.get_annotation_types()
+        ) != bool(self.image_port):
             raise ValidationError(
                 "The image port must (only) be set for annotation questions."
             )
@@ -1164,7 +1164,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     @property
     def allow_null_types(self):
         return [
-            *AnswerType.annotation_types(),
+            *self.AnswerType.get_annotation_types(),
             self.AnswerType.CHOICE,
             self.AnswerType.NUMBER,
         ]

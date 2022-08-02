@@ -1494,10 +1494,12 @@ class DisplaySetPDFReport(
                 "creator", "question", "answer_image"
             )
             .filter(
-                Q(creator=self.user),
-                Q(is_ground_truth=False),
-                ~Q(question__answer_type__in=AnswerType.annotation_types()),
-                Q(answer_image__isnull=True),
+                creator=self.user,
+                is_ground_truth=False,
+                answer_image__isnull=True,
+            )
+            .exclude(
+                question__answer_type__in=AnswerType.get_annotation_types(),
             )
             .all()
         }
