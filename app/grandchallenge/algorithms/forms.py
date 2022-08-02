@@ -1,6 +1,8 @@
 import re
+from itertools import chain
 from urllib.parse import urlparse
 
+import requests
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
     HTML,
@@ -30,7 +32,6 @@ from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from guardian.shortcuts import get_objects_for_user
-from requests import get
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -45,6 +46,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
 )
+from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -53,6 +55,7 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.evaluation.utils import get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import ReaderStudy
@@ -646,6 +649,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
             raise ValidationError("An algorithm with that slug already exists")
 
         self._build_algorithm(algorithm_slug=algorithm_slug)
+        self._build_interfaces()
 
         return algorithm_slug
 
@@ -653,7 +657,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         url = urlparse(reverse(viewname="api:algorithm-list"))
 
         # TODO AUTH, NETLOC customisation
-        response = get(
+        response = requests.get(
             url=url._replace(scheme="https", netloc=self.REMOTE_HOST).geturl(),
             params={"slug": algorithm_slug},
             timeout=5,
@@ -678,13 +682,106 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
 
         self.algorithm_serializer = algorithm_serializer
 
+    def _build_interfaces(self):
+        remote_interfaces = {
+            interface["slug"]: interface
+            for interface in chain(
+                self.algorithm_serializer.initial_data["inputs"],
+                self.algorithm_serializer.initial_data["outputs"],
+            )
+        }
+
+        local_interfaces = ComponentInterface.objects.filter(
+            slug__in=remote_interfaces.keys()
+        )
+
+        self.new_interfaces = []
+
+        for slug, remote_interface in remote_interfaces.items():
+            try:
+                local_interface = local_interfaces.get(slug=slug)
+
+                serialized_local_interface = ComponentInterfaceSerializer(
+                    instance=local_interface
+                )
+
+                for key, value in serialized_local_interface.data.items():
+                    # Check all the values match, some keys are allowed to differ
+                    if (
+                        key not in {"pk", "description"}
+                        and value != remote_interface[key]
+                    ):
+                        raise ValidationError(
+                            f"Interface {key} does not match for `{slug}`"
+                        )
+
+            except ObjectDoesNotExist:
+                # The remote interface does not exist locally, create it
+                new_interface = ComponentInterfaceSerializer(
+                    data=remote_interface
+                )
+
+                if not new_interface.is_valid():
+                    raise ValidationError(f"New interface '{slug}' is invalid")
+
+                self.new_interfaces.append(new_interface)
+
     def save(self):
-        # TODO I/O
+        self._save_new_interfaces()
+        self._save_new_algorithm()
+
+    def _save_new_interfaces(self):
+        for interface in self.new_interfaces:
+            interface.save()
+
+            # The interface kind is a read only display value, this could
+            # be better solved with a custom DRF Field but deadlines...
+            interface.instance.kind = get(
+                [
+                    c[0]
+                    for c in InterfaceKindChoices.choices
+                    if c[1] == interface.initial_data["kind"]
+                ]
+            )
+
+            # Set the store in database correctly, for most interfaces this is
+            # False, then switch it if the super kind is different
+            interface.instance.store_in_database = False
+            if interface.initial_data[
+                "super_kind"
+            ] != interface.get_super_kind(obj=interface.instance):
+                interface.instance.store_in_database = True
+            interface.instance.save()
+
+    def _save_new_algorithm(self):
         self.algorithm = self.algorithm_serializer.save()
         self.algorithm.add_editor(user=self.user)
 
-        if logo_url := self.algorithm_serializer.initial_data.get("logo"):
-            response = get(url=logo_url, timeout=5, allow_redirects=True)
+        self.algorithm.inputs.set(
+            ComponentInterface.objects.filter(
+                slug__in={
+                    interface["slug"]
+                    for interface in self.algorithm_serializer.initial_data[
+                        "inputs"
+                    ]
+                }
+            )
+        )
+        self.algorithm.outputs.set(
+            ComponentInterface.objects.filter(
+                slug__in={
+                    interface["slug"]
+                    for interface in self.algorithm_serializer.initial_data[
+                        "outputs"
+                    ]
+                }
+            )
+        )
+
+        if logo_url := self.algorithm_serializer.initial_data["logo"]:
+            response = requests.get(
+                url=logo_url, timeout=5, allow_redirects=True
+            )
             logo = ContentFile(response.content)
             self.algorithm.logo.save(
                 logo_url.rsplit("/")[-1].replace(".x20", ""), logo
