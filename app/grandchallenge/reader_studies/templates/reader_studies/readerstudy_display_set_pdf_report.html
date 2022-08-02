@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Report</title>
+    <style>
+        body {padding: 3rem; font-size:1.5rem;}
+        table.general {background-color: lightgrey; padding: 3px;}
+        tr {margin:2px; padding: 5px;}
+        td.left {width:30%;}
+        h1 {text-align: center;}
+        div.answers {padding: 3px;}
+        @page {
+            @frame content_frame {
+                left: 50pt;
+                width: 500pt;
+                top: 50pt;
+                height: 692pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Grand Challenge Reader Study Report</h1>
+    <div>
+        <table class="general">
+            <tr style="padding-top: 10px;">
+                <td class="left"><b>Reader study:</b></td>
+                <td>{{ reader_study.title }}</td>
+            </tr>
+            <tr>
+                <td class="left"><b>Display set:</b></td>
+                <td>{{ display_set.id }}</td>
+            </tr>
+            <tr>
+                <td class="left"><b>User:</b></td>
+                <td>{{ user.username }}</td>
+            </tr>
+            <tr>
+                <td class="left"><b>Created</b></td>
+                <td>{{ created }}</td>
+            </tr>
+        </table>
+        <div class="answers">
+            <h2 style="margin-top:50px;">Answers</h2>
+            <table>
+                {% for question, answer in answers.items %}
+                    <tr>
+                        <td class="left"><b>{{ question }}:</b></td>
+                        <td>{{ answer }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>
