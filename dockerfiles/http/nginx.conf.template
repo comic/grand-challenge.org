@@ -158,8 +158,9 @@ http {
 
     error_page 413 = @error_413;
 
-    location @error_413 {
+    location =@error_413 {
         # Add permissive CORS header to 413 errors
+        internal;
         add_header 'Access-Control-Allow-Origin' '*' always;
         return 413;
     }
