@@ -97,6 +97,7 @@ django-ses = "*"
 Pygments = "*"
 django-forms-dynamic = "*"
 django-allauth-2fa = "*"
+xhtml2pdf = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

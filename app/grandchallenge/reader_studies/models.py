@@ -926,6 +926,24 @@ class AnswerType(models.TextChoices):
     ANGLE = "ANGL", "Angle"
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
 
+    @staticmethod
+    def get_annotation_types():
+        return [
+            AnswerType.BOUNDING_BOX_2D,
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            AnswerType.DISTANCE_MEASUREMENT,
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            AnswerType.POINT,
+            AnswerType.MULTIPLE_POINTS,
+            AnswerType.POLYGON,
+            AnswerType.MULTIPLE_POLYGONS,
+            AnswerType.MASK,
+            AnswerType.LINE,
+            AnswerType.MULTIPLE_LINES,
+            AnswerType.ANGLE,
+            AnswerType.MULTIPLE_ANGLES,
+        ]
+
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
@@ -1140,9 +1158,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     def clean(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
-        if (self.answer_type in self.annotation_types) != bool(
-            self.image_port
-        ):
+        if (
+            self.answer_type in self.AnswerType.get_annotation_types()
+        ) != bool(self.image_port):
             raise ValidationError(
                 "The image port must (only) be set for annotation questions."
             )
@@ -1166,27 +1184,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
 
     @property
-    def annotation_types(self):
-        return [
-            self.AnswerType.BOUNDING_BOX_2D,
-            self.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-            self.AnswerType.DISTANCE_MEASUREMENT,
-            self.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-            self.AnswerType.POINT,
-            self.AnswerType.MULTIPLE_POINTS,
-            self.AnswerType.POLYGON,
-            self.AnswerType.MULTIPLE_POLYGONS,
-            self.AnswerType.MASK,
-            self.AnswerType.LINE,
-            self.AnswerType.MULTIPLE_LINES,
-            self.AnswerType.ANGLE,
-            self.AnswerType.MULTIPLE_ANGLES,
-        ]
-
-    @property
     def allow_null_types(self):
         return [
-            *self.annotation_types,
+            *self.AnswerType.get_annotation_types(),
             self.AnswerType.CHOICE,
             self.AnswerType.NUMBER,
         ]

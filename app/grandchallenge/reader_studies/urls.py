@@ -8,6 +8,7 @@ from grandchallenge.reader_studies.views import (
     AnswersRemoveForUser,
     AnswersRemoveGroundTruth,
     DisplaySetDetail,
+    DisplaySetPDFReport,
     DisplaySetUpdate,
     EditorsUpdate,
     QuestionDelete,
@@ -95,6 +96,11 @@ urlpatterns = [
         "<slug>/display-sets/add/",
         AddDisplaySetsToReaderStudy.as_view(),
         name="add-displaysets",
+    ),
+    path(
+        "<slug>/display-sets/<uuid:pk>/report/<str:username>/",
+        DisplaySetPDFReport.as_view(),
+        name="display-set-pdf-report",
     ),
     path(
         "<slug>/images/add/",

@@ -206,6 +206,7 @@ def test_create_session_feedback(client):
                 "session": session.api_url,
                 "user_comment": "Some comment",
                 "screenshot": file,
+                "context": '{"foo": "bar"}',
             },
             user=user,
             follow=True,
@@ -216,6 +217,7 @@ def test_create_session_feedback(client):
     feedback = Feedback.objects.get()
     assert feedback.session == session
     assert feedback.user_comment == "Some comment"
+    assert feedback.context == {"foo": "bar"}
     assert "test_grayscale.jpg" in feedback.screenshot.name
 
 

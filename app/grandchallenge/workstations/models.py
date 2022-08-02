@@ -575,7 +575,7 @@ class Feedback(UUIDModel):
         blank=True,
     )
     user_comment = models.TextField()
-    context = models.TextField(blank=True)
+    context = models.JSONField(null=True, blank=True)
 
     def save(self, *args, **kwargs) -> None:
         adding = self._state.adding
