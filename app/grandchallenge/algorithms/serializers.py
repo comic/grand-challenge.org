@@ -64,6 +64,9 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
         read_only=True, view_name="api:algorithm-detail"
     )
     url = URLField(source="get_absolute_url", read_only=True)
+    import_status = CharField(
+        source="get_import_status_display", read_only=True
+    )
 
     class Meta:
         model = AlgorithmImage
@@ -75,6 +78,7 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
             "created",
             "requires_gpu",
             "requires_memory_gb",
+            "import_status",
         ]
 
 
