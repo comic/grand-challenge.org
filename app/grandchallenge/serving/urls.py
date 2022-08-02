@@ -4,6 +4,7 @@ from django.urls import path, register_converter
 from grandchallenge.serving.views import (
     serve_component_interface_value,
     serve_images,
+    serve_session_feedback_screenshot,
     serve_structured_challenge_submission_form,
     serve_submissions,
 )
@@ -62,5 +63,9 @@ urlpatterns = [
             "<path:path>"
         ),
         serve_structured_challenge_submission_form,
+    ),
+    path(
+        "session-feedback/<uuid:feedback_pk>/<path:path>",
+        serve_session_feedback_screenshot,
     ),
 ]

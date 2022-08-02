@@ -1,7 +1,9 @@
 import json
+from pathlib import Path
 
 import pytest
 from django.core.files.base import ContentFile
+from django.core.files.images import ImageFile
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.components.models import (
@@ -10,12 +12,14 @@ from grandchallenge.components.models import (
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.cases_tests import RESOURCE_PATH
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     SubmissionFactory,
 )
 from tests.factories import ImageFileFactory, UserFactory
 from tests.utils import get_view_for_user
+from tests.workstations_tests.factories import FeedbackFactory
 
 
 @pytest.mark.django_db
@@ -203,6 +207,33 @@ def test_structured_challenge_submission_form_download(
     for test in tests:
         response = get_view_for_user(
             url=type_1_challenge_request.structured_challenge_submission_form.url,
+            client=client,
+            user=test[1],
+        )
+        assert response.status_code == test[0]
+
+
+@pytest.mark.django_db
+def test_session_feedback_screenshot_download(client):
+    """Only staff users should be able to download the screenshot."""
+    user = UserFactory()
+    staff = UserFactory(is_staff=True)
+    feedback = FeedbackFactory(
+        screenshot=ImageFile(
+            open(Path(RESOURCE_PATH / "test_grayscale.jpg"), "rb")
+        )
+    )
+
+    tests = [
+        (403, None),
+        (403, user),
+        (403, feedback.session.creator),
+        (302, staff),
+    ]
+
+    for test in tests:
+        response = get_view_for_user(
+            url=feedback.screenshot.url,
             client=client,
             user=test[1],
         )
