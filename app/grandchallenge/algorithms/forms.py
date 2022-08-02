@@ -634,7 +634,6 @@ class AlgorithmPublishForm(AlgorithmPublishValidation, ModelForm):
 
 class AlgorithmImportForm(SaveFormInitMixin, Form):
     algorithm_slug = SlugField()
-    REMOTE_HOST = "grand-challenge.org"
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -656,16 +655,27 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
     def _build_algorithm(self, *, algorithm_slug):
         url = urlparse(reverse(viewname="api:algorithm-list"))
 
-        # TODO AUTH, NETLOC customisation
+        if settings.ALGORITHMS_REMOTE_INSTANCE_API_KEY:
+            headers = {
+                "Authorization": f"BEARER {settings.ALGORITHMS_REMOTE_INSTANCE_API_KEY}"
+            }
+        else:
+            headers = {}
+
         response = requests.get(
-            url=url._replace(scheme="https", netloc=self.REMOTE_HOST).geturl(),
+            url=url._replace(
+                scheme="https",
+                netloc=settings.ALGORITHMS_REMOTE_INSTANCE_NETLOC,
+            ).geturl(),
             params={"slug": algorithm_slug},
             timeout=5,
+            headers=headers,
         )
 
         if response.status_code != 200:
             raise ValidationError(
-                f"{response.status_code} Response from {self.REMOTE_HOST}"
+                f"{response.status_code} Response from "
+                f"{settings.ALGORITHMS_REMOTE_INSTANCE_NETLOC}"
             )
 
         algorithms_list = response.json()
@@ -706,7 +716,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
                 )
 
                 for key, value in serialized_local_interface.data.items():
-                    # Check all the values match, some keys are allowed to differ
+                    # Check all the values match, some are allowed to differ
                     if (
                         key not in {"pk", "description"}
                         and value != remote_interface[key]
@@ -733,6 +743,9 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
     def _save_new_interfaces(self):
         for interface in self.new_interfaces:
             interface.save()
+
+            # Force the given slug to be used
+            interface.instance.slug = interface.initial_data["slug"]
 
             # The interface kind is a read only display value, this could
             # be better solved with a custom DRF Field but deadlines...
@@ -788,5 +801,8 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
             )
 
         original_url = self.algorithm_serializer.initial_data["url"]
-        self.algorithm.detail_page_markdown += f"\n\n#### Origin\n\nImported from [{self.REMOTE_HOST}]({original_url})."
+        self.algorithm.detail_page_markdown += (
+            f"\n\n#### Origin\n\nImported from "
+            f"[{settings.ALGORITHMS_REMOTE_INSTANCE_NETLOC}]({original_url})."
+        )
         self.algorithm.save()

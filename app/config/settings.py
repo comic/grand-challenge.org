@@ -1177,6 +1177,12 @@ ALGORITHMS_MAX_MEMORY_GB = 30
 ALGORITHMS_JOB_TIME_LIMIT_SECONDS = os.environ.get(
     "ALGORITHMS_JOB_TIME_LIMIT_SECONDS", "3600"
 )
+ALGORITHMS_REMOTE_INSTANCE_NETLOC = os.environ.get(
+    "ALGORITHMS_REMOTE_INSTANCE_NETLOC", "grand-challenge.org"
+)
+ALGORITHMS_REMOTE_INSTANCE_API_KEY = os.environ.get(
+    "ALGORITHMS_REMOTE_INSTANCE_API_KEY", ""
+)
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {
