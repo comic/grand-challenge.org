@@ -12,6 +12,7 @@ from crispy_forms.layout import (
 )
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.base import ContentFile
 from django.forms import (
     ChoiceField,
     Form,
@@ -630,6 +631,7 @@ class AlgorithmPublishForm(AlgorithmPublishValidation, ModelForm):
 
 class AlgorithmImportForm(SaveFormInitMixin, Form):
     algorithm_slug = SlugField()
+    REMOTE_HOST = "grand-challenge.org"
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -648,19 +650,18 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         return algorithm_slug
 
     def _build_algorithm(self, *, algorithm_slug):
-        remote_host = "grand-challenge.org"
         url = urlparse(reverse(viewname="api:algorithm-list"))
 
         # TODO AUTH, NETLOC customisation
         response = get(
-            url=url._replace(scheme="https", netloc=remote_host).geturl(),
+            url=url._replace(scheme="https", netloc=self.REMOTE_HOST).geturl(),
             params={"slug": algorithm_slug},
             timeout=5,
         )
 
         if response.status_code != 200:
             raise ValidationError(
-                f"{response.status_code} Response from {remote_host}"
+                f"{response.status_code} Response from {self.REMOTE_HOST}"
             )
 
         algorithms_list = response.json()
@@ -677,9 +678,18 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
 
         self.algorithm_serializer = algorithm_serializer
 
-        # TODO logo, description
-
     def save(self):
         # TODO I/O
         self.algorithm = self.algorithm_serializer.save()
         self.algorithm.add_editor(user=self.user)
+
+        if logo_url := self.algorithm_serializer.initial_data.get("logo"):
+            response = get(url=logo_url, timeout=5, allow_redirects=True)
+            logo = ContentFile(response.content)
+            self.algorithm.logo.save(
+                logo_url.rsplit("/")[-1].replace(".x20", ""), logo
+            )
+
+        original_url = self.algorithm_serializer.initial_data["url"]
+        self.algorithm.detail_page_markdown += f"\n\n#### Origin\n\nImported from [{self.REMOTE_HOST}]({original_url})."
+        self.algorithm.save()
