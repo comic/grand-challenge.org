@@ -640,6 +640,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.user = user
         self.algorithm_serializer = None
         self.algorithm = None
+        self.new_interfaces = None
 
     def clean_algorithm_slug(self):
         algorithm_slug = self.cleaned_data["algorithm_slug"]
@@ -701,40 +702,40 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
             )
         }
 
-        local_interfaces = ComponentInterface.objects.filter(
-            slug__in=remote_interfaces.keys()
-        )
-
         self.new_interfaces = []
-
         for slug, remote_interface in remote_interfaces.items():
             try:
-                local_interface = local_interfaces.get(slug=slug)
-
-                serialized_local_interface = ComponentInterfaceSerializer(
-                    instance=local_interface
+                self._validate_existing_interface(
+                    slug=slug, remote_interface=remote_interface
                 )
-
-                for key, value in serialized_local_interface.data.items():
-                    # Check all the values match, some are allowed to differ
-                    if (
-                        key not in {"pk", "description"}
-                        and value != remote_interface[key]
-                    ):
-                        raise ValidationError(
-                            f"Interface {key} does not match for `{slug}`"
-                        )
-
             except ObjectDoesNotExist:
                 # The remote interface does not exist locally, create it
-                new_interface = ComponentInterfaceSerializer(
-                    data=remote_interface
+                self._create_new_interface(
+                    slug=slug, remote_interface=remote_interface
                 )
 
-                if not new_interface.is_valid():
-                    raise ValidationError(f"New interface '{slug}' is invalid")
+    def _validate_existing_interface(self, *, remote_interface, slug):
+        serialized_local_interface = ComponentInterfaceSerializer(
+            instance=ComponentInterface.objects.get(slug=slug)
+        )
 
-                self.new_interfaces.append(new_interface)
+        for key, value in serialized_local_interface.data.items():
+            # Check all the values match, some are allowed to differ
+            if (
+                key not in {"pk", "description"}
+                and value != remote_interface[key]
+            ):
+                raise ValidationError(
+                    f"Interface {key} does not match for `{slug}`"
+                )
+
+    def _create_new_interface(self, *, remote_interface, slug):
+        new_interface = ComponentInterfaceSerializer(data=remote_interface)
+
+        if not new_interface.is_valid():
+            raise ValidationError(f"New interface '{slug}' is invalid")
+
+        self.new_interfaces.append(new_interface)
 
     def save(self):
         self._save_new_interfaces()
