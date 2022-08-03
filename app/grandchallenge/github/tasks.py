@@ -113,47 +113,51 @@ def get_zipfile(*, pk):
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
 
-    if ghwm.clone_status == CloneStatusChoices.PENDING:
-        payload = ghwm.payload
-        repo_url = get_repo_url(payload)
-        ghwm.clone_status = CloneStatusChoices.STARTED
+    if ghwm.clone_status != CloneStatusChoices.PENDING:
+        ghwm.clone_status = CloneStatusChoices.FAILURE
         ghwm.save()
+        raise RuntimeError("Clone status was not pending")
 
+    payload = ghwm.payload
+    repo_url = get_repo_url(payload)
+    ghwm.clone_status = CloneStatusChoices.STARTED
+    ghwm.save()
+
+    try:
+        recurse_submodules = Algorithm.objects.get(
+            repo_name=ghwm.payload["repository"]["full_name"]
+        ).recurse_submodules
+    except Algorithm.DoesNotExist:
+        logger.info("No algorithm linked to this repo")
+        ghwm.clone_status = CloneStatusChoices.NOT_APPLICABLE
+        ghwm.save()
+        return
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
         try:
-            recurse_submodules = Algorithm.objects.get(
-                repo_name=ghwm.payload["repository"]["full_name"]
-            ).recurse_submodules
-        except Algorithm.DoesNotExist:
-            logger.info("No algorithm linked to this repo")
-            ghwm.clone_status = CloneStatusChoices.NOT_APPLICABLE
+            # Run git lfs install here, doing it in the dockerfile does not
+            # seem to work
+            install_lfs()
+            fetch_repo(payload, repo_url, tmpdirname, recurse_submodules)
+            license_check_result = check_license(tmpdirname)
+            temp_file = save_zipfile(ghwm, tmpdirname)
+
+            # update GithubWebhook object
+            ghwm.zipfile = temp_file
+            ghwm.license_check_result = license_check_result
+            ghwm.clone_status = CloneStatusChoices.SUCCESS
             ghwm.save()
-            return
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            try:
-                # Run git lfs install here, doing it in the dockerfile does not
-                # seem to work
-                install_lfs()
-                fetch_repo(payload, repo_url, tmpdirname, recurse_submodules)
-                license_check_result = check_license(tmpdirname)
-                temp_file = save_zipfile(ghwm, tmpdirname)
+            build_repo(ghwm.pk)
 
-                # update GithubWebhook object
-                ghwm.zipfile = temp_file
-                ghwm.license_check_result = license_check_result
-                ghwm.clone_status = CloneStatusChoices.SUCCESS
-                ghwm.save()
+        except Exception as e:
+            ghwm.stdout = str(getattr(e, "stdout", ""))
+            ghwm.stderr = str(getattr(e, "stderr", ""))
+            ghwm.clone_status = CloneStatusChoices.FAILURE
+            ghwm.save()
 
-                build_repo(ghwm.pk)
-
-            except Exception as e:
-                ghwm.stdout = str(getattr(e, "stdout", ""))
-                ghwm.stderr = str(getattr(e, "stderr", ""))
-                ghwm.clone_status = CloneStatusChoices.FAILURE
-                ghwm.save()
-
-                if not ghwm.user_error:
-                    raise
+            if not ghwm.user_error:
+                raise
 
 
 @shared_task
