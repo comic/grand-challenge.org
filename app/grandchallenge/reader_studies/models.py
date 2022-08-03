@@ -1379,7 +1379,7 @@ class Answer(UUIDModel):
                     "title", flat=True
                 ).all()
             ]
-            return ", ".join(list)
+            return format_html(", ".join(list))
         elif self.question.answer_type == Question.AnswerType.BOOL:
             return (
                 format_html('<span class="success">✔</span>')
