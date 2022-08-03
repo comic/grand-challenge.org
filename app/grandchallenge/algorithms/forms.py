@@ -747,7 +747,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         response = requests.get(
             url=url._replace(scheme="https", netloc=netloc).geturl(),
             params={
-                "algorithm_pk": self.algorithm_serializer.initial_data["pk"],
+                "algorithm": self.algorithm_serializer.initial_data["pk"],
             },
             timeout=5,
             headers=headers,
@@ -763,11 +763,12 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
             for ai in response.json()["results"]
             if ai["import_status"] == ImportStatusChoices.COMPLETED.label
         ]
-        algorithm_images.sort(key=lambda ai: ai["created"])
+        algorithm_images.sort(key=lambda ai: ai["created"], reverse=True)
 
         if len(algorithm_images) == 0:
             raise ValidationError(
-                "No algorithm images found for this algorithm"
+                "No valid algorithm images found for this algorithm, "
+                "check your URL and API token."
             )
 
         algorithm_image_serializer = AlgorithmImageSerializer(
@@ -831,8 +832,6 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
     def _save_new_interfaces(self):
         for interface in self.new_interfaces:
             interface.save(
-                # Force the given slug to be used
-                slug=interface.initial_data["slug"],
                 # The interface kind is a read only display value, this could
                 # be better solved with a custom DRF Field but deadlines...
                 kind=get(
@@ -844,6 +843,9 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
                 ),
                 store_in_database=False,
             )
+
+            # Force the given slug to be used
+            interface.instance.slug = interface.initial_data["slug"]
 
             # Set the store in database correctly, for most interfaces this is
             # False, then switch it if the super kind is different
