@@ -5,6 +5,7 @@ import pytest
 
 from grandchallenge.github.models import CloneStatusChoices
 from grandchallenge.github.tasks import get_zipfile
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.github_tests.factories import GitHubWebhookMessageFactory
 
 
@@ -13,6 +14,15 @@ from tests.github_tests.factories import GitHubWebhookMessageFactory
 def test_get_zipfile(get_repo_url):
     get_repo_url.return_value = "https://x-access-token:some-token@github.com/DIAGNijmegen/rse-panimg-does-not-exist"
 
+    # repo won't be cloned without linked algorithm
+    ghwm = GitHubWebhookMessageFactory()
+    assert ghwm.clone_status == CloneStatusChoices.PENDING
+    get_zipfile(pk=ghwm.pk)
+    ghwm.refresh_from_db()
+    assert ghwm.clone_status == CloneStatusChoices.NOT_APPLICABLE
+    assert ghwm.zipfile.name == ""
+
+    _ = AlgorithmFactory(repo_name="DIAGNijmegen/rse-panimg")
     ghwm = GitHubWebhookMessageFactory()
     assert ghwm.clone_status == CloneStatusChoices.PENDING
     with pytest.raises(subprocess.CalledProcessError):
@@ -30,14 +40,13 @@ def test_get_zipfile(get_repo_url):
     assert ghwm2.license_keys == set()
 
     ghwm2.refresh_from_db()
-    assert ghwm2.zipfile is not None
-    previous_zipfile = ghwm2.zipfile
     assert ghwm2.clone_status == CloneStatusChoices.SUCCESS
     assert "diagnijmegen-rse-panimg-v0-4-2" in ghwm2.zipfile.name
     assert ghwm2.license_keys == {"apache-2.0"}
     assert ghwm2.has_open_source_license is True
 
-    # check that task is idempotent
-    get_zipfile(pk=ghwm2.pk)
-    ghwm2.refresh_from_db()
-    assert ghwm2.zipfile == previous_zipfile
+    # check that task only runs once
+    with pytest.raises(RuntimeError) as error:
+        get_zipfile(pk=ghwm2.pk)
+
+    assert "Clone status was not pending" in str(error)
