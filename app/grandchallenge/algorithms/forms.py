@@ -15,6 +15,8 @@ from crispy_forms.layout import (
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
+from django.core.validators import RegexValidator
+from django.db.transaction import on_commit
 from django.forms import (
     CharField,
     ChoiceField,
@@ -45,6 +47,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
 )
+from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -652,6 +655,10 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         ),
         widget=PasswordInput(render_value=True),
     )
+    remote_bucket_name = CharField(
+        help_text=("The name of the remote bucket the image is stored on."),
+        validators=[RegexValidator(regex=r"^[a-zA-Z0-9.\-_]{1,255}$")],
+    )
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -899,8 +906,18 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm.save()
 
     def _save_new_algorithm_image(self):
-        self.algorithm_image_serializer.save(
+        algorithm_image = self.algorithm_image_serializer.save(
             algorithm=self.algorithm,
             pk=self.algorithm_image_serializer.initial_data["pk"],
             creator=self.user,
+        )
+        on_commit(
+            import_remote_algorithm_image.signature(
+                kwargs={
+                    "algorithm_image_pk": algorithm_image.pk,
+                    "remote_bucket_name": self.cleaned_data[
+                        "remote_bucket_name"
+                    ],
+                }
+            ).apply_async
         )

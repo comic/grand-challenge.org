@@ -1,6 +1,8 @@
 import logging
 from typing import NamedTuple
 
+import boto3
+from botocore.exceptions import ClientError
 from celery import chain, chord, group, shared_task
 from django.conf import settings
 from django.core.cache import cache
@@ -32,6 +34,7 @@ from grandchallenge.components.tasks import (
     add_images_to_component_interface_value,
 )
 from grandchallenge.core.cache import _cache_key_from_method
+from grandchallenge.core.storage import copy_s3_object
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -512,3 +515,48 @@ def update_associated_challenges():
             ).distinct()
         ]
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
+    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
+
+    if (
+        algorithm_image.import_status
+        != AlgorithmImage.ImportStatusChoices.INITIALIZED
+    ):
+        raise RuntimeError("Algorithm image is not initialized")
+
+    try:
+        response = boto3.client("s3").list_objects_v2(
+            Bucket=remote_bucket_name,
+            Prefix=algorithm_image.image.field.upload_to(algorithm_image, "-")[
+                :-1
+            ],
+        )
+    except ClientError as error:
+        algorithm_image.import_status = (
+            AlgorithmImage.ImportStatusChoices.FAILED
+        )
+        algorithm_image.status = str(error)
+        algorithm_image.save()
+        raise
+
+    output_files = response.get("Contents", [])
+    if len(output_files) != 1:
+        algorithm_image.import_status = (
+            AlgorithmImage.ImportStatusChoices.FAILED
+        )
+        algorithm_image.status = "Unique algorithm image file not found"
+        algorithm_image.save()
+        raise RuntimeError(algorithm_image.status)
+
+    output_file = output_files[0]
+
+    copy_s3_object(
+        to_field=algorithm_image.image,
+        dest_filename=output_file["Key"].split("/")[-1],
+        src_bucket=remote_bucket_name,
+        src_key=output_file["Key"],
+        save=True,
+    )
