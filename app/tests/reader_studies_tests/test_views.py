@@ -485,6 +485,11 @@ def test_pdf_report_content(client):
         answer_type=Question.AnswerType.MASK,
         question_text="Mask question",
     )
+    q4 = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.NUMBER,
+        question_text="Number question 2",
+    )
     number_gt_answer = AnswerFactory(
         question=q1,
         creator=reader,
@@ -512,6 +517,13 @@ def test_pdf_report_content(client):
         answer=4,
         is_ground_truth=False,
         display_set=ds2,
+    )
+    number_empty_answer = AnswerFactory(
+        question=q4,
+        creator=editor,
+        answer=None,
+        is_ground_truth=False,
+        display_set=ds1,
     )
     annotation_answer = AnswerFactory(
         question=q2,
@@ -558,6 +570,12 @@ def test_pdf_report_content(client):
     )
     assert str(number_gt_answer.answer) not in str(response.context["answers"])
     assert str(number_answer_ds2.answer) not in str(
+        response.context["answers"]
+    )
+    assert str(number_empty_answer.answer) not in str(
+        response.context["answers"]
+    )
+    assert str(number_empty_answer.question.question_text) not in str(
         response.context["answers"]
     )
     assert str(annotation_answer.answer) not in str(

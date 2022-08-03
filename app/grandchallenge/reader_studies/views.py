@@ -1489,7 +1489,7 @@ class DisplaySetPDFReport(
 
     def get_context_data(self):
         answer_dict = {
-            answer.question.question_text: answer.answer_text
+            answer.question.question_text: answer.html_string
             for answer in self.display_set.answers.select_related(
                 "creator", "question", "answer_image"
             )
@@ -1502,6 +1502,7 @@ class DisplaySetPDFReport(
                 question__answer_type__in=AnswerType.get_annotation_types(),
             )
             .all()
+            if answer.answer is not None
         }
         context = {
             "reader_study": self.reader_study,

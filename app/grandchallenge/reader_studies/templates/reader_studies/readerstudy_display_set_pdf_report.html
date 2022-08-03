@@ -10,6 +10,8 @@
         td.left {width:30%;}
         h1 {text-align: center;}
         div.answers {padding: 3px;}
+        .success {color:green;}
+        .danger {color:red;}
         @page {
             @frame content_frame {
                 left: 50pt;
@@ -47,7 +49,7 @@
                 {% for question, answer in answers.items %}
                     <tr>
                         <td class="left"><b>{{ question }}:</b></td>
-                        <td>{{ answer }}</td>
+                        <td>{{ answer|safe }}</td>
                     </tr>
                 {% endfor %}
             </table>
