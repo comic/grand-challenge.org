@@ -641,6 +641,44 @@ class AlgorithmPublishForm(AlgorithmPublishValidation, ModelForm):
         fields = ("public",)
 
 
+class RemoteInstanceClient:
+    def list_algorithms(self, netloc, slug, headers):
+        url = urlparse(reverse(viewname="api:algorithm-list"))
+
+        response = requests.get(
+            url=url._replace(scheme="https", netloc=netloc).geturl(),
+            params={"slug": slug},
+            timeout=5,
+            headers=headers,
+        )
+
+        if response.status_code != 200:
+            raise ValidationError(
+                f"{response.status_code} Response from {netloc}"
+            )
+
+        return response.json()
+
+    def list_algorithm_images(self, netloc, algorithm_pk, headers):
+        url = urlparse(reverse(viewname="api:algorithms-image-list"))
+
+        response = requests.get(
+            url=url._replace(scheme="https", netloc=netloc).geturl(),
+            params={
+                "algorithm": algorithm_pk,
+            },
+            timeout=5,
+            headers=headers,
+        )
+
+        if response.status_code != 200:
+            raise ValidationError(
+                f"{response.status_code} Response from {netloc}"
+            )
+
+        return response.json()
+
+
 class AlgorithmImportForm(SaveFormInitMixin, Form):
     algorithm_url = URLField(
         help_text=(
@@ -667,6 +705,10 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm_image_serializer = None
         self.algorithm = None
         self.new_interfaces = None
+
+    @property
+    def remote_instance_client(self):
+        return RemoteInstanceClient()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -717,21 +759,9 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         return algorithm_url
 
     def _build_algorithm(self, *, algorithm_slug, headers, netloc):
-        url = urlparse(reverse(viewname="api:algorithm-list"))
-
-        response = requests.get(
-            url=url._replace(scheme="https", netloc=netloc).geturl(),
-            params={"slug": algorithm_slug},
-            timeout=5,
-            headers=headers,
+        algorithms_list = self.remote_instance_client.list_algorithms(
+            slug=algorithm_slug, headers=headers, netloc=netloc
         )
-
-        if response.status_code != 200:
-            raise ValidationError(
-                f"{response.status_code} Response from {netloc}"
-            )
-
-        algorithms_list = response.json()
 
         if algorithms_list["count"] != 1:
             raise ValidationError(
@@ -749,25 +779,17 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm_serializer = algorithm_serializer
 
     def _build_algorithm_image(self, headers, netloc):
-        url = urlparse(reverse(viewname="api:algorithms-image-list"))
-
-        response = requests.get(
-            url=url._replace(scheme="https", netloc=netloc).geturl(),
-            params={
-                "algorithm": self.algorithm_serializer.initial_data["pk"],
-            },
-            timeout=5,
-            headers=headers,
-        )
-
-        if response.status_code != 200:
-            raise ValidationError(
-                f"{response.status_code} Response from {netloc}"
+        algorithm_images_list = (
+            self.remote_instance_client.list_algorithm_images(
+                netloc=netloc,
+                headers=headers,
+                algorithm_pk=self.algorithm_serializer.initial_data["pk"],
             )
+        )
 
         algorithm_images = [
             ai
-            for ai in response.json()["results"]
+            for ai in algorithm_images_list["results"]
             if ai["import_status"] == ImportStatusChoices.COMPLETED.label
         ]
         algorithm_images.sort(key=lambda ai: ai["created"], reverse=True)
@@ -866,6 +888,8 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm = self.algorithm_serializer.save(
             pk=self.algorithm_serializer.initial_data["pk"],
         )
+        self.algorithm.slug = self.algorithm_serializer.initial_data["slug"]
+
         self.algorithm.add_editor(user=self.user)
 
         self.algorithm.inputs.set(
