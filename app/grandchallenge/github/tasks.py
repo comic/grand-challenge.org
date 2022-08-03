@@ -124,7 +124,10 @@ def get_zipfile(*, pk):
                 repo_name=ghwm.payload["repository"]["full_name"]
             ).recurse_submodules
         except Algorithm.DoesNotExist:
-            recurse_submodules = False
+            logger.info("No algorithm linked to this repo")
+            ghwm.clone_status = CloneStatusChoices.NOT_APPLICABLE
+            ghwm.save()
+            return
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             try:
