@@ -1,4 +1,5 @@
 import logging
+import math
 from datetime import timedelta
 from typing import Dict
 
@@ -753,9 +754,7 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
 
 
 class DisplaySetFromJobCreate(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    FormView,
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, FormView
 ):
     form_class = DisplaySetFromJobForm
     permission_required = "algorithms.view_job"
@@ -815,9 +814,7 @@ class JobViewSet(
     queryset = (
         Job.objects.all()
         .prefetch_related("outputs__interface", "inputs__interface")
-        .select_related(
-            "algorithm_image__algorithm__hanging_protocol",
-        )
+        .select_related("algorithm_image__algorithm__hanging_protocol")
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -954,30 +951,37 @@ class AlgorithmAddRepo(
             "Accept": "application/vnd.github.v3+json",
             "Authorization": f"token {user_token.access_token}",
         }
+        page_items = 100
+        params = {"per_page": page_items, "page": 1}
 
-        installations = requests.get(
-            "https://api.github.com/user/installations",
-            headers=headers,
-            timeout=5,
-        ).json()
-        repos = []
-        for installation in installations.get("installations", []):
+        def recursive_get(url, object_key, value_key, page=1):
+            params["page"] = page
             response = requests.get(
-                f"https://api.github.com/user/installations/{installation['id']}/repositories",
-                headers=headers,
-                timeout=5,
+                url, headers=headers, timeout=5, params=params
             ).json()
+            total = response["total_count"]
+            result = []
+            result += [obj[value_key] for obj in response[object_key]]
+            if total > page_items and page < math.ceil(total / page_items):
+                result += recursive_get(url, object_key, value_key, page + 1)
 
-            repos += [repo["full_name"] for repo in response["repositories"]]
+            return result
+
+        installations = recursive_get(
+            "https://api.github.com/user/installations", "installations", "id"
+        )
+
+        repos = []
+        for installation_id in installations:
+            repo_url = f"https://api.github.com/user/installations/{installation_id}/repositories"
+            repos += recursive_get(repo_url, "repositories", "full_name")
 
         kwargs.update({"repos": repos})
         return kwargs
 
 
 class AlgorithmPublishView(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    UpdateView,
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):
     model = Algorithm
     form_class = AlgorithmPublishForm

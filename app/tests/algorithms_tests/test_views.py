@@ -1,6 +1,9 @@
 import datetime
+import json
+from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
 from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.utils.text import slugify
@@ -19,6 +22,7 @@ from tests.algorithms_tests.factories import (
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import UserFactory
+from tests.github_tests.factories import GitHubUserTokenFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
@@ -852,3 +856,65 @@ def test_import_view(client, authenticated_staff_user, mocker):
     )
     assert image_interface.store_in_database is False
     assert image_interface.kind == ComponentInterface.Kind.IMAGE
+
+
+def mocked_requests_get(*args, **kwargs):
+    json_resp = {}
+    if args[0] == "https://api.github.com/user/installations":
+        json_resp = {"total_count": 2, "installations": [{"id": 1}, {"id": 2}]}
+    elif args[0] == "https://api.github.com/user/installations/1/repositories":
+        per_page = kwargs["params"]["per_page"]
+        total_count = 299
+        page = kwargs["params"]["page"]
+        start_at = page * per_page - per_page
+        end_at = min(page * per_page, total_count)
+        json_resp = {
+            "total_count": total_count,
+            "repositories": [
+                {"full_name": f"inst_1_repo{i}"}
+                for i in range(start_at, end_at)
+            ],
+        }
+    elif args[0] == "https://api.github.com/user/installations/2/repositories":
+        json_resp = {
+            "total_count": 2,
+            "repositories": [
+                {"full_name": "inst_2_repo1"},
+                {"full_name": "inst_2_repo2"},
+            ],
+        }
+
+    mock = MagicMock(
+        spec=requests.Response,
+        status_code=200,
+        headers={"content-type": "application/json"},
+        text=json.dumps(json_resp),
+    )
+    mock.json.return_value = json_resp
+    return mock
+
+
+@pytest.mark.django_db
+@patch(
+    "grandchallenge.algorithms.views.requests.get",
+    side_effect=mocked_requests_get,
+)
+def test_algorithm_repo_list_view(get, client, settings):
+    editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
+    GitHubUserTokenFactory(user=editor)
+    alg = AlgorithmFactory()
+    alg.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="algorithms:add-repo",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    for repo in ("inst_1_repo0", "inst_1_repo298", "inst_2_repo2"):
+        assert response.rendered_content.count(repo) == 2
