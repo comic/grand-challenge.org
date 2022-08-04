@@ -11,7 +11,6 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
-from django.utils.html import format_html
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
@@ -1363,31 +1362,6 @@ class Answer(UUIDModel):
             raise ValidationError(
                 "Answer for required question cannot be None"
             )
-
-    @property
-    def html_string(self):
-        if self.question.answer_type in (
-            Question.AnswerType.CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE,
-            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ):
-            list = [
-                format_html("<u>{}</u>", option)
-                if option in self.answer_text
-                else format_html("{}", option)
-                for option in self.question.options.values_list(
-                    "title", flat=True
-                ).all()
-            ]
-            return format_html(", ".join(list))
-        elif self.question.answer_type == Question.AnswerType.BOOL:
-            return (
-                format_html('<span class="success">✔</span>')
-                if self.answer
-                else format_html('<span class="danger">✘</span>')
-            )
-        else:
-            return self.answer_text
 
     @property
     def answer_text(self):

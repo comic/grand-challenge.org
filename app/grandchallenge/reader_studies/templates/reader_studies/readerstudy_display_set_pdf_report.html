@@ -49,7 +49,26 @@
                 {% for question, answer in answers.items %}
                     <tr>
                         <td class="left"><b>{{ question }}:</b></td>
-                        <td>{{ answer }}</td>
+                        {% if answer.question.answer_type == "BOOL" %}
+                            {% if answer.answer %}
+                                <td><span class="success">✔</span></td>
+                            {% else %}
+                                <td><span class="danger">✘</span></td>
+                            {% endif %}
+                        {% elif answer.question.answer_type == "CHOI" or answer.question.answer_type == "MCHO" or answer.question.answer_type == "MCHD"%}
+                            <td>
+                                {% for option in answer.question.options.all %}
+                                    {% if option.title in answer.answer_text %}
+                                        <u>{{ option.title }}</u>
+                                    {% else %}
+                                        {{ option.title }}
+                                    {% endif %}
+                                    {% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </td>
+                        {% else %}
+                            <td>{{ answer.answer_text }}</td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </table>
