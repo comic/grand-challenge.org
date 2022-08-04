@@ -560,33 +560,11 @@ def test_pdf_report_content(client):
     assert str(ds1) in str(response.context["display_set"])
     assert str(ds2) not in str(response.context["display_set"])
     assert str(reader) in str(response.context["user"])
-    assert number_answer_reader.question.question_text in str(
-        response.context["answers"]
-    )
-    assert str(number_answer_reader.answer) in str(response.context["answers"])
+    assert number_answer_reader in response.context["answers"]
 
-    assert str(number_answer_editor.answer) not in str(
-        response.context["answers"]
-    )
-    assert str(number_gt_answer.answer) not in str(response.context["answers"])
-    assert str(number_answer_ds2.answer) not in str(
-        response.context["answers"]
-    )
-    assert str(number_empty_answer.answer) not in str(
-        response.context["answers"]
-    )
-    assert str(number_empty_answer.question.question_text) not in str(
-        response.context["answers"]
-    )
-    assert str(annotation_answer.answer) not in str(
-        response.context["answers"]
-    )
-    assert annotation_answer.question.question_text not in str(
-        response.context["answers"]
-    )
-    assert str(image_answer.answer_image) not in str(
-        response.context["answers"]
-    )
-    assert image_answer.question.question_text not in str(
-        response.context["answers"]
-    )
+    assert number_answer_editor not in response.context["answers"]
+    assert number_gt_answer not in response.context["answers"]
+    assert number_answer_ds2 not in response.context["answers"]
+    assert number_empty_answer not in response.context["answers"]
+    assert annotation_answer not in response.context["answers"]
+    assert image_answer not in response.context["answers"]
