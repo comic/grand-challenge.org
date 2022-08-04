@@ -1001,6 +1001,14 @@
     <span class="n">MULTIPLE_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;MANG&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple angles&quot;</span>
 
     <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_choice_types</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_annotation_types</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">,</span>
