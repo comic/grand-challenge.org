@@ -1488,26 +1488,25 @@ class DisplaySetPDFReport(
         return response
 
     def get_context_data(self):
-        answer_dict = {
-            answer.question.question_text: answer.answer_text
-            for answer in self.display_set.answers.select_related(
+        answers = (
+            self.display_set.answers.select_related(
                 "creator", "question", "answer_image"
             )
             .filter(
                 creator=self.user,
                 is_ground_truth=False,
                 answer_image__isnull=True,
+                answer__isnull=False,
             )
             .exclude(
                 question__answer_type__in=AnswerType.get_annotation_types(),
             )
-            .all()
-        }
+        )
         context = {
             "reader_study": self.reader_study,
             "display_set": self.display_set,
             "user": self.user,
             "created": now(),
-            "answers": answer_dict,
+            "answers": answers,
         }
         return context

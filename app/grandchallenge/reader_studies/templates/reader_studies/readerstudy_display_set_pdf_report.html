@@ -10,6 +10,8 @@
         td.left {width:30%;}
         h1 {text-align: center;}
         div.answers {padding: 3px;}
+        .success {color:green;}
+        .danger {color:red;}
         @page {
             @frame content_frame {
                 left: 50pt;
@@ -44,10 +46,29 @@
         <div class="answers">
             <h2 style="margin-top:50px;">Answers</h2>
             <table>
-                {% for question, answer in answers.items %}
+                {% for answer in answers %}
                     <tr>
-                        <td class="left"><b>{{ question }}:</b></td>
-                        <td>{{ answer }}</td>
+                        <td class="left"><b>{{ answer.question.question_text }}:</b></td>
+                        {% if answer.question.answer_type == answer.question.AnswerType.BOOL %}
+                            {% if answer.answer %}
+                                <td><span class="success">✔</span></td>
+                            {% else %}
+                                <td><span class="danger">✘</span></td>
+                            {% endif %}
+                        {% elif answer.question.answer_type in answer.question.AnswerType.get_choice_types %}
+                            <td>
+                                {% for option in answer.question.options.all %}
+                                    {% if option.title in answer.answer_text %}
+                                        <u>{{ option.title }}</u>
+                                    {% else %}
+                                        {{ option.title }}
+                                    {% endif %}
+                                    {% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </td>
+                        {% else %}
+                            <td>{{ answer.answer_text }}</td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </table>

@@ -927,6 +927,14 @@ class AnswerType(models.TextChoices):
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
 
     @staticmethod
+    def get_choice_types():
+        return [
+            AnswerType.CHOICE,
+            AnswerType.MULTIPLE_CHOICE,
+            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+        ]
+
+    @staticmethod
     def get_annotation_types():
         return [
             AnswerType.BOUNDING_BOX_2D,

@@ -485,6 +485,11 @@ def test_pdf_report_content(client):
         answer_type=Question.AnswerType.MASK,
         question_text="Mask question",
     )
+    q4 = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.NUMBER,
+        question_text="Number question 2",
+    )
     number_gt_answer = AnswerFactory(
         question=q1,
         creator=reader,
@@ -512,6 +517,13 @@ def test_pdf_report_content(client):
         answer=4,
         is_ground_truth=False,
         display_set=ds2,
+    )
+    number_empty_answer = AnswerFactory(
+        question=q4,
+        creator=editor,
+        answer=None,
+        is_ground_truth=False,
+        display_set=ds1,
     )
     annotation_answer = AnswerFactory(
         question=q2,
@@ -548,27 +560,11 @@ def test_pdf_report_content(client):
     assert str(ds1) in str(response.context["display_set"])
     assert str(ds2) not in str(response.context["display_set"])
     assert str(reader) in str(response.context["user"])
-    assert number_answer_reader.question.question_text in str(
-        response.context["answers"]
-    )
-    assert str(number_answer_reader.answer) in str(response.context["answers"])
+    assert number_answer_reader in response.context["answers"]
 
-    assert str(number_answer_editor.answer) not in str(
-        response.context["answers"]
-    )
-    assert str(number_gt_answer.answer) not in str(response.context["answers"])
-    assert str(number_answer_ds2.answer) not in str(
-        response.context["answers"]
-    )
-    assert str(annotation_answer.answer) not in str(
-        response.context["answers"]
-    )
-    assert annotation_answer.question.question_text not in str(
-        response.context["answers"]
-    )
-    assert str(image_answer.answer_image) not in str(
-        response.context["answers"]
-    )
-    assert image_answer.question.question_text not in str(
-        response.context["answers"]
-    )
+    assert number_answer_editor not in response.context["answers"]
+    assert number_gt_answer not in response.context["answers"]
+    assert number_answer_ds2 not in response.context["answers"]
+    assert number_empty_answer not in response.context["answers"]
+    assert annotation_answer not in response.context["answers"]
+    assert image_answer not in response.context["answers"]
