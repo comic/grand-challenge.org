@@ -46,16 +46,16 @@
         <div class="answers">
             <h2 style="margin-top:50px;">Answers</h2>
             <table>
-                {% for question, answer in answers.items %}
+                {% for answer in answers %}
                     <tr>
-                        <td class="left"><b>{{ question }}:</b></td>
-                        {% if answer.question.answer_type == "BOOL" %}
+                        <td class="left"><b>{{ answer.question.question_text }}:</b></td>
+                        {% if answer.question.answer_type == answer.question.AnswerType.BOOL %}
                             {% if answer.answer %}
                                 <td><span class="success">✔</span></td>
                             {% else %}
                                 <td><span class="danger">✘</span></td>
                             {% endif %}
-                        {% elif answer.question.answer_type == "CHOI" or answer.question.answer_type == "MCHO" or answer.question.answer_type == "MCHD"%}
+                        {% elif answer.question.answer_type in answer.question.AnswerType.get_choice_types %}
                             <td>
                                 {% for option in answer.question.options.all %}
                                     {% if option.title in answer.answer_text %}
