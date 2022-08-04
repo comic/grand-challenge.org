@@ -959,9 +959,10 @@ class AlgorithmAddRepo(
             response = requests.get(
                 url, headers=headers, timeout=5, params=params
             ).json()
-            total = response["total_count"]
+            total = response.get("total_count", 0)
             result = []
-            result += [obj[value_key] for obj in response[object_key]]
+            if object_key in response:
+                result += [obj[value_key] for obj in response[object_key]]
             if total > page_items and page < math.ceil(total / page_items):
                 result += recursive_get(url, object_key, value_key, page + 1)
 

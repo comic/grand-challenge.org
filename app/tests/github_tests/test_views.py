@@ -59,7 +59,8 @@ def test_github_webhook(client, settings):
 @pytest.mark.django_db
 @patch("grandchallenge.github.views.requests.post")
 @patch("grandchallenge.github.views.requests.get")
-def test_redirect_view(get, post, client):
+@patch("grandchallenge.algorithms.views.requests.get")
+def test_redirect_view(alg_get, get, post, client):
     resp = Response()
     resp.status_code = 200
     resp.headers["Content-Type"] = "application/json"
@@ -97,6 +98,13 @@ def test_redirect_view(get, post, client):
     assert response.status_code == 403
 
     VerificationFactory(user=user, is_verified=True)
+
+    repo_response = Response()
+    repo_response.status_code = 200
+    repo_response.headers["Content-Type"] = "application/json"
+    repo_response._content = b'{"total_count": 1, "installations": [{"id": 1}], "repositories":[{"full_name" :"repo"}]}'
+    alg_get.return_value = repo_response
+
     response = get_view_for_user(
         client=client,
         viewname="github:install-complete",
