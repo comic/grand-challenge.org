@@ -31,8 +31,8 @@ from grandchallenge.hanging_protocols.serializers import (
 
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
-    inputs = ComponentInterfaceSerializer(many=True)
-    outputs = ComponentInterfaceSerializer(many=True)
+    inputs = ComponentInterfaceSerializer(many=True, read_only=True)
+    outputs = ComponentInterfaceSerializer(many=True, read_only=True)
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
 
