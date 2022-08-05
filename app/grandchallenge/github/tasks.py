@@ -84,8 +84,13 @@ def check_license(tmpdirname):
         ["licensee", "detect", tmpdirname, "--json", "--no-remote"],
         stdout=subprocess.PIPE,
     )
-    process.wait()
-    return json.loads(process.stdout.read().decode("utf-8"))
+    try:
+        outs, errs = process.communicate(timeout=15)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        raise
+
+    return json.loads(outs.decode("utf-8"))
 
 
 def save_zipfile(ghwm, tmpdirname):
