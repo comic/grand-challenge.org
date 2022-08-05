@@ -566,7 +566,7 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
         s3_client.download_file(
             Filename=dest,
             Bucket=remote_bucket_name,
-            Key=output_file["key"],
+            Key=output_file["Key"],
         )
 
         with open(dest, "rb") as f:
