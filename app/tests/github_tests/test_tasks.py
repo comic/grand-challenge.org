@@ -40,7 +40,7 @@ def test_get_zipfile(get_repo_url):
     assert ghwm2.license_keys == set()
 
     ghwm2.refresh_from_db()
-    assert ghwm2.clone_status == CloneStatusChoices.FAILURE
+    assert ghwm2.clone_status == CloneStatusChoices.SUCCESS
     assert "diagnijmegen-rse-panimg-v0-4-2" in ghwm2.zipfile.name
     assert ghwm2.license_keys == {"apache-2.0"}
     assert ghwm2.has_open_source_license is True
