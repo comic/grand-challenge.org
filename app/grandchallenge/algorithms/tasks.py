@@ -1,4 +1,5 @@
 import logging
+from tempfile import TemporaryDirectory
 from typing import NamedTuple
 
 import boto3
@@ -6,9 +7,11 @@ from botocore.exceptions import ClientError
 from celery import chain, chord, group, shared_task
 from django.conf import settings
 from django.core.cache import cache
+from django.core.files.base import File
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
+from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm
 from redis.exceptions import LockError
 
@@ -34,7 +37,6 @@ from grandchallenge.components.tasks import (
     add_images_to_component_interface_value,
 )
 from grandchallenge.core.cache import _cache_key_from_method
-from grandchallenge.core.storage import copy_s3_object
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
@@ -527,8 +529,10 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
     ):
         raise RuntimeError("Algorithm image is not initialized")
 
+    s3_client = boto3.client("s3")
+
     try:
-        response = boto3.client("s3").list_objects_v2(
+        response = s3_client.list_objects_v2(
             Bucket=remote_bucket_name,
             Prefix=algorithm_image.image.field.upload_to(algorithm_image, "-")[
                 :-1
@@ -553,10 +557,17 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
 
     output_file = output_files[0]
 
-    copy_s3_object(
-        to_field=algorithm_image.image,
-        dest_filename=output_file["Key"].split("/")[-1],
-        src_bucket=remote_bucket_name,
-        src_key=output_file["Key"],
-        save=True,
-    )
+    # We cannot copy objects directly here as this is likely a cross-region
+    # request, so download it then upload
+    with TemporaryDirectory() as tmp_dir:
+        filename = output_file["Key"].split("/")[-1]
+        dest = safe_join(tmp_dir, filename)
+
+        s3_client.download_file(
+            Filename=dest,
+            Bucket=remote_bucket_name,
+            Key=output_file["key"],
+        )
+
+        with open(dest, "rb") as f:
+            algorithm_image.image.save(filename, File(f))
