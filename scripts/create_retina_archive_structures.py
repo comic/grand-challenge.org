@@ -96,11 +96,10 @@ def load_as_bytes_io(fp):
     :param fp: filepath
     :return: BytesIO object
     """
-    fh = open(fp, "rb")
     bio = BytesIO()
-    bio.name = fh.name
-    bio.write(fh.read())
-    fh.close()
+    with open(fp, "rb") as fh:
+        bio.name = fh.name
+        bio.write(fh.read())
     bio.seek(0)
     return bio
 
