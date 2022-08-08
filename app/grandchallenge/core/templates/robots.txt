@@ -1,5 +1,5 @@
 User-agent: *
-DisallowL /accounts/
+Disallow: /accounts/
 Disallow: /admins/
 Disallow: /api/
 Disallow: /cases/
@@ -18,19 +18,10 @@ Disallow: /verifications/
 Disallow: /workstations/*/sessions/
 
 User-agent: AhrefsBot
-Disallow: /
-
 User-agent: rogerbot
-Disallow: /
-
 User-agent: MJ12bot
-Disallow: /
-
 User-agent: dotbot
-Disallow: /
-
 User-agent: SEOkicks
-Disallow: /
-
 User-agent: SEOkicks-Robot
+User-agent: BLEXBot
 Disallow: /
