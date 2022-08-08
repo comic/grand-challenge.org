@@ -717,6 +717,7 @@ def test_display_set_interfaces_create(client, settings):
     assert civ.image.name == "test_grayscale.jpg"
 
 
+@pytest.mark.django_db
 def test_pdf_report_permissions(client):
     editor, reader = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
