@@ -48,8 +48,8 @@ class UserProfileObjectMixin:
         try:
             return (
                 UserProfile.objects.select_related("user__verification")
-                .exclude(user__username__iexact=settings.ANONYMOUS_USER_NAME)
-                .get(user__username__iexact=self.kwargs["username"])
+                .exclude(user__username__exact=settings.ANONYMOUS_USER_NAME)
+                .get(user__username__exact=self.kwargs["username"])
             )
         except ObjectDoesNotExist:
             raise Http404("User not found.")
