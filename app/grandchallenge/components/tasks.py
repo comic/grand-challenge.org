@@ -131,28 +131,36 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         return
 
     if not instance.is_in_registry:
-        push_container_image(instance=instance)
-        instance.is_in_registry = True
+        try:
+            push_container_image(instance=instance)
+            instance.is_in_registry = True
+            instance.save()
+        except ValidationError as error:
+            instance.is_in_registry = False
+            instance.status = oxford_comma(error)
+            instance.import_status = instance.ImportStatusChoices.FAILED
+            instance.save()
+            send_invalid_dockerfile_email(container_image=instance)
+            return
+
+    if instance.SHIM_IMAGE and (
+        instance.latest_shimmed_version
+        != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+    ):
+        shim_container_image(instance=instance)
+        instance.is_on_sagemaker = False
         instance.save()
 
-    if instance.SHIM_IMAGE:
-        if (
-            instance.latest_shimmed_version
-            != settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
-        ):
-            shim_container_image(instance=instance)
-            instance.is_on_sagemaker = False
-            instance.save()
-
-        if (
-            settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
-            and not instance.is_on_sagemaker
-        ):
-            # Only create SageMaker models for shimmed images for now
-            # See ComponentImageManager
-            create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
-            instance.is_on_sagemaker = True
-            instance.save()
+    if (
+        instance.SHIM_IMAGE
+        and settings.COMPONENTS_CREATE_SAGEMAKER_MODEL
+        and not instance.is_on_sagemaker
+    ):
+        # Only create SageMaker models for shimmed images for now
+        # See ComponentImageManager
+        create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
+        instance.is_on_sagemaker = True
+        instance.save()
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
@@ -216,13 +224,19 @@ def push_container_image(*, instance):
     if not instance.is_manifest_valid:
         raise RuntimeError("Cannot push invalid instance to registry")
 
-    with NamedTemporaryFile(suffix=".tar") as o:
-        with instance.image.open(mode="rb") as im:
-            # Rewrite to tar as crane cannot handle gz
-            _decompress_tarball(in_fileobj=im, out_fileobj=o)
+    try:
+        with NamedTemporaryFile(suffix=".tar") as o:
+            with instance.image.open(mode="rb") as im:
+                # Rewrite to tar as crane cannot handle gz
+                _decompress_tarball(in_fileobj=im, out_fileobj=o)
 
-        _repo_login_and_run(
-            command=["crane", "push", o.name, instance.original_repo_tag]
+            _repo_login_and_run(
+                command=["crane", "push", o.name, instance.original_repo_tag]
+            )
+    except OSError:
+        raise ValidationError(
+            "The container image is too large, please reduce the size by "
+            "optimizing the layers of the container image."
         )
 
 

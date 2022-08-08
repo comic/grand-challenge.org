@@ -37,7 +37,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.hanging_protocols.models import ImagePort, ViewContentMixin
+from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -143,6 +143,10 @@ The scores can then be compared on the ``leaderboard``. Statistics are also avai
 based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
+
+from grandchallenge.workstations.templatetags.workstations import (
+    workstation_query,
+)
 
 CASE_TEXT_SCHEMA = {
     "type": "object",
@@ -840,6 +844,16 @@ class DisplaySet(UUIDModel):
             "api:reader-studies-display-set-detail", kwargs={"pk": self.pk}
         )
 
+    @cached_property
+    def workstation_url(self):
+        """The URL to answer this display set in a workstation"""
+        url = reverse(
+            "workstations:workstation-session-create",
+            kwargs={"slug": self.reader_study.workstation.slug},
+        )
+        query = workstation_query(display_set=self)
+        return f"{url}?{query}"
+
     @property
     def description(self):
         case_text = self.reader_study.case_text
@@ -899,6 +913,32 @@ class AnswerType(models.TextChoices):
     ANGLE = "ANGL", "Angle"
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
 
+    @staticmethod
+    def get_choice_types():
+        return [
+            AnswerType.CHOICE,
+            AnswerType.MULTIPLE_CHOICE,
+            AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+        ]
+
+    @staticmethod
+    def get_annotation_types():
+        return [
+            AnswerType.BOUNDING_BOX_2D,
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            AnswerType.DISTANCE_MEASUREMENT,
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            AnswerType.POINT,
+            AnswerType.MULTIPLE_POINTS,
+            AnswerType.POLYGON,
+            AnswerType.MULTIPLE_POLYGONS,
+            AnswerType.MASK,
+            AnswerType.LINE,
+            AnswerType.MULTIPLE_LINES,
+            AnswerType.ANGLE,
+            AnswerType.MULTIPLE_ANGLES,
+        ]
+
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
@@ -940,6 +980,28 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
+
+    class ImagePort(models.TextChoices):
+        MAIN = "M", "Main"
+        SECONDARY = "S", "Secondary"
+        TERTIARY = "TERTIARY", "Tertiary"
+        QUATERNARY = "QUATERNARY", "Quaternary"
+        QUINARY = "QUINARY", "Quinary"
+        SENARY = "SENARY", "Senary"
+        SEPTENARY = "SEPTENARY", "Septenary"
+        OCTONARY = "OCTONARY", "Octonary"
+        NONARY = "NONARY", "Nonary"
+        DENARY = "DENARY", "Denary"
+        UNDENARY = "UNDENARY", "Undenary"
+        DUODENARY = "DUODENARY", "Duodenary"
+        TREDENARY = "TREDENARY", "Tredenary"
+        QUATTUORDENARY = "QUATTUORDENARY", "Quattuordenary"
+        QUINDENARY = "QUINDENARY", "Quindenary"
+        SEXDENARY = "SEXDENARY", "Sexdenary"
+        SEPTENDENARY = "SEPTENDENARY", "Septendenary"
+        OCTODENARY = "OCTODENARY", "Octodenary"
+        NOVEMDENARY = "NOVEMDENARY", "Novemdenary"
+        VIGINTENARY = "VIGINTENARY", "Vigintenary"
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -1091,9 +1153,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     def clean(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
-        if (self.answer_type in self.annotation_types) != bool(
-            self.image_port
-        ):
+        if (
+            self.answer_type in self.AnswerType.get_annotation_types()
+        ) != bool(self.image_port):
             raise ValidationError(
                 "The image port must (only) be set for annotation questions."
             )
@@ -1117,27 +1179,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
 
     @property
-    def annotation_types(self):
-        return [
-            self.AnswerType.BOUNDING_BOX_2D,
-            self.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-            self.AnswerType.DISTANCE_MEASUREMENT,
-            self.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-            self.AnswerType.POINT,
-            self.AnswerType.MULTIPLE_POINTS,
-            self.AnswerType.POLYGON,
-            self.AnswerType.MULTIPLE_POLYGONS,
-            self.AnswerType.MASK,
-            self.AnswerType.LINE,
-            self.AnswerType.MULTIPLE_LINES,
-            self.AnswerType.ANGLE,
-            self.AnswerType.MULTIPLE_ANGLES,
-        ]
-
-    @property
     def allow_null_types(self):
         return [
-            *self.annotation_types,
+            *self.AnswerType.get_annotation_types(),
             self.AnswerType.CHOICE,
             self.AnswerType.NUMBER,
         ]

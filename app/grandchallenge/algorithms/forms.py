@@ -1,5 +1,8 @@
 import re
+from itertools import chain
+from urllib.parse import urlparse
 
+import requests
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
     HTML,
@@ -11,7 +14,11 @@ from crispy_forms.layout import (
 )
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.base import ContentFile
+from django.core.validators import RegexValidator
+from django.db.transaction import on_commit
 from django.forms import (
+    CharField,
     ChoiceField,
     Form,
     HiddenInput,
@@ -21,11 +28,14 @@ from django.forms import (
     ModelMultipleChoiceField,
     Select,
     TextInput,
+    URLField,
 )
-from django.forms.widgets import MultipleHiddenInput
+from django.forms.widgets import MultipleHiddenInput, PasswordInput
+from django.urls import Resolver404, resolve
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -33,12 +43,19 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
+from grandchallenge.algorithms.serializers import (
+    AlgorithmImageSerializer,
+    AlgorithmSerializer,
+)
+from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
+    ImportStatusChoices,
     InterfaceKindChoices,
 )
+from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -47,9 +64,11 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.evaluation.utils import get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstations.models import Workstation
 
 
@@ -331,6 +350,11 @@ class AlgorithmForm(
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
+        if self.instance:
+            self.fields["view_content"].help_text += (
+                " The following interfaces are used in your algorithm: "
+                f"{', '.join(self.instance.inputs.values_list('slug', flat=True).distinct())}."
+            )
 
 
 class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
@@ -577,6 +601,21 @@ class JobForm(SaveFormInitMixin, ModelForm):
         fields = ("comment", "public")
 
 
+class DisplaySetFromJobForm(SaveFormInitMixin, Form):
+    reader_study = ModelChoiceField(
+        queryset=ReaderStudy.objects.none(), required=True
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["reader_study"].queryset = get_objects_for_user(
+            user,
+            "reader_studies.change_readerstudy",
+            accept_global_perms=False,
+        ).order_by("title")
+
+
 class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
     class Meta(PermissionRequestUpdateForm.Meta):
         model = AlgorithmPermissionRequest
@@ -599,3 +638,309 @@ class AlgorithmPublishForm(AlgorithmPublishValidation, ModelForm):
     class Meta:
         model = Algorithm
         fields = ("public",)
+
+
+class RemoteInstanceClient:
+    def list_algorithms(self, netloc, slug, headers):
+        url = urlparse(reverse(viewname="api:algorithm-list"))
+
+        response = requests.get(
+            url=url._replace(scheme="https", netloc=netloc).geturl(),
+            params={"slug": slug},
+            timeout=5,
+            headers=headers,
+        )
+
+        if response.status_code != 200:
+            raise ValidationError(
+                f"{response.status_code} Response from {netloc}"
+            )
+
+        return response.json()
+
+    def list_algorithm_images(self, netloc, algorithm_pk, headers):
+        url = urlparse(reverse(viewname="api:algorithms-image-list"))
+
+        response = requests.get(
+            url=url._replace(scheme="https", netloc=netloc).geturl(),
+            params={
+                "algorithm": algorithm_pk,
+            },
+            timeout=5,
+            headers=headers,
+        )
+
+        if response.status_code != 200:
+            raise ValidationError(
+                f"{response.status_code} Response from {netloc}"
+            )
+
+        return response.json()
+
+
+class AlgorithmImportForm(SaveFormInitMixin, Form):
+    algorithm_url = URLField(
+        help_text=(
+            "The URL of the detail view for the algorithm you want to import. "
+            "You must be an editor of this algorithm."
+        )
+    )
+    api_token = CharField(
+        help_text=(
+            "API token used to fetch the algorithm information from the "
+            "remote instance. This will not be stored on the server."
+        ),
+        widget=PasswordInput(render_value=True),
+    )
+    remote_bucket_name = CharField(
+        help_text=("The name of the remote bucket the image is stored on."),
+        validators=[RegexValidator(regex=r"^[a-zA-Z0-9.\-_]{1,255}$")],
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.algorithm_serializer = None
+        self.algorithm_image_serializer = None
+        self.algorithm = None
+        self.new_interfaces = None
+
+    @property
+    def remote_instance_client(self):
+        return RemoteInstanceClient()
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if cleaned_data["api_token"]:
+            headers = {"Authorization": f"BEARER {cleaned_data['api_token']}"}
+        else:
+            headers = {}
+
+        parsed_algorithm_url = self._parse_remote_algorithm_url(
+            cleaned_data["algorithm_url"]
+        )
+        algorithm_slug = parsed_algorithm_url["slug"]
+        netloc = parsed_algorithm_url["netloc"]
+
+        self._build_algorithm(
+            algorithm_slug=algorithm_slug, headers=headers, netloc=netloc
+        )
+        self._build_algorithm_image(headers=headers, netloc=netloc)
+        self._build_interfaces()
+
+        return cleaned_data
+
+    def _parse_remote_algorithm_url(self, url):
+        parsed_url = urlparse(url)
+
+        try:
+            resolver_match = resolve(parsed_url.path)
+        except Resolver404:
+            raise ValidationError("Invalid URL")
+
+        if resolver_match.view_name != "algorithms:detail":
+            raise ValidationError("URL is not an algorithm detail view")
+
+        return {
+            "netloc": parsed_url.netloc,
+            "slug": resolver_match.kwargs["slug"],
+        }
+
+    def clean_algorithm_url(self):
+        algorithm_url = self.cleaned_data["algorithm_url"]
+
+        if Algorithm.objects.filter(
+            slug=self._parse_remote_algorithm_url(algorithm_url)["slug"]
+        ).exists():
+            raise ValidationError("An algorithm with that slug already exists")
+
+        return algorithm_url
+
+    def _build_algorithm(self, *, algorithm_slug, headers, netloc):
+        algorithms_list = self.remote_instance_client.list_algorithms(
+            slug=algorithm_slug, headers=headers, netloc=netloc
+        )
+
+        if algorithms_list["count"] != 1:
+            raise ValidationError(
+                f"Algorithm {algorithm_slug} not found, "
+                "check your URL and API token."
+            )
+
+        algorithm_serializer = AlgorithmSerializer(
+            data=algorithms_list["results"][0]
+        )
+
+        if not algorithm_serializer.is_valid():
+            raise ValidationError("Algorithm is invalid")
+
+        self.algorithm_serializer = algorithm_serializer
+
+    def _build_algorithm_image(self, headers, netloc):
+        algorithm_images_list = (
+            self.remote_instance_client.list_algorithm_images(
+                netloc=netloc,
+                headers=headers,
+                algorithm_pk=self.algorithm_serializer.initial_data["pk"],
+            )
+        )
+
+        algorithm_images = [
+            ai
+            for ai in algorithm_images_list["results"]
+            if ai["import_status"] == ImportStatusChoices.COMPLETED.label
+        ]
+        algorithm_images.sort(key=lambda ai: ai["created"], reverse=True)
+
+        if len(algorithm_images) == 0:
+            raise ValidationError(
+                "No valid algorithm images found for this algorithm, "
+                "check your URL and API token."
+            )
+
+        algorithm_image_serializer = AlgorithmImageSerializer(
+            data=algorithm_images[0]
+        )
+
+        if not algorithm_image_serializer.is_valid():
+            raise ValidationError("Algorithm image is invalid")
+
+        self.algorithm_image_serializer = algorithm_image_serializer
+
+    def _build_interfaces(self):
+        remote_interfaces = {
+            interface["slug"]: interface
+            for interface in chain(
+                self.algorithm_serializer.initial_data["inputs"],
+                self.algorithm_serializer.initial_data["outputs"],
+            )
+        }
+
+        self.new_interfaces = []
+        for slug, remote_interface in remote_interfaces.items():
+            try:
+                self._validate_existing_interface(
+                    slug=slug, remote_interface=remote_interface
+                )
+            except ObjectDoesNotExist:
+                # The remote interface does not exist locally, create it
+                self._create_new_interface(
+                    slug=slug, remote_interface=remote_interface
+                )
+
+    def _validate_existing_interface(self, *, remote_interface, slug):
+        serialized_local_interface = ComponentInterfaceSerializer(
+            instance=ComponentInterface.objects.get(slug=slug)
+        )
+
+        for key, value in serialized_local_interface.data.items():
+            # Check all the values match, some are allowed to differ
+            if (
+                key not in {"pk", "description"}
+                and value != remote_interface[key]
+            ):
+                raise ValidationError(
+                    f"Interface {key} does not match for `{slug}`"
+                )
+
+    def _create_new_interface(self, *, remote_interface, slug):
+        new_interface = ComponentInterfaceSerializer(data=remote_interface)
+
+        if not new_interface.is_valid():
+            raise ValidationError(f"New interface '{slug}' is invalid")
+
+        self.new_interfaces.append(new_interface)
+
+    def save(self):
+        self._save_new_interfaces()
+        self._save_new_algorithm()
+        self._save_new_algorithm_image()
+
+    def _save_new_interfaces(self):
+        for interface in self.new_interfaces:
+            interface.save(
+                # The interface kind is a read only display value, this could
+                # be better solved with a custom DRF Field but deadlines...
+                kind=get(
+                    [
+                        c[0]
+                        for c in InterfaceKindChoices.choices
+                        if c[1] == interface.initial_data["kind"]
+                    ]
+                ),
+                store_in_database=False,
+            )
+
+            # Force the given slug to be used
+            interface.instance.slug = interface.initial_data["slug"]
+
+            # Set the store in database correctly, for most interfaces this is
+            # False, then switch it if the super kind is different
+            if interface.initial_data[
+                "super_kind"
+            ] != interface.get_super_kind(obj=interface.instance):
+                interface.instance.store_in_database = True
+            interface.instance.save()
+
+    def _save_new_algorithm(self):
+        self.algorithm = self.algorithm_serializer.save(
+            pk=self.algorithm_serializer.initial_data["pk"],
+        )
+        self.algorithm.slug = self.algorithm_serializer.initial_data["slug"]
+
+        self.algorithm.add_editor(user=self.user)
+
+        self.algorithm.inputs.set(
+            ComponentInterface.objects.filter(
+                slug__in={
+                    interface["slug"]
+                    for interface in self.algorithm_serializer.initial_data[
+                        "inputs"
+                    ]
+                }
+            )
+        )
+        self.algorithm.outputs.set(
+            ComponentInterface.objects.filter(
+                slug__in={
+                    interface["slug"]
+                    for interface in self.algorithm_serializer.initial_data[
+                        "outputs"
+                    ]
+                }
+            )
+        )
+
+        if logo_url := self.algorithm_serializer.initial_data["logo"]:
+            response = requests.get(
+                url=logo_url, timeout=5, allow_redirects=True
+            )
+            logo = ContentFile(response.content)
+            self.algorithm.logo.save(
+                logo_url.rsplit("/")[-1].replace(".x20", ""), logo
+            )
+
+        original_url = self.algorithm_serializer.initial_data["url"]
+        self.algorithm.detail_page_markdown += (
+            f"\n\n#### Origin\n\nImported from "
+            f"[{urlparse(original_url).netloc}]({original_url})."
+        )
+        self.algorithm.save()
+
+    def _save_new_algorithm_image(self):
+        algorithm_image = self.algorithm_image_serializer.save(
+            algorithm=self.algorithm,
+            pk=self.algorithm_image_serializer.initial_data["pk"],
+            creator=self.user,
+        )
+        on_commit(
+            import_remote_algorithm_image.signature(
+                kwargs={
+                    "algorithm_image_pk": algorithm_image.pk,
+                    "remote_bucket_name": self.cleaned_data[
+                        "remote_bucket_name"
+                    ],
+                }
+            ).apply_async
+        )

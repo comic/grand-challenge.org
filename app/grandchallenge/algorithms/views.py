@@ -5,7 +5,10 @@ from typing import Dict
 import requests
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import (
@@ -49,11 +52,13 @@ from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
+    AlgorithmImportForm,
     AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
     AlgorithmRepoForm,
     AlgorithmUpdateForm,
+    DisplaySetFromJobForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -248,10 +253,18 @@ class EditorsUpdate(AlgorithmUserGroupUpdateMixin):
     form_class = EditorsForm
     success_message = "Editors successfully updated"
 
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#editors"
+
 
 class UsersUpdate(AlgorithmUserGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+    def get_success_url(self):
+        url = super().get_success_url()
+        return f"{url}#users"
 
 
 class JobViewersUpdate(JobUserGroupUpdateMixin):
@@ -739,6 +752,47 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     raise_exception = True
 
 
+class DisplaySetFromJobCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    FormView,
+):
+    form_class = DisplaySetFromJobForm
+    permission_required = "algorithms.view_job"
+    raise_exception = True
+    template_name = "algorithms/display_set_from_job_form.html"
+
+    @cached_property
+    def job(self):
+        return get_object_or_404(
+            Job.objects.filter(status=Job.SUCCESS).prefetch_related(
+                "inputs", "outputs", "algorithm_image__algorithm"
+            ),
+            pk=self.kwargs["pk"],
+        )
+
+    def get_permission_object(self):
+        return self.job
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.job})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
+    def form_valid(self, form):
+        display_set = self.job.get_or_create_display_set(
+            reader_study=form.cleaned_data["reader_study"]
+        )
+        self.success_url = display_set.workstation_url
+
+        return super().form_valid(form)
+
+
 class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all().prefetch_related("outputs", "inputs")
     serializer_class = AlgorithmSerializer
@@ -940,3 +994,23 @@ class AlgorithmPublishView(
             "Your algorithm has been published successfully.",
         )
         return response
+
+
+class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    form_class = AlgorithmImportForm
+    template_name = "algorithms/algorithm_import_form.html"
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+
+        self.success_url = form.algorithm.get_absolute_url()
+
+        return super().form_valid(form=form)

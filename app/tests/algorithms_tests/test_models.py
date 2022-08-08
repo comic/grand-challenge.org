@@ -16,6 +16,8 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmJobFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 
 @pytest.mark.django_db
@@ -162,3 +164,82 @@ class TestAlgorithmJobGroups(TestCase):
     def test_viewer_group_in_m2m(self):
         j = AlgorithmJobFactory()
         assert {*j.viewer_groups.all()} == {j.viewers}
+
+
+def test_get_or_create_display_set_unsuccessful_job():
+    j = AlgorithmJobFactory.build()
+
+    with pytest.raises(RuntimeError) as error:
+        j.get_or_create_display_set(reader_study=None)
+
+    assert "Display sets can only be created from successful jobs" in str(
+        error
+    )
+
+
+@pytest.mark.django_db
+def test_get_or_create_display_set():
+    rs1, rs2 = ReaderStudyFactory.create_batch(2)
+    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    civ1, civ2, civ3 = ComponentInterfaceValueFactory.create_batch(3)
+    j.inputs.set([civ1])
+    j.outputs.set([civ2, civ3])
+
+    new_display_set = j.get_or_create_display_set(reader_study=rs1)
+
+    # Display set should be created with the correct values
+    assert {*new_display_set.values.all()} == {civ1, civ2, civ3}
+    # For the correct readerstudy
+    assert new_display_set.reader_study == rs1
+
+    # And is idempotent
+    assert j.get_or_create_display_set(reader_study=rs1) == new_display_set
+
+    assert rs1.display_sets.count() == 1
+    assert rs2.display_sets.count() == 0
+
+
+@pytest.mark.django_db
+def test_new_display_set_created_on_output_change():
+    rs = ReaderStudyFactory()
+    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    civ1, civ2, civ3 = ComponentInterfaceValueFactory.create_batch(3)
+    j.inputs.set([civ1])
+    j.outputs.set([civ2])
+
+    ds1 = j.get_or_create_display_set(reader_study=rs)
+
+    # Display set should be created with the correct values
+    assert {*ds1.values.all()} == {civ1, civ2}
+
+    # A new display set should be created if the output changes
+    j.outputs.add(civ3)
+    ds2 = j.get_or_create_display_set(reader_study=rs)
+    assert ds2 != ds1
+    assert {*ds1.values.all()} == {civ1, civ2}
+    assert {*ds2.values.all()} == {civ1, civ2, civ3}
+
+    assert rs.display_sets.count() == 2
+
+
+@pytest.mark.django_db
+def test_new_display_set_created_on_reader_study_change():
+    rs1, rs2 = ReaderStudyFactory.create_batch(2)
+    j = AlgorithmJobFactory(status=Job.SUCCESS)
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)
+    j.inputs.set([civ1])
+    j.outputs.set([civ2])
+
+    ds1 = j.get_or_create_display_set(reader_study=rs1)
+
+    # Display set should be created with the correct values
+    assert {*ds1.values.all()} == {civ1, civ2}
+
+    # A new display set should be created if the reader study changes
+    ds2 = j.get_or_create_display_set(reader_study=rs2)
+    assert ds2 != ds1
+    assert {*ds1.values.all()} == {civ1, civ2}
+    assert {*ds2.values.all()} == {civ1, civ2}
+
+    assert rs1.display_sets.count() == 1
+    assert rs2.display_sets.count() == 1

@@ -231,6 +231,13 @@ class ReaderStudyUpdateForm(
         }
         help_texts.update(ViewContentMixin.Meta.help_texts)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["view_content"].help_text += (
+            " The following interfaces are used in your reader study: "
+            f"{', '.join(self.instance.display_sets.values_list('values__interface__slug', flat=True).distinct())}."
+        )
+
 
 class ReaderStudyCopyForm(Form):
     title = CharField(required=True)

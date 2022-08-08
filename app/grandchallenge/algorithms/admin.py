@@ -83,6 +83,7 @@ class JobAdmin(GuardedModelAdmin):
         "creator__username",
         "pk",
         "algorithm_image__algorithm__slug",
+        "algorithm_image__pk",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
 

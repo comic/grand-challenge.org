@@ -219,3 +219,35 @@ def test_hanging_protocol_parent_id_draggable():
         }
     )
     assert form.is_valid()
+
+
+def test_hanging_protocol_slice_plane_indicator():
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main"}, {"viewport_name": "secondary", "slice_plane_indicator": "tertiary"}]',
+        }
+    )
+    assert (
+        form.errors["json"][0]
+        == "Viewport secondary has a slice_plane_indicator that does not exist."
+    )
+
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main"}, {"viewport_name": "secondary", "slice_plane_indicator": "secondary"}]',
+        }
+    )
+    assert (
+        form.errors["json"][0]
+        == "Viewport secondary has a slice_plane_indicator that is the same as the viewport_name."
+    )
+
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main"}, {"viewport_name": "secondary", "slice_plane_indicator": "main"}]',
+        }
+    )
+    assert form.is_valid()

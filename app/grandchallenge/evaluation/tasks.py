@@ -178,6 +178,15 @@ def create_algorithm_jobs_for_evaluation(
     )
     evaluation = Evaluation.objects.get(pk=evaluation_pk)
 
+    if evaluation.status not in {
+        evaluation.PENDING,
+        evaluation.EXECUTING_PREREQUISITES,
+    }:
+        logger.info(
+            f"Nothing to do: evaluation is {evaluation.get_status_display()}."
+        )
+        return
+
     # Only the challenge admins should be able to view these jobs, never
     # the algorithm editors as these are participants - they must never
     # be able to see the test data.
@@ -228,19 +237,19 @@ def create_algorithm_jobs_for_evaluation(
                 max_jobs=max_jobs,
                 time_limit=evaluation.submission.phase.algorithm_time_limit,
             )
-
-            if not jobs:
-                # No more jobs created from this task, so everything must be ready
-                # for evaluation
-                set_evaluation_inputs.signature(
-                    kwargs={"evaluation_pk": str(evaluation.pk)},
-                    immutable=True,
-                ).apply_async()
-
     except (TooManyJobsScheduled, LockError) as error:
         logger.info(f"Retrying task due to: {error}")
         retry_with_delay()
         raise
+
+    if not jobs:
+        # No more jobs created from this task, so everything must be
+        # ready for evaluation, handles archives with only one item
+        # and re-evaluation of existing submissions with new methods
+        set_evaluation_inputs.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk)},
+            immutable=True,
+        ).apply_async()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
@@ -294,11 +303,11 @@ def set_evaluation_inputs(*, evaluation_pk):
     )
 
     has_pending_jobs = (
-        Job.objects.filter(
+        Job.objects.active()
+        .filter(
             algorithm_image__submission__evaluation=evaluation_pk,
             creator__isnull=True,  # Evaluation inference jobs have no creator
         )
-        .exclude(status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED])
         .exists()
     )
 
@@ -320,9 +329,19 @@ def set_evaluation_inputs(*, evaluation_pk):
             )
             return
 
+        algorithm_inputs = {
+            *evaluation.submission.phase.algorithm_inputs.all()
+        }
+
         civ_sets = {
             i.values.all()
-            for i in evaluation.submission.phase.archive.items.all()
+            for i in evaluation.submission.phase.archive.items.annotate(
+                interface_match_count=Count(
+                    "values", filter=Q(values__interface__in=algorithm_inputs)
+                )
+            )
+            .filter(interface_match_count=len(algorithm_inputs))
+            .prefetch_related("values")
         }
 
         successful_jobs = (
@@ -375,8 +394,6 @@ def set_evaluation_inputs(*, evaluation_pk):
             evaluation.save()
 
             on_commit(evaluation.execute)
-        else:
-            handle_failed_jobs(evaluation_pk=evaluation_pk)
 
 
 def filter_by_creators_most_recent(*, evaluations):

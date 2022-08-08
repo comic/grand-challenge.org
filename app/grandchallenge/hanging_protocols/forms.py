@@ -48,13 +48,31 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
         )
 
     def clean_json(self):
-        value = self.cleaned_data["json"]
-        viewports = [x["viewport_name"] for x in value]
-        if len(set(viewports)) != len(viewports):
+        json = self.cleaned_data["json"]
+        viewport_names = [x["viewport_name"] for x in json]
+
+        self._validate_viewport_uniqueness(viewport_names=viewport_names)
+        self._validate_dimensions(value=json)
+
+        for viewport in json:
+            if "parent_id" in viewport:
+                self._validate_parent_id(
+                    viewport=viewport, viewport_names=viewport_names
+                )
+            if "slice_plane_indicator" in viewport:
+                self._validate_slice_plane_indicator(
+                    viewport=viewport, viewport_names=viewport_names
+                )
+
+        return json
+
+    def _validate_viewport_uniqueness(self, *, viewport_names):
+        if len(set(viewport_names)) != len(viewport_names):
             self.add_error(
                 error="Each viewport can only be used once.", field="json"
             )
 
+    def _validate_dimensions(self, *, value):
         dims = ["x", "y", "w", "h"]
         if any(d in [k for v in value for k in v.keys()] for d in dims):
             for viewport in value:
@@ -73,19 +91,29 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
                         field="json",
                     )
 
-        for viewport in [v for v in value if "parent_id" in v]:
-            if viewport["parent_id"] not in viewports:
-                self.add_error(
-                    error=f"Viewport {viewport['viewport_name']} has a parent_id that does not exist.",
-                    field="json",
-                )
-            if "draggable" not in viewport or not viewport["draggable"]:
-                self.add_error(
-                    error=f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable.",
-                    field="json",
-                )
+    def _validate_parent_id(self, *, viewport, viewport_names):
+        if viewport.get("draggable", False) is False:
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable.",
+                field="json",
+            )
+        if viewport["parent_id"] not in viewport_names:
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a parent_id that does not exist.",
+                field="json",
+            )
 
-        return value
+    def _validate_slice_plane_indicator(self, *, viewport, viewport_names):
+        if viewport["slice_plane_indicator"] not in viewport_names:
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that does not exist.",
+                field="json",
+            )
+        if viewport["slice_plane_indicator"] == viewport["viewport_name"]:
+            self.add_error(
+                error=f"Viewport {viewport['viewport_name']} has a slice_plane_indicator that is the same as the viewport_name.",
+                field="json",
+            )
 
 
 class ViewContentMixin:

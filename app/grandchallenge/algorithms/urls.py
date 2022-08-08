@@ -11,12 +11,14 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageCreate,
     AlgorithmImageDetail,
     AlgorithmImageUpdate,
+    AlgorithmImportView,
     AlgorithmList,
     AlgorithmPermissionRequestCreate,
     AlgorithmPermissionRequestList,
     AlgorithmPermissionRequestUpdate,
     AlgorithmPublishView,
     AlgorithmUpdate,
+    DisplaySetFromJobCreate,
     EditorsUpdate,
     JobDetail,
     JobExperimentDetail,
@@ -31,6 +33,7 @@ app_name = "algorithms"
 urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
     path("create/", AlgorithmCreate.as_view(), name="create"),
+    path("import/", AlgorithmImportView.as_view(), name="import"),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
     path("<slug>/update/", AlgorithmUpdate.as_view(), name="update"),
     path("<slug>/publish/", AlgorithmPublishView.as_view(), name="publish"),
@@ -74,6 +77,11 @@ urlpatterns = [
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
         "<slug>/jobs/<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"
+    ),
+    path(
+        "<slug>/jobs/<uuid:pk>/display-set/create/",
+        DisplaySetFromJobCreate.as_view(),
+        name="display-set-from-job-create",
     ),
     path(
         "<slug>/jobs/<uuid:pk>/experiment/",
