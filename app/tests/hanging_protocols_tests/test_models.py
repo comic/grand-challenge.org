@@ -76,7 +76,97 @@ from tests.factories import UserFactory
             ],
             nullcontext(),
         ),
-        *[  # All valid orientations
+        # valid specialized view: minimap
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap",
+                    "specialized_view": "minimap",
+                    "parent_id": "main",
+                },
+            ],
+            nullcontext(),
+        ),
+        #  valid specialized view: multiple minimaps
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap1",
+                    "specialized_view": "minimap",
+                    "parent_id": "main",
+                },
+                {
+                    "viewport_name": "main_minimap2",
+                    "specialized_view": "minimap",
+                    "parent_id": "main",
+                },
+            ],
+            nullcontext(),
+        ),
+        # valid specialized view: 3D-sideview
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_sideview",
+                    "specialized_view": "3D-sideview",
+                    "parent_id": "main",
+                    "orientation": "axial",
+                },
+            ],
+            nullcontext(),
+        ),
+        # valid specialized view: multiple 3D-sideview
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_sideview_axial",
+                    "specialized_view": "3D-sideview",
+                    "parent_id": "main",
+                    "orientation": "axial",
+                },
+                {
+                    "viewport_name": "main_sideview_coronal",
+                    "specialized_view": "3D-sideview",
+                    "parent_id": "main",
+                    "orientation": "coronal",
+                },
+            ],
+            nullcontext(),
+        ),
+        # valid mixed specialized views: minimap and 3D-sideview
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap",
+                    "specialized_view": "minimap",
+                    "parent_id": "main",
+                },
+                {
+                    "viewport_name": "main_sideview",
+                    "specialized_view": "3D-sideview",
+                    "parent_id": "main",
+                    "orientation": "axial",
+                },
+            ],
+            nullcontext(),
+        ),
+        # All valid orientations
+        *[
             (
                 [
                     {
@@ -168,6 +258,81 @@ from tests.factories import UserFactory
                     "viewport_name": "main",
                     "slice_plane_indicator": "invalid",
                 }
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid view port name that is not a valid instance name for MeVisLab module ([a-zA-Z0-9_]+):
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main-!@#$%^&*()_+",
+                    "specialized_view": "minimap",
+                    "parent_id": "main",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid specialized view: 3D-sideview misses parent_id
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap",
+                    "specialized_view": "minimap",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid specialized view: 3D-sideview misses parent_id
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap",
+                    "specialized_view": "3D-sideview",
+                    "orientation": "axial",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid specialized view: 3D-sideview misses orientation
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap",
+                    "specialized_view": "3D-sideview",
+                    "parent_id": "main",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid specialized view: parent is specialized view
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap1",
+                    "specialized_view": "3D-sideview",
+                    "parent_id": "main",
+                },
+                {
+                    "viewport_name": "main_minimap2",
+                    "specialized_view": "minimap",
+                    "specialized_view": "minimap",
+                    "parent_id": "main_minimap1",
+                },
             ],
             pytest.raises(ValidationError),
         ),
