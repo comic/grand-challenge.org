@@ -119,17 +119,6 @@ HANGING_PROTOCOL_SCHEMA = {
             },
         },
         "additionalProperties": False,
-        "dependentRequired": {"specialized_view": ["parent_id"]},
-        "dependentSchemas": {
-            "specialized_view": {
-                "properties": {
-                    "viewport_name": {
-                        "type": "string",
-                        "pattern": "[a-zA-Z0-9_]+",
-                    }
-                }
-            }
-        },
         "allOf": [
             {
                 "if": {
