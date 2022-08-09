@@ -75,6 +75,8 @@ class InterfaceFormField:
                 JSONValidator(schema=instance.schema),
             ]
             extra_help = ""
+        else:
+            raise RuntimeError(f"Unknown widget for {instance}")
 
         self._field = field_type(
             help_text=_join_with_br(help_text, extra_help), **kwargs
