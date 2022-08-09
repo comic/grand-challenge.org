@@ -104,10 +104,7 @@ def add_file_to_display_set(
     display_set = DisplaySet.objects.get(pk=display_set_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
     with transaction.atomic():
-        if civ_pk is None:
-            civ = ComponentInterfaceValue.objects.create(interface=interface)
-        else:
-            civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
+        civ = ComponentInterfaceValue.objects.create(interface=interface)
         user_upload.copy_object(to_field=civ.file)
         try:
             civ.full_clean()
@@ -127,6 +124,10 @@ def add_file_to_display_set(
         else:
             civ.save()
             display_set.values.add(civ)
+            if civ_pk is not None:
+                # Remove the preiously assigned civ from the display set
+                civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
+                display_set.values.remove(civ)
 
 
 @shared_task

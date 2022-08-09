@@ -1090,7 +1090,7 @@ def test_file_form(settings):
     form.cleaned_data = {"user_upload": upload}
     with capture_on_commit_callbacks(execute=True):
         form.save()
-    civ.refresh_from_db()
+    civ = ds.values.get(interface=ci)
     assert civ.file.read() == b'{"foo": "bar"}'
 
 

@@ -436,10 +436,10 @@ def test_display_set_update(client):
     )
 
     assert response.status_code == 302
+    assert ds1.values.count() == 2
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
-    civ_str.refresh_from_db()
-    assert civ_str.value == "new-title"
+    assert ds1.values.get(interface=ci_str).value == "new-title"
 
     # A new ds should have been created for civ_img
     assert DisplaySet.objects.count() == 3
@@ -607,7 +607,7 @@ def test_add_files_to_display_set(client, settings):
         )
 
     assert response.status_code == 302
-    civ_json.refresh_from_db()
+    civ_json = ds.values.get(interface=ci_json)
     assert civ_json.file.read() == b'{"foo": "bar"}'
 
     with capture_on_commit_callbacks(execute=True):

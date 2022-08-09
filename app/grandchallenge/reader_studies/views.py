@@ -1431,19 +1431,16 @@ class DisplaySetUpdate(
 
             if ci.is_json_kind:
                 if current_value:
-                    current_value.value = civ
-                    current_value.save()
-                else:
-                    val = ComponentInterfaceValue.objects.create(
-                        interface=ci, value=civ
-                    )
-                    instance.values.add(val)
+                    assigned_civs.append(current_value)
+                val = ComponentInterfaceValue.objects.create(
+                    interface=ci, value=civ
+                )
+                instance.values.add(val)
             else:
                 if civ is None:
-
+                    # Value is cleared
                     if current_value:
                         assigned_civs.append(current_value)
-                        instance.values.remove(current_value)
                     continue
 
                 # If there is already a value for the provided civ's interface in
@@ -1456,11 +1453,11 @@ class DisplaySetUpdate(
                 # Add the provided civ to the current display set
                 instance.values.add(civ)
 
-        # Create a new display set for any civs that have been replaced by a
+        # Create a new display set for any image civs that have been replaced by a
         # new value in this display set, to ensure it remains connected to
         # the reader study.
         for assigned in assigned_civs:
-            if (
+            if assigned.interface.is_image_kind and (
                 not instance.reader_study.display_sets.exclude(pk=instance.pk)
                 .filter(values=assigned)
                 .exists()
