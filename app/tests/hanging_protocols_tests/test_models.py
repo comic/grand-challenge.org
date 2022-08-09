@@ -211,6 +211,18 @@ from tests.factories import UserFactory
             ],
             pytest.raises(ValidationError),
         ),
+        # valid json with duplicate viewports
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
         # invalid json containing undefined additional properties
         (
             [
@@ -330,8 +342,26 @@ from tests.factories import UserFactory
                 {
                     "viewport_name": "main_minimap2",
                     "specialized_view": "minimap",
-                    "specialized_view": "minimap",
                     "parent_id": "main_minimap1",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid specialized view: repeated viewport names
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "main_minimap1",
+                    "specialized_view": "3D-sideview",
+                    "parent_id": "main",
+                },
+                {
+                    "viewport_name": "main_minimap1",
+                    "specialized_view": "minimap",
+                    "parent_id": "main",
                 },
             ],
             pytest.raises(ValidationError),
