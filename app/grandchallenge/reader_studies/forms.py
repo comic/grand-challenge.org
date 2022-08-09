@@ -492,41 +492,62 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 
 class DisplaySetCreateForm(Form):
     _possible_widgets = {
-        SelectUploadWidget,
         *InterfaceFormField._possible_widgets,
     }
 
     def __init__(self, *args, instance, reader_study, user, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.instance = instance
         self.reader_study = reader_study
         self.user = user
+
         for slug, values in reader_study.values_for_interfaces.items():
             current_value = None
+
             if instance:
                 current_value = instance.values.filter(
                     interface__slug=slug
                 ).first()
+
             interface = ComponentInterface.objects.get(slug=slug)
+
             if interface.is_image_kind:
                 self.fields[slug] = self._get_image_field(
-                    interface, values, current_value
+                    interface=interface,
+                    values=values,
+                    current_value=current_value,
                 )
             elif interface.requires_file:
                 self.fields[slug] = self._get_file_field(
-                    interface, values, current_value
+                    interface=interface,
+                    values=values,
+                    current_value=current_value,
                 )
             else:
-                self.fields[slug] = self._get_json_field(
-                    interface, current_value
+                self.fields[slug] = self._get_default_field(
+                    interface=interface, current_value=current_value
                 )
 
-        order = (
-            instance.order if instance else reader_study.next_display_set_order
+        self.fields["order"] = IntegerField(
+            initial=(
+                instance.order
+                if instance
+                else reader_study.next_display_set_order
+            )
         )
-        self.fields["order"] = IntegerField(initial=order)
 
-    def _get_default_field(self, interface, current_value):
+    def _get_image_field(self, *, interface, values, current_value):
+        return self._get_default_field(
+            interface=interface, current_value=current_value
+        )
+
+    def _get_file_field(self, *, interface, values, current_value):
+        return self._get_default_field(
+            interface=interface, current_value=current_value
+        )
+
+    def _get_default_field(self, *, interface, current_value):
         return InterfaceFormField(
             instance=interface,
             initial=current_value.value if current_value else None,
@@ -534,8 +555,25 @@ class DisplaySetCreateForm(Form):
             user=self.user,
         ).field
 
+
+class DisplaySetUpdateForm(DisplaySetCreateForm):
+    _possible_widgets = {
+        SelectUploadWidget,
+        *DisplaySetCreateForm._possible_widgets,
+    }
+
+    def _get_image_field(self, *, interface, values, current_value):
+        return self._get_select_upload_widget_field(
+            interface=interface, values=values, current_value=current_value
+        )
+
+    def _get_file_field(self, *, interface, values, current_value):
+        return self._get_select_upload_widget_field(
+            interface=interface, values=values, current_value=current_value
+        )
+
     def _get_select_upload_widget_field(
-        self, interface, values, current_value
+        self, *, interface, values, current_value
     ):
         return ModelChoiceField(
             queryset=ComponentInterfaceValue.objects.filter(id__in=values),
@@ -548,27 +586,6 @@ class DisplaySetCreateForm(Form):
                     "interface_slug": interface.slug,
                 }
             ),
-        )
-
-    def _get_json_field(self, interface, current_value):
-        return self._get_default_field(interface, current_value)
-
-    def _get_image_field(self, interface, values, current_value):
-        return self._get_default_field(interface, current_value)
-
-    def _get_file_field(self, interface, values, current_value):
-        return self._get_default_field(interface, current_value)
-
-
-class DisplaySetUpdateForm(DisplaySetCreateForm):
-    def _get_image_field(self, interface, values, current_value):
-        return self._get_select_upload_widget_field(
-            interface, values, current_value
-        )
-
-    def _get_file_field(self, interface, values, current_value):
-        return self._get_select_upload_widget_field(
-            interface, values, current_value
         )
 
 
