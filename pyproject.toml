@@ -56,7 +56,7 @@ bleach = { extras = ["css"], version = "*" }
 jsonschema = "*"
 tldextract = "*"
 django-autocomplete-light = "*"
-django-storages = "*"
+django-storages = ">=1.13.1"
 boto3 = ">1.18.8"
 whitenoise = "*"
 brotli = "*"
