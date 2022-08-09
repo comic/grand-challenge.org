@@ -37,7 +37,7 @@ class Orientation(models.TextChoices):
 
 HANGING_PROTOCOL_SCHEMA = {
     "definitions": {},
-    "$schema": "https://json-schema.org/draft/2019-09/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "The Hanging Protocol Schema",
     "type": "array",
     "contains": {
