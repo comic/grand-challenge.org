@@ -653,13 +653,19 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     def _handle_failed_job(self, *, event):
         failure_reason = event.get("FailureReason")
+
         if failure_reason == (
             "CapacityError: Unable to provision requested ML compute capacity. "
             "Please retry using a different ML instance type."
         ):
             raise RetryTask("No current capacity for the chosen instance type")
 
-        data_log = self._get_job_data_log()
+        try:
+            data_log = self._get_job_data_log()
+        except LogStreamNotFound as error:
+            logger.warning(str(error))
+            data_log = []
+
         if any(
             "Model server did not respond to /invocations request within" in e
             for e in data_log
