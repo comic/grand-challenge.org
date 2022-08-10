@@ -422,11 +422,11 @@ def test_display_set_update(client):
     assert response.status_code == 302
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
-    civ_str.refresh_from_db()
-    assert civ_str.value == "new-title"
+    assert not ds1.values.filter(pk=civ_str.pk).exists()
+    assert ds1.values.filter(interface__kind="STR").get().value == "new-title"
 
-    # A new ds should have been created for civ_img
-    assert DisplaySet.objects.count() == 3
+    # Two new ds should have been created, one for civ_img and one for civ_str
+    assert DisplaySet.objects.count() == 4
 
 
 @pytest.mark.django_db
