@@ -1091,18 +1091,14 @@ class DisplaySetViewSet(
         interface = data.pop("interface", None)
         value = data.pop("value", None)
         image = data.pop("image", None)
-        with transaction.atomic():
-            if interface.is_image_kind:
-                # New images can also be added via the rawimageupload endpoint
-                if image:
-                    civ = ComponentInterfaceValue(interface=interface)
-                    civ.image = image
-                    civ.full_clean()
-                    civ.save()
-                    return civ
-            elif interface.is_json_kind:
-                civ = interface.create_instance(value=value)
-                return civ
+
+        if (interface.is_image_kind and image) or interface.is_json_kind:
+            with transaction.atomic():
+                return interface.create_instance(image=image, value=value)
+        else:
+            raise DRFValidationError(
+                f"No image, file or value provided for {interface.title}."
+            )
 
     def partial_update(self, request, pk=None):
         instance = self.get_object()
