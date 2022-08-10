@@ -103,24 +103,15 @@ def add_file_to_display_set(
     user_upload = UserUpload.objects.get(pk=user_upload_pk)
     display_set = DisplaySet.objects.get(pk=display_set_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
+    error = None
     with transaction.atomic():
         civ = ComponentInterfaceValue.objects.create(interface=interface)
         user_upload.copy_object(to_field=civ.file)
         try:
             civ.full_clean()
         except ValidationError as e:
-            civ.delete()
-            transaction.on_commit(
-                send_failed_file_copy_notification.signature(
-                    kwargs={
-                        "display_set_pk": display_set_pk,
-                        "interface_pk": interface_pk,
-                        "user_upload_pk": user_upload_pk,
-                        "error": str(e),
-                    },
-                    immutable=True,
-                ).apply_async
-            )
+            transaction.set_rollback(True)
+            error = str(e)
         else:
             civ.save()
             display_set.values.add(civ)
@@ -129,24 +120,17 @@ def add_file_to_display_set(
                 civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
                 display_set.values.remove(civ)
 
-
-@shared_task
-def send_failed_file_copy_notification(
-    *, display_set_pk, interface_pk, user_upload_pk, error
-):
-    user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    display_set = DisplaySet.objects.get(pk=display_set_pk)
-    interface = ComponentInterface.objects.get(pk=interface_pk)
-    Notification.send(
-        type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-        actor=user_upload.creator,
-        message=f"File for interface {interface.title} failed validation.",
-        target=display_set.reader_study,
-        description=(
-            f"File for interface {interface.title} added to {display_set_pk} "
-            f"in {display_set.reader_study.title} failed validation:\n{error}."
-        ),
-    )
+    if error is not None:
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            actor=user_upload.creator,
+            message=f"File for interface {interface.title} failed validation.",
+            target=display_set.reader_study,
+            description=(
+                f"File for interface {interface.title} added to {display_set_pk} "
+                f"in {display_set.reader_study.title} failed validation:\n{error}."
+            ),
+        )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

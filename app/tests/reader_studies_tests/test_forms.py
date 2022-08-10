@@ -16,6 +16,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetInterfacesCreateForm,
@@ -1086,6 +1087,32 @@ def test_file_form(settings):
     )
     upload.save()
 
+    ci.schema = {
+        "$schema": "http://json-schema.org/draft-07/schema",
+        "type": "array",
+    }
+    ci.save()
+
+    form = FileForm(user=user, display_set=ds, interface=ci)
+    form.cleaned_data = {"user_upload": upload}
+
+    with capture_on_commit_callbacks(execute=True):
+        form.save()
+
+    assert ds.values.count() == 1
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    msg = notification.print_notification(user=notification.user)
+    assert ci.title in msg
+    assert str(ds.pk) in msg
+    assert rs.title in msg
+    assert (
+        "JSON does not fulfill schema: {'foo': 'bar'} is not of type 'array'"
+        in msg
+    )
+
+    ci.schema = {}
+    ci.save()
     form = FileForm(user=user, display_set=ds, interface=ci)
     form.cleaned_data = {"user_upload": upload}
     with capture_on_commit_callbacks(execute=True):
