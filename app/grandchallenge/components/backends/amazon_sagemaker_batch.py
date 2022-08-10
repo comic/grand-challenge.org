@@ -561,10 +561,14 @@ class AmazonSageMakerBatchExecutor(Executor):
         return [event["message"] for event in response["events"]]
 
     def _set_runtime_metrics(self, *, event):
-        query_id = "q"
+        try:
+            start_time = ms_timestamp_to_datetime(event["TransformStartTime"])
+            end_time = ms_timestamp_to_datetime(event["TransformEndTime"])
+        except KeyError:
+            logger.warning("Invalid start or end time, metrics undetermined")
+            return
 
-        start_time = ms_timestamp_to_datetime(event["TransformStartTime"])
-        end_time = ms_timestamp_to_datetime(event["TransformEndTime"])
+        query_id = "q"
         query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._transform_job_name}/i-', 'Average', 60)"
 
         instance_type = get(
@@ -649,13 +653,19 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     def _handle_failed_job(self, *, event):
         failure_reason = event.get("FailureReason")
+
         if failure_reason == (
             "CapacityError: Unable to provision requested ML compute capacity. "
             "Please retry using a different ML instance type."
         ):
             raise RetryTask("No current capacity for the chosen instance type")
 
-        data_log = self._get_job_data_log()
+        try:
+            data_log = self._get_job_data_log()
+        except LogStreamNotFound as error:
+            logger.warning(str(error))
+            data_log = []
+
         if any(
             "Model server did not respond to /invocations request within" in e
             for e in data_log
@@ -663,7 +673,7 @@ class AmazonSageMakerBatchExecutor(Executor):
             raise ComponentException("Time limit exceeded")
 
         # Anything else needs investigation by a site administrator
-        raise RuntimeError("Job failed for an unknown reason")
+        raise RuntimeError(failure_reason)
 
     def _stop_running_jobs(self):
         try:

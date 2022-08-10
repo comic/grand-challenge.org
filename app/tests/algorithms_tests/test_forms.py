@@ -1,13 +1,17 @@
 import pytest
 from actstream.actions import is_following
 
-from grandchallenge.algorithms.forms import AlgorithmForm, AlgorithmPublishForm
+from grandchallenge.algorithms.forms import (
+    AlgorithmForm,
+    AlgorithmPublishForm,
+    JobForm,
+)
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, ComponentJob
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -418,4 +422,15 @@ def test_publish_algorithm():
     del algorithm.latest_executable_image
     del algorithm.public_test_case
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid()
+
+
+def test_only_publish_successful_jobs():
+    job_success = AlgorithmJobFactory.build(status=ComponentJob.SUCCESS)
+    job_failure = AlgorithmJobFactory.build(status=ComponentJob.FAILURE)
+
+    form = JobForm(instance=job_failure, data={"public": True})
+    assert not form.is_valid()
+
+    form = JobForm(instance=job_success, data={"public": True})
     assert form.is_valid()

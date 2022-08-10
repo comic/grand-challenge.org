@@ -52,6 +52,7 @@ from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
     ComponentInterface,
+    ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
@@ -599,6 +600,14 @@ class JobForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = Job
         fields = ("comment", "public")
+
+    def clean_public(self):
+        public = self.cleaned_data["public"]
+        if public and not self.instance.status == ComponentJob.SUCCESS:
+            return ValidationError(
+                "You can only publish successful algorithm jobs."
+            )
+        return public
 
 
 class DisplaySetFromJobForm(SaveFormInitMixin, Form):

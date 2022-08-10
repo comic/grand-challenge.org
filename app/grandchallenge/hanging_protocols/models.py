@@ -37,7 +37,7 @@ class Orientation(models.TextChoices):
 
 HANGING_PROTOCOL_SCHEMA = {
     "definitions": {},
-    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "The Hanging Protocol Schema",
     "type": "array",
     "contains": {
@@ -56,7 +56,10 @@ HANGING_PROTOCOL_SCHEMA = {
         "properties": {
             "viewport_name": {
                 "type": "string",
-                "enum": ViewportNames.values,
+            },
+            "specialized_view": {
+                "type": "string",
+                "enum": ["minimap", "3D-sideview"],
             },
             "x": {
                 "type": "integer",
@@ -116,6 +119,40 @@ HANGING_PROTOCOL_SCHEMA = {
             },
         },
         "additionalProperties": False,
+        "allOf": [
+            {
+                "if": {
+                    "required": ["specialized_view"],
+                    "specialized_view": {"minLength": 1},
+                },
+                "then": {
+                    "required": ["parent_id"],
+                    "properties": {
+                        "viewport_name": {
+                            "type": "string",
+                            "pattern": "^[a-zA-Z0-9_]+$",
+                        }
+                    },
+                },
+                "else": {
+                    "properties": {
+                        "viewport_name": {
+                            "type": "string",
+                            "enum": ViewportNames.values,
+                        }
+                    }
+                },
+            },
+            {
+                "if": {
+                    "required": ["specialized_view"],
+                    "properties": {
+                        "specialized_view": {"const": "3D-sideview"}
+                    },
+                },
+                "then": {"required": ["orientation"]},
+            },
+        ],
     },
     "minItems": 1,
     "uniqueItems": True,

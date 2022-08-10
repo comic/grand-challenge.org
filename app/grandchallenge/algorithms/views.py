@@ -954,10 +954,12 @@ class AlgorithmAddRepo(
             "Accept": "application/vnd.github.v3+json",
             "Authorization": f"token {user_token.access_token}",
         }
+        params = {"per_page": 100, "page": 1}
 
         installations = requests.get(
             "https://api.github.com/user/installations",
             headers=headers,
+            params=params,
             timeout=5,
         ).json()
         repos = []
@@ -965,6 +967,7 @@ class AlgorithmAddRepo(
             response = requests.get(
                 f"https://api.github.com/user/installations/{installation['id']}/repositories",
                 headers=headers,
+                params=params,
                 timeout=5,
             ).json()
 

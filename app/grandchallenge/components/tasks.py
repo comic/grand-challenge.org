@@ -863,7 +863,7 @@ def retry_task(
 
     with transaction.atomic():
         job.status = job.PENDING
-        job.attempts += 1
+        job.attempt += 1
         job.save()
 
         on_commit(provision_job.signature(**job.signature_kwargs).apply_async)

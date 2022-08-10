@@ -977,8 +977,43 @@ class ComponentInterfaceValue(models.Model):
         else:
             return f"Component Interface Value {self.pk} for {self.interface}"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._value_orig = self.value
+        self._image_orig = self.image
+        self._file_orig = self.file
+
+    def save(self, *args, **kwargs):
+        if (
+            (
+                self._value_orig not in (None, self.interface.default_value)
+                and self.value is not None
+                and self._value_orig != self.value
+            )
+            or (self._image_orig and self._image_orig != self.image)
+            or (
+                self._file_orig.name not in (None, "")
+                and self._file_orig != self.file
+            )
+        ):
+            raise ValidationError(
+                "You cannot change the value, file or image of an existing CIV. "
+                "Please create a new CIV instead."
+            )
+        super().save(*args, **kwargs)
+
     def clean(self):
         super().clean()
+        attributes = [
+            attribute
+            for attribute in [self.value, self.image, self.file.name]
+            if attribute is not None
+            if attribute != ""
+        ]
+        if len(attributes) > 1:
+            raise ValidationError(
+                "Only one of image, value and file can be defined."
+            )
 
         if self.interface.is_image_kind:
             self._validate_image_only()

@@ -293,6 +293,67 @@ def test_multi_value_fails(kind, image, file, value):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "kind",
+    (
+        InterfaceKindChoices.IMAGE,
+        InterfaceKindChoices.CSV,
+        InterfaceKindChoices.BOOL,
+        InterfaceKindChoices.STRING,
+    ),
+)
+def test_civ_updating(kind):
+    ci = ComponentInterfaceFactory(kind=kind)
+    if kind == InterfaceKindChoices.STRING:
+        ci.default_value = "Foo"
+        ci.save()
+    civ = ComponentInterfaceValueFactory(interface=ci)
+
+    # updating from None or default value to a file, image, value works
+    if kind == InterfaceKindChoices.IMAGE:
+        image = ImageFactory()
+        civ.image = image
+        civ.full_clean()
+        civ.save()
+    elif kind == InterfaceKindChoices.CSV:
+        file = ContentFile(b"Foo1", name="test.csv")
+        civ.file = file
+        civ.full_clean()
+        civ.save()
+    elif kind == InterfaceKindChoices.BOOL:
+        civ.value = True
+        civ.full_clean()
+        civ.save()
+    elif kind == InterfaceKindChoices.STRING:
+        civ.value = "Bar"
+        civ.full_clean()
+        civ.save()
+
+    civ = ComponentInterfaceValue.objects.last()
+
+    # updating existing values does not work
+    with pytest.raises(ValidationError):
+        if kind == InterfaceKindChoices.IMAGE:
+            image = ImageFactory()
+            civ.image = image
+            civ.full_clean()
+            civ.save()
+        elif kind == InterfaceKindChoices.CSV:
+            file = ContentFile(b"Foo2", name="test2.csv")
+            civ.file = file
+            civ.full_clean()
+            civ.save()
+        elif kind == InterfaceKindChoices.BOOL:
+            civ.value = False
+            civ.full_clean()
+            civ.save()
+        elif kind == InterfaceKindChoices.STRING:
+            civ.value = "Foo"
+            civ.full_clean()
+            civ.save()
+
+
+@pytest.mark.django_db
 def test_valid_schema_ok():
     i = ComponentInterfaceFactory(
         schema={"type": "object"},

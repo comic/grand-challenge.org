@@ -432,14 +432,14 @@ def _create_algorithm_demo(users):
         creator=users["algorithm"], algorithm=algorithm
     )
 
-    if os.path.isfile(settings.DEMO_ALGORITHM_IMAGE_PATH):
-        with open(settings.DEMO_ALGORITHM_IMAGE_PATH, "rb") as f:
+    try:
+        with open(
+            os.path.join(settings.SITE_ROOT, "algorithm.tar.gz"), "rb"
+        ) as f:
             container = File(f)
             algorithm_image.image.save("test_algorithm.tar", container)
-            algorithm_image.image_sha256 = settings.DEMO_ALGORITHM_SHA256
-    else:
-        container = ContentFile(base64.b64decode(b""))
-        algorithm_image.image.save("test_algorithm.tar", container)
+    except FileNotFoundError:
+        pass
 
     algorithm_image.save()
 
