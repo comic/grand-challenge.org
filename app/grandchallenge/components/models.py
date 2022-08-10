@@ -916,6 +916,8 @@ class ComponentInterfaceValue(models.Model):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
+    _schema_validated = False
+
     @property
     def title(self):
         if self.value is not None:
@@ -1012,6 +1014,8 @@ class ComponentInterfaceValue(models.Model):
             )
 
     def _validate_value(self):
+        if self._schema_validated:
+            return
         if self.interface.saved_in_object_store:
             self._validate_file_only()
             with self.file.open("r") as f:
@@ -1021,6 +1025,12 @@ class ComponentInterfaceValue(models.Model):
             value = self.value
 
         self.interface.validate_against_schema(value=value)
+
+    def validate_user_upload(self, user_upload):
+        if self.interface.is_json_kind:
+            value = user_upload.read_object()
+            self.interface.validate_against_schema(value=value)
+        self._schema_validated = True
 
     class Meta:
         ordering = ("pk",)

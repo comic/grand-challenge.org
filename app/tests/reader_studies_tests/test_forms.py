@@ -1106,10 +1106,7 @@ def test_file_form(settings):
     assert ci.title in msg
     assert str(ds.pk) in msg
     assert rs.title in msg
-    assert (
-        "JSON does not fulfill schema: {'foo': 'bar'} is not of type 'array'"
-        in msg
-    )
+    assert "JSON does not fulfill schema" in msg
 
     ci.schema = {}
     ci.save()

@@ -292,6 +292,11 @@ class UserUpload(UUIDModel):
         self._client.delete_object(Bucket=self.bucket, Key=self.key)
         self.status = self.StatusChoices.ABORTED
 
+    def read_object(self):
+        obj = self._client.get_object(Bucket=self.bucket, Key=self.key)
+        body = obj["Body"]
+        return body.read().decode("utf-8")
+
 
 @receiver(post_delete, sender=UserUpload)
 def delete_objects_hook(*_, instance: UserUpload, **__):

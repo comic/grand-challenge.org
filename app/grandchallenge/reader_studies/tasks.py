@@ -106,13 +106,14 @@ def add_file_to_display_set(
     error = None
     with transaction.atomic():
         civ = ComponentInterfaceValue.objects.create(interface=interface)
-        user_upload.copy_object(to_field=civ.file)
         try:
+            civ.validate_user_upload(user_upload)
             civ.full_clean()
         except ValidationError as e:
             transaction.set_rollback(True)
             error = str(e)
         else:
+            user_upload.copy_object(to_field=civ.file)
             civ.save()
             display_set.values.add(civ)
             if civ_pk is not None:
