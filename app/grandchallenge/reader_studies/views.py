@@ -1393,13 +1393,11 @@ class DisplaySetUpdate(
 
             if ci.kind in InterfaceKind.interface_type_json():
                 if current_value:
-                    current_value.value = civ
-                    current_value.save()
-                else:
-                    val = ComponentInterfaceValue.objects.create(
-                        interface=ci, value=civ
-                    )
-                    instance.values.add(val)
+                    assigned_civs.append(current_value)
+                val = ComponentInterfaceValue.objects.create(
+                    interface=ci, value=civ
+                )
+                instance.values.add(val)
             else:
                 if civ is None:
 
