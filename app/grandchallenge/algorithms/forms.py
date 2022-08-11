@@ -90,8 +90,7 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
 
         for inp in algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(
-                kind=inp.kind,
-                schema=inp.schema,
+                instance=inp,
                 initial=inp.default_value,
                 user=user,
                 required=(inp.kind != InterfaceKindChoices.BOOL),

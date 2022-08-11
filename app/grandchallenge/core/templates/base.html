@@ -69,7 +69,10 @@
 
             {% block messages %}
                 {% include 'challenges/challenge_banner.html' %}
-                {% include "grandchallenge/partials/messages.html" %}
+                <div id="messages">
+                    {% include "grandchallenge/partials/messages.html" %}
+                </div>
+                {% include "grandchallenge/partials/debug_statement.html" %}
             {% endblock %}
 
             {% block outer_content %}

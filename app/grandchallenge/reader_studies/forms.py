@@ -14,6 +14,7 @@ from crispy_forms.layout import (
     Submit,
 )
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.transaction import on_commit
 from django.forms import (
     BooleanField,
     CharField,
@@ -30,12 +31,12 @@ from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -55,7 +56,11 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
+from grandchallenge.reader_studies.tasks import add_file_to_display_set
+from grandchallenge.reader_studies.widgets import SelectUploadWidget
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -485,41 +490,185 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         return values
 
 
-class DisplaySetForm(Form):
+class DisplaySetCreateForm(Form):
     _possible_widgets = {
-        Select,  # Default for ModelChoiceField
         *InterfaceFormField._possible_widgets,
     }
 
-    def __init__(self, *args, instance=None, **kwargs):
+    def __init__(self, *args, instance, reader_study, user, **kwargs):
         super().__init__(*args, **kwargs)
-        if instance is not None:
-            for (
-                slug,
-                civ,
-            ) in instance.reader_study.values_for_interfaces.items():
-                val = instance.values.filter(interface__slug=slug).first()
 
-                if civ["kind"] in InterfaceKind.interface_type_json():
-                    # Use the field/widget provided by InterfaceFormField,
-                    # which includes proper validation
-                    self.fields[slug] = InterfaceFormField(
-                        kind=civ["kind"],
-                        schema=civ["schema"],
-                        initial=val.value if val else None,
-                        required=False,
-                    ).field
-                else:
-                    # Use a ModelChoiceField here, as InterfaceFormField would
-                    # provide an upload wodget, but we do not want to add new
-                    # images/files here, but rather assign existing values to
-                    # the proper display sets.
-                    self.fields[slug] = ModelChoiceField(
-                        queryset=ComponentInterfaceValue.objects.filter(
-                            id__in=civ["values"]
-                        ),
-                        initial=val,
-                        required=False,
-                    )
+        self.instance = instance
+        self.reader_study = reader_study
+        self.user = user
 
-            self.fields["order"] = IntegerField(initial=instance.order)
+        for slug, values in reader_study.values_for_interfaces.items():
+            current_value = None
+
+            if instance:
+                current_value = instance.values.filter(
+                    interface__slug=slug
+                ).first()
+
+            interface = ComponentInterface.objects.get(slug=slug)
+
+            if interface.is_image_kind:
+                self.fields[slug] = self._get_image_field(
+                    interface=interface,
+                    values=values,
+                    current_value=current_value,
+                )
+            elif interface.requires_file:
+                self.fields[slug] = self._get_file_field(
+                    interface=interface,
+                    values=values,
+                    current_value=current_value,
+                )
+            else:
+                self.fields[slug] = self._get_default_field(
+                    interface=interface, current_value=current_value
+                )
+
+        self.fields["order"] = IntegerField(
+            initial=(
+                instance.order
+                if instance
+                else reader_study.next_display_set_order
+            )
+        )
+
+    def _get_image_field(self, *, interface, values, current_value):
+        return self._get_default_field(
+            interface=interface, current_value=current_value
+        )
+
+    def _get_file_field(self, *, interface, values, current_value):
+        return self._get_default_field(
+            interface=interface, current_value=current_value
+        )
+
+    def _get_default_field(self, *, interface, current_value):
+        return InterfaceFormField(
+            instance=interface,
+            initial=current_value.value if current_value else None,
+            required=False,
+            user=self.user,
+        ).field
+
+
+class DisplaySetUpdateForm(DisplaySetCreateForm):
+    _possible_widgets = {
+        SelectUploadWidget,
+        *DisplaySetCreateForm._possible_widgets,
+    }
+
+    def _get_image_field(self, *, interface, values, current_value):
+        return self._get_select_upload_widget_field(
+            interface=interface, values=values, current_value=current_value
+        )
+
+    def _get_file_field(self, *, interface, values, current_value):
+        return self._get_select_upload_widget_field(
+            interface=interface, values=values, current_value=current_value
+        )
+
+    def _get_select_upload_widget_field(
+        self, *, interface, values, current_value
+    ):
+        return ModelChoiceField(
+            queryset=ComponentInterfaceValue.objects.filter(id__in=values),
+            initial=current_value,
+            required=False,
+            widget=SelectUploadWidget(
+                attrs={
+                    "reader_study_slug": self.reader_study.slug,
+                    "display_set_pk": self.instance.pk,
+                    "interface_slug": interface.slug,
+                }
+            ),
+        )
+
+
+class FileForm(Form):
+
+    user_upload = ModelChoiceField(
+        label="File",
+        queryset=None,
+    )
+
+    def __init__(
+        self, *args, user, display_set, interface, instance=None, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.fields["user_upload"].widget = UserUploadSingleWidget(
+            allowed_file_types=interface.file_mimetypes
+        )
+        self.fields["user_upload"].queryset = get_objects_for_user(
+            user, "uploads.change_userupload", accept_global_perms=False
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        self.interface = interface
+        self.display_set = display_set
+
+    def save(self):
+        civ = self.display_set.values.get(interface=self.interface)
+        user_upload = self.cleaned_data["user_upload"]
+        on_commit(
+            lambda: add_file_to_display_set.apply_async(
+                kwargs={
+                    "user_upload_pk": str(user_upload.pk),
+                    "interface_pk": str(self.interface.pk),
+                    "display_set_pk": str(self.display_set.pk),
+                    "civ_pk": str(civ.pk),
+                }
+            )
+        )
+        return civ
+
+
+class DisplaySetInterfacesCreateForm(Form):
+    _possible_widgets = {
+        *InterfaceFormField._possible_widgets,
+    }
+
+    def __init__(self, *args, pk, interface, reader_study, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        selected_interface = None
+        if interface:
+            selected_interface = ComponentInterface.objects.get(pk=interface)
+        data = kwargs.get("data")
+        if data and data.get("interface"):
+            selected_interface = ComponentInterface.objects.get(
+                pk=data["interface"]
+            )
+        qs = ComponentInterface.objects.exclude(
+            slug__in=reader_study.values_for_interfaces.keys()
+        )
+        if pk is not None:
+            attrs = {
+                "hx-get": reverse_lazy(
+                    "reader-studies:display-set-interfaces-create",
+                    kwargs={"pk": pk, "slug": reader_study.slug},
+                ),
+                "hx-target": f"#ds-content-{pk}",
+            }
+        else:
+            attrs = {
+                "hx-get": reverse_lazy(
+                    "reader-studies:display-set-new-interfaces-create",
+                    kwargs={"slug": reader_study.slug},
+                ),
+                "hx-target": f"#form-{kwargs['auto_id'][:-3]}",
+                "hx-swap": "outerHTML",
+                "disabled": selected_interface is not None,
+            }
+        self.fields["interface"] = ModelChoiceField(
+            initial=selected_interface,
+            queryset=qs,
+            widget=Select(attrs=attrs),
+        )
+
+        if selected_interface is not None:
+            self.fields["value"] = InterfaceFormField(
+                instance=selected_interface,
+                user=user,
+            ).field

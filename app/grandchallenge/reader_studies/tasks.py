@@ -9,11 +9,13 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
     ReaderStudy,
 )
+from grandchallenge.uploads.models import UserUpload
 
 
 @transaction.atomic
@@ -88,6 +90,48 @@ def add_image_to_display_set(
         else:
             civ.save()
             display_set.values.add(civ)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def add_file_to_display_set(
+    *,
+    user_upload_pk,
+    display_set_pk,
+    interface_pk,
+    civ_pk=None,
+):
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    display_set = DisplaySet.objects.get(pk=display_set_pk)
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    error = None
+    with transaction.atomic():
+        civ = ComponentInterfaceValue.objects.create(interface=interface)
+        try:
+            civ.validate_user_upload(user_upload)
+            civ.full_clean()
+        except ValidationError as e:
+            transaction.set_rollback(True)
+            error = str(e)
+        else:
+            user_upload.copy_object(to_field=civ.file)
+            civ.save()
+            display_set.values.add(civ)
+            if civ_pk is not None:
+                # Remove the preiously assigned civ from the display set
+                civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
+                display_set.values.remove(civ)
+
+    if error is not None:
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            actor=user_upload.creator,
+            message=f"File for interface {interface.title} failed validation.",
+            target=display_set.reader_study,
+            description=(
+                f"File for interface {interface.title} added to {display_set_pk} "
+                f"in {display_set.reader_study.title} failed validation:\n{error}."
+            ),
+        )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

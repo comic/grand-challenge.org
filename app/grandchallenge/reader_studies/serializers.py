@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
 from guardian.shortcuts import get_objects_for_user
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import (
     BooleanField,
     CharField,
@@ -117,6 +118,11 @@ class DisplaySetPostSerializer(DisplaySetSerializer):
         slug_field="slug", queryset=ReaderStudy.objects.none(), required=False
     )
     values = ComponentInterfaceValuePostSerializer(many=True, required=False)
+
+    def create(self, validated_data):
+        if validated_data.pop("values", []) != []:
+            raise DRFValidationError("Values can only be added via update")
+        return super().create(validated_data)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

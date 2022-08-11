@@ -6,6 +6,7 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from requests import put
 
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -14,12 +15,25 @@ from grandchallenge.components.models import (
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
-from grandchallenge.reader_studies.forms import DisplaySetForm, QuestionForm
+from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.notifications.models import Notification
+from grandchallenge.reader_studies.forms import (
+    DisplaySetCreateForm,
+    DisplaySetInterfacesCreateForm,
+    DisplaySetUpdateForm,
+    FileForm,
+    QuestionForm,
+    SelectUploadWidget,
+)
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     Question,
     ReaderStudy,
+)
+from grandchallenge.uploads.widgets import (
+    UserUploadMultipleWidget,
+    UserUploadSingleWidget,
 )
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -36,6 +50,7 @@ from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 
 
@@ -1015,23 +1030,124 @@ def test_reader_study_add_ground_truth_ds(client, settings):
 
 
 @pytest.mark.django_db
-def test_display_set_form():
+@pytest.mark.parametrize(
+    "form_class, file_widget",
+    (
+        (DisplaySetCreateForm, UserUploadSingleWidget),
+        (DisplaySetUpdateForm, SelectUploadWidget),
+    ),
+)
+def test_display_set_update_form(form_class, file_widget):
     rs = ReaderStudyFactory()
-    for slug in ["slug-1", "slug-2"]:
-        ci = ComponentInterfaceFactory(title=slug)
+    user = UserFactory()
+    rs.add_editor(user)
+    for slug, store_in_db in [("slug-1", False), ("slug-2", True)]:
+        ci = ComponentInterfaceFactory(
+            title=slug, kind="JSON", store_in_database=store_in_db
+        )
         civ = ComponentInterfaceValueFactory(interface=ci)
         ds = DisplaySetFactory(reader_study=rs)
         ds.values.add(civ)
-    form = DisplaySetForm(instance=ds)
+
+    instance = None if form_class == DisplaySetCreateForm else ds
+    form = form_class(user=user, instance=instance, reader_study=rs)
     assert sorted(form.fields.keys()) == ["order", "slug-1", "slug-2"]
+    assert isinstance(form.fields["slug-1"].widget, file_widget)
+    assert isinstance(form.fields["slug-2"].widget, JSONEditorWidget)
 
     ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
     QuestionFactory(reader_study=rs, answer_type="STXT", interface=ci)
     del rs.values_for_interfaces
-    form = DisplaySetForm(instance=ds)
+    form = form_class(user=user, instance=instance, reader_study=rs)
     assert sorted(form.fields.keys()) == [
         "order",
         "slug-1",
         "slug-2",
         "slug-3",
     ]
+
+
+@pytest.mark.django_db
+def test_file_form(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    rs = ReaderStudyFactory()
+    ci = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ)
+    user = UserFactory()
+    rs.add_editor(user)
+    upload = UserUploadFactory(filename="file.json", creator=user)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+
+    ci.schema = {
+        "$schema": "http://json-schema.org/draft-07/schema",
+        "type": "array",
+    }
+    ci.save()
+
+    form = FileForm(user=user, display_set=ds, interface=ci)
+    form.cleaned_data = {"user_upload": upload}
+
+    with capture_on_commit_callbacks(execute=True):
+        form.save()
+
+    assert ds.values.count() == 1
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    msg = notification.print_notification(user=notification.user)
+    assert ci.title in msg
+    assert str(ds.pk) in msg
+    assert rs.title in msg
+    assert "JSON does not fulfill schema" in msg
+
+    ci.schema = {}
+    ci.save()
+    form = FileForm(user=user, display_set=ds, interface=ci)
+    form.cleaned_data = {"user_upload": upload}
+    with capture_on_commit_callbacks(execute=True):
+        form.save()
+    civ = ds.values.get(interface=ci)
+    assert civ.file.read() == b'{"foo": "bar"}'
+
+
+@pytest.mark.django_db
+def test_display_set_add_interface_form():
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    user = UserFactory()
+    rs.add_editor(user)
+
+    ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
+    ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
+
+    form = DisplaySetInterfacesCreateForm(
+        pk=ds.pk, reader_study=rs, interface=None, user=user
+    )
+    assert sorted(form.fields.keys()) == ["interface"]
+
+    form = DisplaySetInterfacesCreateForm(
+        pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
+    )
+    assert sorted(form.fields.keys()) == ["interface", "value"]
+    assert isinstance(form.fields["value"].widget, UserUploadSingleWidget)
+
+    form = DisplaySetInterfacesCreateForm(
+        pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
+    )
+    assert sorted(form.fields.keys()) == ["interface", "value"]
+    assert isinstance(form.fields["value"].widget, JSONEditorWidget)
+
+    form = DisplaySetInterfacesCreateForm(
+        pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
+    )
+    assert sorted(form.fields.keys()) == ["interface", "value"]
+    assert isinstance(form.fields["value"].widget, UserUploadMultipleWidget)

@@ -7,6 +7,9 @@
 {% load crispy_forms_tags %}
 
 <div class="card-body py-1" id="ds-content-{{ object.id }}">
+
+  {% include "grandchallenge/partials/messages.html" %}
+
   <table class="table table-striped table-sm">
     <tr>
       <th>Interface</th>
@@ -30,7 +33,7 @@
   <div class="d-flex justify-content-between px-1 py-2">
       <button
           class="btn btn-primary"
-          hx-get="{% url 'reader-studies:display-set-update' pk=object.pk %}"
+          hx-get="{% url 'reader-studies:display-set-update' pk=object.pk slug=object.reader_study.slug %}"
           hx-target="#ds-content-{{ object.id }}"
           hx-swap="outerHTML"
           {% if not object.is_editable %}

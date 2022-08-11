@@ -2,12 +2,15 @@ from django.urls import path
 
 from grandchallenge.reader_studies.views import (
     AddDisplaySetsToReaderStudy,
+    AddDisplaySetToReaderStudy,
     AddGroundTruthToReaderStudy,
     AddImagesToReaderStudy,
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
     AnswersRemoveGroundTruth,
     DisplaySetDetail,
+    DisplaySetFilesUpdate,
+    DisplaySetInterfacesCreate,
     DisplaySetPDFReport,
     DisplaySetUpdate,
     EditorsUpdate,
@@ -41,16 +44,6 @@ urlpatterns = [
         "questions/interfaces/",
         QuestionInterfacesView.as_view(),
         name="question-interfaces",
-    ),
-    path(
-        "display-sets/<uuid:pk>/",
-        DisplaySetDetail.as_view(),
-        name="display-set-detail",
-    ),
-    path(
-        "display-sets/<uuid:pk>/update/",
-        DisplaySetUpdate.as_view(),
-        name="display-set-update",
     ),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
@@ -93,9 +86,39 @@ urlpatterns = [
         name="example-ground-truth",
     ),
     path(
-        "<slug>/display-sets/add/",
+        "<slug>/display-sets/create/",
         AddDisplaySetsToReaderStudy.as_view(),
-        name="add-displaysets",
+        name="display-sets-create",
+    ),
+    path(
+        "<slug>/display-sets/create-single/",
+        AddDisplaySetToReaderStudy.as_view(),
+        name="display-set-create",
+    ),
+    path(
+        "<slug>/display-sets/<uuid:pk>/",
+        DisplaySetDetail.as_view(),
+        name="display-set-detail",
+    ),
+    path(
+        "<slug>/display-sets/<uuid:pk>/update/",
+        DisplaySetUpdate.as_view(),
+        name="display-set-update",
+    ),
+    path(
+        "<slug>/display-sets/new/interfaces/create/",
+        DisplaySetInterfacesCreate.as_view(),
+        name="display-set-new-interfaces-create",
+    ),
+    path(
+        "<slug>/display-sets/<uuid:pk>/interface/create/",
+        DisplaySetInterfacesCreate.as_view(),
+        name="display-set-interfaces-create",
+    ),
+    path(
+        "<slug>/display-sets/<uuid:pk>/interfaces/<slug:interface_slug>/files/update/",
+        DisplaySetFilesUpdate.as_view(),
+        name="display-set-files-update",
     ),
     path(
         "<slug>/display-sets/<uuid:pk>/report/<str:username>/",

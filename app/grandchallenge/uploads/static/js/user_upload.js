@@ -1,12 +1,18 @@
 "use strict";
 
 {
-    document.addEventListener("DOMContentLoaded", () => {
+
+    function initializeWidgets() {
         const widgets = document.getElementsByClassName("user-upload");
         for (const widget of widgets) {
-            initializeWidget(widget)
+            if (!$(widget).data("initialized")) {
+                initializeWidget(widget);
+                $(widget).data("initialized", true);
+            }
         }
-    });
+    }
+    document.addEventListener("DOMContentLoaded", () => {initializeWidgets()});
+    document.addEventListener("htmx:load", () => {initializeWidgets()});
 
     function initializeWidget(widget) {
         const inputId = widget.getAttribute("data-input-id");

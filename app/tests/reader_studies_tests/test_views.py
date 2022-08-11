@@ -1,8 +1,11 @@
 import io
 
 import pytest
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from requests import put
 
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
+from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -14,6 +17,10 @@ from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
+)
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
 )
 from tests.utils import get_view_for_user
 
@@ -361,7 +368,7 @@ def test_display_set_detail(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-detail",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u2,
     )
 
@@ -370,7 +377,7 @@ def test_display_set_detail(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-detail",
         client=client,
-        reverse_kwargs={"pk": ds.pk},
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
         user=u1,
     )
 
@@ -398,9 +405,9 @@ def test_display_set_update(client):
 
     assert DisplaySet.objects.count() == 2
     response = get_view_for_user(
-        viewname="reader-studies:display-set-detail",
+        viewname="reader-studies:display-set-update",
         client=client,
-        reverse_kwargs={"pk": ds1.pk},
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         user=u2,
     )
 
@@ -409,7 +416,16 @@ def test_display_set_update(client):
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
         client=client,
-        reverse_kwargs={"pk": ds1.pk},
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
+        user=u1,
+    )
+
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-update",
+        client=client,
+        reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         data={
             ci_str.slug: "new-title",
             ci_img.slug: str(civ_img_new.pk),
@@ -420,13 +436,285 @@ def test_display_set_update(client):
     )
 
     assert response.status_code == 302
+    assert ds1.values.count() == 2
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
-    assert not ds1.values.filter(pk=civ_str.pk).exists()
-    assert ds1.values.filter(interface__kind="STR").get().value == "new-title"
+    assert ds1.values.get(interface=ci_str).value == "new-title"
 
-    # Two new ds should have been created, one for civ_img and one for civ_str
-    assert DisplaySet.objects.count() == 4
+    # A new ds should have been created for civ_img
+    assert DisplaySet.objects.count() == 3
+
+
+@pytest.mark.django_db
+def test_add_display_set_to_reader_study(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds1 = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(u1)
+    ci_str = ComponentInterfaceFactory(kind="STR")
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+
+    ci_img_new = ComponentInterfaceFactory(kind="IMG")
+    ci_str_new = ComponentInterfaceFactory(kind="STR")
+    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+
+    im1, im2 = ImageFactory.create_batch(2)
+    civ_str = ComponentInterfaceValueFactory(
+        interface=ci_str, value="civ-title"
+    )
+    civ_img = ComponentInterfaceValueFactory(interface=ci_img, image=im1)
+    ds1.values.set([civ_str, civ_img])
+
+    assert DisplaySet.objects.count() == 1
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-create",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=u2,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-create",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=u1,
+    )
+
+    assert response.status_code == 200
+
+    im_upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "test_grayscale.jpg",
+        creator=u1,
+    )
+    im_upload_new = create_upload_from_file(
+        file_path=RESOURCE_PATH / "test_grayscale.png",
+        creator=u1,
+    )
+    upload = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-create",
+            client=client,
+            reverse_kwargs={"slug": rs.slug},
+            content_type="application/json",
+            data={
+                ci_str.slug: "new-title",
+                ci_img.slug: str(im_upload.pk),
+                "order": 11,
+                "new_interfaces": [
+                    {
+                        "interface": ci_img_new.pk,
+                        "value": str(im_upload_new.pk),
+                    },
+                    {"interface": ci_str_new.pk, "value": "new"},
+                    {"interface": ci_json.pk, "value": str(upload.pk)},
+                ],
+            },
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 200
+    assert DisplaySet.objects.count() == 2
+    ds = DisplaySet.objects.last()
+    # assert ds.values.count() == 5
+    assert ds.values.get(interface=ci_str).value == "new-title"
+    assert ds.values.get(interface=ci_img).image.name == "test_grayscale.jpg"
+    assert (
+        ds.values.get(interface=ci_img_new).image.name == "test_grayscale.png"
+    )
+    assert ds.values.get(interface=ci_str_new).value == "new"
+    assert ds.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
+
+
+@pytest.mark.django_db
+def test_add_files_to_display_set(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(u1)
+    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+    im_upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "test_grayscale.jpg",
+        creator=u1,
+    )
+    civ_json = ComponentInterfaceValueFactory(
+        interface=ci_json,
+    )
+    ds.values.add(civ_json)
+    upload = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-files-update",
+        client=client,
+        reverse_kwargs={
+            "pk": ds.pk,
+            "interface_slug": ci_json.slug,
+            "slug": rs.slug,
+        },
+        user=u2,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-files-update",
+        client=client,
+        reverse_kwargs={
+            "pk": ds.pk,
+            "interface_slug": ci_json.slug,
+            "slug": rs.slug,
+        },
+        user=u1,
+    )
+
+    assert response.status_code == 200
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-files-update",
+            client=client,
+            reverse_kwargs={
+                "pk": ds.pk,
+                "interface_slug": ci_json.slug,
+                "slug": rs.slug,
+            },
+            data={"user_upload": str(upload.pk)},
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    civ_json = ds.values.get(interface=ci_json)
+    assert civ_json.file.read() == b'{"foo": "bar"}'
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-files-update",
+            client=client,
+            reverse_kwargs={
+                "pk": ds.pk,
+                "interface_slug": ci_img.slug,
+                "slug": rs.slug,
+            },
+            data={"user_uploads": str(im_upload.pk)},
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    civ_img = ds.values.get(interface=ci_img)
+    assert civ_img.image.name == "test_grayscale.jpg"
+
+
+@pytest.mark.django_db
+def test_display_set_interfaces_create(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    u1, u2 = UserFactory.create_batch(2)
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(u1)
+
+    ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
+    ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-interfaces-create",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        user=u2,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-interfaces-create",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        user=u1,
+    )
+
+    assert response.status_code == 200
+
+    assert not ds.values.filter(interface=ci_value).exists()
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-interfaces-create",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        data={"interface": str(ci_value.pk), "value": '{"foo": "bar"}'},
+        user=u1,
+        method=client.post,
+    )
+
+    assert response.status_code == 302
+    civ = ds.values.get(interface=ci_value)
+    assert civ.value == {"foo": "bar"}
+
+    assert not ds.values.filter(interface=ci_file).exists()
+    upload = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-interfaces-create",
+            client=client,
+            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+            data={"interface": str(ci_file.pk), "value": str(upload.pk)},
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    civ = ds.values.get(interface=ci_file)
+    assert civ.file.read() == b'{"foo": "bar"}'
+
+    assert not ds.values.filter(interface=ci_image).exists()
+    upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "test_grayscale.jpg",
+        creator=u1,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-interfaces-create",
+            client=client,
+            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+            data={"interface": str(ci_image.pk), "value": str(upload.pk)},
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    civ = ds.values.get(interface=ci_image)
+    assert civ.image.name == "test_grayscale.jpg"
 
 
 @pytest.mark.django_db
