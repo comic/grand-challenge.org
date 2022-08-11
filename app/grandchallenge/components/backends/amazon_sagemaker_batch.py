@@ -660,6 +660,17 @@ class AmazonSageMakerBatchExecutor(Executor):
         ):
             raise RetryTask("No current capacity for the chosen instance type")
 
+        if failure_reason == (
+            "InternalServerError: We encountered an internal error.  "
+            "Please try again."
+        ):
+            if self.get_job_params(event=event).attempt < 3:
+                raise RetryTask("Retrying due to internal server error")
+            else:
+                raise ComponentException(
+                    "Algorithm container image would not start"
+                )
+
         try:
             data_log = self._get_job_data_log()
         except LogStreamNotFound as error:

@@ -862,11 +862,16 @@ def retry_task(
         )
 
     with transaction.atomic():
-        job.status = job.PENDING
-        job.attempt += 1
-        job.save()
+        if job.attempt < 99:
+            job.status = job.PENDING
+            job.attempt += 1
+            job.save()
 
-        on_commit(provision_job.signature(**job.signature_kwargs).apply_async)
+            on_commit(
+                provision_job.signature(**job.signature_kwargs).apply_async
+            )
+        else:
+            raise RuntimeError("Maximum attempts exceeded")
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
