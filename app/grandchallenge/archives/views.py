@@ -433,8 +433,10 @@ class ArchiveEditArchiveItem(
             update_archive_item_update_kwargs(
                 instance=self.archive_item,
                 interface=ci,
-                value=value if ci.is_json_kind else None,
-                user_upload=value if ci.is_file_kind else None,
+                value=value
+                if ci.is_json_kind and not ci.requires_file
+                else None,
+                user_upload=value if ci.requires_file else None,
                 upload_session=upload_session,
                 civ_pks_to_add=civ_pks_to_add,
                 upload_pks=upload_pks,

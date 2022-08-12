@@ -1,3 +1,7 @@
+import json
+import tempfile
+from pathlib import Path
+
 import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm, remove_perm
@@ -461,6 +465,82 @@ def test_api_archive_item_add_and_update_non_image_file(client, settings):
 
 
 @pytest.mark.django_db
+def test_api_archive_item_add_and_update_json_file(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+    assert item.values.count() == 0
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+    )
+
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
+        json.dump('{"Foo": "bar"}', file)
+        file.seek(0)
+        upload = create_upload_from_file(
+            creator=editor, file_path=Path(file.name)
+        )
+        # add civ
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="api:archives-item-detail",
+                reverse_kwargs={"pk": item.pk},
+                data={
+                    "values": [
+                        {"interface": ci.slug, "user_upload": upload.api_url}
+                    ]
+                },
+                user=editor,
+                client=client,
+                method=client.patch,
+                content_type="application/json",
+                HTTP_X_FORWARDED_PROTO="https",
+            )
+    assert response.status_code == 200
+    assert response.json()["pk"] == str(item.pk)
+    item.refresh_from_db()
+    assert item.values.count() == 1
+    civ = item.values.get()
+    assert civ.interface.slug == ci.slug
+
+    # update civ
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
+        json.dump('{"Foo": "bar"}', file)
+        file.seek(0)
+        upload2 = create_upload_from_file(
+            creator=editor, file_path=Path(file.name)
+        )
+
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="api:archives-item-detail",
+                reverse_kwargs={"pk": item.pk},
+                data={
+                    "values": [
+                        {"interface": ci.slug, "user_upload": upload2.api_url}
+                    ]
+                },
+                user=editor,
+                client=client,
+                method=client.patch,
+                content_type="application/json",
+                HTTP_X_FORWARDED_PROTO="https",
+            )
+    assert response.status_code == 200
+    assert response.json()["pk"] == str(item.pk)
+    item.refresh_from_db()
+    assert item.values.count() == 1
+    new_civ = item.values.get()
+    assert new_civ.interface.slug == ci.slug
+    assert new_civ != civ
+
+
+@pytest.mark.django_db
 def test_api_archive_item_create(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -649,6 +729,46 @@ def test_archive_item_add_file(client, settings):
             )
     assert response.status_code == 200
     assert "test" in ArchiveItem.objects.get().values.first().file.name
+
+
+@pytest.mark.django_db
+def test_archive_item_add_json_file(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    archive = ArchiveFactory()
+    item = ArchiveItemFactory(archive=archive)
+    editor = UserFactory()
+    archive.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+    )
+
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
+        json.dump('{"Foo": "bar"}', file)
+        file.seek(0)
+        upload = create_upload_from_file(
+            creator=editor, file_path=Path(file.name)
+        )
+        with capture_on_commit_callbacks(execute=True):
+            with capture_on_commit_callbacks(execute=True):
+                response = get_view_for_user(
+                    viewname="archives:item-edit",
+                    client=client,
+                    method=client.post,
+                    reverse_kwargs={
+                        "pk": item.pk,
+                        "interface_slug": ci.slug,
+                        "archive_slug": archive.slug,
+                    },
+                    user=editor,
+                    follow=True,
+                    data={ci.slug: upload.pk},
+                )
+        assert response.status_code == 200
+        assert (
+            file.name.split("/")[-1]
+            in ArchiveItem.objects.get().values.first().file.name
+        )
 
 
 @pytest.mark.django_db

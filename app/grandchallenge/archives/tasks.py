@@ -103,7 +103,7 @@ def update_archive_item_update_kwargs(
                 upload_pks[civ.pk] = upload_session.pk
             civ.save()
             civ_pks_to_add.add(civ.pk)
-        elif interface.is_file_kind:
+        elif interface.requires_file:
             civ = ComponentInterfaceValue.objects.create(interface=interface)
             user_upload.copy_object(to_field=civ.file)
             civ.full_clean()
