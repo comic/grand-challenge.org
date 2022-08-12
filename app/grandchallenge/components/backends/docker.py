@@ -179,7 +179,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 timestamp, log = line.replace("\x00", "").split(" ", 1)
                 parsed_log = parse_structured_log(log=log)
             except (JSONDecodeError, KeyError, ValueError):
-                logger.error("Could not parse log")
+                logger.warning("Could not parse log")
                 continue
 
             if parsed_log is not None:
