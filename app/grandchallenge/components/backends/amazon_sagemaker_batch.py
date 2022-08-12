@@ -536,7 +536,7 @@ class AmazonSageMakerBatchExecutor(Executor):
                 )
                 timestamp = ms_timestamp_to_datetime(event["timestamp"])
             except (JSONDecodeError, KeyError, ValueError):
-                logger.error("Could not parse log")
+                logger.warning("Could not parse log")
                 continue
 
             if parsed_log is not None:
