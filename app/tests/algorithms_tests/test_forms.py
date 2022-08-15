@@ -278,6 +278,13 @@ def test_algorithm_update_contains_repo_name(client, uploaded_image):
                 '<div id="jsoneditor_id_multiple-polygons"',
             ],
         ),
+        (
+            "anything",
+            [
+                'class="user-upload"',
+                '<div id="id_anything-drag-drop"',
+            ],
+        ),
     ),
 )
 def test_create_experiment_input_fields(
