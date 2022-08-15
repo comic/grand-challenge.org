@@ -1,4 +1,7 @@
 import datetime
+import json
+import tempfile
+from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import Group
@@ -8,7 +11,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -17,11 +20,17 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.uploads_tests.factories import UserUploadFactory
-from tests.utils import get_view_for_user
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
+from tests.utils import get_view_for_user, recurse_callbacks
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -852,3 +861,45 @@ def test_import_view(client, authenticated_staff_user, mocker):
     )
     assert image_interface.store_in_database is False
     assert image_interface.kind == ComponentInterface.Kind.IMAGE
+
+
+@pytest.mark.django_db
+def test_create_job_with_json_file(client, settings, algorithm_io_image):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
+    recurse_callbacks(callbacks=callbacks)
+
+    editor = UserFactory()
+    ai.algorithm.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ai.algorithm.inputs.set([ci])
+
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
+        json.dump('{"Foo": "bar"}', file)
+        file.seek(0)
+        upload = create_upload_from_file(
+            creator=editor, file_path=Path(file.name)
+        )
+        with capture_on_commit_callbacks(execute=True):
+            with capture_on_commit_callbacks(execute=True):
+                response = get_view_for_user(
+                    viewname="algorithms:execution-session-create",
+                    client=client,
+                    method=client.post,
+                    reverse_kwargs={
+                        "slug": ai.algorithm.slug,
+                    },
+                    user=editor,
+                    follow=True,
+                    data={ci.slug: upload.pk},
+                )
+        assert response.status_code == 200
+        assert (
+            file.name.split("/")[-1]
+            in Job.objects.get().inputs.first().file.name
+        )

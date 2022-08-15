@@ -595,6 +595,12 @@ def component_interfaces():
             "kind": ComponentInterface.Kind.MULTIPLE_POLYGONS,
             "relative_path": "multiple_polygons",
         },
+        {
+            "title": "Anything",
+            "kind": ComponentInterface.Kind.ANY,
+            "relative_path": "any",
+            "store_in_database": False,
+        },
     ]
 
     return [ComponentInterfaceFactory(**interface) for interface in interfaces]
