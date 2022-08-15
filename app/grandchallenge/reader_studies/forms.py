@@ -495,6 +495,8 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 class DisplaySetCreateForm(Form):
     _possible_widgets = {
         *InterfaceFormField._possible_widgets,
+        SelectUploadWidget,
+        autocomplete.ModelSelect2,
     }
 
     def __init__(self, *args, instance, reader_study, user, **kwargs):
