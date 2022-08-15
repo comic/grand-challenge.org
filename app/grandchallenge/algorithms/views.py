@@ -497,7 +497,7 @@ class AlgorithmExperimentCreate(
                     civ = ComponentInterfaceValue.objects.create(interface=ci)
                     civs.append(civ)
                     upload_pks[civ.pk] = create_upload(value)
-            elif ci.is_file_kind:
+            elif ci.requires_file:
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
                 value.copy_object(to_field=civ.file)
                 civ.full_clean()
