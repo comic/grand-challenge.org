@@ -916,7 +916,7 @@ class ComponentInterfaceValue(models.Model):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
-    _schema_validated = False
+    _user_upload_validated = False
 
     @property
     def title(self):
@@ -1033,7 +1033,7 @@ class ComponentInterfaceValue(models.Model):
             )
 
     def _validate_file_only(self):
-        if not self.file:
+        if not self._user_upload_validated and not self.file:
             raise ValidationError("File must be set")
         if self.image or self.value is not None:
             raise ValidationError(
@@ -1049,7 +1049,7 @@ class ComponentInterfaceValue(models.Model):
             )
 
     def _validate_value(self):
-        if self._schema_validated:
+        if self._user_upload_validated:
             return
         if self.interface.saved_in_object_store:
             self._validate_file_only()
@@ -1062,10 +1062,12 @@ class ComponentInterfaceValue(models.Model):
         self.interface.validate_against_schema(value=value)
 
     def validate_user_upload(self, user_upload):
+        if not user_upload.is_completed:
+            raise ValidationError("User upload is not completed.")
         if self.interface.is_json_kind:
             value = user_upload.read_object()
             self.interface.validate_against_schema(value=value)
-        self._schema_validated = True
+        self._user_upload_validated = True
 
     class Meta:
         ordering = ("pk",)

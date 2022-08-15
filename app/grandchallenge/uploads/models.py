@@ -141,7 +141,7 @@ class UserUpload(UUIDModel):
     def size(self):
         if self.status == self.StatusChoices.INITIALIZED:
             return self.pending_size
-        elif self.status == self.StatusChoices.COMPLETED:
+        elif self.is_completed:
             return self.completed_size
         else:
             return 0
@@ -152,7 +152,7 @@ class UserUpload(UUIDModel):
 
     @property
     def completed_size(self):
-        if self.status != self.StatusChoices.COMPLETED:
+        if not self.is_completed:
             raise RuntimeError("Upload is not completed")
 
         return self._client.head_object(Bucket=self.bucket, Key=self.key)[
@@ -162,6 +162,10 @@ class UserUpload(UUIDModel):
     @property
     def size_of_creators_completed_uploads(self):
         return sum(u["Size"] for u in self.get_creators_completed_uploads())
+
+    @property
+    def is_completed(self):
+        return self.status == self.StatusChoices.COMPLETED
 
     def get_creators_completed_uploads(self, continuation_token=None):
         kwargs = {
@@ -268,7 +272,7 @@ class UserUpload(UUIDModel):
         self.status = self.StatusChoices.ABORTED
 
     def download_fileobj(self, fileobj):
-        if self.status != self.StatusChoices.COMPLETED:
+        if not self.is_completed:
             raise RuntimeError("Upload is not completed")
 
         return self._client.download_fileobj(
@@ -286,7 +290,7 @@ class UserUpload(UUIDModel):
         )
 
     def delete_object(self):
-        if self.status != self.StatusChoices.COMPLETED:
+        if not self.is_completed:
             raise RuntimeError("Upload is not completed")
 
         self._client.delete_object(Bucket=self.bucket, Key=self.key)
