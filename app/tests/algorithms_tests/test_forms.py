@@ -419,9 +419,18 @@ def test_publish_algorithm():
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid() is False
 
+    # add contact email address
+    algorithm.contact_email = "test@test.com"
+    algorithm.save()
+    form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
+    assert form.is_valid() is False
+
     # add a public result
     ai = AlgorithmImageFactory(
-        algorithm=algorithm, is_manifest_valid=True, is_in_registry=True
+        algorithm=algorithm,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_on_sagemaker=True,
     )
     _ = AlgorithmJobFactory(
         algorithm_image=ai, status=Job.SUCCESS, public=True

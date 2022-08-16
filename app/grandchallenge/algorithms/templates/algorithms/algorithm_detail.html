@@ -95,7 +95,7 @@
     {% get_obj_perms request.user for object as "algorithm_perms" %}
 
     {% if 'change_algorithm' in algorithm_perms %}
-        {% if not object.display_editors or not object.contact_email %}
+        {% if object.display_editors == None or not object.contact_email %}
             <div class="alert alert-warning" role="alert">
                 Please update your algorithm settings. Grand Challenge now requires a <u>contact email address</u> for all algorithms.<br>
                 You will also need to indicate whether you want the algorithm editors to be displayed on the Information page.
@@ -111,7 +111,7 @@
 
         {% if object.public and not object.public_test_case %}
             <div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-triangle mr-1"></i> Please upload a public test case <a href="{% url 'algorithms:execution-session-create' slug=object.slug %}">here</a>.
+                <i class="fas fa-exclamation-triangle mr-1"></i> Please upload a public test case for your latest algorithm image <a href="{% url 'algorithms:execution-session-create' slug=object.slug %}">here</a>.
             </div>
         {% endif %}
     {% endif %}
