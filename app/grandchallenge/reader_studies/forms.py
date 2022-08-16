@@ -561,7 +561,7 @@ class DisplaySetCreateForm(Form):
 class DisplaySetUpdateForm(DisplaySetCreateForm):
     _possible_widgets = {
         SelectUploadWidget,
-        *InterfaceFormField._possible_widgets,
+        *DisplaySetCreateForm._possible_widgets,
     }
 
     def _get_image_field(self, *, interface, values, current_value):
