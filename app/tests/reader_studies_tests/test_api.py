@@ -1643,6 +1643,32 @@ def test_display_set_add_and_edit(client, settings):
     ds.refresh_from_db()
     assert ds.values.count() == 2
 
+    ci_csv = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.CSV
+    )
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "ground_truth.csv",
+        creator=r1,
+    )
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:reader-studies-display-set-detail",
+            reverse_kwargs={"pk": ds.pk},
+            user=r1,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            data={
+                "values": [
+                    {"interface": ci_csv.slug, "user_upload": upload.api_url}
+                ]
+            },
+        )
+
+    ds.refresh_from_db()
+    assert ds.values.count() == 3
+
     # Create another display set
     ds2 = DisplaySetFactory(reader_study=rs)
     civ = ComponentInterfaceValueFactory(interface=ci, value=False)
