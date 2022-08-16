@@ -23,6 +23,8 @@ from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
+from panimg.image_builders.metaio_utils import load_sitk_image
+from panimg.models import SimpleITKImage
 
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.cases.models import RawImageUploadSession
@@ -979,3 +981,33 @@ def civ_value_to_file(*, civ_pk):
         )
         civ.value = None
         civ.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def validate_voxel_values(*, civ_pk):
+    civ = get_model_instance(
+        pk=civ_pk,
+        app_label="components",
+        model_name="componentinterfacevalue",
+    )
+
+    if civ.image.segments is None:
+        image_file = civ.image.files.first()
+        with NamedTemporaryFile() as tmp:
+            for chunk in image_file.file.chunks():
+                tmp.write(chunk)
+            tmp.flush()
+            tmp.seek(0)
+            loaded_image = load_sitk_image(Path(tmp.name))
+            simple_itk_image = SimpleITKImage(
+                image=loaded_image,
+                name=tmp.name,
+                consumed_files=set(),
+                spacing_valid=True,
+            )
+            segments = simple_itk_image.segments
+
+        civ.image.segments = [int(segment) for segment in segments]
+        civ.image.save()
+
+    civ.interface._validate_voxel_values(civ.image)
