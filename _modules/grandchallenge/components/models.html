@@ -990,7 +990,7 @@
         <span class="n">to</span><span class="o">=</span><span class="n">Image</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
     <span class="p">)</span>
 
-    <span class="n">_schema_validated</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1107,7 +1107,7 @@
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_file_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;File must be set&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -1123,7 +1123,7 @@
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_validated</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_only</span><span class="p">()</span>
@@ -1136,10 +1136,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate_user_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_upload</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">user_upload</span><span class="o">.</span><span class="n">is_completed</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;User upload is not completed.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_json_kind</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">user_upload</span><span class="o">.</span><span class="n">read_object</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_schema_validated</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
