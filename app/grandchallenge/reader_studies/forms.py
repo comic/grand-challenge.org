@@ -495,8 +495,6 @@ class GroundTruthForm(SaveFormInitMixin, Form):
 class DisplaySetCreateForm(Form):
     _possible_widgets = {
         *InterfaceFormField._possible_widgets,
-        SelectUploadWidget,
-        autocomplete.ModelSelect2,
     }
 
     def __init__(self, *args, instance, reader_study, user, **kwargs):
@@ -563,7 +561,7 @@ class DisplaySetCreateForm(Form):
 class DisplaySetUpdateForm(DisplaySetCreateForm):
     _possible_widgets = {
         SelectUploadWidget,
-        *DisplaySetCreateForm._possible_widgets,
+        *InterfaceFormField._possible_widgets,
     }
 
     def _get_image_field(self, *, interface, values, current_value):
@@ -594,6 +592,10 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
 
 
 class FileForm(Form):
+
+    _possible_widgets = {
+        UserUploadSingleWidget,
+    }
 
     user_upload = ModelChoiceField(
         label="File",
