@@ -25,6 +25,9 @@
 
     {{ block.super }}
 
+
+    <div id="readerStudySlug" class="d-none" data-slug="{{ reader_study.slug }}"></div>
+
     <div class="modal fade" id="removeCaseModal" tabindex="-1" role="dialog"
          aria-labelledby="removeCaseModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -117,5 +120,8 @@
         });
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+    <script src="{% static 'reader_studies/js/autocomplete_htmx.js' %}" type="text/javascript"></script>
     {{ form_media }}
+
+    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
 {% endblock %}

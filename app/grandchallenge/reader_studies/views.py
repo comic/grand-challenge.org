@@ -395,7 +395,11 @@ class ReaderStudyDisplaySetList(
     ]
     text_align = "left"
     default_sort_order = "asc"
-    form_class = DisplaySetUpdateForm
+    included_form_classes = (
+        DisplaySetUpdateForm,
+        DisplaySetInterfacesCreateForm,
+        FileForm,
+    )
 
     @cached_property
     def reader_study(self):
@@ -414,8 +418,9 @@ class ReaderStudyDisplaySetList(
         context = super().get_context_data(**kwargs)
 
         media = Media()
-        for widget in self.form_class._possible_widgets:
-            media = media + widget().media
+        for form_class in self.included_form_classes:
+            for widget in form_class._possible_widgets:
+                media = media + widget().media
 
         context.update(
             {
@@ -1664,6 +1669,10 @@ class AddDisplaySetToReaderStudy(
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+    included_form_classes = (
+        DisplaySetCreateForm,
+        DisplaySetInterfacesCreateForm,
+    )
 
     def get_permission_object(self):
         return self.reader_study
@@ -1695,8 +1704,9 @@ class AddDisplaySetToReaderStudy(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         media = Media()
-        for widget in self.form_class._possible_widgets:
-            media = media + widget().media
+        for form_class in self.included_form_classes:
+            for widget in form_class._possible_widgets:
+                media = media + widget().media
         context.update(
             {
                 "reader_study": self.reader_study,

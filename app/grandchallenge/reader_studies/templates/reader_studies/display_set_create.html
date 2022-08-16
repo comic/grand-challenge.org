@@ -20,6 +20,8 @@
 {% block content %}
     <h2>Add {{ type_to_add }} to {{ object }}</h2>
 
+    <div id="readerStudySlug" class="d-none" data-slug="{{ object.slug }}"></div>
+
     <form action="{% url 'reader-studies:display-set-create' slug=reader_study.slug %}" method="post" id="form-new-ds">
       {% csrf_token %}
       {{ form|crispy }}
@@ -38,10 +40,14 @@
     {{ block.super }}
     {{ form_media }}
     <script src="{% static 'reader_studies/js/display_set_create.js' %}" type="text/javascript"></script>
+    <script src="{% static 'reader_studies/js/autocomplete_htmx.js' %}" type="text/javascript"></script>
+
     <script>
         window.drf = {
             csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
             csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
         };
     </script>
+
+    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
 {% endblock %}

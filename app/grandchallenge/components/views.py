@@ -9,6 +9,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
+from grandchallenge.reader_studies.models import ReaderStudy
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -61,9 +62,16 @@ class ComponentInterfaceAutocomplete(
     LoginRequiredMixin, autocomplete.Select2QuerySetView
 ):
     def get_queryset(self):
-        qs = ComponentInterface.objects.filter(
-            kind__in=InterfaceKind.interface_type_image()
-        ).order_by("title")
+        if self.forwarded:
+            reader_study_slug = self.forwarded.pop("reader-study")
+            reader_study = ReaderStudy.objects.get(slug=reader_study_slug)
+            qs = ComponentInterface.objects.exclude(
+                slug__in=reader_study.values_for_interfaces.keys()
+            ).exclude(pk__in=self.forwarded.values())
+        else:
+            qs = ComponentInterface.objects.filter(
+                kind__in=InterfaceKind.interface_type_image()
+            ).order_by("title")
 
         if self.q:
             qs = qs.filter(
