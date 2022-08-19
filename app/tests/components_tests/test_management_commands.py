@@ -1,4 +1,5 @@
 import pytest
+from celery.result import AsyncResult
 from django.core.management import call_command
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
@@ -26,8 +27,18 @@ def test_add_overlay_segments(settings):
 
     # This raises a ValidationError, but unfortunetaly that gest swallowed in
     # the context manager.
-    with capture_on_commit_callbacks(execute=True):
+    with capture_on_commit_callbacks() as callbacks:
         call_command("add_overlay_segments", "foo", '{"255": "seg"}')
+
+    error = (
+        "The valid voxel values for this segmentation are: {0, 255}. "
+        "This segmentation is invalid as it contains the voxel values: {2}."
+    )
+
+    for callback in callbacks:
+        maybe_task = callback()
+        if isinstance(maybe_task, AsyncResult):
+            assert error in maybe_task.traceback
 
     ci.refresh_from_db()
     assert ci.overlay_segments == [
