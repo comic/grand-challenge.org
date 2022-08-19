@@ -27,7 +27,7 @@ from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.models import SimpleITKImage
 
 from grandchallenge.algorithms.exceptions import ImageImportError
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
@@ -983,6 +983,22 @@ def civ_value_to_file(*, civ_pk):
         civ.save()
 
 
+def _get_sitk_image(image_file):
+    with NamedTemporaryFile() as tmp:
+        for chunk in image_file.file.chunks():
+            tmp.write(chunk)
+        tmp.flush()
+        tmp.seek(0)
+        loaded_image = load_sitk_image(Path(tmp.name))
+        simple_itk_image = SimpleITKImage(
+            image=loaded_image,
+            name=tmp.name,
+            consumed_files=set(),
+            spacing_valid=True,
+        )
+        return simple_itk_image
+
+
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def validate_voxel_values(*, civ_pk):
     civ = get_model_instance(
@@ -992,19 +1008,10 @@ def validate_voxel_values(*, civ_pk):
     )
 
     if civ.image.segments is None:
-        image_file = civ.image.files.first()
-        with NamedTemporaryFile() as tmp:
-            for chunk in image_file.file.chunks():
-                tmp.write(chunk)
-            tmp.flush()
-            tmp.seek(0)
-            loaded_image = load_sitk_image(Path(tmp.name))
-            simple_itk_image = SimpleITKImage(
-                image=loaded_image,
-                name=tmp.name,
-                consumed_files=set(),
-                spacing_valid=True,
-            )
+        for file in civ.image.files.all():
+            if not file.image_type == ImageFile.IMAGE_TYPE_MHD:
+                continue
+            simple_itk_image = _get_sitk_image(file)
             segments = simple_itk_image.segments
 
         civ.image.segments = [int(segment) for segment in segments]
