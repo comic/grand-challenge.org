@@ -8,6 +8,8 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import validate_voxel_values
+from grandchallenge.core.validators import JSONValidator
+from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
 
 class Command(BaseCommand):
@@ -31,6 +33,11 @@ class Command(BaseCommand):
             }
             for voxel_value in mapping
         ]
+        # Only validate the segments json, as the ci's clean method also
+        # checks whether civs already exist
+        JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)(
+            value=interface.overlay_segments
+        )
         interface.save()
 
         for civ in ComponentInterfaceValue.objects.filter(interface=interface):
