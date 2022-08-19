@@ -27,7 +27,7 @@ def test_add_overlay_segments(settings):
     # This raises a ValidationError, but unfortunetaly that gest swallowed in
     # the context manager.
     with capture_on_commit_callbacks(execute=True):
-        call_command("add_overlay_segments", '{"foo": {"255": "seg"} }')
+        call_command("add_overlay_segments", "foo", '{"255": "seg"}')
 
     ci.refresh_from_db()
     assert ci.overlay_segments == [
@@ -37,6 +37,6 @@ def test_add_overlay_segments(settings):
     im.segments = None
     im.save()
     with capture_on_commit_callbacks(execute=True):
-        call_command("add_overlay_segments", '{"foo": {"255": "seg"} }')
+        call_command("add_overlay_segments", "foo", '{"255": "seg"}')
     im.refresh_from_db()
     assert im.segments == [0]
