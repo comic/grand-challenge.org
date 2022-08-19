@@ -635,14 +635,18 @@ class Job(UUIDModel, ComponentJob):
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
 
-    def run_job(self, upload_pks=None):
+    def run_job(self, upload_pks=None, user_upload_pks=None):
         # Local import to avoid circular dependency
         from grandchallenge.algorithms.tasks import (
             run_algorithm_job_for_inputs,
         )
 
         run_job = run_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": self.pk, "upload_pks": upload_pks},
+            kwargs={
+                "job_pk": self.pk,
+                "upload_pks": upload_pks,
+                "user_upload_pks": user_upload_pks,
+            },
             immutable=True,
         )
         on_commit(run_job.apply_async)

@@ -37,6 +37,8 @@ from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
+from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.uploads.models import UserUpload
 
 logger = logging.getLogger(__name__)
 
@@ -959,6 +961,50 @@ def add_images_to_component_interface_value(
     civ.save()
 
     civ.image.update_viewer_groups_permissions()
+
+
+@shared_task
+def add_file_to_component_interface_value(
+    *,
+    component_interface_value_pk,
+    user_upload_pk,
+    target_pk,
+    target_app,
+    target_model,
+):
+    user_upload = UserUpload.objects.get(pk=user_upload_pk)
+    civ = get_model_instance(
+        pk=component_interface_value_pk,
+        app_label="components",
+        model_name="componentinterfacevalue",
+    )
+    target = get_model_instance(
+        pk=target_pk,
+        app_label=target_app,
+        model_name=target_model,
+    )
+    error = None
+    with transaction.atomic():
+        try:
+            civ.validate_user_upload(user_upload)
+            civ.full_clean()
+        except ValidationError as e:
+            transaction.set_rollback(True)
+            error = str(e)
+        else:
+            user_upload.copy_object(to_field=civ.file)
+            civ.save()
+
+    if error is not None:
+        Notification.send(
+            type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            actor=user_upload.creator,
+            message=f"File for interface {civ.interface.title} failed validation.",
+            target=target,
+            description=(
+                f"File for interface {civ.interface.title} failed validation:\n{error}."
+            ),
+        )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
