@@ -34,6 +34,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.tasks import (
     _retry,
+    add_file_to_component_interface_value,
     add_images_to_component_interface_value,
 )
 from grandchallenge.core.cache import _cache_key_from_method
@@ -46,7 +47,8 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
+def run_algorithm_job_for_inputs(*, job_pk, upload_pks, user_upload_pks):
+    job = Job.objects.get(pk=job_pk)
     start_jobs = execute_algorithm_job_for_inputs.signature(
         kwargs={"job_pk": job_pk}, immutable=True
     )
@@ -73,7 +75,25 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
         start_jobs = chord(image_tasks, start_jobs).on_error(
             on_job_creation_error.s(job_pk=job_pk)
         )
-
+    if user_upload_pks:
+        file_tasks = group(
+            [
+                add_file_to_component_interface_value.signature(
+                    kwargs={
+                        "component_interface_value_pk": civ_pk,
+                        "user_upload_pk": upload_pk,
+                        "target_pk": job.algorithm_image.algorithm.pk,
+                        "target_app": "algorithms",
+                        "target_model": "algorithm",
+                    },
+                    immutable=True,
+                )
+                for civ_pk, upload_pk in user_upload_pks.items()
+            ]
+        )
+        start_jobs = chord(file_tasks, start_jobs).on_error(
+            on_job_creation_error.s(job_pk=job_pk)
+        )
     on_commit(start_jobs.apply_async)
 
 

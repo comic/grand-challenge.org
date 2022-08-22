@@ -7,6 +7,7 @@ from actstream.models import Follow
 from django.core.files.base import File
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from requests import put
 
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
@@ -41,6 +42,7 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user, recurse_callbacks
 
 
@@ -66,7 +68,9 @@ class TestCreateAlgorithmJobs:
         )
         j.inputs.set([civ])
         assert Job.objects.count() == 1
-        run_algorithm_job_for_inputs(job_pk=j.pk, upload_pks=[])
+        run_algorithm_job_for_inputs(
+            job_pk=j.pk, upload_pks=[], user_upload_pks=[]
+        )
         assert Job.objects.count() == 1
 
     def test_creates_job_correctly(self):
@@ -402,7 +406,9 @@ def test_algorithm_multiple_inputs(
             expected.append("test")
 
     with capture_on_commit_callbacks() as callbacks:
-        run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
+        run_algorithm_job_for_inputs(
+            job_pk=job.pk, upload_pks=[], user_upload_pks=[]
+        )
     recurse_callbacks(callbacks=callbacks)
 
     job.refresh_from_db()
@@ -451,7 +457,7 @@ def test_algorithm_input_image_multiple_files(
     with pytest.raises(ImageImportError):
         with capture_on_commit_callbacks(execute=True):
             run_algorithm_job_for_inputs(
-                job_pk=job.pk, upload_pks={civ.pk: us.pk}
+                job_pk=job.pk, upload_pks={civ.pk: us.pk}, user_upload_pks=[]
             )
 
     # TODO: celery errorhandling with the .on_error seems to not work when
@@ -466,6 +472,66 @@ def test_algorithm_input_image_multiple_files(
     #     "['Generic Medical Image'] "
     #     "ValueError('Image imports should result in a single image')"
     # )
+
+
+@pytest.mark.django_db
+def test_algorithm_input_user_upload(client, settings, component_interfaces):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    assert Job.objects.count() == 0
+
+    # Create the algorithm image
+    alg = AlgorithmImageFactory()
+    alg.algorithm.add_editor(creator)
+
+    ci = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    civ = ComponentInterfaceValueFactory(interface=ci)
+
+    alg.algorithm.inputs.add(ci)
+    # create the job
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+
+    upload = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+    ci.schema = {
+        "$schema": "http://json-schema.org/draft-07/schema",
+        "type": "array",
+    }
+    ci.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        run_algorithm_job_for_inputs(
+            job_pk=job.pk,
+            upload_pks=[],
+            user_upload_pks={civ.pk: upload.pk},
+        )
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    assert "JSON does not fulfill schema" in notification.print_notification(
+        user=notification.user
+    )
+
+    ci.schema = {}
+    ci.save()
+    civ = ComponentInterfaceValueFactory(interface=ci)
+
+    with capture_on_commit_callbacks(execute=True):
+        run_algorithm_job_for_inputs(
+            job_pk=job.pk,
+            upload_pks=[],
+            user_upload_pks={civ.pk: upload.pk},
+        )
+    civ.refresh_from_db()
+    assert civ.file.read() == b'{"foo": "bar"}'
 
 
 @pytest.mark.django_db

@@ -208,15 +208,20 @@ class JobPostSerializer(JobSerializer):
 
         component_interface_values = []
         upload_pks = {}
+        user_upload_pks = {}
         for input_data in inputs_data:
             # check for upload_session in input
             upload_session = input_data.pop("upload_session", None)
+            user_upload = input_data.pop("user_upload", None)
             civ = ComponentInterfaceValue(**input_data)
             if upload_session:
                 # CIVs with upload sessions cannot be validated, done in
                 # run_algorithm_job_for_inputs
                 civ.save()
                 upload_pks[civ.pk] = upload_session.pk
+            elif civ.interface.requires_file and user_upload:
+                civ.save()
+                user_upload_pks[civ.pk] = user_upload.pk
             else:
                 civ.full_clean()
                 civ.save()
@@ -241,6 +246,6 @@ class JobPostSerializer(JobSerializer):
             component_interface_values.append(civ)
 
         job.inputs.add(*component_interface_values)
-        job.run_job(upload_pks=upload_pks)
+        job.run_job(upload_pks=upload_pks, user_upload_pks=user_upload_pks)
 
         return job
