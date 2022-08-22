@@ -1,6 +1,4 @@
-import json
 import re
-import tempfile
 from io import BytesIO
 from pathlib import Path
 
@@ -9,6 +7,7 @@ from actstream.models import Follow
 from django.core.files.base import File
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from requests import put
 
 from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
@@ -43,7 +42,7 @@ from tests.factories import (
     ImageFileFactory,
     UserFactory,
 )
-from tests.uploads_tests.factories import create_upload_from_file
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user, recurse_callbacks
 
 
@@ -497,18 +496,44 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
     # create the job
     job = Job.objects.create(creator=creator, algorithm_image=alg)
 
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
-        json.dump('{"Foo": "bar"}', file)
-        file.seek(0)
-        upload = create_upload_from_file(
-            creator=creator, file_path=Path(file.name)
+    upload = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    upload.save()
+    ci.schema = {
+        "$schema": "http://json-schema.org/draft-07/schema",
+        "type": "array",
+    }
+    ci.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        run_algorithm_job_for_inputs(
+            job_pk=job.pk,
+            upload_pks=[],
+            user_upload_pks={civ.pk: upload.pk},
         )
-        with capture_on_commit_callbacks(execute=True):
-            run_algorithm_job_for_inputs(
-                job_pk=job.pk,
-                upload_pks=[],
-                user_upload_pks={civ.pk: upload.pk},
-            )
+    civ.refresh_from_db()
+    # assert civ.file is None
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    assert "JSON does not fulfill schema" in notification.print_notification(
+        user=notification.user
+    )
+
+    ci.schema = {}
+    ci.save()
+
+    with capture_on_commit_callbacks(execute=True):
+        run_algorithm_job_for_inputs(
+            job_pk=job.pk,
+            upload_pks=[],
+            user_upload_pks={civ.pk: upload.pk},
+        )
+    civ.refresh_from_db()
+    assert civ.file.read() == b'{"foo": "bar"}'
 
 
 @pytest.mark.django_db
