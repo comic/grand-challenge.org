@@ -516,7 +516,6 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
             user_upload_pks={civ.pk: upload.pk},
         )
     civ.refresh_from_db()
-    # assert civ.file is None
     assert Notification.objects.count() == 1
     notification = Notification.objects.get()
     assert "JSON does not fulfill schema" in notification.print_notification(

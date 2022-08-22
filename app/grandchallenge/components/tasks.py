@@ -989,7 +989,7 @@ def add_file_to_component_interface_value(
             civ.validate_user_upload(user_upload)
             civ.full_clean()
         except ValidationError as e:
-            transaction.set_rollback(True)
+            civ.delete()
             error = str(e)
         else:
             user_upload.copy_object(to_field=civ.file)
