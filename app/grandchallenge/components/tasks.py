@@ -994,6 +994,7 @@ def add_file_to_component_interface_value(
         else:
             user_upload.copy_object(to_field=civ.file)
             civ.save()
+            user_upload.delete()
 
     if error is not None:
         Notification.send(
