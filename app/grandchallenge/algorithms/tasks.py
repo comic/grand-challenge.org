@@ -88,7 +88,7 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks, user_upload_pks):
                     },
                     immutable=True,
                 )
-                for civ_pk, upload_pk in user_upload_pks
+                for civ_pk, upload_pk in user_upload_pks.items()
             ]
         )
         start_jobs = chord(file_tasks, start_jobs).on_error(
