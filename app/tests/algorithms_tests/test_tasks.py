@@ -489,7 +489,6 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
     alg.algorithm.add_editor(creator)
 
     ci = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-
     civ = ComponentInterfaceValueFactory(interface=ci)
 
     alg.algorithm.inputs.add(ci)
@@ -515,7 +514,6 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
             upload_pks=[],
             user_upload_pks={civ.pk: upload.pk},
         )
-    civ.refresh_from_db()
     assert Notification.objects.count() == 1
     notification = Notification.objects.get()
     assert "JSON does not fulfill schema" in notification.print_notification(
@@ -524,6 +522,7 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
 
     ci.schema = {}
     ci.save()
+    civ = ComponentInterfaceValueFactory(interface=ci)
 
     with capture_on_commit_callbacks(execute=True):
         run_algorithm_job_for_inputs(
