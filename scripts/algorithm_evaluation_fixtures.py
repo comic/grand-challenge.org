@@ -40,6 +40,12 @@ def run():
     _create_algorithm(
         creator=users["demop"], inputs=inputs, outputs=outputs, suffix=suffix
     )
+    _create_algorithm(
+        creator=users["demop"],
+        inputs=_get_non_image_inputs(),
+        outputs=outputs,
+        suffix=suffix + 1,
+    )
 
 
 def _get_users():
@@ -51,6 +57,10 @@ def _get_inputs():
     return ComponentInterface.objects.filter(
         slug__in=["generic-medical-image"]
     )
+
+
+def _get_non_image_inputs():
+    return ComponentInterface.objects.filter(slug__in=["predictions-csv-file"])
 
 
 def _get_outputs():
