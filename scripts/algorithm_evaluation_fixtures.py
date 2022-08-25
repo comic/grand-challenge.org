@@ -42,7 +42,7 @@ def run():
     )
     _create_algorithm(
         creator=users["demop"],
-        inputs=_get_non_image_inputs(),
+        inputs=_get_json_file_inputs(),
         outputs=outputs,
         suffix=suffix + 1,
     )
@@ -59,8 +59,15 @@ def _get_inputs():
     )
 
 
-def _get_non_image_inputs():
-    return ComponentInterface.objects.filter(slug__in=["predictions-csv-file"])
+def _get_json_file_inputs():
+    return [
+        ComponentInterface.objects.get_or_create(
+            title="JSON File",
+            relative_path="json-file",
+            kind=ComponentInterface.Kind.ANY,
+            store_in_database=False,
+        )[0]
+    ]
 
 
 def _get_outputs():
