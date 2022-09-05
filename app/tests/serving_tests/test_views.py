@@ -18,6 +18,10 @@ from tests.evaluation_tests.factories import (
     SubmissionFactory,
 )
 from tests.factories import ImageFileFactory, UserFactory
+from tests.reader_studies_tests.factories import (
+    DisplaySetFactory,
+    ReaderStudyFactory,
+)
 from tests.utils import get_view_for_user
 from tests.workstations_tests.factories import FeedbackFactory
 
@@ -185,6 +189,16 @@ def test_civ_file_download(client):
     archive.add_user(user1)
     has_correct_access(user1, user2, archive_item.values.first().file.url)
     archive.remove_user(user1)
+
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(output_civ)
+    rs.add_editor(user1)
+    has_correct_access(user1, user2, ds.values.first().file.url)
+    rs.remove_editor(user1)
+    rs.add_reader(user1)
+    has_correct_access(user1, user2, ds.values.first().file.url)
+    rs.remove_reader(user1)
 
 
 @pytest.mark.django_db
