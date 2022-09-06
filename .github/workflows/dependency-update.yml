@@ -33,7 +33,7 @@ jobs:
         id: dependency-update
         timeout-minutes: 5
         run: |
-          POETRY_LOG=$(poetry update --lock --dry-run --no-interaction --no-ansi)
+          POETRY_LOG=$(poetry update --lock --no-interaction --no-ansi)
           POETRY_LOG="${POETRY_LOG//'%'/'%25'}"
           POETRY_LOG="${POETRY_LOG//$'\n'/'%0A'}"
           POETRY_LOG="${POETRY_LOG//$'\r'/'%0D'}"
