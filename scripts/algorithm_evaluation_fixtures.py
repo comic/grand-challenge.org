@@ -25,26 +25,29 @@ def run():
     users = _get_users()
     inputs = _get_inputs()
     outputs = _get_outputs()
-    suffix = Challenge.objects.count()
+    challenge_count = Challenge.objects.count()
     archive = _create_archive(
-        creator=users["demo"], interfaces=inputs, suffix=suffix
+        creator=users["demo"], interfaces=inputs, suffix=challenge_count
     )
     _create_challenge(
         creator=users["demo"],
         participant=users["demop"],
         archive=archive,
-        suffix=suffix,
+        suffix=challenge_count,
         inputs=inputs,
         outputs=outputs,
     )
     _create_algorithm(
-        creator=users["demop"], inputs=inputs, outputs=outputs, suffix=suffix
+        creator=users["demop"],
+        inputs=inputs,
+        outputs=outputs,
+        suffix=f"Image {challenge_count}",
     )
     _create_algorithm(
         creator=users["demop"],
         inputs=_get_json_file_inputs(),
         outputs=outputs,
-        suffix=suffix + 1,
+        suffix=f"File {challenge_count}",
     )
 
 
