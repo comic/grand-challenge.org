@@ -21,6 +21,7 @@ from django.db import models
 from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField, ModelMultipleChoiceField
+from django.forms.models import model_to_dict
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
@@ -980,8 +981,14 @@ class ComponentInterfaceValue(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._value_orig = self.value
-        self._image_orig = self.image
+        self._image_orig = self._dict["image"]
         self._file_orig = self.file
+
+    @property
+    def _dict(self):
+        return model_to_dict(
+            self, fields=[field.name for field in self._meta.fields]
+        )
 
     def save(self, *args, **kwargs):
         if (
@@ -990,7 +997,7 @@ class ComponentInterfaceValue(models.Model):
                 and self.value is not None
                 and self._value_orig != self.value
             )
-            or (self._image_orig and self._image_orig != self.image)
+            or (self._image_orig and self._image_orig != self.image.pk)
             or (
                 self._file_orig.name not in (None, "")
                 and self._file_orig != self.file
