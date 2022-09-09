@@ -439,6 +439,8 @@ class ReaderStudyDisplaySetList(
             .prefetch_related(
                 "values", "answers", "values__image", "values__interface"
             )
+            .order_by()
+            .distinct()
         )
         return qs
 
