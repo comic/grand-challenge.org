@@ -235,9 +235,15 @@ class ReaderStudyUpdateForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        interface_slugs = (
+            self.instance.display_sets.exclude(values__isnull=True)
+            .values_list("values__interface__slug", flat=True)
+            .order_by()
+            .distinct()
+        )
         self.fields["view_content"].help_text += (
             " The following interfaces are used in your reader study: "
-            f"{', '.join(self.instance.display_sets.values_list('values__interface__slug', flat=True).order_by().distinct())}."
+            f"{', '.join(interface_slugs)}."
         )
 
 
