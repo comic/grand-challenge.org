@@ -57,9 +57,15 @@ class ArchiveForm(
             )
         ).distinct()
         if self.instance:
+            interface_slugs = (
+                self.instance.items.exclude(values__isnull=True)
+                .values_list("values__interface__slug", flat=True)
+                .order_by()
+                .distinct()
+            )
             self.fields["view_content"].help_text += (
                 " The following interfaces are used in your archive: "
-                f"{', '.join(self.instance.items.values_list('values__interface__slug', flat=True).distinct())}."
+                f"{', '.join(interface_slugs)}."
             )
 
     class Meta:
