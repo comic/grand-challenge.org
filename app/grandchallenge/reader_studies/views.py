@@ -1181,6 +1181,7 @@ class DisplaySetViewSet(
         # reader study.
         reader_study = self.reader_study
         if reader_study and reader_study.shuffle_hanging_list:
+            queryset = queryset.filter(reader_study=reader_study)
             queryset = self.create_randomized_qs(queryset=queryset)
         unanswered_by_user = strtobool(
             self.request.query_params.get("unanswered_by_user", "False")
@@ -1245,7 +1246,9 @@ class DisplaySetViewSet(
         # retrieve the full queryset and save its shuffled version to later
         # determine the shuffled index for this object
         if obj.reader_study.shuffle_hanging_list:
-            queryset = super().filter_queryset(self.get_queryset())
+            queryset = self.get_queryset()
+            queryset = super().filter_queryset(queryset)
+            queryset = queryset.filter(reader_study=obj.reader_study)
             self.create_randomized_qs(queryset=queryset)
         return obj
 
