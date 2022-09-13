@@ -24,4 +24,5 @@ User-agent: dotbot
 User-agent: SEOkicks
 User-agent: SEOkicks-Robot
 User-agent: BLEXBot
+User-agent: SemrushBot
 Disallow: /
