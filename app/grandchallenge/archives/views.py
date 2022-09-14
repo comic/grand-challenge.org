@@ -463,11 +463,11 @@ class ArchiveEditArchiveItem(
 
 
 class ArchiveItemsList(
-    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     model = ArchiveItem
     permission_required = (
-        f"{ArchiveItem._meta.app_label}.view_{ArchiveItem._meta.model_name}"
+        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
     )
     raise_exception = True
     template_name = "archives/archive_items_list.html"
@@ -488,6 +488,9 @@ class ArchiveItemsList(
     @cached_property
     def archive(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
