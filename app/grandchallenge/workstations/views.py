@@ -9,7 +9,7 @@ from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
-from guardian.mixins import LoginRequiredMixin, PermissionListMixin
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
@@ -23,6 +23,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from ua_parser.user_agent_parser import ParseUserAgent
 
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.views import PermissionListMixin
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.verifications.views import VerificationRequiredMixin

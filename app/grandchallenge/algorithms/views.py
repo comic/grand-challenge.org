@@ -32,7 +32,7 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from guardian.mixins import LoginRequiredMixin, PermissionListMixin
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
@@ -85,7 +85,10 @@ from grandchallenge.components.models import (
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.core.views import (
+    PermissionListMixin,
+    PermissionRequestUpdate,
+)
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken

@@ -1,12 +1,13 @@
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import CreateView, DetailView, ListView
-from guardian.mixins import LoginRequiredMixin, PermissionListMixin
+from guardian.mixins import LoginRequiredMixin
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from ipware import get_client_ip
 
+from grandchallenge.core.views import PermissionListMixin
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.workspaces.forms import WorkspaceForm
 from grandchallenge.workspaces.models import Workspace
