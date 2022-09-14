@@ -13,9 +13,6 @@ def init_archiveitem_permissions(*_, **__):
         name=settings.REGISTERED_USERS_GROUP_NAME
     )
     assign_perm(
-        f"{ArchiveItem._meta.app_label}.view_{ArchiveItem._meta.model_name}", g
-    )
-    assign_perm(
         f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}",
         g,
     )
