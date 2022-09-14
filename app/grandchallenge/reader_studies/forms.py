@@ -33,7 +33,6 @@ from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
@@ -46,6 +45,7 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin

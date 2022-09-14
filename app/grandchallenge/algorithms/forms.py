@@ -35,7 +35,6 @@ from django.urls import Resolver404, resolve
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -62,6 +61,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import MarkdownEditorWidget

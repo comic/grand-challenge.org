@@ -2,8 +2,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.conf import settings
 from django.forms import ModelForm
-from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
 

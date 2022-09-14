@@ -1,10 +1,10 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import HiddenInput, ModelChoiceField, ModelForm
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.evaluation.models import Method
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget

@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
-from guardian.shortcuts import get_objects_for_user
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import (
     BooleanField,
@@ -23,6 +22,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )

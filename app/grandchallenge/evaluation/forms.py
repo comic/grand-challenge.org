@@ -11,13 +11,13 @@ from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (

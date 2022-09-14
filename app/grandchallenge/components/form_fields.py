@@ -1,8 +1,8 @@
 from django import forms
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.uploads.models import UserUpload

@@ -1,10 +1,10 @@
 from django import forms
 from django.forms import ModelChoiceField
 from django_select2.forms import Select2MultipleWidget
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.blogs.forms import PostUpdateForm
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.products.models import ProjectAirFiles
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget

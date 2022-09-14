@@ -1,6 +1,6 @@
 from typing import Optional
 
-from guardian.shortcuts import assign_perm, get_objects_for_user
+from guardian.shortcuts import assign_perm
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -24,6 +24,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )

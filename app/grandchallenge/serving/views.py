@@ -5,13 +5,13 @@ from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
 from django.db.models import F
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
-from guardian.shortcuts import get_objects_for_user
 from knox.auth import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.serving.models import Download

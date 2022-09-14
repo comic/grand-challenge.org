@@ -1,4 +1,3 @@
-from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import SlugRelatedField
@@ -8,6 +7,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,
