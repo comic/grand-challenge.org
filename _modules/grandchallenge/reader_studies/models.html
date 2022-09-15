@@ -86,7 +86,7 @@
 <span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
-<span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">get_objects_for_group</span><span class="p">,</span> <span class="n">remove_perm</span>
+<span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">RefResolutionError</span>
 <span class="kn">from</span> <span class="nn">simple_history.models</span> <span class="kn">import</span> <span class="n">HistoricalRecords</span>
 <span class="kn">from</span> <span class="nn">stdimage</span> <span class="kn">import</span> <span class="n">JPEGField</span>
@@ -99,6 +99,7 @@
     <span class="n">OverlaySegmentsMixin</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.guardian</span> <span class="kn">import</span> <span class="n">get_objects_for_group</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_logo_path</span><span class="p">,</span>
@@ -474,7 +475,8 @@
 
         <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">):</span>
             <span class="n">workstations</span> <span class="o">=</span> <span class="n">get_objects_for_group</span><span class="p">(</span>
-                <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="n">perms</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span> <span class="n">accept_global_perms</span><span class="o">=</span><span class="kc">False</span>
+                <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
+                <span class="n">perms</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="p">(</span>
