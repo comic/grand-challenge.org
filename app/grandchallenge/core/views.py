@@ -13,7 +13,9 @@ from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import PermissionListMixin as PermissionListMixinOrig
+from guardian.mixins import (  # noqa: I251
+    PermissionListMixin as PermissionListMixinOrig,
+)
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
