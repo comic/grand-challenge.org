@@ -3,15 +3,16 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.views.generic import CreateView, DeleteView, ListView
-from guardian.mixins import LoginRequiredMixin, PermissionListMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
+from guardian.mixins import LoginRequiredMixin
 from rest_framework import mixins, viewsets
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.core.filters import FilterMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.notifications.filters import (
     FollowFilter,
     NotificationFilter,

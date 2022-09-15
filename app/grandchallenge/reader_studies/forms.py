@@ -33,7 +33,6 @@ from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
@@ -45,6 +44,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
@@ -616,7 +616,8 @@ class FileForm(Form):
             allowed_file_types=interface.file_mimetypes
         )
         self.fields["user_upload"].queryset = get_objects_for_user(
-            user, "uploads.change_userupload", accept_global_perms=False
+            user,
+            "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         self.interface = interface
         self.display_set = display_set

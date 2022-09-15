@@ -8,10 +8,8 @@ from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import CreateView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 

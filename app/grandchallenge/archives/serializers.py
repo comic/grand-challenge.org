@@ -1,5 +1,4 @@
 from django.db.transaction import on_commit
-from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import JSONField, ReadOnlyField, URLField
@@ -14,6 +13,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -80,7 +80,7 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
             user = self.context["request"].user
 
             self.fields["archive"].queryset = get_objects_for_user(
-                user, "archives.upload_archive", accept_global_perms=False
+                user, "archives.upload_archive"
             )
 
     def create(self, validated_data):

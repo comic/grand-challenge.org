@@ -1,10 +1,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelMultipleChoiceField
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
@@ -36,7 +36,8 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields["user_uploads"].queryset = get_objects_for_user(
-            user, "uploads.change_userupload", accept_global_perms=False
+            user,
+            "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
         self._linked_task = linked_task

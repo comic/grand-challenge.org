@@ -3,14 +3,12 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
 from grandchallenge.blogs.filters import BlogFilter
 from grandchallenge.blogs.forms import AuthorsForm, PostForm, PostUpdateForm
 from grandchallenge.blogs.models import Post
 from grandchallenge.core.filters import FilterMixin
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.groups.views import UserGroupUpdateMixin
 
 

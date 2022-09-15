@@ -1,4 +1,3 @@
-from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import SlugRelatedField
@@ -8,6 +7,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,
@@ -92,17 +92,18 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
 
             self.fields["image"].queryset = get_objects_for_user(
-                user, "cases.view_image", accept_global_perms=False
+                user,
+                "cases.view_image",
             )
 
             self.fields["upload_session"].queryset = get_objects_for_user(
                 user,
                 "cases.change_rawimageuploadsession",
-                accept_global_perms=False,
             ).filter(status=RawImageUploadSession.PENDING)
 
             self.fields["user_upload"].queryset = get_objects_for_user(
-                user, "uploads.change_userupload", accept_global_perms=False
+                user,
+                "uploads.change_userupload",
             )
 
     def validate(self, attrs):

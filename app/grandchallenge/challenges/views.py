@@ -13,9 +13,6 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.filters import (
@@ -35,6 +32,7 @@ from grandchallenge.challenges.models import (
     ExternalChallenge,
 )
 from grandchallenge.core.filters import FilterMixin
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin

@@ -3,11 +3,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import FormView, ListView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
 from grandchallenge.admins.forms import AdminsForm
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 

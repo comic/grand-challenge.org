@@ -3,11 +3,11 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
-from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    get_objects_for_user,
+)
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.groups.forms import EditorsForm, MembersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -70,7 +70,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="algorithms.view_algorithm",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -79,7 +78,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="archives.view_archive",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -88,7 +86,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="challenges.view_challenge",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -97,7 +94,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="challenges.view_externalchallenge",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -106,7 +102,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="reader_studies.view_readerstudy",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()

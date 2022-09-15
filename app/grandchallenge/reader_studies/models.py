@@ -12,7 +12,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from jsonschema import RefResolutionError
 from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
@@ -25,6 +25,7 @@ from grandchallenge.components.models import (
     OverlaySegmentsMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
+from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -400,7 +401,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
         for group in (self.editors_group, self.readers_group):
             workstations = get_objects_for_group(
-                group=group, perms=perm, accept_global_perms=False
+                group=group,
+                perms=perm,
             )
 
             if (

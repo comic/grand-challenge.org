@@ -15,7 +15,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
@@ -26,6 +26,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
 )
+from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -327,7 +328,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
         for group in [self.users_group, self.editors_group]:
             workstations = get_objects_for_group(
-                group=group, perms=perm, accept_global_perms=False
+                group=group,
+                perms=perm,
             )
 
             if (

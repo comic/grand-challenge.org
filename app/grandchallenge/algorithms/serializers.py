@@ -1,6 +1,6 @@
 from typing import Optional
 
-from guardian.shortcuts import assign_perm, get_objects_for_user
+from guardian.shortcuts import assign_perm
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -24,6 +24,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -153,7 +154,8 @@ class JobPostSerializer(JobSerializer):
             user = self.context["request"].user
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user, "algorithms.execute_algorithm", accept_global_perms=False
+                user,
+                "algorithms.execute_algorithm",
             )
 
     def validate(self, data):

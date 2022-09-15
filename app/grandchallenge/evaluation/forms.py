@@ -11,13 +11,13 @@ from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
@@ -311,7 +311,8 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             del self.fields["user_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user, "algorithms.change_algorithm", accept_global_perms=False
+                user,
+                "algorithms.change_algorithm",
             ).order_by("title")
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
@@ -320,7 +321,8 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             del self.fields["algorithm"]
 
             self.fields["user_upload"].queryset = get_objects_for_user(
-                user, "uploads.change_userupload", accept_global_perms=False
+                user,
+                "uploads.change_userupload",
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
     def clean_algorithm(self):

@@ -11,7 +11,6 @@ from django.forms import (
 )
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
-from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.archives.models import (
     Archive,
@@ -30,6 +29,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
@@ -53,7 +53,6 @@ class ArchiveForm(
             | get_objects_for_user(
                 kwargs["user"],
                 "algorithms.execute_algorithm",
-                accept_global_perms=False,
             )
         ).distinct()
         if self.instance:
@@ -185,7 +184,6 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
         self.fields["reader_study"].queryset = get_objects_for_user(
             self.user,
             "reader_studies.change_readerstudy",
-            accept_global_perms=False,
         ).order_by("title")
 
         self.fields["items"].queryset = self.archive.items.all()
