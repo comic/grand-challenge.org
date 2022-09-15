@@ -12,10 +12,8 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page

@@ -33,9 +33,6 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 from guardian.shortcuts import assign_perm, get_perms
 from rest_framework.mixins import (
     CreateModelMixin,
@@ -84,7 +81,10 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.guardian import PermissionListMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit

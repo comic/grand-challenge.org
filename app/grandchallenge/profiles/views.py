@@ -11,9 +11,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, UpdateView
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -22,7 +19,10 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    get_objects_for_user,
+)
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
 from grandchallenge.profiles.forms import NewsletterSignupForm, UserProfileForm

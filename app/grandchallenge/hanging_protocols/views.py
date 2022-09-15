@@ -2,10 +2,8 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.hanging_protocols.forms import HangingProtocolForm
 from grandchallenge.hanging_protocols.models import HangingProtocol
 from grandchallenge.subdomains.utils import reverse

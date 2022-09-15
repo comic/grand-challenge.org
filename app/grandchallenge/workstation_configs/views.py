@@ -8,12 +8,10 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstation_configs.forms import WorkstationConfigForm
 from grandchallenge.workstation_configs.models import WorkstationConfig

@@ -18,15 +18,15 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.guardian import PermissionListMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,

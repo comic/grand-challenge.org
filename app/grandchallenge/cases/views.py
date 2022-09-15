@@ -3,9 +3,6 @@ from django.http import Http404
 from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -22,7 +19,10 @@ from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
-from grandchallenge.core.guardian import PermissionListMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy

@@ -13,13 +13,11 @@ from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.blogs.models import Post
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 

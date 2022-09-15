@@ -49,9 +49,6 @@ from drf_spectacular.utils import (
 )
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
 from guardian.shortcuts import get_perms
 from rest_framework import mixins
 from rest_framework.decorators import action
@@ -75,7 +72,10 @@ from grandchallenge.components.serializers import (
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.guardian import PermissionListMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils import strtobool
