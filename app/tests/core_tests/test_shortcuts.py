@@ -1,7 +1,7 @@
 import pytest
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.core.shortcuts import (
+from grandchallenge.core.guardian import (
     get_objects_for_group,
     get_objects_for_user,
 )

@@ -29,7 +29,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm

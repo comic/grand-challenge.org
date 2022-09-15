@@ -4,7 +4,7 @@ from django.forms import HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Method
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget

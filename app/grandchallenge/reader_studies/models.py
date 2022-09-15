@@ -25,8 +25,8 @@ from grandchallenge.components.models import (
     OverlaySegmentsMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
+from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
-from grandchallenge.core.shortcuts import get_objects_for_group
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,

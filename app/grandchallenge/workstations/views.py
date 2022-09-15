@@ -23,7 +23,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from ua_parser.user_agent_parser import ParseUserAgent
 
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.views import PermissionListMixin
+from grandchallenge.core.guardian import PermissionListMixin
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.verifications.views import VerificationRequiredMixin

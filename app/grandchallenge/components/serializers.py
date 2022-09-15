@@ -7,7 +7,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,

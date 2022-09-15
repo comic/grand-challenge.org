@@ -26,7 +26,7 @@ from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.forms import UserFormKwargsMixin
-from grandchallenge.core.views import PermissionListMixin
+from grandchallenge.core.guardian import PermissionListMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,

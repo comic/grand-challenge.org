@@ -22,7 +22,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )

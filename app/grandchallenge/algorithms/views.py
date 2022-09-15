@@ -84,11 +84,9 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.guardian import PermissionListMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.views import (
-    PermissionListMixin,
-    PermissionRequestUpdate,
-)
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken

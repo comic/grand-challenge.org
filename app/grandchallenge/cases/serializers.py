@@ -14,7 +14,7 @@ from grandchallenge.archives.tasks import (
 )
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, DisplaySet
 from grandchallenge.reader_studies.tasks import (

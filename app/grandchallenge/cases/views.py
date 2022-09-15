@@ -22,8 +22,8 @@ from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
+from grandchallenge.core.guardian import PermissionListMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
-from grandchallenge.core.views import PermissionListMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy
 

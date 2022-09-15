@@ -4,7 +4,7 @@ from django.forms import ModelMultipleChoiceField
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 

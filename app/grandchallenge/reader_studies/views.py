@@ -75,14 +75,12 @@ from grandchallenge.components.serializers import (
 )
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.guardian import PermissionListMixin
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.query import set_seed
-from grandchallenge.core.views import (
-    PermissionListMixin,
-    PermissionRequestUpdate,
-)
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin

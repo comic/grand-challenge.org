@@ -44,8 +44,8 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.layout import Formset
-from grandchallenge.core.shortcuts import get_objects_for_user
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin

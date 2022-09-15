@@ -13,9 +13,6 @@ from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import LoginRequiredMixin
-from guardian.mixins import (  # noqa: I251
-    PermissionListMixin as PermissionListMixinOrig,
-)
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
@@ -244,7 +241,3 @@ class PermissionRequestUpdate(
             f"{self.redirect_namespace}:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
-
-
-class PermissionListMixin(PermissionListMixinOrig):
-    get_objects_for_user_extra_kwargs = {"accept_global_perms": False}

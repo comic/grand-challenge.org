@@ -6,7 +6,7 @@ from django.views.generic import ListView
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.core.views import PermissionListMixin
+from grandchallenge.core.guardian import PermissionListMixin
 from grandchallenge.datatables.views import PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory

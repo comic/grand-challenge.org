@@ -7,7 +7,7 @@ from guardian.mixins import (
 )
 from ipware import get_client_ip
 
-from grandchallenge.core.views import PermissionListMixin
+from grandchallenge.core.guardian import PermissionListMixin
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.workspaces.forms import WorkspaceForm
 from grandchallenge.workspaces.models import Workspace

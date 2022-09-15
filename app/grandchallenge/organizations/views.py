@@ -7,7 +7,7 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.groups.forms import EditorsForm, MembersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin

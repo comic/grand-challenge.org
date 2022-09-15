@@ -11,7 +11,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.core.shortcuts import get_objects_for_user
+from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.serving.models import Download
