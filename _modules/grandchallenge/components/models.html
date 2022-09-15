@@ -860,10 +860,13 @@
             <span class="p">)</span>
 
         <span class="n">Question</span> <span class="o">=</span> <span class="n">apps</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;question&quot;</span><span class="p">)</span>  <span class="c1"># noqa: N806</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span> <span class="ow">and</span> <span class="p">(</span>
-            <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-            <span class="ow">or</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+                <span class="ow">or</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="p">)</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Overlay segments cannot be changed, as values or questions &quot;</span>
