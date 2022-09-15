@@ -15,7 +15,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
@@ -27,6 +27,7 @@ from grandchallenge.components.models import (
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
+from grandchallenge.core.shortcuts import get_objects_for_group
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
