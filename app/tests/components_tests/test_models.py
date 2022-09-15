@@ -23,6 +23,7 @@ from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
 )
+from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -33,6 +34,7 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import ImageFactory
+from tests.reader_studies_tests.factories import QuestionFactory
 
 
 @pytest.mark.django_db
@@ -966,13 +968,42 @@ def test_runtime_metrics_chart():
 
 
 @pytest.mark.django_db
-def test_clean_overlay_segments():
+def test_clean_overlay_segments_with_values():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
     ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci._clean_overlay_segments()
     ci.save()
 
     ComponentInterfaceValueFactory(interface=ci)
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert e.value.message == (
+        "Overlay segments cannot be changed, as values or questions for this "
+        "ComponentInterface exist."
+    )
+
+
+@pytest.mark.django_db
+def test_clean_overlay_segments_with_questions(reader_study_with_gt):
+    question = QuestionFactory(
+        reader_study=reader_study_with_gt,
+        answer_type=Question.AnswerType.BOOL,
+    )
+    assert question.interface is None
+
+    ci = ComponentInterface(
+        kind=InterfaceKindChoices.SEGMENTATION, relative_path="images/test"
+    )
+    ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
+    ci._clean_overlay_segments()
+    ci.save()
+
+    question.interface = ci
+    question.save()
     ci.overlay_segments = [
         {"name": "s1", "visible": True, "voxel_value": 1},
         {"name": "s2", "visible": True, "voxel_value": 2},
