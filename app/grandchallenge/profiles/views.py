@@ -74,7 +74,6 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="archives.view_archive",
-                accept_global_perms=False,
             )
             .filter(
                 Q(editors_group__in=profile_groups)
@@ -87,7 +86,6 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="reader_studies.view_readerstudy",
-                accept_global_perms=False,
             )
             .filter(
                 Q(editors_group__in=profile_groups)
@@ -104,7 +102,6 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="algorithms.view_algorithm",
-                accept_global_perms=False,
             )
             .filter(
                 Q(editors_group__in=profile_groups)

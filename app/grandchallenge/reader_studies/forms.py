@@ -616,7 +616,8 @@ class FileForm(Form):
             allowed_file_types=interface.file_mimetypes
         )
         self.fields["user_upload"].queryset = get_objects_for_user(
-            user, "uploads.change_userupload", accept_global_perms=False
+            user,
+            "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         self.interface = interface
         self.display_set = display_set

@@ -311,7 +311,8 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             del self.fields["user_upload"]
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user, "algorithms.change_algorithm", accept_global_perms=False
+                user,
+                "algorithms.change_algorithm",
             ).order_by("title")
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
@@ -320,7 +321,8 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
             del self.fields["algorithm"]
 
             self.fields["user_upload"].queryset = get_objects_for_user(
-                user, "uploads.change_userupload", accept_global_perms=False
+                user,
+                "uploads.change_userupload",
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
     def clean_algorithm(self):

@@ -401,7 +401,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
         for group in (self.editors_group, self.readers_group):
             workstations = get_objects_for_group(
-                group=group, perms=perm, accept_global_perms=False
+                group=group,
+                perms=perm,
             )
 
             if (

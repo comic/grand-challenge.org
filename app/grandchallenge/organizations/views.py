@@ -70,7 +70,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="algorithms.view_algorithm",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -79,7 +78,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="archives.view_archive",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -88,7 +86,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="challenges.view_challenge",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -97,7 +94,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="challenges.view_externalchallenge",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()
@@ -106,7 +102,6 @@ class OrganizationDetail(DetailView):
             get_objects_for_user(
                 user=self.request.user,
                 perms="reader_studies.view_readerstudy",
-                accept_global_perms=False,
             )
             .filter(organizations__in=[self.object])
             .distinct()

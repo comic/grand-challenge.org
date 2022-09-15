@@ -53,7 +53,6 @@ class ArchiveForm(
             | get_objects_for_user(
                 kwargs["user"],
                 "algorithms.execute_algorithm",
-                accept_global_perms=False,
             )
         ).distinct()
         if self.instance:
@@ -185,7 +184,6 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
         self.fields["reader_study"].queryset = get_objects_for_user(
             self.user,
             "reader_studies.change_readerstudy",
-            accept_global_perms=False,
         ).order_by("title")
 
         self.fields["items"].queryset = self.archive.items.all()

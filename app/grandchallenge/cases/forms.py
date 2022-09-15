@@ -36,7 +36,8 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields["user_uploads"].queryset = get_objects_for_user(
-            user, "uploads.change_userupload", accept_global_perms=False
+            user,
+            "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
         self._linked_task = linked_task

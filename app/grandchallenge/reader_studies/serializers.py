@@ -131,12 +131,10 @@ class DisplaySetPostSerializer(DisplaySetSerializer):
             self.fields["reader_study"].queryset = get_objects_for_user(
                 user,
                 "reader_studies.change_readerstudy",
-                accept_global_perms=False,
             )
             self.fields["values"].queryset = get_objects_for_user(
                 user,
                 "reader_studies.change_displayset",
-                accept_global_perms=False,
             )
 
 
@@ -192,7 +190,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             self.fields["display_set"].queryset = get_objects_for_user(
                 user,
                 "reader_studies.view_displayset",
-                accept_global_perms=False,
             )
 
     def validate(self, attrs):

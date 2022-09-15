@@ -103,7 +103,8 @@ def serve_component_interface_value(
         # but each is quite performant. Could be optimised later.
         if (
             get_objects_for_user(
-                user=user, perms=perm, accept_global_perms=False
+                user=user,
+                perms=perm,
             )
             .filter(**{lookup: civ})
             .exists()

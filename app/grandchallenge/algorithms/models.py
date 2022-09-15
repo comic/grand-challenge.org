@@ -328,7 +328,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
         for group in [self.users_group, self.editors_group]:
             workstations = get_objects_for_group(
-                group=group, perms=perm, accept_global_perms=False
+                group=group,
+                perms=perm,
             )
 
             if (

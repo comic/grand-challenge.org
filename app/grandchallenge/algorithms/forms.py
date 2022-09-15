@@ -602,7 +602,6 @@ class DisplaySetFromJobForm(SaveFormInitMixin, Form):
         self.fields["reader_study"].queryset = get_objects_for_user(
             user,
             "reader_studies.change_readerstudy",
-            accept_global_perms=False,
         ).order_by("title")
 
 

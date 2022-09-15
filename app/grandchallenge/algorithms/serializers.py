@@ -154,7 +154,8 @@ class JobPostSerializer(JobSerializer):
             user = self.context["request"].user
 
             self.fields["algorithm"].queryset = get_objects_for_user(
-                user, "algorithms.execute_algorithm", accept_global_perms=False
+                user,
+                "algorithms.execute_algorithm",
             )
 
     def validate(self, data):

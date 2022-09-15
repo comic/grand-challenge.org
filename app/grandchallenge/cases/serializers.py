@@ -122,28 +122,29 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
                 queryset=get_objects_for_user(
                     user,
                     "uploads.change_userupload",
-                    accept_global_perms=False,
                 ).filter(status=UserUpload.StatusChoices.COMPLETED),
                 view_name="api:upload-detail",
                 required=True,
             )
 
             self.fields["archive"].queryset = get_objects_for_user(
-                user, "archives.upload_archive", accept_global_perms=False
+                user,
+                "archives.upload_archive",
             )
 
             self.fields["answer"].queryset = get_objects_for_user(
-                user, "reader_studies.change_answer", accept_global_perms=False
+                user,
+                "reader_studies.change_answer",
             )
 
             self.fields["archive_item"].queryset = get_objects_for_user(
-                user, "archives.change_archiveitem", accept_global_perms=False
+                user,
+                "archives.change_archiveitem",
             )
 
             self.fields["display_set"].queryset = get_objects_for_user(
                 user,
                 "reader_studies.change_displayset",
-                accept_global_perms=False,
             )
 
     @property

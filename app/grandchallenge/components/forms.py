@@ -43,7 +43,8 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields["user_upload"].queryset = get_objects_for_user(
-            user, "uploads.change_userupload", accept_global_perms=False
+            user,
+            "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
         self.fields["creator"].initial = user
