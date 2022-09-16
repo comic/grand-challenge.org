@@ -1436,7 +1436,7 @@ class DisplaySetUpdate(
             ci = ComponentInterface.objects.get(slug=ci_slug)
             current_value = instance.values.filter(interface=ci).first()
 
-            if ci.is_json_kind:
+            if ci.is_json_kind and not ci.requires_file:
                 if current_value:
                     assigned_civs.append(current_value)
                 val = ComponentInterfaceValue.objects.create(
