@@ -391,17 +391,22 @@ def test_display_set_update(client):
     rs = ReaderStudyFactory()
     ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
     rs.add_editor(u1)
-    ci_str = ComponentInterfaceFactory(kind="STR")
+    ci_json = ComponentInterfaceFactory(kind="JSON")
+    ci_json_file = ComponentInterfaceFactory(
+        kind="JSON", store_in_database=False
+    )
     ci_img = ComponentInterfaceFactory(kind="IMG")
     im1, im2 = ImageFactory.create_batch(2)
-    civ_str = ComponentInterfaceValueFactory(
-        interface=ci_str, value="civ-title"
+    civ_json = ComponentInterfaceValueFactory(
+        interface=ci_json, value={"foo": "bar"}
     )
     civ_img = ComponentInterfaceValueFactory(interface=ci_img, image=im1)
-    ds1.values.set([civ_str, civ_img])
+    civ_json_file = ComponentInterfaceValueFactory(interface=ci_json_file)
+    ds1.values.set([civ_json, civ_json_file, civ_img])
 
     civ_img_new = ComponentInterfaceValueFactory(interface=ci_img, image=im2)
-    ds2.values.add(civ_img_new)
+    civ_json_file_new = ComponentInterfaceValueFactory(interface=ci_json_file)
+    ds2.values.add(civ_img_new, civ_json_file_new)
 
     assert DisplaySet.objects.count() == 2
     response = get_view_for_user(
@@ -427,8 +432,9 @@ def test_display_set_update(client):
         client=client,
         reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         data={
-            ci_str.slug: "new-title",
+            ci_json.slug: '{"foo": "new"}',
             ci_img.slug: str(civ_img_new.pk),
+            ci_json_file.slug: str(civ_json_file_new.pk),
             "order": 11,
         },
         user=u1,
@@ -436,10 +442,13 @@ def test_display_set_update(client):
     )
 
     assert response.status_code == 302
-    assert ds1.values.count() == 2
+    assert ds1.values.count() == 3
     assert not ds1.values.filter(pk=civ_img.pk).exists()
     assert ds1.values.filter(pk=civ_img_new.pk).exists()
-    assert ds1.values.get(interface=ci_str).value == "new-title"
+
+    assert not ds1.values.filter(pk=civ_json_file.pk).exists()
+    assert ds1.values.filter(pk=civ_json_file_new.pk).exists()
+    assert ds1.values.get(interface=ci_json).value == {"foo": "new"}
 
     # A new ds should have been created for civ_img
     assert DisplaySet.objects.count() == 3
