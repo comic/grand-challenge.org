@@ -396,6 +396,7 @@ class Session(UUIDModel):
             "GRAND_CHALLENGE_API_ROOT": unquote(reverse("api:api-root")),
             "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
             "WORKSTATION_SESSION_ID": str(self.pk),
+            "CIRRUS_KEEP_ALIVE_METHOD": "old",
         }
 
         if self.creator:
