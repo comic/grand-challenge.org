@@ -21,10 +21,10 @@ from grandchallenge.cases.tasks import (
     build_images,
     check_compressed_and_extract,
 )
+from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.notifications.models import Notification
 from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.utils import get_sitk_image
 from tests.factories import UploadSessionFactory, UserFactory
 from tests.uploads_tests.factories import create_upload_from_file
 
