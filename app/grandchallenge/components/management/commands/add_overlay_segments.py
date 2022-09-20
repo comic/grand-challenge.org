@@ -1,6 +1,6 @@
 import json
 
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 from django.db.transaction import on_commit
 
 from grandchallenge.components.models import (
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         try:
             interface = ComponentInterface.objects.get(slug=slug)
         except ComponentInterface.DoesNotExist:
-            self.stdout.error(f"Could not find interface with slug: {slug}.")
+            raise CommandError(f"Could not find interface with slug: {slug}.")
         interface.overlay_segments = [
             {
                 "voxel_value": int(voxel_value),

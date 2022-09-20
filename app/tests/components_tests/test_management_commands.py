@@ -1,6 +1,6 @@
 import pytest
 from celery.result import AsyncResult
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.components.models import InterfaceKind
@@ -24,6 +24,11 @@ def test_add_overlay_segments(settings):
 
     im.segments = [2]
     im.save()
+
+    with pytest.raises(CommandError) as e:
+        call_command("add_overlay_segments", "non-existent", '{"255": "seg"}')
+
+    assert str(e.value) == "Could not find interface with slug: non-existent."
 
     # This raises a ValidationError, but unfortunetaly that gest swallowed in
     # the context manager.
