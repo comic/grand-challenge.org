@@ -256,6 +256,7 @@ ANSWER_TYPE_SCHEMA = {
                 "path_points",
                 "sub_type",
                 "groups",
+                "type",
                 "version",
             ],
             "additionalProperties": False,
@@ -303,7 +304,7 @@ ANSWER_TYPE_SCHEMA = {
                 "version": {"$ref": "#/definitions/version-object"},
                 "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": ["seed_points", "path_point_lists", "version"],
+            "required": ["seed_points", "path_point_lists", "type", "version"],
             "additionalProperties": False,
         },
         "MLIN": {
@@ -344,7 +345,7 @@ ANSWER_TYPE_SCHEMA = {
                 "version": {"$ref": "#/definitions/version-object"},
                 "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": ["lines", "version"],
+            "required": ["lines", "version", "type"],
             "additionalProperties": False,
         },
         "MANG": {
