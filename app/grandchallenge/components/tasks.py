@@ -23,9 +23,11 @@ from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
+from panimg.models import SimpleITKImage
 
 from grandchallenge.algorithms.exceptions import ImageImportError
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import ImageFile, RawImageUploadSession
+from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
@@ -1026,3 +1028,30 @@ def civ_value_to_file(*, civ_pk):
         )
         civ.value = None
         civ.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def validate_voxel_values(*, civ_pk):
+    civ = get_model_instance(
+        pk=civ_pk,
+        app_label="components",
+        model_name="componentinterfacevalue",
+    )
+
+    first_file = civ.image.files.first()
+    if (
+        civ.image.segments is None
+        and first_file.image_type == ImageFile.IMAGE_TYPE_MHD
+    ):
+        sitk_image = SimpleITKImage(
+            image=get_sitk_image(image=civ.image),
+            name=civ.image.name,
+            consumed_files=set(),
+            spacing_valid=True,
+        )
+        segments = sitk_image.segments
+        if segments is not None:
+            civ.image.segments = [int(segment) for segment in segments]
+            civ.image.save()
+
+    civ.interface._validate_voxel_values(civ.image)
