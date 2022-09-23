@@ -186,33 +186,41 @@ def test_imageviewset_empty_fields_filtering(
 
 @pytest.mark.django_db
 class TestCSImageDetail:
-    def get_status_code(self, client, image):
+    def get_status_code(self, client, viewname, image):
         u = UserFactory()
         assign_perm("view_image", u, image)
         response = get_view_for_user(
             client=client,
-            viewname="cases:cs-image-detail",
+            viewname=f"cases:{viewname}-image-detail",
             reverse_kwargs={"pk": image.pk},
             user=u,
         )
         return response.status_code
 
     @pytest.mark.parametrize(
-        "factory,kwargs",
+        "viewname,factory,kwargs",
         [
             (
+                "cs",
                 ImageFactoryWithoutImageFile,
                 {"color_space": Image.COLOR_SPACE_GRAY},
             ),
             (
+                "cs3d",
+                ImageFactoryWithoutImageFile,
+                {"color_space": Image.COLOR_SPACE_GRAY},
+            ),
+            (
+                "cs",
                 ImageFactoryWithImageFile,
                 {"color_space": Image.COLOR_SPACE_YCBCR},
             ),
         ],
     )
-    def test_not_allowed(self, client, factory, kwargs):
-        assert self.get_status_code(client, factory(**kwargs)) == 404
+    def test_not_allowed(self, client, viewname, factory, kwargs):
+        assert self.get_status_code(client, viewname, factory(**kwargs)) == 404
 
+    @pytest.mark.parametrize("viewname", ["cs", "cs3d"])
     @pytest.mark.parametrize(
         "factory,kwargs",
         [
@@ -229,5 +237,5 @@ class TestCSImageDetail:
             (ImageFactoryWithImageFile3D, {}),
         ],
     )
-    def test_allowed(self, client, factory, kwargs):
-        assert self.get_status_code(client, factory(**kwargs)) == 200
+    def test_allowed(self, client, viewname, factory, kwargs):
+        assert self.get_status_code(client, viewname, factory(**kwargs)) == 200
