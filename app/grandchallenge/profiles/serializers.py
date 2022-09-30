@@ -9,7 +9,7 @@ from grandchallenge.profiles.models import UserProfile
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     location = CountryField(source="country")
-    mugshot = URLField(source="mugshot.x20.url", read_only=True, default="")
+    mugshot = URLField(source="get_mugshot_url", read_only=True, default="")
 
     class Meta:
         model = UserProfile
