@@ -193,7 +193,7 @@ def test_hanging_protocol_parent_id_draggable():
     )
     assert (
         form.errors["json"][0]
-        == "Viewport main has a parent_id but is not draggable."
+        == "Viewport main has a parent_id but is not draggable or is not a specialized view."
     )
 
     form = HangingProtocolForm(
@@ -208,7 +208,7 @@ def test_hanging_protocol_parent_id_draggable():
         in form.errors["json"]
     )
     assert (
-        "Viewport main has a parent_id but is not draggable."
+        "Viewport main has a parent_id but is not draggable or is not a specialized view."
         in form.errors["json"]
     )
 
@@ -219,6 +219,14 @@ def test_hanging_protocol_parent_id_draggable():
         }
     )
     assert form.is_valid()
+
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"viewport_name": "main", "parent_id": "secondary", "specialized_view": "minimap"}, {"viewport_name": "secondary"}]',
+        }
+    )
+    assert form.is_valid(), form.errors
 
 
 def test_hanging_protocol_slice_plane_indicator():

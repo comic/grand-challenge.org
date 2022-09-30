@@ -92,9 +92,11 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
                     )
 
     def _validate_parent_id(self, *, viewport, viewport_names):
-        if viewport.get("draggable", False) is False:
+        if viewport.get("draggable", False) is False and not viewport.get(
+            "specialized_view"
+        ) in ["minimap", "3D-sideview"]:
             self.add_error(
-                error=f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable.",
+                error=f"Viewport {viewport['viewport_name']} has a parent_id but is not draggable or is not a specialized view.",
                 field="json",
             )
         if viewport["parent_id"] not in viewport_names:
