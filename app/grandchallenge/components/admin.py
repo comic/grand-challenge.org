@@ -98,6 +98,8 @@ def cancel_jobs(modeladmin, request, queryset):
             ComponentJob.PENDING,
             ComponentJob.PROVISIONED,
             ComponentJob.EXECUTING,
+            ComponentJob.EXECUTED,
+            ComponentJob.PARSING,
             ComponentJob.RETRY,
         ]
     ).update(status=ComponentJob.CANCELLED)
