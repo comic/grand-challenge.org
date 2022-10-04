@@ -9,6 +9,7 @@ from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework import mixins
 from rest_framework.decorators import action
@@ -41,6 +42,7 @@ from grandchallenge.workstations.models import (
 from grandchallenge.workstations.serializers import (
     FeedbackSerializer,
     SessionSerializer,
+    WorkstationSerializer,
 )
 from grandchallenge.workstations.utils import get_or_create_active_session
 
@@ -340,3 +342,11 @@ class FeedbackViewSet(mixins.CreateModelMixin, ReadOnlyModelViewSet):
     serializer_class = FeedbackSerializer
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (ObjectPermissionsFilter,)
+
+
+class WorkstationViewSet(ReadOnlyModelViewSet):
+    queryset = Workstation.objects.all()
+    serializer_class = WorkstationSerializer
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["slug"]
