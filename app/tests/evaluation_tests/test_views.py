@@ -3,12 +3,12 @@ from datetime import timedelta
 
 import factory
 import pytest
+from django.conf import settings
 from django.db.models import signals
 from django.utils import timezone
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 
-from config import settings
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
