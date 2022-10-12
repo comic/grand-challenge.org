@@ -5,12 +5,12 @@ import pytest
 from allauth.socialaccount.models import SocialAccount
 from allauth.socialaccount.tests import OAuth2TestsMixin
 from allauth.tests import MockedResponse
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase, override_settings
 from pytest_django.asserts import assertRedirects
 
-from config.settings import LOGIN_REDIRECT_URL
 from grandchallenge.profiles.providers.gmail.provider import GmailProvider
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from tests.conftest import get_token_from_totp_device
@@ -35,7 +35,7 @@ def test_2fa_required_for_staff(client):
         user=user,
     )
     assertRedirects(
-        response, LOGIN_REDIRECT_URL, fetch_redirect_response=False
+        response, settings.LOGIN_REDIRECT_URL, fetch_redirect_response=False
     )
 
     response = get_view_for_user(

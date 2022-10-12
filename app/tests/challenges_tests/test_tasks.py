@@ -1,6 +1,6 @@
 import pytest
+from django.conf import settings
 
-from config import settings
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.challenges.tasks import update_challenge_results_cache
 from grandchallenge.evaluation.utils import SubmissionKindChoices
