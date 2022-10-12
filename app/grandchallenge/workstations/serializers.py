@@ -1,8 +1,8 @@
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 from rest_framework.serializers import ModelSerializer
 
-from grandchallenge.workstations.models import Feedback, Session
+from grandchallenge.workstations.models import Feedback, Session, Workstation
 
 
 class SessionSerializer(ModelSerializer):
@@ -29,3 +29,11 @@ class FeedbackSerializer(ModelSerializer):
             self.fields["session"].queryset = Session.objects.filter(
                 creator=user
             ).all()
+
+
+class WorkstationSerializer(ModelSerializer):
+    url = URLField(source="get_absolute_url", read_only=True)
+
+    class Meta:
+        model = Workstation
+        fields = ("pk", "title", "slug", "url")

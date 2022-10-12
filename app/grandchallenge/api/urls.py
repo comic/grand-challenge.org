@@ -44,7 +44,11 @@ from grandchallenge.retina_api.views import (
 from grandchallenge.timezones.views import TimezoneAPIView
 from grandchallenge.uploads.views import UserUploadViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
-from grandchallenge.workstations.views import FeedbackViewSet, SessionViewSet
+from grandchallenge.workstations.views import (
+    FeedbackViewSet,
+    SessionViewSet,
+    WorkstationViewSet,
+)
 
 app_name = "api"
 
@@ -178,6 +182,7 @@ router.register(
     r"workstations/feedback", FeedbackViewSet, basename="workstations-feedback"
 )
 router.register(r"workstations/sessions", SessionViewSet)
+router.register(r"workstations", WorkstationViewSet, basename="workstations")
 
 
 class SchemaView(SpectacularAPIView):

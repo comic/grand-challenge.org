@@ -6,7 +6,7 @@ from django.utils.timezone import now
 
 from grandchallenge.workstations.models import Feedback
 from tests.cases_tests import RESOURCE_PATH
-from tests.factories import SessionFactory, UserFactory
+from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 from tests.workstations_tests.factories import FeedbackFactory
 
@@ -250,3 +250,31 @@ def test_only_session_creator_can_create_session_feedback(client):
     )
     assert response.status_code == 201
     assert Feedback.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_workstation_api(client):
+    user = UserFactory()
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:workstations-list",
+        user=user,
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 1
+
+    ws1, _ = WorkstationFactory(), WorkstationFactory()
+    ws1.add_user(user)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="api:workstations-list",
+        user=user,
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
