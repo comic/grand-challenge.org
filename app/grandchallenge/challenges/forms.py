@@ -250,6 +250,12 @@ phase_2_items = (
     "phase_2_number_of_submissions_per_team",
     "phase_2_number_of_test_images",
 )
+structured_challenge_submission_help_text = (
+    "If you have uploaded a PDF or "
+    "provided the DOI for your structured "
+    "challenge submission form above, "
+    "you can enter 'See structured submission form' here."
+)
 
 
 class ChallengeRequestForm(
@@ -355,14 +361,15 @@ class ChallengeRequestForm(
                 "link it to their algorithm</a> on Grand Challenge."
             ),
             "data_set": (
-                "Describe the training and test datasets you are planning to "
-                "use. <br>For Type 1 challenges, indicate where "
-                "you will store the data (read about the options <a href="
-                "'https://grand-challenge.org/documentation/data-storage/' "
-                "target='_blank'>here</a>).<br>For Type 2 challenges, the test "
-                "dataset will need to be uploaded to Grand Challenge (read more "
-                "about that <a href='https://grand-challenge.org/documentation/"
-                "data-storage-2/' target='_blank'>here</a>)."
+                f"{structured_challenge_submission_help_text} Otherwise, please "
+                f"describe the training and test datasets you are planning to "
+                f"use. <br>For Type 1 challenges, indicate where "
+                f"you will store the data (read about the options <a href="
+                f"'https://grand-challenge.org/documentation/data-storage/' "
+                f"target='_blank'>here</a>).<br>For Type 2 challenges, the test "
+                f"dataset will need to be uploaded to Grand Challenge (read more "
+                f"about that <a href='https://grand-challenge.org/documentation/"
+                f"data-storage-2/' target='_blank'>here</a>)."
             ),
             "number_of_tasks": (
                 "If your challenge has multiple tasks, we multiply"
@@ -429,6 +436,16 @@ class ChallengeRequestForm(
                 "You can enforce a submission limit in the settings for each phase "
                 "to control this."
             ),
+            "submission_assessment": (
+                f"{structured_challenge_submission_help_text} Otherwise, "
+                f"please define the metrics you will use "
+                "to assess and rank participants’ submissions."
+            ),
+            "challenge_publication": (
+                f"{structured_challenge_submission_help_text} Otherwise, "
+                f"please indicate if you plan to coordinate a publication "
+                f"of the challenge results."
+            ),
         }
 
     def __init__(self, creator, *args, **kwargs):
@@ -461,9 +478,11 @@ class ChallengeRequestForm(
                     HTML(
                         "<p class='mb-0'>Structured challenge submission form </p>"
                         "<small class='text-muted mb-2'> Have you registered this challenge "
-                        "for a conference (e.g., MICCAI, MIDL, ISBI) <a href='https://www.biomedical-challenges.org/' target='_blank'> "
-                        "through this website</a>? If so, you can alternatively provide the DOI for your submission form, or"
-                        " upload the submission PDF here and fill the below text boxes with 'See PDF'.</small>"
+                        "for a conference (e.g., MICCAI, ISBI) <a href='https://www.biomedical-challenges.org/' target='_blank'> "
+                        "through this website</a>? If so, please provide the DOI for your submission form, or"
+                        " upload the submission PDF here. If you want to <a href='https://www.midl.io/'>organize your challenge with MIDL</a>, "
+                        "you <u>must</u> fill out the <a href='https://www.biomedical-challenges.org/'>structured submission form</a> and upload the PDF. "
+                        "If you have added a link or PDF, please fill the below text boxes with 'See structured submission form'.</small>"
                     ),
                     Div(
                         "structured_challenge_submission_doi",
