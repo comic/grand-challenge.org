@@ -3,10 +3,10 @@ from django.db.models import Q, TextChoices
 from django.views.generic import ListView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
+from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.reader_studies.models import ReaderStudy
