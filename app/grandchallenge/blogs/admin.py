@@ -21,8 +21,8 @@ class AdminPostForm(ModelForm):
 
 class PostAdmin(MarkdownxModelAdmin):
     form = AdminPostForm
-    list_display = ("pk", "title", "published")
-    list_filter = ("tags", "companies")
+    list_display = ("pk", "slug", "title", "published", "highlight")
+    list_filter = ("tags", "companies", "highlight")
     autocomplete_fields = ("authors",)
 
 
