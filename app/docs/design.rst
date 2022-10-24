@@ -14,7 +14,7 @@ Definitions
 This document uses sentences written in *italic text* to denote design decisions
 that were decided upon during previous design meetings. These are choices
 that should discussed within the development team should it become necessary to
-diverege from them.
+diverge from them.
 
 Image database objects
 ----------------------
