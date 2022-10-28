@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
@@ -135,10 +136,38 @@ class MeasurementAnnotation(AbstractImageAnnotationModel):
         )
 
 
+class MeasurementAnnotationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        MeasurementAnnotation, on_delete=models.CASCADE
+    )
+
+
+class MeasurementAnnotationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        MeasurementAnnotation, on_delete=models.CASCADE
+    )
+
+
 class BooleanClassificationAnnotation(AbstractNamedImageAnnotationModel):
     """General model for boolean image-level classification."""
 
     value = models.BooleanField()
+
+
+class BooleanClassificationAnnotationUserObjectPermission(
+    UserObjectPermissionBase
+):
+    content_object = models.ForeignKey(
+        BooleanClassificationAnnotation, on_delete=models.CASCADE
+    )
+
+
+class BooleanClassificationAnnotationGroupObjectPermission(
+    GroupObjectPermissionBase
+):
+    content_object = models.ForeignKey(
+        BooleanClassificationAnnotation, on_delete=models.CASCADE
+    )
 
 
 class IntegerClassificationAnnotation(AbstractNamedImageAnnotationModel):
@@ -161,6 +190,18 @@ class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
     Looks empty because it only contains the fields from
     `AbstractNamedImageAnnotationModel`.
     """
+
+
+class PolygonAnnotationSetUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        PolygonAnnotationSet, on_delete=models.CASCADE
+    )
+
+
+class PolygonAnnotationSetGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        PolygonAnnotationSet, on_delete=models.CASCADE
+    )
 
 
 def x_axis_orientation_default():
@@ -190,6 +231,18 @@ class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     interpolated = models.BooleanField(default=False)
 
 
+class SinglePolygonAnnotationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        SinglePolygonAnnotation, on_delete=models.CASCADE
+    )
+
+
+class SinglePolygonAnnotationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        SinglePolygonAnnotation, on_delete=models.CASCADE
+    )
+
+
 class LandmarkAnnotationSet(AbstractAnnotationModel):
     """
     General model containing a set of specific landmark annotations.
@@ -198,6 +251,18 @@ class LandmarkAnnotationSet(AbstractAnnotationModel):
 
     class Meta(AbstractAnnotationModel.Meta):
         unique_together = ("grader", "created")
+
+
+class LandmarkAnnotationSetUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        LandmarkAnnotationSet, on_delete=models.CASCADE
+    )
+
+
+class LandmarkAnnotationSetGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        LandmarkAnnotationSet, on_delete=models.CASCADE
+    )
 
 
 class SingleLandmarkAnnotation(AbstractSingleAnnotationModel):
@@ -219,6 +284,18 @@ class SingleLandmarkAnnotation(AbstractSingleAnnotationModel):
         unique_together = ("image", "annotation_set")
 
 
+class SingleLandmarkAnnotationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        SingleLandmarkAnnotation, on_delete=models.CASCADE
+    )
+
+
+class SingleLandmarkAnnotationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        SingleLandmarkAnnotation, on_delete=models.CASCADE
+    )
+
+
 class ETDRSGridAnnotation(AbstractImageAnnotationModel):
     """
     Retina specific annotation
@@ -233,6 +310,18 @@ class ETDRSGridAnnotation(AbstractImageAnnotationModel):
 
     class Meta(AbstractImageAnnotationModel.Meta):
         unique_together = ("image", "grader", "created")
+
+
+class ETDRSGridAnnotationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ETDRSGridAnnotation, on_delete=models.CASCADE
+    )
+
+
+class ETDRSGridAnnotationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ETDRSGridAnnotation, on_delete=models.CASCADE
+    )
 
 
 class ImageQualityAnnotation(AbstractImageAnnotationModel):
@@ -270,6 +359,18 @@ class ImageQualityAnnotation(AbstractImageAnnotationModel):
     )
 
 
+class ImageQualityAnnotationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ImageQualityAnnotation, on_delete=models.CASCADE
+    )
+
+
+class ImageQualityAnnotationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ImageQualityAnnotation, on_delete=models.CASCADE
+    )
+
+
 class ImagePathologyAnnotation(AbstractImageAnnotationModel):
     """Model to annotate if an pathology is present in an image."""
 
@@ -291,6 +392,18 @@ class ImagePathologyAnnotation(AbstractImageAnnotationModel):
     )
 
 
+class ImagePathologyAnnotationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ImagePathologyAnnotation, on_delete=models.CASCADE
+    )
+
+
+class ImagePathologyAnnotationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ImagePathologyAnnotation, on_delete=models.CASCADE
+    )
+
+
 class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     """Model to annotate presence of specific pathologies."""
 
@@ -306,6 +419,22 @@ class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     )
     other_present = models.BooleanField(
         help_text="Are other findings present in this image?"
+    )
+
+
+class RetinaImagePathologyAnnotationUserObjectPermission(
+    UserObjectPermissionBase
+):
+    content_object = models.ForeignKey(
+        RetinaImagePathologyAnnotation, on_delete=models.CASCADE
+    )
+
+
+class RetinaImagePathologyAnnotationGroupObjectPermission(
+    GroupObjectPermissionBase
+):
+    content_object = models.ForeignKey(
+        RetinaImagePathologyAnnotation, on_delete=models.CASCADE
     )
 
 
@@ -329,7 +458,35 @@ class OctRetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     )
 
 
+class OctRetinaImagePathologyAnnotationUserObjectPermission(
+    UserObjectPermissionBase
+):
+    content_object = models.ForeignKey(
+        OctRetinaImagePathologyAnnotation, on_delete=models.CASCADE
+    )
+
+
+class OctRetinaImagePathologyAnnotationGroupObjectPermission(
+    GroupObjectPermissionBase
+):
+    content_object = models.ForeignKey(
+        OctRetinaImagePathologyAnnotation, on_delete=models.CASCADE
+    )
+
+
 class ImageTextAnnotation(AbstractImageAnnotationModel):
     """Model to annotate a textual comment for an image."""
 
     text = models.TextField()
+
+
+class ImageTextAnnotationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ImageTextAnnotation, on_delete=models.CASCADE
+    )
+
+
+class ImageTextAnnotationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        ImageTextAnnotation, on_delete=models.CASCADE
+    )
