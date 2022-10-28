@@ -1,7 +1,15 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.uploads.models import UserUpload
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
+from grandchallenge.uploads.models import (
+    UserUpload,
+    UserUploadGroupObjectPermission,
+    UserUploadUserObjectPermission,
+)
 
 
 class UserUploadAdmin(GuardedModelAdmin):
@@ -13,3 +21,7 @@ class UserUploadAdmin(GuardedModelAdmin):
 
 
 admin.site.register(UserUpload, UserUploadAdmin)
+admin.site.register(UserUploadUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    UserUploadGroupObjectPermission, GroupObjectPermissionAdmin
+)
