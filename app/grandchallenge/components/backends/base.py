@@ -64,8 +64,9 @@ class Executor(ABC):
     def execute(self, *, input_civs, input_prefixes):
         ...
 
+    @abstractmethod
     def handle_event(self, *, event):
-        pass
+        ...
 
     def get_outputs(self, *, output_interfaces):
         """Create ComponentInterfaceValues from the output interfaces"""

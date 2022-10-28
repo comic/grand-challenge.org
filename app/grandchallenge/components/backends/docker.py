@@ -64,6 +64,9 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             input_civs=input_civs, input_prefixes=input_prefixes
         )
 
+    def handle_event(self, *, event):
+        raise RuntimeError("This backend is not event-driven")
+
     def deprovision(self):
         super().deprovision()
         docker_client.remove_container(name=self.container_name)
