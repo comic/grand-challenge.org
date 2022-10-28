@@ -2,6 +2,10 @@ from actstream.models import Follow
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.notifications.models import (
     FollowGroupObjectPermission,
     FollowUserObjectPermission,
@@ -54,8 +58,12 @@ class NotificationAdmin(GuardedModelAdmin):
 
 admin.site.unregister(Follow)
 admin.site.register(Follow, FollowAdmin)
-admin.site.register(FollowUserObjectPermission)
-admin.site.register(FollowGroupObjectPermission)
+admin.site.register(FollowUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(FollowGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(Notification, NotificationAdmin)
-admin.site.register(NotificationUserObjectPermission)
-admin.site.register(NotificationGroupObjectPermission)
+admin.site.register(
+    NotificationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    NotificationGroupObjectPermission, GroupObjectPermissionAdmin
+)
