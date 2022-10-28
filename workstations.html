@@ -129,6 +129,56 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.FeedbackGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">FeedbackGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#FeedbackGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.FeedbackGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.FeedbackGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.FeedbackUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">FeedbackUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#FeedbackUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.FeedbackUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.FeedbackUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Session">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">Session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Session"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.Session" title="Permalink to this definition"></a></dt>
 <dd><p>Tracks who has launched workstation images. The <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code> will
@@ -310,6 +360,56 @@ to access the launched service.</p></li>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">SessionGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#SessionGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.SessionGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">SessionUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#SessionUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.SessionUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Workstation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">Workstation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Workstation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.Workstation" title="Permalink to this definition"></a></dt>
 <dd><p>Store the title and description of a workstation.</p>
@@ -359,6 +459,31 @@ control the saving process.</p>
 that the “save” must be an SQL insert or update (or equivalent for
 non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -413,6 +538,81 @@ control the saving process.</p>
 that the “save” must be an SQL insert or update (or equivalent for
 non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationImageGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationImageGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationImageGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationImageGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationImageGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationImageUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationImageUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationImageUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationImageUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationImageUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 

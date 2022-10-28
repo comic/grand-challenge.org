@@ -87,6 +87,7 @@
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
+<span class="kn">from</span> <span class="nn">guardian.models</span> <span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span> <span class="nn">knox.models</span> <span class="kn">import</span> <span class="n">AuthToken</span>
 <span class="kn">from</span> <span class="nn">simple_history.models</span> <span class="kn">import</span> <span class="n">HistoricalRecords</span>
@@ -231,6 +232,14 @@
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users_group</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="WorkstationUserObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">WorkstationUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Workstation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WorkstationGroupObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">WorkstationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Workstation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="delete_workstation_groups_hook"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.delete_workstation_groups_hook">[docs]</a><span class="nd">@receiver</span><span class="p">(</span><span class="n">post_delete</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">Workstation</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">delete_workstation_groups_hook</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Workstation</span><span class="p">,</span> <span class="n">using</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -322,6 +331,18 @@
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="WorkstationImageUserObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationImageUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">WorkstationImageUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">WorkstationImage</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WorkstationImageGroupObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">WorkstationImageGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">WorkstationImage</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Session"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session">[docs]</a><span class="k">class</span> <span class="nc">Session</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
@@ -634,6 +655,14 @@
             <span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="SessionUserObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">SessionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Session</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SessionGroupObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">SessionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Session</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
+
+
 <span class="k">def</span> <span class="nf">feedback_screenshot_filepath</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;session-feedback/&quot;</span>
@@ -664,6 +693,14 @@
         <span class="n">assign_perm</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FeedbackUserObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.FeedbackUserObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">FeedbackUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Feedback</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FeedbackGroupObjectPermission"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.FeedbackGroupObjectPermission">[docs]</a><span class="k">class</span> <span class="nc">FeedbackGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Feedback</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 </pre></div>
 
            </div>
