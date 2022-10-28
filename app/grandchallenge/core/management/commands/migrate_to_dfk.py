@@ -40,7 +40,7 @@ class Command(BaseCommand):
     def migrate_user_permissions(self, *, dfk_user_model, content_type):
         queryset = UserObjectPermission.objects.filter(
             content_type=content_type
-        )
+        ).select_related("user", "permission")
 
         self.stdout.write(f"Migrating {queryset.count()} user permissions")
 
@@ -48,7 +48,13 @@ class Command(BaseCommand):
         removed = 0
 
         for perm in queryset.iterator():
-            if perm.content_object:
+            if (migrated + removed) % 1000 == 0:
+                self.stdout.write(f"User permissions: {migrated=} {removed=}")
+
+            if perm.content_object is None:
+                perm.delete()
+                removed += 1
+            else:
                 with transaction.atomic():
                     dfk_user_model.objects.create(
                         user=perm.user,
@@ -57,9 +63,6 @@ class Command(BaseCommand):
                     )
                     perm.delete()
                     migrated += 1
-            else:
-                perm.delete()
-                removed += 1
 
         self.stdout.write(f"Migrated {migrated} user permissions")
         self.stdout.write(f"Removed {removed} orphaned user permissions")
@@ -67,7 +70,7 @@ class Command(BaseCommand):
     def migrate_group_permissions(self, *, dfk_group_model, content_type):
         queryset = GroupObjectPermission.objects.filter(
             content_type=content_type
-        )
+        ).select_related("group", "permission")
 
         self.stdout.write(f"Migrating {queryset.count()} group permissions")
 
@@ -75,7 +78,13 @@ class Command(BaseCommand):
         removed = 0
 
         for perm in queryset.iterator():
-            if perm.content_object:
+            if (migrated + removed) % 1000 == 0:
+                self.stdout.write(f"Group permissions: {migrated=} {removed=}")
+
+            if perm.content_object is None:
+                perm.delete()
+                removed += 1
+            else:
                 with transaction.atomic():
                     dfk_group_model.objects.create(
                         group=perm.group,
@@ -84,9 +93,6 @@ class Command(BaseCommand):
                     )
                     perm.delete()
                     migrated += 1
-            else:
-                perm.delete()
-                removed += 1
 
         self.stdout.write(f"Migrated {migrated} group permissions")
         self.stdout.write(f"Removed {removed} orphaned group permissions")
