@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
 from django_extensions.db.fields import AutoSlugField
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -694,6 +695,14 @@ class Phase(UUIDModel, ViewContentMixin):
             return None
 
 
+class PhaseUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+
+class PhaseGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
@@ -718,6 +727,14 @@ class Method(UUIDModel, ComponentImage):
                 "challenge_short_name": self.phase.challenge.short_name,
             },
         )
+
+
+class MethodUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
+
+
+class MethodGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
 
 
 def submission_file_path(instance, filename):
@@ -822,6 +839,14 @@ class Submission(UUIDModel):
                 "challenge_short_name": self.phase.challenge.short_name,
             },
         )
+
+
+class SubmissionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
+
+
+class SubmissionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
 class Evaluation(UUIDModel, ComponentJob):
@@ -941,3 +966,11 @@ class Evaluation(UUIDModel, ComponentJob):
                 "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
+
+
+class EvaluationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
+
+
+class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
