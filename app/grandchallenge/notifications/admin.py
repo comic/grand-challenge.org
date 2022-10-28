@@ -1,11 +1,17 @@
 from actstream.models import Follow
 from django.contrib import admin
-from django.contrib.admin import ModelAdmin
+from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.notifications.models import Notification
+from grandchallenge.notifications.models import (
+    FollowGroupObjectPermission,
+    FollowUserObjectPermission,
+    Notification,
+    NotificationGroupObjectPermission,
+    NotificationUserObjectPermission,
+)
 
 
-class FollowAdmin(ModelAdmin):
+class FollowAdmin(GuardedModelAdmin):
     list_display = (
         "__str__",
         "user",
@@ -19,7 +25,7 @@ class FollowAdmin(ModelAdmin):
     list_select_related = ("user", "content_type")
 
 
-class NotificationAdmin(ModelAdmin):
+class NotificationAdmin(GuardedModelAdmin):
     readonly_fields = ("user",)
     ordering = ("-created",)
     list_display = (
@@ -48,4 +54,8 @@ class NotificationAdmin(ModelAdmin):
 
 admin.site.unregister(Follow)
 admin.site.register(Follow, FollowAdmin)
+admin.site.register(FollowUserObjectPermission)
+admin.site.register(FollowGroupObjectPermission)
 admin.site.register(Notification, NotificationAdmin)
+admin.site.register(NotificationUserObjectPermission)
+admin.site.register(NotificationGroupObjectPermission)

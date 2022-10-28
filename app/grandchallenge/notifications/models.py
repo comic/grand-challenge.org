@@ -1,5 +1,5 @@
 from actstream.actions import is_following
-from actstream.models import followers
+from actstream.models import Follow, followers
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -7,11 +7,20 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
+
+
+class FollowUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Follow, on_delete=models.CASCADE)
+
+
+class FollowGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Follow, on_delete=models.CASCADE)
 
 
 class NotificationTypeChoices(models.TextChoices):
@@ -426,3 +435,11 @@ class Notification(UUIDModel):
             == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS
         ):
             return self.description
+
+
+class NotificationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Notification, on_delete=models.CASCADE)
+
+
+class NotificationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Notification, on_delete=models.CASCADE)
