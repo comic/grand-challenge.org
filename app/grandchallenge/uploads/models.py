@@ -10,6 +10,7 @@ from django.utils.datetime_safe import strftime
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_summernote.models import AbstractAttachment
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
@@ -314,3 +315,11 @@ def delete_objects_hook(*_, instance: UserUpload, **__):
         instance.delete_object()
     elif instance.status == UserUpload.StatusChoices.INITIALIZED:
         instance.abort_multipart_upload()
+
+
+class UserUploadUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(UserUpload, on_delete=models.CASCADE)
+
+
+class UserUploadGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(UserUpload, on_delete=models.CASCADE)
