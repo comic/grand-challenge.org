@@ -2,8 +2,16 @@ from django.contrib import admin
 
 from grandchallenge.archives.models import (
     Archive,
+    ArchiveGroupObjectPermission,
     ArchiveItem,
+    ArchiveItemGroupObjectPermission,
+    ArchiveItemUserObjectPermission,
     ArchivePermissionRequest,
+    ArchiveUserObjectPermission,
+)
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
 )
 
 
@@ -26,5 +34,11 @@ class ArchivePermissionRequestAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Archive, ArchiveAdmin)
+admin.site.register(ArchiveUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(ArchiveGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(ArchiveItem, ArchiveItemAdmin)
+admin.site.register(ArchiveItemUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    ArchiveItemGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(ArchivePermissionRequest, ArchivePermissionRequestAdmin)
