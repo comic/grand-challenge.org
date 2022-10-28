@@ -8,12 +8,24 @@ from grandchallenge.components.admin import (
     deprovision_jobs,
     requeue_jobs,
 )
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
     Evaluation,
+    EvaluationGroupObjectPermission,
+    EvaluationUserObjectPermission,
     Method,
+    MethodGroupObjectPermission,
+    MethodUserObjectPermission,
     Phase,
+    PhaseGroupObjectPermission,
+    PhaseUserObjectPermission,
     Submission,
+    SubmissionGroupObjectPermission,
+    SubmissionUserObjectPermission,
 )
 from grandchallenge.evaluation.tasks import create_evaluation
 
@@ -122,6 +134,18 @@ class EvaluationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Phase, PhaseAdmin)
+admin.site.register(PhaseUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(PhaseGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(Method, ComponentImageAdmin)
+admin.site.register(MethodUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(MethodGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(Submission, SubmissionAdmin)
+admin.site.register(SubmissionUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    SubmissionGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(Evaluation, EvaluationAdmin)
+admin.site.register(EvaluationUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    EvaluationGroupObjectPermission, GroupObjectPermissionAdmin
+)
