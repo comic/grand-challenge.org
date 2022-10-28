@@ -13,6 +13,7 @@ from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
 from simple_history.models import HistoricalRecords
@@ -157,6 +158,14 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.remove(self.users_group)
 
 
+class WorkstationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
+
+
+class WorkstationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
+
+
 @receiver(post_delete, sender=Workstation)
 def delete_workstation_groups_hook(*_, instance: Workstation, using, **__):
     """
@@ -248,6 +257,18 @@ class WorkstationImage(UUIDModel, ComponentImage):
 
         if adding:
             self.assign_permissions()
+
+
+class WorkstationImageUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        WorkstationImage, on_delete=models.CASCADE
+    )
+
+
+class WorkstationImageGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        WorkstationImage, on_delete=models.CASCADE
+    )
 
 
 class Session(UUIDModel):
@@ -560,6 +581,14 @@ class Session(UUIDModel):
             )
 
 
+class SessionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
+
+
+class SessionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
+
+
 def feedback_screenshot_filepath(instance, filename):
     return (
         f"session-feedback/"
@@ -590,3 +619,11 @@ class Feedback(UUIDModel):
         assign_perm(
             f"view_{self._meta.model_name}", self.session.creator, self
         )
+
+
+class FeedbackUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
+
+
+class FeedbackGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)

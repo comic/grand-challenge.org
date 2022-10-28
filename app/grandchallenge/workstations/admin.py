@@ -6,12 +6,24 @@ from django.utils.html import format_html
 from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.components.admin import ComponentImageAdmin
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import (
     Feedback,
+    FeedbackGroupObjectPermission,
+    FeedbackUserObjectPermission,
     Session,
+    SessionGroupObjectPermission,
+    SessionUserObjectPermission,
     Workstation,
+    WorkstationGroupObjectPermission,
     WorkstationImage,
+    WorkstationImageGroupObjectPermission,
+    WorkstationImageUserObjectPermission,
+    WorkstationUserObjectPermission,
 )
 
 
@@ -83,6 +95,20 @@ class FeedbackAdmin(ModelAdmin):
 
 
 admin.site.register(Workstation)
+admin.site.register(WorkstationUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    WorkstationGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(WorkstationImage, ComponentImageAdmin)
+admin.site.register(
+    WorkstationImageUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    WorkstationImageGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(Session, SessionHistoryAdmin)
+admin.site.register(SessionUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(SessionGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(Feedback, FeedbackAdmin)
+admin.site.register(FeedbackUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(FeedbackGroupObjectPermission, GroupObjectPermissionAdmin)
