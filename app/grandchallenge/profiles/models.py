@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
@@ -101,6 +102,14 @@ class UserProfile(models.Model):
             or not self.department
             or not self.country
         )
+
+
+class UserProfileUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+
+
+class UserProfileGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 
 @disable_for_loaddata
