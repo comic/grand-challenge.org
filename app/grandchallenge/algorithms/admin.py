@@ -6,15 +6,25 @@ from guardian.admin import GuardedModelAdmin
 from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmGroupObjectPermission,
     AlgorithmImage,
+    AlgorithmImageGroupObjectPermission,
+    AlgorithmImageUserObjectPermission,
     AlgorithmPermissionRequest,
+    AlgorithmUserObjectPermission,
     Job,
+    JobGroupObjectPermission,
+    JobUserObjectPermission,
 )
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
     cancel_jobs,
     deprovision_jobs,
     requeue_jobs,
+)
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
 )
 
 
@@ -96,8 +106,18 @@ class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
 
 
 admin.site.register(Algorithm, AlgorithmAdmin)
+admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(AlgorithmImage, ComponentImageAdmin)
+admin.site.register(
+    AlgorithmImageUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    AlgorithmImageGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(Job, JobAdmin)
+admin.site.register(JobUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(JobGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(
     AlgorithmPermissionRequest, AlgorithmPermissionRequestAdmin
 )
