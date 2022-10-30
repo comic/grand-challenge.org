@@ -3,7 +3,16 @@ from django.contrib.admin import ModelAdmin
 from django.forms import ModelForm
 from markdownx.admin import MarkdownxModelAdmin
 
-from grandchallenge.blogs.models import Post, Tag
+from grandchallenge.blogs.models import (
+    Post,
+    PostGroupObjectPermission,
+    PostUserObjectPermission,
+    Tag,
+)
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 
 
@@ -31,4 +40,6 @@ class TagAdmin(ModelAdmin):
 
 
 admin.site.register(Post, PostAdmin)
+admin.site.register(PostUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(PostGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(Tag, TagAdmin)

@@ -4,6 +4,7 @@ from django.db.models import Count, Max
 from django.template.loader import render_to_string
 from django_countries import countries
 from django_extensions.db.fields import AutoSlugField
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
 
@@ -220,3 +221,11 @@ class Page(models.Model):
         unique_together = (("challenge", "slug"),)
         # when getting a list of these objects this ordering is used
         ordering = ["challenge", "order"]
+
+
+class PageUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Page, on_delete=models.CASCADE)
+
+
+class PageGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Page, on_delete=models.CASCADE)

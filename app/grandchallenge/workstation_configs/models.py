@@ -7,6 +7,7 @@ from django.core.validators import (
 )
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
@@ -398,6 +399,18 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
                 self.creator,
                 self,
             )
+
+
+class WorkstationConfigUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        WorkstationConfig, on_delete=models.CASCADE
+    )
+
+
+class WorkstationConfigGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        WorkstationConfig, on_delete=models.CASCADE
+    )
 
 
 class WindowPreset(TitleSlugDescriptionModel):

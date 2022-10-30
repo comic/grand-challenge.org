@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.transaction import on_commit
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from config.celery import celery_app
@@ -290,3 +291,11 @@ class Workspace(UUIDModel):
                 "pk": self.pk,
             },
         )
+
+
+class WorkspaceUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+
+class WorkspaceGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Workspace, on_delete=models.CASCADE)
