@@ -25,6 +25,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
@@ -452,14 +453,11 @@ class LeaderboardRedirect(RedirectView):
             raise Http404("Leaderboard not found")
 
 
-class LeaderboardDetail(
-    PermissionListMixin, TeamContextMixin, PaginatedTableListView
-):
+class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
-    permission_required = "view_evaluation"
 
     @cached_property
     def phase(self):
@@ -585,7 +583,11 @@ class LeaderboardDetail(
                 "outputs__interface",
             )
         )
-        return queryset
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename="view_evaluation",
+        )
 
     def filter_by_date(self, queryset):
         if "date" in self.request.GET:
