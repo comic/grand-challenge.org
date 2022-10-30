@@ -12,6 +12,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from jsonschema import RefResolutionError
 from simple_history.models import HistoricalRecords
@@ -775,6 +776,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return (highest + 10) // 10 * 10
 
 
+class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+
+
+class ReaderStudyGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+
+
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
     """
@@ -889,6 +898,14 @@ class DisplaySet(UUIDModel):
             ).values_list("image__name", flat=True)[0]
         except (KeyError, IndexError):
             return self.values.values_list("image__name", flat=True).first()
+
+
+class DisplaySetUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)
+
+
+class DisplaySetGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)
 
 
 class AnswerType(models.TextChoices):
@@ -1218,6 +1235,14 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         return self.reader_study.get_absolute_url() + "#questions"
 
 
+class QuestionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Question, on_delete=models.CASCADE)
+
+
+class QuestionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Question, on_delete=models.CASCADE)
+
+
 class CategoricalOption(models.Model):
     question = models.ForeignKey(
         Question, related_name="options", on_delete=models.CASCADE
@@ -1406,6 +1431,14 @@ class Answer(UUIDModel):
         )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
         assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+
+
+class AnswerUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Answer, on_delete=models.CASCADE)
+
+
+class AnswerGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Answer, on_delete=models.CASCADE)
 
 
 class ReaderStudyPermissionRequest(RequestBase):
