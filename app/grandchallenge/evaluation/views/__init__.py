@@ -3,7 +3,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
@@ -556,13 +555,11 @@ class LeaderboardDetail(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        limit = 1000
         context.update(
             {
                 "phase": self.phase,
                 "now": now().isoformat(),
-                "limit": limit,
-                "offsets": range(0, self.object_list.count(), limit),
+                "limit": 1000,
                 "user_teams": self.user_teams,
             }
         )
@@ -572,23 +569,20 @@ class LeaderboardDetail(
         queryset = super().get_queryset(*args, **kwargs)
         queryset = self.filter_by_date(queryset=queryset)
         queryset = (
-            queryset.select_related(
-                "submission__creator__user_profile",
-                "submission__creator__verification",
-                "submission__phase__challenge",
-                "submission__algorithm_image__algorithm",
-            )
-            .filter(
+            queryset.filter(
                 submission__phase=self.phase,
                 published=True,
                 status=Evaluation.SUCCESS,
                 rank__gt=0,
             )
-            .annotate(
-                metrics=ArrayAgg(
-                    "outputs__value",
-                    filter=Q(outputs__interface__slug="metrics-json-file"),
-                )
+            .select_related(
+                "submission__creator__user_profile",
+                "submission__creator__verification",
+                "submission__phase__challenge",
+                "submission__algorithm_image__algorithm",
+            )
+            .prefetch_related(
+                "outputs__interface",
             )
         )
         return queryset

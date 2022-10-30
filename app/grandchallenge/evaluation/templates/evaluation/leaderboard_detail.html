@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load static %}
+{% load to_range %}
 
 {% block title %}Leaderboard - {{ block.super }}{% endblock %}
 
@@ -65,7 +66,7 @@
 
     {% if "change_challenge" in challenge_perms %}
         <h3>Export</h3>
-        {% for offset in offsets %}
+        {% for offset in object_list.count|to_range:limit %}
             <p>
                 <a class="btn btn-primary"
                    href="{% url 'api:evaluation-list' %}?format=csv&submission__phase={{ phase.pk }}&offset={{ offset }}&limit={{ limit }}"
