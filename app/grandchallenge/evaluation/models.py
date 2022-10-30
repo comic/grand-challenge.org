@@ -9,6 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.transaction import on_commit
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
 from django_extensions.db.fields import AutoSlugField
@@ -923,6 +924,12 @@ class Evaluation(UUIDModel, ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.outputs
+
+    @cached_property
+    def metrics_json_file(self):
+        for output in self.outputs.all():
+            if output.interface.slug == "metrics-json-file":
+                return output.value
 
     def clean(self):
         if self.submission.phase != self.method.phase:
