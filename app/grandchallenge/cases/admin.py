@@ -1,7 +1,19 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    ImageGroupObjectPermission,
+    ImageUserObjectPermission,
+    RawImageUploadSession,
+    RawImageUploadSessionGroupObjectPermission,
+    RawImageUploadSessionUserObjectPermission,
+)
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 
 
 class ImageFileInline(admin.StackedInline):
@@ -61,5 +73,13 @@ class RawImageUploadSessionAdmin(GuardedModelAdmin):
 
 
 admin.site.register(Image, ImageAdmin)
+admin.site.register(ImageUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(ImageGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(ImageFile, ImageFileAdmin)
 admin.site.register(RawImageUploadSession, RawImageUploadSessionAdmin)
+admin.site.register(
+    RawImageUploadSessionUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    RawImageUploadSessionGroupObjectPermission, GroupObjectPermissionAdmin
+)
