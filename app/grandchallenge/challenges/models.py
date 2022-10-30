@@ -19,6 +19,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -641,6 +642,14 @@ class Challenge(ChallengeBase):
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
+
+
+class ChallengeUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
+
+
+class ChallengeGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
 
 @receiver(post_delete, sender=Challenge)

@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
@@ -203,6 +204,18 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
                 self.creator,
                 self,
             )
+
+
+class HangingProtocolUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        HangingProtocol, on_delete=models.CASCADE
+    )
+
+
+class HangingProtocolGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        HangingProtocol, on_delete=models.CASCADE
+    )
 
 
 class ViewContentMixin(models.Model):

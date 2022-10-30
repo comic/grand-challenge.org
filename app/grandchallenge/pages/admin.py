@@ -1,7 +1,15 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from grandchallenge.pages.models import Page
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
+from grandchallenge.pages.models import (
+    Page,
+    PageGroupObjectPermission,
+    PageUserObjectPermission,
+)
 
 
 class PageAdmin(SimpleHistoryAdmin):
@@ -21,3 +29,5 @@ class PageAdmin(SimpleHistoryAdmin):
 
 
 admin.site.register(Page, PageAdmin)
+admin.site.register(PageUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(PageGroupObjectPermission, GroupObjectPermissionAdmin)
