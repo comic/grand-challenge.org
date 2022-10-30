@@ -242,9 +242,59 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerType">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerType" title="Permalink to this definition"></a></dt>
 <dd><p>An enumeration.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.AnswerUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -318,6 +368,56 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <span class="sig-name descname"><span class="pre">workstation_url</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.workstation_url" title="Permalink to this definition"></a></dt>
 <dd><p>The URL to answer this display set in a workstation</p>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -429,6 +529,56 @@ control the saving process.</p>
 that the “save” must be an SQL insert or update (or equivalent for
 non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -610,6 +760,31 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyPermissionRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyPermissionRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest" title="Permalink to this definition"></a></dt>
 <dd><p>When a user wants to read a reader study, editors have the option of
@@ -650,6 +825,31 @@ control the saving process.</p>
 that the “save” must be an SQL insert or update (or equivalent for
 non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
+<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Content object</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.DoesNotExist">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.DoesNotExist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.MultipleObjectsReturned">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
