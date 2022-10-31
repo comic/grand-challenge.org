@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
@@ -167,7 +169,7 @@ def test_filter_by_permission_joined():
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename="view_evaluation"
     )
-    # User does not have permission to view
+    # User has permission to view both
     assert filtered_queryset.count() == 2
     assert {e.pk for e in filtered_queryset} == {
         evaluation1.pk,
@@ -228,3 +230,46 @@ def test_works_with_anonymous_user():
         queryset=queryset, user=AnonymousUser(), codename="view_evaluation"
     )
     assert filtered_queryset.count() == 1
+
+
+@pytest.mark.django_db
+def test_filter_ordering():
+    user = UserFactory()
+    queryset = Evaluation.objects.all().order_by("created")
+    evaluation1 = EvaluationFactory()
+    evaluation2 = EvaluationFactory()
+
+    evaluation1.created -= timedelta(minutes=10)
+    evaluation1.save()
+
+    group = GroupFactory()
+    group.user_set.add(user)
+
+    assign_perm("view_evaluation", group, evaluation1)
+    assign_perm("view_evaluation", user, evaluation2)
+
+    filtered_queryset = filter_by_permission(
+        queryset=queryset, user=user, codename="view_evaluation"
+    )
+    # User has permission to view both but ordering must be maintained
+    assert filtered_queryset.count() == 2
+    assert [e.pk for e in filtered_queryset] == [
+        evaluation1.pk,
+        evaluation2.pk,
+    ]
+
+    remove_perm("view_evaluation", group, evaluation1)
+    remove_perm("view_evaluation", user, evaluation2)
+
+    assign_perm("view_evaluation", group, evaluation2)
+    assign_perm("view_evaluation", user, evaluation1)
+
+    filtered_queryset = filter_by_permission(
+        queryset=queryset, user=user, codename="view_evaluation"
+    )
+    # User has permission to view both but ordering must be maintained
+    assert filtered_queryset.count() == 2
+    assert [e.pk for e in filtered_queryset] == [
+        evaluation1.pk,
+        evaluation2.pk,
+    ]
