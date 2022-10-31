@@ -80,16 +80,22 @@ def filter_by_permission(*, queryset, user, codename):
         codename=codename,
     )
 
-    return queryset.filter(
-        **{
-            f"{user_related_query_name}__user": user,
-            f"{user_related_query_name}__permission": permission,
-        }
-    ).union(
+    pks = (
         queryset.filter(
             **{
-                f"{group_related_query_name}__group__user": user,
-                f"{group_related_query_name}__permission": permission,
+                f"{user_related_query_name}__user": user,
+                f"{user_related_query_name}__permission": permission,
             }
         )
+        .union(
+            queryset.filter(
+                **{
+                    f"{group_related_query_name}__group__user": user,
+                    f"{group_related_query_name}__permission": permission,
+                }
+            )
+        )
+        .values_list("pk", flat=True)
     )
+
+    return queryset.filter(pk__in=pks)
