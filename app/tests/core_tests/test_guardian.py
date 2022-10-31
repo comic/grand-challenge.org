@@ -251,7 +251,7 @@ def test_filter_ordering():
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename="view_evaluation"
     )
-    # User does not have permission to view
+    # User has permission to view both but ordering must be maintained
     assert filtered_queryset.count() == 2
     assert [e.pk for e in filtered_queryset] == [
         evaluation1.pk,
@@ -267,7 +267,7 @@ def test_filter_ordering():
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename="view_evaluation"
     )
-    # User does not have permission to view
+    # User has permission to view both but ordering must be maintained
     assert filtered_queryset.count() == 2
     assert [e.pk for e in filtered_queryset] == [
         evaluation1.pk,
