@@ -15,6 +15,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
@@ -404,6 +405,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             return False
 
 
+class AlgorithmUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+
+
+class AlgorithmGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+
+
 @receiver(post_delete, sender=Algorithm)
 def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
     """
@@ -462,6 +471,18 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             self.algorithm.editors_group,
             self,
         )
+
+
+class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmImage, on_delete=models.CASCADE
+    )
+
+
+class AlgorithmImageGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        AlgorithmImage, on_delete=models.CASCADE
+    )
 
 
 class JobQuerySet(models.QuerySet):
@@ -688,6 +709,14 @@ class Job(UUIDModel, ComponentJob):
             display_set.values.set(values)
 
         return display_set
+
+
+class JobUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
+
+
+class JobGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
 
 @receiver(post_delete, sender=Job)

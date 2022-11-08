@@ -13,6 +13,7 @@ from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.models import (
     MAXIMUM_SEGMENTS_LENGTH,
@@ -153,6 +154,18 @@ class RawImageUploadSession(UUIDModel):
     @property
     def api_url(self):
         return reverse("api:upload-session-detail", kwargs={"pk": self.pk})
+
+
+class RawImageUploadSessionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        RawImageUploadSession, on_delete=models.CASCADE
+    )
+
+
+class RawImageUploadSessionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        RawImageUploadSession, on_delete=models.CASCADE
+    )
 
 
 @receiver(pre_delete, sender=RawImageUploadSession)
@@ -485,6 +498,14 @@ class Image(UUIDModel):
 
     class Meta:
         ordering = ("name",)
+
+
+class ImageUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Image, on_delete=models.CASCADE)
+
+
+class ImageGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Image, on_delete=models.CASCADE)
 
 
 class ImageFile(UUIDModel):

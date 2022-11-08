@@ -2,15 +2,43 @@ from django.contrib import admin
 
 from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
+    BooleanClassificationAnnotationGroupObjectPermission,
+    BooleanClassificationAnnotationUserObjectPermission,
     ETDRSGridAnnotation,
+    ETDRSGridAnnotationGroupObjectPermission,
+    ETDRSGridAnnotationUserObjectPermission,
+    ImagePathologyAnnotationGroupObjectPermission,
+    ImagePathologyAnnotationUserObjectPermission,
+    ImageQualityAnnotationGroupObjectPermission,
+    ImageQualityAnnotationUserObjectPermission,
     ImageTextAnnotation,
+    ImageTextAnnotationGroupObjectPermission,
+    ImageTextAnnotationUserObjectPermission,
     LandmarkAnnotationSet,
+    LandmarkAnnotationSetGroupObjectPermission,
+    LandmarkAnnotationSetUserObjectPermission,
     MeasurementAnnotation,
+    MeasurementAnnotationGroupObjectPermission,
+    MeasurementAnnotationUserObjectPermission,
     OctRetinaImagePathologyAnnotation,
+    OctRetinaImagePathologyAnnotationGroupObjectPermission,
+    OctRetinaImagePathologyAnnotationUserObjectPermission,
     PolygonAnnotationSet,
+    PolygonAnnotationSetGroupObjectPermission,
+    PolygonAnnotationSetUserObjectPermission,
     RetinaImagePathologyAnnotation,
+    RetinaImagePathologyAnnotationGroupObjectPermission,
+    RetinaImagePathologyAnnotationUserObjectPermission,
     SingleLandmarkAnnotation,
+    SingleLandmarkAnnotationGroupObjectPermission,
+    SingleLandmarkAnnotationUserObjectPermission,
     SinglePolygonAnnotation,
+    SinglePolygonAnnotationGroupObjectPermission,
+    SinglePolygonAnnotationUserObjectPermission,
+)
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
 )
 
 
@@ -63,6 +91,12 @@ admin.site.register(
 )
 admin.site.register(PolygonAnnotationSet, PolygonAnnotationSetAdmin)
 admin.site.register(SinglePolygonAnnotation)
+admin.site.register(
+    SinglePolygonAnnotationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    SinglePolygonAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(LandmarkAnnotationSet, LandmarkAnnotationSetAdmin)
 admin.site.register(SingleLandmarkAnnotation)
 admin.site.register(
@@ -72,3 +106,75 @@ admin.site.register(
     OctRetinaImagePathologyAnnotation, AbstractImageAnnotationAdmin
 )
 admin.site.register(ImageTextAnnotation, AbstractImageAnnotationAdmin)
+admin.site.register(
+    ImagePathologyAnnotationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    ImagePathologyAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    BooleanClassificationAnnotationUserObjectPermission,
+    UserObjectPermissionAdmin,
+)
+admin.site.register(
+    BooleanClassificationAnnotationGroupObjectPermission,
+    GroupObjectPermissionAdmin,
+)
+admin.site.register(
+    MeasurementAnnotationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    MeasurementAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    PolygonAnnotationSetUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    PolygonAnnotationSetGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    ImageTextAnnotationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    ImageTextAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    OctRetinaImagePathologyAnnotationUserObjectPermission,
+    UserObjectPermissionAdmin,
+)
+admin.site.register(
+    OctRetinaImagePathologyAnnotationGroupObjectPermission,
+    GroupObjectPermissionAdmin,
+)
+admin.site.register(
+    SingleLandmarkAnnotationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    SingleLandmarkAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    ImageQualityAnnotationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    ImageQualityAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    RetinaImagePathologyAnnotationUserObjectPermission,
+    UserObjectPermissionAdmin,
+)
+admin.site.register(
+    RetinaImagePathologyAnnotationGroupObjectPermission,
+    GroupObjectPermissionAdmin,
+)
+admin.site.register(
+    LandmarkAnnotationSetUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    LandmarkAnnotationSetGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    ETDRSGridAnnotationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    ETDRSGridAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
+)

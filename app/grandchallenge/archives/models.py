@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
 
@@ -233,6 +234,14 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
 
+class ArchiveUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
+
+
+class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
+
+
 class ArchiveItem(UUIDModel):
     archive = models.ForeignKey(
         Archive, related_name="items", on_delete=models.PROTECT
@@ -278,6 +287,14 @@ class ArchiveItem(UUIDModel):
             self.archive.uploaders_group,
             self,
         )
+
+
+class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)
+
+
+class ArchiveItemGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)
 
 
 class ArchivePermissionRequest(RequestBase):

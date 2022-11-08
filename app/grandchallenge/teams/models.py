@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse
@@ -51,6 +52,14 @@ class Team(models.Model):
     def get_members(self):
         User = get_user_model()  # noqa: N806
         return User.objects.filter(teammember__team=self)
+
+
+class TeamUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Team, on_delete=models.CASCADE)
+
+
+class TeamGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Team, on_delete=models.CASCADE)
 
 
 class TeamMember(models.Model):

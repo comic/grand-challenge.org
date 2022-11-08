@@ -1,14 +1,21 @@
 from functools import partial
 
+from django.contrib.auth.models import Permission
 from guardian.mixins import (  # noqa: I251
     PermissionListMixin as PermissionListMixinOrig,
 )
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
+from guardian.models import GroupObjectPermission, UserObjectPermission
 from guardian.shortcuts import (  # noqa: I251
     get_objects_for_group as get_objects_for_group_orig,
 )
 from guardian.shortcuts import (  # noqa: I251
     get_objects_for_user as get_objects_for_user_orig,
+)
+from guardian.utils import (
+    get_anonymous_user,
+    get_group_obj_perms_model,
+    get_user_obj_perms_model,
 )
 
 get_objects_for_user = partial(
@@ -26,3 +33,69 @@ class PermissionListMixin(PermissionListMixinOrig):
 
 class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
     accept_global_perms = False
+
+
+def filter_by_permission(*, queryset, user, codename):
+    """
+    Optimised version of get_objects_for_user
+
+    This method considers both the group and user permissions, and ignores
+    global permissions.
+
+    Django guardian keeps its permissions in two tables. If you are allowing
+    permissions from both users and groups then get_objects_for_user
+    creates uses a SQL OR operation which is slow. This optimises the queries
+    by using a SQL Union.
+
+    This requires using direct foreign key permissions on the objects so that
+    a reverse lookup can be used. Django does now allow filtering of
+    querysets created with a SQL Union, so this must be the last operation
+    in the queryset generation.
+    """
+    if user.is_superuser is True:
+        return queryset
+
+    if user.is_anonymous:
+        # AnonymousUser does not work with filters
+        user = get_anonymous_user()
+
+    dfk_user_model = get_user_obj_perms_model(queryset.model)
+    dfk_group_model = get_group_obj_perms_model(queryset.model)
+
+    if dfk_user_model == UserObjectPermission:
+        raise RuntimeError("DFK user permissions not active for model")
+
+    if dfk_group_model == GroupObjectPermission:
+        raise RuntimeError("DFK group permissions not active for model")
+
+    user_related_query_name = (
+        dfk_user_model.content_object.field.related_query_name()
+    )
+    group_related_query_name = (
+        dfk_group_model.content_object.field.related_query_name()
+    )
+
+    permission = Permission.objects.get(
+        content_type__app_label=queryset.model._meta.app_label,
+        codename=codename,
+    )
+
+    pks = (
+        queryset.filter(
+            **{
+                f"{user_related_query_name}__user": user,
+                f"{user_related_query_name}__permission": permission,
+            }
+        )
+        .union(
+            queryset.filter(
+                **{
+                    f"{group_related_query_name}__group__user": user,
+                    f"{group_related_query_name}__permission": permission,
+                }
+            )
+        )
+        .values_list("pk", flat=True)
+    )
+
+    return queryset.filter(pk__in=pks)

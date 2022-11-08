@@ -84,6 +84,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
@@ -556,9 +557,8 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class JobsList(PermissionListMixin, PaginatedTableListView):
+class JobsList(PaginatedTableListView):
     model = Job
-    permission_required = "algorithms.view_job"
     row_template = "algorithms/job_list_row.html"
     search_fields = [
         "pk",
@@ -585,7 +585,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
                 ).values_list("value", flat=True)
             )
 
-        return (
+        queryset = (
             queryset.filter(algorithm_image__algorithm=self.algorithm)
             .annotate(**interface_values)
             .prefetch_related(
@@ -599,6 +599,12 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
                 "creator__verification",
                 "algorithm_image__algorithm",
             )
+        )
+
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename="view_job",
         )
 
     def get_context_data(self, *args, **kwargs):

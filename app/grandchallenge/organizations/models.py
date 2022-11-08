@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from django_countries.fields import CountryField
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from stdimage import JPEGField
 
@@ -84,3 +85,11 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
 
     def remove_member(self, user):
         return user.groups.remove(self.members_group)
+
+
+class OrganizationUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+
+class OrganizationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Organization, on_delete=models.CASCADE)

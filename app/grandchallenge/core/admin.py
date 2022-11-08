@@ -15,5 +15,15 @@ class MarkdownFlatPageAdmin(FlatPageAdmin):
     form = MarkdownFlatPageForm
 
 
+class UserObjectPermissionAdmin(admin.ModelAdmin):
+    readonly_fields = ("user", "permission", "content_object")
+    search_fields = ("user__username", "content_object__pk")
+
+
+class GroupObjectPermissionAdmin(admin.ModelAdmin):
+    readonly_fields = ("group", "permission", "content_object")
+    search_fields = ("group__name", "content_object__pk")
+
+
 admin.site.unregister(FlatPage)
 admin.site.register(FlatPage, MarkdownFlatPageAdmin)

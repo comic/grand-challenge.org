@@ -5,9 +5,15 @@ from django.core.exceptions import ValidationError
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.models import (
     Challenge,
+    ChallengeGroupObjectPermission,
     ChallengeRequest,
     ChallengeSeries,
+    ChallengeUserObjectPermission,
     ExternalChallenge,
+)
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
 )
 
 
@@ -81,6 +87,8 @@ class ChallengeRequestAdmin(ModelAdmin):
 
 
 admin.site.register(Challenge, ChallengeAdmin)
+admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(ChallengeGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(ExternalChallenge, ExternalChallengeAdmin)
 admin.site.register(ChallengeSeries)
 admin.site.register(ChallengeRequest, ChallengeRequestAdmin)

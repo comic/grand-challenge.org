@@ -1,12 +1,24 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.reader_studies.models import (
     Answer,
+    AnswerGroupObjectPermission,
+    AnswerUserObjectPermission,
     DisplaySet,
+    DisplaySetGroupObjectPermission,
+    DisplaySetUserObjectPermission,
     Question,
+    QuestionGroupObjectPermission,
+    QuestionUserObjectPermission,
     ReaderStudy,
+    ReaderStudyGroupObjectPermission,
     ReaderStudyPermissionRequest,
+    ReaderStudyUserObjectPermission,
 )
 
 
@@ -74,9 +86,21 @@ class DisplaySetAdmin(GuardedModelAdmin):
 
 
 admin.site.register(ReaderStudy, ReaderStudyAdmin)
+admin.site.register(ReaderStudyUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    ReaderStudyGroupObjectPermission, GroupObjectPermissionAdmin
+)
 admin.site.register(Question, QuestionsAdmin)
+admin.site.register(QuestionUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(QuestionGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(Answer, AnswersAdmin)
+admin.site.register(AnswerUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(AnswerGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(
     ReaderStudyPermissionRequest, ReaderStudyPermissionRequestAdmin
 )
 admin.site.register(DisplaySet, DisplaySetAdmin)
+admin.site.register(DisplaySetUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    DisplaySetGroupObjectPermission, GroupObjectPermissionAdmin
+)
