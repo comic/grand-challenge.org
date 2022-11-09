@@ -150,6 +150,8 @@ class InterfaceKind:
         * Chart
 
         Example json for 2D bounding box annotation
+            required: ``type``, ``corners``, ``version``
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -159,7 +161,7 @@ class InterfaceKind:
                 "corners": [
                     [ 130.80001831054688, 148.86666870117188, 0.5009999871253967],
                     [ 69.73332977294922, 148.86666870117188, 0.5009999871253967],
-                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967 ],
+                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967],
                     [ 130.80001831054688, 73.13333129882812, 0.5009999871253967]
                 ],
                 "probability": 0.95,
@@ -167,6 +169,8 @@ class InterfaceKind:
             }
 
         Example json for Multiple 2D bounding boxes annotation
+            required: "type", "boxes", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -199,6 +203,8 @@ class InterfaceKind:
             }
 
         Example json for Distance measurement annotation
+            required: "type", "start", "end", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -212,6 +218,8 @@ class InterfaceKind:
             }
 
         Example json for Multiple distance measurement annotation
+            required: "type", "lines", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -236,6 +244,8 @@ class InterfaceKind:
             }
 
         Example json for Point annotation
+            required: "type", "point", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -248,6 +258,8 @@ class InterfaceKind:
             }
 
         Example json for Multiple points annotation
+            required: "type", "points", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -274,6 +286,8 @@ class InterfaceKind:
             }
 
         Example json for Polygon annotation
+            required: "type", "seed_point", "path_points", "sub_type", "groups", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -293,6 +307,8 @@ class InterfaceKind:
             }
 
         Example json for Multiple polygon annotation
+            required: "type", "polygons", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -330,6 +346,8 @@ class InterfaceKind:
             }
 
         Example json for Line annotation
+            required: "type", "seed_points", "path_point_lists", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -346,6 +364,8 @@ class InterfaceKind:
             }
 
         Example json for Multiple lines annotation
+            required: "type", "lines", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -376,6 +396,8 @@ class InterfaceKind:
             }
 
         Example json for Angle annotation
+            required: "type", "lines", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
@@ -388,6 +410,8 @@ class InterfaceKind:
             }
 
         Example json for Multiple angles annotation
+            required: "type", "angles", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
