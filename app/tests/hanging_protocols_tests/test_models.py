@@ -118,6 +118,8 @@ from tests.factories import UserFactory
                 {
                     "viewport_name": "main_sideview",
                     "specialized_view": "3D-sideview",
+                    "slice_plane_indicator": "main",
+                    "slice_plane_indicator_fade_ms": 0,
                     "parent_id": "main",
                     "orientation": "axial",
                 },
@@ -211,7 +213,7 @@ from tests.factories import UserFactory
             ],
             pytest.raises(ValidationError),
         ),
-        # valid json with duplicate viewports
+        # invalid json with duplicate viewports
         (
             [
                 {
@@ -219,6 +221,19 @@ from tests.factories import UserFactory
                 },
                 {
                     "viewport_name": "main",
+                },
+            ],
+            pytest.raises(ValidationError),
+        ),
+        # invalid json containing an invalid value for
+        (
+            [
+                {
+                    "viewport_name": "main",
+                },
+                {
+                    "viewport_name": "secondary",
+                    "slice_plane_indicator_fade_ms": -1,
                 },
             ],
             pytest.raises(ValidationError),
