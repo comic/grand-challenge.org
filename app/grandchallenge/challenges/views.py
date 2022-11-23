@@ -1,5 +1,9 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.cache import cache
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.http import HttpResponse
@@ -390,3 +394,25 @@ class ChallengeRequestBudgetUpdate(
         response = HttpResponse()
         response["HX-Refresh"] = "true"
         return response
+
+
+class ChallengeCostOverview(
+    LoginRequiredMixin, UserPassesTestMixin, TemplateView
+):
+    template_name = "challenges/challenge_statistics_overview.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "statistics_for_challenges": cache.get(
+                    "statistics_for_challenges"
+                ),
+            }
+        )
+        return context
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.has_perm(
+            "challenges.view_challengerequest"
+        )

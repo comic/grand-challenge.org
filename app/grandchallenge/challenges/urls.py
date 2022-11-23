@@ -1,6 +1,7 @@
 from django.urls import path
 
 from grandchallenge.challenges.views import (
+    ChallengeCostOverview,
     ChallengeList,
     ChallengeRequestBudgetUpdate,
     ChallengeRequestCreate,
@@ -55,5 +56,8 @@ urlpatterns = [
         "requests/<pk>/update/budget/",
         ChallengeRequestBudgetUpdate.as_view(),
         name="requests-budget-update",
+    ),
+    path(
+        "cost-overview", ChallengeCostOverview.as_view(), name="cost-overview"
     ),
 ]
