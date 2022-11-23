@@ -232,10 +232,6 @@ ul.socialaccount_providers > li {
     }
 }
 
-.carousel-img {
-    object-fit: cover;
-}
-
 .thumbnail {
     max-height:90px;
     max-width:90px;
