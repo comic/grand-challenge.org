@@ -1,16 +1,13 @@
+from typing import NamedTuple
+
 from celery import shared_task
-from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models import Count, Max
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.evaluation.tasks import (
-    PhaseStatistics,
-    get_average_job_duration_for_phase,
-)
+from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
@@ -59,53 +56,51 @@ def update_challenge_results_cache():
     )
 
 
+class ChallengeCosts(NamedTuple):
+    short_name: str
+    status: str
+    challenge_compute_cost: float
+    docker_storage_cost: float
+
+
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def update_challenge_cost_statistics():
-    Phase = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Phase"
-    )
-    phases = (
-        Phase.objects.filter(submission_kind=SubmissionKindChoices.ALGORITHM)
-        .annotate(archive_item_count=Count("archive__items"))
-        .all()
-    )
+    phase_stats = cache.get("statistics_for_phases")
     challenge_dict = {}
-    for phase in phases:
-        avg_duration = get_average_job_duration_for_phase(phase)
-        average_algorithm_job_run_time = avg_duration.get(
-            "average_duration", None
-        )
-        accumulated_algorithm_job_run_time = avg_duration.get(
-            "total_duration", None
-        )
-        try:
-            average_submission_compute_cost = round(
-                phase.archive_item_count
-                * average_algorithm_job_run_time.total_seconds()
-                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-                / 3600
-                / 100,
-                ndigits=2,
-            )
-            total_phase_compute_cost = round(
-                accumulated_algorithm_job_run_time.total_seconds()
-                * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-                / 3600
-                / 100,
-                ndigits=2,
-            )
-        except AttributeError:
-            average_submission_compute_cost = None
-            total_phase_compute_cost = None
+    challenges = Challenge.objects.filter(
+        phase__submission_kind=SubmissionKindChoices.ALGORITHM
+    ).all()
+    ecr_storage_costs = (
+        settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+    )
+    average_algorithm_container_size_in_gb = 10
 
-        challenge_dict[phase.challenge.title] = {
-            phase.pk: PhaseStatistics(
-                average_algorithm_job_run_time,
-                accumulated_algorithm_job_run_time,
-                average_submission_compute_cost,
-                total_phase_compute_cost,
-                phase.archive_item_count,
-            )
-        }
-
+    for challenge in challenges:
+        submitted_algorithms = Submission.objects.filter(
+            algorithm_image__isnull=False,
+            phase__challenge=challenge,
+        ).values_list("algorithm_image__algorithm__pk", flat=True)
+        num_submitted_algorithms = (
+            len(list(set(submitted_algorithms))) if submitted_algorithms else 0
+        )
+        challenge_compute_cost = sum(
+            v.total_phase_compute_cost
+            for k, v in phase_stats.items()
+            for phase in challenge.phase_set.all()
+            if k == phase.pk and v.total_phase_compute_cost is not None
+        )
+        docker_storage_cost = round(
+            average_algorithm_container_size_in_gb
+            * num_submitted_algorithms
+            * ecr_storage_costs
+            / 1000
+            / 100,
+            ndigits=2,
+        )
+        challenge_dict[challenge.pk] = ChallengeCosts(
+            short_name=challenge.short_name,
+            status=challenge.status.name,
+            challenge_compute_cost=challenge_compute_cost,
+            docker_storage_cost=docker_storage_cost,
+        )
     cache.set("statistics_for_challenges", challenge_dict, timeout=None)

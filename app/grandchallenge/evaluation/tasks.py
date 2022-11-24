@@ -570,6 +570,7 @@ def get_average_job_duration_for_phase(phase):
 
 
 class PhaseStatistics(NamedTuple):
+    challenge_title: str
     average_algorithm_job_run_time: datetime.timedelta
     accumulated_algorithm_job_run_time: datetime.timedelta
     average_submission_compute_cost: float
@@ -617,6 +618,7 @@ def update_phase_statistics():
             total_phase_compute_cost = None
 
         phase_dict[phase.pk] = PhaseStatistics(
+            phase.challenge.title,
             average_algorithm_job_run_time,
             accumulated_algorithm_job_run_time,
             average_submission_compute_cost,

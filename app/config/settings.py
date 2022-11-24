@@ -1130,7 +1130,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_phase_statistics": {
         "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
-        "schedule": crontab(minute=30, hour=3),
+        "schedule": crontab(minute="*/1"),
     },
     "send_unread_notification_emails": {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",

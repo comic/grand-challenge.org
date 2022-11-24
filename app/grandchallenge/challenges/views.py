@@ -39,6 +39,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.evaluation.utils import StatusChoices
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -408,6 +409,9 @@ class ChallengeCostOverview(
                 "statistics_for_challenges": cache.get(
                     "statistics_for_challenges"
                 ),
+                "challenge_status_choices": {
+                    status.name: status.name for status in StatusChoices
+                },
             }
         )
         return context

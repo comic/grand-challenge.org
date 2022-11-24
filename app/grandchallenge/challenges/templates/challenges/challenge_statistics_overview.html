@@ -19,26 +19,36 @@
 {% endblock %}
 
 {% block content %}
+    <h3 class="mb-3">Challenge cost overview</h3>
+    <p>By challenge (only Type 2 challenges included)</p>
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm">
-            <thead class="bg-primary text-light">
+            <thead class="thead-light">
                 <tr>
                     <th class="pl-3">Challenge</th>
-                    <th>Compute cost so far</th>
+                    <th>Status</th>
+                    <th>Total compute cost</th>
+                    <th>Total docker storage cost</th>
+                    <th>Details</th>
                 </tr>
             </thead>
             <tbody>
                 {% for challenge, challenge_dict in statistics_for_challenges.items %}
-                    {% get_dict_values statistics_for_challenges challenge as challenge_stats %}
-                    <tr class="bg-dark">
-                        <td colspan="100%" class="pl-3">{{ challenge }}</td>
+                    <tr>
+                        <td>{{ challenge_dict.short_name }}</td>
+                        <td>
+                            <span class="badge {% if challenge_dict.status == challenge_status_choices.OPEN %}badge-success {% elif challenge_dict.status == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}mt-1 above-stretched-link text-wrap w-100 p-2">{{ challenge_dict.status }}</span><br>
+                        </td>
+                        <td>{{ challenge_dict.challenge_compute_cost }} €</td>
+                        <td>{{ challenge_dict.docker_storage_cost }} €</td>
+                        <td>
+                            <a href="{% url 'pages:statistics' challenge_short_name=challenge_dict.short_name %}">
+                                <span class="badge badge-primary p-2">
+                                    Costs per phase
+                                </span>
+                            </a>
+                        </td>
                     </tr>
-                    {% for phase, phase_dict in challenge_dict.items %}
-                        <tr class="bg-light">
-                            <td class="pl-5">{{ phase }}</td>
-                            <td>{{ phase_dict.total_phase_compute_cost }}</td>
-                        </tr>
-                    {% endfor %}
                 {% endfor %}
             </tbody>
         </table>
