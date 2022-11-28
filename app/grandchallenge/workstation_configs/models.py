@@ -298,6 +298,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         help_text="A plugin that allows analysis of segmentations. It shows voxel value "
         "statistics of annotated areas.",
     )
+    show_swivel_tool = models.BooleanField(
+        default=False,
+        help_text="A tool that allows swiveling the image around axes to view a custom orientation",
+    )
     show_invert_tool = models.BooleanField(
         default=True,
         help_text="A tool/button that allows inverting the displayed pixel colors of an image",
