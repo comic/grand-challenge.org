@@ -61,6 +61,27 @@ class ChallengeCosts(NamedTuple):
     status: str
     challenge_compute_cost: float
     docker_storage_cost: float
+    total_cost: float
+
+
+def get_monthly_challenge_costs(phase_stats):
+    monthly_challenge_costs = {}
+    for _phase, values in phase_stats.items():
+        for year, month_values in values.monthly_spendings.items():
+            for month, cost in month_values.items():
+                try:
+                    monthly_challenge_costs[year][month] += cost
+                except (KeyError, TypeError):
+                    if year not in monthly_challenge_costs.keys():
+                        monthly_challenge_costs[year] = {}
+                        monthly_challenge_costs[year]["total"] = 0
+                    monthly_challenge_costs[year][month] = cost
+
+    for year, values in monthly_challenge_costs.items():
+        for month, cost in values.items():
+            if month != "total":
+                monthly_challenge_costs[year]["total"] += cost
+    return monthly_challenge_costs
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -74,7 +95,6 @@ def update_challenge_cost_statistics():
         settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
     )
     average_algorithm_container_size_in_gb = 10
-
     for challenge in challenges:
         submitted_algorithms = Submission.objects.filter(
             algorithm_image__isnull=False,
@@ -83,11 +103,14 @@ def update_challenge_cost_statistics():
         num_submitted_algorithms = (
             len(list(set(submitted_algorithms))) if submitted_algorithms else 0
         )
-        challenge_compute_cost = sum(
-            v.total_phase_compute_cost
-            for k, v in phase_stats.items()
-            for phase in challenge.phase_set.all()
-            if k == phase.pk and v.total_phase_compute_cost is not None
+        challenge_compute_cost = round(
+            sum(
+                v.total_phase_compute_cost
+                for k, v in phase_stats.items()
+                for phase in challenge.phase_set.all()
+                if k == phase.pk and v.total_phase_compute_cost is not None
+            ),
+            ndigits=2,
         )
         docker_storage_cost = round(
             average_algorithm_container_size_in_gb
@@ -102,5 +125,12 @@ def update_challenge_cost_statistics():
             status=challenge.status.name,
             challenge_compute_cost=challenge_compute_cost,
             docker_storage_cost=docker_storage_cost,
+            total_cost=round(
+                challenge_compute_cost + docker_storage_cost, ndigits=2
+            ),
         )
+
+    monthly_challenge_costs = get_monthly_challenge_costs(phase_stats)
+
     cache.set("statistics_for_challenges", challenge_dict, timeout=None)
+    cache.set("monthly_challenge_costs", monthly_challenge_costs, timeout=None)

@@ -409,6 +409,9 @@ class ChallengeCostOverview(
                 "statistics_for_challenges": cache.get(
                     "statistics_for_challenges"
                 ),
+                "monthly_challenge_costs": cache.get(
+                    "monthly_challenge_costs"
+                ),
                 "challenge_status_choices": {
                     status.name: status.name for status in StatusChoices
                 },

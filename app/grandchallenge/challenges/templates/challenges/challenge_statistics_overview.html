@@ -23,25 +23,27 @@
     <p>By challenge (only Type 2 challenges included)</p>
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-light">
+            <thead class="thead-dark">
                 <tr>
                     <th class="pl-3">Challenge</th>
-                    <th>Status</th>
-                    <th>Total compute cost</th>
-                    <th>Total docker storage cost</th>
-                    <th>Details</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Compute costs</th>
+                    <th class="text-center">Docker storage costs</th>
+                    <th class="text-center">Total costs</th>
+                    <th class="text-center">Details</th>
                 </tr>
             </thead>
             <tbody>
                 {% for challenge, challenge_dict in statistics_for_challenges.items %}
                     <tr>
-                        <td>{{ challenge_dict.short_name }}</td>
-                        <td>
-                            <span class="badge {% if challenge_dict.status == challenge_status_choices.OPEN %}badge-success {% elif challenge_dict.status == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}mt-1 above-stretched-link text-wrap w-100 p-2">{{ challenge_dict.status }}</span><br>
+                        <td class="pl-3">{{ challenge_dict.short_name }}</td>
+                        <td class="text-center">
+                            <span class="badge {% if challenge_dict.status == challenge_status_choices.OPEN %}badge-success {% elif challenge_dict.status == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge_dict.status }}</span><br>
                         </td>
-                        <td>{{ challenge_dict.challenge_compute_cost }} €</td>
-                        <td>{{ challenge_dict.docker_storage_cost }} €</td>
-                        <td>
+                        <td class="text-right">{{ challenge_dict.challenge_compute_cost }} €</td>
+                        <td class="text-right">{{ challenge_dict.docker_storage_cost }} €</td>
+                        <td class="text-right">{{ challenge_dict.total_cost }} €</td>
+                        <td class="text-center">
                             <a href="{% url 'pages:statistics' challenge_short_name=challenge_dict.short_name %}">
                                 <span class="badge badge-primary p-2">
                                     Costs per phase
@@ -49,6 +51,36 @@
                             </a>
                         </td>
                     </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p>By month (only Type 2 challenges included)</p>
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm">
+            <thead class="thead-dark">
+                <tr>
+                    <th class="pl-3">Month</th>
+                    <th class="text-center">Challenge compute costs</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for year, values in monthly_challenge_costs.items %}
+                    {% get_dict_values values 'total' as total_cost %}
+                    <tr class="bg-light">
+                        <td class="pl-3">
+                            {{ year }}</td>
+                        <td class="text-right">{{ total_cost|floatformat:'2' }}</td>
+                    </tr>
+                    {% for month, cost in values.items %}
+                        {% if not forloop.first %}
+                            <tr>
+                                <td class="pl-4">{{ month }}</td>
+                                <td class="text-right">{{ cost }} €</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
                 {% endfor %}
             </tbody>
         </table>

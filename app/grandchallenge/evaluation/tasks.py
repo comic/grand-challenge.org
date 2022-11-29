@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import logging
 import uuid
@@ -5,6 +6,7 @@ from statistics import mean, median
 from typing import NamedTuple
 
 from celery import shared_task
+from dateutil import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
@@ -562,9 +564,49 @@ def get_average_job_duration_for_phase(phase):
     jobs = Job.objects.filter(
         outputs__evaluation_evaluations_as_input__submission__phase=phase,
     ).distinct()
+
+    start_date = datetime.datetime.strptime("1/1/2021", "%d/%m/%Y")
+    end_date = datetime.datetime.now()
+    delta = relativedelta.relativedelta(end_date, start_date)
+    monthly_spendings = {}
+    for year in [start_date.year, start_date.year + delta.years]:
+        if not year == start_date.year + delta.years:
+            months = range(1, 13)
+        else:
+            months = range(1, 2 + delta.months)
+        for month in months:
+            _, num_days = calendar.monthrange(year, month)
+            start_date = datetime.date(year, month, 1)
+            end_date = datetime.date(year, month, num_days)
+            jobs_for_month = jobs.filter(
+                started_at__gte=start_date, completed_at__lte=end_date
+            )
+            total_duration = jobs_for_month.total_duration()
+            compute_cost = (
+                round(
+                    total_duration.total_seconds()
+                    * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+                    / 3600
+                    / 100,
+                    ndigits=2,
+                )
+                if total_duration
+                else 0
+            )
+            try:
+                monthly_spendings[year][
+                    start_date.strftime("%B")
+                ] = compute_cost
+            except (TypeError, KeyError):
+                monthly_spendings[year] = {}
+                monthly_spendings[year][
+                    start_date.strftime("%B")
+                ] = compute_cost
+
     duration_dict = {
         "average_duration": jobs.average_duration(),
         "total_duration": jobs.total_duration(),
+        "monthly_spendings": monthly_spendings,
     }
     return duration_dict
 
@@ -576,6 +618,7 @@ class PhaseStatistics(NamedTuple):
     average_submission_compute_cost: float
     total_phase_compute_cost: float
     archive_item_count: int
+    monthly_spendings: dict
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -597,6 +640,7 @@ def update_phase_statistics():
         accumulated_algorithm_job_run_time = avg_duration.get(
             "total_duration", None
         )
+        monthly_spendings = avg_duration.get("monthly_spendings", None)
         try:
             average_submission_compute_cost = round(
                 phase.archive_item_count
@@ -624,6 +668,7 @@ def update_phase_statistics():
             average_submission_compute_cost,
             total_phase_compute_cost,
             phase.archive_item_count,
+            monthly_spendings,
         )
 
     cache.set("statistics_for_phases", phase_dict, timeout=None)
