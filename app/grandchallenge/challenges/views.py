@@ -501,3 +501,50 @@ class ChallengeCostsRow(
             }
         )
         return context
+
+
+class ChallengeCostsPerYearView(
+    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+):
+    template_name = "challenges/challenge_costs_per_year.html"
+
+    def get_context_data(self, **kwargs):
+        monthly_challenge_costs = cache.get("monthly_challenge_costs")
+        year = self.request.GET.get("year", None)
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "year": year,
+                "total_compute_cost": monthly_challenge_costs[int(year)][
+                    "total"
+                ],
+                "total_docker_cost": monthly_challenge_costs[int(year)][
+                    "total_docker_cost"
+                ],
+                "values": monthly_challenge_costs[int(year)],
+            }
+        )
+        return context
+
+
+class YearCostsRow(
+    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+):
+    template_name = "challenges/year_cost_row.html"
+
+    def get_context_data(self, **kwargs):
+        monthly_challenge_costs = cache.get("monthly_challenge_costs")
+        year = self.request.GET.get("year", None)
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "year": year,
+                "total_compute_cost": monthly_challenge_costs[int(year)][
+                    "total"
+                ],
+                "total_docker_cost": monthly_challenge_costs[int(year)][
+                    "total_docker_cost"
+                ],
+            }
+        )
+        return context

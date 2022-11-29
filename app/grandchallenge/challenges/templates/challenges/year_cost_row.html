@@ -1,0 +1,10 @@
+<tr hx-get="{% url 'challenges:costs-per-year' %}"
+    hx-swap="outerHTML"
+    hx-vals='{"year": {{ year }}}'
+>
+    <td class="pl-3">{{ year }}</td>
+    <td class="text-right">{{ total_compute_cost|floatformat:'2' }} €</td>
+    <td class="text-right">{{ total_docker_cost|floatformat:'2' }} €</td>
+</tr>
+
+<tr hx-swap-oob="true" id="child-{{ year }}" type="hidden" class="border-0"></tr>

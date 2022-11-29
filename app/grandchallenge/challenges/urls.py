@@ -3,6 +3,7 @@ from django.urls import path
 from grandchallenge.challenges.views import (
     ChallengeCostOverview,
     ChallengeCostsPerPhaseView,
+    ChallengeCostsPerYearView,
     ChallengeCostsRow,
     ChallengeList,
     ChallengeRequestBudgetUpdate,
@@ -15,6 +16,7 @@ from grandchallenge.challenges.views import (
     ExternalChallengeList,
     ExternalChallengeUpdate,
     UsersChallengeList,
+    YearCostsRow,
 )
 
 app_name = "challenges"
@@ -73,5 +75,15 @@ urlpatterns = [
         "challenge-costs/<pk>/cost-row",
         ChallengeCostsRow.as_view(),
         name="challenge-cost-row",
+    ),
+    path(
+        "challenge-costs/costs-per-year",
+        ChallengeCostsPerYearView.as_view(),
+        name="costs-per-year",
+    ),
+    path(
+        "challenge-costs/year-row",
+        YearCostsRow.as_view(),
+        name="year-cost-row",
     ),
 ]
