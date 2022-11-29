@@ -64,24 +64,80 @@ class ChallengeCosts(NamedTuple):
     total_cost: float
 
 
-def get_monthly_challenge_costs(phase_stats):
-    monthly_challenge_costs = {}
+def aggregate_compute_costs_per_month(phase_stats):
+    monthly_compute_costs = {}
     for _phase, values in phase_stats.items():
         for year, month_values in values.monthly_spendings.items():
             for month, cost in month_values.items():
                 try:
-                    monthly_challenge_costs[year][month] += cost
+                    monthly_compute_costs[year][month]["compute_costs"] += cost
                 except (KeyError, TypeError):
-                    if year not in monthly_challenge_costs.keys():
-                        monthly_challenge_costs[year] = {}
-                        monthly_challenge_costs[year]["total"] = 0
-                    monthly_challenge_costs[year][month] = cost
+                    if year not in monthly_compute_costs.keys():
+                        monthly_compute_costs[year] = {}
+                        monthly_compute_costs[year]["total"] = 0
+                        monthly_compute_costs[year]["total_docker_cost"] = 0
+                    if month not in monthly_compute_costs[year].keys():
+                        monthly_compute_costs[year][month] = {}
+                    monthly_compute_costs[year][month]["compute_costs"] = cost
+    return monthly_compute_costs
 
-    for year, values in monthly_challenge_costs.items():
-        for month, cost in values.items():
-            if month != "total":
-                monthly_challenge_costs[year]["total"] += cost
-    return monthly_challenge_costs
+
+def aggregate_submitted_algorithm_pks_per_month(phase_stats):
+    monthly_submitted_algorithms = {}
+    for _phase, values in phase_stats.items():
+        for (
+            year,
+            month_values,
+        ) in values.algorithms_submitted_per_month.items():
+            for month, algorithms in month_values.items():
+                try:
+                    monthly_submitted_algorithms[year][month].extend(
+                        algorithms
+                    )
+                except (KeyError, TypeError):
+                    if year not in monthly_submitted_algorithms.keys():
+                        monthly_submitted_algorithms[year] = {}
+                    monthly_submitted_algorithms[year][month] = algorithms
+    return monthly_submitted_algorithms
+
+
+def add_monthly_docker_costs_to_cost_dict(
+    monthly_submitted_algorithms, monthly_compute_costs
+):
+    ecr_storage_costs = (
+        settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
+    )
+    average_algorithm_container_size_in_gb = 10
+    for year, values in monthly_submitted_algorithms.items():
+        for month, algorithms in values.items():
+            cost = round(
+                average_algorithm_container_size_in_gb
+                * len(set(algorithms))
+                * ecr_storage_costs
+                / 1000
+                / 100,
+                ndigits=2,
+            )
+            monthly_compute_costs[year][month]["docker_costs"] = cost
+            monthly_compute_costs[year]["total_docker_cost"] += cost
+    return monthly_compute_costs
+
+
+def get_monthly_challenge_costs(phase_stats):
+    monthly_compute_costs = aggregate_compute_costs_per_month(phase_stats)
+    monthly_submitted_algorithms = aggregate_submitted_algorithm_pks_per_month(
+        phase_stats
+    )
+    for year, values in monthly_compute_costs.items():
+        for month, subvals in values.items():
+            if month != "total" and month != "total_docker_cost":
+                monthly_compute_costs[year]["total"] += subvals[
+                    "compute_costs"
+                ]
+    monthly_costs = add_monthly_docker_costs_to_cost_dict(
+        monthly_submitted_algorithms, monthly_compute_costs
+    )
+    return monthly_costs
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -131,6 +187,5 @@ def update_challenge_cost_statistics():
         )
 
     monthly_challenge_costs = get_monthly_challenge_costs(phase_stats)
-
     cache.set("statistics_for_challenges", challenge_dict, timeout=None)
     cache.set("monthly_challenge_costs", monthly_challenge_costs, timeout=None)

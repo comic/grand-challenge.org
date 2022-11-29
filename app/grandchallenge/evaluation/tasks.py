@@ -569,6 +569,7 @@ def get_average_job_duration_for_phase(phase):
     end_date = datetime.datetime.now()
     delta = relativedelta.relativedelta(end_date, start_date)
     monthly_spendings = {}
+    algorithms_submitted_per_month = {}
     for year in [start_date.year, start_date.year + delta.years]:
         if not year == start_date.year + delta.years:
             months = range(1, 13)
@@ -580,6 +581,11 @@ def get_average_job_duration_for_phase(phase):
             end_date = datetime.date(year, month, num_days)
             jobs_for_month = jobs.filter(
                 started_at__gte=start_date, completed_at__lte=end_date
+            )
+            submitted_algorithms = list(
+                jobs_for_month.values_list(
+                    "algorithm_image__algorithm__pk", flat=True
+                )
             )
             total_duration = jobs_for_month.total_duration()
             compute_cost = (
@@ -597,16 +603,24 @@ def get_average_job_duration_for_phase(phase):
                 monthly_spendings[year][
                     start_date.strftime("%B")
                 ] = compute_cost
+                algorithms_submitted_per_month[year][
+                    start_date.strftime("%B")
+                ] = submitted_algorithms
             except (TypeError, KeyError):
                 monthly_spendings[year] = {}
+                algorithms_submitted_per_month[year] = {}
                 monthly_spendings[year][
                     start_date.strftime("%B")
                 ] = compute_cost
+                algorithms_submitted_per_month[year][
+                    start_date.strftime("%B")
+                ] = submitted_algorithms
 
     duration_dict = {
         "average_duration": jobs.average_duration(),
         "total_duration": jobs.total_duration(),
         "monthly_spendings": monthly_spendings,
+        "algorithms_submitted_per_month": algorithms_submitted_per_month,
     }
     return duration_dict
 
@@ -619,6 +633,7 @@ class PhaseStatistics(NamedTuple):
     total_phase_compute_cost: float
     archive_item_count: int
     monthly_spendings: dict
+    algorithms_submitted_per_month: list
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -633,14 +648,17 @@ def update_phase_statistics():
     )
     phase_dict = {}
     for phase in phases:
-        avg_duration = get_average_job_duration_for_phase(phase)
-        average_algorithm_job_run_time = avg_duration.get(
+        duration_dict = get_average_job_duration_for_phase(phase)
+        average_algorithm_job_run_time = duration_dict.get(
             "average_duration", None
         )
-        accumulated_algorithm_job_run_time = avg_duration.get(
+        accumulated_algorithm_job_run_time = duration_dict.get(
             "total_duration", None
         )
-        monthly_spendings = avg_duration.get("monthly_spendings", None)
+        monthly_spendings = duration_dict.get("monthly_spendings", None)
+        algorithms_submitted_per_month = duration_dict.get(
+            "algorithms_submitted_per_month", None
+        )
         try:
             average_submission_compute_cost = round(
                 phase.archive_item_count
@@ -669,6 +687,7 @@ def update_phase_statistics():
             total_phase_compute_cost,
             phase.archive_item_count,
             monthly_spendings,
+            algorithms_submitted_per_month,
         )
 
     cache.set("statistics_for_phases", phase_dict, timeout=None)

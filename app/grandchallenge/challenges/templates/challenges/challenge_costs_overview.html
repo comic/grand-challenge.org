@@ -55,23 +55,27 @@
         <table class="table table-hover table-borderless table-sm">
             <thead class="thead-dark">
                 <tr>
-                    <th class="pl-3">Month</th>
+                    <th class="pl-3"></th>
                     <th class="text-center">Challenge compute costs</th>
+                    <th class="text-center">Challenge docker costs</th>
                 </tr>
             </thead>
             <tbody>
                 {% for year, values in monthly_challenge_costs.items %}
-                    {% get_dict_values values 'total' as total_cost %}
+                    {% get_dict_values values 'total' as total_compute_cost %}
+                    {% get_dict_values values 'total_docker_cost' as total_docker_cost %}
                     <tr class="bg-light">
                         <td class="pl-3">
                             {{ year }}</td>
-                        <td class="text-right">{{ total_cost|floatformat:'2' }}</td>
+                        <td class="text-right">{{ total_compute_cost|floatformat:'2' }} €</td>
+                        <td class="text-right">{{ total_docker_cost|floatformat:'2' }} €</td>
                     </tr>
-                    {% for month, cost in values.items %}
-                        {% if not forloop.first %}
+                    {% for month, costs in values.items %}
+                        {% if not month == "total" and not month == "total_docker_cost" %}
                             <tr>
                                 <td class="pl-4">{{ month }}</td>
-                                <td class="text-right">{{ cost|floatformat:'2' }} €</td>
+                                <td class="text-right">{{ costs.compute_costs|floatformat:'2' }} €</td>
+                                <td class="text-right">{{ costs.docker_costs|floatformat:'2' }} €</td>
                             </tr>
                         {% endif %}
                     {% endfor %}
