@@ -1,0 +1,18 @@
+<tr class="bg-primary text-light"
+    hx-get="{% url 'challenges:challenge-cost-row' pk=challenge_pk %}"
+    hx-swap="outerHTML"
+>
+    <td class="pl-3">{{ short_name }}</td>
+    <td class="text-center">
+        <span class="badge {% if status == challenge_status_choices.OPEN %}badge-success {% elif status == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ status }}</span><br>
+    </td>
+    <td class="text-right">{{ challenge_compute_cost }} €</td>
+    <td class="text-right">{{ docker_storage_cost }} €</td>
+    <td class="text-right">{{ total_cost }} €</td>
+</tr>
+
+<tr id="child-{{ short_name }}" type="hidden" class="border border-light">
+    <td colspan="100%" class="p-3">
+        {% include 'pages/phase_costs_partial.html' with phases=phases statistics_for_phases=statistics_for_phases %}
+    </td>
+</tr>

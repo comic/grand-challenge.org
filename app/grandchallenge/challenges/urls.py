@@ -2,6 +2,8 @@ from django.urls import path
 
 from grandchallenge.challenges.views import (
     ChallengeCostOverview,
+    ChallengeCostsPerPhaseView,
+    ChallengeCostsRow,
     ChallengeList,
     ChallengeRequestBudgetUpdate,
     ChallengeRequestCreate,
@@ -58,6 +60,18 @@ urlpatterns = [
         name="requests-budget-update",
     ),
     path(
-        "cost-overview", ChallengeCostOverview.as_view(), name="cost-overview"
+        "challenge-costs/",
+        ChallengeCostOverview.as_view(),
+        name="cost-overview",
+    ),
+    path(
+        "challenge-costs/<pk>/costs-per-phase/",
+        ChallengeCostsPerPhaseView.as_view(),
+        name="costs-per-phase",
+    ),
+    path(
+        "challenge-costs/<pk>/cost-row",
+        ChallengeCostsRow.as_view(),
+        name="challenge-cost-row",
     ),
 ]

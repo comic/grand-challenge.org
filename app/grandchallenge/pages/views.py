@@ -13,6 +13,7 @@ from django.views.generic import (
 )
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.challenges.views import ChallengeCostViewPermissionMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
@@ -148,7 +149,7 @@ class PageDelete(
 
 
 class ChallengeStatistics(
-    LoginRequiredMixin, UserPassesTestMixin, TemplateView
+    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
 ):
     template_name = "pages/challenge_statistics.html"
 
@@ -165,8 +166,3 @@ class ChallengeStatistics(
         )
 
         return context
-
-    def test_func(self):
-        return self.request.user.is_staff or self.request.user.has_perm(
-            "challenges.view_challengerequest"
-        )

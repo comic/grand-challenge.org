@@ -30,12 +30,13 @@
                     <th class="text-center">Compute costs</th>
                     <th class="text-center">Docker storage costs</th>
                     <th class="text-center">Total costs</th>
-                    <th class="text-center">Details</th>
                 </tr>
             </thead>
             <tbody>
-                {% for challenge, challenge_dict in statistics_for_challenges.items %}
-                    <tr>
+                {% for challenge_pk, challenge_dict in statistics_for_challenges.items %}
+                    <tr hx-get="{% url 'challenges:costs-per-phase' pk=challenge_pk %}"
+                        hx-swap="outerHTML"
+                    >
                         <td class="pl-3">{{ challenge_dict.short_name }}</td>
                         <td class="text-center">
                             <span class="badge {% if challenge_dict.status == challenge_status_choices.OPEN %}badge-success {% elif challenge_dict.status == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge_dict.status }}</span><br>
@@ -43,13 +44,6 @@
                         <td class="text-right">{{ challenge_dict.challenge_compute_cost }} €</td>
                         <td class="text-right">{{ challenge_dict.docker_storage_cost }} €</td>
                         <td class="text-right">{{ challenge_dict.total_cost }} €</td>
-                        <td class="text-center">
-                            <a href="{% url 'pages:statistics' challenge_short_name=challenge_dict.short_name %}">
-                                <span class="badge badge-primary p-2">
-                                    Costs per phase
-                                </span>
-                            </a>
-                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -77,7 +71,7 @@
                         {% if not forloop.first %}
                             <tr>
                                 <td class="pl-4">{{ month }}</td>
-                                <td class="text-right">{{ cost }} €</td>
+                                <td class="text-right">{{ cost|floatformat:'2' }} €</td>
                             </tr>
                         {% endif %}
                     {% endfor %}

@@ -7,6 +7,8 @@ from django.core.cache import cache
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import (
@@ -397,10 +399,17 @@ class ChallengeRequestBudgetUpdate(
         return response
 
 
+class ChallengeCostViewPermissionMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.has_perm(
+            "challenges.view_challengerequest"
+        )
+
+
 class ChallengeCostOverview(
-    LoginRequiredMixin, UserPassesTestMixin, TemplateView
+    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
 ):
-    template_name = "challenges/challenge_statistics_overview.html"
+    template_name = "challenges/challenge_costs_overview.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
@@ -419,7 +428,76 @@ class ChallengeCostOverview(
         )
         return context
 
-    def test_func(self):
-        return self.request.user.is_staff or self.request.user.has_perm(
-            "challenges.view_challengerequest"
+
+class ChallengeCostsPerPhaseView(
+    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+):
+    template_name = "challenges/challenge_costs_per_phase.html"
+
+    @cached_property
+    def challenge(self):
+        return get_object_or_404(Challenge, pk=self.kwargs["pk"])
+
+    def get_context_data(self, **kwargs):
+        statistics_for_challenges = cache.get("statistics_for_challenges")
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "challenge_pk": self.challenge.pk,
+                "short_name": statistics_for_challenges[
+                    self.challenge.pk
+                ].short_name,
+                "status": statistics_for_challenges[self.challenge.pk].status,
+                "challenge_compute_cost": statistics_for_challenges[
+                    self.challenge.pk
+                ].challenge_compute_cost,
+                "docker_storage_cost": statistics_for_challenges[
+                    self.challenge.pk
+                ].docker_storage_cost,
+                "total_cost": statistics_for_challenges[
+                    self.challenge.pk
+                ].total_cost,
+                "statistics_for_phases": cache.get("statistics_for_phases"),
+                "phases": self.challenge.phase_set.all(),
+                "challenge_status_choices": {
+                    status.name: status.name for status in StatusChoices
+                },
+            }
         )
+        return context
+
+
+class ChallengeCostsRow(
+    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+):
+    template_name = "challenges/challenge_cost_row.html"
+
+    @cached_property
+    def challenge(self):
+        return get_object_or_404(Challenge, pk=self.kwargs["pk"])
+
+    def get_context_data(self, **kwargs):
+        statistics_for_challenges = cache.get("statistics_for_challenges")
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "challenge_pk": self.challenge.pk,
+                "short_name": statistics_for_challenges[
+                    self.challenge.pk
+                ].short_name,
+                "status": statistics_for_challenges[self.challenge.pk].status,
+                "challenge_compute_cost": statistics_for_challenges[
+                    self.challenge.pk
+                ].challenge_compute_cost,
+                "docker_storage_cost": statistics_for_challenges[
+                    self.challenge.pk
+                ].docker_storage_cost,
+                "total_cost": statistics_for_challenges[
+                    self.challenge.pk
+                ].total_cost,
+                "challenge_status_choices": {
+                    status.name: status.name for status in StatusChoices
+                },
+            }
+        )
+        return context
