@@ -577,10 +577,14 @@ def get_average_job_duration_for_phase(phase):
             months = range(1, 2 + delta.months)
         for month in months:
             _, num_days = calendar.monthrange(year, month)
-            start_date = datetime.date(year, month, 1)
-            end_date = datetime.date(year, month, num_days)
+            job_start_date = datetime.datetime(
+                year, month, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+            )
+            job_end_date = datetime.datetime(
+                year, month, num_days, 23, 59, 59, tzinfo=datetime.timezone.utc
+            )
             jobs_for_month = jobs.filter(
-                started_at__gte=start_date, completed_at__lte=end_date
+                started_at__gte=job_start_date, completed_at__lte=job_end_date
             )
             submitted_algorithms = list(
                 jobs_for_month.values_list(
@@ -601,19 +605,19 @@ def get_average_job_duration_for_phase(phase):
             )
             try:
                 monthly_spendings[year][
-                    start_date.strftime("%B")
+                    job_start_date.strftime("%B")
                 ] = compute_cost
                 algorithms_submitted_per_month[year][
-                    start_date.strftime("%B")
+                    job_start_date.strftime("%B")
                 ] = submitted_algorithms
             except (TypeError, KeyError):
                 monthly_spendings[year] = {}
                 algorithms_submitted_per_month[year] = {}
                 monthly_spendings[year][
-                    start_date.strftime("%B")
+                    job_start_date.strftime("%B")
                 ] = compute_cost
                 algorithms_submitted_per_month[year][
-                    start_date.strftime("%B")
+                    job_start_date.strftime("%B")
                 ] = submitted_algorithms
 
     duration_dict = {
