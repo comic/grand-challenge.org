@@ -23,7 +23,7 @@
     <p>By challenge (only Type 2 challenges included)</p>
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-dark">
+            <thead class="thead-light">
                 <tr>
                     <th class="pl-3">Challenge</th>
                     <th class="text-center">Status</th>
@@ -53,17 +53,19 @@
     <p>By month (only Type 2 challenges included)</p>
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-dark">
+            <thead class="thead-light">
                 <tr>
                     <th class="pl-3"></th>
-                    <th class="text-center">Challenge compute costs</th>
-                    <th class="text-center">Challenge docker costs</th>
+                    <th class="text-right">Challenge compute costs</th>
+                    <th class="text-right">Challenge docker costs</th>
+                    <th class="text-right">Total</th>
                 </tr>
             </thead>
             <tbody>
                 {% for year, values in monthly_challenge_costs.items %}
                     {% get_dict_values values 'total' as total_compute_cost %}
                     {% get_dict_values values 'total_docker_cost' as total_docker_cost %}
+                    {% get_dict_values values 'grand_total' as total_cost %}
                     <tr hx-get="{% url 'challenges:costs-per-year' %}"
                         hx-swap="outerHTML"
                         hx-vals='{"year": {{ year }}}'
@@ -72,6 +74,7 @@
                             {{ year }}</td>
                         <td class="text-right">{{ total_compute_cost|floatformat:'2' }} €</td>
                         <td class="text-right">{{ total_docker_cost|floatformat:'2' }} €</td>
+                        <td class="text-right">{{ total_cost|floatformat:'2' }} €</td>
                     </tr>
                 {% endfor %}
             </tbody>

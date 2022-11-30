@@ -521,6 +521,9 @@ class ChallengeCostsPerYearView(
                 "total_docker_cost": monthly_challenge_costs[int(year)][
                     "total_docker_cost"
                 ],
+                "total_cost": monthly_challenge_costs[int(year)][
+                    "grand_total"
+                ],
                 "values": monthly_challenge_costs[int(year)],
             }
         )
@@ -544,6 +547,9 @@ class YearCostsRow(
                 ],
                 "total_docker_cost": monthly_challenge_costs[int(year)][
                     "total_docker_cost"
+                ],
+                "total_cost": monthly_challenge_costs[int(year)][
+                    "grand_total"
                 ],
             }
         )

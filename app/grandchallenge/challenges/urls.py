@@ -62,27 +62,27 @@ urlpatterns = [
         name="requests-budget-update",
     ),
     path(
-        "challenge-costs/",
+        "costs/",
         ChallengeCostOverview.as_view(),
         name="cost-overview",
     ),
     path(
-        "challenge-costs/<pk>/costs-per-phase/",
+        "costs/<pk>/costs-per-phase/",
         ChallengeCostsPerPhaseView.as_view(),
         name="costs-per-phase",
     ),
     path(
-        "challenge-costs/<pk>/cost-row",
+        "costs/<pk>/cost-row",
         ChallengeCostsRow.as_view(),
         name="challenge-cost-row",
     ),
     path(
-        "challenge-costs/costs-per-year",
+        "costs/costs-per-year",
         ChallengeCostsPerYearView.as_view(),
         name="costs-per-year",
     ),
     path(
-        "challenge-costs/year-row",
+        "costs/year-row",
         YearCostsRow.as_view(),
         name="year-cost-row",
     ),

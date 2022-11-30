@@ -5,6 +5,7 @@
     <td class="pl-3">{{ year }}</td>
     <td class="text-right">{{ total_compute_cost|floatformat:'2' }} €</td>
     <td class="text-right">{{ total_docker_cost|floatformat:'2' }} €</td>
+    <td class="text-right">{{ total_cost|floatformat:'2' }} €</td>
 </tr>
 
 <tr hx-swap-oob="true" id="child-{{ year }}" type="hidden" class="border-0"></tr>

@@ -6,6 +6,7 @@
     <td class="pl-3">{{ year }}</td>
     <td class="text-right">{{ total_compute_cost|floatformat:'2' }} €</td>
     <td class="text-right">{{ total_docker_cost|floatformat:'2' }} €</td>
+    <td class="text-right">{{ total_cost|floatformat:'2' }} €</td>
 </tr>
 
 <tr id="child-{{ year }}" class="border border-light">
@@ -13,11 +14,12 @@
         <table class="table table-hover table-borderless">
             <tbody>
                 {% for month, costs in values.items %}
-                    {% if not month == "total" and not month == "total_docker_cost" %}
+                    {% if not month == "total" and not month == "total_docker_cost" and not month == "grand_total" %}
                         <tr>
-                            <td class="pl-4">{{ month }}</td>
-                            <td class="text-right">{{ costs.compute_costs|floatformat:'2' }} €</td>
-                            <td class="text-right">{{ costs.docker_costs|floatformat:'2' }} €</td>
+                            <td colspan="33%" class="pl-4 col-4">{{ month }}</td>
+                            <td colspan="33%" class="text-right">{{ costs.compute_costs|floatformat:'2' }} €</td>
+                            <td colspan="33%" class="text-right">{{ costs.docker_costs|floatformat:'2' }} €</td>
+                            <td colspan="33%" class="text-right">{{ costs.total|floatformat:'2' }} €</td>
                         </tr>
                     {% endif %}
                 {% endfor %}

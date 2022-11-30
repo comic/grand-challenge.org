@@ -128,15 +128,22 @@ def get_monthly_challenge_costs(phase_stats):
     monthly_submitted_algorithms = aggregate_submitted_algorithm_pks_per_month(
         phase_stats
     )
-    for year, values in monthly_compute_costs.items():
-        for month, subvals in values.items():
-            if month != "total" and month != "total_docker_cost":
-                monthly_compute_costs[year]["total"] += subvals[
-                    "compute_costs"
-                ]
     monthly_costs = add_monthly_docker_costs_to_cost_dict(
         monthly_submitted_algorithms, monthly_compute_costs
     )
+    for year, values in monthly_compute_costs.items():
+        for month, subvals in values.items():
+            if month != "total" and month != "total_docker_cost":
+                monthly_compute_costs[year][month]["total"] = (
+                    subvals["compute_costs"] + subvals["docker_costs"]
+                )
+                monthly_compute_costs[year]["total"] += subvals[
+                    "compute_costs"
+                ]
+        monthly_compute_costs[year]["grand_total"] = (
+            monthly_compute_costs[year]["total"]
+            + monthly_compute_costs[year]["total_docker_cost"]
+        )
     return monthly_costs
 
 
