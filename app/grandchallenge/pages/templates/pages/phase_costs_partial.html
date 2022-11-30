@@ -6,7 +6,7 @@
         {% for phase in phases %}
             <div class="card m-1">
                 <div class="card-header">{{ phase.title }}</div>
-                {% get_dict_values statistics_for_phases phase.pk as phase_stats %}
+                {% get_dict_values statistics_for_phases phase.pk|stringformat:'s' as phase_stats %}
                 <div class="card-body">
                     <ul>
                         <li>Average algorithm job
