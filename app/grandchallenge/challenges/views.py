@@ -441,29 +441,34 @@ class ChallengeCostsPerPhaseView(
     def get_context_data(self, **kwargs):
         statistics_for_challenges = cache.get("statistics_for_challenges")
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "challenge_pk": self.challenge.pk,
-                "short_name": statistics_for_challenges[
-                    self.challenge.pk
-                ].short_name,
-                "status": statistics_for_challenges[self.challenge.pk].status,
-                "challenge_compute_cost": statistics_for_challenges[
-                    self.challenge.pk
-                ].challenge_compute_cost,
-                "docker_storage_cost": statistics_for_challenges[
-                    self.challenge.pk
-                ].docker_storage_cost,
-                "total_cost": statistics_for_challenges[
-                    self.challenge.pk
-                ].total_cost,
-                "statistics_for_phases": cache.get("statistics_for_phases"),
-                "phases": self.challenge.phase_set.all(),
-                "challenge_status_choices": {
-                    status.name: status.name for status in StatusChoices
-                },
-            }
-        )
+        if statistics_for_challenges:
+            context.update(
+                {
+                    "challenge_pk": self.challenge.pk,
+                    "short_name": statistics_for_challenges[
+                        self.challenge.pk
+                    ].short_name,
+                    "status": statistics_for_challenges[
+                        self.challenge.pk
+                    ].status,
+                    "challenge_compute_cost": statistics_for_challenges[
+                        self.challenge.pk
+                    ].challenge_compute_cost,
+                    "docker_storage_cost": statistics_for_challenges[
+                        self.challenge.pk
+                    ].docker_storage_cost,
+                    "total_cost": statistics_for_challenges[
+                        self.challenge.pk
+                    ].total_cost,
+                    "statistics_for_phases": cache.get(
+                        "statistics_for_phases"
+                    ),
+                    "phases": self.challenge.phase_set.all(),
+                    "challenge_status_choices": {
+                        status.name: status.name for status in StatusChoices
+                    },
+                }
+            )
         return context
 
 
@@ -479,27 +484,30 @@ class ChallengeCostsRow(
     def get_context_data(self, **kwargs):
         statistics_for_challenges = cache.get("statistics_for_challenges")
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "challenge_pk": self.challenge.pk,
-                "short_name": statistics_for_challenges[
-                    self.challenge.pk
-                ].short_name,
-                "status": statistics_for_challenges[self.challenge.pk].status,
-                "challenge_compute_cost": statistics_for_challenges[
-                    self.challenge.pk
-                ].challenge_compute_cost,
-                "docker_storage_cost": statistics_for_challenges[
-                    self.challenge.pk
-                ].docker_storage_cost,
-                "total_cost": statistics_for_challenges[
-                    self.challenge.pk
-                ].total_cost,
-                "challenge_status_choices": {
-                    status.name: status.name for status in StatusChoices
-                },
-            }
-        )
+        if statistics_for_challenges:
+            context.update(
+                {
+                    "challenge_pk": self.challenge.pk,
+                    "short_name": statistics_for_challenges[
+                        self.challenge.pk
+                    ].short_name,
+                    "status": statistics_for_challenges[
+                        self.challenge.pk
+                    ].status,
+                    "challenge_compute_cost": statistics_for_challenges[
+                        self.challenge.pk
+                    ].challenge_compute_cost,
+                    "docker_storage_cost": statistics_for_challenges[
+                        self.challenge.pk
+                    ].docker_storage_cost,
+                    "total_cost": statistics_for_challenges[
+                        self.challenge.pk
+                    ].total_cost,
+                    "challenge_status_choices": {
+                        status.name: status.name for status in StatusChoices
+                    },
+                }
+            )
         return context
 
 
@@ -512,21 +520,22 @@ class ChallengeCostsPerYearView(
         monthly_challenge_costs = cache.get("monthly_challenge_costs")
         year = self.request.GET.get("year", None)
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "year": year,
-                "total_compute_cost": monthly_challenge_costs[int(year)][
-                    "total"
-                ],
-                "total_docker_cost": monthly_challenge_costs[int(year)][
-                    "total_docker_cost"
-                ],
-                "total_cost": monthly_challenge_costs[int(year)][
-                    "grand_total"
-                ],
-                "values": monthly_challenge_costs[int(year)],
-            }
-        )
+        if monthly_challenge_costs and year:
+            context.update(
+                {
+                    "year": year,
+                    "total_compute_cost": monthly_challenge_costs[int(year)][
+                        "total"
+                    ],
+                    "total_docker_cost": monthly_challenge_costs[int(year)][
+                        "total_docker_cost"
+                    ],
+                    "total_cost": monthly_challenge_costs[int(year)][
+                        "grand_total"
+                    ],
+                    "values": monthly_challenge_costs[int(year)],
+                }
+            )
         return context
 
 
@@ -539,18 +548,19 @@ class YearCostsRow(
         monthly_challenge_costs = cache.get("monthly_challenge_costs")
         year = self.request.GET.get("year", None)
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "year": year,
-                "total_compute_cost": monthly_challenge_costs[int(year)][
-                    "total"
-                ],
-                "total_docker_cost": monthly_challenge_costs[int(year)][
-                    "total_docker_cost"
-                ],
-                "total_cost": monthly_challenge_costs[int(year)][
-                    "grand_total"
-                ],
-            }
-        )
+        if monthly_challenge_costs and year:
+            context.update(
+                {
+                    "year": year,
+                    "total_compute_cost": monthly_challenge_costs[int(year)][
+                        "total"
+                    ],
+                    "total_docker_cost": monthly_challenge_costs[int(year)][
+                        "total_docker_cost"
+                    ],
+                    "total_cost": monthly_challenge_costs[int(year)][
+                        "grand_total"
+                    ],
+                }
+            )
         return context
