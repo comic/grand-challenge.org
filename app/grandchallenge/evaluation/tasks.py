@@ -586,11 +586,12 @@ def get_average_job_duration_for_phase(phase):
             jobs_for_month = jobs.filter(
                 started_at__gte=job_start_date, completed_at__lte=job_end_date
             )
-            submitted_algorithms = list(
-                jobs_for_month.values_list(
+            submitted_algorithms = [
+                str(pk)
+                for pk in jobs_for_month.values_list(
                     "algorithm_image__algorithm__pk", flat=True
                 )
-            )
+            ]
             total_duration = jobs_for_month.total_duration()
             compute_cost = (
                 round(
@@ -683,7 +684,7 @@ def update_phase_statistics():
             average_submission_compute_cost = None
             total_phase_compute_cost = None
 
-        phase_dict[phase.pk] = PhaseStatistics(
+        phase_dict[str(phase.pk)] = PhaseStatistics(
             phase.challenge.title,
             average_algorithm_job_run_time,
             accumulated_algorithm_job_run_time,

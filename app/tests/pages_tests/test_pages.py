@@ -2,6 +2,7 @@ from datetime import timedelta
 from itertools import chain
 
 import pytest
+from django.conf import settings
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
@@ -401,3 +402,23 @@ def test_average_job_duration_calculation():
         round(duration["total_duration"].total_seconds(), ndigits=2)
         == timedelta(days=2).total_seconds()
     )
+    assert duration["monthly_spendings"][now().year][
+        now().strftime("%B")
+    ] == round(
+        duration["total_duration"].total_seconds()
+        * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+        / 3600
+        / 100,
+        ndigits=2,
+    )
+    assert (
+        len(
+            duration["algorithms_submitted_per_month"][now().year][
+                now().strftime("%B")
+            ]
+        )
+        == 1
+    )
+    assert duration["algorithms_submitted_per_month"][now().year][
+        now().strftime("%B")
+    ] == [str(ai.algorithm.pk)]

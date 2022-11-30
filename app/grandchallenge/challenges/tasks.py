@@ -131,25 +131,21 @@ def get_monthly_challenge_costs(phase_stats):
     monthly_costs = add_monthly_docker_costs_to_cost_dict(
         monthly_submitted_algorithms, monthly_compute_costs
     )
-    for year, values in monthly_compute_costs.items():
+    for year, values in monthly_costs.items():
         for month, subvals in values.items():
             if month != "total" and month != "total_docker_cost":
-                monthly_compute_costs[year][month]["total"] = (
+                monthly_costs[year][month]["total"] = (
                     subvals["compute_costs"] + subvals["docker_costs"]
                 )
-                monthly_compute_costs[year]["total"] += subvals[
-                    "compute_costs"
-                ]
-        monthly_compute_costs[year]["grand_total"] = (
-            monthly_compute_costs[year]["total"]
-            + monthly_compute_costs[year]["total_docker_cost"]
+                monthly_costs[year]["total"] += subvals["compute_costs"]
+        monthly_costs[year]["grand_total"] = (
+            monthly_costs[year]["total"]
+            + monthly_costs[year]["total_docker_cost"]
         )
     return monthly_costs
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def update_challenge_cost_statistics():
-    phase_stats = cache.get("statistics_for_phases")
+def calculate_costs_per_challenge(phase_stats):
     challenge_dict = {}
     challenges = Challenge.objects.filter(
         phase__submission_kind=SubmissionKindChoices.ALGORITHM
@@ -159,10 +155,13 @@ def update_challenge_cost_statistics():
     )
     average_algorithm_container_size_in_gb = 10
     for challenge in challenges:
-        submitted_algorithms = Submission.objects.filter(
-            algorithm_image__isnull=False,
-            phase__challenge=challenge,
-        ).values_list("algorithm_image__algorithm__pk", flat=True)
+        submitted_algorithms = [
+            str(pk)
+            for pk in Submission.objects.filter(
+                algorithm_image__isnull=False,
+                phase__challenge=challenge,
+            ).values_list("algorithm_image__algorithm__pk", flat=True)
+        ]
         num_submitted_algorithms = (
             len(list(set(submitted_algorithms))) if submitted_algorithms else 0
         )
@@ -171,7 +170,8 @@ def update_challenge_cost_statistics():
                 v.total_phase_compute_cost
                 for k, v in phase_stats.items()
                 for phase in challenge.phase_set.all()
-                if k == phase.pk and v.total_phase_compute_cost is not None
+                if k == str(phase.pk)
+                and v.total_phase_compute_cost is not None
             ),
             ndigits=2,
         )
@@ -192,7 +192,13 @@ def update_challenge_cost_statistics():
                 challenge_compute_cost + docker_storage_cost, ndigits=2
             ),
         )
+    return challenge_dict
 
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def update_challenge_cost_statistics():
+    phase_stats = cache.get("statistics_for_phases")
+    challenge_dict = calculate_costs_per_challenge(phase_stats)
     monthly_challenge_costs = get_monthly_challenge_costs(phase_stats)
     cache.set("statistics_for_challenges", challenge_dict, timeout=None)
     cache.set("monthly_challenge_costs", monthly_challenge_costs, timeout=None)
