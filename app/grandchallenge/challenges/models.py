@@ -874,6 +874,10 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
     )
+    challenge_fee_agreement = models.BooleanField(
+        blank=False,
+        default=False,
+    )
 
     def __str__(self):
         return self.title

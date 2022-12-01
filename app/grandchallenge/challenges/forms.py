@@ -243,6 +243,7 @@ general_information_items_2 = (
     "code_availability",
     "expected_number_of_teams",
     "budget_for_hosting_challenge",
+    "challenge_fee_agreement",
 )
 phase_1_items = (
     "phase_1_number_of_submissions_per_team",
@@ -308,6 +309,9 @@ class ChallengeRequestForm(
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
             "structured_challenge_submission_doi": "DOI",
             "structured_challenge_submission_form": "PDF",
+            "challenge_fee_agreement": "I confirm that I have read and understood the "
+            "<a href='https://grand-challenge.org/challenge-policy-and-pricing/'>pricing "
+            "policy</a> for running a challenge.",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
@@ -339,9 +343,8 @@ class ChallengeRequestForm(
                 "test data are open, participants run their algorithms locally "
                 "and submit their predictions on the website which are evaluated "
                 "against a secret ground truth on our servers.<br>"
-                "<b>Type 2:</b> Docker container submission – test data are "
-                "secret, participants submit algorithms as docker "
-                "containers on our website, which are run on the secret test set on "
+                "<b>Type 2:</b> Algorithm submission – test data are "
+                "secret, participants submit algorithms on our website, which are run on the secret test set on "
                 "our servers and then evaluated against a secret ground "
                 "truth. <br>"
                 "<b>We strongly encourage Type 2 challenges.</b> "
@@ -455,6 +458,7 @@ class ChallengeRequestForm(
         super().__init__(*args, **kwargs)
         self.instance.creator = creator
         self.fields["title"].required = True
+        self.fields["challenge_fee_agreement"].required = True
         self.fields["data_license"].initial = True
         self.fields["long_term_commitment"].initial = True
         self.helper = FormHelper(self)
