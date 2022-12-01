@@ -34,6 +34,7 @@ def test_challenge_request_type_2_fields_required():
         "code_availability": "test",
         "expected_number_of_teams": 10,
         "number_of_tasks": 1,
+        "challenge_fee_agreement": True,
     }
     form = ChallengeRequestForm(data=data, creator=user)
     assert form.is_valid()
@@ -57,6 +58,7 @@ def test_challenge_request_type_2_fields_required():
         "code_availability": "test",
         "expected_number_of_teams": 10,
         "number_of_tasks": 1,
+        "challenge_fee_agreement": True,
     }
     form2 = ChallengeRequestForm(data=data2, creator=user)
     assert not form2.is_valid()
