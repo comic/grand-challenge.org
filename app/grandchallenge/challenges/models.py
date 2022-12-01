@@ -763,6 +763,10 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         default=ChallengeTypeChoices.T2,
         help_text="What type is this challenge?",
     )
+    challenge_type_extra = models.CharField(
+        max_length=2000,
+        blank=True,
+    )
     challenge_setup = models.TextField(
         help_text="Describe the challenge set-up."
     )

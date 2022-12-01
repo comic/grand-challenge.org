@@ -233,6 +233,7 @@ general_information_items_2 = (
     "structures",
     "modalities",
     "challenge_type",
+    "challenge_type_extra",
     "challenge_setup",
     "data_set",
     "data_license",
@@ -241,6 +242,7 @@ general_information_items_2 = (
     "challenge_publication",
     "code_availability",
     "expected_number_of_teams",
+    "budget_for_hosting_challenge",
 )
 phase_1_items = (
     "phase_1_number_of_submissions_per_team",
@@ -271,7 +273,6 @@ class ChallengeRequestForm(
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
-            "budget_for_hosting_challenge",
             "algorithm_inputs",
             "algorithm_outputs",
             *phase_1_items,
@@ -282,7 +283,9 @@ class ChallengeRequestForm(
             "start_date": forms.TextInput(attrs={"type": "date"}),
             "end_date": forms.TextInput(attrs={"type": "date"}),
             "challenge_type": forms.Select(
-                attrs={"onchange": "updateBudgetFields();"}
+                attrs={
+                    "onchange": "updateBudgetFields(); updateExtraField('challenge_type', 'host your challenge as a Type 2 challenge');"
+                }
             ),
             "long_term_commitment": forms.CheckboxInput(
                 attrs={
@@ -506,7 +509,7 @@ class ChallengeRequestForm(
                 ),
                 Div(
                     HTML(
-                        "<h3 class='d-flex justify-content-center'>Type 2 challenge cost estimation</h3><br>"
+                        "<h3 class='d-flex justify-content-center'>Type 2 compute and storage cost estimation</h3><br>"
                     ),
                     HTML(
                         "<p>Since Type 2 challenges involve running algorithm "
@@ -531,7 +534,6 @@ class ChallengeRequestForm(
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
                     "inference_time_limit_in_minutes",
-                    "budget_for_hosting_challenge",
                     HTML(
                         "<br><p>Type 2 challenges usually consist of 2 phases. "
                         "The first of those tends to be a "
@@ -549,7 +551,7 @@ class ChallengeRequestForm(
                         "tasks above accordingly. For examples of those"
                         " and other scenarios, have a look "
                         "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
-                        "target='_blank'>at our example budget calculations</a>"
+                        "target='_blank'>at our example cost calculations</a>"
                         ".</p><h4>Phase 1</h4>"
                     ),
                     *phase_1_items,

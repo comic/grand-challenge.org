@@ -24,9 +24,11 @@ function updateExtraField(fieldName, helpText){
     if (checkbox.checked) {
         document.getElementById(extraFieldDiv).style.display = 'none';
         document.getElementById(extraFieldId).required = false;
+    } else if (checkbox.value == "2" ) {
+        document.getElementById(extraFieldDiv).style.display = 'none';
+        document.getElementById(extraFieldId).required = false;
     } else {
         document.getElementById(extraFieldDiv).style.display = 'block';
-        document.getElementById(extraFieldDiv).classList.add('ml-3');
         document.getElementById(extraFieldId).required = true;
         document.getElementById(extraFieldDiv).querySelector('label').innerHTML = "Why are you not willing/able to " + helpText + "? *"
     }
@@ -36,4 +38,5 @@ $(document).ready(function() {
     updateBudgetFields();
     updateExtraField('long_term_commitment', 'support this challenge long-term');
     updateExtraField('data_license', 'use a CC-BY license for your data');
+    updateExtraField('challenge_type', 'host your challenge as a Type 2 challenge');
 });
