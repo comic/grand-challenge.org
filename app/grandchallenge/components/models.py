@@ -1075,7 +1075,7 @@ class ComponentInterfaceValue(models.Model):
         if not user_upload.is_completed:
             raise ValidationError("User upload is not completed.")
         if self.interface.is_json_kind:
-            value = user_upload.read_object()
+            value = json.loads(user_upload.read_object())
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
 
