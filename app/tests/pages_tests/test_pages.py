@@ -403,7 +403,7 @@ def test_average_job_duration_calculation():
         == timedelta(days=2).total_seconds()
     )
     assert duration["monthly_spendings"][now().year][
-        now().strftime("%B")
+        j1.started_at.strftime("%B")
     ] == round(
         duration["total_duration"].total_seconds()
         * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
@@ -414,11 +414,11 @@ def test_average_job_duration_calculation():
     assert (
         len(
             duration["algorithms_submitted_per_month"][now().year][
-                now().strftime("%B")
+                j1.started_at.strftime("%B")
             ]
         )
         == 1
     )
     assert duration["algorithms_submitted_per_month"][now().year][
-        now().strftime("%B")
+        j1.started_at.strftime("%B")
     ] == [str(ai.algorithm.pk)]

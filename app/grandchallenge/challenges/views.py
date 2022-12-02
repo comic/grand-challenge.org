@@ -445,21 +445,23 @@ class ChallengeCostsPerPhaseView(
             context.update(
                 {
                     "challenge_pk": self.challenge.pk,
-                    "short_name": statistics_for_challenges[
-                        self.challenge.pk
-                    ].short_name,
-                    "status": statistics_for_challenges[
-                        self.challenge.pk
-                    ].status,
+                    "short_name": self.challenge.short_name,
+                    "status": self.challenge.status.name,
                     "challenge_compute_cost": statistics_for_challenges[
                         self.challenge.pk
-                    ].challenge_compute_cost,
+                    ].challenge_compute_cost
+                    if self.challenge.pk in statistics_for_challenges.keys()
+                    else None,
                     "docker_storage_cost": statistics_for_challenges[
                         self.challenge.pk
-                    ].docker_storage_cost,
+                    ].docker_storage_cost
+                    if self.challenge.pk in statistics_for_challenges.keys()
+                    else None,
                     "total_cost": statistics_for_challenges[
                         self.challenge.pk
-                    ].total_cost,
+                    ].total_cost
+                    if self.challenge.pk in statistics_for_challenges.keys()
+                    else None,
                     "statistics_for_phases": cache.get(
                         "statistics_for_phases"
                     ),
@@ -488,21 +490,23 @@ class ChallengeCostsRow(
             context.update(
                 {
                     "challenge_pk": self.challenge.pk,
-                    "short_name": statistics_for_challenges[
-                        self.challenge.pk
-                    ].short_name,
-                    "status": statistics_for_challenges[
-                        self.challenge.pk
-                    ].status,
+                    "short_name": self.challenge.short_name,
+                    "status": self.challenge.status.name,
                     "challenge_compute_cost": statistics_for_challenges[
                         self.challenge.pk
-                    ].challenge_compute_cost,
+                    ].challenge_compute_cost
+                    if self.challenge.pk in statistics_for_challenges.keys()
+                    else None,
                     "docker_storage_cost": statistics_for_challenges[
                         self.challenge.pk
-                    ].docker_storage_cost,
+                    ].docker_storage_cost
+                    if self.challenge.pk in statistics_for_challenges.keys()
+                    else None,
                     "total_cost": statistics_for_challenges[
                         self.challenge.pk
-                    ].total_cost,
+                    ].total_cost
+                    if self.challenge.pk in statistics_for_challenges.keys()
+                    else None,
                     "challenge_status_choices": {
                         status.name: status.name for status in StatusChoices
                     },
@@ -526,14 +530,22 @@ class ChallengeCostsPerYearView(
                     "year": year,
                     "total_compute_cost": monthly_challenge_costs[int(year)][
                         "total"
-                    ],
+                    ]
+                    if int(year) in monthly_challenge_costs.keys()
+                    else None,
                     "total_docker_cost": monthly_challenge_costs[int(year)][
                         "total_docker_cost"
-                    ],
+                    ]
+                    if int(year) in monthly_challenge_costs.keys()
+                    else None,
                     "total_cost": monthly_challenge_costs[int(year)][
                         "grand_total"
-                    ],
-                    "values": monthly_challenge_costs[int(year)],
+                    ]
+                    if int(year) in monthly_challenge_costs.keys()
+                    else None,
+                    "values": monthly_challenge_costs[int(year)]
+                    if int(year) in monthly_challenge_costs.keys()
+                    else None,
                 }
             )
         return context
@@ -554,13 +566,19 @@ class YearCostsRow(
                     "year": year,
                     "total_compute_cost": monthly_challenge_costs[int(year)][
                         "total"
-                    ],
+                    ]
+                    if int(year) in monthly_challenge_costs.keys()
+                    else None,
                     "total_docker_cost": monthly_challenge_costs[int(year)][
                         "total_docker_cost"
-                    ],
+                    ]
+                    if int(year) in monthly_challenge_costs.keys()
+                    else None,
                     "total_cost": monthly_challenge_costs[int(year)][
                         "grand_total"
-                    ],
+                    ]
+                    if int(year) in monthly_challenge_costs.keys()
+                    else None,
                 }
             )
         return context

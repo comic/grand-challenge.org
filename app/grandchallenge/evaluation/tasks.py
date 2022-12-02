@@ -564,7 +564,6 @@ def get_average_job_duration_for_phase(phase):
     jobs = Job.objects.filter(
         outputs__evaluation_evaluations_as_input__submission__phase=phase,
     ).distinct()
-
     start_date = datetime.datetime.strptime("1/1/2021", "%d/%m/%Y")
     end_date = datetime.datetime.now()
     delta = relativedelta.relativedelta(end_date, start_date)
@@ -584,7 +583,7 @@ def get_average_job_duration_for_phase(phase):
                 year, month, num_days, 23, 59, 59, tzinfo=datetime.timezone.utc
             )
             jobs_for_month = jobs.filter(
-                started_at__gte=job_start_date, completed_at__lte=job_end_date
+                started_at__gte=job_start_date, started_at__lte=job_end_date
             )
             submitted_algorithms = [
                 str(pk)
