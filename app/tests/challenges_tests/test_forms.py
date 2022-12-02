@@ -11,10 +11,9 @@ from tests.factories import ChallengeFactory, UserFactory
 
 
 @pytest.mark.django_db
-def test_challenge_request_type_2_fields_required():
+def test_challenge_request_budget_fields_required():
     user = UserFactory.build()
     # fill all fields except for budget and input / output fields
-    # for type 1 this form is valid
     data = {
         "creator": user,
         "title": "Test request",
@@ -35,9 +34,8 @@ def test_challenge_request_type_2_fields_required():
         "challenge_fee_agreement": True,
     }
     form = ChallengeRequestForm(data=data, creator=user)
-    assert form.is_valid()
+    assert not form.is_valid()
 
-    # for type 2, these fields need to be filled
     data2 = {
         "creator": user,
         "title": "Test request",
@@ -56,10 +54,17 @@ def test_challenge_request_type_2_fields_required():
         "expected_number_of_teams": 10,
         "number_of_tasks": 1,
         "challenge_fee_agreement": True,
+        "algorithm_inputs": "foo",
+        "algorithm_outputs": "foo",
+        "average_size_of_test_image_in_mb": 1,
+        "inference_time_limit_in_minutes": 11,
+        "phase_1_number_of_submissions_per_team": 1,
+        "phase_2_number_of_submissions_per_team": 1,
+        "phase_1_number_of_test_images": 1,
+        "phase_2_number_of_test_images": 1,
     }
     form2 = ChallengeRequestForm(data=data2, creator=user)
-    assert not form2.is_valid()
-    assert "For a type 2 challenge, you need to provide" in str(form2.errors)
+    assert form2.is_valid()
 
 
 @pytest.mark.django_db
@@ -96,7 +101,7 @@ def test_budget_update_form(challenge_request):
         data=data, instance=challenge_request
     )
     assert not form.is_valid()
-    assert "For a type 2 challenge, you need to provide" in str(form.errors)
+    assert "You need to provide" in str(form.errors)
 
     data2 = {
         "expected_number_of_teams": 100,

@@ -331,7 +331,7 @@ def test_challenge_request_workflow(
 ):
     # requesting a challenge sends email to requester and reviewer(s)
     requester1 = challenge_request.creator
-    assert len(mail.outbox) == 4
+    assert len(mail.outbox) == 2
     receivers = [address for i in mail.outbox for address in i.to]
     assert requester1.email in receivers
     assert challenge_reviewer.email in receivers
@@ -434,6 +434,15 @@ def test_challenge_request_date_check(client):
             "challenge_publication": "test",
             "code_availability": "test",
             "expected_number_of_teams": 10,
+            "algorithm_inputs": "foo",
+            "algorithm_outputs": "foo",
+            "average_size_of_test_image_in_mb": 1,
+            "inference_time_limit_in_minutes": 11,
+            "phase_1_number_of_submissions_per_team": 1,
+            "phase_2_number_of_submissions_per_team": 1,
+            "phase_1_number_of_test_images": 1,
+            "phase_2_number_of_test_images": 1,
+            "challenge_fee_agreement": True,
         },
     )
     assert response.status_code == 200
@@ -465,6 +474,15 @@ def test_challenge_request_date_check(client):
             "challenge_publication": "test",
             "code_availability": "test",
             "expected_number_of_teams": 10,
+            "algorithm_inputs": "foo",
+            "algorithm_outputs": "foo",
+            "average_size_of_test_image_in_mb": 1,
+            "inference_time_limit_in_minutes": 11,
+            "phase_1_number_of_submissions_per_team": 1,
+            "phase_2_number_of_submissions_per_team": 1,
+            "phase_1_number_of_test_images": 1,
+            "phase_2_number_of_test_images": 1,
+            "challenge_fee_agreement": True,
         },
     )
     assert response.status_code == 200
