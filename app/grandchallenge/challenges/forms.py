@@ -177,16 +177,15 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
 class ChallengeRequestBudgetFieldValidationMixin:
     def clean(self):
         cleaned_data = super().clean()
-        if "average_size_of_test_image_in_mb" not in cleaned_data.keys():
+        if not cleaned_data["average_size_of_test_image_in_mb"]:
             raise ValidationError(
                 "Please provide the average test image size."
             )
-        if "inference_time_limit_in_minutes" not in cleaned_data.keys():
+        if not cleaned_data["inference_time_limit_in_minutes"]:
             raise ValidationError("Please provide an inference time limit.")
         if (
-            "phase_1_number_of_submissions_per_team" not in cleaned_data.keys()
-            or "phase_2_number_of_submissions_per_team"
-            not in cleaned_data.keys()
+            cleaned_data["phase_1_number_of_submissions_per_team"] is None
+            or cleaned_data["phase_2_number_of_submissions_per_team"] is None
         ):
             raise ValidationError(
                 "Please provide the number of "
@@ -194,20 +193,13 @@ class ChallengeRequestBudgetFieldValidationMixin:
                 "if you only have 1 phase."
             )
         if (
-            "phase_1_number_of_test_images" not in cleaned_data.keys()
-            or "phase_2_number_of_test_images" not in cleaned_data.keys()
+            cleaned_data["phase_1_number_of_test_images"] is None
+            or cleaned_data["phase_2_number_of_test_images"] is None
         ):
             raise ValidationError(
                 "Please provide the number of "
                 "test images for each phase. Enter 0 for phase 2 if you "
                 "only have 1 phase."
-            )
-        if (
-            "algorithm_inputs" not in cleaned_data.keys()
-            or "algorithm_outputs" not in cleaned_data.keys()
-        ):
-            raise ValidationError(
-                "Please describe what inputs and outputs the algorithms submitted to your challenge take and produce."
             )
         return cleaned_data
 
@@ -554,6 +546,13 @@ class ChallengeRequestForm(
         if start and end and start >= end:
             raise ValidationError(
                 "The start date needs to be before the end date."
+            )
+        if (
+            "algorithm_inputs" not in cleaned_data.keys()
+            or "algorithm_outputs" not in cleaned_data.keys()
+        ):
+            raise ValidationError(
+                "Please describe what inputs and outputs the algorithms submitted to your challenge take and produce."
             )
         return cleaned_data
 

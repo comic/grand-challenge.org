@@ -101,7 +101,7 @@ def test_budget_update_form(challenge_request):
         data=data, instance=challenge_request
     )
     assert not form.is_valid()
-    assert "You need to provide" in str(form.errors)
+    assert "Please provide an inference time limit." in str(form.errors)
 
     data2 = {
         "expected_number_of_teams": 100,
