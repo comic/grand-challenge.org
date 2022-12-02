@@ -31,7 +31,6 @@
             <i class="fa fa-user text-primary pr-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
             <i class="fa fa-envelope text-primary pr-3"></i> <a href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
             <i class="fa fa-calendar text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created }}</span><br>
-            <i class="fa fa-cog text-primary pr-3"></i>Type {{ object.challenge_type }}<br>
         </div>
         <div class="col-lg-6">
             {% if object.structured_challenge_submission_doi %}
@@ -47,7 +46,6 @@
     </div>
     <div class="table-responsive">
         <table class="table table-hover">
-        <tr><td class="col-3 font-weight-bold">Challenge type</td> <td class="col-9">{{ object.challenge_type }} {% if object.challenge_type == challenge_types.T1 %}<br><span>The organizers do not agree to host this as Type 2 because: {{ object.challenge_type_extra }}</span>{% endif %}</td></tr>
         {% for field, value in fields.items %}
             {% if value %}
                 <tr><td class="col-3 font-weight-bold">{{ field|title }}</td> <td class="col-9">{{ value|linebreaks }}</td></tr>

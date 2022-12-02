@@ -612,7 +612,7 @@ def uploaded_image():
 
 
 @pytest.fixture
-def type_2_challenge_request():
+def challenge_request():
     return ChallengeRequestFactory(
         creator=UserFactory(),
         start_date=now(),
@@ -627,17 +627,6 @@ def type_2_challenge_request():
         phase_2_number_of_test_images=500,
         number_of_tasks=1,
         structured_challenge_submission_doi="10.5281/zenodo.6362337",
-    )
-
-
-@pytest.fixture
-def type_1_challenge_request():
-    return ChallengeRequestFactory(
-        creator=UserFactory(),
-        start_date=now(),
-        end_date=now() + timedelta(days=1),
-        challenge_type=ChallengeTypeChoices.T1,
-        expected_number_of_teams=10,
     )
 
 

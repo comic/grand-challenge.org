@@ -39,12 +39,11 @@ class ChallengeRequestAdmin(ModelAdmin):
         "creator",
         "created",
         "status",
-        "challenge_type",
         "total_cost",
         "budget_for_hosting_challenge",
     )
     actions = ["create_challenge", "send_status_update_email"]
-    list_filter = ["status", "challenge_type"]
+    list_filter = ["status"]
 
     @admin.display(description="Total cost")
     def total_cost(self, obj):

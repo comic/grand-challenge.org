@@ -31,7 +31,6 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     ExternalChallenge,
 )
-from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
@@ -337,9 +336,6 @@ class ChallengeRequestDetail(
                 "fields": fields,
                 "budget": self.object.budget,
                 "budget_fields": budget_fields,
-                "challenge_types": {
-                    type.name: type.value for type in ChallengeTypeChoices
-                },
             }
         )
         return context

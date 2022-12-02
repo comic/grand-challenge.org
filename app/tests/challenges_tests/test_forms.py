@@ -7,7 +7,6 @@ from grandchallenge.challenges.forms import (
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
 )
-from grandchallenge.challenges.utils import ChallengeTypeChoices
 from tests.factories import ChallengeFactory, UserFactory
 
 
@@ -20,7 +19,6 @@ def test_challenge_request_type_2_fields_required():
         "creator": user,
         "title": "Test request",
         "short_name": "example1234",
-        "challenge_type": ChallengeTypeChoices.T1,
         "start_date": datetime.date.today(),
         "end_date": datetime.date.today() + datetime.timedelta(days=1),
         "expected_number_of_participants": 10,
@@ -44,7 +42,6 @@ def test_challenge_request_type_2_fields_required():
         "creator": user,
         "title": "Test request",
         "short_name": "example1234",
-        "challenge_type": ChallengeTypeChoices.T2,
         "start_date": datetime.date.today(),
         "end_date": datetime.date.today() + datetime.timedelta(days=1),
         "expected_number_of_participants": 10,
@@ -67,24 +64,24 @@ def test_challenge_request_type_2_fields_required():
 
 @pytest.mark.django_db
 def test_accept_challenge_request(
-    client, challenge_reviewer, type_1_challenge_request
+    client, challenge_reviewer, challenge_request
 ):
-    _ = ChallengeFactory(short_name=type_1_challenge_request.short_name)
+    _ = ChallengeFactory(short_name=challenge_request.short_name)
     form = ChallengeRequestStatusUpdateForm(
         data={
-            "status": type_1_challenge_request.ChallengeRequestStatusChoices.ACCEPTED
+            "status": challenge_request.ChallengeRequestStatusChoices.ACCEPTED
         },
-        instance=type_1_challenge_request,
+        instance=challenge_request,
     )
     assert not form.is_valid()
     assert (
-        f"There already is a challenge with short name: {type_1_challenge_request.short_name}"
+        f"There already is a challenge with short name: {challenge_request.short_name}"
         in str(form.errors)
     )
 
 
 @pytest.mark.django_db
-def test_budget_update_form(type_2_challenge_request):
+def test_budget_update_form(challenge_request):
     # all budget fields need to be filled
     data = {
         "expected_number_of_teams": 100,
@@ -96,7 +93,7 @@ def test_budget_update_form(type_2_challenge_request):
         "number_of_tasks": 1,
     }
     form = ChallengeRequestBudgetUpdateForm(
-        data=data, instance=type_2_challenge_request
+        data=data, instance=challenge_request
     )
     assert not form.is_valid()
     assert "For a type 2 challenge, you need to provide" in str(form.errors)
@@ -112,6 +109,6 @@ def test_budget_update_form(type_2_challenge_request):
         "number_of_tasks": 1,
     }
     form2 = ChallengeRequestBudgetUpdateForm(
-        data=data2, instance=type_2_challenge_request
+        data=data2, instance=challenge_request
     )
     assert form2.is_valid()
