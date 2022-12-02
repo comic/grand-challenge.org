@@ -36,6 +36,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "show_algorithm_output_plugin",
             "show_overlay_plugin",
             "show_annotation_statistics_plugin",
+            "show_swivel_tool",
             "show_invert_tool",
             "show_flip_tool",
             "show_window_level_tool",

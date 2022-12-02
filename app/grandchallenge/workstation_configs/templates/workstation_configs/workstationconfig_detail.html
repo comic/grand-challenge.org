@@ -144,6 +144,12 @@
                 <i class="fas {% if object.show_annotation_statistics_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'show_swivel_tool' %}">
+            <td class="font-weight-bold">Swivel tool</td>
+            <td>
+                <i class="fas {% if object.show_swivel_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
         <tr data-toggle="tooltip" title="{% get_help_text object 'show_invert_tool' %}">
             <td class="font-weight-bold">Invert tool</td>
             <td>
