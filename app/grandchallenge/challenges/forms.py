@@ -177,14 +177,23 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
 class ChallengeRequestBudgetFieldValidationMixin:
     def clean(self):
         cleaned_data = super().clean()
-        if not cleaned_data["average_size_of_test_image_in_mb"]:
+        if (
+            "average_size_of_test_image_in_mb" not in cleaned_data.keys()
+            or not cleaned_data["average_size_of_test_image_in_mb"]
+        ):
             raise ValidationError(
                 "Please provide the average test image size."
             )
-        if not cleaned_data["inference_time_limit_in_minutes"]:
+        if (
+            "inference_time_limit_in_minutes" not in cleaned_data.keys()
+            or not cleaned_data["inference_time_limit_in_minutes"]
+        ):
             raise ValidationError("Please provide an inference time limit.")
         if (
-            cleaned_data["phase_1_number_of_submissions_per_team"] is None
+            "phase_1_number_of_submissions_per_team" not in cleaned_data.keys()
+            or "phase_2_number_of_submissions_per_team"
+            not in cleaned_data.keys()
+            or cleaned_data["phase_1_number_of_submissions_per_team"] is None
             or cleaned_data["phase_2_number_of_submissions_per_team"] is None
         ):
             raise ValidationError(
@@ -193,7 +202,9 @@ class ChallengeRequestBudgetFieldValidationMixin:
                 "if you only have 1 phase."
             )
         if (
-            cleaned_data["phase_1_number_of_test_images"] is None
+            "phase_1_number_of_test_images" not in cleaned_data.keys()
+            or "phase_2_number_of_test_images" not in cleaned_data.keys()
+            or cleaned_data["phase_1_number_of_test_images"] is None
             or cleaned_data["phase_2_number_of_test_images"] is None
         ):
             raise ValidationError(
