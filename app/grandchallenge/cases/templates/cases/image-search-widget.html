@@ -1,0 +1,31 @@
+{% load url %}
+{% load static %}
+
+<div class="form-group mb-1"
+     id="search-image-{{ widget.name }}"
+{#     hx-get="{% url 'cases:image-search' %}"#}
+{#     hx-trigger="imageSelected, keyup[target.value.length > 1] delay:500ms from:#{{ widget.dicom_tags.PatientName }}-{{ widget.name }}, click[keyCode==46] delay:500ms from:#{{ widget.dicom_tags.PatientName }}-{{ widget.name }}"#}
+{#     hx-target="#selected-{{ widget.dicom_tags.PatientName }}-{{ widget.name }}"#}
+{#     hx-swap="outerHTML"#}
+{#     hx-vals='{"interface": "{{ widget.name }}"}'#}
+>
+    <div class="input-group" id="image-input-group-{{ widget.name }}">
+        <div class="input-group-prepend"><span class="input-group-text">Select an image</span></div>
+        <input class="form-control" type="search" name="image"
+               id="image-{{ widget.name }}"
+               placeholder="Search by pk or image name"
+        >
+        <select class="custom-select" name="image"
+                id="selected-image-{{ widget.name }}">
+            <option value="">No image selected</option>
+        </select>
+    </div>
+</div>
+
+<div id="search-{{ widget.name }}"></div>
+
+{% if widget.attrs.help_text and widget.attrs.help_text != "" %}
+    <small id="hint_{{ widget.attrs.id }}" class="form-text text-muted">{{ widget.attrs.help_text|safe }}</small>
+{% endif %}
+
+<script type="text/javascript" src="{% static "js/cases/image_select.js" %}"></script>

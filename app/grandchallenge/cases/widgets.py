@@ -1,0 +1,105 @@
+from django.core.exceptions import ValidationError
+from django.forms import (
+    HiddenInput,
+    ModelMultipleChoiceField,
+    MultiValueField,
+    MultiWidget,
+)
+from django.forms.widgets import ChoiceWidget
+from django.utils.datastructures import MultiValueDictKeyError
+
+from grandchallenge.cases.models import Image
+from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+
+
+class CurieSearchMixin(ChoiceWidget):
+    template_name = "cases/image-search-widget.html"
+    input_type = None
+    name = None
+
+    def __init__(self, *args, name=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if name:
+            self.name = name
+
+    def get_context(self, *args, **kwargs):
+        context = super().get_context(*args, **kwargs)
+        if self.name:
+            context["widget"]["name"] = self.name
+        return context
+
+
+class ImageSearchWidget(CurieSearchMixin, HiddenInput):
+    pass
+
+
+class FlexibleImageWidget(MultiWidget):
+    template_name = "cases/flexible_image_widget.html"
+
+    def __init__(
+        self,
+        *args,
+        help_text=None,
+        default_widget=None,
+        user=None,
+        **kwargs,
+    ):
+        widgets = (
+            ImageSearchWidget(),
+            UserUploadMultipleWidget(),
+        )
+        super().__init__(widgets)
+        self.attrs = {
+            "help_text": help_text,
+            "default_widget": default_widget,
+            "user": user,
+        }
+
+    def decompress(self, value):
+        if value:
+            if Image.objects.filter(pk=value).exists():
+                return [[value], None]
+            else:
+                return [None, [value]]
+        else:
+            return [None, None]
+
+    def value_from_datadict(self, data, files, name):
+        try:
+            value = data[name]
+        except MultiValueDictKeyError:
+            value = None
+        if value:
+            if Image.objects.filter(pk=value).exists():
+                return [[value], None]
+            else:
+                return [None, [value]]
+
+
+class FlexibleImageField(MultiValueField):
+
+    widget = FlexibleImageWidget
+
+    def __init__(
+        self,
+        *args,
+        require_all_fields=False,
+        image_queryset=None,
+        upload_queryset=None,
+        **kwargs,
+    ):
+        list_fields = [
+            ModelMultipleChoiceField(queryset=image_queryset),
+            ModelMultipleChoiceField(queryset=upload_queryset),
+        ]
+        super().__init__(fields=list_fields, *args, **kwargs)
+        self.require_all_fields = require_all_fields
+
+    def compress(self, values):
+        if values:
+            non_empty_values = [
+                val for val in values if val and val not in self.empty_values
+            ]
+            if len(non_empty_values) != 1:
+                raise ValidationError("Too many values returned.")
+            return non_empty_values[0]

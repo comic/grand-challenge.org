@@ -1,5 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
+from django.db.models import TextChoices
+from django.http import Http404, HttpResponse
+from django.template.loader import render_to_string
+from django.views import View
 from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -14,11 +17,14 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.filters import ImageFilterSet
+from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
+from grandchallenge.cases.widgets import ImageSearchWidget
+from grandchallenge.components.form_fields import _join_with_br
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
@@ -26,6 +32,12 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+
+
+class WidgetChoices(TextChoices):
+    IMAGE_SEARCH = "IMAGE_SEARCH"
+    IMAGE_UPLOAD = "IMAGE_UPLOAD"
 
 
 class RawImageUploadSessionList(
@@ -159,3 +171,51 @@ class CSImageDetail(
             raise Http404
 
         return img
+
+
+class ImageWidgetSelectView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        query_params = request.GET.copy()
+        interface = query_params.pop("interface", None)[0]
+        widget_name = query_params.pop("WidgetChoice-" + interface, None)[0]
+        help_text = query_params.pop("help_text", None)
+
+        if widget_name:
+            if widget_name == WidgetChoices.IMAGE_SEARCH.name:
+                html_content = render_to_string(
+                    ImageSearchWidget.template_name,
+                    {
+                        "widget": ImageSearchWidget().get_context(
+                            name=interface,
+                            value=None,
+                            attrs={
+                                "help_text": help_text[0]
+                                if help_text
+                                else None,
+                            },
+                        )["widget"],
+                    },
+                )
+                return HttpResponse(html_content)
+            elif widget_name == WidgetChoices.IMAGE_UPLOAD.name:
+                html_content = render_to_string(
+                    UserUploadMultipleWidget.template_name,
+                    {
+                        "widget": UserUploadMultipleWidget().get_context(
+                            name=interface,
+                            value=None,
+                            attrs={
+                                "id": interface,
+                                "help_text": _join_with_br(
+                                    help_text[0] if help_text else None,
+                                    IMAGE_UPLOAD_HELP_TEXT,
+                                ),
+                            },
+                        )["widget"],
+                    },
+                )
+                return HttpResponse(html_content)
+            else:
+                return RuntimeError("Unknown widget type")
+        else:
+            return RuntimeError("Unknown widget type")
