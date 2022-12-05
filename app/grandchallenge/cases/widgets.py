@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.forms import (
     HiddenInput,
+    ModelChoiceField,
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
@@ -58,7 +59,7 @@ class FlexibleImageWidget(MultiWidget):
     def decompress(self, value):
         if value:
             if Image.objects.filter(pk=value).exists():
-                return [[value], None]
+                return [value, None]
             else:
                 return [None, [value]]
         else:
@@ -71,7 +72,7 @@ class FlexibleImageWidget(MultiWidget):
             value = None
         if value:
             if Image.objects.filter(pk=value).exists():
-                return [[value], None]
+                return [value, None]
             else:
                 return [None, [value]]
 
@@ -89,7 +90,7 @@ class FlexibleImageField(MultiValueField):
         **kwargs,
     ):
         list_fields = [
-            ModelMultipleChoiceField(queryset=image_queryset),
+            ModelChoiceField(queryset=image_queryset),
             ModelMultipleChoiceField(queryset=upload_queryset),
         ]
         super().__init__(fields=list_fields, *args, **kwargs)

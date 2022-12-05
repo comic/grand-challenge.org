@@ -1,9 +1,13 @@
+from functools import reduce
+from operator import or_
+
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import TextChoices
+from django.db.models import Q, TextChoices
 from django.http import Http404, HttpResponse
 from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
 from django.views import View
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.mixins import (
@@ -28,6 +32,7 @@ from grandchallenge.components.form_fields import _join_with_br
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    get_objects_for_user,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -219,3 +224,33 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 return RuntimeError("Unknown widget type")
         else:
             return RuntimeError("Unknown widget type")
+
+
+class ImageSearchView(LoginRequiredMixin, ListView):
+    template_name = "cases/image_search_result_select.html"
+    search_fields = ["pk", "name"]
+    model = Image
+    paginate_by = 50
+
+    def get_queryset(self):
+        return get_objects_for_user(self.request.user, "cases.change_image")
+
+    def get(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        interface = request.GET.get("interface")
+        query = request.GET.get("query-" + interface)
+        if query:
+            q = reduce(
+                or_,
+                [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
+                Q(),
+            )
+            qs = qs.filter(q).order_by("-created")
+        self.object_list = qs
+        context = self.get_context_data(**kwargs)
+        context["interface"] = interface
+        return TemplateResponse(
+            request=request,
+            template=self.template_name,
+            context=context,
+        )
