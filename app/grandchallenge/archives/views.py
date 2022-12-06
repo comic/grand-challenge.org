@@ -58,6 +58,7 @@ from grandchallenge.archives.tasks import (
     update_archive_item_update_kwargs,
 )
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.views import WidgetChoices
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -427,9 +428,16 @@ class ArchiveEditArchiveItem(
             ci = ComponentInterface.objects.get(slug=slug)
 
             if ci.is_image_kind:
-                upload_session = create_upload(value)
+                widget = form.data[f"WidgetChoice-{ci.slug}"]
+                if widget == WidgetChoices.IMAGE_SEARCH:
+                    image = value
+                    upload_session = None
+                elif widget == WidgetChoices.IMAGE_UPLOAD:
+                    upload_session = create_upload(value)
+                    image = None
             else:
                 upload_session = None
+                image = None
 
             update_archive_item_update_kwargs(
                 instance=self.archive_item,
@@ -441,6 +449,7 @@ class ArchiveEditArchiveItem(
                 upload_session=upload_session,
                 civ_pks_to_add=civ_pks_to_add,
                 upload_pks=upload_pks,
+                image=image,
             )
 
         on_commit(
