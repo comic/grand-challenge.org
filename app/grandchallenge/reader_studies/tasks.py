@@ -58,18 +58,23 @@ def add_scores_for_display_set(*, instance_pk, ds_pk):
     throws=(ImageImportError,),
 )
 def add_image_to_display_set(
-    *, upload_session_pk, display_set_pk, interface_pk
+    *, display_set_pk, interface_pk, upload_session_pk=None, image_pk=None
 ):
     display_set = DisplaySet.objects.get(pk=display_set_pk)
-    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    try:
-        image = Image.objects.get(origin_id=upload_session_pk)
-    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        error_message = "Image imports should result in a single image"
-        upload_session.status = RawImageUploadSession.FAILURE
-        upload_session.error_message = error_message
-        upload_session.save()
-        raise ImageImportError(error_message)
+    if upload_session_pk:
+        upload_session = RawImageUploadSession.objects.get(
+            pk=upload_session_pk
+        )
+        try:
+            image = Image.objects.get(origin_id=upload_session_pk)
+        except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+            error_message = "Image imports should result in a single image"
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = error_message
+            upload_session.save()
+            raise ImageImportError(error_message)
+    if image_pk:
+        image = Image.objects.filter(pk=image_pk).get()
     interface = ComponentInterface.objects.get(pk=interface_pk)
     with transaction.atomic():
         display_set.values.remove(
@@ -79,17 +84,19 @@ def add_image_to_display_set(
             interface=interface, image=image
         ).first()
         if civ is None:
-            civ = ComponentInterfaceValue(interface=interface)
-        civ.image = image
-        try:
-            civ.full_clean()
-        except ValidationError as e:
-            upload_session.status = RawImageUploadSession.FAILURE
-            upload_session.error_message = e.message
-            upload_session.save()
+            civ = ComponentInterfaceValue.objects.create(
+                interface=interface, image=image
+            )
+            try:
+                civ.full_clean()
+            except ValidationError as e:
+                # this should only happen for new uploads
+                upload_session.status = RawImageUploadSession.FAILURE
+                upload_session.error_message = e.message
+                upload_session.save()
         else:
             civ.save()
-            display_set.values.add(civ)
+        display_set.values.add(civ)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

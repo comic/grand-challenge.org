@@ -13,7 +13,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
-class CurieSearchMixin(ChoiceWidget):
+class ImageSearchMixin(ChoiceWidget):
     template_name = "cases/image-search-widget.html"
     input_type = None
     name = None
@@ -30,7 +30,7 @@ class CurieSearchMixin(ChoiceWidget):
         return context
 
 
-class ImageSearchWidget(CurieSearchMixin, HiddenInput):
+class ImageSearchWidget(ImageSearchMixin, HiddenInput):
     pass
 
 
@@ -43,6 +43,7 @@ class FlexibleImageWidget(MultiWidget):
         help_text=None,
         default_widget=None,
         user=None,
+        current_value=None,
         **kwargs,
     ):
         widgets = (
@@ -54,6 +55,7 @@ class FlexibleImageWidget(MultiWidget):
             "help_text": help_text,
             "default_widget": default_widget,
             "user": user,
+            "current_value": current_value,
         }
 
     def decompress(self, value):

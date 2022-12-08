@@ -1,4 +1,5 @@
 {% load crispy_forms_tags %}
+{% load static %}
 
 <div class="extra-interface card-body py-1" id="ds-content-{{ object.id }}">
   <form action="{% url 'reader-studies:display-set-interfaces-create' pk=object.pk slug=object.reader_study.slug %}" method="post" class="ds-form" data-hx-target="#ds-content-{{ object.id }}" id="form-{{ object.pk }}">
@@ -13,3 +14,5 @@
     </div>
   </form>
 </div>
+
+<script type="text/javascript" src="{% static "js/cases/ignore_enter_button.js" %}"></script>

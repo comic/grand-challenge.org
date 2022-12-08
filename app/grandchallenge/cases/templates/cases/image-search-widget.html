@@ -4,7 +4,7 @@
 <div class="form-group mb-1"
      id="search-image-{{ widget.name }}"
      hx-get="{% url 'cases:image-search' %}"
-     hx-trigger="load once, keyup[target.value.length > 1] delay:500ms from:#query-{{ widget.name }}, click[keyCode==46] delay:500ms from:#query-{{ widget.name }}"
+     hx-trigger="load once, keyup[target.value.length > 1] delay:500ms from:#query-{{ widget.name }}, click[keyCode==8] delay:500ms from:#query-{{ widget.name }}"
      hx-target="#selected-image-{{ widget.name }}"
      hx-swap="outerHTML"
      hx-vals='{"interface": "{{ widget.name }}"}'
