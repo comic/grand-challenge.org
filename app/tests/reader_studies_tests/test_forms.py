@@ -8,6 +8,7 @@ from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from requests import put
 
+from grandchallenge.cases.widgets import FlexibleImageWidget
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
@@ -31,10 +32,7 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
-from grandchallenge.uploads.widgets import (
-    UserUploadMultipleWidget,
-    UserUploadSingleWidget,
-)
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1137,17 +1135,17 @@ def test_display_set_add_interface_form():
     form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
     )
-    assert sorted(form.fields.keys()) == ["interface", "value"]
-    assert isinstance(form.fields["value"].widget, UserUploadSingleWidget)
+    assert sorted(form.fields.keys()) == [ci_file.slug, "interface"]
+    assert isinstance(form.fields[ci_file.slug].widget, UserUploadSingleWidget)
 
     form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
     )
-    assert sorted(form.fields.keys()) == ["interface", "value"]
-    assert isinstance(form.fields["value"].widget, JSONEditorWidget)
+    assert sorted(form.fields.keys()) == [ci_value.slug, "interface"]
+    assert isinstance(form.fields[ci_value.slug].widget, JSONEditorWidget)
 
     form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
     )
-    assert sorted(form.fields.keys()) == ["interface", "value"]
-    assert isinstance(form.fields["value"].widget, UserUploadMultipleWidget)
+    assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
+    assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)

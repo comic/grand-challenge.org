@@ -429,10 +429,10 @@ class ArchiveEditArchiveItem(
 
             if ci.is_image_kind:
                 widget = form.data[f"WidgetChoice-{ci.slug}"]
-                if widget == WidgetChoices.IMAGE_SEARCH:
+                if widget == WidgetChoices.IMAGE_SEARCH.name:
                     image = value
                     upload_session = None
-                elif widget == WidgetChoices.IMAGE_UPLOAD:
+                elif widget == WidgetChoices.IMAGE_UPLOAD.name:
                     upload_session = create_upload(value)
                     image = None
             else:

@@ -209,19 +209,22 @@ def test_algorithm_update_contains_repo_name(client, uploaded_image):
         (
             None,
             [
-                '<div class="user-upload"',
-                'data-input-name="generic-medical-image"',
+                '<select class="custom-select"',
+                'name="WidgetChoice-generic-medical-image"',
             ],
         ),
         (
             "generic-overlay",
-            ['<div class="user-upload"', 'data-input-name="generic-overlay"'],
+            [
+                '<select class="custom-select"',
+                'name="WidgetChoice-generic-overlay"',
+            ],
         ),
         (
             "generic-medical-image",
             [
-                '<div class="user-upload"',
-                'data-input-name="generic-medical-image"',
+                '<select class="custom-select"',
+                'name="WidgetChoice-generic-medical-image"',
             ],
         ),
         ("boolean", ['<input type="checkbox"', 'name="boolean"']),

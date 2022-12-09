@@ -233,7 +233,7 @@ class ImageSearchView(LoginRequiredMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        return get_objects_for_user(self.request.user, "cases.change_image")
+        return get_objects_for_user(self.request.user, "cases.view_image")
 
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()

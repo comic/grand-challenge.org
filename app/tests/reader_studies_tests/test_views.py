@@ -2,8 +2,10 @@ import io
 
 import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from guardian.shortcuts import assign_perm
 from requests import put
 
+from grandchallenge.cases.views import WidgetChoices
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
@@ -397,6 +399,7 @@ def test_display_set_update(client):
     )
     ci_img = ComponentInterfaceFactory(kind="IMG")
     im1, im2 = ImageFactory.create_batch(2)
+    assign_perm("cases.view_image", u1, im2)
     civ_json = ComponentInterfaceValueFactory(
         interface=ci_json, value={"foo": "bar"}
     )
@@ -433,7 +436,7 @@ def test_display_set_update(client):
         reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
         data={
             ci_json.slug: '{"foo": "new"}',
-            ci_img.slug: str(civ_img_new.pk),
+            ci_img.slug: str(im2.pk),
             ci_json_file.slug: str(civ_json_file_new.pk),
             "order": 11,
         },
@@ -449,9 +452,6 @@ def test_display_set_update(client):
     assert not ds1.values.filter(pk=civ_json_file.pk).exists()
     assert ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert ds1.values.get(interface=ci_json).value == {"foo": "new"}
-
-    # A new ds should have been created for civ_img
-    assert DisplaySet.objects.count() == 3
 
 
 @pytest.mark.django_db
@@ -522,13 +522,18 @@ def test_add_display_set_to_reader_study(client, settings):
                 ci_str.slug: "new-title",
                 ci_img.slug: str(im_upload.pk),
                 "order": 11,
+                f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_UPLOAD.name,
                 "new_interfaces": [
                     {
                         "interface": ci_img_new.pk,
-                        "value": str(im_upload_new.pk),
+                        str(ci_img_new.slug): str(im_upload_new.pk),
+                        f"WidgetChoice-{ci_img_new.slug}": WidgetChoices.IMAGE_UPLOAD.name,
                     },
-                    {"interface": ci_str_new.pk, "value": "new"},
-                    {"interface": ci_json.pk, "value": str(upload.pk)},
+                    {"interface": ci_str_new.pk, str(ci_str_new.slug): "new"},
+                    {
+                        "interface": ci_json.pk,
+                        str(ci_json.slug): str(upload.pk),
+                    },
                 ],
             },
             user=u1,
@@ -675,7 +680,7 @@ def test_display_set_interfaces_create(client, settings):
         viewname="reader-studies:display-set-interfaces-create",
         client=client,
         reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        data={"interface": str(ci_value.pk), "value": '{"foo": "bar"}'},
+        data={"interface": str(ci_value.pk), ci_value.slug: '{"foo": "bar"}'},
         user=u1,
         method=client.post,
     )
@@ -697,7 +702,7 @@ def test_display_set_interfaces_create(client, settings):
             viewname="reader-studies:display-set-interfaces-create",
             client=client,
             reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-            data={"interface": str(ci_file.pk), "value": str(upload.pk)},
+            data={"interface": str(ci_file.pk), ci_file.slug: str(upload.pk)},
             user=u1,
             method=client.post,
         )
@@ -716,7 +721,10 @@ def test_display_set_interfaces_create(client, settings):
             viewname="reader-studies:display-set-interfaces-create",
             client=client,
             reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-            data={"interface": str(ci_image.pk), "value": str(upload.pk)},
+            data={
+                "interface": str(ci_image.pk),
+                ci_image.slug: str(upload.pk),
+            },
             user=u1,
             method=client.post,
         )

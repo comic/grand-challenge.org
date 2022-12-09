@@ -577,9 +577,7 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
 
     def _get_image_field(self, *, interface, values, current_value):
         return FlexibleImageField(
-            image_queryset=get_objects_for_user(
-                self.user, "cases.change_image"
-            ),
+            image_queryset=get_objects_for_user(self.user, "cases.view_image"),
             upload_queryset=get_objects_for_user(
                 self.user, "uploads.change_userupload"
             ),
@@ -728,7 +726,7 @@ class DisplaySetInterfacesCreateForm(Form):
         )
 
         if selected_interface is not None:
-            self.fields["value"] = InterfaceFormField(
+            self.fields[selected_interface.slug] = InterfaceFormField(
                 instance=selected_interface,
                 user=user,
             ).field

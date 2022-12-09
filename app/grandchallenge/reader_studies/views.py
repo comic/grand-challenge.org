@@ -1672,12 +1672,12 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
 
     def form_valid(self, form):
         interface = form.cleaned_data["interface"]
-        value = form.cleaned_data["value"]
+        value = form.cleaned_data[interface.slug]
         if self.display_set:
             try:
                 self.update_display_set(interface, value)
             except ValidationError as e:
-                form.add_error("value", str(e))
+                form.add_error(interface.slug, str(e))
                 return self.form_invalid(form)
         return super().form_valid(form)
 
@@ -1755,8 +1755,6 @@ class AddDisplaySetToReaderStudy(
         errors = {}
         for entry in new_interfaces:
             interface = ComponentInterface.objects.get(pk=entry["interface"])
-            if interface.is_image_kind:
-                entry["value"] = [entry["value"]]
             form = DisplaySetInterfacesCreateForm(
                 data=entry,
                 pk=None,
@@ -1767,9 +1765,13 @@ class AddDisplaySetToReaderStudy(
             )
             if form.is_valid():
                 cleaned = form.cleaned_data
-                validated_data[cleaned["interface"].slug] = cleaned["value"]
+                validated_data[cleaned["interface"].slug] = cleaned[
+                    interface.slug
+                ]
             else:
-                errors.update({entry["interface"]: form.errors["value"]})
+                errors.update(
+                    {entry["interface"]: form.errors[interface.slug]}
+                )
         if errors:
             raise ValidationError(errors)
         return validated_data
