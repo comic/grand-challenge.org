@@ -348,7 +348,7 @@ class ChallengeRequestForm(
                 f"describe the training and test datasets you are planning to "
                 f"use. <br>In order to evaluate the submitted algorithms, the test dataset will need to be "
                 f"uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
-                f"data-storage-2/' target='_blank'>here</a>)."
+                f"data-storage/' target='_blank'>here</a>)."
             ),
             "number_of_tasks": (
                 "If your challenge has multiple tasks, we multiply "
@@ -388,7 +388,8 @@ class ChallengeRequestForm(
                 "data</b> are released under a "
                 "<a href='https://creativecommons.org/licenses/' target='_blank'>"
                 "CC-BY license</a>. Note that this does not apply to the secret test "
-                "data used to evaluate algorithm submissions."
+                "data used to evaluate algorithm submissions. Read more about this <a href='"
+                "https://grand-challenge.org/documentation/data-storage/'>here</a>."
             ),
             "phase_1_number_of_test_images": (
                 "Number of test images for this phase. If you're <a href="
@@ -507,7 +508,7 @@ class ChallengeRequestForm(
                         "target='_blank'>challenge pricing policy</a> before you continue. We will use the "
                         "below information to calculate a rough compute and storage cost estimate.</p>"
                         "<p> If you are unfamiliar with how challenges work on Grand Challenge, please <a href="
-                        "'https://grand-challenge.org/documentation/type-ii-challenge-setup/'"
+                        "'https://grand-challenge.org/documentation/challenge-setup/'"
                         "target='_blank'> first read our challenge documentation</a>.</p> "
                         "<p>To help you fill in the below form correctly, "
                         "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
@@ -527,7 +528,7 @@ class ChallengeRequestForm(
                         "often the amount of times that users can submit to "
                         "them differs, which is why we ask for separate "
                         "estimates for the two phases below."
-                        " Should your challenge have only phase, enter 0 in "
+                        " Should your challenge have only one phase, enter 0 in "
                         "all fields for phase 2. Should your challenge have "
                         "multiple tasks and hence more than N*2 phases, "
                         "please provide the average numbers across tasks for "
