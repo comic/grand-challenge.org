@@ -1464,14 +1464,16 @@ class DisplaySetUpdate(
             )
             instance.values.add(val)
         elif isinstance(new_value, Image):
-            if current_value:
+            if not current_value or (
+                current_value and current_value.image != new_value
+            ):
                 assigned_civs.append(current_value)
-            civ, created = ComponentInterfaceValue.objects.get_or_create(
-                interface=ci, image=new_value
-            )
-            if created:
-                civ.full_clean()
-            instance.values.add(civ)
+                civ, created = ComponentInterfaceValue.objects.get_or_create(
+                    interface=ci, image=new_value
+                )
+                if created:
+                    civ.full_clean()
+                instance.values.add(civ)
         elif isinstance(new_value, QuerySet):
             us = RawImageUploadSession.objects.create(
                 creator=self.request.user,

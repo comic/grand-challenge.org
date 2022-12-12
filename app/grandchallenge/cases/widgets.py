@@ -41,7 +41,6 @@ class FlexibleImageWidget(MultiWidget):
         self,
         *args,
         help_text=None,
-        default_widget=None,
         user=None,
         current_value=None,
         **kwargs,
@@ -53,7 +52,6 @@ class FlexibleImageWidget(MultiWidget):
         super().__init__(widgets)
         self.attrs = {
             "help_text": help_text,
-            "default_widget": default_widget,
             "user": user,
             "current_value": current_value,
         }
@@ -71,7 +69,11 @@ class FlexibleImageWidget(MultiWidget):
         try:
             value = data[name]
         except MultiValueDictKeyError:
-            value = None
+            try:
+                # this happens if the data comes from the DS update form
+                value = data[f"WidgetChoice-{name}"]
+            except MultiValueDictKeyError:
+                value = None
         if value:
             if Image.objects.filter(pk=value).exists():
                 return [value, None]

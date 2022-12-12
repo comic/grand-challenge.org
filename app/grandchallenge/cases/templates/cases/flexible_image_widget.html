@@ -9,12 +9,12 @@
         hx-vals='{"help_text": "{{ widget.attrs.help_text }}", "interface": "{{ widget.name }}"}'
 >
     {% if widget.attrs.current_value %}
-        <option value="">{{ widget.attrs.current_value }}</option>
+        <option value="{{ widget.attrs.current_value.image.pk }}">{{ widget.attrs.current_value }}</option>
     {% else %}
         <option value="">Choose data source...</option>
     {% endif %}
-    <option value="IMAGE_SEARCH" {% if widget.attrs.default_widget == "IMAGE_SEARCH" %} selected {% endif %}>Select previously uploaded image</option>
-    <option value="IMAGE_UPLOAD" {% if widget.attrs.default_widget == "IMAGE_UPLOAD" %} selected {% endif %}>Upload new image</option>
+    <option value="IMAGE_SEARCH">Select previously uploaded image</option>
+    <option value="IMAGE_UPLOAD">Upload new image</option>
 </select>
 
 <div class="mt-3" id="{{ widget.name }}-area"></div>
