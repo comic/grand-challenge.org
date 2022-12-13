@@ -1357,7 +1357,7 @@ class ComponentJob(models.Model):
                     }
                     for metric in self.runtime_metrics["metrics"]
                     for timestamp, value in zip(
-                        metric["timestamps"], metric["values"]
+                        metric["timestamps"], metric["values"], strict=True
                     )
                 ]
             },
