@@ -16,7 +16,6 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.transaction import on_commit
 from django.forms import (
     BooleanField,
     CharField,
@@ -63,7 +62,6 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.reader_studies.tasks import add_file_to_display_set
 from grandchallenge.reader_studies.widgets import SelectUploadWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -637,21 +635,6 @@ class FileForm(Form):
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         self.interface = interface
         self.display_set = display_set
-
-    def save(self):
-        civ = self.display_set.values.get(interface=self.interface)
-        user_upload = self.cleaned_data["user_upload"]
-        on_commit(
-            lambda: add_file_to_display_set.apply_async(
-                kwargs={
-                    "user_upload_pk": str(user_upload.pk),
-                    "interface_pk": str(self.interface.pk),
-                    "display_set_pk": str(self.display_set.pk),
-                    "civ_pk": str(civ.pk),
-                }
-            )
-        )
-        return civ
 
 
 class DisplaySetInterfacesCreateForm(Form):

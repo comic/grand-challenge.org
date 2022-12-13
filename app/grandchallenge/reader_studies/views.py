@@ -15,6 +15,7 @@ from django.core.exceptions import (
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.query import QuerySet
+from django.db.transaction import on_commit
 from django.forms import Media
 from django.forms.utils import ErrorList
 from django.http import (
@@ -1502,8 +1503,8 @@ class DisplaySetUpdate(
         return instance, assigned_civs
 
 
-class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, CreateView):
-    model = RawImageUploadSession
+class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
+    form_class = FileForm
     template_name = "reader_studies/display_set_files_update.html"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
@@ -1512,12 +1513,6 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, CreateView):
 
     def get_permission_object(self):
         return self.display_set
-
-    def get_form_class(self):
-        if self.interface.is_image_kind:
-            return UploadRawImagesForm
-        else:
-            return FileForm
 
     @cached_property
     def interface(self):
@@ -1542,37 +1537,32 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        if self.interface.is_image_kind:
-            linked_task = add_image_to_display_set.signature(
-                kwargs={
-                    "display_set_pk": self.kwargs["pk"],
-                    "interface_pk": self.interface.pk,
-                },
-                immutable=True,
-            )
-            kwargs.update(
-                {
-                    "user": self.request.user,
-                    "linked_task": linked_task,
-                    "auto_id": f"id-{self.kwargs['pk']}-%s",
-                }
-            )
-        else:
-            kwargs.update(
-                {
-                    "user": self.request.user,
-                    "display_set": self.display_set,
-                    "interface": self.interface,
-                    "auto_id": f"id-{self.kwargs['pk']}-%s",
-                }
-            )
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "display_set": self.display_set,
+                "interface": self.interface,
+                "auto_id": f"id-{self.kwargs['pk']}-%s",
+            }
+        )
         return kwargs
 
     def form_valid(self, form):
-        if self.interface.is_image_kind:
-            messages.add_message(
-                self.request, messages.SUCCESS, "Image import started."
+        civ = self.display_set.values.get(interface=self.interface)
+        user_upload = form.cleaned_data["user_upload"]
+        on_commit(
+            lambda: add_file_to_display_set.apply_async(
+                kwargs={
+                    "user_upload_pk": str(user_upload.pk),
+                    "interface_pk": str(self.interface.pk),
+                    "display_set_pk": str(self.display_set.pk),
+                    "civ_pk": str(civ.pk),
+                }
             )
+        )
+        messages.add_message(
+            self.request, messages.SUCCESS, "File import started."
+        )
         return super().form_valid(form)
 
     def get_success_url(self):
