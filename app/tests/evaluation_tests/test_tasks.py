@@ -213,7 +213,7 @@ class TestSetEvaluationInputs(TestCase):
             2, interface=interface
         )
 
-        for ai, civ in zip(ais, input_civs, strict=True):
+        for ai, civ in zip(ais, input_civs):
             ai.values.set([civ])
 
         alg = AlgorithmImageFactory()
@@ -223,7 +223,7 @@ class TestSetEvaluationInputs(TestCase):
         submission.phase.algorithm_inputs.set([interface])
 
         jobs = []
-        for inpt, output in zip(input_civs, output_civs, strict=True):
+        for inpt, output in zip(input_civs, output_civs):
             j = AlgorithmJobFactory(status=Job.SUCCESS, algorithm_image=alg)
             j.inputs.set([inpt])
             j.outputs.set([output])
@@ -244,7 +244,7 @@ class TestSetEvaluationInputs(TestCase):
         assert self.evaluation.inputs.count() == 3
         assert self.evaluation.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
-            for alg, civ in zip(self.jobs, self.output_civs, strict=True)
+            for alg, civ in zip(self.jobs, self.output_civs)
         }
 
 
