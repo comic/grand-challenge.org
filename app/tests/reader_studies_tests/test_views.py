@@ -6,6 +6,7 @@ from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.cases.views import WidgetChoices
+from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
@@ -563,14 +564,14 @@ def test_add_files_to_display_set(client, settings):
     ds = DisplaySetFactory(reader_study=rs)
     rs.add_editor(u1)
     ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_img = ComponentInterfaceFactory(kind="IMG")
-    im_upload = create_upload_from_file(
-        file_path=RESOURCE_PATH / "test_grayscale.jpg",
-        creator=u1,
-    )
     civ_json = ComponentInterfaceValueFactory(
         interface=ci_json,
     )
+    ci_json.schema = {
+        "$schema": "http://json-schema.org/draft-07/schema",
+        "type": "array",
+    }
+    ci_json.save()
     ds.values.add(civ_json)
     upload = UserUploadFactory(filename="file.json", creator=u1)
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
@@ -621,26 +622,34 @@ def test_add_files_to_display_set(client, settings):
         )
 
     assert response.status_code == 302
-    civ_json = ds.values.get(interface=ci_json)
-    assert civ_json.file.read() == b'{"foo": "bar"}'
+    assert ds.values.count() == 1
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    msg = notification.print_notification(user=notification.user)
+    assert ci_json.title in msg
+    assert str(ds.pk) in msg
+    assert rs.title in msg
+    assert "JSON does not fulfill schema" in msg
 
+    ci_json.schema = {}
+    ci_json.save()
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-files-update",
             client=client,
             reverse_kwargs={
                 "pk": ds.pk,
-                "interface_slug": ci_img.slug,
+                "interface_slug": ci_json.slug,
                 "slug": rs.slug,
             },
-            data={"user_uploads": str(im_upload.pk)},
+            data={"user_upload": str(upload.pk)},
             user=u1,
             method=client.post,
         )
 
     assert response.status_code == 302
-    civ_img = ds.values.get(interface=ci_img)
-    assert civ_img.image.name == "test_grayscale.jpg"
+    civ_json = ds.values.get(interface=ci_json)
+    assert civ_json.file.read() == b'{"foo": "bar"}'
 
 
 @pytest.mark.django_db
