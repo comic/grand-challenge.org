@@ -438,6 +438,7 @@ def test_display_set_update(client):
         data={
             ci_json.slug: '{"foo": "new"}',
             ci_img.slug: str(im2.pk),
+            f"WidgetChoice-{ci_img.slug}": WidgetChoices.IMAGE_SEARCH.name,
             ci_json_file.slug: str(civ_json_file_new.pk),
             "order": 11,
         },
@@ -501,9 +502,10 @@ def test_add_display_set_to_reader_study(client, settings):
         file_path=RESOURCE_PATH / "test_grayscale.jpg",
         creator=u1,
     )
-    im_upload_new = create_upload_from_file(
-        file_path=RESOURCE_PATH / "test_grayscale.png",
-        creator=u1,
+    image = ImageFactory()
+    assign_perm("cases.view_image", u1, image)
+    civ_new_img = ComponentInterfaceValueFactory(
+        image=image, interface=ci_img_new
     )
     upload = UserUploadFactory(filename="file.json", creator=u1)
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
@@ -527,8 +529,8 @@ def test_add_display_set_to_reader_study(client, settings):
                 "new_interfaces": [
                     {
                         "interface": ci_img_new.pk,
-                        str(ci_img_new.slug): str(im_upload_new.pk),
-                        f"WidgetChoice-{ci_img_new.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                        str(ci_img_new.slug): str(image.pk),
+                        f"WidgetChoice-{ci_img_new.slug}": WidgetChoices.IMAGE_SEARCH.name,
                     },
                     {"interface": ci_str_new.pk, str(ci_str_new.slug): "new"},
                     {
@@ -547,9 +549,8 @@ def test_add_display_set_to_reader_study(client, settings):
     # assert ds.values.count() == 5
     assert ds.values.get(interface=ci_str).value == "new-title"
     assert ds.values.get(interface=ci_img).image.name == "test_grayscale.jpg"
-    assert (
-        ds.values.get(interface=ci_img_new).image.name == "test_grayscale.png"
-    )
+    assert ds.values.get(interface=ci_img_new).image == image
+    assert ds.values.get(interface=ci_img_new) == civ_new_img
     assert ds.values.get(interface=ci_str_new).value == "new"
     assert ds.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
 
@@ -665,6 +666,7 @@ def test_display_set_interfaces_create(client, settings):
     ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
     ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
     ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
+    ci_image_2 = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
 
     response = get_view_for_user(
         viewname="reader-studies:display-set-interfaces-create",
@@ -733,6 +735,7 @@ def test_display_set_interfaces_create(client, settings):
             data={
                 "interface": str(ci_image.pk),
                 ci_image.slug: str(upload.pk),
+                f"WidgetChoice-{ci_image.slug}": WidgetChoices.IMAGE_UPLOAD.name,
             },
             user=u1,
             method=client.post,
@@ -741,6 +744,29 @@ def test_display_set_interfaces_create(client, settings):
     assert response.status_code == 302
     civ = ds.values.get(interface=ci_image)
     assert civ.image.name == "test_grayscale.jpg"
+
+    image = ImageFactory()
+    assign_perm("cases.view_image", u1, image)
+    civ2 = ComponentInterfaceValueFactory(image=image, interface=ci_image_2)
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-interfaces-create",
+            client=client,
+            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+            data={
+                "interface": str(ci_image_2.pk),
+                ci_image_2.slug: str(image.pk),
+                f"WidgetChoice-{ci_image_2.slug}": WidgetChoices.IMAGE_SEARCH.name,
+            },
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    new_civ = ds.values.get(interface=ci_image_2)
+    assert new_civ != civ
+    assert new_civ == civ2
 
 
 @pytest.mark.django_db

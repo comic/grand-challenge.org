@@ -698,10 +698,30 @@ def test_archive_item_add_image(client, settings):
                 },
             )
     assert response.status_code == 200
-    assert (
-        "image10x10x10.mha"
-        == ArchiveItem.objects.get().values.first().image.name
-    )
+    assert "image10x10x10.mha" == item.values.first().image.name
+    old_civ = item.values.first()
+
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "pk": item.pk,
+                    "interface_slug": ci.slug,
+                    "archive_slug": archive.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    ci.slug: old_civ.image.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                },
+            )
+    assert response.status_code == 200
+    assert item.values.first().image.pk == old_civ.image.pk
+    assert item.values.first() == old_civ
 
     image = ImageFactory()
     assign_perm("cases.view_image", editor, image)
@@ -724,7 +744,8 @@ def test_archive_item_add_image(client, settings):
                 },
             )
     assert response.status_code == 200
-    assert ArchiveItem.objects.get().values.first().image.pk == image.pk
+    assert item.values.first().image.pk == image.pk
+    assert item.values.first() != old_civ
 
 
 @pytest.mark.django_db

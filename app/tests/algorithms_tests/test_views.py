@@ -11,6 +11,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.cases.views import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
@@ -19,12 +20,13 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
 )
+from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -903,3 +905,92 @@ def test_create_job_with_json_file(client, settings, algorithm_io_image):
             file.name.split("/")[-1]
             in Job.objects.get().inputs.first().file.name
         )
+
+
+@pytest.mark.django_db
+def test_algorithm_experiment_create_with_image_input(
+    settings, client, algorithm_io_image
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
+    recurse_callbacks(callbacks=callbacks)
+
+    editor = UserFactory()
+    ai.algorithm.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
+    )
+    ai.algorithm.inputs.set([ci])
+
+    image1, image2 = ImageFactory.create_batch(2)
+    assign_perm("cases.view_image", editor, image1)
+    assign_perm("cases.view_image", editor, image2)
+
+    civ = ComponentInterfaceValueFactory(interface=ci, image=image1)
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="algorithms:execution-session-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    ci.slug: image1.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                },
+            )
+    assert response.status_code == 200
+    assert Job.objects.get().inputs.first().image.pk == image1.pk
+    # same civ reused
+    assert Job.objects.get().inputs.first() == civ
+
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="algorithms:execution-session-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    ci.slug: image2.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                },
+            )
+    assert response.status_code == 200
+    assert Job.objects.last().inputs.first().image.pk == image2.pk
+    assert Job.objects.last().inputs.first() != civ
+
+    upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha",
+        creator=editor,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="algorithms:execution-session-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    ci.slug: upload.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                },
+            )
+    assert response.status_code == 200
+    assert Job.objects.last().inputs.first().image.name == "image10x10x10.mha"
+    assert Job.objects.last().inputs.first() != civ
