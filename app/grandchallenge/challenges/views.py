@@ -292,7 +292,6 @@ class ChallengeRequestDetail(
     detail_view_fields = (
         "title",
         "short_name",
-        "challenge_type",
         "start_date",
         "end_date",
         "organizers",
