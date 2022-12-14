@@ -118,6 +118,10 @@ HANGING_PROTOCOL_SCHEMA = {
                 "type": "string",
                 "enum": ViewportNames.values,
             },
+            "slice_plane_indicator_fade_ms": {
+                "type": "number",
+                "minimum": 0,
+            },
         },
         "additionalProperties": False,
         "allOf": [
