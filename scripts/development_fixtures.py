@@ -535,6 +535,14 @@ def _create_reader_studies(users):
         color_space="RGB",
     )
     image.save()
+    annotation_interface = ComponentInterface(
+        store_in_database=True,
+        relative_path="annotation.json",
+        slug="annotation",
+        title="Annotation",
+        kind=ComponentInterface.Kind.TWO_D_BOUNDING_BOX,
+    )
+    annotation_interface.save()
     civ = ComponentInterfaceValue.objects.create(
         interface=ComponentInterface.objects.get(slug="generic-medical-image"),
         image=image,
