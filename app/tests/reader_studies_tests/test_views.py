@@ -632,8 +632,13 @@ def test_add_files_to_display_set(client, settings):
     assert rs.title in msg
     assert "JSON does not fulfill schema" in msg
 
-    ci_json.schema = {}
-    ci_json.save()
+    upload2 = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls2 = upload2.generate_presigned_urls(part_numbers=[1])
+    response2 = put(presigned_urls2["1"], data=b'["foo", "bar"]')
+    upload2.complete_multipart_upload(
+        parts=[{"ETag": response2.headers["ETag"], "PartNumber": 1}]
+    )
+    upload2.save()
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-files-update",
@@ -643,14 +648,14 @@ def test_add_files_to_display_set(client, settings):
                 "interface_slug": ci_json.slug,
                 "slug": rs.slug,
             },
-            data={"user_upload": str(upload.pk)},
+            data={"user_upload": str(upload2.pk)},
             user=u1,
             method=client.post,
         )
 
     assert response.status_code == 302
     civ_json = ds.values.get(interface=ci_json)
-    assert civ_json.file.read() == b'{"foo": "bar"}'
+    assert civ_json.file.read() == b'["foo", "bar"]'
 
 
 @pytest.mark.django_db
