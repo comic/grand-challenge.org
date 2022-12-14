@@ -150,7 +150,7 @@ class InterfaceKind:
         * Chart
 
         Example json for 2D bounding box annotation
-            required: ``type``, ``corners``, ``version``
+            required: "type", "corners", "version"
             optional: "name", "probability"
 
         .. code-block:: json
@@ -423,7 +423,6 @@ class InterfaceKind:
                         "name": "First angle",
                         "lines": [[[110, 135, 0.5], [60, 165, 0.5]],[[70, 25, 0.5], [85, 65, 0.5]]],
                         "probability": 0.82
-
                     },
                     {
                         "name": "Second angle",
