@@ -44,4 +44,7 @@
                 {% include "django/forms/widgets/attrs.html" %}
         >
     {% endif %}
+    {% if widget.attrs.help_text %}
+        <small id="hint_{{ widget.attrs.id }}" class="form-text text-muted">{{ widget.attrs.help_text|safe }}</small>
+    {% endif %}
 </div>
