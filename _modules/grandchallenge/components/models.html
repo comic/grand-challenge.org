@@ -224,111 +224,149 @@
 <span class="sd">        * Chart</span>
 
 <span class="sd">        Example json for 2D bounding box annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;corners&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Region of interest&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;2D bounding box&quot;,</span>
 <span class="sd">                &quot;corners&quot;: [</span>
 <span class="sd">                    [ 130.80001831054688, 148.86666870117188, 0.5009999871253967],</span>
 <span class="sd">                    [ 69.73332977294922, 148.86666870117188, 0.5009999871253967],</span>
-<span class="sd">                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967 ],</span>
+<span class="sd">                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967],</span>
 <span class="sd">                    [ 130.80001831054688, 73.13333129882812, 0.5009999871253967]</span>
 <span class="sd">                ],</span>
+<span class="sd">                &quot;probability&quot;: 0.95,</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Multiple 2D bounding boxes annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;boxes&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Regions of interest&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple 2D bounding boxes&quot;,</span>
 <span class="sd">                &quot;boxes&quot;: [</span>
 <span class="sd">                    {</span>
-<span class="sd">                    &quot;corners&quot;: [</span>
-<span class="sd">                        [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                        [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                        [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],</span>
-<span class="sd">                        [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]</span>
-<span class="sd">                    ]},</span>
+<span class="sd">                        &quot;name&quot;: &quot;ROI 1&quot;,</span>
+<span class="sd">                        &quot;corners&quot;: [</span>
+<span class="sd">                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],</span>
+<span class="sd">                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],</span>
+<span class="sd">                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],</span>
+<span class="sd">                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]</span>
+<span class="sd">                        ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.95</span>
+<span class="sd">                    },</span>
 <span class="sd">                    {</span>
-<span class="sd">                    &quot;corners&quot;: [</span>
-<span class="sd">                        [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                        [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],</span>
-<span class="sd">                        [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],</span>
-<span class="sd">                        [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]</span>
-<span class="sd">                    ]}</span>
+<span class="sd">                        &quot;name&quot;: &quot;ROI 2&quot;,</span>
+<span class="sd">                        &quot;corners&quot;: [</span>
+<span class="sd">                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],</span>
+<span class="sd">                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],</span>
+<span class="sd">                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],</span>
+<span class="sd">                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]</span>
+<span class="sd">                        ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
+<span class="sd">                    }</span>
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Distance measurement annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;start&quot;, &quot;end&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Distance between areas&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Distance measurement&quot;,</span>
 <span class="sd">                &quot;start&quot;: [ 59.79176712036133, 78.76753997802734, 0.5009999871253967 ],</span>
 <span class="sd">                &quot;end&quot;: [ 69.38014221191406, 143.75546264648438, 0.5009999871253967 ],</span>
+<span class="sd">                &quot;probability&quot;: 0.92,</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Multiple distance measurement annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Distances between areas&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple distance measurements&quot;,</span>
 <span class="sd">                &quot;lines&quot;: [</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Distance 1&quot;,</span>
 <span class="sd">                        &quot;start&quot;: [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;end&quot;: [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ]</span>
+<span class="sd">                        &quot;end&quot;: [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
 <span class="sd">                    },</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Distance 2&quot;,</span>
 <span class="sd">                        &quot;start&quot;: [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],</span>
-<span class="sd">                        &quot;end&quot;: [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ]</span>
+<span class="sd">                        &quot;end&quot;: [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
 <span class="sd">                    }</span>
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Point annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;point&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
-<span class="sd">                &quot;point&quot;: [ 152.13333129882812, 111.0, 0.5009999871253967 ],</span>
+<span class="sd">                &quot;name&quot;: &quot;Point of interest&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Point&quot;,</span>
+<span class="sd">                &quot;point&quot;: [ 152.13333129882812, 111.0, 0.5009999871253967 ],</span>
+<span class="sd">                &quot;probability&quot;: 0.92,</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Multiple points annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;points&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Points of interest&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple points&quot;,</span>
 <span class="sd">                &quot;points&quot;: [</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Point 1&quot;,</span>
 <span class="sd">                        &quot;point&quot;: [</span>
 <span class="sd">                            96.0145263671875, 79.83292388916016, 0.5009999871253967</span>
 <span class="sd">                        ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
 <span class="sd">                    },</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Point 2&quot;,</span>
 <span class="sd">                        &quot;point&quot;: [</span>
 <span class="sd">                            130.10653686523438, 115.52300262451172, 0.5009999871253967</span>
 <span class="sd">                        ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
 <span class="sd">                    }</span>
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Polygon annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;seed_point&quot;, &quot;path_points&quot;, &quot;sub_type&quot;, &quot;groups&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Area of interest&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Polygon&quot;,</span>
 <span class="sd">                &quot;seed_point&quot;: [ 76.413756408691, 124.014717102050, 0.5009999871253967 ],</span>
 <span class="sd">                &quot;path_points&quot;: [</span>
@@ -338,17 +376,22 @@
 <span class="sd">                ],</span>
 <span class="sd">                &quot;sub_type&quot;: &quot;brush&quot;,</span>
 <span class="sd">                &quot;groups&quot;: [],</span>
+<span class="sd">                &quot;probability&quot;: 0.92,</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Multiple polygon annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;polygons&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Areas of interest&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple polygons&quot;,</span>
 <span class="sd">                &quot;polygons&quot;: [</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Area 1&quot;,</span>
 <span class="sd">                        &quot;seed_point&quot;: [ 55.82666793823242, 90.46666717529297, 0.5009999871253967 ],</span>
 <span class="sd">                        &quot;path_points&quot;: [</span>
 <span class="sd">                            [ 55.82667599387105, 90.46666717529297, 0.5009999871253967 ],</span>
@@ -358,8 +401,10 @@
 <span class="sd">                        ],</span>
 <span class="sd">                        &quot;sub_type&quot;: &quot;brush&quot;,</span>
 <span class="sd">                        &quot;groups&quot;: [ &quot;manual&quot;],</span>
+<span class="sd">                        &quot;probability&quot;: 0.67</span>
 <span class="sd">                    },</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Area 2&quot;,</span>
 <span class="sd">                        &quot;seed_point&quot;: [ 90.22666564941406, 96.06666564941406, 0.5009999871253967 ],</span>
 <span class="sd">                        &quot;path_points&quot;: [</span>
 <span class="sd">                            [ 90.22667370505269, 96.06666564941406, 0.5009999871253967 ],</span>
@@ -367,79 +412,101 @@
 <span class="sd">                            [ 90.64666967723338, 96.7941200122053, 0.5009999871253967 ]</span>
 <span class="sd">                        ],</span>
 <span class="sd">                        &quot;sub_type&quot;: &quot;brush&quot;,</span>
-<span class="sd">                        &quot;groups&quot;: []</span>
+<span class="sd">                        &quot;groups&quot;: [],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
 <span class="sd">                    }</span>
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Line annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;seed_points&quot;, &quot;path_point_lists&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some annotation&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Line&quot;,</span>
 <span class="sd">                &quot;seed_points&quot;: [[1, 2, 3], [1, 2, 3]],</span>
 <span class="sd">                &quot;path_point_lists&quot;: [</span>
 <span class="sd">                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
 <span class="sd">                    [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]]</span>
 <span class="sd">                ],</span>
+<span class="sd">                &quot;probability&quot;: 0.92</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Multiple lines annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some annotations&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple lines&quot;,</span>
 <span class="sd">                &quot;lines&quot;: [</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Annotation 1&quot;,</span>
 <span class="sd">                        &quot;seed_points&quot;: [[1, 2, 3], [1, 2, 3]],</span>
 <span class="sd">                        &quot;path_point_lists&quot;: [</span>
 <span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
 <span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
-<span class="sd">                        ]</span>
+<span class="sd">                        ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.78</span>
 <span class="sd">                    },</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Annotation 2&quot;,</span>
 <span class="sd">                        &quot;seed_points&quot;: [[1, 2, 3], [1, 2, 3]],</span>
 <span class="sd">                        &quot;path_point_lists&quot;: [</span>
 <span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
 <span class="sd">                            [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],</span>
-<span class="sd">                        ]</span>
+<span class="sd">                        ],</span>
+<span class="sd">                        &quot;probability&quot;: 0.92</span>
 <span class="sd">                    }</span>
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Angle annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some angle&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Angle&quot;,</span>
 <span class="sd">                &quot;lines&quot;: [[[180, 10, 0.5], [190, 10, 0.5]],[[180, 25, 0.5], [190, 15, 0.5]]],</span>
+<span class="sd">                &quot;probability&quot;: 0.92,</span>
 <span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
 <span class="sd">            }</span>
 
 <span class="sd">        Example json for Multiple angles annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;angles&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
 
 <span class="sd">        .. code-block:: json</span>
 
 <span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some angles&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple angles&quot;,</span>
 <span class="sd">                &quot;angles&quot;: [</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;First angle&quot;,</span>
 <span class="sd">                        &quot;lines&quot;: [[[110, 135, 0.5], [60, 165, 0.5]],[[70, 25, 0.5], [85, 65, 0.5]]],</span>
-<span class="sd">                        &quot;name&quot;: &quot;First angle&quot;</span>
+<span class="sd">                        &quot;probability&quot;: 0.82</span>
 <span class="sd">                    },</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Second angle&quot;,</span>
 <span class="sd">                        &quot;lines&quot;: [[[130, 210, 0.5], [160, 130, 0.5]], [[140, 40, 0.5], [180, 75, 0.5]]],</span>
-<span class="sd">                        &quot;name&quot;: &quot;Second angle&quot;</span>
+<span class="sd">                        &quot;probability&quot;: 0.52</span>
 <span class="sd">                    },</span>
 <span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Third angle&quot;,</span>
 <span class="sd">                        &quot;lines&quot;: [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],</span>
-<span class="sd">                        &quot;name&quot;: &quot;Third angle&quot;</span>
+<span class="sd">                        &quot;probability&quot;: 0.98</span>
 <span class="sd">                    }</span>
 <span class="sd">                ],</span>
 <span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>

@@ -293,97 +293,149 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p>Multiple choice (array of strings)</p></li>
 <li><p>Chart</p></li>
 </ul>
-<p>Example json for 2D bounding box annotation</p>
+<dl class="simple">
+<dt>Example json for 2D bounding box annotation</dt><dd><p>required: “type”, “corners”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Region of interest&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2D bounding box&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">130.80001831054688</span><span class="p">,</span><span class="w"> </span><span class="mf">148.86666870117188</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
 <span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">69.73332977294922</span><span class="p">,</span><span class="w"> </span><span class="mf">148.86666870117188</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
-<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">69.73332977294922</span><span class="p">,</span><span class="w"> </span><span class="mf">73.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">69.73332977294922</span><span class="p">,</span><span class="w"> </span><span class="mf">73.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
 <span class="w">        </span><span class="p">[</span><span class="w"> </span><span class="mf">130.80001831054688</span><span class="p">,</span><span class="w"> </span><span class="mf">73.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Multiple 2D bounding boxes annotation</p>
+<dl class="simple">
+<dt>Example json for Multiple 2D bounding boxes annotation</dt><dd><p>required: “type”, “boxes”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Regions of interest&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;boxes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
-<span class="w">        </span><span class="p">]},</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ROI 1&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span><span class="w"></span>
+<span class="w">        </span><span class="p">},</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
-<span class="w">        </span><span class="p">]}</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ROI 2&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;corners&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">136.06668090820312</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">54.79999923706055</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">],</span><span class="w"></span>
+<span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">92.66666412353516</span><span class="p">,</span><span class="w"> </span><span class="mf">95.53333282470703</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Distance measurement annotation</p>
+<dl class="simple">
+<dt>Example json for Distance measurement annotation</dt><dd><p>required: “type”, “start”, “end”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Distance between areas&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Distance measurement&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">59.79176712036133</span><span class="p">,</span><span class="w"> </span><span class="mf">78.76753997802734</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">69.38014221191406</span><span class="p">,</span><span class="w"> </span><span class="mf">143.75546264648438</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Multiple distance measurement annotation</p>
+<dl class="simple">
+<dt>Example json for Multiple distance measurement annotation</dt><dd><p>required: “type”, “lines”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Distances between areas&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Distance 1&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">49.733333587646484</span><span class="p">,</span><span class="w"> </span><span class="mf">103.26667022705078</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">139.26666259765625</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">139.26666259765625</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
 <span class="w">        </span><span class="p">},</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Distance 2&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">49.733333587646484</span><span class="p">,</span><span class="w"> </span><span class="mf">103.26667022705078</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">139.26666259765625</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">139.26666259765625</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
 <span class="w">        </span><span class="p">}</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Point annotation</p>
+<dl class="simple">
+<dt>Example json for Point annotation</dt><dd><p>required: “type”, “point”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">152.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">111.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Point of interest&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Point&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">152.13333129882812</span><span class="p">,</span><span class="w"> </span><span class="mf">111.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Multiple points annotation</p>
+<dl class="simple">
+<dt>Example json for Multiple points annotation</dt><dd><p>required: “type”, “points”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Points of interest&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple points&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Point 1&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">                </span><span class="mf">96.0145263671875</span><span class="p">,</span><span class="w"> </span><span class="mf">79.83292388916016</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"></span>
 <span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
 <span class="w">        </span><span class="p">},</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Point 2&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">                </span><span class="mf">130.10653686523438</span><span class="p">,</span><span class="w"> </span><span class="mf">115.52300262451172</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"></span>
 <span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
 <span class="w">        </span><span class="p">}</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Polygon annotation</p>
+<dl class="simple">
+<dt>Example json for Polygon annotation</dt><dd><p>required: “type”, “seed_point”, “path_points”, “sub_type”, “groups”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Area of interest&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Polygon&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">76.413756408691</span><span class="p">,</span><span class="w"> </span><span class="mf">124.014717102050</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
@@ -393,15 +445,22 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;sub_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;brush&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Multiple polygon annotation</p>
+<dl class="simple">
+<dt>Example json for Multiple polygon annotation</dt><dd><p>required: “type”, “polygons”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Areas of interest&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple polygons&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;polygons&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Area 1&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">55.82666793823242</span><span class="p">,</span><span class="w"> </span><span class="mf">90.46666717529297</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">55.82667599387105</span><span class="p">,</span><span class="w"> </span><span class="mf">90.46666717529297</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
@@ -411,8 +470,10 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <span class="w">            </span><span class="p">],</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;sub_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;brush&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">&quot;manual&quot;</span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.67</span><span class="w"></span>
 <span class="w">        </span><span class="p">},</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Area 2&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;seed_point&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mf">90.22666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">96.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;path_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.22667370505269</span><span class="p">,</span><span class="w"> </span><span class="mf">96.06666564941406</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">],</span><span class="w"></span>
@@ -420,71 +481,101 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <span class="w">                </span><span class="p">[</span><span class="w"> </span><span class="mf">90.64666967723338</span><span class="p">,</span><span class="w"> </span><span class="mf">96.7941200122053</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5009999871253967</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
 <span class="w">            </span><span class="p">],</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;sub_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;brush&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
 <span class="w">        </span><span class="p">}</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Line annotation</p>
+<dl class="simple">
+<dt>Example json for Line annotation</dt><dd><p>required: “type”, “seed_points”, “path_point_lists”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some annotation&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Line&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;seed_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">]],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;path_point_lists&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">[[</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]],</span><span class="w"></span>
 <span class="w">        </span><span class="p">[[</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]]</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Multiple lines annotation</p>
+<dl class="simple">
+<dt>Example json for Multiple lines annotation</dt><dd><p>required: “type”, “lines”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some annotations&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple lines&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Annotation 1&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;seed_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">]],</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;path_point_lists&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">                </span><span class="p">[[</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]],</span><span class="w"></span>
 <span class="w">                </span><span class="p">[[</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]],</span><span class="w"></span>
-<span class="w">            </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.78</span><span class="w"></span>
 <span class="w">        </span><span class="p">},</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Annotation 2&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;seed_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">]],</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;path_point_lists&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">                </span><span class="p">[[</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]],</span><span class="w"></span>
 <span class="w">                </span><span class="p">[[</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]],</span><span class="w"></span>
-<span class="w">            </span><span class="p">]</span><span class="w"></span>
+<span class="w">            </span><span class="p">],</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="w"></span>
 <span class="w">        </span><span class="p">}</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Angle annotation</p>
+<dl class="simple">
+<dt>Example json for Angle annotation</dt><dd><p>required: “type”, “lines”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some angle&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Angle&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">190</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],[[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">190</span><span class="p">,</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Example json for Multiple angles annotation</p>
+<dl class="simple">
+<dt>Example json for Multiple angles annotation</dt><dd><p>required: “type”, “angles”, “version”
+optional: “name”, “probability”</p>
+</dd>
+</dl>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Some angles&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Multiple angles&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;angles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;First angle&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">110</span><span class="p">,</span><span class="w"> </span><span class="mi">135</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">165</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],[[</span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">85</span><span class="p">,</span><span class="w"> </span><span class="mi">65</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;First angle&quot;</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.82</span><span class="w"></span>
 <span class="w">        </span><span class="p">},</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Second angle&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">130</span><span class="p">,</span><span class="w"> </span><span class="mi">210</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">160</span><span class="p">,</span><span class="w"> </span><span class="mi">130</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span><span class="w"> </span><span class="p">[[</span><span class="mi">140</span><span class="p">,</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">75</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Second angle&quot;</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.52</span><span class="w"></span>
 <span class="w">        </span><span class="p">},</span><span class="w"></span>
 <span class="w">        </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Third angle&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">            </span><span class="nt">&quot;lines&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[[</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]],</span><span class="w"> </span><span class="p">[[</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">210</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">]]],</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Third angle&quot;</span><span class="w"></span>
+<span class="w">            </span><span class="nt">&quot;probability&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.98</span><span class="w"></span>
 <span class="w">        </span><span class="p">}</span><span class="w"></span>
 <span class="w">    </span><span class="p">],</span><span class="w"></span>
 <span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;major&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;minor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span><span class="w"></span>
