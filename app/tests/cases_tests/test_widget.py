@@ -35,6 +35,13 @@ def test_flexible_image_field_validation():
     ]
     assert field.clean(parsed_value) == im1
 
+    other_image = field.widget.value_from_datadict(
+        data={ci.slug: im2.pk}, name=ci.slug, files={}
+    )
+    assert other_image == [im2.pk, None]
+    with pytest.raises(ValidationError):
+        field.clean(other_image)
+
     upload_from_user = field.widget.value_from_datadict(
         data={ci.slug: str(upload1.pk)}, name=ci.slug, files={}
     )
