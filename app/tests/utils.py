@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 from urllib.parse import urlparse
 
 from django.conf import settings

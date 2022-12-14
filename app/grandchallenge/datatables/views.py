@@ -1,7 +1,7 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import reduce
 from operator import or_
-from typing import Callable, Optional, Tuple
 
 from django.db.models import Q
 from django.http import JsonResponse
@@ -91,10 +91,10 @@ class PaginatedTableListView(ListView):
 class Column:
     title: str
     sort_field: str
-    classes: Tuple[str, ...] = ()
+    classes: tuple[str, ...] = ()
     identifier: str = ""
 
     # A column will be hidden when the `optional_condition` evaluates to False
     # for every object shown in the current list (page). `optional_condition`
     # is a function that consumes the current object as argument
-    optional_condition: Optional[Callable] = None
+    optional_condition: Callable | None = None

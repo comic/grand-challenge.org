@@ -1,5 +1,3 @@
-from typing import Union
-
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from django import template
@@ -30,7 +28,7 @@ def clean(html: str):
 
 
 @register.filter
-def md2html(markdown: Union[str, None], link_blank_target=False):
+def md2html(markdown: str | None, link_blank_target=False):
     """Convert markdown to clean html"""
 
     extensions = settings.MARKDOWNX_MARKDOWN_EXTENSIONS

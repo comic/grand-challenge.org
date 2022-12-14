@@ -3,7 +3,6 @@ import logging
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional
 
 from celery import signature
 from django import forms
@@ -1269,7 +1268,7 @@ class ComponentJob(models.Model):
         stdout: str = "",
         stderr: str = "",
         error_message="",
-        duration: Optional[timedelta] = None,
+        duration: timedelta | None = None,
         runtime_metrics=None,
     ):
         self.status = status

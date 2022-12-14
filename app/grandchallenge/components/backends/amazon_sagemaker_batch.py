@@ -4,7 +4,7 @@ import logging
 import re
 from datetime import timedelta
 from json import JSONDecodeError
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 import boto3
 import botocore
@@ -52,7 +52,7 @@ class InstanceType(NamedTuple):
     memory: float
     price_per_hour: float
     gpus: int = 0
-    gpu_type: Optional[GPUChoices] = None
+    gpu_type: GPUChoices | None = None
 
 
 INSTANCE_OPTIONS = [
