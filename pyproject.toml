@@ -36,7 +36,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.10,<3.11"
 celery = { extras = ["redis", "sqs"], version = "!=5.0.6" }
 django = "<3.3"
 django-countries = "*"
