@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
             field=models.IntegerField(
                 blank=True,
                 default=0,
-                help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='https://grand-challenge.org/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
+                help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
                 null=True,
             ),
         ),

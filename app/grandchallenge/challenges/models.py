@@ -822,7 +822,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         default=0,
         null=True,
         blank=True,
-        help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='https://grand-challenge.org/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
+        help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
     )
     long_term_commitment = models.BooleanField(
         null=True,
