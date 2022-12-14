@@ -20,7 +20,6 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     ExternalChallenge,
 )
-from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse_lazy
 
 common_information_items = (
@@ -178,41 +177,41 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
 class ChallengeRequestBudgetFieldValidationMixin:
     def clean(self):
         cleaned_data = super().clean()
-        challenge_type = (
-            cleaned_data["challenge_type"]
-            if "challenge_type" in cleaned_data
-            else self.instance.challenge_type
-        )
-        if challenge_type == ChallengeTypeChoices.T2:
-            if not cleaned_data["average_size_of_test_image_in_mb"]:
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide the average "
-                    "test image size."
-                )
-            if not cleaned_data["inference_time_limit_in_minutes"]:
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide an inference "
-                    "time limit."
-                )
-            if (
-                cleaned_data["phase_1_number_of_submissions_per_team"] is None
-                or cleaned_data["phase_2_number_of_submissions_per_team"]
-                is None
-            ):
-                raise ValidationError(
-                    "For a type 2 challenge, you need to provide the number of "
-                    "submissions per team for each phase. Enter 0 for phase 2 "
-                    "if you only have 1 phase."
-                )
-            if (
-                cleaned_data["phase_1_number_of_test_images"] is None
-                or cleaned_data["phase_2_number_of_test_images"] is None
-            ):
-                raise ValidationError(
-                    "For a type 2 challenge, You need to provide the number of "
-                    "test images for each phase. Enter 0 for phase 2 if you "
-                    "only have 1 phase."
-                )
+        if (
+            "average_size_of_test_image_in_mb" not in cleaned_data.keys()
+            or not cleaned_data["average_size_of_test_image_in_mb"]
+        ):
+            raise ValidationError(
+                "Please provide the average test image size."
+            )
+        if (
+            "inference_time_limit_in_minutes" not in cleaned_data.keys()
+            or not cleaned_data["inference_time_limit_in_minutes"]
+        ):
+            raise ValidationError("Please provide an inference time limit.")
+        if (
+            "phase_1_number_of_submissions_per_team" not in cleaned_data.keys()
+            or "phase_2_number_of_submissions_per_team"
+            not in cleaned_data.keys()
+            or cleaned_data["phase_1_number_of_submissions_per_team"] is None
+            or cleaned_data["phase_2_number_of_submissions_per_team"] is None
+        ):
+            raise ValidationError(
+                "Please provide the number of "
+                "submissions per team for each phase. Enter 0 for phase 2 "
+                "if you only have 1 phase."
+            )
+        if (
+            "phase_1_number_of_test_images" not in cleaned_data.keys()
+            or "phase_2_number_of_test_images" not in cleaned_data.keys()
+            or cleaned_data["phase_1_number_of_test_images"] is None
+            or cleaned_data["phase_2_number_of_test_images"] is None
+        ):
+            raise ValidationError(
+                "Please provide the number of "
+                "test images for each phase. Enter 0 for phase 2 if you "
+                "only have 1 phase."
+            )
         return cleaned_data
 
 
@@ -232,7 +231,6 @@ general_information_items_2 = (
     "task_types",
     "structures",
     "modalities",
-    "challenge_type",
     "challenge_setup",
     "data_set",
     "data_license",
@@ -271,19 +269,17 @@ class ChallengeRequestForm(
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
-            "budget_for_hosting_challenge",
             "algorithm_inputs",
             "algorithm_outputs",
             *phase_1_items,
             *phase_2_items,
+            "budget_for_hosting_challenge",
+            "challenge_fee_agreement",
             "comments",
         )
         widgets = {
             "start_date": forms.TextInput(attrs={"type": "date"}),
             "end_date": forms.TextInput(attrs={"type": "date"}),
-            "challenge_type": forms.Select(
-                attrs={"onchange": "updateBudgetFields();"}
-            ),
             "long_term_commitment": forms.CheckboxInput(
                 attrs={
                     "onchange": "updateExtraField('long_term_commitment', 'support this challenge long-term');"
@@ -305,6 +301,9 @@ class ChallengeRequestForm(
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
             "structured_challenge_submission_doi": "DOI",
             "structured_challenge_submission_form": "PDF",
+            "challenge_fee_agreement": "I confirm that I have read and understood the "
+            "<a href='https://grand-challenge.org/challenge-policy-and-pricing/'>pricing "
+            "policy</a> for running a challenge.",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
@@ -331,26 +330,10 @@ class ChallengeRequestForm(
                 "modality, etc.). Finally, we kindly ask you to clearly state the "
                 "envisioned technical and/or biomedical impact of the challenge."
             ),
-            "challenge_type": (
-                "<b>Type 1 :</b> Prediction submission - "
-                "test data are open, participants run their algorithms locally "
-                "and submit their predictions on the website which are evaluated "
-                "against a secret ground truth on our servers.<br>"
-                "<b>Type 2:</b> Docker container submission – test data are "
-                "secret, participants submit algorithms as docker "
-                "containers on our website, which are run on the secret test set on "
-                "our servers and then evaluated against a secret ground "
-                "truth. <br>"
-                "<b>We strongly encourage Type 2 challenges.</b> "
-                "Please read our <a href="
-                "'https://grand-challenge.org/documentation/challenges/' "
-                "target='_blank'> challenge documentation</a> before making your "
-                "choice."
-            ),
             "code_availability": (
                 "Will the participants’ code be accessible after "
-                "the challenge? <br>We strongly encourage open science. For Type "
-                "2 challenges, algorithms will be stored on Grand Challenge and "
+                "the challenge? <br>We strongly encourage open science. Algorithms "
+                "submitted as challenge solutions will therefore be stored on Grand Challenge and "
                 "we encourage organizers to incentivize an open source policy, "
                 "for example by asking participants to publish their Github repo "
                 "under an <a href='https://docs.github.com/en/repositories/managing-"
@@ -363,16 +346,12 @@ class ChallengeRequestForm(
             "data_set": (
                 f"{structured_challenge_submission_help_text} Otherwise, please "
                 f"describe the training and test datasets you are planning to "
-                f"use. <br>For Type 1 challenges, indicate where "
-                f"you will store the data (read about the options <a href="
-                f"'https://grand-challenge.org/documentation/data-storage/' "
-                f"target='_blank'>here</a>).<br>For Type 2 challenges, the test "
-                f"dataset will need to be uploaded to Grand Challenge (read more "
-                f"about that <a href='https://grand-challenge.org/documentation/"
-                f"data-storage-2/' target='_blank'>here</a>)."
+                f"use. <br>In order to evaluate the submitted algorithms, the test dataset will need to be "
+                f"uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
+                f"data-storage/' target='_blank'>here</a>)."
             ),
             "number_of_tasks": (
-                "If your challenge has multiple tasks, we multiply"
+                "If your challenge has multiple tasks, we multiply "
                 "the phase 1 and 2 cost estimates by the number of tasks. "
                 "For that to work, please provide the average number of "
                 "test images and the average number of submissions across "
@@ -406,10 +385,11 @@ class ChallengeRequestForm(
             ),
             "data_license": (
                 "In the spirit of open science, we ask that the <b>public training "
-                "data</b> for type 1 and type 2 challenges are released under a "
+                "data</b> are released under a "
                 "<a href='https://creativecommons.org/licenses/' target='_blank'>"
                 "CC-BY license</a>. Note that this does not apply to the secret test "
-                "data used to evaluate algorithm submissions in Type 2 challenges."
+                "data used to evaluate algorithm submissions. Read more about this <a href='"
+                "https://grand-challenge.org/documentation/data-storage/'>here</a>."
             ),
             "phase_1_number_of_test_images": (
                 "Number of test images for this phase. If you're <a href="
@@ -452,6 +432,16 @@ class ChallengeRequestForm(
         super().__init__(*args, **kwargs)
         self.instance.creator = creator
         self.fields["title"].required = True
+        self.fields["challenge_fee_agreement"].required = True
+        self.fields["algorithm_inputs"].required = True
+        self.fields["algorithm_outputs"].required = True
+        self.fields["number_of_tasks"].required = True
+        self.fields["average_size_of_test_image_in_mb"].required = True
+        self.fields["inference_time_limit_in_minutes"].required = True
+        self.fields["phase_1_number_of_submissions_per_team"].required = True
+        self.fields["phase_2_number_of_submissions_per_team"].required = True
+        self.fields["phase_1_number_of_test_images"].required = True
+        self.fields["phase_2_number_of_test_images"].required = True
         self.fields["data_license"].initial = True
         self.fields["long_term_commitment"].initial = True
         self.helper = FormHelper(self)
@@ -502,14 +492,13 @@ class ChallengeRequestForm(
                 Div(
                     "algorithm_inputs",
                     "algorithm_outputs",
-                    id="type-2-fields",
                 ),
                 Div(
                     HTML(
-                        "<h3 class='d-flex justify-content-center'>Type 2 challenge cost estimation</h3><br>"
+                        "<h3 class='d-flex justify-content-center'>Compute and storage cost estimation</h3><br>"
                     ),
                     HTML(
-                        "<p>Since Type 2 challenges involve running algorithm "
+                        "<p>Since challenges involve running algorithm "
                         "containers on our AWS infrastructure on a hidden test "
                         "set, we need to know how computationally expensive "
                         "your challenge submissions will be and how much data "
@@ -518,10 +507,9 @@ class ChallengeRequestForm(
                         "'https://grand-challenge.org/challenge-policy-and-pricing/'"
                         "target='_blank'>challenge pricing policy</a> before you continue. We will use the "
                         "below information to calculate a rough compute and storage cost estimate.</p>"
-                        "<p> If you are unfamiliar with what a Type 2 challenge"
-                        " entails, please <a href="
-                        "'https://grand-challenge.org/documentation/type-ii-challenge-setup/'"
-                        "target='_blank'> first read our Type 2 challenge documentation</a>.</p> "
+                        "<p> If you are unfamiliar with how challenges work on Grand Challenge, please <a href="
+                        "'https://grand-challenge.org/documentation/challenge-setup/'"
+                        "target='_blank'> first read our challenge documentation</a>.</p> "
                         "<p>To help you fill in the below form correctly, "
                         "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
                         "target='_blank'> we have assembled example budgets "
@@ -531,9 +519,8 @@ class ChallengeRequestForm(
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
                     "inference_time_limit_in_minutes",
-                    "budget_for_hosting_challenge",
                     HTML(
-                        "<br><p>Type 2 challenges usually consist of 2 phases. "
+                        "<br><p>Challenges usually consist of 2 phases. "
                         "The first of those tends to be a "
                         "<b>preliminary test phase</b>, "
                         "and the second the <b>final test phase</b>. The "
@@ -541,7 +528,7 @@ class ChallengeRequestForm(
                         "often the amount of times that users can submit to "
                         "them differs, which is why we ask for separate "
                         "estimates for the two phases below."
-                        " Should your challenge have only phase, enter 0 in "
+                        " Should your challenge have only one phase, enter 0 in "
                         "all fields for phase 2. Should your challenge have "
                         "multiple tasks and hence more than N*2 phases, "
                         "please provide the average numbers across tasks for "
@@ -549,15 +536,16 @@ class ChallengeRequestForm(
                         "tasks above accordingly. For examples of those"
                         " and other scenarios, have a look "
                         "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
-                        "target='_blank'>at our example budget calculations</a>"
+                        "target='_blank'>at our example cost calculations</a>"
                         ".</p><h4>Phase 1</h4>"
                     ),
                     *phase_1_items,
                     HTML("<h4>Phase 2</h4>"),
                     *phase_2_items,
-                    id="budget-fields",
                     css_class="border rounded px-4 pt-4 my-5",
                 ),
+                "budget_for_hosting_challenge",
+                "challenge_fee_agreement",
                 "comments",
             ),
             ButtonHolder(Submit("save", "Save")),
@@ -570,6 +558,13 @@ class ChallengeRequestForm(
         if start and end and start >= end:
             raise ValidationError(
                 "The start date needs to be before the end date."
+            )
+        if (
+            "algorithm_inputs" not in cleaned_data.keys()
+            or "algorithm_outputs" not in cleaned_data.keys()
+        ):
+            raise ValidationError(
+                "Please describe what inputs and outputs the algorithms submitted to your challenge take and produce."
             )
         return cleaned_data
 
