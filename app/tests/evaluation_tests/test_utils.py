@@ -34,7 +34,7 @@ def test_calculate_ranks(django_assert_max_num_queries):
         for _ in range(len(results))
     ]
 
-    for e, r in zip(queryset, results):
+    for e, r in zip(queryset, results, strict=True):
         e.outputs.add(
             ComponentInterfaceValue.objects.create(
                 interface=ComponentInterface.objects.get(
@@ -165,7 +165,7 @@ def test_results_display():
         for r in results
     ]
 
-    for e, r in zip(queryset, results):
+    for e, r in zip(queryset, results, strict=True):
         e.outputs.add(
             ComponentInterfaceValue.objects.create(
                 interface=ComponentInterface.objects.get(
@@ -229,7 +229,7 @@ def test_null_results():
         for _ in range(len(results))
     ]
 
-    for e, r in zip(queryset, results):
+    for e, r in zip(queryset, results, strict=True):
         e.outputs.add(
             ComponentInterfaceValue.objects.create(
                 interface=ComponentInterface.objects.get(

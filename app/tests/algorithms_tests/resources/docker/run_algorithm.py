@@ -4,11 +4,10 @@ import shutil
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Union
 from warnings import warn
 
 
-def write_to_file(path: str, res: Union[dict, str]):
+def write_to_file(path: str, res: dict | str):
     with open(path, "w") as f:
         if isinstance(res, dict):
             res = json.dumps(res, ensure_ascii=True, indent=2)

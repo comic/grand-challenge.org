@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass
@@ -7,7 +6,7 @@ class LegacyLUT:
     title: str
     lut_color: str
     lut_alpha: str
-    lut_range: List[int]
+    lut_range: list[int]
     color_interpolation: str
     lut_relative: bool
     lut_color_invert: str = ""

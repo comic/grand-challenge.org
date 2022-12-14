@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import List
 
 from actstream.actions import follow
 from actstream.models import Follow
@@ -342,7 +341,7 @@ class Image(UUIDModel):
         return f"Image {self.name} {self.shape_without_color}"
 
     @property
-    def shape_without_color(self) -> List[int]:
+    def shape_without_color(self) -> list[int]:
         """
         Return the shape of the image without the color channel.
 
@@ -360,7 +359,7 @@ class Image(UUIDModel):
         return result
 
     @property
-    def shape(self) -> List[int]:
+    def shape(self) -> list[int]:
         """
         Return the shape of the image with the color channel.
 

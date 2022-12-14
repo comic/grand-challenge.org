@@ -5,7 +5,7 @@ import zipfile
 from datetime import datetime, timezone
 from os.path import commonpath
 from pathlib import Path
-from typing import List, NamedTuple, Optional
+from typing import NamedTuple
 
 from django.conf import settings
 from django.core.files import File
@@ -51,7 +51,7 @@ class ParsedLog(NamedTuple):
     source: SourceChoices
 
 
-def parse_structured_log(*, log: str) -> Optional[ParsedLog]:
+def parse_structured_log(*, log: str) -> ParsedLog | None:
     """Parse the structured logs from SageMaker Shim"""
     structured_log = json.loads(log.strip())
 
@@ -95,7 +95,7 @@ def safe_extract(*, src: File, dest: Path):
                         fd.write(chunk)
 
 
-def _filter_members(members: List[zipfile.ZipInfo]):
+def _filter_members(members: list[zipfile.ZipInfo]):
     """Filter common prefixes and uninteresting files from a zip archive"""
     members = [
         m.filename

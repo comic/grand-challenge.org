@@ -1,6 +1,5 @@
 import re
 from re import Match
-from typing import Tuple, Union
 
 from django.utils.html import format_html
 from django.utils.safestring import SafeString, mark_safe
@@ -21,7 +20,7 @@ class Substitution:
         *,
         tag_name: str,
         replacement: str,
-        markers: Tuple[str, str] = ("{%", "%}"),
+        markers: tuple[str, str] = ("{%", "%}"),
         use_arg: bool = False,
     ):
         self._tag_name = tag_name.strip()
@@ -40,7 +39,7 @@ class Substitution:
         pattern += rf"\s*{self._markers[1]}"
         return pattern
 
-    def sub(self, s: Union[str, SafeString]) -> Union[str, SafeString]:
+    def sub(self, s: str | SafeString) -> str | SafeString:
         def subrepl(match: Match):
             if self._use_arg:
                 return format_html(self._replacement, match.group(1))

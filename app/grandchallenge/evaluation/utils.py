@@ -1,6 +1,7 @@
 import enum
 from collections import OrderedDict
-from typing import Callable, Dict, Iterable, List, NamedTuple, Tuple
+from collections.abc import Callable, Iterable
+from typing import NamedTuple
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
@@ -16,9 +17,9 @@ class Metric(NamedTuple):
 
 
 class Positions(NamedTuple):
-    ranks: Dict[str, float]
-    rank_scores: Dict[str, float]
-    rank_per_metric: Dict[str, Dict[str, float]]
+    ranks: dict[str, float]
+    rank_scores: dict[str, float]
+    rank_per_metric: dict[str, dict[str, float]]
 
 
 def get(inputs):
@@ -32,7 +33,7 @@ def get(inputs):
 
 
 def rank_results(
-    *, evaluations: Tuple, metrics: Tuple[Metric, ...], score_method: Callable
+    *, evaluations: tuple, metrics: tuple[Metric, ...], score_method: Callable
 ) -> Positions:
     """Determine the overall rank for each result."""
     evaluations = _filter_valid_results(
@@ -56,8 +57,8 @@ def rank_results(
 
 
 def _filter_valid_results(
-    *, evaluations: Iterable, metrics: Tuple[Metric, ...]
-) -> List:
+    *, evaluations: Iterable, metrics: tuple[Metric, ...]
+) -> list:
     """Ensure that all of the metrics are in every result."""
     return [
         e
@@ -80,8 +81,8 @@ def _filter_valid_results(
 
 
 def _get_rank_per_metric(
-    *, evaluations: Iterable, metrics: Tuple[Metric, ...]
-) -> Dict[str, Dict[str, float]]:
+    *, evaluations: Iterable, metrics: tuple[Metric, ...]
+) -> dict[str, dict[str, float]]:
     """
     Takes results and calculates the rank for each of the individual metrics
 
@@ -120,8 +121,8 @@ def _get_rank_per_metric(
 
 
 def _scores_to_ranks(
-    *, scores: Dict, reverse: bool = False
-) -> Dict[str, float]:
+    *, scores: dict, reverse: bool = False
+) -> dict[str, float]:
     """
     Go from a score (a scalar) to a rank (integer). If two scalars are the
     same then they will have the same rank.

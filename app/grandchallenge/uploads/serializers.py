@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import (
@@ -96,7 +95,7 @@ class UserUploadPresignedURLsSerializer(UserUploadSerializer):
             raise ValidationError("The `part_numbers` field is required")
         return data
 
-    def get_presigned_urls(self, obj: UserUpload) -> Dict[int, str]:
+    def get_presigned_urls(self, obj: UserUpload) -> dict[int, str]:
         return obj.generate_presigned_urls(
             part_numbers=self.validated_data["part_numbers"]
         )
