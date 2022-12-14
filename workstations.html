@@ -16,6 +16,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -45,7 +46,86 @@
 <li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Workstations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Workstations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.Feedback"><code class="docutils literal notranslate"><span class="pre">Feedback</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Feedback.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Feedback.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Feedback.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Feedback.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Feedback.save"><code class="docutils literal notranslate"><span class="pre">Feedback.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">FeedbackGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">FeedbackGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">FeedbackGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">FeedbackUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">FeedbackUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">FeedbackUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.Session"><code class="docutils literal notranslate"><span class="pre">Session</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Session.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Session.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.Region"><code class="docutils literal notranslate"><span class="pre">Session.Region</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.environment"><code class="docutils literal notranslate"><span class="pre">Session.environment</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.expires_at"><code class="docutils literal notranslate"><span class="pre">Session.expires_at</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.hostname"><code class="docutils literal notranslate"><span class="pre">Session.hostname</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.save"><code class="docutils literal notranslate"><span class="pre">Session.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.save_without_historical_record"><code class="docutils literal notranslate"><span class="pre">Session.save_without_historical_record()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.service"><code class="docutils literal notranslate"><span class="pre">Session.service</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.start"><code class="docutils literal notranslate"><span class="pre">Session.start()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.stop"><code class="docutils literal notranslate"><span class="pre">Session.stop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.task_kwargs"><code class="docutils literal notranslate"><span class="pre">Session.task_kwargs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.update_status"><code class="docutils literal notranslate"><span class="pre">Session.update_status()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Session.workstation_url"><code class="docutils literal notranslate"><span class="pre">Session.workstation_url</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.SessionGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">SessionGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.SessionGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">SessionGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.SessionGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">SessionGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.SessionUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">SessionUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.SessionUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">SessionUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.SessionUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">SessionUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation"><code class="docutils literal notranslate"><span class="pre">Workstation</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Workstation.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Workstation.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.latest_executable_image"><code class="docutils literal notranslate"><span class="pre">Workstation.latest_executable_image</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.save"><code class="docutils literal notranslate"><span class="pre">Workstation.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">WorkstationGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">WorkstationGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage"><code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">WorkstationImage.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">WorkstationImage.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage.save"><code class="docutils literal notranslate"><span class="pre">WorkstationImage.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationImageGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">WorkstationImageGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">WorkstationImageGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationImageUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">WorkstationImageUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">WorkstationImageUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">WorkstationUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">WorkstationUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.delete_workstation_groups_hook"><code class="docutils literal notranslate"><span class="pre">delete_workstation_groups_hook()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
 </ul>
@@ -63,8 +143,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Workstations</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Workstations</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/workstations.rst.txt" rel="nofollow"> View page source</a>
       </li>

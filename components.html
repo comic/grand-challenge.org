@@ -16,6 +16,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -44,7 +45,44 @@
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Components</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface"><code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.Kind"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.Kind</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.__init__"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.clean"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.clean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterface.validate_against_schema"><code class="docutils literal notranslate"><span class="pre">ComponentInterface.validate_against_schema()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.__init__"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.clean"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.clean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.decompress"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.decompress</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.image_file"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.image_file</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.relative_path"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.relative_path</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentInterfaceValue.save"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ComponentJobManager"><code class="docutils literal notranslate"><span class="pre">ComponentJobManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentJobManager.average_duration"><code class="docutils literal notranslate"><span class="pre">ComponentJobManager.average_duration()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.ComponentJobManager.with_duration"><code class="docutils literal notranslate"><span class="pre">ComponentJobManager.with_duration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.ImportStatusChoices"><code class="docutils literal notranslate"><span class="pre">ImportStatusChoices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.InterfaceKind"><code class="docutils literal notranslate"><span class="pre">InterfaceKind</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.InterfaceKind.InterfaceKindChoices"><code class="docutils literal notranslate"><span class="pre">InterfaceKind.InterfaceKindChoices</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.InterfaceKind.interface_type_file"><code class="docutils literal notranslate"><span class="pre">InterfaceKind.interface_type_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.InterfaceKind.interface_type_image"><code class="docutils literal notranslate"><span class="pre">InterfaceKind.interface_type_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.components.models.InterfaceKind.interface_type_json"><code class="docutils literal notranslate"><span class="pre">InterfaceKind.interface_type_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.InterfaceKindChoices"><code class="docutils literal notranslate"><span class="pre">InterfaceKindChoices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.components.models.InterfaceSuperKindChoices"><code class="docutils literal notranslate"><span class="pre">InterfaceSuperKindChoices</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
@@ -63,8 +101,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Components</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Components</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/components.rst.txt" rel="nofollow"> View page source</a>
       </li>

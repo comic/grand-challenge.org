@@ -16,6 +16,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -52,6 +53,117 @@
 <li class="toctree-l2"><a class="reference internal" href="#defining-the-hanging-list">Defining the Hanging List</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#questions">Questions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#adding-ground-truth">Adding Ground Truth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer"><code class="docutils literal notranslate"><span class="pre">Answer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Answer.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Answer.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.api_url"><code class="docutils literal notranslate"><span class="pre">Answer.api_url</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.calculate_score"><code class="docutils literal notranslate"><span class="pre">Answer.calculate_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.save"><code class="docutils literal notranslate"><span class="pre">Answer.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.save_without_historical_record"><code class="docutils literal notranslate"><span class="pre">Answer.save_without_historical_record()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Answer.validate"><code class="docutils literal notranslate"><span class="pre">Answer.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerType"><code class="docutils literal notranslate"><span class="pre">AnswerType</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">AnswerUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">AnswerUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">AnswerUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption"><code class="docutils literal notranslate"><span class="pre">CategoricalOption</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">CategoricalOption.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">CategoricalOption.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet"><code class="docutils literal notranslate"><span class="pre">DisplaySet</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DisplaySet.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DisplaySet.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.api_url"><code class="docutils literal notranslate"><span class="pre">DisplaySet.api_url</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.save"><code class="docutils literal notranslate"><span class="pre">DisplaySet.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet.workstation_url"><code class="docutils literal notranslate"><span class="pre">DisplaySet.workstation_url</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question"><code class="docutils literal notranslate"><span class="pre">Question</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.AnswerType"><code class="docutils literal notranslate"><span class="pre">Question.AnswerType</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.Direction"><code class="docutils literal notranslate"><span class="pre">Question.Direction</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Question.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.ImagePort"><code class="docutils literal notranslate"><span class="pre">Question.ImagePort</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Question.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.ScoringFunction"><code class="docutils literal notranslate"><span class="pre">Question.ScoringFunction</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.api_url"><code class="docutils literal notranslate"><span class="pre">Question.api_url</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.calculate_score"><code class="docutils literal notranslate"><span class="pre">Question.calculate_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.clean"><code class="docutils literal notranslate"><span class="pre">Question.clean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.is_answer_valid"><code class="docutils literal notranslate"><span class="pre">Question.is_answer_valid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.is_fully_editable"><code class="docutils literal notranslate"><span class="pre">Question.is_fully_editable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.read_only_fields"><code class="docutils literal notranslate"><span class="pre">Question.read_only_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.save"><code class="docutils literal notranslate"><span class="pre">Question.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy"><code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.add_editor"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.add_editor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.add_ground_truth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.add_reader"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.add_reader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.answerable_question_count</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_questions"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.answerable_questions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.clean"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.clean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.get_progress_for_user()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.help_text</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.image_groups"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.image_groups</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.is_editor"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.is_editor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.is_reader"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.is_reader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.leaderboard"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.leaderboard</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_editor"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.remove_editor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.remove_reader"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.remove_reader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.save"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.score_for_user"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.score_for_user()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.scores_by_user"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.scores_by_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.statistics"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.statistics</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.study_image_names"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.study_image_names</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.delete_reader_study_groups_hook"><code class="docutils literal notranslate"><span class="pre">delete_reader_study_groups_hook()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
@@ -70,8 +182,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Reader Studies</li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Reader Studies</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/reader-studies.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -170,6 +282,7 @@ reader is evaluated by applying the <code class="docutils literal notranslate"><
 <p>The scores can then be compared on the <code class="docutils literal notranslate"><span class="pre">leaderboard</span></code>. Statistics are also available
 based on these scores: the average and total scores for each question as well
 as for each case are displayed in the <code class="docutils literal notranslate"><span class="pre">statistics</span></code> view.</p>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">Answer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer" title="Permalink to this definition"></a></dt>
@@ -861,7 +974,6 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 bulk_delete.</p>
 </dd></dl>
 
-</section>
 </section>
 
 

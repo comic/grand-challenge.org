@@ -16,6 +16,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -62,8 +63,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-      <li>Welcome to grand-challenge.org’s documentation!</li>
+      <li><a href="#" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Welcome to grand-challenge.org’s documentation!</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -130,14 +131,54 @@ or spin up your own instance.</p>
 <li class="toctree-l2"><a class="reference internal" href="algorithms.html#frequently-asked-questions">Frequently Asked Questions</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="components.html#grandchallenge.components.models.ComponentInterface"><code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#grandchallenge.components.models.ComponentInterfaceValue"><code class="docutils literal notranslate"><span class="pre">ComponentInterfaceValue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#grandchallenge.components.models.ComponentJobManager"><code class="docutils literal notranslate"><span class="pre">ComponentJobManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#grandchallenge.components.models.ImportStatusChoices"><code class="docutils literal notranslate"><span class="pre">ImportStatusChoices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#grandchallenge.components.models.InterfaceKind"><code class="docutils literal notranslate"><span class="pre">InterfaceKind</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#grandchallenge.components.models.InterfaceKindChoices"><code class="docutils literal notranslate"><span class="pre">InterfaceKindChoices</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#grandchallenge.components.models.InterfaceSuperKindChoices"><code class="docutils literal notranslate"><span class="pre">InterfaceSuperKindChoices</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.Feedback"><code class="docutils literal notranslate"><span class="pre">Feedback</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.FeedbackGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">FeedbackGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.FeedbackUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">FeedbackUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.Session"><code class="docutils literal notranslate"><span class="pre">Session</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.SessionGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">SessionGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.SessionUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">SessionUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.Workstation"><code class="docutils literal notranslate"><span class="pre">Workstation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.WorkstationGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.WorkstationImage"><code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationImageGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.WorkstationImageUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationImageUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.WorkstationUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">WorkstationUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="workstations.html#grandchallenge.workstations.models.delete_workstation_groups_hook"><code class="docutils literal notranslate"><span class="pre">delete_workstation_groups_hook()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="reader-studies.html#creating-a-reader-study">Creating a Reader Study</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reader-studies.html#cases">Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reader-studies.html#defining-the-hanging-list">Defining the Hanging List</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reader-studies.html#questions">Questions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reader-studies.html#adding-ground-truth">Adding Ground Truth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.Answer"><code class="docutils literal notranslate"><span class="pre">Answer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.AnswerGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.AnswerType"><code class="docutils literal notranslate"><span class="pre">AnswerType</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.AnswerUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">AnswerUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.CategoricalOption"><code class="docutils literal notranslate"><span class="pre">CategoricalOption</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.DisplaySet"><code class="docutils literal notranslate"><span class="pre">DisplaySet</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.Question"><code class="docutils literal notranslate"><span class="pre">Question</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.QuestionGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.QuestionUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy"><code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission"><code class="docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest"><code class="docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission"><code class="docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.delete_reader_study_groups_hook"><code class="docutils literal notranslate"><span class="pre">delete_reader_study_groups_hook()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a><ul>
