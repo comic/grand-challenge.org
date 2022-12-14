@@ -466,7 +466,7 @@ def _create_algorithm_demo(users):
             ]
         },
     ]
-    for res, det in zip(results, detections):
+    for res, det in zip(results, detections, strict=True):
         _create_job_result(users, algorithm_image, cases_image, res, det)
 
 

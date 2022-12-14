@@ -465,7 +465,9 @@ def _extract_docker_image_file(*, instance, filename: str):
         with instance.image.open(mode="rb") as im, tarfile.open(
             fileobj=im, mode="r"
         ) as t:
-            member = dict(zip(t.getnames(), t.getmembers()))[filename]
+            member = dict(zip(t.getnames(), t.getmembers(), strict=True))[
+                filename
+            ]
             file = t.extractfile(member).read()
         return file
     except (KeyError, tarfile.ReadError):
