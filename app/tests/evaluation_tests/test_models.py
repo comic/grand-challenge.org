@@ -87,7 +87,7 @@ class TestSubmission(TestCase):
 
 @pytest.mark.django_db
 class TestPhaseLimits:
-    def setup(self):
+    def setup_method(self):
         self.phase = PhaseFactory()
         self.user = UserFactory()
         evaluation_kwargs = {
