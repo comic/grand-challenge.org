@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from grandchallenge.algorithms.tasks import (
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
     send_failed_job_notification,
+    set_credits_per_job,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -736,3 +738,31 @@ def test_failed_job_notifications(client, settings):
 
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user is not editor
+
+
+@pytest.mark.django_db
+def test_setting_credits_per_job(algorithm_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # Create the algorithm image
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    recurse_callbacks(callbacks=callbacks)
+    ai.refresh_from_db()
+    alg = ai.algorithm
+
+    for test in (
+        {"duration": 20, "credits": 30},
+        {"duration": 1, "credits": 20},
+        {"duration": 120, "credits": 200},
+    ):
+        alg.average_duration = timedelta(minutes=test["duration"])
+        alg.save()
+
+        set_credits_per_job()
+
+        alg.refresh_from_db()
+        assert alg.credits_per_job == test["credits"]

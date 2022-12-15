@@ -1136,6 +1136,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
         "schedule": crontab(minute=0, hour=4),
     },
+    "update_algorithm_credits": {
+        "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
+        "schedule": crontab(minute=30, hour=4),
+    },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": crontab(minute="*/5"),
@@ -1176,6 +1180,13 @@ ALGORITHMS_MAX_MEMORY_GB = 30
 # The SageMaker backend currently has a maximum limit of 3600s
 ALGORITHMS_JOB_TIME_LIMIT_SECONDS = os.environ.get(
     "ALGORITHMS_JOB_TIME_LIMIT_SECONDS", "3600"
+)
+# How many cents per month each user receives by default
+ALGORITHMS_USER_CENTS_PER_MONTH = int(
+    os.environ.get("ALGORITHMS_USER_CENTS_PER_MONTH", "1000")
+)
+ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH = int(
+    os.environ.get("ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH", "50")
 )
 
 # Disallow some challenge names due to subdomain or media folder clashes

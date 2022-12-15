@@ -87,7 +87,7 @@ class TestSubmission(TestCase):
 
 @pytest.mark.django_db
 class TestPhaseLimits:
-    def setup(self):
+    def setup_method(self):
         self.phase = PhaseFactory()
         self.user = UserFactory()
         evaluation_kwargs = {
@@ -129,7 +129,6 @@ class TestPhaseLimits:
 
     @pytest.mark.parametrize("submission_limit_period", (None, 1, 3))
     def test_submissions_closed(self, submission_limit_period):
-        self.setup()
         self.phase.submission_limit = 0
         self.phase.submission_limit_period = submission_limit_period
 
@@ -144,7 +143,6 @@ class TestPhaseLimits:
     def test_submissions_period(
         self, submission_limit_period, expected_remaining
     ):
-        self.setup()
         self.phase.submission_limit = 3  # successful jobs created in setUp
         self.phase.submission_limit_period = submission_limit_period
 
@@ -159,7 +157,6 @@ class TestPhaseLimits:
     def test_submissions_period_none(
         self, submission_limit, expected_remaining
     ):
-        self.setup()
         self.phase.submission_limit = submission_limit
         self.phase.submission_limit_period = None
 

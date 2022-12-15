@@ -162,7 +162,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         related_name="algorithms",
     )
     credits_per_job = models.PositiveIntegerField(
-        default=0,
+        default=100,
+        editable=False,
         help_text=(
             "The number of credits that are required for each execution of this algorithm."
         ),
