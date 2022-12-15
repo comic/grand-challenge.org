@@ -498,7 +498,7 @@ def test_challenge_cost_page_permissions(
     assign_perm("challenges.view_challengerequest", reviewer)
     if reverse_kwargs:
         challenge = ChallengeFactory()
-        reverse_kwargs_for_view = {"pk": challenge.pk}
+        reverse_kwargs_for_view = {"pk": str(challenge.pk)}
     else:
         reverse_kwargs_for_view = None
     response = get_view_for_user(
