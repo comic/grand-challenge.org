@@ -2,7 +2,7 @@
 {% load random_encode %}
 {% load bleach %}
 
-<li class="nav-item dropdown pr-1 my-1">
+<li class="nav-item dropdown my-auto">
     <a href="#" class="nav-link dropdown-toggle"
        data-toggle="dropdown" role="button"
        aria-haspopup="true"
@@ -91,10 +91,10 @@
         </div>
     </li>
 {% else %}
-    <li class="pr-2 my-1"><a
+    <li class="pr-2 my-auto"><a
             class="btn btn-outline-primary"
             href="{% url 'account_login' %}?next={{ request.build_absolute_uri }}#signin">Sign In</a></li>
-    <li class="my-1"><a
+    <li class="my-auto"><a
             class="btn btn-outline-primary"
             href="{% url 'account_signup' %}?next={{ request.build_absolute_uri }}#register">Register</a></li>
 {% endif %}
