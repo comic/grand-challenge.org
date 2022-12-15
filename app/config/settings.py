@@ -1142,7 +1142,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_challenge_cost_statistics": {
         "task": "grandchallenge.challenges.tasks.update_challenge_cost_statistics",
-        "schedule": crontab(minute="*/1"),
+        "schedule": crontab(minute=0, hour=0),
     },
     **{
         f"stop_expired_services_{region}": {
