@@ -621,7 +621,7 @@ def set_credits_per_job():
                     round(
                         cents_per_job
                         * default_credits_per_month
-                        / settings.ALGORITHMS_CENTS_PER_MONTH,
+                        / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
                         -1,
                     )
                 ),
