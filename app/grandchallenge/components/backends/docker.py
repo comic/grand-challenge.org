@@ -89,6 +89,10 @@ class DockerExecutor(DockerConnectionMixin, Executor):
             return None
 
     @property
+    def cents_per_hour(self):
+        return 100
+
+    @property
     def runtime_metrics(self):
         logger.warning("Runtime metrics are not implemented for this backend")
         return

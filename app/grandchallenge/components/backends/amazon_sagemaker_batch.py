@@ -11,6 +11,7 @@ import botocore
 from django.conf import settings
 from django.db.models import TextChoices
 from django.utils._os import safe_join
+from django.utils.functional import cached_property
 
 from grandchallenge.components.backends.base import Executor, JobParams
 from grandchallenge.components.backends.exceptions import (
@@ -50,7 +51,7 @@ class InstanceType(NamedTuple):
     name: str
     cpu: int
     memory: float
-    price_per_hour: float
+    cents_per_hour: int
     gpus: int = 0
     gpu_type: GPUChoices | None = None
 
@@ -62,127 +63,127 @@ INSTANCE_OPTIONS = [
         name="ml.m5.large",
         cpu=2,
         memory=8,
-        price_per_hour=0.128,
+        cents_per_hour=13,
     ),
     InstanceType(
         name="ml.m5.xlarge",
         cpu=4,
         memory=16,
-        price_per_hour=0.257,
+        cents_per_hour=26,
     ),
     InstanceType(
         name="ml.m5.2xlarge",
         cpu=8,
         memory=32,
-        price_per_hour=0.514,
+        cents_per_hour=51,
     ),
     InstanceType(
         name="ml.m5.4xlarge",
         cpu=16,
         memory=64,
-        price_per_hour=1.027,
+        cents_per_hour=103,
     ),
     InstanceType(
         name="ml.m5.12xlarge",
         cpu=48,
         memory=192,
-        price_per_hour=3.082,
+        cents_per_hour=308,
     ),
     InstanceType(
         name="ml.m5.24xlarge",
         cpu=96,
         memory=384,
-        price_per_hour=6.163,
+        cents_per_hour=616,
     ),
     InstanceType(
         name="ml.m4.xlarge",
         cpu=4,
         memory=16,
-        price_per_hour=0.266,
+        cents_per_hour=27,
     ),
     InstanceType(
         name="ml.m4.2xlarge",
         cpu=8,
         memory=32,
-        price_per_hour=0.533,
+        cents_per_hour=53,
     ),
     InstanceType(
         name="ml.m4.4xlarge",
         cpu=16,
         memory=64,
-        price_per_hour=1.066,
+        cents_per_hour=107,
     ),
     InstanceType(
         name="ml.m4.10xlarge",
         cpu=40,
         memory=160,
-        price_per_hour=2.664,
+        cents_per_hour=266,
     ),
     InstanceType(
         name="ml.m4.16xlarge",
         cpu=64,
         memory=256,
-        price_per_hour=4.262,
+        cents_per_hour=426,
     ),
     InstanceType(
         name="ml.c5.xlarge",
         cpu=4,
         memory=8,
-        price_per_hour=0.23,
+        cents_per_hour=23,
     ),
     InstanceType(
         name="ml.c5.2xlarge",
         cpu=8,
         memory=16,
-        price_per_hour=0.461,
+        cents_per_hour=46,
     ),
     InstanceType(
         name="ml.c5.4xlarge",
         cpu=16,
         memory=32,
-        price_per_hour=0.922,
+        cents_per_hour=92,
     ),
     InstanceType(
         name="ml.c5.9xlarge",
         cpu=36,
         memory=72,
-        price_per_hour=2.074,
+        cents_per_hour=207,
     ),
     InstanceType(
         name="ml.c5.18xlarge",
         cpu=72,
         memory=144,
-        price_per_hour=4.147,
+        cents_per_hour=415,
     ),
     InstanceType(
         name="ml.c4.xlarge",
         cpu=4,
         memory=7.5,
-        price_per_hour=0.271,
+        cents_per_hour=27,
     ),
     InstanceType(
         name="ml.c4.2xlarge",
         cpu=8,
         memory=15,
-        price_per_hour=0.544,
+        cents_per_hour=54,
     ),
     InstanceType(
         name="ml.c4.4xlarge",
         cpu=16,
         memory=30,
-        price_per_hour=1.086,
+        cents_per_hour=109,
     ),
     InstanceType(
         name="ml.c4.8xlarge",
         cpu=36,
         memory=60,
-        price_per_hour=2.173,
+        cents_per_hour=217,
     ),
     InstanceType(
         name="ml.p3.2xlarge",
         cpu=8,
         memory=61,
-        price_per_hour=4.131,
+        cents_per_hour=413,
         gpus=1,
         gpu_type=GPUChoices.V100,
     ),
@@ -190,7 +191,7 @@ INSTANCE_OPTIONS = [
         name="ml.p3.8xlarge",
         cpu=32,
         memory=244,
-        price_per_hour=15.864,
+        cents_per_hour=1586,
         gpus=4,
         gpu_type=GPUChoices.V100,
     ),
@@ -198,7 +199,7 @@ INSTANCE_OPTIONS = [
         name="ml.p3.16xlarge",
         cpu=64,
         memory=488,
-        price_per_hour=30.406,
+        cents_per_hour=3041,
         gpus=8,
         gpu_type=GPUChoices.V100,
     ),
@@ -206,7 +207,7 @@ INSTANCE_OPTIONS = [
         name="ml.p2.xlarge",
         cpu=4,
         memory=61,
-        price_per_hour=1.215,
+        cents_per_hour=122,
         gpus=1,
         gpu_type=GPUChoices.K80,
     ),
@@ -214,7 +215,7 @@ INSTANCE_OPTIONS = [
         name="ml.p2.8xlarge",
         cpu=32,
         memory=488,
-        price_per_hour=9.331,
+        cents_per_hour=933,
         gpus=8,
         gpu_type=GPUChoices.K80,
     ),
@@ -222,7 +223,7 @@ INSTANCE_OPTIONS = [
         name="ml.p2.16xlarge",
         cpu=64,
         memory=732,
-        price_per_hour=17.885,
+        cents_per_hour=1789,
         gpus=16,
         gpu_type=GPUChoices.K80,
     ),
@@ -230,7 +231,7 @@ INSTANCE_OPTIONS = [
         name="ml.g4dn.xlarge",
         cpu=4,
         memory=16,
-        price_per_hour=0.822,
+        cents_per_hour=82,
         gpus=1,
         gpu_type=GPUChoices.T4,
     ),
@@ -238,7 +239,7 @@ INSTANCE_OPTIONS = [
         name="ml.g4dn.2xlarge",
         cpu=8,
         memory=32,
-        price_per_hour=1.047,
+        cents_per_hour=105,
         gpus=1,
         gpu_type=GPUChoices.T4,
     ),
@@ -246,7 +247,7 @@ INSTANCE_OPTIONS = [
         name="ml.g4dn.4xlarge",
         cpu=16,
         memory=64,
-        price_per_hour=1.678,
+        cents_per_hour=168,
         gpus=1,
         gpu_type=GPUChoices.T4,
     ),
@@ -254,7 +255,7 @@ INSTANCE_OPTIONS = [
         name="ml.g4dn.12xlarge",
         cpu=48,
         memory=192,
-        price_per_hour=5.453,
+        cents_per_hour=545,
         gpus=4,
         gpu_type=GPUChoices.T4,
     ),
@@ -262,7 +263,7 @@ INSTANCE_OPTIONS = [
         name="ml.g4dn.16xlarge",
         cpu=64,
         memory=256,
-        price_per_hour=6.066,
+        cents_per_hour=607,
         gpus=1,
         gpu_type=GPUChoices.T4,
     ),
@@ -370,7 +371,7 @@ class AmazonSageMakerBatchExecutor(Executor):
         # Hardcoded by AWS
         return "/aws/sagemaker/TransformJobs"
 
-    @property
+    @cached_property
     def _instance_type(self):
         """Find the cheapest instance that can run this job"""
 
@@ -394,8 +395,12 @@ class AmazonSageMakerBatchExecutor(Executor):
             raise ValueError("No suitable instance types for job")
 
         # Get the lowest priced instance
-        compatible_instances.sort(key=lambda x: x.price_per_hour)
-        return compatible_instances[0].name
+        compatible_instances.sort(key=lambda x: x.cents_per_hour)
+        return compatible_instances[0]
+
+    @property
+    def cents_per_hour(self):
+        return self._instance_type.cents_per_hour
 
     def execute(self, *, input_civs, input_prefixes):
         self._create_invocation_json(
@@ -464,7 +469,7 @@ class AmazonSageMakerBatchExecutor(Executor):
                     "S3OutputPath": f"s3://{settings.COMPONENTS_OUTPUT_BUCKET_NAME}/{self._invocation_prefix}"
                 },
                 TransformResources={
-                    "InstanceType": self._instance_type,
+                    "InstanceType": self._instance_type.name,
                     "InstanceCount": 1,
                 },
                 Environment={  # Up to 16 pairs
@@ -605,7 +610,7 @@ class AmazonSageMakerBatchExecutor(Executor):
                 "name": instance_type.name,
                 "cpu": instance_type.cpu,
                 "memory": instance_type.memory,
-                "price_per_hour": instance_type.price_per_hour,
+                "cents_per_hour": instance_type.cents_per_hour,
                 "gpus": instance_type.gpus,
                 "gpu_type": None
                 if instance_type.gpu_type is None

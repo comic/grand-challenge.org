@@ -117,6 +117,11 @@ class Executor(ABC):
 
     @property
     @abstractmethod
+    def cents_per_hour(self):
+        ...
+
+    @property
+    @abstractmethod
     def runtime_metrics(self):
         ...
 

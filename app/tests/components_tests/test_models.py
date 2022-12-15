@@ -804,7 +804,7 @@ def test_runtime_metrics_chart():
                 "gpus": 0,
                 "memory": 8,
                 "name": "ml.m5.large",
-                "price_per_hour": 0.128,
+                "cents_per_hour": 13,
             },
             "metrics": [
                 {
