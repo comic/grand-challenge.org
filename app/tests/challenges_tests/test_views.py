@@ -514,6 +514,15 @@ def test_challenge_cost_page_permissions(
         viewname=viewname,
         reverse_kwargs=reverse_kwargs_for_view,
         client=client,
+        user=authenticated_staff_user,
+        data=data,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=viewname,
+        reverse_kwargs=reverse_kwargs_for_view,
+        client=client,
         user=reviewer,
         data=data,
     )
