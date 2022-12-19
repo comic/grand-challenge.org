@@ -620,9 +620,9 @@ def challenge_request():
         inference_time_limit_in_minutes=10,
         average_size_of_test_image_in_mb=10,
         phase_1_number_of_submissions_per_team=10,
-        phase_2_number_of_submissions_per_team=1,
+        phase_2_number_of_submissions_per_team=0,
         phase_1_number_of_test_images=100,
-        phase_2_number_of_test_images=500,
+        phase_2_number_of_test_images=0,
         number_of_tasks=1,
         structured_challenge_submission_doi="10.5281/zenodo.6362337",
     )
