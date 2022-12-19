@@ -914,12 +914,12 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     @cached_property
     def budget(self):
         if (
-            self.inference_time_limit_in_minutes
-            and self.phase_1_number_of_test_images
-            and self.phase_1_number_of_submissions_per_team
-            and self.average_size_of_test_image_in_mb
-            and self.phase_2_number_of_test_images
-            and self.phase_2_number_of_submissions_per_team
+            self.inference_time_limit_in_minutes is not None
+            and self.phase_1_number_of_test_images is not None
+            and self.phase_1_number_of_submissions_per_team is not None
+            and self.average_size_of_test_image_in_mb is not None
+            and self.phase_2_number_of_test_images is not None
+            and self.phase_2_number_of_submissions_per_team is not None
         ):
             compute_costs = settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
             s3_storage_costs = (
