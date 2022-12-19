@@ -870,6 +870,8 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
     )
+    accumulated_compute_cost = models.FloatField(default=0, blank=True)
+    accumulated_docker_storage_cost = models.FloatField(default=0, blank=True)
 
     def __str__(self):
         return self.title

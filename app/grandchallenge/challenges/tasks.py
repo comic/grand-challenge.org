@@ -1,5 +1,3 @@
-from typing import NamedTuple
-
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -54,14 +52,6 @@ def update_challenge_results_cache():
             "cached_latest_result",
         ],
     )
-
-
-class ChallengeCosts(NamedTuple):
-    short_name: str
-    status: str
-    challenge_compute_cost: float
-    docker_storage_cost: float
-    total_cost: float
 
 
 def aggregate_compute_costs_per_month(phase_stats):
@@ -146,7 +136,6 @@ def get_monthly_challenge_costs(phase_stats):
 
 
 def calculate_costs_per_challenge(phase_stats):
-    challenge_dict = {}
     challenges = Challenge.objects.filter(
         phase__submission_kind=SubmissionKindChoices.ALGORITHM
     ).all()
@@ -183,22 +172,17 @@ def calculate_costs_per_challenge(phase_stats):
             / 100,
             ndigits=2,
         )
-        challenge_dict[challenge.pk] = ChallengeCosts(
-            short_name=challenge.short_name,
-            status=challenge.status.name,
-            challenge_compute_cost=challenge_compute_cost,
-            docker_storage_cost=docker_storage_cost,
-            total_cost=round(
-                challenge_compute_cost + docker_storage_cost, ndigits=2
-            ),
-        )
-    return challenge_dict
+        challenge.accumulated_docker_storage_cost = docker_storage_cost
+        challenge.accumulated_compute_cost = challenge_compute_cost
+    Challenge.objects.bulk_update(
+        challenges,
+        ["accumulated_docker_storage_cost", "accumulated_compute_cost"],
+    )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def update_challenge_cost_statistics():
     phase_stats = cache.get("statistics_for_phases")
-    challenge_dict = calculate_costs_per_challenge(phase_stats)
+    calculate_costs_per_challenge(phase_stats=phase_stats)
     monthly_challenge_costs = get_monthly_challenge_costs(phase_stats)
-    cache.set("statistics_for_challenges", challenge_dict, timeout=None)
     cache.set("monthly_challenge_costs", monthly_challenge_costs, timeout=None)
