@@ -1,13 +1,13 @@
-<tr hx-get="{% url 'challenges:costs-per-phase' pk=challenge_pk %}"
+<tr hx-get="{% url 'challenges:costs-per-phase' pk=challenge.pk %}"
     hx-swap="outerHTML"
 >
-    <td class="pl-3">{{ short_name }}</td>
+    <td class="pl-3">{{ challenge.short_name }}</td>
     <td class="text-center">
-        <span class="badge {% if status == challenge_status_choices.OPEN %}badge-success {% elif status == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ status }}</span><br>
+        <span class="badge {% if challenge.status.name == challenge_status_choices.OPEN %}badge-success {% elif challenge.status.name == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge.status.name }}</span><br>
     </td>
-    <td class="text-right">{{ challenge_compute_cost }} €</td>
-    <td class="text-right">{{ docker_storage_cost }} €</td>
+    <td class="text-right">{{ challenge.accumulated_compute_cost }} €</td>
+    <td class="text-right">{{ challenge.accumulated_docker_storage_cost }} €</td>
     <td class="text-right">{{ total_cost }} €</td>
 </tr>
 
-<tr hx-swap-oob="true" id="child-{{ short_name }}" type="hidden" class="border-0"></tr>
+<tr hx-swap-oob="true" id="child-{{ challenge.short_name }}" type="hidden" class="border-0"></tr>

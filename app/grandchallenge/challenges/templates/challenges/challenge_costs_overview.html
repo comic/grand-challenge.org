@@ -33,17 +33,17 @@
                 </tr>
             </thead>
             <tbody>
-                {% for challenge_pk, challenge_dict in statistics_for_challenges.items %}
-                    <tr hx-get="{% url 'challenges:costs-per-phase' pk=challenge_pk %}"
+                {% for challenge in challenges %}
+                    <tr hx-get="{% url 'challenges:costs-per-phase' pk=challenge.pk %}"
                         hx-swap="outerHTML"
                     >
-                        <td class="pl-3">{{ challenge_dict.short_name }}</td>
+                        <td class="pl-3">{{ challenge.short_name }}</td>
                         <td class="text-center">
-                            <span class="badge {% if challenge_dict.status == challenge_status_choices.OPEN %}badge-success {% elif challenge_dict.status == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge_dict.status }}</span><br>
+                            <span class="badge {% if challenge.status.name == challenge_status_choices.OPEN %}badge-success {% elif challenge.status.name == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge.status.name }}</span><br>
                         </td>
-                        <td class="text-right">{{ challenge_dict.challenge_compute_cost }} €</td>
-                        <td class="text-right">{{ challenge_dict.docker_storage_cost }} €</td>
-                        <td class="text-right">{{ challenge_dict.total_cost }} €</td>
+                        <td class="text-right">{{ challenge.accumulated_compute_cost }} €</td>
+                        <td class="text-right">{{ challenge.accumulated_docker_storage_cost }} €</td>
+                        <td class="text-right">{{ challenge.total_cost }} €</td>
                     </tr>
                 {% endfor %}
             </tbody>

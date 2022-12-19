@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.paginator import EmptyPage, Paginator
-from django.db.models import Q
+from django.db.models import F, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -41,7 +41,10 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.evaluation.utils import StatusChoices
+from grandchallenge.evaluation.utils import (
+    StatusChoices,
+    SubmissionKindChoices,
+)
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -412,12 +415,18 @@ class ChallengeCostOverview(
     template_name = "challenges/challenge_costs_overview.html"
 
     def get_context_data(self, **kwargs):
+        challenges = Challenge.objects.filter(
+            phase__submission_kind=SubmissionKindChoices.ALGORITHM
+        ).annotate(
+            total_cost=Sum(
+                F("accumulated_compute_cost")
+                + F("accumulated_docker_storage_cost")
+            )
+        )
         context = super().get_context_data()
         context.update(
             {
-                "statistics_for_challenges": cache.get(
-                    "statistics_for_challenges"
-                ),
+                "challenges": challenges,
                 "monthly_challenge_costs": cache.get(
                     "monthly_challenge_costs"
                 ),
@@ -439,38 +448,19 @@ class ChallengeCostsPerPhaseView(
         return get_object_or_404(Challenge, pk=self.kwargs["pk"])
 
     def get_context_data(self, **kwargs):
-        statistics_for_challenges = cache.get("statistics_for_challenges")
         context = super().get_context_data(**kwargs)
-        if statistics_for_challenges:
-            context.update(
-                {
-                    "challenge_pk": self.challenge.pk,
-                    "short_name": self.challenge.short_name,
-                    "status": self.challenge.status.name,
-                    "challenge_compute_cost": statistics_for_challenges[
-                        self.challenge.pk
-                    ].challenge_compute_cost
-                    if self.challenge.pk in statistics_for_challenges.keys()
-                    else None,
-                    "docker_storage_cost": statistics_for_challenges[
-                        self.challenge.pk
-                    ].docker_storage_cost
-                    if self.challenge.pk in statistics_for_challenges.keys()
-                    else None,
-                    "total_cost": statistics_for_challenges[
-                        self.challenge.pk
-                    ].total_cost
-                    if self.challenge.pk in statistics_for_challenges.keys()
-                    else None,
-                    "statistics_for_phases": cache.get(
-                        "statistics_for_phases"
-                    ),
-                    "phases": self.challenge.phase_set.all(),
-                    "challenge_status_choices": {
-                        status.name: status.name for status in StatusChoices
-                    },
-                }
-            )
+        context.update(
+            {
+                "challenge": self.challenge,
+                "total_cost": self.challenge.accumulated_docker_storage_cost
+                + self.challenge.accumulated_compute_cost,
+                "statistics_for_phases": cache.get("statistics_for_phases"),
+                "phases": self.challenge.phase_set.all(),
+                "challenge_status_choices": {
+                    status.name: status.name for status in StatusChoices
+                },
+            }
+        )
         return context
 
 
@@ -484,34 +474,17 @@ class ChallengeCostsRow(
         return get_object_or_404(Challenge, pk=self.kwargs["pk"])
 
     def get_context_data(self, **kwargs):
-        statistics_for_challenges = cache.get("statistics_for_challenges")
         context = super().get_context_data(**kwargs)
-        if statistics_for_challenges:
-            context.update(
-                {
-                    "challenge_pk": self.challenge.pk,
-                    "short_name": self.challenge.short_name,
-                    "status": self.challenge.status.name,
-                    "challenge_compute_cost": statistics_for_challenges[
-                        self.challenge.pk
-                    ].challenge_compute_cost
-                    if self.challenge.pk in statistics_for_challenges.keys()
-                    else None,
-                    "docker_storage_cost": statistics_for_challenges[
-                        self.challenge.pk
-                    ].docker_storage_cost
-                    if self.challenge.pk in statistics_for_challenges.keys()
-                    else None,
-                    "total_cost": statistics_for_challenges[
-                        self.challenge.pk
-                    ].total_cost
-                    if self.challenge.pk in statistics_for_challenges.keys()
-                    else None,
-                    "challenge_status_choices": {
-                        status.name: status.name for status in StatusChoices
-                    },
-                }
-            )
+        context.update(
+            {
+                "challenge": self.challenge,
+                "total_cost": self.challenge.accumulated_docker_storage_cost
+                + self.challenge.accumulated_compute_cost,
+                "challenge_status_choices": {
+                    status.name: status.name for status in StatusChoices
+                },
+            }
+        )
         return context
 
 
