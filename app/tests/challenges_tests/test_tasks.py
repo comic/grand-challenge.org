@@ -1,5 +1,4 @@
 import datetime
-from pathlib import Path
 
 import pytest
 from django.conf import settings
@@ -18,9 +17,6 @@ from tests.evaluation_tests.factories import (
     SubmissionFactory,
 )
 from tests.factories import ChallengeFactory
-
-BASE_PATH = Path(__file__).parent.absolute()
-RESOURCE_PATH = BASE_PATH / "resources"
 
 
 @pytest.mark.django_db
