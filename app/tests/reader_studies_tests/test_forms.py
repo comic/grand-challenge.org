@@ -1108,14 +1108,20 @@ def test_file_form(settings):
     assert rs.title in msg
     assert "JSON does not fulfill schema" in msg
 
-    ci.schema = {}
-    ci.save()
     form = FileForm(user=user, display_set=ds, interface=ci)
-    form.cleaned_data = {"user_upload": upload}
+    upload2 = UserUploadFactory(filename="file2.json", creator=user)
+    presigned_urls2 = upload2.generate_presigned_urls(part_numbers=[1])
+    response2 = put(presigned_urls2["1"], data=b'["foo", "bar", "test"]')
+    upload2.complete_multipart_upload(
+        parts=[{"ETag": response2.headers["ETag"], "PartNumber": 1}]
+    )
+    upload2.save()
+    form.cleaned_data = {"user_upload": upload2}
     with capture_on_commit_callbacks(execute=True):
         form.save()
-    civ = ds.values.get(interface=ci)
-    assert civ.file.read() == b'{"foo": "bar"}'
+    civ2 = ds.values.get(interface=ci)
+    civ2.file.seek(0)
+    assert civ2.file.read() == b'["foo", "bar", "test"]'
 
 
 @pytest.mark.django_db

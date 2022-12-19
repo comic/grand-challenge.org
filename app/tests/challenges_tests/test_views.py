@@ -6,7 +6,6 @@ from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
@@ -328,16 +327,13 @@ def test_challenge_card_status(
 def test_challenge_request_workflow(
     client,
     challenge_reviewer,
-    type_1_challenge_request,
-    type_2_challenge_request,
+    challenge_request,
 ):
     # requesting a challenge sends email to requester and reviewer(s)
-    requester1 = type_1_challenge_request.creator
-    requester2 = type_2_challenge_request.creator
-    assert len(mail.outbox) == 4
+    requester1 = challenge_request.creator
+    assert len(mail.outbox) == 2
     receivers = [address for i in mail.outbox for address in i.to]
     assert requester1.email in receivers
-    assert requester2.email in receivers
     assert challenge_reviewer.email in receivers
 
     # rejecting a request send email to requester
@@ -346,7 +342,7 @@ def test_challenge_request_workflow(
         client=client,
         method=client.post,
         viewname="challenges:requests-status-update",
-        reverse_kwargs={"pk": type_1_challenge_request.pk},
+        reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
         data={
             "status": ChallengeRequest.ChallengeRequestStatusChoices.REJECTED
@@ -363,11 +359,16 @@ def test_challenge_request_workflow(
 
     # accepting a request sends an email to the requester and creates the challenge
     mail.outbox.clear()
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+    challenge_request.save()
+
     response = get_view_for_user(
         client=client,
         method=client.post,
         viewname="challenges:requests-status-update",
-        reverse_kwargs={"pk": type_2_challenge_request.pk},
+        reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
         data={
             "status": ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
@@ -376,28 +377,23 @@ def test_challenge_request_workflow(
     assert response.status_code == 200
     assert len(mail.outbox) == 1
     # acceptance email to requester
-    assert mail.outbox[0].to == [requester2.email]
+    assert mail.outbox[0].to == [requester1.email]
     assert (
         "We are happy to inform you that your challenge request has been accepted"
         in mail.outbox[0].body
     )
     assert Challenge.objects.count() == 1
-    assert (
-        Challenge.objects.get().short_name
-        == type_2_challenge_request.short_name
-    )
+    assert Challenge.objects.get().short_name == challenge_request.short_name
 
 
 @pytest.mark.django_db
-def test_budget_field_update(
-    client, type_2_challenge_request, challenge_reviewer
-):
-    assert type_2_challenge_request.expected_number_of_teams == 10
+def test_budget_field_update(client, challenge_request, challenge_reviewer):
+    assert challenge_request.expected_number_of_teams == 10
     response = get_view_for_user(
         client=client,
         method=client.post,
         viewname="challenges:requests-budget-update",
-        reverse_kwargs={"pk": type_2_challenge_request.pk},
+        reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
         data={
             "expected_number_of_teams": 500,
@@ -411,8 +407,8 @@ def test_budget_field_update(
         },
     )
     assert response.status_code == 200
-    type_2_challenge_request.refresh_from_db()
-    assert type_2_challenge_request.expected_number_of_teams == 500
+    challenge_request.refresh_from_db()
+    assert challenge_request.expected_number_of_teams == 500
 
 
 @pytest.mark.django_db
@@ -437,8 +433,16 @@ def test_challenge_request_date_check(client):
             "submission_assessment": "test",
             "challenge_publication": "test",
             "code_availability": "test",
-            "challenge_type": ChallengeTypeChoices.T1,
             "expected_number_of_teams": 10,
+            "algorithm_inputs": "foo",
+            "algorithm_outputs": "foo",
+            "average_size_of_test_image_in_mb": 1,
+            "inference_time_limit_in_minutes": 11,
+            "phase_1_number_of_submissions_per_team": 1,
+            "phase_2_number_of_submissions_per_team": 1,
+            "phase_1_number_of_test_images": 1,
+            "phase_2_number_of_test_images": 1,
+            "challenge_fee_agreement": True,
         },
     )
     assert response.status_code == 200
@@ -469,8 +473,16 @@ def test_challenge_request_date_check(client):
             "submission_assessment": "test",
             "challenge_publication": "test",
             "code_availability": "test",
-            "challenge_type": ChallengeTypeChoices.T1,
             "expected_number_of_teams": 10,
+            "algorithm_inputs": "foo",
+            "algorithm_outputs": "foo",
+            "average_size_of_test_image_in_mb": 1,
+            "inference_time_limit_in_minutes": 11,
+            "phase_1_number_of_submissions_per_team": 1,
+            "phase_2_number_of_submissions_per_team": 1,
+            "phase_1_number_of_test_images": 1,
+            "phase_2_number_of_test_images": 1,
+            "challenge_fee_agreement": True,
         },
     )
     assert response.status_code == 200

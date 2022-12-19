@@ -1,11 +1,11 @@
 import logging
 import zipfile
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List, Optional, Sequence, Set
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
@@ -65,7 +65,7 @@ def populate_provisioning_directory(
             input_file.download_fileobj(fileobj=f)
 
 
-def check_compressed_and_extract(*, src_path: Path, checked_paths: Set[Path]):
+def check_compressed_and_extract(*, src_path: Path, checked_paths: set[Path]):
     """Checks if `src_path` is a zip file and if so, extracts it."""
     if src_path in checked_paths:
         return
@@ -174,16 +174,16 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 
 @dataclass
 class ImporterResult:
-    new_images: Set[Image]
-    consumed_files: Set[Path]
-    file_errors: Dict[Path, List[str]]
+    new_images: set[Image]
+    consumed_files: set[Path]
+    file_errors: dict[Path, list[str]]
 
 
 def import_images(
     *,
     input_directory: Path,
-    origin: Optional[RawImageUploadSession] = None,
-    builders: Optional[Sequence[Callable]] = None,
+    origin: RawImageUploadSession | None = None,
+    builders: Sequence[Callable] | None = None,
     recurse_subdirectories: bool = True,
 ) -> ImporterResult:
     """
@@ -265,9 +265,9 @@ def _check_all_ids(*, panimg_result: PanImgResult):
 
 @dataclass
 class ConversionResult:
-    new_images: Set[Image]
-    new_image_files: Set[ImageFile]
-    new_folders: Set[FolderUpload]
+    new_images: set[Image]
+    new_image_files: set[ImageFile]
+    new_folders: set[FolderUpload]
 
 
 def _convert_panimg_to_django(
@@ -301,10 +301,10 @@ def _convert_panimg_to_django(
 
 def _store_images(
     *,
-    origin: Optional[RawImageUploadSession],
-    images: Set[Image],
-    image_files: Set[ImageFile],
-    folders: Set[FolderUpload],
+    origin: RawImageUploadSession | None,
+    images: set[Image],
+    image_files: set[ImageFile],
+    folders: set[FolderUpload],
 ):
     for image in images:
         image.origin = origin
@@ -318,8 +318,8 @@ def _store_images(
 
 def _handle_raw_files(
     *,
-    consumed_files: Set[Path],
-    file_errors: Dict[Path, List[str]],
+    consumed_files: set[Path],
+    file_errors: dict[Path, list[str]],
     base_directory: Path,
     upload_session: RawImageUploadSession,
 ):

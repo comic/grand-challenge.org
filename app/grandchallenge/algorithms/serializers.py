@@ -1,5 +1,3 @@
-from typing import Optional
-
 from guardian.shortcuts import assign_perm
 from rest_framework import serializers
 from rest_framework.fields import (
@@ -52,7 +50,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "outputs",
         ]
 
-    def get_average_duration(self, obj: Algorithm) -> Optional[float]:
+    def get_average_duration(self, obj: Algorithm) -> float | None:
         """The average duration of successful jobs in seconds"""
         if obj.average_duration is None:
             return None

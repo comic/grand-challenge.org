@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from grandchallenge.algorithms.tasks import (
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
     send_failed_job_notification,
+    set_credits_per_job,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -520,18 +522,24 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
         user=notification.user
     )
 
-    ci.schema = {}
-    ci.save()
-    civ = ComponentInterfaceValueFactory(interface=ci)
+    upload2 = UserUploadFactory(filename="file.json", creator=creator)
+    presigned_urls2 = upload2.generate_presigned_urls(part_numbers=[1])
+    response2 = put(presigned_urls2["1"], data=b'["foo", "bar"]')
+    upload2.complete_multipart_upload(
+        parts=[{"ETag": response2.headers["ETag"], "PartNumber": 1}]
+    )
+    upload2.save()
+    civ2 = ComponentInterfaceValueFactory(interface=ci)
 
     with capture_on_commit_callbacks(execute=True):
         run_algorithm_job_for_inputs(
             job_pk=job.pk,
             upload_pks=[],
-            user_upload_pks={civ.pk: upload.pk},
+            user_upload_pks={civ2.pk: upload2.pk},
         )
-    civ.refresh_from_db()
-    assert civ.file.read() == b'{"foo": "bar"}'
+    civ2.refresh_from_db()
+    civ2.file.seek(0)
+    assert civ2.file.read() == b'["foo", "bar"]'
 
 
 @pytest.mark.django_db
@@ -730,3 +738,31 @@ def test_failed_job_notifications(client, settings):
 
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user is not editor
+
+
+@pytest.mark.django_db
+def test_setting_credits_per_job(algorithm_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # Create the algorithm image
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    recurse_callbacks(callbacks=callbacks)
+    ai.refresh_from_db()
+    alg = ai.algorithm
+
+    for test in (
+        {"duration": 20, "credits": 30},
+        {"duration": 1, "credits": 20},
+        {"duration": 120, "credits": 200},
+    ):
+        alg.average_duration = timedelta(minutes=test["duration"])
+        alg.save()
+
+        set_credits_per_job()
+
+        alg.refresh_from_db()
+        assert alg.credits_per_job == test["credits"]

@@ -760,11 +760,6 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             MimeTypeValidator(allowed_types=("application/pdf",)),
         ],
     )
-    challenge_type = models.PositiveSmallIntegerField(
-        choices=ChallengeTypeChoices.choices,
-        default=ChallengeTypeChoices.T2,
-        help_text="What type is this challenge?",
-    )
     challenge_setup = models.TextField(
         help_text="Describe the challenge set-up."
     )
@@ -829,7 +824,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         default=0,
         null=True,
         blank=True,
-        help_text="What is your budget for hosting this challenge, if any?",
+        help_text="What is your budget for hosting this challenge? Please be reminded of our <a href='/challenge-policy-and-pricing/'>challenge pricing policy</a>.",
     )
     long_term_commitment = models.BooleanField(
         null=True,
@@ -854,7 +849,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     algorithm_inputs = models.TextField(
         blank=True,
         help_text="What are the inputs to the algorithms submitted as solutions to "
-        "your Type 2 challenge going to be? "
+        "your challenge going to be? "
         "Please describe in detail "
         "what the input(s) reflect(s), for example, "
         "MRI scan of the brain, or chest X-ray. Grand Challenge only "
@@ -863,7 +858,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     algorithm_outputs = models.TextField(
         blank=True,
         help_text="What are the outputs to the algorithms submitted as solutions to "
-        "your Type 2 challenge going to be? "
+        "your challenge going to be? "
         "Please describe in detail what the output(s) "
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
@@ -871,6 +866,10 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     structured_challenge_submission_doi = IdentifierField(
         blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
+    )
+    challenge_fee_agreement = models.BooleanField(
+        blank=False,
+        default=False,
     )
 
     def __str__(self):
@@ -906,19 +905,24 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         challenge.structures.set(self.structures.all())
         challenge.save()
 
-        if self.challenge_type == ChallengeTypeChoices.T2:
-            phase = challenge.phase_set.get()
-            phase.submission_kind = SubmissionKindChoices.ALGORITHM
-            phase.creator_must_be_verified = True
-            phase.full_clean()
-            phase.save()
+        phase = challenge.phase_set.get()
+        phase.submission_kind = SubmissionKindChoices.ALGORITHM
+        phase.creator_must_be_verified = True
+        phase.full_clean()
+        phase.save()
 
         return challenge
 
     @cached_property
     def budget(self):
-        budget = None
-        if self.challenge_type == ChallengeTypeChoices.T2:
+        if (
+            self.inference_time_limit_in_minutes is not None
+            and self.phase_1_number_of_test_images is not None
+            and self.phase_1_number_of_submissions_per_team is not None
+            and self.average_size_of_test_image_in_mb is not None
+            and self.phase_2_number_of_test_images is not None
+            and self.phase_2_number_of_submissions_per_team is not None
+        ):
             compute_costs = settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
             s3_storage_costs = (
                 settings.CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR
@@ -926,7 +930,6 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             ecr_storage_costs = (
                 settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
             )
-
             budget = {
                 "Data storage cost for phase 1": None,
                 "Compute costs for phase 1": None,
@@ -965,7 +968,6 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
                 * self.number_of_tasks,
                 ndigits=2,
             )
-
             # calculate budget for phase 2
             budget["Data storage cost for phase 2"] = round(
                 self.phase_2_number_of_test_images
@@ -993,7 +995,6 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
                 * self.number_of_tasks,
                 ndigits=2,
             )
-
             budget["Docker storage cost"] = round(
                 self.average_algorithm_container_size_in_gb
                 * self.average_number_of_containers_per_team
@@ -1003,7 +1004,6 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
                 / 100,
                 ndigits=2,
             )
-
             budget["Total"] = round(
                 sum(
                     filter(
@@ -1017,5 +1017,6 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
                 ),
                 ndigits=2,
             )
-
-        return budget
+            return budget
+        else:
+            return None

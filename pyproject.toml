@@ -9,7 +9,7 @@ line_length = 79
 
 [tool.black]
 line-length = 79
-target-version = ['py38']
+target-version = ['py310']
 
 [tool.curlylint.rules]
 html_has_lang = 'en'
@@ -36,13 +36,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.10"
+python = ">=3.10,<3.11"
 celery = { extras = ["redis", "sqs"], version = "!=5.0.6" }
-pycurl = ">=7.44.1,<7.45.0"  # Fix poetry dependency resolution for celery
 django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
-djangorestframework = "*"
+djangorestframework = "<3.14" # Need to update drf spectacular for deprecated NullBooleanField
+drf-spectacular = "<0.16.0" # API change needs to be fixed
 python-magic = "*"
 pytz = "*"
 gunicorn = "*"
@@ -80,7 +80,6 @@ django-ipware = "*"
 pyswot = "*"
 django-redis = "*"
 django-allauth = "*"
-drf-spectacular = "<0.16.0" # API change needs to be fixed
 jinja2 = "*"
 openpyxl = "*"
 requests = "*"

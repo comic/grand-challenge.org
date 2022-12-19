@@ -5,7 +5,6 @@ from django.core.mail import mail_managers, send_mail
 from django.db.models import Q
 from django.utils.html import format_html
 
-from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -69,18 +68,16 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
 def send_challenge_requested_email_to_requester(challengerequest):
     site = Site.objects.get_current()
     addition = ""
-    if challengerequest.challenge_type == ChallengeTypeChoices.T2:
-        budget = ""
-        for key, value in challengerequest.budget.items():
-            budget += f"{key}: {value} €\n"
-        addition += (
-            f"For your type 2 challenge, we have calculated the following "
-            f"budget estimate. This estimate is based on the information "
-            f"you provided in the form and reflects a rough estimation of"
-            f"the costs we expect to incur:\n"
-            f"{budget}\n\n"
-        )
-
+    budget = ""
+    for key, value in challengerequest.budget.items():
+        budget += f"{key}: {value} €\n"
+    addition += (
+        f"We have calculated the following "
+        f"budget estimate. This estimate is based on the information "
+        f"you provided in the form and reflects a rough estimation of"
+        f"the costs we expect to incur:\n"
+        f"{budget}\n\n"
+    )
     message = format_html(
         "Dear {user},\n\n"
         "Your challenge request has been sent to the reviewers. You will "
@@ -96,7 +93,6 @@ def send_challenge_requested_email_to_requester(challengerequest):
         site_name=site.name,
         site_domain=site.domain,
     )
-
     send_mail(
         subject=f"[{site.domain.lower()}] Challenge Request Submitted Successfully",
         message=message,
@@ -136,8 +132,7 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
             "see the tab 'Add custom pages' in our documentation.\n"
             "3. A first phase has been added to your challenge, to add more go "
             "to Admin - Phases - Add a new Phase. Please carefully read our "
-            "documentation for details on how to set up your phases for a type 1"
-            "or a type 2 challenge respectively. \n\n"
+            "documentation for details on how to set up your phases. \n\n"
             "Feel free to contact support@grand-challenge.org if you have any "
             "questions or require assistance in setting up your challenge. \n"
             "Thank you for choosing Grand Challenge. We are looking forward to "

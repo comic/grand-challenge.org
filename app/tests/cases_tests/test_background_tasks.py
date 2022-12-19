@@ -1,7 +1,6 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Tuple
 from unittest import mock
 
 import pytest
@@ -30,8 +29,8 @@ from tests.uploads_tests.factories import create_upload_from_file
 
 
 def create_raw_upload_image_session(
-    *, images: List[str], delete_file=False, user=None, linked_task=None
-) -> Tuple[RawImageUploadSession, Dict[str, UserUpload]]:
+    *, images: list[str], delete_file=False, user=None, linked_task=None
+) -> tuple[RawImageUploadSession, dict[str, UserUpload]]:
     creator = user or UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession.objects.create(creator=creator)
 
@@ -120,7 +119,7 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     ),
 )
 @pytest.mark.django_db
-def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
+def test_staged_4d_mha_and_4d_mhd_upload(settings, images: list):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -152,7 +151,7 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
 )
 @pytest.mark.django_db
 def test_staged_mhd_upload_with_additional_headers(
-    settings, tmp_path, images: List[str]
+    settings, tmp_path, images: list[str]
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)

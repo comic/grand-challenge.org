@@ -623,7 +623,10 @@ class FileForm(Form):
         self.display_set = display_set
 
     def save(self):
-        civ = self.display_set.values.get(interface=self.interface)
+        try:
+            civ = self.display_set.values.get(interface=self.interface)
+        except ObjectDoesNotExist:
+            civ = None
         user_upload = self.cleaned_data["user_upload"]
         on_commit(
             lambda: add_file_to_display_set.apply_async(
@@ -631,7 +634,7 @@ class FileForm(Form):
                     "user_upload_pk": str(user_upload.pk),
                     "interface_pk": str(self.interface.pk),
                     "display_set_pk": str(self.display_set.pk),
-                    "civ_pk": str(civ.pk),
+                    "civ_pk": str(civ.pk) if civ else None,
                 }
             )
         )

@@ -3,7 +3,6 @@ import logging
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional
 
 from celery import signature
 from django import forms
@@ -150,111 +149,149 @@ class InterfaceKind:
         * Chart
 
         Example json for 2D bounding box annotation
+            required: "type", "corners", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Region of interest",
                 "type": "2D bounding box",
                 "corners": [
                     [ 130.80001831054688, 148.86666870117188, 0.5009999871253967],
                     [ 69.73332977294922, 148.86666870117188, 0.5009999871253967],
-                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967 ],
+                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967],
                     [ 130.80001831054688, 73.13333129882812, 0.5009999871253967]
                 ],
+                "probability": 0.95,
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Multiple 2D bounding boxes annotation
+            required: "type", "boxes", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Regions of interest",
                 "type": "Multiple 2D bounding boxes",
                 "boxes": [
                     {
-                    "corners": [
-                        [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
-                        [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
-                        [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
-                        [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
-                    ]},
+                        "name": "ROI 1",
+                        "corners": [
+                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
+                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
+                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
+                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
+                        ],
+                        "probability": 0.95
+                    },
                     {
-                    "corners": [
-                        [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
-                        [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
-                        [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
-                        [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
-                    ]}
+                        "name": "ROI 2",
+                        "corners": [
+                            [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
+                            [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
+                            [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
+                            [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
+                        ],
+                        "probability": 0.92
+                    }
                 ],
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Distance measurement annotation
+            required: "type", "start", "end", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Distance between areas",
                 "type": "Distance measurement",
                 "start": [ 59.79176712036133, 78.76753997802734, 0.5009999871253967 ],
                 "end": [ 69.38014221191406, 143.75546264648438, 0.5009999871253967 ],
+                "probability": 0.92,
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Multiple distance measurement annotation
+            required: "type", "lines", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Distances between areas",
                 "type": "Multiple distance measurements",
                 "lines": [
                     {
+                        "name": "Distance 1",
                         "start": [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],
-                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ]
+                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],
+                        "probability": 0.92
                     },
                     {
+                        "name": "Distance 2",
                         "start": [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],
-                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ]
+                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ],
+                        "probability": 0.92
                     }
                 ],
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Point annotation
+            required: "type", "point", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
-                "point": [ 152.13333129882812, 111.0, 0.5009999871253967 ],
+                "name": "Point of interest",
                 "type": "Point",
+                "point": [ 152.13333129882812, 111.0, 0.5009999871253967 ],
+                "probability": 0.92,
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Multiple points annotation
+            required: "type", "points", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Points of interest",
                 "type": "Multiple points",
                 "points": [
                     {
+                        "name": "Point 1",
                         "point": [
                             96.0145263671875, 79.83292388916016, 0.5009999871253967
                         ],
+                        "probability": 0.92
                     },
                     {
+                        "name": "Point 2",
                         "point": [
                             130.10653686523438, 115.52300262451172, 0.5009999871253967
                         ],
+                        "probability": 0.92
                     }
                 ],
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Polygon annotation
+            required: "type", "seed_point", "path_points", "sub_type", "groups", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Area of interest",
                 "type": "Polygon",
                 "seed_point": [ 76.413756408691, 124.014717102050, 0.5009999871253967 ],
                 "path_points": [
@@ -264,17 +301,22 @@ class InterfaceKind:
                 ],
                 "sub_type": "brush",
                 "groups": [],
+                "probability": 0.92,
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Multiple polygon annotation
+            required: "type", "polygons", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Areas of interest",
                 "type": "Multiple polygons",
                 "polygons": [
                     {
+                        "name": "Area 1",
                         "seed_point": [ 55.82666793823242, 90.46666717529297, 0.5009999871253967 ],
                         "path_points": [
                             [ 55.82667599387105, 90.46666717529297, 0.5009999871253967 ],
@@ -284,8 +326,10 @@ class InterfaceKind:
                         ],
                         "sub_type": "brush",
                         "groups": [ "manual"],
+                        "probability": 0.67
                     },
                     {
+                        "name": "Area 2",
                         "seed_point": [ 90.22666564941406, 96.06666564941406, 0.5009999871253967 ],
                         "path_points": [
                             [ 90.22667370505269, 96.06666564941406, 0.5009999871253967 ],
@@ -293,79 +337,101 @@ class InterfaceKind:
                             [ 90.64666967723338, 96.7941200122053, 0.5009999871253967 ]
                         ],
                         "sub_type": "brush",
-                        "groups": []
+                        "groups": [],
+                        "probability": 0.92
                     }
                 ],
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Line annotation
+            required: "type", "seed_points", "path_point_lists", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Some annotation",
                 "type": "Line",
                 "seed_points": [[1, 2, 3], [1, 2, 3]],
                 "path_point_lists": [
                     [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
                     [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]]
                 ],
+                "probability": 0.92
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Multiple lines annotation
+            required: "type", "lines", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Some annotations",
                 "type": "Multiple lines",
                 "lines": [
                     {
+                        "name": "Annotation 1",
                         "seed_points": [[1, 2, 3], [1, 2, 3]],
                         "path_point_lists": [
                             [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
                             [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                        ]
+                        ],
+                        "probability": 0.78
                     },
                     {
+                        "name": "Annotation 2",
                         "seed_points": [[1, 2, 3], [1, 2, 3]],
                         "path_point_lists": [
                             [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
                             [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
-                        ]
+                        ],
+                        "probability": 0.92
                     }
                 ],
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Angle annotation
+            required: "type", "lines", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Some angle",
                 "type": "Angle",
                 "lines": [[[180, 10, 0.5], [190, 10, 0.5]],[[180, 25, 0.5], [190, 15, 0.5]]],
+                "probability": 0.92,
                 "version": {"major": 1, "minor": 0}
             }
 
         Example json for Multiple angles annotation
+            required: "type", "angles", "version"
+            optional: "name", "probability"
 
         .. code-block:: json
 
             {
+                "name": "Some angles",
                 "type": "Multiple angles",
                 "angles": [
                     {
+                        "name": "First angle",
                         "lines": [[[110, 135, 0.5], [60, 165, 0.5]],[[70, 25, 0.5], [85, 65, 0.5]]],
-                        "name": "First angle"
+                        "probability": 0.82
                     },
                     {
+                        "name": "Second angle",
                         "lines": [[[130, 210, 0.5], [160, 130, 0.5]], [[140, 40, 0.5], [180, 75, 0.5]]],
-                        "name": "Second angle"
+                        "probability": 0.52
                     },
                     {
+                        "name": "Third angle",
                         "lines": [[[20, 30, 0.5], [20, 100, 0.5]], [[180, 200, 0.5], [210, 200, 0.5]]],
-                        "name": "Third angle"
+                        "probability": 0.98
                     }
                 ],
                 "version": {"major": 1, "minor": 0}
@@ -1075,7 +1141,7 @@ class ComponentInterfaceValue(models.Model):
         if not user_upload.is_completed:
             raise ValidationError("User upload is not completed.")
         if self.interface.is_json_kind:
-            value = user_upload.read_object()
+            value = json.loads(user_upload.read_object())
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
 
@@ -1202,7 +1268,7 @@ class ComponentJob(models.Model):
         stdout: str = "",
         stderr: str = "",
         error_message="",
-        duration: Optional[timedelta] = None,
+        duration: timedelta | None = None,
         runtime_metrics=None,
     ):
         self.status = status
@@ -1357,7 +1423,7 @@ class ComponentJob(models.Model):
                     }
                     for metric in self.runtime_metrics["metrics"]
                     for timestamp, value in zip(
-                        metric["timestamps"], metric["values"]
+                        metric["timestamps"], metric["values"], strict=True
                     )
                 ]
             },

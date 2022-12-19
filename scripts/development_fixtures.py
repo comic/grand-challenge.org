@@ -466,7 +466,7 @@ def _create_algorithm_demo(users):
             ]
         },
     ]
-    for res, det in zip(results, detections):
+    for res, det in zip(results, detections, strict=True):
         _create_job_result(users, algorithm_image, cases_image, res, det)
 
 
@@ -535,6 +535,14 @@ def _create_reader_studies(users):
         color_space="RGB",
     )
     image.save()
+    annotation_interface = ComponentInterface(
+        store_in_database=True,
+        relative_path="annotation.json",
+        slug="annotation",
+        title="Annotation",
+        kind=ComponentInterface.Kind.TWO_D_BOUNDING_BOX,
+    )
+    annotation_interface.save()
     civ = ComponentInterfaceValue.objects.create(
         interface=ComponentInterface.objects.get(slug="generic-medical-image"),
         image=image,

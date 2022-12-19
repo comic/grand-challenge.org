@@ -591,3 +591,43 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
 
         with open(dest, "rb") as f:
             algorithm_image.image.save(filename, File(f))
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def set_credits_per_job():
+    default_credits_per_month = Credit._meta.get_field("credits").get_default()
+    default_credits_per_job = Algorithm._meta.get_field(
+        "credits_per_job"
+    ).get_default()
+    min_credits_per_job = (
+        default_credits_per_month
+        / settings.ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH
+    )
+
+    for algorithm in Algorithm.objects.all().iterator():
+        if algorithm.average_duration and algorithm.latest_executable_image:
+            executor = Job(
+                algorithm_image=algorithm.latest_executable_image
+            ).get_executor(backend=settings.COMPONENTS_DEFAULT_BACKEND)
+
+            cents_per_job = (
+                executor.cents_per_hour
+                * algorithm.average_duration.total_seconds()
+                / 3600
+            )
+
+            algorithm.credits_per_job = max(
+                int(
+                    round(
+                        cents_per_job
+                        * default_credits_per_month
+                        / settings.ALGORITHMS_USER_CENTS_PER_MONTH,
+                        -1,
+                    )
+                ),
+                min_credits_per_job,
+            )
+        else:
+            algorithm.credits_per_job = default_credits_per_job
+
+        algorithm.save(update_fields=("credits_per_job",))
