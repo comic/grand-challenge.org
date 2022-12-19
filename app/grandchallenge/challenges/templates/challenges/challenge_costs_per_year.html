@@ -14,7 +14,7 @@
         <table class="table table-hover table-borderless">
             <tbody>
                 {% for month, costs in values.items %}
-                    {% if not month == "total" and not month == "total_docker_cost" and not month == "grand_total" %}
+                    {% if not month == "total_compute_cost" and not month == "total_docker_cost" and not month == "grand_total" %}
                         <tr>
                             <td style="width:25%" class="pl-4 col-4">{{ month }}</td>
                             <td style="width:25%" class="text-right">{{ costs.compute_costs|floatformat:'2' }} €</td>

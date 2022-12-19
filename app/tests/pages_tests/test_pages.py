@@ -402,7 +402,7 @@ def test_average_job_duration_calculation():
         round(duration["total_duration"].total_seconds(), ndigits=2)
         == timedelta(days=2).total_seconds()
     )
-    assert duration["monthly_spendings"][now().year][
+    assert duration["monthly_costs"][now().year][
         j1.started_at.strftime("%B")
     ] == round(
         duration["total_duration"].total_seconds()

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models import Count, Max
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 
@@ -54,17 +54,17 @@ def update_challenge_results_cache():
     )
 
 
-def aggregate_compute_costs_per_month(phase_stats):
+def aggregate_compute_costs_per_month_across_challenges(phase_stats):
     monthly_compute_costs = {}
     for _phase, values in phase_stats.items():
-        for year, month_values in values.monthly_spendings.items():
+        for year, month_values in values.monthly_costs.items():
             for month, cost in month_values.items():
                 try:
                     monthly_compute_costs[year][month]["compute_costs"] += cost
                 except (KeyError, TypeError):
                     if year not in monthly_compute_costs.keys():
                         monthly_compute_costs[year] = {}
-                        monthly_compute_costs[year]["total"] = 0
+                        monthly_compute_costs[year]["total_compute_cost"] = 0
                         monthly_compute_costs[year]["total_docker_cost"] = 0
                     if month not in monthly_compute_costs[year].keys():
                         monthly_compute_costs[year][month] = {}
@@ -72,7 +72,7 @@ def aggregate_compute_costs_per_month(phase_stats):
     return monthly_compute_costs
 
 
-def aggregate_submitted_algorithm_pks_per_month(phase_stats):
+def aggregate_submitted_algorithm_pks_per_month_across_challenges(phase_stats):
     monthly_submitted_algorithms = {}
     for _phase, values in phase_stats.items():
         for (
@@ -97,7 +97,9 @@ def add_monthly_docker_costs_to_cost_dict(
     ecr_storage_costs = (
         settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
     )
-    average_algorithm_container_size_in_gb = 10
+    average_algorithm_container_size_in_gb = ChallengeRequest._meta.get_field(
+        "average_algorithm_container_size_in_gb"
+    ).get_default()
     for year, values in monthly_submitted_algorithms.items():
         for month, algorithms in values.items():
             cost = round(
@@ -114,22 +116,28 @@ def add_monthly_docker_costs_to_cost_dict(
 
 
 def get_monthly_challenge_costs(phase_stats):
-    monthly_compute_costs = aggregate_compute_costs_per_month(phase_stats)
-    monthly_submitted_algorithms = aggregate_submitted_algorithm_pks_per_month(
-        phase_stats
+    monthly_compute_costs = (
+        aggregate_compute_costs_per_month_across_challenges(phase_stats)
+    )
+    monthly_submitted_algorithms = (
+        aggregate_submitted_algorithm_pks_per_month_across_challenges(
+            phase_stats
+        )
     )
     monthly_costs = add_monthly_docker_costs_to_cost_dict(
         monthly_submitted_algorithms, monthly_compute_costs
     )
     for year, values in monthly_costs.items():
         for month, subvals in values.items():
-            if month != "total" and month != "total_docker_cost":
+            if month != "total_compute_cost" and month != "total_docker_cost":
                 monthly_costs[year][month]["total"] = (
                     subvals["compute_costs"] + subvals["docker_costs"]
                 )
-                monthly_costs[year]["total"] += subvals["compute_costs"]
+                monthly_costs[year]["total_compute_cost"] += subvals[
+                    "compute_costs"
+                ]
         monthly_costs[year]["grand_total"] = (
-            monthly_costs[year]["total"]
+            monthly_costs[year]["total_compute_cost"]
             + monthly_costs[year]["total_docker_cost"]
         )
     return monthly_costs

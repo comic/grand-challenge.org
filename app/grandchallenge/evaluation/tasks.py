@@ -567,7 +567,7 @@ def get_average_job_duration_for_phase(phase):
     start_date = datetime.datetime.strptime("1/1/2021", "%d/%m/%Y")
     end_date = datetime.datetime.now()
     delta = relativedelta.relativedelta(end_date, start_date)
-    monthly_spendings = {}
+    monthly_costs = {}
     algorithms_submitted_per_month = {}
     for year in [start_date.year, start_date.year + delta.years]:
         if not year == start_date.year + delta.years:
@@ -604,16 +604,16 @@ def get_average_job_duration_for_phase(phase):
                 else 0
             )
             try:
-                monthly_spendings[year][
+                monthly_costs[year][
                     job_start_date.strftime("%B")
                 ] = compute_cost
                 algorithms_submitted_per_month[year][
                     job_start_date.strftime("%B")
                 ] = submitted_algorithms
             except (TypeError, KeyError):
-                monthly_spendings[year] = {}
+                monthly_costs[year] = {}
                 algorithms_submitted_per_month[year] = {}
-                monthly_spendings[year][
+                monthly_costs[year][
                     job_start_date.strftime("%B")
                 ] = compute_cost
                 algorithms_submitted_per_month[year][
@@ -623,7 +623,7 @@ def get_average_job_duration_for_phase(phase):
     duration_dict = {
         "average_duration": jobs.average_duration(),
         "total_duration": jobs.total_duration(),
-        "monthly_spendings": monthly_spendings,
+        "monthly_costs": monthly_costs,
         "algorithms_submitted_per_month": algorithms_submitted_per_month,
     }
     return duration_dict
@@ -636,7 +636,7 @@ class PhaseStatistics(NamedTuple):
     average_submission_compute_cost: float
     total_phase_compute_cost: float
     archive_item_count: int
-    monthly_spendings: dict
+    monthly_costs: dict
     algorithms_submitted_per_month: list
 
 
@@ -659,7 +659,7 @@ def update_phase_statistics():
         accumulated_algorithm_job_run_time = duration_dict.get(
             "total_duration", None
         )
-        monthly_spendings = duration_dict.get("monthly_spendings", None)
+        monthly_costs = duration_dict.get("monthly_costs", None)
         algorithms_submitted_per_month = duration_dict.get(
             "algorithms_submitted_per_month", None
         )
@@ -690,7 +690,7 @@ def update_phase_statistics():
             average_submission_compute_cost,
             total_phase_compute_cost,
             phase.archive_item_count,
-            monthly_spendings,
+            monthly_costs,
             algorithms_submitted_per_month,
         )
 

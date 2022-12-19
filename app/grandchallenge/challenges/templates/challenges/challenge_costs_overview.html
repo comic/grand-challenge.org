@@ -63,7 +63,7 @@
             </thead>
             <tbody>
                 {% for year, values in monthly_challenge_costs.items %}
-                    {% get_dict_values values 'total' as total_compute_cost %}
+                    {% get_dict_values values 'total_compute_cost' as total_compute_cost %}
                     {% get_dict_values values 'total_docker_cost' as total_docker_cost %}
                     {% get_dict_values values 'grand_total' as total_cost %}
                     <tr hx-get="{% url 'challenges:costs-per-year' %}"

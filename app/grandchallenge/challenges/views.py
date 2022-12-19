@@ -501,7 +501,7 @@ class ChallengeCostsPerYearView(
                 {
                     "year": year,
                     "total_compute_cost": monthly_challenge_costs[int(year)][
-                        "total"
+                        "total_compute_cost"
                     ]
                     if int(year) in monthly_challenge_costs.keys()
                     else None,
@@ -537,7 +537,7 @@ class YearCostsRow(
                 {
                     "year": year,
                     "total_compute_cost": monthly_challenge_costs[int(year)][
-                        "total"
+                        "total_compute_cost"
                     ]
                     if int(year) in monthly_challenge_costs.keys()
                     else None,

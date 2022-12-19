@@ -155,7 +155,7 @@ def test_challenge_costs_calculation():
             average_submission_compute_cost=16.3,
             total_phase_compute_cost=32.6,
             archive_item_count=14,
-            monthly_spendings={
+            monthly_costs={
                 2021: {
                     "January": 0,
                     "February": 0,
@@ -228,7 +228,7 @@ def test_challenge_costs_calculation():
             average_submission_compute_cost=13.47,
             total_phase_compute_cost=53.87,
             archive_item_count=11,
-            monthly_spendings={
+            monthly_costs={
                 2021: {
                     "January": 0,
                     "February": 0,
@@ -293,8 +293,8 @@ def test_challenge_costs_calculation():
         ),
     }
     monthly_challenge_costs = get_monthly_challenge_costs(phase_stats)
-    assert monthly_challenge_costs[2021]["total"] == 0
-    assert monthly_challenge_costs[2022]["total"] == 86.47
+    assert monthly_challenge_costs[2021]["total_compute_cost"] == 0
+    assert monthly_challenge_costs[2022]["total_compute_cost"] == 86.47
     assert monthly_challenge_costs[2022]["total_docker_cost"] == 60.00
     assert monthly_challenge_costs[2022]["grand_total"] == 146.47
 
