@@ -84,7 +84,7 @@ migrations:
 	docker compose run -u $(USER_ID) --rm web python manage.py makemigrations
 
 runserver: build_web_test build_http development_fixtures
-	docker compose up
+	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
 minio:
 	docker compose run \
