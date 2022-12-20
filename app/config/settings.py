@@ -863,6 +863,9 @@ SPECTACULAR_SETTINGS = {
     "TOS": f"https://{SESSION_COOKIE_DOMAIN.lstrip('.')}/policies/terms-of-service/",
     "LICENSE": {"name": "Apache License 2.0"},
     "VERSION": "1.0.0",
+    "ENUM_NAME_OVERRIDES": {
+        "ColorInterpolationEnum": "grandchallenge.workstation_configs.models.LookUpTable.COLOR_INTERPOLATION_CHOICES",
+    },
 }
 
 REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}

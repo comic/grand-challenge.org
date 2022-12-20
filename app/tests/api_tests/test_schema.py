@@ -16,6 +16,6 @@ def test_schema_is_valid():
 
     validate_schema(schema)
 
-    # TODO: fix the warnings from types that could not be inferred
-    # from drf_spectacular.drainage import GENERATOR_STATS
-    # assert not GENERATOR_STATS
+    from drf_spectacular.drainage import GENERATOR_STATS
+
+    assert not GENERATOR_STATS

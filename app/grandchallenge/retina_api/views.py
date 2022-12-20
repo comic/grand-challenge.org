@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as drf_filters
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework_guardian import filters
@@ -117,6 +119,14 @@ class ImageLevelAnnotationsForImageViewSet(
             except (IndexError, AttributeError):
                 data[key] = None
         return data
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("id", OpenApiTypes.UUID, OpenApiParameter.PATH),
+        ],
+    )
+    def retrieve(self, *args, **kwargs):
+        super().retrieve(*args, **kwargs)
 
 
 class QualityAnnotationViewSet(viewsets.ModelViewSet):

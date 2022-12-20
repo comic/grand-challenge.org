@@ -1023,6 +1023,13 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "case_pk", OpenApiTypes.UUID, OpenApiParameter.PATH
+            ),
+        ],
+    )
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
     def ground_truth(self, request, pk=None, case_pk=None):
         reader_study = self.get_object()

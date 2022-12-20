@@ -1,5 +1,6 @@
 from django_filters import FilterSet, ModelMultipleChoiceFilter
 from django_select2.forms import Select2MultipleWidget
+from drf_spectacular.utils import extend_schema_field
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import Archive
@@ -8,8 +9,13 @@ from grandchallenge.core.filters import EmptyStringFilter
 from grandchallenge.reader_studies.models import ReaderStudy
 
 
+@extend_schema_field({"type": "array", "items": {"type": "string"}})
+class UUIDModelMultipleChoiceFilter(ModelMultipleChoiceFilter):
+    pass
+
+
 class ImageFilterSet(FilterSet):
-    archive = ModelMultipleChoiceFilter(
+    archive = UUIDModelMultipleChoiceFilter(
         queryset=Archive.objects.all(),
         widget=Select2MultipleWidget,
         label="Archive",
@@ -17,7 +23,7 @@ class ImageFilterSet(FilterSet):
         field_name="componentinterfacevalue__archive_items__archive__pk",
         to_field_name="pk",
     )
-    job_input = ModelMultipleChoiceFilter(
+    job_input = UUIDModelMultipleChoiceFilter(
         queryset=Job.objects.all(),
         widget=Select2MultipleWidget,
         label="Job Input",
@@ -25,7 +31,7 @@ class ImageFilterSet(FilterSet):
         field_name="componentinterfacevalue__algorithm_jobs_as_input__pk",
         to_field_name="pk",
     )
-    job_output = ModelMultipleChoiceFilter(
+    job_output = UUIDModelMultipleChoiceFilter(
         queryset=Job.objects.all(),
         widget=Select2MultipleWidget,
         label="Job Output",
@@ -33,7 +39,7 @@ class ImageFilterSet(FilterSet):
         field_name="componentinterfacevalue__algorithm_jobs_as_output__pk",
         to_field_name="pk",
     )
-    reader_study = ModelMultipleChoiceFilter(
+    reader_study = UUIDModelMultipleChoiceFilter(
         queryset=ReaderStudy.objects.all(),
         widget=Select2MultipleWidget,
         label="Reader Study",
