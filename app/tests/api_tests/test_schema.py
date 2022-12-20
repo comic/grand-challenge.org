@@ -1,15 +1,9 @@
 from drf_spectacular.validation import validate_schema
-from rest_framework.test import APIRequestFactory
-
-from grandchallenge.api.urls import SchemaView
+from drf_spectacular.views import SpectacularAPIView
 
 
 def test_schema_is_valid():
-    schema_view = SchemaView()
-
-    # Initialize the url conf
-    rf = APIRequestFactory()
-    schema_view.get(rf.get("/"))
+    schema_view = SpectacularAPIView()
 
     generator = schema_view.generator_class(
         urlconf=schema_view.urlconf, api_version=schema_view.api_version
