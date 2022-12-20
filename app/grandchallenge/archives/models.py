@@ -133,7 +133,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return f"{self.title}"
 
     @property
-    def name(self):
+    def name(self) -> str:
         # Include the read only name for legacy clients
         return self.title
 
@@ -230,7 +230,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return reverse("archives:detail", kwargs={"slug": self.slug})
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
 
 

@@ -88,7 +88,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     )
     index = SerializerMethodField()
 
-    def get_index(self, obj):
+    def get_index(self, obj) -> int | None:
         if obj.reader_study.shuffle_hanging_list:
             try:
                 return self.context["view"].randomized_qs.index(obj)

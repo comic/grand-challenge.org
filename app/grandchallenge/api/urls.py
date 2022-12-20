@@ -185,12 +185,8 @@ router.register(r"workstations/sessions", SessionViewSet)
 router.register(r"workstations", WorkstationViewSet, basename="workstations")
 
 
-class SchemaView(SpectacularAPIView):
-    urlconf = [path("api/v1/", include(router.urls))]
-
-
 urlpatterns = [
-    path("schema/", SchemaView.as_view(), name="schema"),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),

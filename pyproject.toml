@@ -41,8 +41,8 @@ celery = { extras = ["redis", "sqs"], version = "!=5.0.6" }
 django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
-djangorestframework = "<3.14" # Need to update drf spectacular for deprecated NullBooleanField
-drf-spectacular = "<0.16.0" # API change needs to be fixed
+djangorestframework = "*"
+drf-spectacular = "*"
 python-magic = "*"
 pytz = "*"
 gunicorn = "*"

@@ -535,7 +535,7 @@ class Session(UUIDModel):
         )
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:session-detail", kwargs={"pk": self.pk})
 
     def assign_permissions(self):

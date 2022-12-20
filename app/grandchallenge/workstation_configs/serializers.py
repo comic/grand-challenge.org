@@ -121,9 +121,8 @@ class WorkstationConfigSerializer(ModelSerializer):
             "link_flipping",
         ]
 
-    def get_enabled_preprocessors(self, obj):
+    def get_enabled_preprocessors(self, obj) -> list[str]:
         if obj.enable_contrast_enhancement:
-            text = ["contrast_enhanced"]
+            return ["contrast_enhanced"]
         else:
-            text = []
-        return text
+            return []

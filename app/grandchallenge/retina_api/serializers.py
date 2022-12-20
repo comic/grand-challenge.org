@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from rest_framework import serializers
 
 from grandchallenge.cases.models import Image
@@ -17,7 +19,7 @@ class ImageLevelAnnotationsForImageSerializer(serializers.Serializer):
 class RetinaImageSerializer(HyperlinkedImageSerializer):
     landmark_annotations = serializers.SerializerMethodField(read_only=True)
 
-    def get_landmark_annotations(self, obj):
+    def get_landmark_annotations(self, obj) -> list[UUID]:
         return [
             sla2.image.pk
             for sla1 in obj.singlelandmarkannotation_set.all()
