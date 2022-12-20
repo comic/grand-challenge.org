@@ -1,7 +1,9 @@
+import pytest
 from drf_spectacular.validation import validate_schema
 from drf_spectacular.views import SpectacularAPIView
 
 
+@pytest.mark.django_db
 def test_schema_is_valid():
     schema_view = SpectacularAPIView()
 
