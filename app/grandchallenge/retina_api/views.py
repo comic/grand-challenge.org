@@ -126,7 +126,7 @@ class ImageLevelAnnotationsForImageViewSet(
         ],
     )
     def retrieve(self, *args, **kwargs):
-        super().retrieve(*args, **kwargs)
+        return super().retrieve(*args, **kwargs)
 
 
 class QualityAnnotationViewSet(viewsets.ModelViewSet):
