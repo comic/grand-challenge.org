@@ -121,6 +121,8 @@ def test_average_duration_filtering():
         (InterfaceKindChoices.MULTIPLE_LINES, False, False),
         (InterfaceKindChoices.ANGLE, False, False),
         (InterfaceKindChoices.MULTIPLE_ANGLES, False, False),
+        (InterfaceKindChoices.ELLIPSE, False, False),
+        (InterfaceKindChoices.MULTIPLE_ELLIPSES, False, False),
         # Image types
         (InterfaceKindChoices.IMAGE, True, True),
         (InterfaceKindChoices.HEAT_MAP, True, True),
@@ -183,6 +185,8 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.MULTIPLE_LINES, True),
         (InterfaceKindChoices.ANGLE, False),
         (InterfaceKindChoices.MULTIPLE_ANGLES, True),
+        (InterfaceKindChoices.ELLIPSE, False),
+        (InterfaceKindChoices.MULTIPLE_ELLIPSES, True),
         # Image types
         (InterfaceKindChoices.IMAGE, True),
         (InterfaceKindChoices.HEAT_MAP, True),
@@ -521,6 +525,33 @@ def test_invalid_schema_raises_error():
             },
             nullcontext(),
         ),
+        (
+                InterfaceKindChoices.ELLIPSE,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Ellipse",
+                    "name": "test",
+                    "major_axis": [[1, 2, 3], [4, 5, 6]],
+                    "minor_axis": [[1, 2, 3], [4, 5, 6]],
+                },
+                nullcontext(),
+        ),
+        (
+                InterfaceKindChoices.MULTIPLE_ELLIPSES,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Multiple ellipses",
+                    "name": "test",
+                    "ellipses": [
+                        {
+                            "name": "test",
+                            "major_axis": [[1, 2, 3], [4, 5, 6]],
+                            "minor_axis": [[1, 2, 3], [4, 5, 6]],
+                        }
+                    ],
+                },
+                nullcontext(),
+        ),
         (InterfaceKindChoices.CHOICE, "First", nullcontext()),
         (InterfaceKindChoices.CHOICE, 1, pytest.raises(ValidationError)),
         (InterfaceKindChoices.MULTIPLE_CHOICE, ["1", "2"], nullcontext()),
@@ -765,6 +796,35 @@ def test_default_validation(kind, value, expectation, use_file):
             },
             {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
         ),
+        (
+                InterfaceKindChoices.ELLIPSE,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Ellipse",
+                    "name": "test",
+                    "major_axis": [[0, 0, 0], [10, 1, 0.5]],
+                    "minor_axis": [[10, 0, 0], [10, 4, 0.5]],
+                    "probability": 0.9,
+                },
+                {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
+        ),
+        (
+                InterfaceKindChoices.MULTIPLE_ELLIPSES,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Multiple ellipses",
+                    "name": "test",
+                    "ellipses": [
+                        {
+                            "name": "First Ellipse",
+                            "major_axis": [[0, 0, 0], [10, 1, 0.5]],
+                            "minor_axis": [[10, 0, 0], [10, 4, 0.5]],
+                        },
+                    ],
+                },
+                {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
+        ),
+
         (InterfaceKindChoices.CHOICE, "First", {"enum": ["first"]}),
         (
             InterfaceKindChoices.MULTIPLE_CHOICE,
