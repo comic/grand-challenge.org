@@ -801,6 +801,117 @@ def test_answer_creator_is_reader(client):
         (Question.AnswerType.CHOICE, None, 400),
         (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
         (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
+        (Question.AnswerType.ELLIPSE, "wwoljg", 400),
+        (Question.AnswerType.ELLIPSE, True, 400),
+        (Question.AnswerType.ELLIPSE, 42, 400),
+        (Question.AnswerType.ELLIPSE, {}, 400),
+        (Question.AnswerType.ELLIPSE, "", 400),
+        (
+                Question.AnswerType.ELLIPSE,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Ellipse",
+                    "name": "test",
+                    "major_axis": ((1, 2, 3), (4, 5, 6)),
+                    "minor_axis": ((7, 8, 9), (10, 11, 12)),
+                },
+                201,
+        ),
+        (
+                Question.AnswerType.ELLIPSE,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "ELLIPSE",
+                    "name": "test",
+                    "major_axis": ((1, 2, 3), (4, 5, 6), (7, 8, 9)),
+                    "minor_axis": ((7, 8, 9), (10, 11, 12)),
+                },
+                400,
+        ),
+        (
+                Question.AnswerType.ELLIPSE,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Ellipse",
+                    "name": "test",
+                    "major_axis": (((1, 2, 3), (4, 5, 6)),),
+                    "minor_axis": ((1, 2, 3), (4, 5, 6))
+                },
+                400,
+        ),
+        (
+                Question.AnswerType.ELLIPSE,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Ellipse",
+                    "name": "test",
+                    "major_axis": ((1, 2, 3), (4, 5, 6, 7)),
+                    "minor_axis": ((7, 8, 9), (10, 11, 12)),
+                },
+                400,
+        ),
+        (Question.AnswerType.MULTIPLE_ELLIPSES, "djwqpidg", 400),
+        (Question.AnswerType.MULTIPLE_ELLIPSES, True, 400),
+        (Question.AnswerType.MULTIPLE_ELLIPSES, 42, 400),
+        (Question.AnswerType.MULTIPLE_ELLIPSES, {}, 400),
+        (Question.AnswerType.MULTIPLE_ELLIPSES, "", 400),
+        (
+                Question.AnswerType.MULTIPLE_ELLIPSES,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Multiple ellipses",
+                    "name": "test",
+                    "ellipses": [
+                        {
+                            "name": "ellipse1",
+                            "major_axis": ((1, 2, 3), (4, 5, 6)),
+                            "minor_axis": ((7, 8, 9), (10, 11, 12)),
+                        }
+                    ]
+
+                },
+                201,
+        ),
+        (
+                Question.AnswerType.MULTIPLE_ELLIPSES,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Multiple ellipses",
+                    "name": "test",
+                    "ellipses": [
+                        {
+                            "name": "ellipse1",
+                            "major_axis": ((1, 2, 3), (4, 5, 6), (4, 5, 6)),
+                            "minor_axis": ((7, 8, 9), (10, 11, 12)),
+                        }
+                    ]
+
+                },
+                400,
+        ),
+        (
+                Question.AnswerType.MULTIPLE_ELLIPSES,
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "Multiple ellipses",
+                    "name": "test",
+                    "ellipses": [
+                        {
+                            "name": "ellipse1",
+                            "major_axis": ((1, 2, 3), (4, 5, 6)),
+                            "minor_axis": ((7, 8, 9), (10, 11, 12)),
+                        },
+                        {
+                            "name": "ellipse2",
+                            "major_axis": ((1, 2, 3)),
+                            "minor_axis": ((7, 8, 9), (10, 11, 12)),
+                        },
+                    ]
+
+                },
+                400,
+        ),
+
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):

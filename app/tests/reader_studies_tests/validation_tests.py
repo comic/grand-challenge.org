@@ -162,6 +162,29 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             },
         ],
     },
+    "ELLI": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Ellipse",
+        "name": "test_name",
+        "major_axis": [[0, 0, 0], [0, 0, 0]],
+        "minor_axis": [[1, 1, 1], [1, 1, 1]],
+        "probability": 0.3,
+    },
+    "MELL": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple ellipses",
+        "name": "test_name",
+        "ellipses": [
+            {
+                "name": "ellipse1",
+                "major_axis": [[0, 0, 0], [0, 0, 0]],
+                "minor_axis": [[1, 1, 1], [1, 1, 1]],
+            },
+        ],
+        "major_axis": [[0, 0, 0], [0, 0, 0]],
+        "minor_axis": [[1, 1, 1], [1, 1, 1]],
+        "probability": 0.3,
+    },
 }
 
 
@@ -224,6 +247,8 @@ def test_new_answer_type_listed():
         ["MLIN", True],
         ["ANGL", True],
         ["MANG", True],
+        ["ELLI", True],
+        ["MELL", True],
     ],
 )
 def test_answer_type_allows_null(answer_type, allow_null):
