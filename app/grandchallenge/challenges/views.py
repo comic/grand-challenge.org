@@ -446,7 +446,7 @@ class ChallengeCostCalculation(
                     "You specified more than 150 test images in one or both of your phases. Be reminded that Grand Challenge starts a seperate algorithm job per image. When the images are small, it is better to <a href='{}'>bundle them into sets of images</a>. This drastically reduces the compute costs for a submission.",
                     "https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images",
                 )
-        except ValueError:
+        except (ValueError, TypeError):
             context[
                 "error"
             ] = "You need to fill in all the fields in the cost estimate box to calculate the costs."
