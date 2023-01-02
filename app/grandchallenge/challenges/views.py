@@ -433,6 +433,19 @@ class ChallengeCostCalculation(
                 phase_2_number_of_submissions_per_team=phase_2_number_of_submissions_per_team,
             )
             context["budget"] = challenge_request.budget
+            num_submissions = challenge_request.expected_number_of_teams * (
+                challenge_request.phase_1_number_of_submissions_per_team
+                + challenge_request.phase_2_number_of_submissions_per_team
+            )
+            context["total_submissions"] = num_submissions
+            if (
+                phase_1_number_of_test_images > 150
+                or phase_2_number_of_test_images > 150
+            ):
+                context["image_warning"] = format_html(
+                    "You specified more than 150 test images in one or both of your phases. Be reminded that Grand Challenge starts a seperate algorithm job per image. When the images are small, it is better to <a href='{}'>bundle them into sets of images</a>. This drastically reduces the compute costs for a submission.",
+                    "https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images",
+                )
         except ValueError:
             context[
                 "error"
