@@ -398,40 +398,46 @@ class ChallengeCostCalculation(
     template_name = "challenges/challenge_cost.html"
 
     def get(self, request, *args, **kwargs):
-        number_of_tasks = int(request.GET.get("number_of_tasks"))
-        average_size_of_test_image_in_mb = int(
-            request.GET.get("average_size_of_test_image_in_mb")
-        )
-        inference_time_limit_in_minutes = int(
-            request.GET.get("inference_time_limit_in_minutes")
-        )
-        phase_1_number_of_test_images = int(
-            request.GET.get("phase_1_number_of_test_images")
-        )
-        phase_2_number_of_test_images = int(
-            request.GET.get("phase_2_number_of_test_images")
-        )
-        phase_1_number_of_submissions_per_team = int(
-            request.GET.get("phase_1_number_of_submissions_per_team")
-        )
-        phase_2_number_of_submissions_per_team = int(
-            request.GET.get("phase_2_number_of_submissions_per_team")
-        )
-        expected_number_of_teams = int(
-            request.GET.get("expected_number_of_teams")
-        )
-        challenge_request = ChallengeRequest(
-            number_of_tasks=number_of_tasks,
-            average_size_of_test_image_in_mb=average_size_of_test_image_in_mb,
-            expected_number_of_teams=expected_number_of_teams,
-            inference_time_limit_in_minutes=inference_time_limit_in_minutes,
-            phase_1_number_of_test_images=phase_1_number_of_test_images,
-            phase_2_number_of_test_images=phase_2_number_of_test_images,
-            phase_1_number_of_submissions_per_team=phase_1_number_of_submissions_per_team,
-            phase_2_number_of_submissions_per_team=phase_2_number_of_submissions_per_team,
-        )
         context = self.get_context_data(**kwargs)
-        context["budget"] = challenge_request.budget
+        try:
+            number_of_tasks = int(request.GET.get("number_of_tasks"))
+            average_size_of_test_image_in_mb = int(
+                request.GET.get("average_size_of_test_image_in_mb")
+            )
+            inference_time_limit_in_minutes = int(
+                request.GET.get("inference_time_limit_in_minutes")
+            )
+            phase_1_number_of_test_images = int(
+                request.GET.get("phase_1_number_of_test_images")
+            )
+            phase_2_number_of_test_images = int(
+                request.GET.get("phase_2_number_of_test_images")
+            )
+            phase_1_number_of_submissions_per_team = int(
+                request.GET.get("phase_1_number_of_submissions_per_team")
+            )
+            phase_2_number_of_submissions_per_team = int(
+                request.GET.get("phase_2_number_of_submissions_per_team")
+            )
+            expected_number_of_teams = int(
+                request.GET.get("expected_number_of_teams")
+            )
+            challenge_request = ChallengeRequest(
+                number_of_tasks=number_of_tasks,
+                average_size_of_test_image_in_mb=average_size_of_test_image_in_mb,
+                expected_number_of_teams=expected_number_of_teams,
+                inference_time_limit_in_minutes=inference_time_limit_in_minutes,
+                phase_1_number_of_test_images=phase_1_number_of_test_images,
+                phase_2_number_of_test_images=phase_2_number_of_test_images,
+                phase_1_number_of_submissions_per_team=phase_1_number_of_submissions_per_team,
+                phase_2_number_of_submissions_per_team=phase_2_number_of_submissions_per_team,
+            )
+            context["budget"] = challenge_request.budget
+        except ValueError:
+            context[
+                "error"
+            ] = "You need to fill in all the fields in the cost estimate box to calculate the costs."
+
         return TemplateResponse(
             request=request,
             template=self.template_name,
