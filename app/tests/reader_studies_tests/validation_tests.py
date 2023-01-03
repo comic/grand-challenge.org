@@ -179,11 +179,14 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
                 "name": "ellipse1",
                 "major_axis": [[0, 0, 0], [0, 0, 0]],
                 "minor_axis": [[1, 1, 1], [1, 1, 1]],
+                "probability": 0.3,
+            },
+            {
+                "name": "ellipse2",
+                "major_axis": [[0, 0, 0], [0, 0, 0]],
+                "minor_axis": [[1, 1, 1], [1, 1, 1]],
             },
         ],
-        "major_axis": [[0, 0, 0], [0, 0, 0]],
-        "minor_axis": [[1, 1, 1], [1, 1, 1]],
-        "probability": 0.3,
     },
 }
 

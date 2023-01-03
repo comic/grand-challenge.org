@@ -24,6 +24,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='question',
             name='answer_type',
-            field=models.CharField(choices=[('STXT', 'Single line text'), ('MTXT', 'Multi line text'), ('BOOL', 'Bool'), ('NUMB', 'Number'), ('HEAD', 'Heading'), ('2DBB', '2D bounding box'), ('M2DB', 'Multiple 2D bounding boxes'), ('DIST', 'Distance measurement'), ('MDIS', 'Multiple distance measurements'), ('POIN', 'Point'), ('MPOI', 'Multiple points'), ('POLY', 'Polygon'), ('MPOL', 'Multiple polygons'), ('CHOI', 'Choice'), ('MCHO', 'Multiple choice'), ('MCHD', 'Multiple choice dropdown'), ('MASK', 'Mask'), ('LINE', 'Line'), ('MLIN', 'Multiple lines'), ('ANGL', 'Angle'), ('MANG', 'Multiple angles'), ('ELLI', 'Ellipse'), ('MELL', 'MUltiple Ellipses')], default='STXT', max_length=4),
+            field=models.CharField(choices=[('STXT', 'Single line text'), ('MTXT', 'Multi line text'), ('BOOL', 'Bool'), ('NUMB', 'Number'), ('HEAD', 'Heading'), ('2DBB', '2D bounding box'), ('M2DB', 'Multiple 2D bounding boxes'), ('DIST', 'Distance measurement'), ('MDIS', 'Multiple distance measurements'), ('POIN', 'Point'), ('MPOI', 'Multiple points'), ('POLY', 'Polygon'), ('MPOL', 'Multiple polygons'), ('CHOI', 'Choice'), ('MCHO', 'Multiple choice'), ('MCHD', 'Multiple choice dropdown'), ('MASK', 'Mask'), ('LINE', 'Line'), ('MLIN', 'Multiple lines'), ('ANGL', 'Angle'), ('MANG', 'Multiple angles'), ('ELLI', 'Ellipse'), ('MELL', 'Multiple Ellipses')], default='STXT', max_length=4),
         ),
     ]
