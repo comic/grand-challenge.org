@@ -11,7 +11,7 @@
                         <td class="col-5 font-weight-bold">Total number of submissions to challenge</td>
                         <td class="col-7">{{ total_submissions }}
                             {% if total_submissions > 500 %}
-                                <br><small class="text-danger">This is an unusually high number of submissions. Please reconsider the number of submissions for each phase. </small>
+                                <br><small class="text-danger">This is an unusually high number of submissions. You may want to reconsider the number of submissions for each phase. </small>
                             {% endif %}
                         </td>
                     </tr>
@@ -19,9 +19,12 @@
                 {% if image_warning %}
                     <div class="bg-warning rounded p-2 mb-3 text-white"><i class="fa fa-exclamation-circle mx-2" aria-hidden="true"></i> {{ image_warning }}</div>
                 {% endif %}
+                {% if runtime_warning %}
+                    <div class="bg-warning rounded p-2 mb-3 text-white"><i class="fa fa-exclamation-circle mx-2" aria-hidden="true"></i> {{ runtime_warning }}</div>
+                {% endif %}
             </div>
         </div>
     </div>
 {% else %}
-    <div class="bg-danger rounded p-2 mb-3 text-white"><i class="fa fa-exclamation-circle mx-2" aria-hidden="true"></i> {{ error }}</div>
+    <div id="cost-estimate" class="bg-danger rounded p-2 mb-3 text-white"><i class="fa fa-exclamation-circle mx-2" aria-hidden="true"></i> {{ error }}</div>
 {% endif %}
