@@ -536,14 +536,14 @@ class InterfaceKind:
             {
                 "name": "an Ellipse",
                 "type": "Ellipse",
-                "major_axis": [[ 130.80001831054688, 148.86666870117188, 0.5009999871253967], [10, 10, 0]]
-                "minor_axis": [[ 69.73332977294922, 148.86666870117188, 0.5009999871253967], 10, 0, 0]]
+                "major_axis": [[ 130, 148.86, 0.50], [10, 10, 0]],
+                "minor_axis": [[ 69.73, 148.86, 0.50], [10, 0, 0]],
                 "probability": 0.95,
                 "version": { "major": 1, "minor": 0 }
             }
 
         Example json for Multiple Ellipses annotation
-            required: "type", "ellipse", "version"
+            required: "type", "ellipses", "version"
             optional: "name", "probability"
 
         .. code-block:: json
@@ -554,22 +554,22 @@ class InterfaceKind:
                 "ellipses": [
                     {
                         "name": "First Ellipse",
-                        "major axis": [[10, 10, 0.5], [10, 20, 0]]
-                        "minor_axis: [[10, 20, 0.5], [10.6, 0, 0]]
+                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
+                        "minor_axis: [[10, 20, 0.5], [10.6, 0, 0]],
                         "probability": 0.82
                     },
                     {
                         "name": "Second Ellipse",
-                        "major axis": [[10, 10, 0.5], [10, 20, 0]]
-                        "minor_axis: [[10, 20, 0.5], [10.6, 0, 0]]
+                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
+                        "minor_axis: [[10, 20, 0.5], [10.6, 0, 0]],
                         "probability": 0.52
                     },
                     {
                         "name": "Third Ellipse",
-                        "major axis": [[10, 10, 0.5], [10, 20, 0]]
-                        "minor_axis: [[10, 20, 0.5], [10.6, 0, 0]]
+                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
+                        "minor_axis: [[10, 20, 0.5], [10.6, 0, 0]],
                         "probability": 0.98
-                    }
+                    },
                 ],
                 "version": {"major": 1, "minor": 0}
             }
