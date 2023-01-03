@@ -446,7 +446,7 @@ ANSWER_TYPE_SCHEMA = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
-                "type": {"enum": ["Ellipse object"]},
+                "type": {"enum": ["Ellipse"]},
                 "major_axis": {
                     "type": "array",
                     "items": {
