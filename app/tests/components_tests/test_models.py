@@ -526,31 +526,31 @@ def test_invalid_schema_raises_error():
             nullcontext(),
         ),
         (
-                InterfaceKindChoices.ELLIPSE,
-                {
-                    "version": {"major": 1, "minor": 0},
-                    "type": "Ellipse",
-                    "name": "test",
-                    "major_axis": [[1, 2, 3], [4, 5, 6]],
-                    "minor_axis": [[1, 2, 3], [4, 5, 6]],
-                },
-                nullcontext(),
+            InterfaceKindChoices.ELLIPSE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Ellipse",
+                "name": "test",
+                "major_axis": [[1, 2, 3], [4, 5, 6]],
+                "minor_axis": [[1, 2, 3], [4, 5, 6]],
+            },
+            nullcontext(),
         ),
         (
-                InterfaceKindChoices.MULTIPLE_ELLIPSES,
-                {
-                    "version": {"major": 1, "minor": 0},
-                    "type": "Multiple ellipses",
-                    "name": "test",
-                    "ellipses": [
-                        {
-                            "name": "test",
-                            "major_axis": [[1, 2, 3], [4, 5, 6]],
-                            "minor_axis": [[1, 2, 3], [4, 5, 6]],
-                        }
-                    ],
-                },
-                nullcontext(),
+            InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple ellipses",
+                "name": "test",
+                "ellipses": [
+                    {
+                        "name": "test",
+                        "major_axis": [[1, 2, 3], [4, 5, 6]],
+                        "minor_axis": [[1, 2, 3], [4, 5, 6]],
+                    }
+                ],
+            },
+            nullcontext(),
         ),
         (InterfaceKindChoices.CHOICE, "First", nullcontext()),
         (InterfaceKindChoices.CHOICE, 1, pytest.raises(ValidationError)),
@@ -797,34 +797,33 @@ def test_default_validation(kind, value, expectation, use_file):
             {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
         ),
         (
-                InterfaceKindChoices.ELLIPSE,
-                {
-                    "version": {"major": 1, "minor": 0},
-                    "type": "Ellipse",
-                    "name": "test",
-                    "major_axis": [[0, 0, 0], [10, 1, 0.5]],
-                    "minor_axis": [[10, 0, 0], [10, 4, 0.5]],
-                    "probability": 0.9,
-                },
-                {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
+            InterfaceKindChoices.ELLIPSE,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Ellipse",
+                "name": "test",
+                "major_axis": [[0, 0, 0], [10, 1, 0.5]],
+                "minor_axis": [[10, 0, 0], [10, 4, 0.5]],
+                "probability": 0.9,
+            },
+            {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
         ),
         (
-                InterfaceKindChoices.MULTIPLE_ELLIPSES,
-                {
-                    "version": {"major": 1, "minor": 0},
-                    "type": "Multiple ellipses",
-                    "name": "test",
-                    "ellipses": [
-                        {
-                            "name": "First Ellipse",
-                            "major_axis": [[0, 0, 0], [10, 1, 0.5]],
-                            "minor_axis": [[10, 0, 0], [10, 4, 0.5]],
-                        },
-                    ],
-                },
-                {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
+            InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple ellipses",
+                "name": "test",
+                "ellipses": [
+                    {
+                        "name": "First Ellipse",
+                        "major_axis": [[0, 0, 0], [10, 1, 0.5]],
+                        "minor_axis": [[10, 0, 0], [10, 4, 0.5]],
+                    },
+                ],
+            },
+            {"properties": {"name": {"pattern": "^[A-Z]+$"}}},
         ),
-
         (InterfaceKindChoices.CHOICE, "First", {"enum": ["first"]}),
         (
             InterfaceKindChoices.MULTIPLE_CHOICE,

@@ -950,7 +950,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
         }
 
         if object_store_required and self.store_in_database:

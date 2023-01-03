@@ -482,14 +482,11 @@ ANSWER_TYPE_SCHEMA = {
                 "ellipses": {
                     "type": "array",
                     "items": {
-                        "allOf": [
-                            {"$ref": "#/definitions/ellipse-object"}
-                        ]
+                        "allOf": [{"$ref": "#/definitions/ellipse-object"}]
                     },
                 },
                 "version": {"$ref": "#/definitions/version-object"},
             },
-
             "required": ["version", "type", "ellipses"],
             "additionalProperties": False,
         },
@@ -572,7 +569,7 @@ INTERFACE_VALUE_SCHEMA = {
         "polygon-object": ANSWER_TYPE_SCHEMA["definitions"]["polygon-object"],
         "spline-object": ANSWER_TYPE_SCHEMA["definitions"]["spline-object"],
         "angle-object": ANSWER_TYPE_SCHEMA["definitions"]["angle-object"],
-        "ellipse-object": ANSWER_TYPE_SCHEMA["definitions"]["ellipse-object"]
+        "ellipse-object": ANSWER_TYPE_SCHEMA["definitions"]["ellipse-object"],
     },
     "anyOf": [
         {"$ref": "#/definitions/STR"},
