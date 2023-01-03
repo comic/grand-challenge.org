@@ -543,7 +543,7 @@ class InterfaceKind:
             }
 
         Example json for Multiple Ellipses annotation
-            required: "type", "ellipse", "version"
+            required: "type", "ellipses", "version"
             optional: "name", "probability"
 
         .. code-block:: json
