@@ -5,7 +5,7 @@ if (window.location.hash == "" || window.location.hash == '#information') {
 
 $('#v-pills-tab a').click(function () {
   $(this).siblings().removeClass('active');
-  $(this).tab('active');
+  $(this).tab('show');
 });
 
 // store the currently selected tab in the hash value
