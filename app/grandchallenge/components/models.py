@@ -555,7 +555,7 @@ class InterfaceKind:
                     {
                         "name": "First Ellipse",
                         "major axis": [[10, 10, 0.5], [10, 20, 0]],
-                        "minor_axis: [[10, 20, 0.5], [10.6, 0, 0]],
+                        "minor_axis": [[10, 20, 0.5], [10.6, 0, 0]],
                         "probability": 0.82
                     },
                     {
