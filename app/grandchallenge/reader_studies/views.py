@@ -461,9 +461,9 @@ class ReaderStudyImagesList(
         Column(title="Name", sort_field="name"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="origin__creator__username"),
-        Column(title="View", sort_field="pk"),
-        Column(title="Download", sort_field="pk"),
-        Column(title="Remove from Study", sort_field="pk"),
+        Column(title="View"),
+        Column(title="Download"),
+        Column(title="Remove from Study"),
     ]
 
     @cached_property

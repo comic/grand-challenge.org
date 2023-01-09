@@ -482,8 +482,8 @@ class ArchiveItemsList(
     ]
     columns = [
         Column(title="Values", sort_field="created"),
-        Column(title="Add", sort_field="pk"),
-        Column(title="View", sort_field="status"),
+        Column(title="Add"),
+        Column(title="View"),
     ]
 
     @cached_property
@@ -594,7 +594,7 @@ class ArchiveCasesList(
             sort_field="series_description",
             optional_condition=lambda o: o.series_description,
         ),
-        Column(title="View", sort_field="pk"),
+        Column(title="View"),
         Column(
             title="Algorithm Results",
             sort_field="pk",
@@ -603,7 +603,7 @@ class ArchiveCasesList(
                 for civ in o.componentinterfacevalue_set.all()
             ),
         ),
-        Column(title="Download", sort_field="pk"),
+        Column(title="Download"),
     ]
 
     @cached_property
