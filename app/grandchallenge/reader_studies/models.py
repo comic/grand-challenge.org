@@ -931,6 +931,8 @@ class AnswerType(models.TextChoices):
     MULTIPLE_LINES = "MLIN", "Multiple lines"
     ANGLE = "ANGL", "Angle"
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
+    ELLIPSE = "ELLI", "Ellipse"
+    MULTIPLE_ELLIPSES = "MELL", "Multiple ellipses"
 
     @staticmethod
     def get_choice_types():
@@ -956,6 +958,8 @@ class AnswerType(models.TextChoices):
             AnswerType.MULTIPLE_LINES,
             AnswerType.ANGLE,
             AnswerType.MULTIPLE_ANGLES,
+            AnswerType.ELLIPSE,
+            AnswerType.MULTIPLE_ELLIPSES,
         ]
 
 
@@ -994,6 +998,8 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     ],
     AnswerType.ANGLE: [InterfaceKindChoices.ANGLE],
     AnswerType.MULTIPLE_ANGLES: [InterfaceKindChoices.MULTIPLE_ANGLES],
+    AnswerType.ELLIPSE: [InterfaceKindChoices.ELLIPSE],
+    AnswerType.MULTIPLE_ELLIPSES: [InterfaceKindChoices.MULTIPLE_ELLIPSES],
 }
 
 
