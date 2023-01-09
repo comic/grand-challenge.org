@@ -164,6 +164,8 @@
     <span class="n">MULTIPLE_LINES</span> <span class="o">=</span> <span class="s2">&quot;MLIN&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple lines&quot;</span><span class="p">)</span>
     <span class="n">ANGLE</span> <span class="o">=</span> <span class="s2">&quot;ANGL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Angle&quot;</span><span class="p">)</span>
     <span class="n">MULTIPLE_ANGLES</span> <span class="o">=</span> <span class="s2">&quot;MANG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple angles&quot;</span><span class="p">)</span>
+    <span class="n">ELLIPSE</span> <span class="o">=</span> <span class="s2">&quot;ELLI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Ellipse&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_ELLIPSES</span> <span class="o">=</span> <span class="s2">&quot;MELL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple ellipses&quot;</span><span class="p">)</span>
 
     <span class="c1"># Choice Types</span>
     <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Choice&quot;</span><span class="p">)</span>
@@ -222,6 +224,8 @@
 <span class="sd">        * Choice (string)</span>
 <span class="sd">        * Multiple choice (array of strings)</span>
 <span class="sd">        * Chart</span>
+<span class="sd">        * Ellipse</span>
+<span class="sd">        * Multiple ellipses</span>
 
 <span class="sd">        Example json for 2D bounding box annotation</span>
 <span class="sd">            required: &quot;type&quot;, &quot;corners&quot;, &quot;version&quot;</span>
@@ -472,9 +476,7 @@
 <span class="sd">        Example json for Angle annotation</span>
 <span class="sd">            required: &quot;type&quot;, &quot;lines&quot;, &quot;version&quot;</span>
 <span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
 <span class="sd">        .. code-block:: json</span>
-
 <span class="sd">            {</span>
 <span class="sd">                &quot;name&quot;: &quot;Some angle&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Angle&quot;,</span>
@@ -486,9 +488,7 @@
 <span class="sd">        Example json for Multiple angles annotation</span>
 <span class="sd">            required: &quot;type&quot;, &quot;angles&quot;, &quot;version&quot;</span>
 <span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
-
 <span class="sd">        .. code-block:: json</span>
-
 <span class="sd">            {</span>
 <span class="sd">                &quot;name&quot;: &quot;Some angles&quot;,</span>
 <span class="sd">                &quot;type&quot;: &quot;Multiple angles&quot;,</span>
@@ -602,6 +602,52 @@
 <span class="sd">                  }</span>
 <span class="sd">               }</span>
 <span class="sd">            }</span>
+<span class="sd">        Example json for Ellipse annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;major_axis, &quot;minor_axis&quot; &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;an Ellipse&quot;,</span>
+<span class="sd">                &quot;type&quot;: &quot;Ellipse&quot;,</span>
+<span class="sd">                &quot;major_axis&quot;: [[ 130, 148.86, 0.50], [10, 10, 0]],</span>
+<span class="sd">                &quot;minor_axis&quot;: [[ 69.73, 148.86, 0.50], [10, 0, 0]],</span>
+<span class="sd">                &quot;probability&quot;: 0.95,</span>
+<span class="sd">                &quot;version&quot;: { &quot;major&quot;: 1, &quot;minor&quot;: 0 }</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Example json for Multiple ellipses annotation</span>
+<span class="sd">            required: &quot;type&quot;, &quot;ellipses&quot;, &quot;version&quot;</span>
+<span class="sd">            optional: &quot;name&quot;, &quot;probability&quot;</span>
+
+<span class="sd">        .. code-block:: json</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;name&quot;: &quot;Some Ellipses&quot;,</span>
+<span class="sd">                &quot;type&quot;: &quot;Multiple ellipses&quot;,</span>
+<span class="sd">                &quot;ellipses&quot;: [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;First Ellipse&quot;,</span>
+<span class="sd">                        &quot;major axis&quot;: [[10, 10, 0.5], [10, 20, 0]],</span>
+<span class="sd">                        &quot;minor_axis&quot;: [[10, 20, 0.5], [10.6, 0, 0]],</span>
+<span class="sd">                        &quot;probability&quot;: 0.82</span>
+<span class="sd">                    },</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Second Ellipse&quot;,</span>
+<span class="sd">                        &quot;major axis&quot;: [[10, 10, 0.5], [10, 20, 0]],</span>
+<span class="sd">                        &quot;minor_axis&quot;: [[10, 20, 0.5], [10.6, 0, 0]],</span>
+<span class="sd">                        &quot;probability&quot;: 0.52</span>
+<span class="sd">                    },</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;Third Ellipse&quot;,</span>
+<span class="sd">                        &quot;major axis&quot;: [[10, 10, 0.5], [10, 20, 0]],</span>
+<span class="sd">                        &quot;minor_axis&quot;: [[10, 20, 0.5], [10.6, 0, 0]],</span>
+<span class="sd">                        &quot;probability&quot;: 0.98</span>
+<span class="sd">                    }</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;version&quot;: {&quot;major&quot;: 1, &quot;minor&quot;: 0}</span>
+<span class="sd">            }</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -625,6 +671,8 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
         <span class="p">}</span></div>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_image"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>    <span class="nd">@staticmethod</span>
@@ -977,6 +1025,7 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="n">object_store_required</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
