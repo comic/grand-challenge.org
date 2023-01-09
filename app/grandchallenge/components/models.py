@@ -150,7 +150,7 @@ class InterfaceKind:
         * Multiple choice (array of strings)
         * Chart
         * Ellipse
-        * Multiple Ellipses
+        * Multiple ellipses
 
         Example json for 2D bounding box annotation
             required: "type", "corners", "version"
@@ -542,7 +542,7 @@ class InterfaceKind:
                 "version": { "major": 1, "minor": 0 }
             }
 
-        Example json for Multiple Ellipses annotation
+        Example json for Multiple ellipses annotation
             required: "type", "ellipses", "version"
             optional: "name", "probability"
 
@@ -550,7 +550,7 @@ class InterfaceKind:
 
             {
                 "name": "Some Ellipses",
-                "type": "Multiple Ellipses",
+                "type": "Multiple ellipses",
                 "ellipses": [
                     {
                         "name": "First Ellipse",

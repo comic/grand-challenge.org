@@ -932,7 +932,7 @@ class AnswerType(models.TextChoices):
     ANGLE = "ANGL", "Angle"
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
     ELLIPSE = "ELLI", "Ellipse"
-    MULTIPLE_ELLIPSES = "MELL", "Multiple Ellipses"
+    MULTIPLE_ELLIPSES = "MELL", "Multiple ellipses"
 
     @staticmethod
     def get_choice_types():

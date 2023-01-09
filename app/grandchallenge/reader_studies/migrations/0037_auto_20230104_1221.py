@@ -1486,7 +1486,7 @@ class Migration(migrations.Migration):
                     ("ANGL", "Angle"),
                     ("MANG", "Multiple angles"),
                     ("ELLI", "Ellipse"),
-                    ("MELL", "Multiple Ellipses"),
+                    ("MELL", "Multiple ellipses"),
                 ],
                 default="STXT",
                 max_length=4,
