@@ -638,13 +638,7 @@ class JobsList(PaginatedTableListView):
                         )
                     )
                 else:
-                    columns.append(
-                        Column(
-                            title=interface.title,
-                            sort_field="",
-                            classes=("nonSortable",),
-                        )
-                    )
+                    columns.append(Column(title=interface.title))
 
         return columns
 

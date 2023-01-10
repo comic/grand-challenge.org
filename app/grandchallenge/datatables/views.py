@@ -90,7 +90,7 @@ class PaginatedTableListView(ListView):
 @dataclass
 class Column:
     title: str
-    sort_field: str
+    sort_field: str = ""
     classes: tuple[str, ...] = ()
     identifier: str = ""
 
@@ -98,3 +98,7 @@ class Column:
     # for every object shown in the current list (page). `optional_condition`
     # is a function that consumes the current object as argument
     optional_condition: Callable | None = None
+
+    def __post_init__(self):
+        if not self.sort_field:
+            self.classes = (*self.classes, "nonSortable")
