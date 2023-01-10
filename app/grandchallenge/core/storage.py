@@ -15,6 +15,7 @@ from django.utils.encoding import filepath_to_uri
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from storages.backends.s3boto3 import S3Boto3Storage
+from storages.utils import clean_name
 
 
 class S3Storage(S3Boto3Storage):
@@ -34,8 +35,8 @@ class S3Storage(S3Boto3Storage):
             )
 
     def copy(self, *, from_name, to_name):
-        from_name = self._normalize_name(self._clean_name(from_name))
-        to_name = self._normalize_name(self._clean_name(to_name))
+        from_name = self._normalize_name(clean_name(from_name))
+        to_name = self._normalize_name(clean_name(to_name))
 
         self.connection.meta.client.copy_object(
             Bucket=self.bucket_name,
@@ -80,7 +81,7 @@ class ProtectedS3Storage(S3Storage):
 
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudfront.html#id57
         """
-        name = self._normalize_name(self._clean_name(name))
+        name = self._normalize_name(clean_name(name))
 
         if domain is None:
             domain = settings.PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN

@@ -11,7 +11,6 @@ from grandchallenge.reader_studies.views import (
     DisplaySetDetail,
     DisplaySetFilesUpdate,
     DisplaySetInterfacesCreate,
-    DisplaySetPDFReport,
     DisplaySetUpdate,
     EditorsUpdate,
     QuestionDelete,
@@ -119,11 +118,6 @@ urlpatterns = [
         "<slug>/display-sets/<uuid:pk>/interfaces/<slug:interface_slug>/files/update/",
         DisplaySetFilesUpdate.as_view(),
         name="display-set-files-update",
-    ),
-    path(
-        "<slug>/display-sets/<uuid:pk>/report/<str:username>/",
-        DisplaySetPDFReport.as_view(),
-        name="display-set-pdf-report",
     ),
     path(
         "<slug>/images/add/",
