@@ -2,7 +2,6 @@ from datetime import timedelta
 from itertools import chain
 
 import pytest
-from django.core.cache import cache
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
@@ -11,10 +10,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.evaluation.tasks import (
-    PhaseStatistics,
-    get_average_job_duration_for_phase,
-)
+from grandchallenge.evaluation.tasks import get_average_job_duration_for_phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
 from tests.algorithms_tests.factories import (
@@ -333,11 +329,6 @@ def test_challenge_statistics_page_permissions(
     admin, reviewer, user = UserFactory.create_batch(3)
     challenge.add_admin(admin)
     assign_perm("challenges.view_challengerequest", reviewer)
-    cache.set(
-        "statistics_for_phases",
-        {1, PhaseStatistics(1, 1, 1, 1, 1)},
-        timeout=None,
-    )
 
     response = get_view_for_user(
         viewname="pages:statistics",
