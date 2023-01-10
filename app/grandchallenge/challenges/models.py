@@ -779,7 +779,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
         help_text="How many teams do you expect to participate in your challenge?"
     )
     average_algorithm_container_size_in_gb = models.IntegerField(
-        default=10, help_text="Average algorithm container size in GB."
+        default=6, help_text="Average algorithm container size in GB."
     )
     average_number_of_containers_per_team = models.IntegerField(
         default=5,
@@ -997,6 +997,7 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
                 self.average_algorithm_container_size_in_gb
                 * self.average_number_of_containers_per_team
                 * self.expected_number_of_teams
+                * self.number_of_tasks
                 * ecr_storage_costs
                 / 1000
                 / 100,
