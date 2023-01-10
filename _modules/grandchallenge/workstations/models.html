@@ -124,7 +124,7 @@
 
 
 <div class="viewcode-block" id="Workstation"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Workstation">[docs]</a><span class="k">class</span> <span class="nc">Workstation</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Store the title and description of a workstation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Store the title and description of a workstation.&quot;&quot;&quot;</span>
 
     <span class="n">logo</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">get_logo_path</span><span class="p">,</span>
@@ -162,7 +162,7 @@
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">latest_executable_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            The most recent container image for this workstation</span>
@@ -243,7 +243,7 @@
 
 <div class="viewcode-block" id="delete_workstation_groups_hook"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.delete_workstation_groups_hook">[docs]</a><span class="nd">@receiver</span><span class="p">(</span><span class="n">post_delete</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">Workstation</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">delete_workstation_groups_hook</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Workstation</span><span class="p">,</span> <span class="n">using</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deletes the related groups.</span>
 
 <span class="sd">    We use a signal rather than overriding delete() to catch usages of</span>
@@ -261,7 +261,7 @@
 
 
 <div class="viewcode-block" id="WorkstationImage"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationImage">[docs]</a><span class="k">class</span> <span class="nc">WorkstationImage</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A ``WorkstationImage`` is a docker container image of a workstation.</span>
 
 <span class="sd">    Parameters</span>
@@ -347,7 +347,7 @@
 
 
 <div class="viewcode-block" id="Session"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session">[docs]</a><span class="k">class</span> <span class="nc">Session</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tracks who has launched workstation images. The ``WorkstationImage`` will</span>
 <span class="sd">    be launched as a ``Service``. The ``Session`` is responsible for starting</span>
 <span class="sd">    and stopping the ``Service``.</span>
@@ -449,7 +449,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">task_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            The kwargs that need to be passed to celery to get this object</span>
@@ -462,7 +462,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">hostname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            The unique hostname for this session</span>
@@ -473,7 +473,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">expires_at</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            The time when this session expires.</span>
@@ -482,7 +482,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            The environment variables that should be set on the container.</span>
@@ -519,7 +519,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">service</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Service</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            The service for this session, could be active or inactive.</span>
@@ -532,7 +532,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">workstation_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            The url that users will use to access the workstation instance.</span>
@@ -542,7 +542,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="Session.start"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Starts the service for this session, ensuring that the</span>
 <span class="sd">        ``workstation_image`` is ready to be used and that</span>
 <span class="sd">        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached in this region.</span>
@@ -579,7 +579,7 @@
             <span class="k">raise</span></div>
 
 <div class="viewcode-block" id="Session.stop"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Stop the service for this session, cleaning up all of the containers.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop the service for this session, cleaning up all of the containers.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">logs</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">stop_and_cleanup</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">STOPPED</span><span class="p">)</span>
@@ -588,7 +588,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Session.update_status"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.update_status">[docs]</a>    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n">STATUS_CHOICES</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Updates the status of this session.</span>
 
 <span class="sd">        Parameters</span>
@@ -630,7 +630,7 @@
         <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Session.save"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Save the session instance, starting or stopping the service if needed.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the session instance, starting or stopping the service if needed.&quot;&quot;&quot;</span>
         <span class="n">created</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="k">if</span> <span class="n">created</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">:</span>

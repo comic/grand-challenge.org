@@ -171,13 +171,27 @@ The user is able to stop the container, otherwise it will be terminated after <c
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
-<li><p><strong>session</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Session</p></li>
-<li><p><strong>screenshot</strong> (<em>ImageField</em>) – Screenshot</p></li>
-<li><p><strong>user_comment</strong> (<em>TextField</em>) – User comment</p></li>
-<li><p><strong>context</strong> (<em>JSONField</em>) – Context</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>screenshot</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ImageField" title="(in Django v4.1)"><em>ImageField</em></a>) – Screenshot</p></li>
+<li><p><strong>user_comment</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – User comment</p></li>
+<li><p><strong>context</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v4.1)"><em>JSONField</em></a>) – Context</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>session</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Session (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">feedback</span></code>)</p>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feedbackuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission" title="grandchallenge.workstations.models.FeedbackUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeedbackUserObjectPermission</span></code></a>) – All feedback user object permissions of this feedback (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>feedbackgroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission" title="grandchallenge.workstations.models.FeedbackGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeedbackGroupObjectPermission</span></code></a>) – All feedback group object permissions of this feedback (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -201,7 +215,7 @@ that the “save” must be an SQL insert or update (or equivalent for
 non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -213,11 +227,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">FeedbackGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#FeedbackGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">feedbackgroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">feedbackgroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">feedbackgroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -238,11 +257,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">FeedbackUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#FeedbackUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.FeedbackUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">feedbackuserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">feedbackuserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">feedbackuserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -267,20 +291,35 @@ and stopping the <code class="docutils literal notranslate"><span class="pre">Se
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>status</strong> (<em>PositiveSmallIntegerField</em>) – Stores what has happened with the service, is it running, errored, etc?</p></li>
-<li><p><strong>region</strong> (<em>CharField</em>) – Stores which region this session runs in</p></li>
-<li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Who created the session? This is also the only user that should be able
+<li><p><strong>status</strong> – Stores what has happened with the service, is it running, errored, etc?</p></li>
+<li><p><strong>region</strong> – Stores which region this session runs in</p></li>
+<li><p><strong>creator</strong> – Who created the session? This is also the only user that should be able
 to access the launched service.</p></li>
-<li><p><strong>workstation_image</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – The container image that will be launched by this <code class="docutils literal notranslate"><span class="pre">Session</span></code>.</p></li>
-<li><p><strong>maximum_duration</strong> (<em>DurationField</em>) – The maximum time that the service can be active before it is terminated</p></li>
-<li><p><strong>user_finished</strong> (<em>BooleanField</em>) – Indicates if the user has chosen to end the session early</p></li>
+<li><p><strong>workstation_image</strong> – The container image that will be launched by this <code class="docutils literal notranslate"><span class="pre">Session</span></code>.</p></li>
+<li><p><strong>maximum_duration</strong> – The maximum time that the service can be active before it is terminated</p></li>
+<li><p><strong>user_finished</strong> – Indicates if the user has chosen to end the session early</p></li>
 <li><p><strong>history</strong> – The history of this Session</p></li>
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
-<li><p><strong>auth_token</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">AuthToken</span></code>) – Auth token</p></li>
-<li><p><strong>logs</strong> (<em>TextField</em>) – Logs</p></li>
-<li><p><strong>ping_times</strong> (<em>JSONField</em>) – Ping times</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>logs</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Logs</p></li>
+<li><p><strong>ping_times</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v4.1)"><em>JSONField</em></a>) – Ping times</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>auth_token</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">AuthToken</span></code>) – Auth token (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">session</span></code>)</p>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.SessionUserObjectPermission" title="grandchallenge.workstations.models.SessionUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionUserObjectPermission</span></code></a>) – All session user object permissions of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>sessiongroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.SessionGroupObjectPermission" title="grandchallenge.workstations.models.SessionGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionGroupObjectPermission</span></code></a>) – All session group object permissions of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>feedback</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – All feedbacks of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">session</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -302,10 +341,10 @@ to access the launched service.</p></li>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Session.environment">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">environment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.environment" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">environment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.environment" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><em>The environment variables that should be set on the container.</em></p>
@@ -315,10 +354,10 @@ to access the launched service.</p></li>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Session.expires_at">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">expires_at</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime</span></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.expires_at" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">expires_at</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.11)"><span class="pre">datetime</span></a></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.expires_at" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><em>The time when this session expires.</em></p>
@@ -328,10 +367,10 @@ to access the launched service.</p></li>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Session.hostname">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hostname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.hostname" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hostname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.hostname" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><em>The unique hostname for this session</em></p>
@@ -345,7 +384,7 @@ to access the launched service.</p></li>
 <dd><p>Save the session instance, starting or stopping the service if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -381,7 +420,7 @@ to access the launched service.</p></li>
 <dd class="field-odd"><p><strong>ComponentException</strong> – If the service cannot be started.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -392,17 +431,17 @@ to access the launched service.</p></li>
 <dd><p>Stop the service for this session, cleaning up all of the containers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Session.task_kwargs">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">task_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.task_kwargs" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">task_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.task_kwargs" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><em>The kwargs that need to be passed to celery to get this object</em></p>
@@ -419,17 +458,17 @@ to access the launched service.</p></li>
 <dd class="field-odd"><p><strong>status</strong> (<em>(</em><em>(</em><em>0</em><em>, </em><em>Queued</em><em>)</em><em>, </em><em>(</em><em>1</em><em>, </em><em>Started</em><em>)</em><em>, </em><em>(</em><em>2</em><em>, </em><em>Running</em><em>)</em><em>, </em><em>(</em><em>3</em><em>, </em><em>Failed</em><em>)</em><em>, </em><em>(</em><em>4</em><em>, </em><em>Stopped</em><em>)</em><em>)</em>) – The new status for this session.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Session.workstation_url">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workstation_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.workstation_url" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workstation_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.workstations.models.Session.workstation_url" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><em>The url that users will use to access the workstation instance.</em></p>
@@ -444,11 +483,16 @@ to access the launched service.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">SessionGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#SessionGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.SessionGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessiongroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessiongroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessiongroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -469,11 +513,16 @@ to access the launched service.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">SessionUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#SessionUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.SessionUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessionuserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessionuserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessionuserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -496,17 +545,38 @@ to access the launched service.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>title</strong> (<em>CharField</em>) – Title</p></li>
-<li><p><strong>description</strong> (<em>TextField</em>) – Description</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Title</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Description</p></li>
 <li><p><strong>slug</strong> (<em>AutoSlugField</em>) – Slug</p></li>
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
 <li><p><strong>logo</strong> (<em>JPEGField</em>) – Logo</p></li>
-<li><p><strong>editors_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Editors group</p></li>
-<li><p><strong>users_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Users group</p></li>
-<li><p><strong>config</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationConfig</span></code>) – Config</p></li>
-<li><p><strong>public</strong> (<em>BooleanField</em>) – Public. If True, all logged in users can use this viewer, otherwise, only the users group can use this viewer.</p></li>
+<li><p><strong>public</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Public. If True, all logged in users can use this viewer, otherwise, only the users group can use this viewer.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>editors_group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Editors group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">editors_of_workstation</span></code>)</p></li>
+<li><p><strong>users_group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Users group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">users_of_workstation</span></code>)</p></li>
+<li><p><strong>config</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationConfig</span></code>) – Config (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>phase</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="evaluation.html#grandchallenge.evaluation.models.Phase" title="grandchallenge.evaluation.models.Phase"><code class="xref py py-class docutils literal notranslate"><span class="pre">Phase</span></code></a>) – All phases of this workstation (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation</span></code>)</p></li>
+<li><p><strong>algorithm</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code>) – All algorithms of this workstation (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation</span></code>)</p></li>
+<li><p><strong>archive</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <code class="xref py py-class docutils literal notranslate"><span class="pre">Archive</span></code>) – All archives of this workstation (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation</span></code>)</p></li>
+<li><p><strong>workstationuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission" title="grandchallenge.workstations.models.WorkstationUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationUserObjectPermission</span></code></a>) – All workstation user object permissions of this workstation (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>workstationgroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission" title="grandchallenge.workstations.models.WorkstationGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationGroupObjectPermission</span></code></a>) – All workstation group object permissions of this workstation (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>workstationimage</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – All workstation images of this workstation (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation</span></code>)</p></li>
+<li><p><strong>readerstudy</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – All reader studies of this workstation (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -523,12 +593,7 @@ to access the launched service.</p></li>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Workstation.latest_executable_image">
 <span class="sig-name descname"><span class="pre">latest_executable_image</span></span><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.latest_executable_image" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><em>The most recent container image for this workstation</em></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Workstation.save">
@@ -547,11 +612,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationgroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationgroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationgroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -574,28 +644,45 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>workstation</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – A <code class="docutils literal notranslate"><span class="pre">Workstation</span></code> can have multiple <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>, that
+<li><p><strong>workstation</strong> – A <code class="docutils literal notranslate"><span class="pre">Workstation</span></code> can have multiple <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>, that
 represent different versions of a workstation</p></li>
-<li><p><strong>http_port</strong> (<em>PositiveIntegerField</em>) – This container will expose a http server on this port</p></li>
-<li><p><strong>websocket_port</strong> (<em>PositiveIntegerField</em>) – This container will expose a websocket on this port. Any relative url
+<li><p><strong>http_port</strong> – This container will expose a http server on this port</p></li>
+<li><p><strong>websocket_port</strong> – This container will expose a websocket on this port. Any relative url
 that starts with <code class="docutils literal notranslate"><span class="pre">/mlab4d4c4142</span></code> will be proxied to this port.</p></li>
-<li><p><strong>initial_path</strong> (<em>CharField</em>) – The initial path that users will navigate to in order to load the
+<li><p><strong>initial_path</strong> – The initial path that users will navigate to in order to load the
 workstation</p></li>
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
-<li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Creator</p></li>
-<li><p><strong>user_upload</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">UserUpload</span></code>) – User upload</p></li>
-<li><p><strong>image</strong> (<em>FileField</em>) – Image. .tar.xz archive of the container image produced from the command ‘docker save IMAGE | xz -T0 -c &gt; IMAGE.tar.xz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
-<li><p><strong>image_sha256</strong> (<em>CharField</em>) – Image sha256</p></li>
-<li><p><strong>latest_shimmed_version</strong> (<em>CharField</em>) – Latest shimmed version</p></li>
-<li><p><strong>import_status</strong> (<em>PositiveSmallIntegerField</em>) – Import status</p></li>
-<li><p><strong>is_manifest_valid</strong> (<em>BooleanField</em>) – Is manifest valid. Is this image’s manifest valid?</p></li>
-<li><p><strong>is_in_registry</strong> (<em>BooleanField</em>) – Is in registry. Is this image in the container registry?</p></li>
-<li><p><strong>is_on_sagemaker</strong> (<em>BooleanField</em>) – Is on sagemaker. Does a SageMaker model for this image exist?</p></li>
-<li><p><strong>status</strong> (<em>TextField</em>) – Status</p></li>
-<li><p><strong>requires_gpu</strong> (<em>BooleanField</em>) – Requires gpu</p></li>
-<li><p><strong>requires_memory_gb</strong> (<em>PositiveIntegerField</em>) – Requires memory gb</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>image</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.FileField" title="(in Django v4.1)"><em>FileField</em></a>) – Image. .tar.xz archive of the container image produced from the command ‘docker save IMAGE | xz -T0 -c &gt; IMAGE.tar.xz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
+<li><p><strong>image_sha256</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Image sha256</p></li>
+<li><p><strong>latest_shimmed_version</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Latest shimmed version</p></li>
+<li><p><strong>import_status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v4.1)"><em>PositiveSmallIntegerField</em></a>) – Import status</p></li>
+<li><p><strong>is_manifest_valid</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Is manifest valid. Is this image’s manifest valid?</p></li>
+<li><p><strong>is_in_registry</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Is in registry. Is this image in the container registry?</p></li>
+<li><p><strong>is_on_sagemaker</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Is on sagemaker. Does a SageMaker model for this image exist?</p></li>
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Status</p></li>
+<li><p><strong>requires_gpu</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Requires gpu</p></li>
+<li><p><strong>requires_memory_gb</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveIntegerField" title="(in Django v4.1)"><em>PositiveIntegerField</em></a>) – Requires memory gb</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>creator</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – Creator (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimage</span></code>)</p></li>
+<li><p><strong>user_upload</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">UserUpload</span></code>) – User upload (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimage</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>workstationimageuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission" title="grandchallenge.workstations.models.WorkstationImageUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImageUserObjectPermission</span></code></a>) – All workstation image user object permissions of this workstation image (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>workstationimagegroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission" title="grandchallenge.workstations.models.WorkstationImageGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImageGroupObjectPermission</span></code></a>) – All workstation image group object permissions of this workstation image (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>session</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – All sessions of this workstation image (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation_image</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -626,11 +713,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationImageGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationImageGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimagegroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimagegroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimagegroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -651,11 +743,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationImageUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationImageUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImageUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimageuserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimageuserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationimageuserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -676,11 +773,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationuserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationuserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstationuserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>

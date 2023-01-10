@@ -115,20 +115,20 @@ installed alongside docker. If the docker compose cycle invocation below crashes
 <ol class="arabic simple" start="2">
 <li><p>Clone the repo</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git clone https://github.com/comic/grand-challenge.org
-<span class="gp">$ </span><span class="nb">cd</span> grand-challenge.org
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/comic/grand-challenge.org
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>grand-challenge.org
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
 <li><p>Set your local docker group id in your <code class="docutils literal notranslate"><span class="pre">.env</span></code> file</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">echo</span> <span class="nv">DOCKER_GID</span><span class="o">=</span><span class="sb">`</span>getent group docker <span class="p">|</span> cut -d: -f3<span class="sb">`</span> &gt; .env
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="nv">DOCKER_GID</span><span class="o">=</span><span class="sb">`</span>getent<span class="w"> </span>group<span class="w"> </span>docker<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d:<span class="w"> </span>-f3<span class="sb">`</span><span class="w"> </span>&gt;<span class="w"> </span>.env
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
 <li><p>You can then start the development site by invoking</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make runserver
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>runserver
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">app/</span></code> directory is mounted in the containers,
@@ -144,17 +144,17 @@ Some default users are created with specific permissions, each user has the same
 These users include <code class="docutils literal notranslate"><span class="pre">archive</span></code>, <code class="docutils literal notranslate"><span class="pre">readerstudy</span></code>, <code class="docutils literal notranslate"><span class="pre">demo</span></code>, <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> and <code class="docutils literal notranslate"><span class="pre">workstation</span></code>,
 who have permission to administer the existing fixtures and create new ones.</p>
 <p>If you would like to test out the algorithms you can create a simple algorithm that lists its inputs in a <cite>results.json</cite> file by running</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make create_io_algorithm
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>create_io_algorithm
 </pre></div>
 </div>
 <p>Before you run</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make runserver
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>runserver
 </pre></div>
 </div>
 <p>You can also download an <a class="reference external" href="https://hub.docker.com/r/grandchallenge/otsu">Example Algorithm Image</a> from Docker Hub.
 Save it locally with</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker pull grandchallenge/otsu
-<span class="gp">$ </span>docker save grandchallenge/otsu &gt; otsu.tar
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>pull<span class="w"> </span>grandchallenge/otsu
+<span class="gp">$ </span>docker<span class="w"> </span>save<span class="w"> </span>grandchallenge/otsu<span class="w"> </span>&gt;<span class="w"> </span>otsu.tar
 </pre></div>
 </div>
 <p>You can then upload <code class="docutils literal notranslate"><span class="pre">otsu.tar</span></code> as a container image to the local site.</p>
@@ -171,27 +171,27 @@ You can also run the tests locally by</p>
 <ol class="arabic simple">
 <li><p>In a console window make sure the database is running</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make runserver
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>runserver
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
 <li><p>Then in a second window run</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker compose run --rm celery_worker_evaluation pytest -n <span class="m">2</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>celery_worker_evaluation<span class="w"> </span>pytest<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
 </pre></div>
 </div>
 <p>Replace 2 with the number of CPUs that you have on your system, this runs
 the tests in parallel.</p>
 <p>If you want to add a new test please add them to the <code class="docutils literal notranslate"><span class="pre">app/tests</span></code> folder.
 If you only want to run the tests for a particular app, eg. for <code class="docutils literal notranslate"><span class="pre">teams</span></code>, you can do</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker compose run --rm celery_worker_evaluation pytest -k teams_tests
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>celery_worker_evaluation<span class="w"> </span>pytest<span class="w"> </span>-k<span class="w"> </span>teams_tests
 </pre></div>
 </div>
 </section>
 <section id="id1">
 <h2>Development<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
 <p>You will need to install pre-commit so that the code is correctly formatted</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python3 -m pip install pre-commit
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>pre-commit
 </pre></div>
 </div>
 <p>Please do all development on a branch and make a pull request to main, this will need to be reviewed before it is integrated.</p>
@@ -256,11 +256,11 @@ If you edit any files these will be updated on the fly by werkzeug.</p>
 <h2>Creating Migrations<a class="headerlink" href="#creating-migrations" title="Permalink to this heading"></a></h2>
 <p>If you change a <code class="docutils literal notranslate"><span class="pre">models.py</span></code> file then you will need to make the corresponding migration files.
 You can do this with</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make migrations
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>migrations
 </pre></div>
 </div>
 <p>or, more explicitly</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker compose run --rm --user <span class="sb">`</span>id -u<span class="sb">`</span> web python manage.py makemigrations
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>--user<span class="w"> </span><span class="sb">`</span>id<span class="w"> </span>-u<span class="sb">`</span><span class="w"> </span>web<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>makemigrations
 </pre></div>
 </div>
 <p>add these to git and commit.</p>
@@ -268,7 +268,7 @@ You can do this with</p>
 <section id="building-the-documentation">
 <h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this heading"></a></h2>
 <p>Having built the web container with <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code> you can use this to generate the docs with</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make docs
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>docs
 </pre></div>
 </div>
 <p>This will create the docs in the <code class="docutils literal notranslate"><span class="pre">docs/_build/html</span></code> directory.</p>
@@ -277,13 +277,13 @@ You can do this with</p>
 <h2>Adding new dependencies<a class="headerlink" href="#adding-new-dependencies" title="Permalink to this heading"></a></h2>
 <p>Poetry is used to manage the dependencies of the platform.
 To add a new dependency use</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry add &lt;whatever&gt;
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry<span class="w"> </span>add<span class="w"> </span>&lt;whatever&gt;
 </pre></div>
 </div>
 <p>and then commit the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
 If this is a development dependency then use the <code class="docutils literal notranslate"><span class="pre">--dev</span></code> flag, see the <code class="docutils literal notranslate"><span class="pre">poetry</span></code> documentation for more details.</p>
 <p>Versions are unpinned in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file, to update the resolved dependencies use</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry lock
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry<span class="w"> </span>lock
 </pre></div>
 </div>
 <p>and commit the update <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.

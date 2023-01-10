@@ -291,19 +291,35 @@ as for each case are displayed in the <code class="docutils literal notranslate"
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Creator</p></li>
-<li><p><strong>question</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question</p></li>
-<li><p><strong>display_set</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Display set</p></li>
-<li><p><strong>answer</strong> (<em>JSONField</em>) – Answer</p></li>
-<li><p><strong>answer_image</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Image</span></code>) – Answer image</p></li>
-<li><p><strong>is_ground_truth</strong> (<em>BooleanField</em>) – Is ground truth</p></li>
-<li><p><strong>score</strong> (<em>FloatField</em>) – Score</p></li>
-<li><p><strong>explanation</strong> (<em>TextField</em>) – Explanation</p></li>
-<li><p><strong>last_edit_duration</strong> (<em>DurationField</em>) – Last edit duration</p></li>
-<li><p><strong>total_edit_duration</strong> (<em>DurationField</em>) – Total edit duration</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>answer</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v4.1)"><em>JSONField</em></a>) – Answer</p></li>
+<li><p><strong>is_ground_truth</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Is ground truth</p></li>
+<li><p><strong>score</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.FloatField" title="(in Django v4.1)"><em>FloatField</em></a>) – Score</p></li>
+<li><p><strong>explanation</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Explanation</p></li>
+<li><p><strong>last_edit_duration</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DurationField" title="(in Django v4.1)"><em>DurationField</em></a>) – Last edit duration</p></li>
+<li><p><strong>total_edit_duration</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DurationField" title="(in Django v4.1)"><em>DurationField</em></a>) – Total edit duration</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>creator</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – Creator (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answer</span></code>)</p></li>
+<li><p><strong>question</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answer</span></code>)</p></li>
+<li><p><strong>display_set</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Display set (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answers</span></code>)</p></li>
+<li><p><strong>answer_image</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Image</span></code>) – Answer image (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answer</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>answeruserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission" title="grandchallenge.reader_studies.models.AnswerUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnswerUserObjectPermission</span></code></a>) – All answer user object permissions of this answer (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>answergroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission" title="grandchallenge.reader_studies.models.AnswerGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnswerGroupObjectPermission</span></code></a>) – All answer group object permissions of this answer (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -319,11 +335,11 @@ as for each case are displayed in the <code class="docutils literal notranslate"
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Answer.api_url">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.api_url" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.api_url" title="Permalink to this definition"></a></dt>
 <dd><p>API url for this <code class="docutils literal notranslate"><span class="pre">Answer</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -364,11 +380,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answergroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answergroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answergroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -395,11 +416,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">AnswerUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#AnswerUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.AnswerUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answeruserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answeruserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">answeruserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -421,11 +447,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>question</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question</p></li>
-<li><p><strong>title</strong> (<em>CharField</em>) – Title</p></li>
-<li><p><strong>default</strong> (<em>BooleanField</em>) – Default</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Title</p></li>
+<li><p><strong>default</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Default</p></li>
 </ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>question</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">options</span></code>)</p>
 </dd>
 </dl>
 <dl class="py exception">
@@ -446,12 +477,29 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
-<li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study</p></li>
-<li><p><strong>order</strong> (<em>PositiveSmallIntegerField</em>) – Order</p></li>
-<li><p><strong>values</strong> (<em>ManyToManyField</em>) – Values</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>order</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v4.1)"><em>PositiveSmallIntegerField</em></a>) – Order</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reader_study</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">display_sets</span></code>)</p></li>
+<li><p><strong>values</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <a class="reference internal" href="components.html#grandchallenge.components.models.ComponentInterfaceValue" title="grandchallenge.components.models.ComponentInterfaceValue"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComponentInterfaceValue</span></code></a>) – Values (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">display_sets</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>displaysetuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission" title="grandchallenge.reader_studies.models.DisplaySetUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySetUserObjectPermission</span></code></a>) – All display set user object permissions of this display set (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>displaysetgroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission" title="grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySetGroupObjectPermission</span></code></a>) – All display set group object permissions of this display set (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>answers</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – All answers of this display set (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">display_set</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -467,11 +515,11 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.api_url">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.api_url" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.api_url" title="Permalink to this definition"></a></dt>
 <dd><p>API url for this <code class="docutils literal notranslate"><span class="pre">DisplaySet</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -489,8 +537,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.DisplaySet.workstation_url">
 <span class="sig-name descname"><span class="pre">workstation_url</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySet.workstation_url" title="Permalink to this definition"></a></dt>
-<dd><p>The URL to answer this display set in a workstation</p>
-</dd></dl>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -499,11 +546,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">displaysetgroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">displaysetgroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">displaysetgroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -524,11 +576,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">DisplaySetUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#DisplaySetUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">displaysetuserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">displaysetuserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">displaysetuserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -550,21 +607,39 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
-<li><p><strong>overlay_segments</strong> (<em>JSONField</em>) – Overlay segments. The schema that defines how categories of values in the overlay images are differentiated.</p></li>
-<li><p><strong>look_up_table</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">LookUpTable</span></code>) – Look up table. The look-up table that is applied when an overlay image is first shown</p></li>
-<li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study</p></li>
-<li><p><strong>question_text</strong> (<em>TextField</em>) – Question text</p></li>
-<li><p><strong>help_text</strong> (<em>TextField</em>) – Help text</p></li>
-<li><p><strong>answer_type</strong> (<em>CharField</em>) – Answer type</p></li>
-<li><p><strong>image_port</strong> (<em>CharField</em>) – Image port</p></li>
-<li><p><strong>required</strong> (<em>BooleanField</em>) – Required</p></li>
-<li><p><strong>direction</strong> (<em>CharField</em>) – Direction</p></li>
-<li><p><strong>scoring_function</strong> (<em>CharField</em>) – Scoring function</p></li>
-<li><p><strong>order</strong> (<em>PositiveSmallIntegerField</em>) – Order</p></li>
-<li><p><strong>interface</strong> (ForeignKey to <a class="reference internal" href="components.html#grandchallenge.components.models.ComponentInterface" title="grandchallenge.components.models.ComponentInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComponentInterface</span></code></a>) – Interface</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>overlay_segments</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v4.1)"><em>JSONField</em></a>) – Overlay segments. The schema that defines how categories of values in the overlay images are differentiated.</p></li>
+<li><p><strong>question_text</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Question text</p></li>
+<li><p><strong>help_text</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Help text</p></li>
+<li><p><strong>answer_type</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Answer type</p></li>
+<li><p><strong>image_port</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Image port</p></li>
+<li><p><strong>required</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Required</p></li>
+<li><p><strong>direction</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Direction</p></li>
+<li><p><strong>scoring_function</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Scoring function</p></li>
+<li><p><strong>order</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v4.1)"><em>PositiveSmallIntegerField</em></a>) – Order</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>look_up_table</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">LookUpTable</span></code>) – Look up table. The look-up table that is applied when an overlay image is first shown (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">question</span></code>)</p></li>
+<li><p><strong>reader_study</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">questions</span></code>)</p></li>
+<li><p><strong>interface</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="components.html#grandchallenge.components.models.ComponentInterface" title="grandchallenge.components.models.ComponentInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComponentInterface</span></code></a>) – Interface (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">question</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>questionuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission" title="grandchallenge.reader_studies.models.QuestionUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuestionUserObjectPermission</span></code></a>) – All question user object permissions of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>questiongroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission" title="grandchallenge.reader_studies.models.QuestionGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission</span></code></a>) – All question group object permissions of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>options</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption" title="grandchallenge.reader_studies.models.CategoricalOption"><code class="xref py py-class docutils literal notranslate"><span class="pre">CategoricalOption</span></code></a>) – All options of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">question</span></code>)</p></li>
+<li><p><strong>answer</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – All answers of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">question</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -604,11 +679,11 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.api_url">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.api_url" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">api_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.api_url" title="Permalink to this definition"></a></dt>
 <dd><p>API url for this <code class="docutils literal notranslate"><span class="pre">Question</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -665,11 +740,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">questiongroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">questiongroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">questiongroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -690,11 +770,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">questionuserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">questionuserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">questionuserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -719,37 +804,56 @@ a set of questions on a set of images (cases).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>title</strong> (<em>CharField</em>) – Title</p></li>
-<li><p><strong>description</strong> (<em>TextField</em>) – Description</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Title</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Description</p></li>
 <li><p><strong>slug</strong> (<em>AutoSlugField</em>) – Slug</p></li>
-<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
-<li><p><strong>view_content</strong> (<em>JSONField</em>) – View content</p></li>
-<li><p><strong>editors_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Editors group</p></li>
-<li><p><strong>readers_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Readers group</p></li>
-<li><p><strong>workstation</strong> (ForeignKey to <a class="reference internal" href="workstations.html#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Workstation</p></li>
-<li><p><strong>workstation_config</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationConfig</span></code>) – Workstation config</p></li>
-<li><p><strong>hanging_protocol</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">HangingProtocol</span></code>) – Hanging protocol</p></li>
-<li><p><strong>public</strong> (<em>BooleanField</em>) – Public. Should this reader study be visible to all users on the overview page? This does not grant all users permission to read this study. Users will still need to be added to the study’s readers group in order to do that.</p></li>
-<li><p><strong>access_request_handling</strong> (<em>CharField</em>) – Access request handling. How would you like to handle access requests?</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Modified</p></li>
+<li><p><strong>view_content</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v4.1)"><em>JSONField</em></a>) – View content</p></li>
+<li><p><strong>public</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Public. Should this reader study be visible to all users on the overview page? This does not grant all users permission to read this study. Users will still need to be added to the study’s readers group in order to do that.</p></li>
+<li><p><strong>access_request_handling</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Access request handling. How would you like to handle access requests?</p></li>
 <li><p><strong>logo</strong> (<em>JPEGField</em>) – Logo</p></li>
 <li><p><strong>social_image</strong> (<em>JPEGField</em>) – Social image. An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).</p></li>
-<li><p><strong>help_text_markdown</strong> (<em>TextField</em>) – Help text markdown</p></li>
-<li><p><strong>shuffle_hanging_list</strong> (<em>BooleanField</em>) – Shuffle hanging list</p></li>
-<li><p><strong>is_educational</strong> (<em>BooleanField</em>) – Is educational. If checked, readers get the option to verify their answers against the uploaded ground truth. This also means that the uploaded ground truth will be readily available to the readers.</p></li>
-<li><p><strong>case_text</strong> (<em>JSONField</em>) – Case text</p></li>
-<li><p><strong>allow_answer_modification</strong> (<em>BooleanField</em>) – Allow answer modification. If true, readers are allowed to modify their answers for a case by navigating back to previous cases. ‘Allow case navigation’ must be checked as well to enable this setting.</p></li>
-<li><p><strong>allow_case_navigation</strong> (<em>BooleanField</em>) – Allow case navigation. If true, readers are allowed to navigate back and forth between cases in this reader study.</p></li>
-<li><p><strong>allow_show_all_annotations</strong> (<em>BooleanField</em>) – Allow show all annotations. If true, readers are allowed to show/hide all annotations for a case.</p></li>
-<li><p><strong>roll_over_answers_for_n_cases</strong> (<em>PositiveSmallIntegerField</em>) – Roll over answers for n cases. The number of cases for which answers should roll over. It can be used for repeated readings with slightly different hangings. For instance, if set to 1. Case 2 will start with the answers from case 1; whereas case 3 starts anew but its answers will rollover to case 4.</p></li>
-<li><p><strong>publications</strong> (<em>ManyToManyField</em>) – Publications. The publications associated with this reader study</p></li>
-<li><p><strong>modalities</strong> (<em>ManyToManyField</em>) – Modalities. The imaging modalities contained in this reader study</p></li>
-<li><p><strong>structures</strong> (<em>ManyToManyField</em>) – Structures. The structures contained in this reader study</p></li>
-<li><p><strong>organizations</strong> (<em>ManyToManyField</em>) – Organizations. The organizations associated with this reader study</p></li>
-<li><p><strong>actor_actions</strong> (<em>GenericRelation</em>) – Actor actions</p></li>
-<li><p><strong>target_actions</strong> (<em>GenericRelation</em>) – Target actions</p></li>
-<li><p><strong>action_object_actions</strong> (<em>GenericRelation</em>) – Action object actions</p></li>
+<li><p><strong>help_text_markdown</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Help text markdown</p></li>
+<li><p><strong>shuffle_hanging_list</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Shuffle hanging list</p></li>
+<li><p><strong>is_educational</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Is educational. If checked, readers get the option to verify their answers against the uploaded ground truth. This also means that the uploaded ground truth will be readily available to the readers.</p></li>
+<li><p><strong>case_text</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v4.1)"><em>JSONField</em></a>) – Case text</p></li>
+<li><p><strong>allow_answer_modification</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Allow answer modification. If true, readers are allowed to modify their answers for a case by navigating back to previous cases. ‘Allow case navigation’ must be checked as well to enable this setting.</p></li>
+<li><p><strong>allow_case_navigation</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Allow case navigation. If true, readers are allowed to navigate back and forth between cases in this reader study.</p></li>
+<li><p><strong>allow_show_all_annotations</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v4.1)"><em>BooleanField</em></a>) – Allow show all annotations. If true, readers are allowed to show/hide all annotations for a case.</p></li>
+<li><p><strong>roll_over_answers_for_n_cases</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v4.1)"><em>PositiveSmallIntegerField</em></a>) – Roll over answers for n cases. The number of cases for which answers should roll over. It can be used for repeated readings with slightly different hangings. For instance, if set to 1. Case 2 will start with the answers from case 1; whereas case 3 starts anew but its answers will rollover to case 4.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>editors_group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Editors group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">editors_of_readerstudy</span></code>)</p></li>
+<li><p><strong>readers_group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Readers group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readers_of_readerstudy</span></code>)</p></li>
+<li><p><strong>workstation</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="workstations.html#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Workstation (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudy</span></code>)</p></li>
+<li><p><strong>workstation_config</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationConfig</span></code>) – Workstation config (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudy</span></code>)</p></li>
+<li><p><strong>hanging_protocol</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">HangingProtocol</span></code>) – Hanging protocol (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudy</span></code>)</p></li>
+<li><p><strong>publications</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Publication</span></code>) – Publications. The publications associated with this reader study (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudy</span></code>)</p></li>
+<li><p><strong>modalities</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">ImagingModality</span></code>) – Modalities. The imaging modalities contained in this reader study (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudy</span></code>)</p></li>
+<li><p><strong>structures</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">BodyStructure</span></code>) – Structures. The structures contained in this reader study (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudy</span></code>)</p></li>
+<li><p><strong>organizations</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Organization</span></code>) – Organizations. The organizations associated with this reader study (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudies</span></code>)</p></li>
+<li><p><strong>actor_actions</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/contenttypes/#django.contrib.contenttypes.fields.GenericRelation" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericRelation</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code>) – Actor actions (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">actions_with_reader_studies_readerstudy_as_actor</span></code>)</p></li>
+<li><p><strong>target_actions</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/contenttypes/#django.contrib.contenttypes.fields.GenericRelation" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericRelation</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code>) – Target actions (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">actions_with_reader_studies_readerstudy_as_target</span></code>)</p></li>
+<li><p><strong>action_object_actions</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/contenttypes/#django.contrib.contenttypes.fields.GenericRelation" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericRelation</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code>) – Action object actions (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">actions_with_reader_studies_readerstudy_as_action_object</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>readerstudyuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission" title="grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudyUserObjectPermission</span></code></a>) – All reader study user object permissions of this reader study (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>readerstudygroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission" title="grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudyGroupObjectPermission</span></code></a>) – All reader study group object permissions of this reader study (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
+<li><p><strong>display_sets</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.DisplaySet" title="grandchallenge.reader_studies.models.DisplaySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DisplaySet</span></code></a>) – All display sets of this reader study (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study</span></code>)</p></li>
+<li><p><strong>questions</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – All questions of this reader study (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study</span></code>)</p></li>
+<li><p><strong>readerstudypermissionrequest</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest" title="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudyPermissionRequest</span></code></a>) – All reader study permission requests of this reader study (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -784,14 +888,12 @@ a set of questions on a set of images (cases).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count">
 <span class="sig-name descname"><span class="pre">answerable_question_count</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count" title="Permalink to this definition"></a></dt>
-<dd><p>The number of answerable questions for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.answerable_questions">
 <span class="sig-name descname"><span class="pre">answerable_questions</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.answerable_questions" title="Permalink to this definition"></a></dt>
-<dd><p>All questions for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code> except those with answer type
-<cite>heading</cite>.</p>
+<dd><p>All questions for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code> except those with answer type</p>
 </dd></dl>
 
 <dl class="py method">
@@ -811,11 +913,11 @@ have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.help_text">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">help_text</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">help_text</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text" title="Permalink to this definition"></a></dt>
 <dd><p>The cleaned help text from the markdown sources</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -841,8 +943,7 @@ have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.leaderboard">
 <span class="sig-name descname"><span class="pre">leaderboard</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.leaderboard" title="Permalink to this definition"></a></dt>
-<dd><p>The leaderboard for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.remove_editor">
@@ -875,20 +976,17 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.scores_by_user">
 <span class="sig-name descname"><span class="pre">scores_by_user</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.scores_by_user" title="Permalink to this definition"></a></dt>
-<dd><p>The average and total scores for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code> grouped by user.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.statistics">
 <span class="sig-name descname"><span class="pre">statistics</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.statistics" title="Permalink to this definition"></a></dt>
-<dd><p>Statistics per question and case based on the total / average score.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.study_image_names">
 <span class="sig-name descname"><span class="pre">study_image_names</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.study_image_names" title="Permalink to this definition"></a></dt>
-<dd><p>Names for all images added to this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
-</dd></dl>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -897,11 +995,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyGroupObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyGroupObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyGroupObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>group</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Group</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudygroupobjectpermission</span></code>)</p></li>
+<li><p><strong>group</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Group" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></a>) – Group (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudygroupobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudygroupobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -926,16 +1029,23 @@ the needed info for that.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User. which user requested to participate?</p></li>
-<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
-<li><p><strong>changed</strong> (<em>DateTimeField</em>) – Changed</p></li>
-<li><p><strong>status</strong> (<em>CharField</em>) – Status</p></li>
-<li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study. To which reader study has the user requested access?</p></li>
-<li><p><strong>rejection_text</strong> (<em>TextField</em>) – Rejection text. The text that will be sent to the user with the reason for their rejection.</p></li>
-<li><p><strong>actor_actions</strong> (<em>GenericRelation</em>) – Actor actions</p></li>
-<li><p><strong>target_actions</strong> (<em>GenericRelation</em>) – Target actions</p></li>
-<li><p><strong>action_object_actions</strong> (<em>GenericRelation</em>) – Action object actions</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>changed</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Changed</p></li>
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Status</p></li>
+<li><p><strong>rejection_text</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v4.1)"><em>TextField</em></a>) – Rejection text. The text that will be sent to the user with the reason for their rejection.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User. which user requested to participate? (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudypermissionrequest</span></code>)</p></li>
+<li><p><strong>reader_study</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study. To which reader study has the user requested access? (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudypermissionrequest</span></code>)</p></li>
+<li><p><strong>actor_actions</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/contenttypes/#django.contrib.contenttypes.fields.GenericRelation" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericRelation</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code>) – Actor actions (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">actions_with_reader_studies_readerstudypermissionrequest_as_actor</span></code>)</p></li>
+<li><p><strong>target_actions</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/contenttypes/#django.contrib.contenttypes.fields.GenericRelation" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericRelation</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code>) – Target actions (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">actions_with_reader_studies_readerstudypermissionrequest_as_target</span></code>)</p></li>
+<li><p><strong>action_object_actions</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/contenttypes/#django.contrib.contenttypes.fields.GenericRelation" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericRelation</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code>) – Action object actions (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">actions_with_reader_studies_readerstudypermissionrequest_as_action_object</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -966,11 +1076,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyUserObjectPermission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyUserObjectPermission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
-<li><p><strong>permission</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code>) – Permission</p></li>
-<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User</p></li>
-<li><p><strong>content_object</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Content object</p></li>
+<li><p><strong>permission</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.Permission" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a>) – Permission (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudyuserobjectpermission</span></code>)</p></li>
+<li><p><strong>user</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – User (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudyuserobjectpermission</span></code>)</p></li>
+<li><p><strong>content_object</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Content object (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudyuserobjectpermission</span></code>)</p></li>
 </ul>
 </dd>
 </dl>

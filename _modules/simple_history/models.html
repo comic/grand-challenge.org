@@ -224,7 +224,7 @@
 
     <span class="k">def</span> <span class="nf">add_extra_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">save_without_historical_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Save model without saving a historical record</span>
 
 <span class="sd">            Make sure you know what you&#39;re doing before you use this method.</span>
@@ -354,7 +354,7 @@
         <span class="k">return</span> <span class="n">m2m_history_model</span>
 
     <span class="k">def</span> <span class="nf">create_history_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">inherited</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates a historical model to associate with the model provided.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
@@ -400,13 +400,13 @@
         <span class="k">return</span> <span class="n">fields</span>
 
     <span class="k">def</span> <span class="nf">field_excluded_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Find the excluded kwargs for a given field.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">excluded_field_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">copy_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates copies of the model&#39;s original fields, returning</span>
 <span class="sd">        a dictionary mapping field name to copied field object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -541,10 +541,10 @@
             <span class="k">return</span> <span class="p">{}</span>
 
     <span class="k">def</span> <span class="nf">get_extra_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">fields</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return dict of extra fields added to the historical record model&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return dict of extra fields added to the historical record model&quot;&quot;&quot;</span>
 
         <span class="k">def</span> <span class="nf">revert_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;URL for this change in the default admin site.&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;URL for this change in the default admin site.&quot;&quot;&quot;</span>
             <span class="n">opts</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span>
             <span class="n">app_label</span><span class="p">,</span> <span class="n">model_name</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">opts</span><span class="o">.</span><span class="n">model_name</span>
             <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
@@ -580,7 +580,7 @@
             <span class="k">return</span> <span class="n">result</span>
 
         <span class="k">def</span> <span class="nf">get_next_record</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Get the next history record for the instance. `None` if last.</span>
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="n">history</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_history_manager_from_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -591,7 +591,7 @@
             <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">get_prev_record</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Get the previous history record for the instance. `None` if first.</span>
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="n">history</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_history_manager_from_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -602,7 +602,7 @@
             <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">get_default_history_user</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Returns the user specified by `get_user` method for manually creating</span>
 <span class="sd">            historical objects</span>
 <span class="sd">            &quot;&quot;&quot;</span>
@@ -637,7 +637,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_date_indexing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;False, True, or &#39;composite&#39;; default is True&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;False, True, or &#39;composite&#39;; default is True&quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;SIMPLE_HISTORY_DATE_INDEX&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -653,7 +653,7 @@
         <span class="k">return</span> <span class="n">result</span>
 
     <span class="k">def</span> <span class="nf">get_meta_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a dictionary of fields that will be added to</span>
 <span class="sd">        the Meta inner class of the historical record model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -697,7 +697,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">create_historical_record</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">using</span><span class="o">=</span><span class="n">using</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_change_reason_for_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">history_type</span><span class="p">,</span> <span class="n">using</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get change reason for object.</span>
 <span class="sd">        Customize this method to automatically fill change reason from context.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -783,7 +783,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_history_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the modifying user from instance or middleware.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the modifying user from instance or middleware.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="n">_history_user</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -798,7 +798,7 @@
 
 
 <span class="k">def</span> <span class="nf">transform_field</span><span class="p">(</span><span class="n">field</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Customize field appropriately for use in historical model&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Customize field appropriately for use in historical model&quot;&quot;&quot;</span>
     <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">attname</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">BigAutoField</span><span class="p">):</span>
         <span class="n">field</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BigIntegerField</span>
@@ -829,7 +829,7 @@
 
 
 <span class="k">class</span> <span class="nc">HistoricForwardManyToOneDescriptor</span><span class="p">(</span><span class="n">ForwardManyToOneDescriptor</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overrides get_queryset to provide historic query support, should the</span>
 <span class="sd">    instance be historic (and therefore was generated by a timepoint query)</span>
 <span class="sd">    and the other side of the relation also uses a history manager.</span>
@@ -854,7 +854,7 @@
 
 
 <span class="k">class</span> <span class="nc">HistoricReverseManyToOneDescriptor</span><span class="p">(</span><span class="n">ReverseManyToOneDescriptor</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overrides get_queryset to provide historic query support, should the</span>
 <span class="sd">    instance be historic (and therefore was generated by a timepoint query)</span>
 <span class="sd">    and the other side of the relation also uses a history manager.</span>
@@ -897,7 +897,7 @@
 
 
 <span class="k">class</span> <span class="nc">HistoricForeignKey</span><span class="p">(</span><span class="n">ForeignKey</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Allows foreign keys to work properly from a historic instance.</span>
 
 <span class="sd">    If you use as_of queries to extract historical instances from</span>
@@ -918,14 +918,14 @@
 
 
 <span class="k">def</span> <span class="nf">is_historic</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns True if the instance was acquired with an as_of timepoint.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">to_historic</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
 
 <span class="k">def</span> <span class="nf">to_historic</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns a historic model instance if the instance was acquired with</span>
 <span class="sd">    an as_of timepoint, or None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>

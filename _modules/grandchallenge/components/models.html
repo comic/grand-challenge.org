@@ -139,7 +139,7 @@
 
 
 <div class="viewcode-block" id="InterfaceKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKindChoices">[docs]</a><span class="k">class</span> <span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
 
     <span class="n">STRING</span> <span class="o">=</span> <span class="s2">&quot;STR&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;String&quot;</span><span class="p">)</span>
     <span class="n">INTEGER</span> <span class="o">=</span> <span class="s2">&quot;INT&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Integer&quot;</span><span class="p">)</span>
@@ -196,13 +196,13 @@
 
 
 <div class="viewcode-block" id="InterfaceKind"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind">[docs]</a><span class="k">class</span> <span class="nc">InterfaceKind</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Interface kind.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind.&quot;&quot;&quot;</span>
 
     <span class="n">InterfaceKindChoices</span> <span class="o">=</span> <span class="n">InterfaceKindChoices</span>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_json"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_json">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_json</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;Interface kinds that are json serializable:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are json serializable:</span>
 
 <span class="sd">        * String</span>
 <span class="sd">        * Integer</span>
@@ -677,7 +677,7 @@
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_image"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_image</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;Interface kinds that are images:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are images:</span>
 
 <span class="sd">        * Image</span>
 <span class="sd">        * Heat Map</span>
@@ -691,7 +691,7 @@
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_file"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_file</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;Interface kinds that are files:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are files:</span>
 
 <span class="sd">        * CSV file</span>
 <span class="sd">        * ZIP file</span>
@@ -1034,7 +1034,7 @@
             <span class="p">)</span>
 
 <div class="viewcode-block" id="ComponentInterface.validate_against_schema"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.validate_against_schema">[docs]</a>    <span class="k">def</span> <span class="nf">validate_against_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validates values against both default and custom schemas&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates values against both default and custom schemas&quot;&quot;&quot;</span>
         <span class="n">JSONValidator</span><span class="p">(</span>
             <span class="n">schema</span><span class="o">=</span><span class="p">{</span>
                 <span class="o">**</span><span class="n">INTERFACE_VALUE_SCHEMA</span><span class="p">,</span>
@@ -1062,7 +1062,7 @@
 
 
 <div class="viewcode-block" id="ComponentInterfaceValue"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue">[docs]</a><span class="k">class</span> <span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Encapsulates the value of an interface at a certain point in the graph.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encapsulates the value of an interface at a certain point in the graph.&quot;&quot;&quot;</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BigAutoField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">interface</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -1128,7 +1128,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">decompress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Should the CIV be decompressed?</span>
 
 <span class="sd">        This is only for legacy support of zip file submission for</span>
@@ -1139,7 +1139,7 @@
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">image_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The single image file for this interface&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The single image file for this interface&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">image_type__in</span><span class="o">=</span><span class="p">[</span>
@@ -1153,7 +1153,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Where should the file be located?</span>
 
 <span class="sd">        Images need special handling as their names are fixed.</span>
@@ -1275,11 +1275,11 @@
 
 <div class="viewcode-block" id="ComponentJobManager"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager">[docs]</a><span class="k">class</span> <span class="nc">ComponentJobManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
 <div class="viewcode-block" id="ComponentJobManager.with_duration"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.with_duration">[docs]</a>    <span class="k">def</span> <span class="nf">with_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Annotate the queryset with the duration of completed jobs&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Annotate the queryset with the duration of completed jobs&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;completed_at&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">F</span><span class="p">(</span><span class="s2">&quot;started_at&quot;</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="ComponentJobManager.average_duration"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.average_duration">[docs]</a>    <span class="k">def</span> <span class="nf">average_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Calculate the average duration that completed jobs ran for&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the average duration that completed jobs ran for&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">with_duration</span><span class="p">()</span>
             <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -1447,7 +1447,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ComponentImage&quot;</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the container object associated with this instance, which</span>
 <span class="sd">        should be a foreign key to an object that is a subclass of</span>
 <span class="sd">        ComponentImage</span>
@@ -1456,7 +1456,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns an unevaluated QuerySet for the output interfaces&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an unevaluated QuerySet for the output interfaces&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
@@ -1818,7 +1818,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">original_repo_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The tag of this image in the container repository&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The tag of this image in the container repository&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_REGISTRY_URL</span><span class="si">}</span><span class="s2">/&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_REGISTRY_PREFIX</span><span class="si">}</span><span class="s2">/&quot;</span>
