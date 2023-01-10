@@ -22,7 +22,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
       - name: Install Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install poetry and pre-commit
