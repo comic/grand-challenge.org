@@ -906,7 +906,13 @@ CELERY_TASK_DECORATOR_KWARGS = {
         "queue": "acks-late-micro-short",
     },
 }
-CELERY_SOLO_QUEUES = {k for k in CELERY_TASK_DECORATOR_KWARGS}
+CELERY_SOLO_QUEUES = {
+    *{k for k in CELERY_TASK_DECORATOR_KWARGS},
+    *{f"{k}-delay" for k in CELERY_TASK_DECORATOR_KWARGS},
+}
+FARGATE_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
+    os.environ.get("FARGATE_ENABLE_CELERY_SCALE_IN_PROTECTION", "False"),
+)
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
