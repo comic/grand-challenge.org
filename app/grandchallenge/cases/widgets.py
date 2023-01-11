@@ -19,7 +19,7 @@ class WidgetChoices(TextChoices):
     IMAGE_UPLOAD = "IMAGE_UPLOAD"
 
 
-class ImageSearchMixin(ChoiceWidget):
+class ImageSearchWidget(ChoiceWidget, HiddenInput):
     template_name = "cases/image-search-widget.html"
     input_type = None
     name = None
@@ -34,10 +34,6 @@ class ImageSearchMixin(ChoiceWidget):
         if self.name:
             context["widget"]["name"] = self.name
         return context
-
-
-class ImageSearchWidget(ImageSearchMixin, HiddenInput):
-    pass
 
 
 class FlexibleImageWidget(MultiWidget):

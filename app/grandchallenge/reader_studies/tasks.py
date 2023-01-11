@@ -94,8 +94,6 @@ def add_image_to_display_set(
                 upload_session.status = RawImageUploadSession.FAILURE
                 upload_session.error_message = e.message
                 upload_session.save()
-        else:
-            civ.save()
         display_set.values.add(civ)
 
 

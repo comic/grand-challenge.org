@@ -2,6 +2,7 @@ import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
     ImageFactoryWithImageFile2DGray16Bit,
@@ -10,6 +11,7 @@ from tests.cases_tests.factories import (
     ImageFactoryWithoutImageFile,
     RawImageUploadSessionFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import ImageFactory, ImageFileFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -239,3 +241,42 @@ class TestCSImageDetail:
     )
     def test_allowed(self, client, viewname, factory, kwargs):
         assert self.get_status_code(client, viewname, factory(**kwargs)) == 200
+
+
+@pytest.mark.django_db
+def test_image_search_view(client):
+    user = UserFactory()
+    im1, im2, im3 = ImageFactory.create_batch(3)
+    assign_perm("cases.view_image", user, im1)
+    assign_perm("cases.view_image", user, im2)
+    im2.name = "test.mha"
+    im2.save()
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+
+    response = get_view_for_user(
+        viewname="cases:image-search",
+        client=client,
+        user=user,
+        data={
+            "interface": ci.slug,
+            f"query-{ci.slug}": "test",
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.context_data["object_list"]) == 1
+    assert response.context_data["object_list"].get() == im2
+
+    response = get_view_for_user(
+        viewname="cases:image-search",
+        client=client,
+        user=user,
+        data={
+            "interface": ci.slug,
+            f"query-{ci.slug}": "",
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.context_data["object_list"]) == 2
+    assert im1 in response.context_data["object_list"].all()
+    assert im2 in response.context_data["object_list"].all()
+    assert im3 not in response.context_data["object_list"].all()

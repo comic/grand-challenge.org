@@ -24,35 +24,66 @@ def test_flexible_image_field_validation():
         image_queryset=get_objects_for_user(user, "cases.view_image"),
         upload_queryset=UserUpload.objects.filter(creator=user).all(),
     )
-
-    parsed_value = field.widget.value_from_datadict(
+    parsed_value_for_image_with_permission = field.widget.value_from_datadict(
         data={ci.slug: im1.pk}, name=ci.slug, files={}
     )
-    assert parsed_value == [
-        im1.pk,
-        None,
-    ]
-    assert field.clean(parsed_value) == im1
-
-    other_image = field.widget.value_from_datadict(
-        data={ci.slug: im2.pk}, name=ci.slug, files={}
+    decompressed_value_for_image_with_permission = field.widget.decompress(
+        im1.pk
     )
-    assert other_image == [im2.pk, None]
-    with pytest.raises(ValidationError):
-        field.clean(other_image)
+    assert (
+        parsed_value_for_image_with_permission
+        == decompressed_value_for_image_with_permission
+        == [
+            im1.pk,
+            None,
+        ]
+    )
+    assert field.clean(parsed_value_for_image_with_permission) == im1
 
-    upload_from_user = field.widget.value_from_datadict(
+    parsed_value_for_image_without_permission = (
+        field.widget.value_from_datadict(
+            data={ci.slug: im2.pk}, name=ci.slug, files={}
+        )
+    )
+    decompressed_value_for_image_without_permission = field.widget.decompress(
+        im2.pk
+    )
+    assert (
+        parsed_value_for_image_without_permission
+        == decompressed_value_for_image_without_permission
+        == [im2.pk, None]
+    )
+    with pytest.raises(ValidationError):
+        field.clean(parsed_value_for_image_without_permission)
+
+    parsed_value_for_upload_from_user = field.widget.value_from_datadict(
         data={ci.slug: str(upload1.pk)}, name=ci.slug, files={}
     )
-    assert upload_from_user == [None, [str(upload1.pk)]]
-    assert field.clean(upload_from_user).get() == upload1
-
-    other_upload = field.widget.value_from_datadict(
-        data={ci.slug: str(upload2.pk)}, name=ci.slug, files={}
+    decompressed_value_for_upload_from_user = field.widget.decompress(
+        str(upload1.pk)
     )
-    assert other_upload == [None, [str(upload2.pk)]]
+    assert (
+        parsed_value_for_upload_from_user
+        == decompressed_value_for_upload_from_user
+        == [None, [str(upload1.pk)]]
+    )
+    assert field.clean(parsed_value_for_upload_from_user).get() == upload1
+
+    parsed_value_from_upload_from_other_user = (
+        field.widget.value_from_datadict(
+            data={ci.slug: str(upload2.pk)}, name=ci.slug, files={}
+        )
+    )
+    decompressed_value_for_upload_from_other_user = field.widget.decompress(
+        str(upload2.pk)
+    )
+    assert (
+        parsed_value_from_upload_from_other_user
+        == decompressed_value_for_upload_from_other_user
+        == [None, [str(upload2.pk)]]
+    )
     with pytest.raises(ValidationError):
-        field.clean(other_upload)
+        field.clean(parsed_value_from_upload_from_other_user)
 
 
 @pytest.mark.django_db

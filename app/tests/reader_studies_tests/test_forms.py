@@ -6,10 +6,12 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
 from grandchallenge.components.models import (
     ComponentInterface,
+    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.core.utils.access_requests import (
@@ -45,6 +47,7 @@ from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
+from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 
 
@@ -1061,6 +1064,28 @@ def test_display_set_update_form(form_class, file_widget):
         "slug-2",
         "slug-3",
     ]
+
+
+@pytest.mark.django_db
+def test_display_set_update_form_image_field_queryset_filters():
+    rs = ReaderStudyFactory()
+    user = UserFactory()
+    rs.add_editor(user)
+    ci_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, title="image"
+    )
+    im1, im2 = ImageFactory.create_batch(2)
+    assign_perm("cases.view_image", user, im1)
+    upload1 = UserUploadFactory(creator=user)
+    upload2 = UserUploadFactory()
+    civ_img = ComponentInterfaceValueFactory(interface=ci_img)
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ_img)
+    form = DisplaySetUpdateForm(user=user, instance=ds, reader_study=rs)
+    assert form.fields["image"].fields[0].queryset.get() == im1
+    assert im2 not in form.fields["image"].fields[0].queryset.all()
+    assert form.fields["image"].fields[1].queryset.get() == upload1
+    assert upload2 not in form.fields["image"].fields[1].queryset.all()
 
 
 @pytest.mark.django_db
