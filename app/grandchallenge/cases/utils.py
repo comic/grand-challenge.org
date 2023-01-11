@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.conf import settings
+from django.db.models import TextChoices
 from panimg.image_builders.metaio_utils import load_sitk_image
 
 
@@ -52,3 +53,8 @@ def get_sitk_image(*, image):
             raise
 
     return sitk_image
+
+
+class WidgetChoices(TextChoices):
+    IMAGE_SEARCH = "IMAGE_SEARCH"
+    IMAGE_UPLOAD = "IMAGE_UPLOAD"

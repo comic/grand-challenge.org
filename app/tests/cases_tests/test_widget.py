@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.views import WidgetChoices
+from grandchallenge.cases.utils import WidgetChoices
 from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import get_objects_for_user

@@ -5,7 +5,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm
 from requests import put
 
-from grandchallenge.cases.views import WidgetChoices
+from grandchallenge.cases.utils import WidgetChoices
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import Answer, DisplaySet, Question
 from tests.cases_tests import RESOURCE_PATH

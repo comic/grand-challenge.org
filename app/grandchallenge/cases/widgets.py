@@ -10,6 +10,7 @@ from django.forms.widgets import ChoiceWidget
 from django.utils.datastructures import MultiValueDictKeyError
 
 from grandchallenge.cases.models import Image
+from grandchallenge.cases.utils import WidgetChoices
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
@@ -54,6 +55,9 @@ class FlexibleImageWidget(MultiWidget):
             "help_text": help_text,
             "user": user,
             "current_value": current_value,
+            "widget_choices": {
+                choice.name: choice.value for choice in WidgetChoices
+            },
         }
 
     def decompress(self, value):

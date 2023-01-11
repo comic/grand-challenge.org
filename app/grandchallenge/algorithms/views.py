@@ -75,7 +75,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.cases.views import WidgetChoices
+from grandchallenge.cases.utils import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
@@ -515,6 +515,10 @@ class AlgorithmExperimentCreate(
                         )
                         civs.append(civ)
                         upload_pks[civ.pk] = create_upload(value)
+                    else:
+                        raise RuntimeError(
+                            f"{widget} is not a valid widget choice."
+                        )
             elif ci.requires_file:
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
                 value.copy_object(to_field=civ.file)

@@ -58,7 +58,7 @@ from grandchallenge.archives.tasks import (
     update_archive_item_update_kwargs,
 )
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.cases.views import WidgetChoices
+from grandchallenge.cases.utils import WidgetChoices
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -435,6 +435,10 @@ class ArchiveEditArchiveItem(
                 elif widget == WidgetChoices.IMAGE_UPLOAD.name:
                     upload_session = create_upload(value)
                     image = None
+                else:
+                    raise RuntimeError(
+                        f"{widget} is not a valid widget choice."
+                    )
             else:
                 upload_session = None
                 image = None

@@ -2,7 +2,7 @@ from functools import reduce
 from operator import or_
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q, TextChoices
+from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
@@ -27,6 +27,7 @@ from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
+from grandchallenge.cases.utils import WidgetChoices
 from grandchallenge.cases.widgets import ImageSearchWidget
 from grandchallenge.components.form_fields import _join_with_br
 from grandchallenge.core.guardian import (
@@ -38,11 +39,6 @@ from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
-
-
-class WidgetChoices(TextChoices):
-    IMAGE_SEARCH = "IMAGE_SEARCH"
-    IMAGE_UPLOAD = "IMAGE_UPLOAD"
 
 
 class RawImageUploadSessionList(
@@ -185,45 +181,40 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
         widget_name = query_params.pop("WidgetChoice-" + interface, None)[0]
         help_text = query_params.pop("help_text", None)
 
-        if widget_name:
-            if widget_name == WidgetChoices.IMAGE_SEARCH.name:
-                html_content = render_to_string(
-                    ImageSearchWidget.template_name,
-                    {
-                        "widget": ImageSearchWidget().get_context(
-                            name=interface,
-                            value=None,
-                            attrs={
-                                "help_text": help_text[0]
-                                if help_text
-                                else None,
-                            },
-                        )["widget"],
-                    },
-                )
-                return HttpResponse(html_content)
-            elif widget_name == WidgetChoices.IMAGE_UPLOAD.name:
-                html_content = render_to_string(
-                    UserUploadMultipleWidget.template_name,
-                    {
-                        "widget": UserUploadMultipleWidget().get_context(
-                            name=interface,
-                            value=None,
-                            attrs={
-                                "id": interface,
-                                "help_text": _join_with_br(
-                                    help_text[0] if help_text else None,
-                                    IMAGE_UPLOAD_HELP_TEXT,
-                                ),
-                            },
-                        )["widget"],
-                    },
-                )
-                return HttpResponse(html_content)
-            else:
-                return RuntimeError("Unknown widget type")
+        if widget_name == WidgetChoices.IMAGE_SEARCH.name:
+            html_content = render_to_string(
+                ImageSearchWidget.template_name,
+                {
+                    "widget": ImageSearchWidget().get_context(
+                        name=interface,
+                        value=None,
+                        attrs={
+                            "help_text": help_text[0] if help_text else None,
+                        },
+                    )["widget"],
+                },
+            )
+            return HttpResponse(html_content)
+        elif widget_name == WidgetChoices.IMAGE_UPLOAD.name:
+            html_content = render_to_string(
+                UserUploadMultipleWidget.template_name,
+                {
+                    "widget": UserUploadMultipleWidget().get_context(
+                        name=interface,
+                        value=None,
+                        attrs={
+                            "id": interface,
+                            "help_text": _join_with_br(
+                                help_text[0] if help_text else None,
+                                IMAGE_UPLOAD_HELP_TEXT,
+                            ),
+                        },
+                    )["widget"],
+                },
+            )
+            return HttpResponse(html_content)
         else:
-            return RuntimeError("Unknown widget type")
+            raise RuntimeError("Unknown widget type")
 
 
 class ImageSearchView(LoginRequiredMixin, ListView):
