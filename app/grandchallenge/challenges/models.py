@@ -1,5 +1,6 @@
 import datetime
 import logging
+import math
 from itertools import chain, product
 
 from actstream.actions import follow, unfollow
@@ -940,81 +941,99 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
             }
 
             # calculate budget for phase 1
-            budget["Data storage cost for phase 1"] = round(
-                self.phase_1_number_of_test_images
-                * self.average_size_of_test_image_in_mb
-                * s3_storage_costs
-                / 1000000
-                / 100,
-                ndigits=2,
-            )
-            budget["Compute costs for phase 1"] = round(
-                self.phase_1_number_of_test_images
-                * self.phase_1_number_of_submissions_per_team
-                * self.expected_number_of_teams
-                * self.inference_time_limit_in_minutes
-                * compute_costs
-                / 60
-                / 100,
-                ndigits=2,
-            )
-            budget["Total phase 1"] = round(
-                (
-                    budget["Data storage cost for phase 1"]
-                    + budget["Compute costs for phase 1"]
+            budget["Data storage cost for phase 1"] = (
+                math.ceil(
+                    self.phase_1_number_of_test_images
+                    * self.average_size_of_test_image_in_mb
+                    * s3_storage_costs
+                    / 1000000
+                    / 100
+                    / 10,
                 )
-                * self.number_of_tasks,
-                ndigits=2,
+                * 10
+            )
+            budget["Compute costs for phase 1"] = (
+                math.ceil(
+                    self.phase_1_number_of_test_images
+                    * self.phase_1_number_of_submissions_per_team
+                    * self.expected_number_of_teams
+                    * self.inference_time_limit_in_minutes
+                    * compute_costs
+                    / 60
+                    / 100
+                    / 10,
+                )
+                * 10
+            )
+            budget["Total phase 1"] = (
+                math.ceil(
+                    (
+                        budget["Data storage cost for phase 1"]
+                        + budget["Compute costs for phase 1"]
+                    )
+                    * self.number_of_tasks
+                    / 10,
+                )
+                * 10
             )
             # calculate budget for phase 2
-            budget["Data storage cost for phase 2"] = round(
-                self.phase_2_number_of_test_images
-                * self.average_size_of_test_image_in_mb
-                * s3_storage_costs
-                / 1000000
-                / 100,
-                ndigits=2,
-            )
-            budget["Compute costs for phase 2"] = round(
-                self.phase_2_number_of_test_images
-                * self.phase_2_number_of_submissions_per_team
-                * self.expected_number_of_teams
-                * self.inference_time_limit_in_minutes
-                * compute_costs
-                / 60
-                / 100,
-                ndigits=2,
-            )
-            budget["Total phase 2"] = round(
-                (
-                    budget["Data storage cost for phase 2"]
-                    + budget["Compute costs for phase 2"]
+            budget["Data storage cost for phase 2"] = (
+                math.ceil(
+                    self.phase_2_number_of_test_images
+                    * self.average_size_of_test_image_in_mb
+                    * s3_storage_costs
+                    / 1000000
+                    / 100
+                    / 10,
                 )
-                * self.number_of_tasks,
-                ndigits=2,
+                * 10
             )
-            budget["Docker storage cost"] = round(
-                self.average_algorithm_container_size_in_gb
-                * self.average_number_of_containers_per_team
-                * self.expected_number_of_teams
-                * self.number_of_tasks
-                * ecr_storage_costs
-                / 1000
-                / 100,
-                ndigits=2,
+            budget["Compute costs for phase 2"] = (
+                math.ceil(
+                    self.phase_2_number_of_test_images
+                    * self.phase_2_number_of_submissions_per_team
+                    * self.expected_number_of_teams
+                    * self.inference_time_limit_in_minutes
+                    * compute_costs
+                    / 60
+                    / 100
+                    / 10,
+                )
+                * 10
             )
-            budget["Total"] = round(
-                sum(
-                    filter(
-                        None,
-                        [
-                            budget["Total phase 1"],
-                            budget["Total phase 2"],
-                            budget["Docker storage cost"],
-                        ],
+            budget["Total phase 2"] = (
+                math.ceil(
+                    (
+                        budget["Data storage cost for phase 2"]
+                        + budget["Compute costs for phase 2"]
                     )
-                ),
-                ndigits=2,
+                    * self.number_of_tasks
+                    / 10,
+                )
+                * 10
+            )
+            budget["Docker storage cost"] = (
+                math.ceil(
+                    self.average_algorithm_container_size_in_gb
+                    * self.average_number_of_containers_per_team
+                    * self.expected_number_of_teams
+                    * self.number_of_tasks
+                    * ecr_storage_costs
+                    / 1000
+                    / 100
+                    / 10,
+                )
+                * 10
+            )
+            budget["Total"] = sum(
+                filter(
+                    None,
+                    [
+                        budget["Total phase 1"],
+                        budget["Total phase 2"],
+                        budget["Docker storage cost"],
+                    ],
+                )
             )
             return budget
         else:
