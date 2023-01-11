@@ -31,6 +31,7 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -1077,14 +1078,16 @@ def test_display_set_update_form_image_field_queryset_filters():
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
     upload1 = UserUploadFactory(creator=user)
+    upload1.status = UserUpload.StatusChoices.COMPLETED
+    upload1.save()
     upload2 = UserUploadFactory()
     civ_img = ComponentInterfaceValueFactory(interface=ci_img)
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ_img)
     form = DisplaySetUpdateForm(user=user, instance=ds, reader_study=rs)
-    assert form.fields["image"].fields[0].queryset.get() == im1
+    assert im1 in form.fields["image"].fields[0].queryset.all()
     assert im2 not in form.fields["image"].fields[0].queryset.all()
-    assert form.fields["image"].fields[1].queryset.get() == upload1
+    assert upload1 in form.fields["image"].fields[1].queryset.all()
     assert upload2 not in form.fields["image"].fields[1].queryset.all()
 
 

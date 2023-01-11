@@ -578,7 +578,7 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
             image_queryset=get_objects_for_user(self.user, "cases.view_image"),
             upload_queryset=get_objects_for_user(
                 self.user, "uploads.change_userupload"
-            ),
+            ).filter(status=UserUpload.StatusChoices.COMPLETED),
             widget=FlexibleImageWidget(
                 user=self.user, current_value=current_value
             ),

@@ -179,6 +179,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
         interface = query_params.pop("interface", None)[0]
         widget_name = query_params.pop("WidgetChoice-" + interface, None)[0]
         help_text = query_params.pop("help_text", None)
+        current_value = query_params.pop("current_value", None)
 
         if widget_name == WidgetChoices.IMAGE_SEARCH.name:
             html_content = render_to_string(
@@ -212,6 +213,14 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 },
             )
             return HttpResponse(html_content)
+        elif (
+            current_value
+            and Image.objects.filter(pk=current_value[0]).exists()
+        ):
+            # this can happen on the display set update view, where one of the options
+            # is the current image, this enables switching back from one of the
+            # above widgets to the chosen image
+            return HttpResponse()
         else:
             raise RuntimeError("Unknown widget type")
 

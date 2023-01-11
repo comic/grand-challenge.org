@@ -6,7 +6,7 @@
         hx-get="{% url 'cases:select-image-widget' %}"
         hx-target="#{{ widget.name }}-area"
         hx-trigger="widgetSelected, change"
-        hx-vals='{"help_text": "{{ widget.attrs.help_text }}", "interface": "{{ widget.name }}"}'
+        hx-include="[id='values-{{ widget.name }}']"
 >
     {% if widget.attrs.current_value %}
         <option value="{{ widget.attrs.current_value.image.pk }}">{{ widget.attrs.current_value }}</option>
@@ -16,6 +16,12 @@
     <option value="{{ widget.attrs.widget_choices.IMAGE_SEARCH }}">Select previously uploaded image</option>
     <option value="{{ widget.attrs.widget_choices.IMAGE_UPLOAD }}">Upload new image</option>
 </select>
+
+<div id="values-{{ widget.name }}">
+    <input type="hidden" name="interface" value="{{ widget.name }}">
+    <input type="hidden" name="help_text" value="{{ widget.attrs.help_text }}">
+    <input type="hidden" name="current_value" value="{{ widget.attrs.current_value.image.pk }}">
+</div>
 
 <div class="mt-3" id="{{ widget.name }}-area"></div>
 
