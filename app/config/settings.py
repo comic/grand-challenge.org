@@ -906,6 +906,7 @@ CELERY_TASK_DECORATOR_KWARGS = {
         "queue": "acks-late-micro-short",
     },
 }
+CELERY_SOLO_QUEUES = {k for k in CELERY_TASK_DECORATOR_KWARGS}
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
@@ -914,6 +915,7 @@ CELERY_RESULT_EXPIRES = timedelta(days=7)
 CELERY_TASK_ACKS_LATE = strtobool(
     os.environ.get("CELERY_TASK_ACKS_LATE", "False")
 )
+CELERY_WORKER_SEND_TASK_EVENTS = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = int(
     os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", "1")
 )
