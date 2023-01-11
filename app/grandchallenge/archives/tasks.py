@@ -1,5 +1,6 @@
 from celery import chain, group, shared_task
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned
 from django.db import transaction
 from django.db.transaction import on_commit
 
@@ -96,9 +97,18 @@ def update_archive_item_update_kwargs(
     with transaction.atomic():
         if interface.is_image_kind:
             if image:
-                civ, created = ComponentInterfaceValue.objects.get_or_create(
-                    interface=interface, image=image
-                )
+                try:
+                    (
+                        civ,
+                        created,
+                    ) = ComponentInterfaceValue.objects.get_or_create(
+                        interface=interface, image=image
+                    )
+                except MultipleObjectsReturned:
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface=interface, image=image
+                    ).last()
+                    created = None
                 if created:
                     civ.full_clean()
                     civ.save()
