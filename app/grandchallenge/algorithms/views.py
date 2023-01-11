@@ -12,7 +12,6 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
-    MultipleObjectsReturned,
     PermissionDenied,
     ValidationError,
 )
@@ -468,14 +467,14 @@ class AlgorithmExperimentCreate(
         )
         return context
 
-    def create_upload(self, image_files):
-        upload_session = RawImageUploadSession.objects.create(
-            creator=self.request.user
-        )
-        upload_session.user_uploads.set(image_files)
-        return upload_session.pk
-
     def form_valid(self, form):
+        def create_upload(image_files):
+            upload_session = RawImageUploadSession.objects.create(
+                creator=self.request.user
+            )
+            upload_session.user_uploads.set(image_files)
+            return upload_session.pk
+
         job = Job.objects.create(
             creator=self.request.user,
             algorithm_image=self.algorithm.latest_executable_image,
@@ -498,18 +497,12 @@ class AlgorithmExperimentCreate(
                 if value:
                     widget = form.data[f"WidgetChoice-{ci.slug}"]
                     if widget == WidgetChoices.IMAGE_SEARCH:
-                        try:
-                            (
-                                civ,
-                                created,
-                            ) = ComponentInterfaceValue.objects.get_or_create(
-                                interface=ci, image=value
-                            )
-                        except MultipleObjectsReturned:
-                            civ = ComponentInterfaceValue.objects.filter(
-                                interface=ci, image=value
-                            ).last()
-                            created = None
+                        (
+                            civ,
+                            created,
+                        ) = ComponentInterfaceValue.objects.get_or_create(
+                            interface=ci, image=value
+                        )
                         if created:
                             civ.full_clean()
                             civ.save()
@@ -520,7 +513,7 @@ class AlgorithmExperimentCreate(
                             interface=ci
                         )
                         civs.append(civ)
-                        upload_pks[civ.pk] = self.create_upload(value)
+                        upload_pks[civ.pk] = create_upload(value)
                     else:
                         raise RuntimeError(
                             f"{widget} is not a valid widget choice."

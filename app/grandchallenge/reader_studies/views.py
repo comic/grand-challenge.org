@@ -9,7 +9,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
-    MultipleObjectsReturned,
     PermissionDenied,
     ValidationError,
 )
@@ -1474,18 +1473,9 @@ class DisplaySetUpdate(
                 current_value and current_value.image != new_value
             ):
                 assigned_civs.append(current_value)
-                try:
-                    (
-                        civ,
-                        created,
-                    ) = ComponentInterfaceValue.objects.get_or_create(
-                        interface=ci, image=new_value
-                    )
-                except MultipleObjectsReturned:
-                    civ = ComponentInterfaceValue.objects.filter(
-                        interface=ci, image=new_value
-                    ).last()
-                    created = None
+                civ, created = ComponentInterfaceValue.objects.get_or_create(
+                    interface=ci, image=new_value
+                )
                 if created:
                     civ.full_clean()
                 instance.values.add(civ)
@@ -1635,18 +1625,9 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
     def update_display_set(self, interface, value):
         if interface.is_image_kind:
             if isinstance(value, Image):
-                try:
-                    (
-                        civ,
-                        created,
-                    ) = ComponentInterfaceValue.objects.get_or_create(
-                        interface=interface, image=value
-                    )
-                except MultipleObjectsReturned:
-                    civ = ComponentInterfaceValue.objects.filter(
-                        interface=interface, image=value
-                    ).last()
-                    created = None
+                civ, created = ComponentInterfaceValue.objects.get_or_create(
+                    interface=interface, image=value
+                )
                 if created:
                     civ.full_clean()
                 self.display_set.values.add(civ)
@@ -1816,18 +1797,12 @@ class AddDisplaySetToReaderStudy(
                 ds.values.add(civ)
             elif interface.is_image_kind:
                 if isinstance(data[slug], Image):
-                    try:
-                        (
-                            civ,
-                            created,
-                        ) = ComponentInterfaceValue.objects.get_or_create(
-                            interface=interface, image=data[slug]
-                        )
-                    except MultipleObjectsReturned:
-                        civ = ComponentInterfaceValue.objects.filter(
-                            interface=interface, image=data[slug]
-                        ).last()
-                        created = None
+                    (
+                        civ,
+                        created,
+                    ) = ComponentInterfaceValue.objects.get_or_create(
+                        interface=interface, image=data[slug]
+                    )
                     if created:
                         civ.full_clean()
                     ds.values.add(civ)
