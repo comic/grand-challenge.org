@@ -907,8 +907,8 @@ CELERY_TASK_DECORATOR_KWARGS = {
     },
 }
 CELERY_SOLO_QUEUES = {
-    *{k for k in CELERY_TASK_DECORATOR_KWARGS},
-    *{f"{k}-delay" for k in CELERY_TASK_DECORATOR_KWARGS},
+    *{q["queue"] for q in CELERY_TASK_DECORATOR_KWARGS.values()},
+    *{f"{q['queue']}-delay" for q in CELERY_TASK_DECORATOR_KWARGS.values()},
 }
 ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
     os.environ.get("ECS_ENABLE_CELERY_SCALE_IN_PROTECTION", "False"),
