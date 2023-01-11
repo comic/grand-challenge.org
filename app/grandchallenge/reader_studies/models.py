@@ -351,7 +351,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:reader-study-detail", kwargs={"pk": self.pk})
 
     def create_groups(self):
@@ -465,7 +465,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return user.groups.remove(self.readers_group)
 
     @property
-    def help_text(self):
+    def help_text(self) -> str:
         """The cleaned help text from the markdown sources"""
         return md2html(self.help_text_markdown, link_blank_target=True)
 
@@ -486,7 +486,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return self.display_sets.all().values_list("pk", flat=True)
 
     @property
-    def has_ground_truth(self):
+    def has_ground_truth(self) -> bool:
         return Answer.objects.filter(
             question__reader_study_id=self.id, is_ground_truth=True
         ).exists()
@@ -849,7 +849,7 @@ class DisplaySet(UUIDModel):
         return not self.answers.exists()
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         """API url for this ``DisplaySet``."""
         return reverse(
             "api:reader-studies-display-set-detail", kwargs={"pk": self.pk}
@@ -866,7 +866,7 @@ class DisplaySet(UUIDModel):
         return f"{url}?{query}"
 
     @property
-    def description(self):
+    def description(self) -> str:
         case_text = self.reader_study.case_text
         if case_text:
             return "".join(
@@ -880,7 +880,7 @@ class DisplaySet(UUIDModel):
             return ""
 
     @property
-    def standard_index(self):
+    def standard_index(self) -> int:
         return len(
             [
                 x
@@ -931,6 +931,8 @@ class AnswerType(models.TextChoices):
     MULTIPLE_LINES = "MLIN", "Multiple lines"
     ANGLE = "ANGL", "Angle"
     MULTIPLE_ANGLES = "MANG", "Multiple angles"
+    ELLIPSE = "ELLI", "Ellipse"
+    MULTIPLE_ELLIPSES = "MELL", "Multiple ellipses"
 
     @staticmethod
     def get_choice_types():
@@ -956,6 +958,8 @@ class AnswerType(models.TextChoices):
             AnswerType.MULTIPLE_LINES,
             AnswerType.ANGLE,
             AnswerType.MULTIPLE_ANGLES,
+            AnswerType.ELLIPSE,
+            AnswerType.MULTIPLE_ELLIPSES,
         ]
 
 
@@ -994,6 +998,8 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     ],
     AnswerType.ANGLE: [InterfaceKindChoices.ANGLE],
     AnswerType.MULTIPLE_ANGLES: [InterfaceKindChoices.MULTIPLE_ANGLES],
+    AnswerType.ELLIPSE: [InterfaceKindChoices.ELLIPSE],
+    AnswerType.MULTIPLE_ELLIPSES: [InterfaceKindChoices.MULTIPLE_ELLIPSES],
 }
 
 
@@ -1085,7 +1091,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         )
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         """API url for this ``Question``."""
         return reverse(
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
@@ -1302,7 +1308,7 @@ class Answer(UUIDModel):
         return f"{self.question.question_text} {self.answer} ({self.creator})"
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         """API url for this ``Answer``."""
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}

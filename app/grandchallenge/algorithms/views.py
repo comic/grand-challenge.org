@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from typing import Dict
 
 import requests
 from django.conf import settings
@@ -345,7 +344,7 @@ class RemainingJobsMixin:
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_remaining_jobs(self, *, credits_per_job: int) -> Dict:
+    def get_remaining_jobs(self, *, credits_per_job: int) -> dict:
         """
         Determines the number of jobs left for the user and when the next job can be started
 
@@ -666,13 +665,7 @@ class JobsList(PaginatedTableListView):
                         )
                     )
                 else:
-                    columns.append(
-                        Column(
-                            title=interface.title,
-                            sort_field="",
-                            classes=("nonSortable",),
-                        )
-                    )
+                    columns.append(Column(title=interface.title))
 
         return columns
 

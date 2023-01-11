@@ -1,5 +1,5 @@
 USER_ID=$(shell id -u)
-PYTHON_VERSION=3.8
+PYTHON_VERSION="3.10"
 POETRY_HASH=$(shell shasum -a 512 poetry.lock | cut -c 1-8)
 GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
@@ -84,7 +84,7 @@ migrations:
 	docker compose run -u $(USER_ID) --rm web python manage.py makemigrations
 
 runserver: build_web_test build_http development_fixtures
-	docker compose up
+	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
 minio:
 	docker compose run \

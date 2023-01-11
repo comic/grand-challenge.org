@@ -10,9 +10,10 @@ from grandchallenge.timezones.serializers import TimezoneSerializer
 class TimezoneAPIView(APIView):
     authentication_classes = [SessionAuthentication]
     permission_classes = [AllowAny]
+    serializer_class = TimezoneSerializer
 
     def put(self, request, format=None):
-        serializer = TimezoneSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             request.session["timezone"] = serializer.validated_data["timezone"]
             return Response(serializer.data)

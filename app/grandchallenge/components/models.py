@@ -3,7 +3,6 @@ import logging
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional
 
 from celery import signature
 from django import forms
@@ -91,6 +90,8 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_LINES = "MLIN", _("Multiple lines")
     ANGLE = "ANGL", _("Angle")
     MULTIPLE_ANGLES = "MANG", _("Multiple angles")
+    ELLIPSE = "ELLI", _("Ellipse")
+    MULTIPLE_ELLIPSES = "MELL", _("Multiple ellipses")
 
     # Choice Types
     CHOICE = "CHOI", _("Choice")
@@ -149,6 +150,8 @@ class InterfaceKind:
         * Choice (string)
         * Multiple choice (array of strings)
         * Chart
+        * Ellipse
+        * Multiple ellipses
 
         Example json for 2D bounding box annotation
             required: "type", "corners", "version"
@@ -399,9 +402,7 @@ class InterfaceKind:
         Example json for Angle annotation
             required: "type", "lines", "version"
             optional: "name", "probability"
-
         .. code-block:: json
-
             {
                 "name": "Some angle",
                 "type": "Angle",
@@ -413,9 +414,7 @@ class InterfaceKind:
         Example json for Multiple angles annotation
             required: "type", "angles", "version"
             optional: "name", "probability"
-
         .. code-block:: json
-
             {
                 "name": "Some angles",
                 "type": "Multiple angles",
@@ -529,6 +528,52 @@ class InterfaceKind:
                   }
                }
             }
+        Example json for Ellipse annotation
+            required: "type", "major_axis, "minor_axis" "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "an Ellipse",
+                "type": "Ellipse",
+                "major_axis": [[ 130, 148.86, 0.50], [10, 10, 0]],
+                "minor_axis": [[ 69.73, 148.86, 0.50], [10, 0, 0]],
+                "probability": 0.95,
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Multiple ellipses annotation
+            required: "type", "ellipses", "version"
+            optional: "name", "probability"
+
+        .. code-block:: json
+
+            {
+                "name": "Some Ellipses",
+                "type": "Multiple ellipses",
+                "ellipses": [
+                    {
+                        "name": "First Ellipse",
+                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
+                        "minor_axis": [[10, 20, 0.5], [10.6, 0, 0]],
+                        "probability": 0.82
+                    },
+                    {
+                        "name": "Second Ellipse",
+                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
+                        "minor_axis": [[10, 20, 0.5], [10.6, 0, 0]],
+                        "probability": 0.52
+                    },
+                    {
+                        "name": "Third Ellipse",
+                        "major axis": [[10, 10, 0.5], [10, 20, 0]],
+                        "minor_axis": [[10, 20, 0.5], [10.6, 0, 0]],
+                        "probability": 0.98
+                    }
+                ],
+                "version": {"major": 1, "minor": 0}
+            }
 
         """
         return {
@@ -552,6 +597,8 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
             InterfaceKind.InterfaceKindChoices.ANGLE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKind.InterfaceKindChoices.ELLIPSE,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
         }
 
     @staticmethod
@@ -904,6 +951,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
         }
 
         if object_store_required and self.store_in_database:
@@ -1270,7 +1318,7 @@ class ComponentJob(models.Model):
         stdout: str = "",
         stderr: str = "",
         error_message="",
-        duration: Optional[timedelta] = None,
+        duration: timedelta | None = None,
         runtime_metrics=None,
     ):
         self.status = status
@@ -1425,7 +1473,7 @@ class ComponentJob(models.Model):
                     }
                     for metric in self.runtime_metrics["metrics"]
                     for timestamp, value in zip(
-                        metric["timestamps"], metric["values"]
+                        metric["timestamps"], metric["values"], strict=True
                     )
                 ]
             },

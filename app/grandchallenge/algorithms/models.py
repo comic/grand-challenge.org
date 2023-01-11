@@ -162,7 +162,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         related_name="algorithms",
     )
     credits_per_job = models.PositiveIntegerField(
-        default=0,
+        default=100,
+        editable=False,
         help_text=(
             "The number of credits that are required for each execution of this algorithm."
         ),
@@ -241,7 +242,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         return reverse("algorithms:detail", kwargs={"slug": self.slug})
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
 
     @property
@@ -449,7 +450,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         )
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
@@ -554,7 +555,7 @@ class Job(UUIDModel, ComponentJob):
         return self.algorithm_image.algorithm.outputs
 
     @cached_property
-    def rendered_result_text(self):
+    def rendered_result_text(self) -> str:
         try:
             results = get(
                 [
@@ -585,7 +586,7 @@ class Job(UUIDModel, ComponentJob):
         )
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):

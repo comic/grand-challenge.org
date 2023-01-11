@@ -3,7 +3,7 @@ import zipfile
 from collections import namedtuple
 from datetime import timedelta
 from pathlib import Path
-from typing import List, NamedTuple
+from typing import NamedTuple
 
 import pytest
 from django.conf import settings
@@ -330,13 +330,13 @@ class MultipleLandmarkAnnotationSets(NamedTuple):
     grader2: UserFactory
     grader3: UserFactory
     landmarkset1: LandmarkAnnotationSetFactory
-    landmarkset1images: List
+    landmarkset1images: list
     landmarkset2: LandmarkAnnotationSetFactory
-    landmarkset2images: List
+    landmarkset2images: list
     landmarkset3: LandmarkAnnotationSetFactory
-    landmarkset3images: List
+    landmarkset3images: list
     landmarkset4: LandmarkAnnotationSetFactory
-    landmarkset4images: List
+    landmarkset4images: list
 
 
 def generate_multiple_landmark_annotation_sets(retina_grader=False):
@@ -620,9 +620,9 @@ def challenge_request():
         inference_time_limit_in_minutes=10,
         average_size_of_test_image_in_mb=10,
         phase_1_number_of_submissions_per_team=10,
-        phase_2_number_of_submissions_per_team=1,
+        phase_2_number_of_submissions_per_team=0,
         phase_1_number_of_test_images=100,
-        phase_2_number_of_test_images=500,
+        phase_2_number_of_test_images=0,
         number_of_tasks=1,
         structured_challenge_submission_doi="10.5281/zenodo.6362337",
     )

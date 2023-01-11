@@ -168,6 +168,33 @@ TEST_DATA = {
             },
         ],
     },
+    "ELLI": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Ellipse",
+        "name": "test_name",
+        "major_axis": [[0, 0, 0], [0, 0, 0]],
+        "minor_axis": [[1, 1, 1], [1, 1, 1]],
+        "probability": 0.3,
+    },
+    "MELL": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple ellipses",
+        "name": "test_name",
+        "ellipses": [
+            {
+                "name": "test_name",
+                "major_axis": [[0, 0, 0], [0, 0, 0]],
+                "minor_axis": [[1, 1, 1], [1, 1, 1]],
+                "probability": 0.54,
+            },
+            {
+                "name": "test_name",
+                "major_axis": [[0, 0, 0], [0, 0, 0]],
+                "minor_axis": [[1, 1, 1], [1, 1, 1]],
+                "probability": 0.54,
+            },
+        ],
+    },
 }
 
 
@@ -212,6 +239,8 @@ def test_civ_post_objects_do_not_exist(civ, error_message):
         InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
         InterfaceKind.InterfaceKindChoices.ANGLE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
+        InterfaceKind.InterfaceKindChoices.ELLIPSE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
     ),
 )
 def test_civ_post_value_validation(kind):
@@ -259,6 +288,8 @@ def test_civ_post_value_validation(kind):
         InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
         InterfaceKind.InterfaceKindChoices.ANGLE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
+        InterfaceKind.InterfaceKindChoices.ELLIPSE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
         # Do not test ANY type here as that is always valid
     ),
 )

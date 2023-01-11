@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Tuple
 
 import magic
 from django.core.exceptions import ValidationError
@@ -13,7 +12,7 @@ from jsonschema import validate, validators
 class MimeTypeValidator:
     allowed_types = ()
 
-    def __init__(self, *, allowed_types: Tuple[str, ...]):
+    def __init__(self, *, allowed_types: tuple[str, ...]):
         self.allowed_types = tuple(x.lower() for x in allowed_types)
         super().__init__()
 
@@ -62,7 +61,7 @@ class ExtensionValidator:
 
     allowed_extensions = ()
 
-    def __init__(self, *, allowed_extensions: Tuple[str, ...]):
+    def __init__(self, *, allowed_extensions: tuple[str, ...]):
         self.allowed_extensions = tuple(x.lower() for x in allowed_extensions)
         super().__init__()
 

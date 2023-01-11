@@ -1,5 +1,3 @@
-from typing import Union
-
 from allauth_2fa.utils import user_has_valid_totp_device
 from django import template
 from django.contrib.auth import get_user_model
@@ -14,7 +12,7 @@ register = template.Library()
 
 
 @register.filter
-def user_profile_link(user: Union[AbstractUser, None]) -> str:
+def user_profile_link(user: AbstractUser | None) -> str:
     verified = ""
 
     if user:

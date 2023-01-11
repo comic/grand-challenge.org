@@ -133,9 +133,9 @@ FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
     os.environ.get("CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 27600)
 )
-# based on 0.10 / GB / month ECR pricing
+# based on cost calculation by James on 21.12.2022
 CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
-    os.environ.get("CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 120000)
+    os.environ.get("CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 32000)
 )
 CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = int(
     os.environ.get("CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 100)
@@ -863,6 +863,9 @@ SPECTACULAR_SETTINGS = {
     "TOS": f"https://{SESSION_COOKIE_DOMAIN.lstrip('.')}/policies/terms-of-service/",
     "LICENSE": {"name": "Apache License 2.0"},
     "VERSION": "1.0.0",
+    "ENUM_NAME_OVERRIDES": {
+        "ColorInterpolationEnum": "grandchallenge.workstation_configs.models.LookUpTable.COLOR_INTERPOLATION_CHOICES",
+    },
 }
 
 REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
@@ -1136,6 +1139,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
         "schedule": crontab(minute=0, hour=4),
     },
+    "update_algorithm_credits": {
+        "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
+        "schedule": crontab(minute=30, hour=4),
+    },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": crontab(minute="*/5"),
@@ -1176,6 +1183,13 @@ ALGORITHMS_MAX_MEMORY_GB = 30
 # The SageMaker backend currently has a maximum limit of 3600s
 ALGORITHMS_JOB_TIME_LIMIT_SECONDS = os.environ.get(
     "ALGORITHMS_JOB_TIME_LIMIT_SECONDS", "3600"
+)
+# How many cents per month each user receives by default
+ALGORITHMS_USER_CENTS_PER_MONTH = int(
+    os.environ.get("ALGORITHMS_USER_CENTS_PER_MONTH", "1000")
+)
+ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH = int(
+    os.environ.get("ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH", "50")
 )
 
 # Disallow some challenge names due to subdomain or media folder clashes

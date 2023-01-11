@@ -245,3 +245,24 @@ class ImageSearchView(LoginRequiredMixin, ListView):
             template=self.template_name,
             context=context,
         )
+
+
+class CS3DImageDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = Image
+    permission_required = (
+        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
+    )
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    template_name = "cases/image_detail_cs3d.html"
+
+    def get_object(self):
+        img = super().get_object()
+        try:
+            img.get_metaimage_files()
+        except FileNotFoundError as e:
+            raise Http404 from e
+
+        return img

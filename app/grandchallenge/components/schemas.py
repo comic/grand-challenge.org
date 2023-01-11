@@ -409,6 +409,87 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["version", "type", "boxes"],
             "additionalProperties": False,
         },
+        "ELLI": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Ellipse"]},
+                "major_axis": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                },
+                "minor_axis": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                },
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["version", "type", "major_axis", "minor_axis"],
+            "additionalProperties": False,
+        },
+        "ellipse-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Ellipse"]},
+                "major_axis": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                },
+                "minor_axis": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["major_axis", "minor_axis"],
+            "additionalProperties": False,
+        },
+        "MELL": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple ellipses"]},
+                "ellipses": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [{"$ref": "#/definitions/ellipse-object"}]
+                    },
+                },
+                "version": {"$ref": "#/definitions/version-object"},
+            },
+            "required": ["version", "type", "ellipses"],
+            "additionalProperties": False,
+        },
         "version-object": {
             "type": "object",
             "properties": {
@@ -443,6 +524,8 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MLIN"},
         {"$ref": "#/definitions/ANGL"},
         {"$ref": "#/definitions/MANG"},
+        {"$ref": "#/definitions/ELLI"},
+        {"$ref": "#/definitions/MELL"},
     ],
 }
 
@@ -471,6 +554,8 @@ INTERFACE_VALUE_SCHEMA = {
         "MLIN": ANSWER_TYPE_SCHEMA["definitions"]["MLIN"],
         "ANGL": ANSWER_TYPE_SCHEMA["definitions"]["ANGL"],
         "MANG": ANSWER_TYPE_SCHEMA["definitions"]["MANG"],
+        "ELLI": ANSWER_TYPE_SCHEMA["definitions"]["ELLI"],
+        "MELL": ANSWER_TYPE_SCHEMA["definitions"]["MELL"],
         "CHOI": {"type": "string"},
         "MCHO": {"type": "array", "items": {"type": "string"}},
         "CHART": VEGA_LITE_SCHEMA,
@@ -484,6 +569,7 @@ INTERFACE_VALUE_SCHEMA = {
         "polygon-object": ANSWER_TYPE_SCHEMA["definitions"]["polygon-object"],
         "spline-object": ANSWER_TYPE_SCHEMA["definitions"]["spline-object"],
         "angle-object": ANSWER_TYPE_SCHEMA["definitions"]["angle-object"],
+        "ellipse-object": ANSWER_TYPE_SCHEMA["definitions"]["ellipse-object"],
     },
     "anyOf": [
         {"$ref": "#/definitions/STR"},
@@ -506,5 +592,7 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/MLIN"},
         {"$ref": "#/definitions/ANGL"},
         {"$ref": "#/definitions/MANG"},
+        {"$ref": "#/definitions/ELLI"},
+        {"$ref": "#/definitions/MELL"},
     ],
 }

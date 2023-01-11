@@ -25,11 +25,10 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
-    HttpResponseServerError,
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
-from django.template.loader import get_template, render_to_string
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -61,7 +60,6 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
-from xhtml2pdf import pisa
 
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -107,7 +105,6 @@ from grandchallenge.reader_studies.forms import (
 )
 from grandchallenge.reader_studies.models import (
     Answer,
-    AnswerType,
     CategoricalOption,
     DisplaySet,
     Question,
@@ -464,9 +461,9 @@ class ReaderStudyImagesList(
         Column(title="Name", sort_field="name"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="origin__creator__username"),
-        Column(title="View", sort_field="pk"),
-        Column(title="Download", sort_field="pk"),
-        Column(title="Remove from Study", sort_field="pk"),
+        Column(title="View"),
+        Column(title="Download"),
+        Column(title="Remove from Study"),
     ]
 
     @cached_property
@@ -1026,6 +1023,13 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "case_pk", OpenApiTypes.UUID, OpenApiParameter.PATH
+            ),
+        ],
+    )
     @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
     def ground_truth(self, request, pk=None, case_pk=None):
         reader_study = self.get_object()
@@ -1879,72 +1883,3 @@ class AddDisplaySetToReaderStudy(
         return reverse(
             "reader-studies:display_sets", kwargs={"slug": self.kwargs["slug"]}
         )
-
-
-class DisplaySetPDFReport(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, View
-):
-    template_name = "reader_studies/readerstudy_display_set_pdf_report.html"
-    permission_required = "reader_studies.change_readerstudy"
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.reader_study
-
-    @cached_property
-    def reader_study(self):
-        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
-
-    @cached_property
-    def display_set(self):
-        return get_object_or_404(DisplaySet, pk=self.kwargs["pk"])
-
-    @cached_property
-    def user(self):
-        return get_object_or_404(
-            get_user_model(), username=self.kwargs["username"]
-        )
-
-    def get(self, request, *args, **kwargs):
-        # Create a Django response object, and specify content_type as pdf
-        response = HttpResponse(content_type="application/pdf")
-        filename = "Report_" + str(self.display_set.pk) + ".pdf"
-        response["Content-Disposition"] = f"attachment; filename={filename}"
-
-        # find the template and render it.
-        template = get_template(self.template_name)
-        html = template.render(self.get_context_data())
-
-        # create a pdf
-        pisa_status = pisa.CreatePDF(html, dest=response)
-
-        if pisa_status.err:
-            return HttpResponseServerError(
-                "We encountered some errors <pre>" + html + "</pre>"
-            )
-
-        return response
-
-    def get_context_data(self):
-        answers = (
-            self.display_set.answers.select_related(
-                "creator", "question", "answer_image"
-            )
-            .filter(
-                creator=self.user,
-                is_ground_truth=False,
-                answer_image__isnull=True,
-                answer__isnull=False,
-            )
-            .exclude(
-                question__answer_type__in=AnswerType.get_annotation_types(),
-            )
-        )
-        context = {
-            "reader_study": self.reader_study,
-            "display_set": self.display_set,
-            "user": self.user,
-            "created": now(),
-            "answers": answers,
-        }
-        return context

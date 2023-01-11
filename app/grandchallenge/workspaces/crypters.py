@@ -1,5 +1,4 @@
 import base64
-from typing import Tuple
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.hashes import SHA256
@@ -24,7 +23,7 @@ class FernetCrypter:
 
         return f"{self.algorithm_name}${self.iterations}${salt}${token}"
 
-    def deserialize(self, encoded: str) -> Tuple[str, str]:
+    def deserialize(self, encoded: str) -> tuple[str, str]:
         algorithm_name, iterations, salt, token = encoded.split(
             self.separator, 3
         )

@@ -40,7 +40,7 @@ def test_instance_type(memory_limit, requires_gpu, expected_type):
         requires_gpu=requires_gpu,
     )
 
-    assert executor._instance_type == expected_type
+    assert executor._instance_type.name == expected_type
 
 
 def test_instance_type_incompatible():
@@ -475,7 +475,7 @@ def test_set_runtime_metrics(settings):
             "gpus": 0,
             "memory": 8,
             "name": "ml.m5.large",
-            "price_per_hour": 0.128,
+            "cents_per_hour": 13,
         },
         "metrics": [
             {
