@@ -47,16 +47,16 @@ def get_scale_in_protection_url():
 
 
 @task_prerun.connect()
-def set_fargate_scale_in_protection(*_, task, **__):
+def set_ecs_scale_in_protection(*_, task, **__):
     if (
         celery_app.is_solo_worker
-        and settings.FARGATE_ENABLE_CELERY_SCALE_IN_PROTECTION
+        and settings.ECS_ENABLE_CELERY_SCALE_IN_PROTECTION
     ):
         expire_seconds = task.time_limit or settings.CELERY_TASK_TIME_LIMIT
         expire_minutes = max(ceil(expire_seconds / 60), 1)
 
         logger.info(
-            f"Setting fargate scale in protection for {expire_minutes} minutes"
+            f"Setting ECS scale-in protection for {expire_minutes} minutes"
         )
 
         response = requests.put(
@@ -70,12 +70,12 @@ def set_fargate_scale_in_protection(*_, task, **__):
 
 
 @task_postrun.connect()
-def remove_fargate_scale_in_protection(*_, **__):
+def remove_ecs_scale_in_protection(*_, **__):
     if (
         celery_app.is_solo_worker
-        and settings.FARGATE_ENABLE_CELERY_SCALE_IN_PROTECTION
+        and settings.ECS_ENABLE_CELERY_SCALE_IN_PROTECTION
     ):
-        logger.info("Removing fargate scale in protection")
+        logger.info("Removing ECS scale-in protection")
 
         response = requests.put(
             url=get_scale_in_protection_url(),
