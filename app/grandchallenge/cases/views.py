@@ -27,8 +27,7 @@ from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
-from grandchallenge.cases.utils import WidgetChoices
-from grandchallenge.cases.widgets import ImageSearchWidget
+from grandchallenge.cases.widgets import ImageSearchWidget, WidgetChoices
 from grandchallenge.components.form_fields import _join_with_br
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
@@ -236,7 +235,7 @@ class ImageSearchView(LoginRequiredMixin, ListView):
                 [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
                 Q(),
             )
-            qs = qs.filter(q).order_by("-created")
+            qs = qs.filter(q).order_by("name")
         self.object_list = qs
         context = self.get_context_data(**kwargs)
         context["interface"] = interface

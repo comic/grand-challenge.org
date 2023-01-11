@@ -74,7 +74,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.cases.utils import WidgetChoices
+from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,

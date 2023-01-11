@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.models import TextChoices
 from django.forms import (
     HiddenInput,
     ModelChoiceField,
@@ -10,8 +11,12 @@ from django.forms.widgets import ChoiceWidget
 from django.utils.datastructures import MultiValueDictKeyError
 
 from grandchallenge.cases.models import Image
-from grandchallenge.cases.utils import WidgetChoices
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+
+
+class WidgetChoices(TextChoices):
+    IMAGE_SEARCH = "IMAGE_SEARCH"
+    IMAGE_UPLOAD = "IMAGE_UPLOAD"
 
 
 class ImageSearchMixin(ChoiceWidget):

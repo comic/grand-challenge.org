@@ -58,7 +58,7 @@ from grandchallenge.archives.tasks import (
     update_archive_item_update_kwargs,
 )
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.cases.utils import WidgetChoices
+from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
