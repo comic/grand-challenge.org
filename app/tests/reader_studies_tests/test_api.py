@@ -1441,11 +1441,14 @@ def test_display_set_list_filters(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    r = UserFactory()
+    r1 = UserFactory()
+    r2 = UserFactory()
 
     rs1, rs2 = (ReaderStudyFactory() for _ in range(2))
-    rs1.add_reader(r)
-    rs2.add_reader(r)
+    rs1.add_reader(r1)
+    rs1.add_reader(r2)
+
+    rs2.add_reader(r1)
     q1, q2 = (
         QuestionFactory(reader_study=rs1, answer_type=Question.AnswerType.BOOL)
         for _ in range(2)
@@ -1466,7 +1469,7 @@ def test_display_set_list_filters(client, settings):
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        user=r,
+        user=r1,
         client=client,
         method=client.get,
     )
@@ -1476,7 +1479,7 @@ def test_display_set_list_filters(client, settings):
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
         data={"reader_study": str(rs1.pk)},
-        user=r,
+        user=r1,
         client=client,
         method=client.get,
     )
@@ -1484,10 +1487,16 @@ def test_display_set_list_filters(client, settings):
     assert response.json()["count"] == 2
     rs1.shuffle_hanging_list = True
     rs1.save()
+
+    # specifying a user is only possible in combination with a reader study
+    unanswered_view_query = {
+        "unanswered_by_user": True,
+        "user": r1.username,
+    }
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"unanswered_by_user": True},
-        user=r,
+        data=unanswered_view_query,
+        user=r1,
         client=client,
         method=client.get,
     )
@@ -1496,51 +1505,78 @@ def test_display_set_list_filters(client, settings):
     assert response.json() == [
         "Please provide a reader study when filtering for unanswered display_sets."
     ]
+    unanswered_view_query["reader_study"] = str(rs1.pk)
+
+    # specifying a user is only possible in combination with unanswered_by_user=True
+    unanswered_view_query.pop("user")
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
-        user=r,
+        data={
+            "reader_study": str(rs1.pk),
+            "user": r1.username,
+        },
+        user=r1,
+        client=client,
+        method=client.get,
+    )
+    assert response.status_code == 400
+    assert (
+        "Specifying a user is only possible when retrieving unanswered display sets."
+        in str(response.rendered_content)
+    )
+
+    unanswered_view_query["user"] = r1.username
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data=unanswered_view_query,
+        user=r1,
         client=client,
         method=client.get,
     )
 
     assert response.json()["count"] == 2
 
+    # Adding ground truths does not change anything
     AnswerFactory(
-        question=q1, display_set=ds1, creator=r, is_ground_truth=True
+        question=q1, display_set=ds1, creator=r1, is_ground_truth=True
     )
     AnswerFactory(
-        question=q2, display_set=ds1, creator=r, is_ground_truth=True
+        question=q2, display_set=ds1, creator=r1, is_ground_truth=True
     )
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
-        user=r,
+        data=unanswered_view_query,
+        user=r1,
         client=client,
         method=client.get,
     )
 
     assert response.json()["count"] == 2
 
-    AnswerFactory(question=q1, display_set=ds1, creator=r)
+    # Partial answered cases are counted
+    AnswerFactory(question=q1, display_set=ds1, creator=r1)
+    AnswerFactory(
+        question=q1, display_set=ds1, creator=r2
+    )  # Add confounding answers for display set ds1
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
-        user=r,
+        data=unanswered_view_query,
+        user=r1,
         client=client,
         method=client.get,
     )
 
     assert response.json()["count"] == 2
 
-    AnswerFactory(question=q2, display_set=ds1, creator=r)
+    AnswerFactory(question=q2, display_set=ds1, creator=r1)
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs1.pk), "unanswered_by_user": True},
-        user=r,
+        data=unanswered_view_query,
+        user=r1,
         client=client,
         method=client.get,
     )
@@ -2121,23 +2157,6 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
         method=client.get,
     )
     assert response.json()["count"] == 2
-
-    # specifying a user is only possible in combination with unanswered_by_user=True
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-list",
-        data={
-            "reader_study": str(rs.pk),
-            "user": r1.username,
-        },
-        user=editor,
-        client=client,
-        method=client.get,
-    )
-    assert response.status_code == 400
-    assert (
-        "Specifying a user is only possible when retrieving unanswered display sets."
-        in str(response.rendered_content)
-    )
 
     # the rs editor can view all
     response = get_view_for_user(
