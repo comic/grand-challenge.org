@@ -11,7 +11,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.evaluation.tasks import get_average_job_duration_for_phase
+from grandchallenge.evaluation.tasks import get_phase_statistics
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
 from tests.algorithms_tests.factories import (
@@ -382,7 +382,7 @@ def test_average_job_duration_calculation():
     e1 = EvaluationFactory(submission__phase=phase1)
     e1.inputs.add(j1.outputs.first())
 
-    duration = get_average_job_duration_for_phase(phase=phase1)
+    duration = get_phase_statistics(phase=phase1)
 
     assert (
         round(duration["average_duration"].total_seconds(), ndigits=2)
