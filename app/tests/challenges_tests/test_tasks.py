@@ -316,13 +316,13 @@ def test_challenge_costs_calculation():
     monthly_challenge_costs = get_monthly_challenge_costs(phase_stats)
     assert monthly_challenge_costs[2021]["total_compute_cost"] == 0
     assert monthly_challenge_costs[2022]["total_compute_cost"] == 86.47
-    assert monthly_challenge_costs[2022]["total_docker_cost"] == 60.00
-    assert monthly_challenge_costs[2022]["grand_total"] == 146.47
+    assert monthly_challenge_costs[2022]["total_docker_cost"] == 9.6
+    assert monthly_challenge_costs[2022]["grand_total"] == 96.07
 
     calculate_costs_per_challenge(phase_stats)
     ch1.refresh_from_db()
     ch2.refresh_from_db()
     assert ch1.accumulated_compute_cost_in_cents == 3260
-    assert ch1.accumulated_docker_storage_cost_in_cents == 2400
+    assert ch1.accumulated_docker_storage_cost_in_cents == 384
     assert ch2.accumulated_compute_cost_in_cents == 5387
-    assert ch2.accumulated_docker_storage_cost_in_cents == 3600
+    assert ch2.accumulated_docker_storage_cost_in_cents == 576
