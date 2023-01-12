@@ -557,7 +557,7 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
         sub.assign_permissions()
 
 
-def get_average_job_duration_for_phase(phase):
+def get_phase_statistics(phase):
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
@@ -569,7 +569,7 @@ def get_average_job_duration_for_phase(phase):
     delta = relativedelta.relativedelta(end_date, start_date)
     monthly_costs = {}
     algorithms_submitted_per_month = {}
-    for year in [start_date.year, start_date.year + delta.years]:
+    for year in range(start_date.year, start_date.year + delta.years + 1):
         if not year == start_date.year + delta.years:
             months = range(1, 13)
         else:
@@ -652,28 +652,19 @@ def update_phase_statistics():
     )
     phase_dict = {}
     for phase in phases:
-        duration_dict = get_average_job_duration_for_phase(phase)
-        average_algorithm_job_run_time = duration_dict.get(
-            "average_duration", None
-        )
-        accumulated_algorithm_job_run_time = duration_dict.get(
-            "total_duration", None
-        )
-        monthly_costs = duration_dict.get("monthly_costs", None)
-        algorithms_submitted_per_month = duration_dict.get(
-            "algorithms_submitted_per_month", None
-        )
+        phase_stats = get_phase_statistics(phase)
+
         try:
             average_submission_compute_cost = round(
                 phase.archive_item_count
-                * average_algorithm_job_run_time.total_seconds()
+                * phase_stats["average_duration"].total_seconds()
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
                 ndigits=2,
             )
             total_phase_compute_cost = round(
-                accumulated_algorithm_job_run_time.total_seconds()
+                phase_stats["total_duration"].total_seconds()
                 * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
                 / 3600
                 / 100,
@@ -685,13 +676,13 @@ def update_phase_statistics():
 
         phase_dict[str(phase.pk)] = PhaseStatistics(
             phase.challenge.title,
-            average_algorithm_job_run_time,
-            accumulated_algorithm_job_run_time,
+            phase_stats["average_duration"],
+            phase_stats["total_duration"],
             average_submission_compute_cost,
             total_phase_compute_cost,
             phase.archive_item_count,
-            monthly_costs,
-            algorithms_submitted_per_month,
+            phase_stats["monthly_costs"],
+            phase_stats["algorithms_submitted_per_month"],
         )
 
     cache.set("statistics_for_phases", phase_dict, timeout=None)
