@@ -1220,11 +1220,14 @@ class DisplaySetViewSet(
             queryset = (
                 queryset.annotate(
                     answer_count=Count(
-                        "answers", filter=Q(answers__is_ground_truth=False)
+                        "answers",
+                        filter=Q(
+                            answers__is_ground_truth=False,
+                            answers__creator=user,
+                        ),
                     )
                 )
                 .exclude(
-                    answers__creator=user,
                     answer_count__gte=answerable_question_count,
                 )
                 .order_by("order", "created")
