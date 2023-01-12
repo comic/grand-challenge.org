@@ -432,6 +432,8 @@ def test_question_update(client):
             InterfaceKindChoices.MULTIPLE_CHOICE,
         ),
         (AnswerType.MASK, InterfaceKindChoices.SEGMENTATION),
+        (AnswerType.ELLIPSE, InterfaceKindChoices.ELLIPSE),
+        (AnswerType.MULTIPLE_ELLIPSES, InterfaceKindChoices.MULTIPLE_ELLIPSES),
     ),
 )
 def test_question_form_interface_field(answer_type, interface_kind):

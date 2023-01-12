@@ -238,7 +238,6 @@ general_information_items_2 = (
     "submission_assessment",
     "challenge_publication",
     "code_availability",
-    "expected_number_of_teams",
 )
 phase_1_items = (
     "phase_1_number_of_submissions_per_team",
@@ -266,6 +265,7 @@ class ChallengeRequestForm(
             "structured_challenge_submission_form",
             "structured_challenge_submission_doi",
             *general_information_items_2,
+            "expected_number_of_teams",
             "number_of_tasks",
             "average_size_of_test_image_in_mb",
             "inference_time_limit_in_minutes",
@@ -514,8 +514,11 @@ class ChallengeRequestForm(
                         "<a href='https://grand-challenge.org/documentation/create-your-own-challenge/'"
                         "target='_blank'> we have assembled example budgets "
                         "here</a>. Please take a close look at those before "
-                        "proceeding to fill in this form.</p><br>"
+                        "proceeding to fill in this form. Once you filled in all fields below, "
+                        "you will automatically see a cost estimate calculation. You can "
+                        "then adjust values and see how those changes affect the costs.</p><br>"
                     ),
+                    "expected_number_of_teams",
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
                     "inference_time_limit_in_minutes",
@@ -542,6 +545,10 @@ class ChallengeRequestForm(
                     *phase_1_items,
                     HTML("<h4>Phase 2</h4>"),
                     *phase_2_items,
+                    HTML(
+                        "<div hx-get='{% url 'challenges:requests-cost-calculation' %}' hx-target='#cost-estimate' hx-swap='outerHTML' hx-trigger='load, change from:#id_number_of_tasks, change from:#id_expected_number_of_teams, change from:#id_average_size_of_test_image_in_mb, change from:#id_inference_time_limit_in_minutes, change from:#id_phase_1_number_of_test_images, change from:#id_phase_2_number_of_test_images, change from:#id_phase_1_number_of_submissions_per_team, change from:#id_phase_2_number_of_submissions_per_team' hx-swap='outerHTML'  hx-include=\"[name='number_of_tasks'], [name='average_size_of_test_image_in_mb'], [name='inference_time_limit_in_minutes'], [name='phase_1_number_of_submissions_per_team'], [name='phase_2_number_of_submissions_per_team'], [name='phase_1_number_of_test_images'], [name='phase_2_number_of_test_images'], [name='expected_number_of_teams']\"></div>"
+                    ),
+                    Div(id="cost-estimate"),
                     css_class="border rounded px-4 pt-4 my-5",
                 ),
                 "budget_for_hosting_challenge",

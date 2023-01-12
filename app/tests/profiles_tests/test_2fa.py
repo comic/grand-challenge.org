@@ -2,16 +2,11 @@ from base64 import b32encode
 from time import sleep
 
 import pytest
-from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.tests import OAuth2TestsMixin
-from allauth.tests import MockedResponse
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from pytest_django.asserts import assertRedirects
 
-from grandchallenge.profiles.providers.gmail.provider import GmailProvider
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from tests.conftest import get_token_from_totp_device
 from tests.factories import (
@@ -48,66 +43,6 @@ def test_2fa_required_for_staff(client):
     assertRedirects(
         response, "/accounts/two_factor/setup", fetch_redirect_response=False
     )
-
-
-class SocialLoginTests(OAuth2TestsMixin, TestCase):
-    provider_id = GmailProvider.id
-
-    def get_mocked_response(
-        self,
-        family_name="Doe",
-        given_name="Jane",
-        name="Jane Doe",
-        email="jane.doe@example.com",
-        verified_email=True,
-    ):
-        return MockedResponse(
-            200,
-            """
-                {"family_name": "%s", "name": "%s",
-                "picture": "https://lh5.googleusercontent.com/photo.jpg",
-                "locale": "nl", "gender": "female",
-                "email": "%s",
-                "link": "https://plus.google.com/108204268033311374519",
-                "given_name": "%s", "id": "108204268033311374519",
-                "verified_email": %s }
-            """
-            % (
-                family_name,
-                name,
-                email,
-                given_name,
-                (repr(verified_email).lower()),
-            ),
-        )
-
-    @override_settings(SOCIALACCOUNT_AUTO_SIGNUP=True)
-    @pytest.mark.django_db
-    def test_2fa_for_social_login(self):
-        # login with test user
-        resp = self.login(resp_mock=self.get_mocked_response())
-        # check that a social account has been created
-        assert SocialAccount.objects.count() == 1
-        assertRedirects(resp, "/users/profile/", fetch_redirect_response=False)
-
-        # enable 2fa for the user (mimicks the 2fa setup)
-        user = get_user_model().objects.last()
-        user.totpdevice_set.create()
-
-        # log user out
-        self.client.logout()
-
-        # sign in again, check that redirect is now to 2fa authenticate page
-        resp = self.login(resp_mock=self.get_mocked_response())
-        assert "two-factor-authenticate" in resp.url
-
-        token = get_token_from_totp_device(user.totpdevice_set.get())
-        resp = self.client.post(resp.url, {"otp_token": token})
-        resp = self.client.post(resp.url)
-        assert (
-            reverse("profile-detail", kwargs={"username": user.username})
-            in resp.url
-        )
 
 
 @override_settings(ACCOUNT_EMAIL_VERIFICATION=None)

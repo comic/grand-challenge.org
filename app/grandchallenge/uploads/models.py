@@ -106,7 +106,7 @@ class UserUpload(UUIDModel):
         return settings.UPLOADS_S3_BUCKET_NAME
 
     @property
-    def key(self):
+    def key(self) -> str:
         # There are several assumptions about the structure of this key
         # elsewhere in the codebase and in clients code
         # First for grouping by the user
@@ -190,7 +190,7 @@ class UserUpload(UUIDModel):
         return objects
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:upload-detail", kwargs={"pk": self.pk})
 
     def assign_permissions(self):

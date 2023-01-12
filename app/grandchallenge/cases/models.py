@@ -151,7 +151,7 @@ class RawImageUploadSession(UUIDModel):
         )
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:upload-session-detail", kwargs={"pk": self.pk})
 
 
@@ -492,7 +492,7 @@ class Image(UUIDModel):
             assign_perm("view_image", answer.creator, self)
 
     @property
-    def api_url(self):
+    def api_url(self) -> str:
         return reverse("api:image-detail", kwargs={"pk": self.pk})
 
     class Meta:

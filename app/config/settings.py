@@ -133,9 +133,9 @@ FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
     os.environ.get("CHALLENGES_S3_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 27600)
 )
-# based on 0.10 / GB / month ECR pricing
+# based on cost calculation by James on 21.12.2022
 CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
-    os.environ.get("CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 120000)
+    os.environ.get("CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR", 32000)
 )
 CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = int(
     os.environ.get("CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 100)
@@ -863,6 +863,9 @@ SPECTACULAR_SETTINGS = {
     "TOS": f"https://{SESSION_COOKIE_DOMAIN.lstrip('.')}/policies/terms-of-service/",
     "LICENSE": {"name": "Apache License 2.0"},
     "VERSION": "1.0.0",
+    "ENUM_NAME_OVERRIDES": {
+        "ColorInterpolationEnum": "grandchallenge.workstation_configs.models.LookUpTable.COLOR_INTERPOLATION_CHOICES",
+    },
 }
 
 REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
@@ -903,6 +906,13 @@ CELERY_TASK_DECORATOR_KWARGS = {
         "queue": "acks-late-micro-short",
     },
 }
+CELERY_SOLO_QUEUES = {
+    *{q["queue"] for q in CELERY_TASK_DECORATOR_KWARGS.values()},
+    *{f"{q['queue']}-delay" for q in CELERY_TASK_DECORATOR_KWARGS.values()},
+}
+ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
+    os.environ.get("ECS_ENABLE_CELERY_SCALE_IN_PROTECTION", "False"),
+)
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
@@ -911,6 +921,7 @@ CELERY_RESULT_EXPIRES = timedelta(days=7)
 CELERY_TASK_ACKS_LATE = strtobool(
     os.environ.get("CELERY_TASK_ACKS_LATE", "False")
 )
+CELERY_WORKER_SEND_TASK_EVENTS = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = int(
     os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", "1")
 )
