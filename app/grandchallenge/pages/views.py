@@ -1,5 +1,8 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import Http404
@@ -13,7 +16,6 @@ from django.views.generic import (
 )
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.challenges.views import ChallengeCostViewPermissionMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
@@ -149,9 +151,10 @@ class PageDelete(
 
 
 class ChallengeStatistics(
-    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
 ):
     template_name = "pages/challenge_statistics.html"
+    permission_required = "challenges.view_challengerequest"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()

@@ -504,7 +504,7 @@ def test_challenge_request_date_check(client):
 )
 @pytest.mark.django_db
 def test_challenge_cost_page_permissions(
-    client, viewname, reverse_kwargs, data, authenticated_staff_user
+    client, viewname, reverse_kwargs, data
 ):
     user, reviewer = UserFactory.create_batch(2)
     assign_perm("challenges.view_challengerequest", reviewer)
@@ -521,15 +521,6 @@ def test_challenge_cost_page_permissions(
         data=data,
     )
     assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname=viewname,
-        reverse_kwargs=reverse_kwargs_for_view,
-        client=client,
-        user=authenticated_staff_user,
-        data=data,
-    )
-    assert response.status_code == 200
 
     response = get_view_for_user(
         viewname=viewname,

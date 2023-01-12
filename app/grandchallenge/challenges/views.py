@@ -1,7 +1,4 @@
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.paginator import EmptyPage, Paginator
@@ -401,17 +398,11 @@ class ChallengeRequestBudgetUpdate(
         return response
 
 
-class ChallengeCostViewPermissionMixin(UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.is_staff or self.request.user.has_perm(
-            "challenges.view_challengerequest"
-        )
-
-
 class ChallengeCostOverview(
-    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
 ):
     template_name = "challenges/challenge_costs_overview.html"
+    permission_required = "challenges.view_challengerequest"
 
     def get_context_data(self, **kwargs):
         challenges = Challenge.objects.filter(
@@ -438,9 +429,10 @@ class ChallengeCostOverview(
 
 
 class ChallengeCostsPerPhaseView(
-    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
 ):
     template_name = "challenges/challenge_costs_per_phase.html"
+    permission_required = "challenges.view_challengerequest"
 
     @cached_property
     def challenge(self):
@@ -464,9 +456,10 @@ class ChallengeCostsPerPhaseView(
 
 
 class ChallengeCostsRow(
-    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
 ):
     template_name = "challenges/challenge_cost_row.html"
+    permission_required = "challenges.view_challengerequest"
 
     @cached_property
     def challenge(self):
@@ -488,9 +481,10 @@ class ChallengeCostsRow(
 
 
 class ChallengeCostsPerYearView(
-    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
+    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
 ):
     template_name = "challenges/challenge_costs_per_year.html"
+    permission_required = "challenges.view_challengerequest"
 
     def get_context_data(self, **kwargs):
         monthly_challenge_costs = cache.get("monthly_challenge_costs")
@@ -523,10 +517,9 @@ class ChallengeCostsPerYearView(
         return context
 
 
-class YearCostsRow(
-    LoginRequiredMixin, ChallengeCostViewPermissionMixin, TemplateView
-):
+class YearCostsRow(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     template_name = "challenges/year_cost_row.html"
+    permission_required = "challenges.view_challengerequest"
 
     def get_context_data(self, **kwargs):
         monthly_challenge_costs = cache.get("monthly_challenge_costs")
