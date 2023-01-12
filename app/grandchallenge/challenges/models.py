@@ -361,8 +361,12 @@ class Challenge(ChallengeBase):
         default="",
         help_text="This email will be listed as the contact email for the challenge and will be visible to all users of Grand Challenge.",
     )
-    accumulated_compute_cost = models.FloatField(default=0, blank=True)
-    accumulated_docker_storage_cost = models.FloatField(default=0, blank=True)
+    accumulated_compute_cost_in_cents = models.IntegerField(
+        default=0, blank=True
+    )
+    accumulated_docker_storage_cost_in_cents = models.IntegerField(
+        default=0, blank=True
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

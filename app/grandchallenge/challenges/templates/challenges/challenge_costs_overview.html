@@ -3,6 +3,7 @@
 {% load url %}
 {% load static %}
 {% load dict_lookup %}
+{% load divide_by %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -41,9 +42,9 @@
                         <td class="text-center">
                             <span class="badge {% if challenge.status.name == challenge_status_choices.OPEN %}badge-success {% elif challenge.status.name == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge.status.name }}</span><br>
                         </td>
-                        <td class="text-right">{{ challenge.accumulated_compute_cost }} €</td>
-                        <td class="text-right">{{ challenge.accumulated_docker_storage_cost }} €</td>
-                        <td class="text-right">{{ challenge.total_cost }} €</td>
+                        <td class="text-right">{{ challenge.accumulated_compute_cost_in_cents|divide_by:100 }} €</td>
+                        <td class="text-right">{{ challenge.accumulated_docker_storage_cost_in_cents|divide_by:100 }} €</td>
+                        <td class="text-right">{{ challenge.total_cost|divide_by:100 }} €</td>
                     </tr>
                 {% endfor %}
             </tbody>

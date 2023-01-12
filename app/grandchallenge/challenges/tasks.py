@@ -150,7 +150,9 @@ def calculate_costs_per_challenge(phase_stats):
     ecr_storage_costs = (
         settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
     )
-    average_algorithm_container_size_in_gb = 10
+    average_algorithm_container_size_in_gb = ChallengeRequest._meta.get_field(
+        "average_algorithm_container_size_in_gb"
+    ).get_default()
     for challenge in challenges:
         submitted_algorithms = [
             str(pk)
@@ -164,27 +166,31 @@ def calculate_costs_per_challenge(phase_stats):
         )
         challenge_compute_cost = round(
             sum(
-                v.total_phase_compute_cost
+                v.total_phase_compute_cost * 100
                 for k, v in phase_stats.items()
                 for phase in challenge.phase_set.all()
                 if k == str(phase.pk)
                 and v.total_phase_compute_cost is not None
             ),
-            ndigits=2,
+            ndigits=0,
         )
         docker_storage_cost = round(
             average_algorithm_container_size_in_gb
             * num_submitted_algorithms
             * ecr_storage_costs
-            / 1000
-            / 100,
-            ndigits=2,
+            / 1000,
+            ndigits=0,
         )
-        challenge.accumulated_docker_storage_cost = docker_storage_cost
-        challenge.accumulated_compute_cost = challenge_compute_cost
+        challenge.accumulated_docker_storage_cost_in_cents = (
+            docker_storage_cost
+        )
+        challenge.accumulated_compute_cost_in_cents = challenge_compute_cost
     Challenge.objects.bulk_update(
         challenges,
-        ["accumulated_docker_storage_cost", "accumulated_compute_cost"],
+        [
+            "accumulated_docker_storage_cost_in_cents",
+            "accumulated_compute_cost_in_cents",
+        ],
     )
 
 

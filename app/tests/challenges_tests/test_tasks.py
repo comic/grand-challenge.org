@@ -301,7 +301,7 @@ def test_challenge_costs_calculation():
     calculate_costs_per_challenge(phase_stats)
     ch1.refresh_from_db()
     ch2.refresh_from_db()
-    assert ch1.accumulated_compute_cost == 32.6
-    assert ch1.accumulated_docker_storage_cost == 24.0
-    assert ch2.accumulated_compute_cost == 53.87
-    assert ch2.accumulated_docker_storage_cost == 36.0
+    assert ch1.accumulated_compute_cost_in_cents == 3260
+    assert ch1.accumulated_docker_storage_cost_in_cents == 2400
+    assert ch2.accumulated_compute_cost_in_cents == 5387
+    assert ch2.accumulated_docker_storage_cost_in_cents == 3600

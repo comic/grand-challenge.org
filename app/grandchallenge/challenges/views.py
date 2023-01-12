@@ -409,8 +409,8 @@ class ChallengeCostOverview(
             phase__submission_kind=SubmissionKindChoices.ALGORITHM
         ).annotate(
             total_cost=Sum(
-                F("accumulated_compute_cost")
-                + F("accumulated_docker_storage_cost")
+                F("accumulated_compute_cost_in_cents")
+                + F("accumulated_docker_storage_cost_in_cents")
             )
         )
         context = super().get_context_data()
@@ -443,8 +443,8 @@ class ChallengeCostsPerPhaseView(
         context.update(
             {
                 "challenge": self.challenge,
-                "total_cost": self.challenge.accumulated_docker_storage_cost
-                + self.challenge.accumulated_compute_cost,
+                "total_cost": self.challenge.accumulated_docker_storage_cost_in_cents
+                + self.challenge.accumulated_compute_cost_in_cents,
                 "statistics_for_phases": cache.get("statistics_for_phases"),
                 "phases": self.challenge.phase_set.all(),
                 "challenge_status_choices": {
@@ -470,8 +470,8 @@ class ChallengeCostsRow(
         context.update(
             {
                 "challenge": self.challenge,
-                "total_cost": self.challenge.accumulated_docker_storage_cost
-                + self.challenge.accumulated_compute_cost,
+                "total_cost": self.challenge.accumulated_docker_storage_cost_in_cents
+                + self.challenge.accumulated_compute_cost_in_cents,
                 "challenge_status_choices": {
                     status.name: status.name for status in StatusChoices
                 },
