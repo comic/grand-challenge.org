@@ -1140,13 +1140,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
         "schedule": crontab(minute=30, hour=4),
     },
+    "update_challenge_cost_statistics": {
+        "task": "grandchallenge.challenges.tasks.update_challenge_cost_statistics",
+        "schedule": crontab(minute=0, hour=5),
+    },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": crontab(minute="*/5"),
-    },
-    "update_challenge_cost_statistics": {
-        "task": "grandchallenge.challenges.tasks.update_challenge_cost_statistics",
-        "schedule": crontab(minute=0, hour=0),
     },
     **{
         f"stop_expired_services_{region}": {
