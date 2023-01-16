@@ -19,7 +19,7 @@ class FernetCrypter:
 
     def serialize(self, salt: str, token: str) -> str:
         if self.separator in salt:
-            raise ValueError(f"Separator '{self.separator}' found in salt")
+            raise ValueError(f"Separator {self.separator!r} found in salt")
 
         return f"{self.algorithm_name}${self.iterations}${salt}${token}"
 

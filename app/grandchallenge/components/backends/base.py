@@ -217,13 +217,13 @@ class Executor(ABC):
 
         if response.get("IsTruncated", False):
             raise ComponentException(
-                f"Too many files produced in '{interface.relative_path}'"
+                f"Too many files produced in {interface.relative_path!r}"
             )
 
         output_files = response.get("Contents", [])
         if not output_files:
             raise ComponentException(
-                f"Output directory '{interface.relative_path}' is empty"
+                f"Output directory {interface.relative_path!r} is empty"
             )
 
         with TemporaryDirectory() as tmpdir:
@@ -254,11 +254,11 @@ class Executor(ABC):
 
         if len(importer_result.new_images) == 0:
             raise ComponentException(
-                f"No output images could be imported from '{interface.relative_path}'"
+                f"No output images could be imported from {interface.relative_path!r}"
             )
         elif len(importer_result.new_images) > 1:
             raise ComponentException(
-                f"Only 1 image should be produced in '{interface.relative_path}', "
+                f"Only 1 image should be produced in {interface.relative_path!r}, "
                 f"we found {len(importer_result.new_images)}"
             )
 
@@ -268,7 +268,7 @@ class Executor(ABC):
             )
         except ValidationError:
             raise ComponentException(
-                f"The image produced in '{interface.relative_path}' is not valid"
+                f"The image produced in {interface.relative_path!r} is not valid"
             )
 
         return civ
@@ -291,15 +291,15 @@ class Executor(ABC):
             civ = interface.create_instance(value=result)
         except botocore.exceptions.ClientError:
             raise ComponentException(
-                f"Output file '{interface.relative_path}' was not produced"
+                f"Output file {interface.relative_path!r} was not produced"
             )
         except JSONDecodeError:
             raise ComponentException(
-                f"The output file '{interface.relative_path}' is not valid json"
+                f"The output file {interface.relative_path!r} is not valid json"
             )
         except ValidationError:
             raise ComponentException(
-                f"The output file '{interface.relative_path}' is not valid"
+                f"The output file {interface.relative_path!r} is not valid"
             )
 
         return civ
@@ -318,11 +318,11 @@ class Executor(ABC):
                 civ = interface.create_instance(fileobj=fileobj)
         except botocore.exceptions.ClientError:
             raise ComponentException(
-                f"Output file '{interface.relative_path}' was not produced"
+                f"Output file {interface.relative_path!r} was not produced"
             )
         except ValidationError:
             raise ComponentException(
-                f"The output file '{interface.relative_path}' is not valid"
+                f"The output file {interface.relative_path!r} is not valid"
             )
 
         return civ

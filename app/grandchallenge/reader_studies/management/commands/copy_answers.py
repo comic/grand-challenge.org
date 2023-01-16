@@ -72,5 +72,5 @@ class Command(BaseCommand):
                     )
         else:
             raise RuntimeError(
-                f"Aborting, only 'yes' is accepted, '{go}' was input"
+                f"Aborting, only 'yes' is accepted, {go!r} was input"
             )
