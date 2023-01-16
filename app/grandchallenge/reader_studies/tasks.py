@@ -80,13 +80,10 @@ def add_image_to_display_set(
         display_set.values.remove(
             *display_set.values.filter(interface=interface)
         )
-        civ = ComponentInterfaceValue.objects.filter(
+        civ, created = ComponentInterfaceValue.objects.get_or_create(
             interface=interface, image=image
-        ).first()
-        if civ is None:
-            civ = ComponentInterfaceValue.objects.create(
-                interface=interface, image=image
-            )
+        )
+        if created:
             try:
                 civ.full_clean()
             except ValidationError as e:

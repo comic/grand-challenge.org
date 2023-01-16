@@ -1715,7 +1715,15 @@ class AddDisplaySetToReaderStudy(
             data = json.loads(self.request.body)
             for key in data:
                 if (
-                    key in ["order", "csrfmiddlewaretoken", "new_interfaces"]
+                    key
+                    in [
+                        "order",
+                        "csrfmiddlewaretoken",
+                        "new_interfaces",
+                        "help_text",
+                        "current_value",
+                        "interface",
+                    ]
                     or "WidgetChoice" in key
                     or "query" in key
                 ):

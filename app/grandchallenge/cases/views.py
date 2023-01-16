@@ -175,11 +175,10 @@ class CSImageDetail(
 
 class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        query_params = request.GET.copy()
-        interface = query_params.pop("interface", None)[0]
-        widget_name = query_params.pop("WidgetChoice-" + interface, None)[0]
-        help_text = query_params.pop("help_text", None)
-        current_value = query_params.pop("current_value", None)
+        interface = request.GET.get("interface")
+        widget_name = request.GET.get(f"WidgetChoice-{interface}")
+        help_text = request.GET.get("help_text")
+        current_value = request.GET.get("current_value")
 
         if widget_name == WidgetChoices.IMAGE_SEARCH.name:
             html_content = render_to_string(
@@ -189,7 +188,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                         name=interface,
                         value=None,
                         attrs={
-                            "help_text": help_text[0] if help_text else None,
+                            "help_text": help_text if help_text else None,
                         },
                     )["widget"],
                 },
@@ -205,7 +204,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                         attrs={
                             "id": interface,
                             "help_text": _join_with_br(
-                                help_text[0] if help_text else None,
+                                help_text if help_text else None,
                                 IMAGE_UPLOAD_HELP_TEXT,
                             ),
                         },
@@ -213,10 +212,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 },
             )
             return HttpResponse(html_content)
-        elif (
-            current_value
-            and Image.objects.filter(pk=current_value[0]).exists()
-        ):
+        elif current_value and Image.objects.filter(pk=current_value).exists():
             # this can happen on the display set update view, where one of the options
             # is the current image, this enables switching back from one of the
             # above widgets to the chosen image
