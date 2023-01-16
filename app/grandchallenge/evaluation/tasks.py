@@ -6,13 +6,13 @@ from statistics import mean, median
 from typing import NamedTuple
 
 from celery import shared_task
-from dateutil import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
+from django.db.models.functions import Extract
 from django.db.transaction import on_commit
 from redis.exceptions import LockError
 
@@ -561,72 +561,64 @@ def get_phase_statistics(phase):
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
-    jobs = Job.objects.filter(
-        outputs__evaluation_evaluations_as_input__submission__phase=phase,
-    ).distinct()
     start_date = datetime.datetime.strptime("1/1/2021", "%d/%m/%Y")
     end_date = datetime.datetime.now()
-    delta = relativedelta.relativedelta(end_date, start_date)
+    jobs = (
+        Job.objects.filter(
+            outputs__evaluation_evaluations_as_input__submission__phase=phase,
+        )
+        .distinct()
+        .annotate(year=Extract("started_at", "year"))
+        .annotate(month=Extract("started_at", "month"))
+        .annotate(duration=F("completed_at") - F("started_at"))
+        .exclude(duration=None)
+        .exclude(started_at__lte=start_date)
+    )
+
     monthly_costs = {}
     algorithms_submitted_per_month = {}
-    for year in range(start_date.year, start_date.year + delta.years + 1):
-        if not year == start_date.year + delta.years:
-            months = range(1, 13)
-        else:
-            months = range(1, 2 + delta.months)
-        for month in months:
-            _, num_days = calendar.monthrange(year, month)
-            job_start_date = datetime.datetime(
-                year, month, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
-            )
-            job_end_date = datetime.datetime(
-                year, month, num_days, 23, 59, 59, tzinfo=datetime.timezone.utc
-            )
-            jobs_for_month = jobs.filter(
-                started_at__gte=job_start_date, started_at__lte=job_end_date
-            )
-            submitted_algorithms = [
-                str(pk)
-                for pk in jobs_for_month.values_list(
-                    "algorithm_image__algorithm__pk", flat=True
-                )
-            ]
-            total_duration = jobs_for_month.total_duration()
-            compute_cost = (
-                round(
-                    total_duration.total_seconds()
-                    * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
-                    / 3600
-                    / 100,
-                    ndigits=2,
-                )
-                if total_duration
-                else 0
-            )
-            try:
-                monthly_costs[year][
-                    job_start_date.strftime("%B")
-                ] = compute_cost
-                algorithms_submitted_per_month[year][
-                    job_start_date.strftime("%B")
-                ] = submitted_algorithms
-            except (TypeError, KeyError):
-                monthly_costs[year] = {}
-                algorithms_submitted_per_month[year] = {}
-                monthly_costs[year][
-                    job_start_date.strftime("%B")
-                ] = compute_cost
-                algorithms_submitted_per_month[year][
-                    job_start_date.strftime("%B")
-                ] = submitted_algorithms
+    current_date = start_date
 
-    duration_dict = {
+    while current_date < end_date:
+        year = current_date.year
+        month = current_date.month
+        if year not in monthly_costs:
+            monthly_costs[year] = {}
+            algorithms_submitted_per_month[year] = {}
+        month_name = current_date.strftime("%B")
+        monthly_costs[year][month_name] = 0
+        algorithms_submitted_per_month[year][month_name] = []
+        if month == 12:
+            current_date = current_date.replace(year=year + 1, month=1)
+        else:
+            current_date = current_date.replace(month=month + 1)
+
+    for job in jobs:
+        monthly_costs[job.year][calendar.month_name[job.month]] += round(
+            job.duration.total_seconds()
+            * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+            / 3600
+            / 100,
+            ndigits=2,
+        )
+        alg_pk = job.algorithm_image.algorithm.pk
+        if (
+            alg_pk
+            not in algorithms_submitted_per_month[job.year][
+                calendar.month_name[job.month]
+            ]
+        ):
+            algorithms_submitted_per_month[job.year][
+                calendar.month_name[job.month]
+            ].append(alg_pk)
+
+    phase_stats = {
         "average_duration": jobs.average_duration(),
         "total_duration": jobs.total_duration(),
         "monthly_costs": monthly_costs,
         "algorithms_submitted_per_month": algorithms_submitted_per_month,
     }
-    return duration_dict
+    return phase_stats
 
 
 class PhaseStatistics(NamedTuple):
