@@ -10,12 +10,12 @@
 *.js    @HarmvZ
 
 # Owners of specific Django applications
-/app/grandchallenge/algorithms/       @miriam-groeneveld
+/app/grandchallenge/algorithms/       @amickan
 /app/grandchallenge/api/              @HarmvZ
-/app/grandchallenge/challenges/       @jmsmkn
-/app/grandchallenge/components/       @miriam-groeneveld
-/app/grandchallenge/evaluation/       @jmsmkn
-/app/grandchallenge/reader_studies/   @MikeOverkamp-diag
+/app/grandchallenge/challenges/       @amickan
+/app/grandchallenge/components/       @jmsmkn
+/app/grandchallenge/evaluation/       @amickan
+/app/grandchallenge/reader_studies/   @amickan
 /app/grandchallenge/retina_api/       @HarmvZ
-/app/grandchallenge/products/         @MikeOverkamp-diag
+/app/grandchallenge/products/         @jmsmkn
 /app/grandchallenge/workstations/     @jmsmkn
