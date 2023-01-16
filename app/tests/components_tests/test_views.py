@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.conf import settings
 
@@ -89,7 +91,7 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"forward": f'{{"reader-study": "{rs.slug}"}}'},
+        data={"forward": json.dumps({"reader-study": rs.slug})},
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -102,7 +104,9 @@ def test_component_interface_autocomplete(client):
         viewname="components:component-interface-autocomplete",
         user=user,
         data={
-            "forward": f'{{"reader-study": "{rs.slug}", "interface-0": "{str(ci_img_2.pk)}"}}'
+            "forward": json.dumps(
+                {"reader-study": rs.slug, "interface-0": ci_img_2.pk}
+            )
         },
     )
     assert response.status_code == 200

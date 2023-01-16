@@ -120,7 +120,7 @@ def test_workstation_config_delete_view(client):
     )
     assert response.status_code == 200
     assert (
-        f'Are you sure that you want to delete viewer configuration "{wc.title}"?'
+        f"Are you sure that you want to delete viewer configuration {wc.title!r}?"
         in response.rendered_content
     )
 

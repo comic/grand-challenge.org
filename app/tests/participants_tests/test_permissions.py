@@ -50,4 +50,4 @@ def test_registration_request_create_get(client, challenge_set):
         "participants:registration-create",
         kwargs={"challenge_short_name": challenge_set.challenge.short_name},
     )
-    assert f'"{expected_link}"' in str(response.content)
+    assert f"{expected_link!r}" in str(response.content)

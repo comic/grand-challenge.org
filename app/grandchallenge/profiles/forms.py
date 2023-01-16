@@ -85,7 +85,7 @@ class SignupForm(UserProfileForm):
             "I have read and agree to {}.".format(
                 oxford_comma(
                     [
-                        f'the <a href="{p.get_absolute_url()}">{p.title}</a>'
+                        f"the <a href={p.get_absolute_url()!r}>{p.title}</a>"
                         for p in Policy.objects.all()
                     ]
                 )
