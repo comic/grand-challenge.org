@@ -128,6 +128,6 @@ def test_remove_inactive_container_images():
     assert repr(callbacks[0]) == (
         "<bound method Signature.apply_async of "
         "grandchallenge.components.tasks.remove_container_image_from_registry"
-        f"(pk=UUID('{ai1.pk}'), "
+        f"(pk={ai1.pk!r}, "
         "app_label='algorithms', model_name='algorithmimage')>"
     )

@@ -109,7 +109,7 @@ class Page(models.Model):
             )
         else:
             raise ValueError(
-                f"Unknown permissions level '{self.permission_level}'. "
+                f"Unknown permissions level {self.permission_level!r}. "
                 "I don't know which groups to give permissions to this object"
             )
 

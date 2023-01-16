@@ -522,7 +522,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                         _answer = option.pk
                     except CategoricalOption.DoesNotExist:
                         raise ValidationError(
-                            f"Option '{_answer}' is not valid for question {question.question_text}"
+                            f"Option {_answer!r} is not valid for question {question.question_text}"
                         )
                 if question.answer_type in (
                     Question.AnswerType.MULTIPLE_CHOICE,

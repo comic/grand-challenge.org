@@ -849,7 +849,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         new_interface = ComponentInterfaceSerializer(data=remote_interface)
 
         if not new_interface.is_valid():
-            raise ValidationError(f"New interface '{slug}' is invalid")
+            raise ValidationError(f"New interface {slug!r} is invalid")
 
         self.new_interfaces.append(new_interface)
 

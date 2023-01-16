@@ -104,7 +104,7 @@ class TestVerificationForm:
             "profile-update", kwargs={"username": u.username}
         )
         assert [
-            f"Your profile information is incomplete. You can complete your profile <a href='{profile_link}'>here</a>."
+            f"Your profile information is incomplete. You can complete your profile <a href={profile_link!r}>here</a>."
         ] == form.errors["__all__"]
 
 

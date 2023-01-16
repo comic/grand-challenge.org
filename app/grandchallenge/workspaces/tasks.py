@@ -148,7 +148,7 @@ def _authorise(*, client, auth):
 
     if len(auth_configs) != 1:
         raise ValueError(
-            f"Auth provider '{auth.get_provider_display()}' is not supported by this service workbench instance"
+            f"Auth provider {auth.get_provider_display()!r} is not supported by this service workbench instance"
         )
 
     auth_config = auth_configs[0]
@@ -194,7 +194,7 @@ def _get_env_type_id(client, name):
     ]
 
     if len(workspace_types) != 1:
-        raise RuntimeError(f"Unique workspace was not found for '{name}'.")
+        raise RuntimeError(f"Unique workspace was not found for {name!r}.")
 
     workspace_type = workspace_types[0]
 
@@ -283,7 +283,7 @@ def _get_workspace_connection(
 
     if len(workspace_connections) != 1:
         raise RuntimeError(
-            f"Connection '{connection_type}' not found for {workspace_id}"
+            f"Connection {connection_type!r} not found for {workspace_id}"
         )
 
     return workspace_connections[0]

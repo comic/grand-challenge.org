@@ -6,10 +6,10 @@ from rest_framework.exceptions import ErrorDetail
 def check_if_field_in_serializer(fields, serializer_fields):
     for field in fields:
         if field not in serializer_fields:
-            pytest.fail(f"Field '{field}' missing in serializer")
+            pytest.fail(f"Field {field!r} missing in serializer")
     for field in serializer_fields:
         if field not in fields:
-            pytest.fail(f"Serializer field '{field}' missing in test")
+            pytest.fail(f"Serializer field {field!r} missing in test")
 
 
 def check_if_valid(model_or_factory, serializer):
