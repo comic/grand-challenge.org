@@ -411,4 +411,4 @@ def test_average_job_duration_calculation():
     )
     assert duration["algorithms_submitted_per_month"][now().year][
         j1.started_at.strftime("%B")
-    ] == [str(ai.algorithm.pk)]
+    ] == [ai.algorithm.pk]
