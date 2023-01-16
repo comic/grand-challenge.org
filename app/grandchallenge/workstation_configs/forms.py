@@ -29,6 +29,8 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "overlay_segments",
             "key_bindings",
             "default_zoom_scale",
+            "default_brush_size",
+            "default_annotation_color",
             "auto_jump_center_of_gravity",
             "show_image_info_plugin",
             "show_display_plugin",
