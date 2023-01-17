@@ -1,5 +1,8 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import Http404
@@ -148,9 +151,10 @@ class PageDelete(
 
 
 class ChallengeStatistics(
-    LoginRequiredMixin, UserPassesTestMixin, TemplateView
+    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
 ):
     template_name = "pages/challenge_statistics.html"
+    permission_required = "challenges.view_challengerequest"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
@@ -165,8 +169,3 @@ class ChallengeStatistics(
         )
 
         return context
-
-    def test_func(self):
-        return self.request.user.is_staff or self.request.user.has_perm(
-            "challenges.view_challengerequest"
-        )
