@@ -1,7 +1,7 @@
 from django.forms import ModelForm
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.core.widgets import ColorEditorWidget, JSONEditorWidget
 from grandchallenge.workstation_configs.models import (
     KEY_BINDINGS_SCHEMA,
     OVERLAY_SEGMENTS_SCHEMA,
@@ -62,6 +62,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
                 schema=OVERLAY_SEGMENTS_SCHEMA
             ),
             "key_bindings": JSONEditorWidget(schema=KEY_BINDINGS_SCHEMA),
+            "default_annotation_color": ColorEditorWidget(format="hex"),
         }
         help_texts = {
             "overlay_segments": (

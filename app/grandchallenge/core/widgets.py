@@ -1,4 +1,5 @@
 from django import forms
+from django.template.loader import render_to_string
 from markdownx.widgets import AdminMarkdownxWidget, MarkdownxWidget
 
 
@@ -17,6 +18,48 @@ class JSONEditorWidget(forms.Textarea):
     class Media:
         css = {"all": ("vendored/jsoneditor/jsoneditor.min.css",)}
         js = ("vendored/jsoneditor/jsoneditor.min.js",)
+
+
+class ColorEditorWidget(forms.TextInput):
+    """
+    Widget that uses the vendored jscolor for editing a color.
+
+    Specify the color format by adding a format keyword:
+    >>> ColorEditorWidget(format="hex")
+
+    See the jscolor documentation for more
+
+    """
+
+    template_name = "coloreditor/coloreditor_widget.html"
+
+    class Media:
+        js = (
+            "vendored/jscolor/jscolor.min.js",
+            "js/coloreditor_widget.js",
+        )
+
+    def __init__(self, attrs=None, format="auto"):
+        self.format = format
+        super().__init__(attrs)
+
+    def get_context(self, name, value, attrs=None):
+        context = {}
+        context.update(self.attrs.copy() or {})
+        context.update(attrs or {})
+        context.update(
+            {
+                "widget": self,
+                "name": name,
+                "value": value,
+            }
+        )
+        return context
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return render_to_string(
+            self.template_name, self.get_context(name, value, attrs)
+        )
 
 
 class MarkdownEditorWidget(MarkdownxWidget):
