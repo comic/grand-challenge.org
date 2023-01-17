@@ -1722,7 +1722,7 @@ class AddDisplaySetToReaderStudy(
                         "new_interfaces",
                         "help_text",
                         "current_value",
-                        "interface",
+                        "interface_slug",
                     ]
                     or "WidgetChoice" in key
                     or "query" in key

@@ -2,7 +2,6 @@
 {% load static %}
 
 <div class="extra-interface card-body py-1" id="ds-content-{{ object.id }}">
-  <div id="form-id" data-formid="{{ object.pk }}"></div>
   <form action="{% url 'reader-studies:display-set-interfaces-create' pk=object.pk slug=object.reader_study.slug %}" method="post" class="ds-form" data-hx-target="#ds-content-{{ object.id }}" id="form-{{ object.pk }}">
     {% csrf_token %}
     {{ form|crispy }}

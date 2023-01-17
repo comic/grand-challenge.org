@@ -175,7 +175,7 @@ class CSImageDetail(
 
 class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        interface = request.GET.get("interface")
+        interface = request.GET.get("interface_slug")
         widget_name = request.GET.get(f"WidgetChoice-{interface}")
         help_text = request.GET.get("help_text")
         current_value = request.GET.get("current_value")
@@ -232,7 +232,7 @@ class ImageSearchView(LoginRequiredMixin, ListView):
 
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()
-        interface = request.GET.get("interface")
+        interface = request.GET.get("interface_slug")
         query = request.GET.get("query-" + interface)
         if query:
             q = reduce(
