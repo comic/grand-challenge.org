@@ -2,6 +2,7 @@ from datetime import timedelta
 from itertools import chain
 
 import pytest
+from django.conf import settings
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
@@ -10,7 +11,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.evaluation.tasks import get_average_job_duration_for_phase
+from grandchallenge.evaluation.tasks import get_phase_statistics
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.models import Page
 from tests.algorithms_tests.factories import (
@@ -322,9 +323,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_challenge_statistics_page_permissions(
-    client, authenticated_staff_user
-):
+def test_challenge_statistics_page_permissions(client):
     challenge = ChallengeFactory()
     admin, reviewer, user = UserFactory.create_batch(3)
     challenge.add_admin(admin)
@@ -345,14 +344,6 @@ def test_challenge_statistics_page_permissions(
         challenge=challenge,
     )
     response.status_code = 404
-
-    response = get_view_for_user(
-        viewname="pages:statistics",
-        client=client,
-        user=authenticated_staff_user,
-        challenge=challenge,
-    )
-    response.status_code = 200
 
     response = get_view_for_user(
         viewname="pages:statistics",
@@ -391,7 +382,7 @@ def test_average_job_duration_calculation():
     e1 = EvaluationFactory(submission__phase=phase1)
     e1.inputs.add(j1.outputs.first())
 
-    duration = get_average_job_duration_for_phase(phase=phase1)
+    duration = get_phase_statistics(phase=phase1)
 
     assert (
         round(duration["average_duration"].total_seconds(), ndigits=2)
@@ -400,4 +391,19 @@ def test_average_job_duration_calculation():
     assert (
         round(duration["total_duration"].total_seconds(), ndigits=2)
         == timedelta(days=2).total_seconds()
+    )
+    assert duration["monthly_costs"][now().year][
+        j1.started_at.strftime("%B")
+    ] == round(
+        duration["total_duration"].total_seconds()
+        * settings.CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR
+        / 3600
+        / 100,
+        ndigits=2,
+    )
+    assert (
+        duration["algorithm_count_per_month"][now().year][
+            j1.started_at.strftime("%B")
+        ]
+        == 1
     )

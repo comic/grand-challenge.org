@@ -1,0 +1,20 @@
+{% load divide_by %}
+
+<tr class="bg-primary text-light"
+    hx-get="{% url 'challenges:challenge-cost-row' pk=challenge.pk %}"
+    hx-swap="outerHTML"
+>
+    <td class="pl-3">{{ challenge.short_name }}</td>
+    <td class="text-center">
+        <span class="badge {% if challenge.status.name == challenge_status_choices.OPEN %}badge-success {% elif challenge.status.name == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge.status.name }}</span><br>
+    </td>
+    <td class="text-right">{{ challenge.accumulated_compute_cost_in_cents|divide_by:100 }} €</td>
+    <td class="text-right">{{ challenge.accumulated_docker_storage_cost_in_cents|divide_by:100 }} €</td>
+    <td class="text-right">{{ total_cost|divide_by:100 }} €</td>
+</tr>
+
+<tr id="child-{{ challenge.short_name }}" type="hidden" class="border border-light">
+    <td colspan="100%" class="p-3">
+        {% include 'pages/phase_costs_partial.html' with phases=phases statistics_for_phases=statistics_for_phases %}
+    </td>
+</tr>
