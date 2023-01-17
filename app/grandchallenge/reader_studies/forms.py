@@ -29,6 +29,7 @@ from django.forms import (
     TextInput,
 )
 from django.forms.models import inlineformset_factory
+from django.http import QueryDict
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
@@ -650,15 +651,25 @@ class DisplaySetInterfacesCreateForm(Form):
         if interface:
             selected_interface = ComponentInterface.objects.get(pk=interface)
         data = kwargs.get("data")
-        if data:
+        if data and isinstance(data, QueryDict):
+            # on the DisplaySetInterfacesCreate view, multiple values for interfaces
+            # are sent along through htmx elements embedded in the form
             interfaces = data.getlist("interface")
             interface_pk = [
                 interface for interface in interfaces if interface.isdigit()
             ]
-            if interface_pk:
-                selected_interface = ComponentInterface.objects.get(
-                    pk=interface_pk[0]
-                )
+        elif data and isinstance(data, dict):
+            # on AddDisplaySetToReaderStudy view, only one interface value is passed
+            # along when this form is initiated because the form data
+            # is manually constructed in display_set_create.js
+            interface_pk = [data["interface"]]
+        else:
+            interface_pk = None
+
+        if interface_pk:
+            selected_interface = ComponentInterface.objects.get(
+                pk=interface_pk[0]
+            )
         qs = ComponentInterface.objects.exclude(
             slug__in=reader_study.values_for_interfaces.keys()
         )
@@ -721,11 +732,12 @@ class DisplaySetInterfacesCreateForm(Form):
 
     def full_clean(self):
         data = self.data.copy()
-        interfaces = data.getlist("interface")
-        interface_pk = [
-            interface for interface in interfaces if interface.isdigit()
-        ]
-        if interface_pk:
-            data["interface"] = interface_pk[0]
-            self.data = data
+        if isinstance(data, QueryDict):
+            interfaces = data.getlist("interface")
+            interface_pk = [
+                interface for interface in interfaces if interface.isdigit()
+            ]
+            if interface_pk:
+                data["interface"] = interface_pk[0]
+                self.data = data
         return super().full_clean()
