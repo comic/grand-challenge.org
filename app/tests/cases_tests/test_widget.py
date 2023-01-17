@@ -96,7 +96,7 @@ def test_flexible_image_widget(client):
         user=user,
         data={
             f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
-            "interface": ci.slug,
+            "interface_slug": ci.slug,
         },
     )
     assert '<input class="form-control" type="search"' in str(response.content)
@@ -107,7 +107,7 @@ def test_flexible_image_widget(client):
         user=user,
         data={
             f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
-            "interface": ci.slug,
+            "interface_slug": ci.slug,
         },
     )
     assert 'class="user-upload"' in str(response2.content)
