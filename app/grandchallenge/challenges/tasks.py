@@ -78,16 +78,16 @@ def aggregate_submitted_algorithm_pks_per_month_across_challenges(phase_stats):
         for (
             year,
             month_values,
-        ) in values.algorithms_submitted_per_month.items():
-            for month, algorithms in month_values.items():
+        ) in values.algorithm_count_per_month.items():
+            for month, algorithm_count in month_values.items():
                 try:
-                    monthly_submitted_algorithms[year][month].extend(
-                        algorithms
-                    )
+                    monthly_submitted_algorithms[year][
+                        month
+                    ] += algorithm_count
                 except (KeyError, TypeError):
                     if year not in monthly_submitted_algorithms.keys():
                         monthly_submitted_algorithms[year] = {}
-                    monthly_submitted_algorithms[year][month] = algorithms
+                    monthly_submitted_algorithms[year][month] = algorithm_count
     return monthly_submitted_algorithms
 
 
@@ -101,10 +101,10 @@ def add_monthly_docker_costs_to_cost_dict(
         "average_algorithm_container_size_in_gb"
     ).get_default()
     for year, values in monthly_submitted_algorithms.items():
-        for month, algorithms in values.items():
+        for month, algorithm_count in values.items():
             cost = round(
                 average_algorithm_container_size_in_gb
-                * len(set(algorithms))
+                * algorithm_count
                 * ecr_storage_costs
                 / 1000
                 / 100,

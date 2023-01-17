@@ -577,6 +577,7 @@ def get_phase_statistics(phase):
 
     monthly_costs = {}
     algorithms_submitted_per_month = {}
+    algorithm_count_per_month = {}
     current_date = start_date
 
     while current_date < end_date:
@@ -585,9 +586,11 @@ def get_phase_statistics(phase):
         if year not in monthly_costs:
             monthly_costs[year] = {}
             algorithms_submitted_per_month[year] = {}
+            algorithm_count_per_month[year] = {}
         month_name = current_date.strftime("%B")
         monthly_costs[year][month_name] = 0
         algorithms_submitted_per_month[year][month_name] = []
+        algorithm_count_per_month[year][month_name] = 0
         if month == 12:
             current_date = current_date.replace(year=year + 1, month=1)
         else:
@@ -611,12 +614,15 @@ def get_phase_statistics(phase):
             algorithms_submitted_per_month[job.year][
                 calendar.month_name[job.month]
             ].append(alg_pk)
+            algorithm_count_per_month[job.year][
+                calendar.month_name[job.month]
+            ] += 1
 
     phase_stats = {
         "average_duration": jobs.average_duration(),
         "total_duration": jobs.total_duration(),
         "monthly_costs": monthly_costs,
-        "algorithms_submitted_per_month": algorithms_submitted_per_month,
+        "algorithm_count_per_month": algorithm_count_per_month,
     }
     return phase_stats
 
@@ -629,7 +635,7 @@ class PhaseStatistics(NamedTuple):
     total_phase_compute_cost: float
     archive_item_count: int
     monthly_costs: dict
-    algorithms_submitted_per_month: list
+    algorithm_count_per_month: dict
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -674,7 +680,7 @@ def update_phase_statistics():
             total_phase_compute_cost,
             phase.archive_item_count,
             phase_stats["monthly_costs"],
-            phase_stats["algorithms_submitted_per_month"],
+            phase_stats["algorithm_count_per_month"],
         )
 
     cache.set("statistics_for_phases", phase_dict, timeout=None)
