@@ -650,10 +650,15 @@ class DisplaySetInterfacesCreateForm(Form):
         if interface:
             selected_interface = ComponentInterface.objects.get(pk=interface)
         data = kwargs.get("data")
-        if data and data.get("interface"):
-            selected_interface = ComponentInterface.objects.get(
-                pk=data["interface"]
-            )
+        if data:
+            interfaces = data.getlist("interface")
+            interface_pk = [
+                interface for interface in interfaces if interface.isdigit()
+            ]
+            if interface_pk:
+                selected_interface = ComponentInterface.objects.get(
+                    pk=interface_pk[0]
+                )
         qs = ComponentInterface.objects.exclude(
             slug__in=reader_study.values_for_interfaces.keys()
         )
@@ -713,3 +718,14 @@ class DisplaySetInterfacesCreateForm(Form):
                 instance=selected_interface,
                 user=user,
             ).field
+
+    def full_clean(self):
+        data = self.data.copy()
+        interfaces = data.getlist("interface")
+        interface_pk = [
+            interface for interface in interfaces if interface.isdigit()
+        ]
+        if interface_pk:
+            data["interface"] = interface_pk[0]
+            self.data = data
+        return super().full_clean()

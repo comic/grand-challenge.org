@@ -1683,19 +1683,6 @@ class DisplaySetInterfacesCreate(ObjectPermissionRequiredMixin, FormView):
             kwargs={"pk": self.kwargs["pk"], "slug": self.kwargs["slug"]},
         )
 
-    def post(self, request, *args, **kwargs):
-        data = request.POST.copy()
-        interfaces = data.getlist("interface")
-        interface_pk = [
-            interface for interface in interfaces if interface.isdigit()
-        ]
-        if interface_pk:
-            data["interface"] = interface_pk[0]
-        else:
-            data.pop("interface", None)
-        request.POST = data
-        return super().post(request, *args, **kwargs)
-
 
 class AddDisplaySetToReaderStudy(
     AddObjectToReaderStudyMixin, ObjectPermissionRequiredMixin, CreateView
