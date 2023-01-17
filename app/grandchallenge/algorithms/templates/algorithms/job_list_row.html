@@ -6,6 +6,7 @@
 {% load humanize %}
 {% load remove_whitespace %}
 {% load dict_lookup %}
+{% load meta_attr %}
 
 <a class="badge badge-primary"
    href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
@@ -66,11 +67,15 @@
 <split></split>
 
 {% if object.status == object.SUCCESS %}
-    <a class="badge badge-primary"
-       title="View algorithm result"
-       href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=object config=algorithm.workstation_config %}">
+    <button class="btn badge badge-primary"
+            title="View algorithm result"
+            data-session-control
+            data-session-origin="https://us-east-1.{{ request.site.domain }}"
+            data-create-session-url='{% url 'workstations:workstation-session-create' slug=object.algorithm_image.algorithm.workstation.slug %}'
+            data-workstation-query='{% workstation_query algorithm_job=object config=object.algorithm_image.algorithm.workstation_config %}'
+            data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}-{{ object|meta_attr:'model_name' }}'>
         <i class="fa fa-eye"></i> Open Result in Viewer
-    </a>
+    </button>
 {% endif %}
 <split></split>
 
