@@ -104,7 +104,7 @@ services:
       WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
       WORKBENCH_API_URL: "${WORKBENCH_API_URL-}"
     restart: always
-    command: watchfiles "celery -A config worker -l info -c 1 -Q celery,workstations-eu-central-1" /app
+    command: watchfiles "celery -A config worker -l info -c 1 -Q celery" /app
     scale: 1
     hostname: "celery-worker"
     depends_on:
@@ -133,7 +133,7 @@ services:
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: watchfiles "celery -A config worker -l info -c 1 --pool solo -Q acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
+    command: watchfiles "celery -A config worker -l info -c 1 --pool solo -Q workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:
