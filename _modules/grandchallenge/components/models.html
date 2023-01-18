@@ -94,7 +94,7 @@
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">IntegerChoices</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">,</span> <span class="n">Sum</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
-<span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelChoiceField</span><span class="p">,</span> <span class="n">ModelMultipleChoiceField</span>
+<span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelChoiceField</span>
 <span class="kn">from</span> <span class="nn">django.forms.models</span> <span class="kn">import</span> <span class="n">model_to_dict</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.module_loading</span> <span class="kn">import</span> <span class="n">import_string</span>
@@ -106,6 +106,7 @@
 <span class="kn">from</span> <span class="nn">panimg.models</span> <span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.cases.widgets</span> <span class="kn">import</span> <span class="n">FlexibleImageField</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">INTERFACE_VALUE_SCHEMA</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">assign_docker_image_from_upload</span><span class="p">,</span>
@@ -880,7 +881,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ModelChoiceField</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ModelMultipleChoiceField</span>
+            <span class="k">return</span> <span class="n">FlexibleImageField</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
