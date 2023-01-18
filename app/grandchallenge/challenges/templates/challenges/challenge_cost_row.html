@@ -1,4 +1,5 @@
 {% load divide_by %}
+{% load humanize %}
 
 <tr hx-get="{% url 'challenges:costs-per-phase' pk=challenge.pk %}"
     hx-swap="outerHTML"
@@ -7,9 +8,9 @@
     <td class="text-center">
         <span class="badge {% if challenge.status.name == challenge_status_choices.OPEN %}badge-success {% elif challenge.status.name == challenge_status_choices.OPENING_SOON %} badge-warning {% else %} badge-danger {% endif %}above-stretched-link text-wrap p-2">{{ challenge.status.name }}</span><br>
     </td>
-    <td class="text-right">{{ challenge.accumulated_compute_cost_in_cents|divide_by:100 }} €</td>
-    <td class="text-right">{{ challenge.accumulated_docker_storage_cost_in_cents|divide_by:100 }} €</td>
-    <td class="text-right">{{ total_cost|divide_by:100 }} €</td>
+    <td class="text-right">{{ challenge.accumulated_compute_cost_in_cents|divide_by:100|intcomma }} €</td>
+    <td class="text-right">{{ challenge.accumulated_docker_storage_cost_in_cents|divide_by:100|intcomma }} €</td>
+    <td class="text-right">{{ total_cost|divide_by:100|intcomma }} €</td>
 </tr>
 
 <tr hx-swap-oob="true" id="child-{{ challenge.short_name }}" type="hidden" class="border-0"></tr>
