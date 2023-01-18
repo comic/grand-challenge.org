@@ -5,7 +5,6 @@
  * @license For open source use: GPLv3
  *          For commercial use: JSColor Commercial License
  * @author  Jan Odvarko - East Desire
- * @version 2.5.1
  *
  * See usage examples at http://jscolor.com/examples/
  */

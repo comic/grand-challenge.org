@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:596d771780a9c98c146eb6c385b3d7f9f440381c52734ac546de1c2dfab54d06",
+  "content_hash": "sha256:ce38d629296949d2840ecae1406eab9bdabd7671f5ca1b6d7a04a04fd14f2b12",
   "dependencies": [
     {
       "name": "hammer.js",
@@ -27,6 +27,20 @@
         {
           "name": "htmx/1.7.0/htmx.min.js",
           "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
+        }
+      ]
+    },
+    {
+      "name": "jscolor",
+      "version": "2.5.1",
+      "assets": [
+        {
+          "name": "jscolor/2.5.1/jscolor.js",
+          "sri": "sha512-UP6tOIJfUgQv7uNUL4IXb8HDO1PlEUVSOuPGUcX11obi7Eh24geCoL2X+8JxB4tA9BfdppntOzqrmVQUblSYYQ=="
+        },
+        {
+          "name": "jscolor/2.5.1/jscolor.min.js",
+          "sri": "sha512-/e+XGe8oSD9M1t0NKNCrUlRsiyeFTiZw4+pmf0g8wTbc8IfiLwJsjTODc/pq3hKhKAdsehJs7STPvX7SkFSpOQ=="
         }
       ]
     },
