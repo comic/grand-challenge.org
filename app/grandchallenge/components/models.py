@@ -19,7 +19,7 @@ from django.core.validators import (
 from django.db import models
 from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
-from django.forms import ModelChoiceField, ModelMultipleChoiceField
+from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
@@ -31,6 +31,7 @@ from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
@@ -805,7 +806,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         if self.requires_file:
             return ModelChoiceField
         elif self.is_image_kind:
-            return ModelMultipleChoiceField
+            return FlexibleImageField
         elif self.kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.CHOICE,

@@ -16,7 +16,6 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.transaction import on_commit
 from django.forms import (
     BooleanField,
     CharField,
@@ -34,10 +33,15 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
+from grandchallenge.cases.widgets import (
+    FlexibleImageField,
+    FlexibleImageWidget,
+)
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceSuperKindChoices,
 )
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -58,7 +62,6 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
-from grandchallenge.reader_studies.tasks import add_file_to_display_set
 from grandchallenge.reader_studies.widgets import SelectUploadWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -571,8 +574,14 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
     }
 
     def _get_image_field(self, *, interface, values, current_value):
-        return self._get_select_upload_widget_field(
-            interface=interface, values=values, current_value=current_value
+        return FlexibleImageField(
+            image_queryset=get_objects_for_user(self.user, "cases.view_image"),
+            upload_queryset=get_objects_for_user(
+                self.user, "uploads.change_userupload"
+            ).filter(status=UserUpload.StatusChoices.COMPLETED),
+            widget=FlexibleImageWidget(
+                user=self.user, current_value=current_value
+            ),
         )
 
     def _get_file_field(self, *, interface, values, current_value):
@@ -592,6 +601,11 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
                     "reader_study_slug": self.reader_study.slug,
                     "display_set_pk": self.instance.pk,
                     "interface_slug": interface.slug,
+                    "interface_type": interface.super_kind,
+                    "interface_super_kinds": {
+                        kind.name: kind.value
+                        for kind in InterfaceSuperKindChoices
+                    },
                 }
             ),
         )
@@ -621,24 +635,6 @@ class FileForm(Form):
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         self.interface = interface
         self.display_set = display_set
-
-    def save(self):
-        try:
-            civ = self.display_set.values.get(interface=self.interface)
-        except ObjectDoesNotExist:
-            civ = None
-        user_upload = self.cleaned_data["user_upload"]
-        on_commit(
-            lambda: add_file_to_display_set.apply_async(
-                kwargs={
-                    "user_upload_pk": str(user_upload.pk),
-                    "interface_pk": str(self.interface.pk),
-                    "display_set_pk": str(self.display_set.pk),
-                    "civ_pk": str(civ.pk) if civ else None,
-                }
-            )
-        )
-        return civ
 
 
 class DisplaySetInterfacesCreateForm(Form):
@@ -713,7 +709,7 @@ class DisplaySetInterfacesCreateForm(Form):
         )
 
         if selected_interface is not None:
-            self.fields["value"] = InterfaceFormField(
+            self.fields[selected_interface.slug] = InterfaceFormField(
                 instance=selected_interface,
                 user=user,
             ).field

@@ -6,22 +6,22 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
-from requests import put
+from guardian.shortcuts import assign_perm
 
+from grandchallenge.cases.widgets import FlexibleImageWidget
 from grandchallenge.components.models import (
     ComponentInterface,
+    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from grandchallenge.core.widgets import JSONEditorWidget
-from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetInterfacesCreateForm,
     DisplaySetUpdateForm,
-    FileForm,
     QuestionForm,
     SelectUploadWidget,
 )
@@ -31,10 +31,8 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
-from grandchallenge.uploads.widgets import (
-    UserUploadMultipleWidget,
-    UserUploadSingleWidget,
-)
+from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadSingleWidget
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1070,60 +1068,27 @@ def test_display_set_update_form(form_class, file_widget):
 
 
 @pytest.mark.django_db
-def test_file_form(settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_display_set_update_form_image_field_queryset_filters():
     rs = ReaderStudyFactory()
-    ci = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    civ = ComponentInterfaceValueFactory(interface=ci)
-    ds = DisplaySetFactory(reader_study=rs)
-    ds.values.add(civ)
     user = UserFactory()
     rs.add_editor(user)
-    upload = UserUploadFactory(filename="file.json", creator=user)
-    presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
-    upload.complete_multipart_upload(
-        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    ci_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, title="image"
     )
-    upload.save()
-
-    ci.schema = {
-        "$schema": "http://json-schema.org/draft-07/schema",
-        "type": "array",
-    }
-    ci.save()
-
-    form = FileForm(user=user, display_set=ds, interface=ci)
-    form.cleaned_data = {"user_upload": upload}
-
-    with capture_on_commit_callbacks(execute=True):
-        form.save()
-
-    assert ds.values.count() == 1
-    assert Notification.objects.count() == 1
-    notification = Notification.objects.get()
-    msg = notification.print_notification(user=notification.user)
-    assert ci.title in msg
-    assert str(ds.pk) in msg
-    assert rs.title in msg
-    assert "JSON does not fulfill schema" in msg
-
-    form = FileForm(user=user, display_set=ds, interface=ci)
-    upload2 = UserUploadFactory(filename="file2.json", creator=user)
-    presigned_urls2 = upload2.generate_presigned_urls(part_numbers=[1])
-    response2 = put(presigned_urls2["1"], data=b'["foo", "bar", "test"]')
-    upload2.complete_multipart_upload(
-        parts=[{"ETag": response2.headers["ETag"], "PartNumber": 1}]
-    )
-    upload2.save()
-    form.cleaned_data = {"user_upload": upload2}
-    with capture_on_commit_callbacks(execute=True):
-        form.save()
-    civ2 = ds.values.get(interface=ci)
-    civ2.file.seek(0)
-    assert civ2.file.read() == b'["foo", "bar", "test"]'
+    im1, im2 = ImageFactory.create_batch(2)
+    assign_perm("cases.view_image", user, im1)
+    upload1 = UserUploadFactory(creator=user)
+    upload1.status = UserUpload.StatusChoices.COMPLETED
+    upload1.save()
+    upload2 = UserUploadFactory()
+    civ_img = ComponentInterfaceValueFactory(interface=ci_img)
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ_img)
+    form = DisplaySetUpdateForm(user=user, instance=ds, reader_study=rs)
+    assert im1 in form.fields["image"].fields[0].queryset.all()
+    assert im2 not in form.fields["image"].fields[0].queryset.all()
+    assert upload1 in form.fields["image"].fields[1].queryset.all()
+    assert upload2 not in form.fields["image"].fields[1].queryset.all()
 
 
 @pytest.mark.django_db
@@ -1145,17 +1110,17 @@ def test_display_set_add_interface_form():
     form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_file.pk, user=user
     )
-    assert sorted(form.fields.keys()) == ["interface", "value"]
-    assert isinstance(form.fields["value"].widget, UserUploadSingleWidget)
+    assert sorted(form.fields.keys()) == [ci_file.slug, "interface"]
+    assert isinstance(form.fields[ci_file.slug].widget, UserUploadSingleWidget)
 
     form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_value.pk, user=user
     )
-    assert sorted(form.fields.keys()) == ["interface", "value"]
-    assert isinstance(form.fields["value"].widget, JSONEditorWidget)
+    assert sorted(form.fields.keys()) == [ci_value.slug, "interface"]
+    assert isinstance(form.fields[ci_value.slug].widget, JSONEditorWidget)
 
     form = DisplaySetInterfacesCreateForm(
         pk=ds.pk, reader_study=rs, interface=ci_image.pk, user=user
     )
-    assert sorted(form.fields.keys()) == ["interface", "value"]
-    assert isinstance(form.fields["value"].widget, UserUploadMultipleWidget)
+    assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
+    assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)

@@ -1,6 +1,13 @@
+from functools import reduce
+from operator import or_
+
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
-from django.views.generic import DetailView
+from django.db.models import Q
+from django.http import Http404, HttpResponse
+from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
+from django.views import View
+from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.mixins import (
@@ -14,18 +21,23 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.filters import ImageFilterSet
+from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
+from grandchallenge.cases.widgets import ImageSearchWidget, WidgetChoices
+from grandchallenge.components.form_fields import _join_with_br
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    get_objects_for_user,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
 class RawImageUploadSessionList(
@@ -159,6 +171,84 @@ class CSImageDetail(
             raise Http404
 
         return img
+
+
+class ImageWidgetSelectView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        interface = request.GET.get("interface_slug")
+        widget_name = request.GET.get(f"WidgetChoice-{interface}")
+        help_text = request.GET.get("help_text")
+        current_value = request.GET.get("current_value")
+
+        if widget_name == WidgetChoices.IMAGE_SEARCH.name:
+            html_content = render_to_string(
+                ImageSearchWidget.template_name,
+                {
+                    "widget": ImageSearchWidget().get_context(
+                        name=interface,
+                        value=None,
+                        attrs={
+                            "help_text": help_text if help_text else None,
+                        },
+                    )["widget"],
+                },
+            )
+            return HttpResponse(html_content)
+        elif widget_name == WidgetChoices.IMAGE_UPLOAD.name:
+            html_content = render_to_string(
+                UserUploadMultipleWidget.template_name,
+                {
+                    "widget": UserUploadMultipleWidget().get_context(
+                        name=interface,
+                        value=None,
+                        attrs={
+                            "id": interface,
+                            "help_text": _join_with_br(
+                                help_text if help_text else None,
+                                IMAGE_UPLOAD_HELP_TEXT,
+                            ),
+                        },
+                    )["widget"],
+                },
+            )
+            return HttpResponse(html_content)
+        elif current_value and Image.objects.filter(pk=current_value).exists():
+            # this can happen on the display set update view, where one of the options
+            # is the current image, this enables switching back from one of the
+            # above widgets to the chosen image
+            return HttpResponse()
+        else:
+            raise RuntimeError("Unknown widget type")
+
+
+class ImageSearchView(LoginRequiredMixin, ListView):
+    template_name = "cases/image_search_result_select.html"
+    search_fields = ["pk", "name"]
+    model = Image
+    paginate_by = 50
+
+    def get_queryset(self):
+        return get_objects_for_user(self.request.user, "cases.view_image")
+
+    def get(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        interface = request.GET.get("interface_slug")
+        query = request.GET.get("query-" + interface)
+        if query:
+            q = reduce(
+                or_,
+                [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
+                Q(),
+            )
+            qs = qs.filter(q).order_by("name")
+        self.object_list = qs
+        context = self.get_context_data(**kwargs)
+        context["interface"] = interface
+        return TemplateResponse(
+            request=request,
+            template=self.template_name,
+            context=context,
+        )
 
 
 class CS3DImageDetail(

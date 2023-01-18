@@ -74,6 +74,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
@@ -494,10 +495,29 @@ class AlgorithmExperimentCreate(
             ci = interfaces[slug]
             if ci.is_image_kind:
                 if value:
-                    # create civ without image, image will be added when import completes
-                    civ = ComponentInterfaceValue.objects.create(interface=ci)
-                    civs.append(civ)
-                    upload_pks[civ.pk] = create_upload(value)
+                    widget = form.data[f"WidgetChoice-{ci.slug}"]
+                    if widget == WidgetChoices.IMAGE_SEARCH:
+                        (
+                            civ,
+                            created,
+                        ) = ComponentInterfaceValue.objects.get_or_create(
+                            interface=ci, image=value
+                        )
+                        if created:
+                            civ.full_clean()
+                            civ.save()
+                        civs.append(civ)
+                    elif widget == WidgetChoices.IMAGE_UPLOAD:
+                        # create civ without image, image will be added when import completes
+                        civ = ComponentInterfaceValue.objects.create(
+                            interface=ci
+                        )
+                        civs.append(civ)
+                        upload_pks[civ.pk] = create_upload(value)
+                    else:
+                        raise RuntimeError(
+                            f"{widget} is not a valid widget choice."
+                        )
             elif ci.requires_file:
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
                 value.copy_object(to_field=civ.file)
