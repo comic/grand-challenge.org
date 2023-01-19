@@ -11,6 +11,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
+from grandchallenge.core.fields import HexColorField
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
@@ -268,6 +269,21 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         max_digits=4,
         decimal_places=2,
         validators=[MinValueValidator(limit_value=0.01)],
+    )
+
+    default_brush_size = models.DecimalField(
+        blank=True,
+        null=True,
+        max_digits=8,
+        decimal_places=7,
+        validators=[MinValueValidator(limit_value=1e-6)],  # 1 nm
+        help_text="Default brush size in millimeter for creating annotations",
+    )
+
+    default_annotation_color = HexColorField(
+        blank=True,
+        null=True,
+        help_text="Default color for displaying and creating annotations",
     )
 
     show_image_info_plugin = models.BooleanField(

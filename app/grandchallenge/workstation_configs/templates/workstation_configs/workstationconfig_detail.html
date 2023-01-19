@@ -95,6 +95,19 @@
             <td class="font-weight-bold">Default zoom scale</td>
             <td>{{ object.default_zoom_scale }}</td>
         </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_brush_size' %}">
+            <td class="font-weight-bold">Default brush size (mm)</td>
+            <td>{{ object.default_brush_size }}</td>
+        </tr>
+        <tr data-toggle="tooltip" title="{% get_help_text object 'default_annotation_color' %}">
+            <td class="font-weight-bold">Default annotation color</td>
+            <td>
+                {{ object.default_annotation_color }}
+                {% if object.default_annotation_color %}
+                    <div class="color-box" style="background-color: {{ object.default_annotation_color }}"></div>
+                {% endif %}
+            </td>
+        </tr>
          <tr data-toggle="tooltip" title="{% get_help_text object 'auto_jump_center_of_gravity' %}">
             <td class="font-weight-bold">Jump to first center of gravity</td>
             <td>

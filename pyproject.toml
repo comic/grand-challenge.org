@@ -130,3 +130,4 @@ jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js", "jsonedit
 "sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js"] }
 "hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js$"] }
 uppy = { version = "==2.2.0", include = ["uppy(.min)?.css$", "uppy(.min)?.js$"] }
+jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js$"] }
