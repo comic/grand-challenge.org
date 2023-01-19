@@ -42,19 +42,17 @@ class ColorEditorWidget(forms.TextInput):
             "js/coloreditor_widget.js",
         )
 
-    def __init__(self, attrs=None, format="auto"):
-        self.format = format
+    def __init__(self, attrs=None, format="auto", placeholder=None):
         super().__init__(attrs)
+        self.format = format
+        self.placeholder = placeholder
 
     def get_context(self, name, value, attrs=None):
-        context = {}
-        context.update(self.attrs.copy() or {})
-        context.update(attrs or {})
-        context.update(
+        context = super().get_context(name, value, attrs)
+        context["widget"].update(
             {
-                "widget": self,
-                "name": name,
-                "value": value,
+                "placeholder": self.placeholder,
+                "format": self.format,
             }
         )
         return context
