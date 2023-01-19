@@ -34,12 +34,12 @@ class Migration(migrations.Migration):
             name="default_brush_size",
             field=models.DecimalField(
                 blank=True,
-                decimal_places=3,
+                decimal_places=7,
                 help_text="Default brush size in millimeter for creating annotations",
-                max_digits=4,
+                max_digits=8,
                 null=True,
                 validators=[
-                    django.core.validators.MinValueValidator(limit_value=0.001)
+                    django.core.validators.MinValueValidator(limit_value=1e-6)
                 ],
             ),
         ),

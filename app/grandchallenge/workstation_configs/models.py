@@ -274,9 +274,9 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     default_brush_size = models.DecimalField(
         blank=True,
         null=True,
-        max_digits=4,
-        decimal_places=3,
-        validators=[MinValueValidator(limit_value=0.001)],  # 1µm
+        max_digits=8,
+        decimal_places=7,
+        validators=[MinValueValidator(limit_value=1e-6)],  # 1 nm
         help_text="Default brush size in millimeter for creating annotations",
     )
 
