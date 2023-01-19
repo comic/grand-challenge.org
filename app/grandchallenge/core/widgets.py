@@ -24,11 +24,14 @@ class ColorEditorWidget(forms.TextInput):
     """
     Widget that uses the vendored jscolor for editing a color.
 
-    Specify the color format by adding a format keyword:
-    >>> ColorEditorWidget(format="hex")
+    Parameters
+    ----------
+    format
+        Specify the color format by adding a format keyword:
+        >>> ColorEditorWidget(format="hex")
 
-    See the jscolor documentation for more
-
+        Options include "auto", "any", "hex", "hexa", "rgb", "rgba".
+        See the jscolor (https://jscolor.com/docs/) for details.
     """
 
     template_name = "coloreditor/coloreditor_widget.html"
