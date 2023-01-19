@@ -75,6 +75,24 @@ class SessionViewSet(ReadOnlyModelViewSet):
                 status=HTTP_400_BAD_REQUEST,
             )
 
+    @action(detail=False)
+    def active_sessions(self, request):
+        """An endpoint that returns the active sessions for a user."""
+        queryset = self.filter_queryset(
+            self.get_queryset().filter(
+                creator=request.user,
+                status__in=(Session.STARTED, Session.RUNNING),
+            )
+        )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Workstation
