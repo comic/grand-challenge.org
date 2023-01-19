@@ -2,6 +2,8 @@
 {% load url %}
 {% load workstations %}
 {% load reader_study_tags %}
+{% load static %}
+{% load meta_attr %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -41,11 +43,15 @@
                             <td data-order="{{ ground_truth }}">{{ ground_truth }}</td>
                         {% endfor %}
                         <td data-order="{{ entry.id }}">
-                            <a href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query display_set=entry %}">
-                                <span class="badge badge-primary">
-                                    <i class="fa fa-eye"></i>
-                                </span>
-                            </a>
+                            <button title="Open in viewer" class="btn badge badge-primary"
+                                    data-session-control
+                                    data-create-session-url='{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}'
+                                    data-session-origin="https://us-east-1.{{ request.site.domain }}"
+                                    data-workstation-query='{% workstation_query display_set=entry %}'
+                                    data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
+                            >
+                                <i class="fa fa-eye"></i>
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -91,4 +97,5 @@
             });
         });
     </script>
+    <script src="{% static 'workstations/js/session-control.js' %}"></script>
 {% endblock %}
