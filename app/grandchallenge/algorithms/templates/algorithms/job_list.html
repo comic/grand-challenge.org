@@ -1,6 +1,7 @@
 {% extends "datatables/list_base.html" %}
 {% load url %}
 {% load guardian_tags %}
+{% load static %}
 
 {% block title %}
     Algorithm Results - {{ block.super }}
@@ -82,4 +83,7 @@
             modal.find('#resultDetailLink').attr("href", `${button.data("pk")}/`);
         })
     </script>
+
+    <script src="{% static 'workstations/js/session-control.js' %}"></script>
+
 {% endblock %}

@@ -2,6 +2,7 @@
 {% load profiles %}
 {% load workstations %}
 {% load pathlib %}
+{% load meta_attr %}
 
 <ul class="list-unstyled mb-0">
     {% for civ in object.values.all %}
@@ -26,8 +27,12 @@
 </select>
 <split></split>
 
-<a class="badge badge-primary" title="View item in viewer"
-   href="{% url 'workstations:workstation-session-create' slug=archive.workstation.slug %}?{% workstation_query archive_item=object config=archive.workstation_config %}">
+<button class="btn badge badge-primary"
+   data-session-control
+   data-create-session-url='{% url 'workstations:workstation-session-create' slug=archive.workstation.slug %}'
+   data-session-origin="https://us-east-1.{{ request.site.domain }}"
+   data-workstation-query='{% workstation_query archive_item=object config=archive.workstation_config %}'
+   data-workstation-window-identifier='workstation-{{ archive|meta_attr:'app_label' }}'>
     <i class="fa fa-eye"></i> Open Item in Viewer
-</a>
+</button>
 <split></split>
