@@ -69,7 +69,9 @@ function genSessionControllersHook() {
 
 function processActiveSessions(activeSessions) {
     if (activeSessions["count"] !== 0) {
-        return activeSessions["results"][0]["region"];
+        // retrieve the region of the last most recently created session
+        console.log(activeSessions["results"][activeSessions["count"]-1]["pk"])
+        return activeSessions["results"][activeSessions["count"]-1]["region"];
     } else {
         return undefined;
     }
