@@ -6,14 +6,28 @@ function openWorkstationSession(element) {
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
+        const sessionListUrl = element.dataset.sessionUrl;
+        const domain = element.dataset.domain;
 
         if (event.ctrlKey) {
             window.open(creationURI);
             return;
         }
 
-        // PoC Hack: ToDo query any existing session
-        const sessionOrigin = element.dataset.sessionOrigin;
+        let activeSessions;
+        $.ajax({
+            url: sessionListUrl,
+            async: false,
+            success: function(data){
+                activeSessions = data;
+            },
+        });
+        const region = processActiveSessions(activeSessions);
+
+        let sessionOrigin;
+        if (typeof region !== "undefined") {
+            sessionOrigin = "https://" + region + "." + domain;
+        }
 
         const workstationWindow = window.open('', windowIdentifier);
 
@@ -27,7 +41,7 @@ function openWorkstationSession(element) {
             console.warn(err);
         }
 
-        if (workstationWindow === null || isBlankContext) {
+        if (workstationWindow === null || isBlankContext || typeof sessionOrigin === 'undefined' ) {
             window.open(creationURI, windowIdentifier);
         } else {
             workstationWindow.focus();
@@ -36,6 +50,7 @@ function openWorkstationSession(element) {
                     loadQuery: query
                 }
             }
+            // TODO wait for response
             workstationWindow.postMessage(msg, sessionOrigin);
         }
     }
@@ -49,6 +64,14 @@ function genSessionControllersHook() {
         for (let element of sessionControllerElements) {
             element.onclick = openWorkstationSession(element);
         }
+    }
+}
+
+function processActiveSessions(activeSessions) {
+    if (activeSessions["count"] !== 0) {
+        return activeSessions["results"][0]["region"];
+    } else {
+        return undefined;
     }
 }
 

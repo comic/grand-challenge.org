@@ -117,9 +117,10 @@
                 <button class="btn btn-primary my-3"
                         data-session-control
                         data-create-session-url='{% url 'workstations:workstation-session-create' slug=object.algorithm_image.algorithm.workstation.slug %}'
-                        data-session-origin="https://us-east-1.{{ request.site.domain }}"
+                        data-domain="{{ request.site.domain }}"
                         data-workstation-query='{% workstation_query algorithm_job=object config=object.algorithm_image.algorithm.workstation_config %}'
                         data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
+                        data-session-url='{% url "api:session-active-sessions" %}'
                 >
                     <i class="fa fa-eye"></i> Open Result in Viewer
                 </button>

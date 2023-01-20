@@ -30,9 +30,10 @@
 <button class="btn badge badge-primary"
    data-session-control
    data-create-session-url='{% url 'workstations:workstation-session-create' slug=archive.workstation.slug %}'
-   data-session-origin="https://us-east-1.{{ request.site.domain }}"
+   data-domain="{{ request.site.domain }}"
    data-workstation-query='{% workstation_query archive_item=object config=archive.workstation_config %}'
-   data-workstation-window-identifier='workstation-{{ archive|meta_attr:'app_label' }}'>
+   data-workstation-window-identifier='workstation-{{ archive|meta_attr:'app_label' }}'
+   data-session-url='{% url "api:session-active-sessions" %}'>
     <i class="fa fa-eye"></i> Open Item in Viewer
 </button>
 <split></split>
