@@ -10,7 +10,11 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField, CICharField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.validators import validate_slug
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    validate_slug,
+)
 from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
@@ -782,50 +786,65 @@ class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
     code_availability = models.TextField(
         help_text="Will the participants’ code be accessible after the challenge?"
     )
-    expected_number_of_teams = models.IntegerField(
-        help_text="How many teams do you expect to participate in your challenge?"
+    expected_number_of_teams = models.PositiveIntegerField(
+        help_text="How many teams do you expect to participate in your challenge?",
+        validators=[MinValueValidator(limit_value=1)],
     )
-    average_algorithm_container_size_in_gb = models.IntegerField(
-        default=6, help_text="Average algorithm container size in GB."
+    average_algorithm_container_size_in_gb = models.PositiveIntegerField(
+        default=6,
+        help_text="Average algorithm container size in GB.",
+        validators=[MinValueValidator(limit_value=1)],
     )
-    average_number_of_containers_per_team = models.IntegerField(
+    average_number_of_containers_per_team = models.PositiveIntegerField(
         default=5,
         help_text="Average number of algorithm containers per team.",
+        validators=[MinValueValidator(limit_value=1)],
     )
-    inference_time_limit_in_minutes = models.IntegerField(
+    inference_time_limit_in_minutes = models.PositiveIntegerField(
         blank=True,
         null=True,
         help_text="Average run time per algorithm job in minutes.",
+        validators=[
+            MinValueValidator(limit_value=1),
+            MaxValueValidator(limit_value=60),
+        ],
     )
-    average_size_of_test_image_in_mb = models.IntegerField(
-        null=True, blank=True, help_text="Average size of a test image in MB."
+    average_size_of_test_image_in_mb = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Average size of a test image in MB.",
+        validators=[
+            MinValueValidator(limit_value=1),
+            MaxValueValidator(limit_value=10000),
+        ],
     )
-    phase_1_number_of_submissions_per_team = models.IntegerField(
+    phase_1_number_of_submissions_per_team = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text="How many submissions do you expect per team in this phase?",
     )
-    phase_2_number_of_submissions_per_team = models.IntegerField(
+    phase_2_number_of_submissions_per_team = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text="How many submissions do you expect per team in this phase?",
     )
-    phase_1_number_of_test_images = models.IntegerField(
+    phase_1_number_of_test_images = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text="Number of test images for this phase.",
     )
-    phase_2_number_of_test_images = models.IntegerField(
+    phase_2_number_of_test_images = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text="Number of test images for this phase.",
     )
-    number_of_tasks = models.IntegerField(
+    number_of_tasks = models.PositiveIntegerField(
         default=1,
         help_text="If your challenge has multiple tasks, we multiply the "
         "phase 1 and 2 cost estimates by the number of tasks.",
+        validators=[MinValueValidator(limit_value=1)],
     )
-    budget_for_hosting_challenge = models.IntegerField(
+    budget_for_hosting_challenge = models.PositiveIntegerField(
         default=0,
         null=True,
         blank=True,
