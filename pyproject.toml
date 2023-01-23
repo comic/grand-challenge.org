@@ -116,6 +116,7 @@ django-capture-on-commit-callbacks = "*"  # Backport from Django 4.0, can be rem
 amass = "*"
 watchfiles = "*"
 playwright = "*"
+pytest-playwright = "*"
 
 [tool.amass]
 output = "app/grandchallenge/core/static/vendored"
