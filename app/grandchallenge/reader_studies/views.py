@@ -9,6 +9,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
+    ObjectDoesNotExist,
     PermissionDenied,
     ValidationError,
 )
@@ -1555,7 +1556,10 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        civ = self.display_set.values.get(interface=self.interface)
+        try:
+            civ = self.display_set.values.get(interface=self.interface)
+        except ObjectDoesNotExist:
+            civ = None
         user_upload = form.cleaned_data["user_upload"]
         on_commit(
             lambda: add_file_to_display_set.apply_async(
@@ -1563,7 +1567,7 @@ class DisplaySetFilesUpdate(ObjectPermissionRequiredMixin, FormView):
                     "user_upload_pk": str(user_upload.pk),
                     "interface_pk": str(self.interface.pk),
                     "display_set_pk": str(self.display_set.pk),
-                    "civ_pk": str(civ.pk),
+                    "civ_pk": str(civ.pk) if civ else None,
                 }
             )
         )

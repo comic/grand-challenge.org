@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from datetime import timedelta
+from json import JSONDecodeError
 from pathlib import Path
 
 from celery import signature
@@ -1191,7 +1192,10 @@ class ComponentInterfaceValue(models.Model):
         if not user_upload.is_completed:
             raise ValidationError("User upload is not completed.")
         if self.interface.is_json_kind:
-            value = json.loads(user_upload.read_object())
+            try:
+                value = json.loads(user_upload.read_object())
+            except JSONDecodeError as e:
+                raise ValidationError(e)
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
 
