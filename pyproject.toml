@@ -97,7 +97,7 @@ Pygments = "*"
 django-forms-dynamic = "*"
 django-allauth-2fa = "*"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest-django = "*"
 pytest-cov = "*"
 pytest-mock = "*"
@@ -115,6 +115,8 @@ sphinxcontrib-django = "*"
 django-capture-on-commit-callbacks = "*"  # Backport from Django 4.0, can be removed
 amass = "*"
 watchfiles = "*"
+playwright = "*"
+pytest-playwright = "*"
 
 [tool.amass]
 output = "app/grandchallenge/core/static/vendored"
