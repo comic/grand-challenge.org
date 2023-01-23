@@ -99,7 +99,7 @@ COPY --chown=django:django poetry.lock /opt/poetry
 RUN python -m pip install -U pip \
     && python -m pip install -U poetry \
     && poetry config virtualenvs.in-project true \
-    && poetry install --no-interaction --no-ansi --no-root --no-dev
+    && poetry install --no-interaction --no-ansi --no-root --only main
 
 ##################
 # TEST CONTAINER #
@@ -114,7 +114,16 @@ RUN apt-get update \
         graphviz \
         # make for sphinx docs
         make \
+        # playwright dependencies
+        libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libatspi2.0-0 \
+        libxcomposite1 \
+        libxrandr2 \
+        libgbm1 \
+        libxkbcommon0 \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
 RUN poetry install --no-interaction --no-ansi --no-root
+RUN playwright install
