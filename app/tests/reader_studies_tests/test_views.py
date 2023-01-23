@@ -565,18 +565,15 @@ def test_add_files_to_display_set(client, settings):
     ds = DisplaySetFactory(reader_study=rs)
     rs.add_editor(u1)
     ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    civ_json = ComponentInterfaceValueFactory(
-        interface=ci_json,
-    )
     ci_json.schema = {
         "$schema": "http://json-schema.org/draft-07/schema",
         "type": "array",
     }
     ci_json.save()
-    ds.values.add(civ_json)
+
     upload = UserUploadFactory(filename="file.json", creator=u1)
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    response = put(presigned_urls["1"], data=b'{"foo": "bar",}')
     upload.complete_multipart_upload(
         parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
     )
@@ -623,22 +620,23 @@ def test_add_files_to_display_set(client, settings):
         )
 
     assert response.status_code == 302
-    assert ds.values.count() == 1
+    assert ds.values.count() == 0
     assert Notification.objects.count() == 1
     notification = Notification.objects.get()
     msg = notification.print_notification(user=notification.user)
     assert ci_json.title in msg
     assert str(ds.pk) in msg
     assert rs.title in msg
-    assert "JSON does not fulfill schema" in msg
+    assert "Expecting property name enclosed in double quotes" in msg
 
     upload2 = UserUploadFactory(filename="file.json", creator=u1)
     presigned_urls2 = upload2.generate_presigned_urls(part_numbers=[1])
-    response2 = put(presigned_urls2["1"], data=b'["foo", "bar"]')
+    response2 = put(presigned_urls2["1"], data=b'{"foo": "bar"}')
     upload2.complete_multipart_upload(
         parts=[{"ETag": response2.headers["ETag"], "PartNumber": 1}]
     )
     upload2.save()
+
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-files-update",
@@ -654,8 +652,66 @@ def test_add_files_to_display_set(client, settings):
         )
 
     assert response.status_code == 302
+    assert ds.values.count() == 0
+    assert Notification.objects.count() == 2
+    notification = Notification.objects.first()
+    msg = notification.print_notification(user=notification.user)
+    assert ci_json.title in msg
+    assert str(ds.pk) in msg
+    assert rs.title in msg
+    assert "JSON does not fulfill schema" in msg
+
+    upload3 = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls3 = upload3.generate_presigned_urls(part_numbers=[1])
+    response3 = put(presigned_urls3["1"], data=b'["foo", "bar"]')
+    upload3.complete_multipart_upload(
+        parts=[{"ETag": response3.headers["ETag"], "PartNumber": 1}]
+    )
+    upload3.save()
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-files-update",
+            client=client,
+            reverse_kwargs={
+                "pk": ds.pk,
+                "interface_slug": ci_json.slug,
+                "slug": rs.slug,
+            },
+            data={"user_upload": str(upload3.pk)},
+            user=u1,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    assert ds.values.count() == 1
     civ_json = ds.values.get(interface=ci_json)
     assert civ_json.file.read() == b'["foo", "bar"]'
+
+    upload4 = UserUploadFactory(filename="file.json", creator=u1)
+    presigned_urls4 = upload4.generate_presigned_urls(part_numbers=[1])
+    response4 = put(presigned_urls4["1"], data=b'["foo", "bar", "extra"]')
+    upload4.complete_multipart_upload(
+        parts=[{"ETag": response4.headers["ETag"], "PartNumber": 1}]
+    )
+    upload4.save()
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-files-update",
+            client=client,
+            reverse_kwargs={
+                "pk": ds.pk,
+                "interface_slug": ci_json.slug,
+                "slug": rs.slug,
+            },
+            data={"user_upload": str(upload4.pk)},
+            user=u1,
+            method=client.post,
+        )
+    assert response.status_code == 302
+    assert ds.values.count() == 1
+    civ_json_new = ds.values.get(interface=ci_json)
+    assert civ_json_new != civ_json
+    assert civ_json_new.file.read() == b'["foo", "bar", "extra"]'
 
 
 @pytest.mark.django_db
