@@ -43,13 +43,35 @@ function openWorkstationSession(element) {
             for (let i = 0; i < sessionOrigins.length; i++) {
                 const msg = {
                     sessionControl: {
-                        loadQuery: query,
+                        // TODO unsure if a message id is really necessary, but if so, it should be a unique id and not just the session origin
                         messageId: sessionOrigins[i],
                     }
                 }
-                // TODO wait for response
-                workstationWindow.postMessage(msg, sessionOrigin[i]);
+                workstationWindow.postMessage(msg, sessionOrigins[i]);
             }
+
+            let messageReceived = false;
+            setTimeout(function() {
+                if (!messageReceived) {
+                    window.open(creationURI, windowIdentifier);
+                }
+            }, 3000);
+            function receiveMessage(event) {
+                if (sessionOrigins.includes(event.source.origin)) {
+                    messageReceived = true;
+                    // TODO check for messageID in event.data if we're including it in the message
+                    workstationWindow.focus();
+                    const msg = {
+                        sessionControl: {
+                            loadQuery: query,
+                        }
+                    }
+                    workstationWindow.postMessage(msg, event.source.origin);
+                }
+            }
+
+            window.addEventListener('message', receiveMessage);
+
         }
     }
 }
