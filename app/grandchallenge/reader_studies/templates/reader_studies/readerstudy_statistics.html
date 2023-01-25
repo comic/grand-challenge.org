@@ -49,7 +49,6 @@
                                     data-domain="{{ request.site.domain }}"
                                     data-workstation-query='{% workstation_query display_set=entry %}'
                                     data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
-                                    data-session-url='{% url "api:session-active-sessions" %}'
                             >
                                 <i class="fa fa-eye"></i>
                             </button>
@@ -98,5 +97,6 @@
             });
         });
     </script>
+    {{ regions|json_script:"workstation-regions" }}
     <script src="{% static 'workstations/js/session-control.js' %}"></script>
 {% endblock %}

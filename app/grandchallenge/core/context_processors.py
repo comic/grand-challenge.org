@@ -82,3 +82,7 @@ def newsletter_signup(*_, **__):
 
 def viewport_names(*_, **__):
     return {"viewport_names": ViewportNames.values}
+
+
+def workstation_regions(*_, **__):
+    return {"regions": settings.WORKSTATIONS_ACTIVE_REGIONS}

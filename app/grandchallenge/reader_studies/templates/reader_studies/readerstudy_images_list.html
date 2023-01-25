@@ -121,6 +121,7 @@
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
     <script src="{% static 'reader_studies/js/autocomplete_htmx.js' %}" type="text/javascript"></script>
+    {{ regions|json_script:"workstation-regions" }}
     <script src="{% static 'workstations/js/session-control.js' %}"></script>
     {{ form_media }}
 

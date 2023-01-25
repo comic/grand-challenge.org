@@ -6,7 +6,6 @@ function openWorkstationSession(element) {
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
-        const sessionListUrl = element.dataset.sessionUrl;
         const domain = element.dataset.domain;
 
         if (event.ctrlKey) {
@@ -14,19 +13,15 @@ function openWorkstationSession(element) {
             return;
         }
 
-        let activeSessions;
-        $.ajax({
-            url: sessionListUrl,
-            async: false,
-            success: function(data){
-                activeSessions = data;
-            },
-        });
-        const region = processActiveSessions(activeSessions);
-
-        let sessionOrigin;
-        if (typeof region !== "undefined") {
-            sessionOrigin = "https://" + region + "." + domain;
+        const workstationRegions = JSON.parse(document.getElementById('workstation-regions').textContent);
+        let sessionOrigins = Array();
+        for (let i = 0; i < workstationRegions.length; i++) {
+            if (domain.includes("localhost")) {
+                // for testing don't prepend regions
+                sessionOrigins.push("https://" + domain);
+            } else {
+                sessionOrigins.push("https://" + workstationRegions[i] + "." + domain);
+            }
         }
 
         const workstationWindow = window.open('', windowIdentifier);
@@ -41,17 +36,20 @@ function openWorkstationSession(element) {
             console.warn(err);
         }
 
-        if (workstationWindow === null || isBlankContext || typeof sessionOrigin === 'undefined' ) {
+        if (workstationWindow === null || isBlankContext ) {
             window.open(creationURI, windowIdentifier);
         } else {
             workstationWindow.focus();
-            const msg = {
-                sessionControl: {
-                    loadQuery: query
+            for (let i = 0; i < sessionOrigins.length; i++) {
+                const msg = {
+                    sessionControl: {
+                        loadQuery: query,
+                        messageId: sessionOrigins[i],
+                    }
                 }
+                // TODO wait for response
+                workstationWindow.postMessage(msg, sessionOrigin[i]);
             }
-            // TODO wait for response
-            workstationWindow.postMessage(msg, sessionOrigin);
         }
     }
 }
@@ -64,16 +62,6 @@ function genSessionControllersHook() {
         for (let element of sessionControllerElements) {
             element.onclick = openWorkstationSession(element);
         }
-    }
-}
-
-function processActiveSessions(activeSessions) {
-    if (activeSessions["count"] !== 0) {
-        // retrieve the region of the last most recently created session
-        console.log(activeSessions["results"][activeSessions["count"]-1]["pk"])
-        return activeSessions["results"][activeSessions["count"]-1]["region"];
-    } else {
-        return undefined;
     }
 }
 

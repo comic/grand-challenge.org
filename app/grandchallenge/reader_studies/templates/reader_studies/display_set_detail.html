@@ -51,7 +51,6 @@
               data-domain="{{ request.site.domain }}"
               data-workstation-query='{% workstation_query display_set=object config=reader_study.workstation_config %}'
               data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
-              data-session-url='{% url "api:session-active-sessions" %}'
       >
           <i class="fa fa-eye"></i> View Display Set
       </button>

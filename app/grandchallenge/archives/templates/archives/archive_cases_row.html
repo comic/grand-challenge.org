@@ -48,8 +48,7 @@
         data-create-session-url='{% url 'workstations:workstation-session-create' slug=archive.workstation.slug %}'
         data-domain="{{ request.site.domain }}"
         data-workstation-query='{% workstation_query image=object config=archive.workstation_config %}'
-        data-workstation-window-identifier='workstation-{{ archive|meta_attr:'app_label' }}'
-        data-session-url='{% url "api:session-active-sessions" %}'>
+        data-workstation-window-identifier='workstation-{{ archive|meta_attr:'app_label' }}'>
     <i class="fa fa-eye"></i> View Image
 </button>
 <split></split>

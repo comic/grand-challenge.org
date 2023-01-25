@@ -29,7 +29,7 @@
 
 {% block script %}
     {{ block.super }}
-
+    {{ regions|json_script:"workstation-regions" }}
     <script src="{% static 'workstations/js/session-control.js' %}"></script>
 
 {% endblock %}

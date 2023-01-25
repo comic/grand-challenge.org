@@ -73,8 +73,7 @@
             data-domain="{{ request.site.domain }}"
             data-create-session-url='{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}'
             data-workstation-query='{% workstation_query algorithm_job=object config=algorithm.workstation_config %}'
-            data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
-            data-session-url='{% url "api:session-active-sessions" %}'>
+            data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'>
         <i class="fa fa-eye"></i> Open Result in Viewer
     </button>
 {% endif %}
