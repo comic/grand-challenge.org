@@ -85,6 +85,20 @@ def test_flexible_image_field_validation():
     with pytest.raises(ValidationError):
         field.clean(parsed_value_from_upload_from_other_user)
 
+    parsed_value_for_missing_value = field.widget.value_from_datadict(
+        data={ci.slug: "IMAGE_UPLOAD"}, name=ci.slug, files={}
+    )
+    decompressed_value_for_missing_value = field.widget.decompress(
+        "IMAGE_UPLOAD"
+    )
+    assert (
+        parsed_value_for_missing_value
+        == decompressed_value_for_missing_value
+        == [None, None]
+    )
+    with pytest.raises(ValidationError):
+        field.clean(parsed_value_for_missing_value)
+
 
 @pytest.mark.django_db
 def test_flexible_image_widget(client):

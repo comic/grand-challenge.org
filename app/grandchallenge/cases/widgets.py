@@ -63,7 +63,9 @@ class FlexibleImageWidget(MultiWidget):
 
     def decompress(self, value):
         if value:
-            if Image.objects.filter(pk=value).exists():
+            if value in WidgetChoices.names:
+                return [None, None]
+            elif Image.objects.filter(pk=value).exists():
                 return [value, None]
             else:
                 return [None, [value]]
@@ -80,7 +82,9 @@ class FlexibleImageWidget(MultiWidget):
             except MultiValueDictKeyError:
                 value = None
         if value:
-            if Image.objects.filter(pk=value).exists():
+            if value in WidgetChoices.names:
+                return [None, None]
+            elif Image.objects.filter(pk=value).exists():
                 return [value, None]
             else:
                 return [None, [value]]
