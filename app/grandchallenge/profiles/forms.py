@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import CheckboxInput, Select
@@ -73,6 +75,14 @@ class UserProfileForm(forms.ModelForm):
             # Hack around a scripts creating
             # accounts with names fooAB barAB etc.
             raise ValidationError("Account details invalid")
+
+        username = self.cleaned_data.get("username", "")
+
+        if re.match(
+            r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", username
+        ):
+            # standard python email regex, avoids the RFC nightmare email regex
+            raise ValidationError("Your username cannot be an email address")
 
 
 class SignupForm(UserProfileForm):

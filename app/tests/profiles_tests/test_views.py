@@ -1,5 +1,6 @@
 import pytest
 from allauth.account.models import EmailAddress
+from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
@@ -181,3 +182,60 @@ class TestProfileViewSets:
         )
 
         assert org1.title not in response.content.decode()
+
+
+@pytest.mark.django_db
+class TestAccountCreation(TestCase):
+    def test_signup_user(self):
+        data = {
+            "email": "test@gmail.com",
+            "username": "test2345",
+            "first_name": "test",
+            "last_name": "blarg",
+            "institution": "test",
+            "department": "test",
+            "country": "AX",
+            "website": "https://test.org",
+            "receive_notification_emails": "on",
+            "receive_newsletter": "on",
+            "accept_terms": "on",
+            "password1": "NPAEu_5=fX4d",
+            "password2": "NPAEu_5=fX4d",
+        }
+        response = self.client.post(
+            reverse("account_signup"),
+            data,
+            follow=True,
+            secure=True,
+        )
+        assert response.template_name == ["account/verification_sent.html"]
+
+        # self.assertFalse(response.content.decode())
+
+    @pytest.mark.django_db
+    def test_signup_user_with_email_username(self):
+        data = {
+            "email": "test@gmail.com",
+            "username": "test@gmail.com",
+            "first_name": "test",
+            "last_name": "two",
+            "institution": "test",
+            "department": "test",
+            "country": "AX",
+            "website": "https://test.org",
+            "receive_notification_emails": "on",
+            "receive_newsletter": "on",
+            "accept_terms": "on",
+            "password1": "blarg12345",
+            "password2": "blarg12345",
+        }
+        response = self.client.post(
+            reverse("account_signup"),
+            data,
+            follow=True,
+            secure=True,
+        )
+        assert response.template_name == ["account/signup.html"]
+        self.assertContains(
+            response, "Your username cannot be an email address"
+        )
