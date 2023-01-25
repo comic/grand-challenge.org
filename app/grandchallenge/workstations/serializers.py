@@ -10,7 +10,7 @@ class SessionSerializer(ModelSerializer):
 
     class Meta:
         model = Session
-        fields = ("pk", "status", "region")
+        fields = ("pk", "status")
 
 
 class FeedbackSerializer(ModelSerializer):

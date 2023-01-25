@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from django.utils.timezone import now
 
-from grandchallenge.workstations.models import Feedback, Session
+from grandchallenge.workstations.models import Feedback
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
@@ -278,35 +278,3 @@ def test_workstation_api(client):
 
     assert response.status_code == 200
     assert response.json()["count"] == 2
-
-
-@pytest.mark.django_db
-def test_active_sessions_api(client):
-    user1, user2 = UserFactory.create_batch(2)
-    s1, s2 = SessionFactory.create_batch(2, creator=user1, region="eu-nl-1")
-    s3 = SessionFactory(creator=user2, region="eu-nl-1")
-
-    response = get_view_for_user(
-        client=client,
-        viewname="api:session-active-sessions",
-        user=user1,
-        content_type="application/json",
-    )
-    assert response.json()["count"] == 0
-
-    s1.status = Session.STARTED
-    s1.save()
-    assert s2.status != Session.STARTED
-    assert s2.status != Session.RUNNING
-
-    response = get_view_for_user(
-        client=client,
-        viewname="api:session-active-sessions",
-        user=user1,
-        content_type="application/json",
-    )
-    assert response.json()["count"] == 1
-    assert response.json()["results"][0]["pk"] == str(s1.pk)
-    assert response.json()["results"][0]["pk"] != str(s2.pk)
-    assert response.json()["results"][0]["pk"] != str(s3.pk)
-    assert response.json()["results"][0]["region"] == "eu-nl-1"
