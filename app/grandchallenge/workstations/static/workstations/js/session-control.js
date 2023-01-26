@@ -7,6 +7,7 @@ function openWorkstationSession(element) {
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
         const domain = element.dataset.domain;
+        const timeout = 3000;
 
         if (event.ctrlKey) {
             window.open(creationURI);
@@ -14,7 +15,7 @@ function openWorkstationSession(element) {
         }
 
         const regions = JSON.parse(document.getElementById('workstation-regions').textContent);
-        const sessionOrigins = getSessionOrigins(domain, regions);
+        const potentialSessionOrigins = getSessionOrigins(domain, regions);
 
         const workstationWindow = window.open('', windowIdentifier);
 
@@ -32,38 +33,17 @@ function openWorkstationSession(element) {
             window.open(creationURI, windowIdentifier);
         } else {
             workstationWindow.focus();
-            for (let i = 0; i < sessionOrigins.length; i++) {
-                const msg = {
-                    sessionControl: {
-                        // TODO unsure if a message id is really necessary, but if so, it should be a unique id and not just the session origin
-                        messageId: sessionOrigins[i],
-                    }
-                }
-                workstationWindow.postMessage(msg, sessionOrigins[i]);
-            }
 
-            let messageReceived = false;
-            setTimeout(function() {
-                if (!messageReceived) {
-                    window.open(creationURI, windowIdentifier);
-                }
-            }, 3000);
-            function receiveMessage(event) {
-                if (sessionOrigins.includes(event.source.origin)) {
-                    messageReceived = true;
-                    // TODO check for messageID in event.data if we're including it in the message
-                    workstationWindow.focus();
-                    const msg = {
-                        sessionControl: {
-                            loadQuery: query,
-                        }
-                    }
-                    workstationWindow.postMessage(msg, event.source.origin);
-                }
-            }
+            const fallback = setTimeout(() => {
+                // Assume window is non-responsive
+                window.open(creationURI, windowIdentifier);
+            }, timeout);
 
-            window.addEventListener('message', receiveMessage);
-
+            potentialSessionOrigins.forEach((origin) => {
+                sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
+                    clearTimeout(fallback)
+                });
+            });
         }
     }
 }
@@ -87,6 +67,40 @@ function genSessionControllersHook() {
     }
 }
 
+function sendSessionControlMessage(window, origin, action, ackCallback) {
+    const msg = {
+                sessionControl: {
+                    header: {
+                        id: UUIDv4()
+                    },
+                    ...action,
+                }
+            };
+    window.postMessage(msg, origin);
+
+    function checkAckMessage(event) {
+        const receivedMsg = event.data.sessionControl;
+        if (!receivedMsg) {
+            return
+        }
+        const ack = msg.header.acknowledge;
+        if (!ack) {
+            return
+        }
+        if (msg.header.id) {
+            ackCallback();
+            window.removeEventListener('message', checkAckMessage);
+        }
+    }
+    window.addEventListener('message', checkAckMessage);
+}
+
+function UUIDv4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
 let sessionControllersHook;
 if (typeof sessionControllersHook === 'undefined') { // singleton
     sessionControllersHook = genSessionControllersHook();
@@ -106,4 +120,4 @@ $(document).ready(() => {
     htmx.onLoad(function() {
         sessionControllersHook()
     });
-})
+});
