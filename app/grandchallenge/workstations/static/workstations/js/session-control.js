@@ -13,16 +13,8 @@ function openWorkstationSession(element) {
             return;
         }
 
-        const workstationRegions = JSON.parse(document.getElementById('workstation-regions').textContent);
-        let sessionOrigins = Array();
-        for (let i = 0; i < workstationRegions.length; i++) {
-            if (domain.includes("localhost")) {
-                // for testing don't prepend regions
-                sessionOrigins.push("https://" + domain);
-            } else {
-                sessionOrigins.push("https://" + workstationRegions[i] + "." + domain);
-            }
-        }
+        const regions = JSON.parse(document.getElementById('workstation-regions').textContent);
+        const sessionOrigins = getSessionOrigins(domain, regions);
 
         const workstationWindow = window.open('', windowIdentifier);
 
@@ -75,6 +67,14 @@ function openWorkstationSession(element) {
         }
     }
 }
+
+function getSessionOrigins(hostname, regions) {
+    const protocol = "https";
+    const port = window.location.port;
+
+    return regions.map((region) => `${protocol}://${region}.${hostname}${port ? ':' + port : ''}`);
+}
+
 
 function genSessionControllersHook() {
      const data = document.currentScript.dataset;
