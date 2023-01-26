@@ -1,12 +1,14 @@
+{% load humanize %}
+
 <tr class="bg-primary text-light"
     hx-get="{% url 'challenges:year-cost-row' %}"
     hx-swap="outerHTML"
     hx-vals='{"year": {{ year }}}'
 >
     <td class="pl-3" style="width:25%">{{ year }}</td>
-    <td class="text-right" style="width:25%">{{ total_compute_cost|floatformat:'2' }} €</td>
-    <td class="text-right" style="width:25%">{{ total_docker_cost|floatformat:'2' }} €</td>
-    <td class="text-right" v>{{ total_cost|floatformat:'2' }} €</td>
+    <td class="text-right" style="width:25%">{{ total_compute_cost|floatformat:'2'|intcomma }} €</td>
+    <td class="text-right" style="width:25%">{{ total_docker_cost|floatformat:'2'|intcomma }} €</td>
+    <td class="text-right" v>{{ total_cost|floatformat:'2'|intcomma }} €</td>
 </tr>
 
 <tr id="child-{{ year }}" class="border border-light">
@@ -17,9 +19,9 @@
                     {% if not month == "total_compute_cost" and not month == "total_docker_cost" and not month == "grand_total" %}
                         <tr>
                             <td style="width:25%" class="pl-4 col-4">{{ month }}</td>
-                            <td style="width:25%" class="text-right">{{ costs.compute_costs|floatformat:'2' }} €</td>
-                            <td style="width:25%" class="text-right">{{ costs.docker_costs|floatformat:'2' }} €</td>
-                            <td style="width:25%" class="text-right">{{ costs.total|floatformat:'2' }} €</td>
+                            <td style="width:25%" class="text-right">{{ costs.compute_costs|floatformat:'2'|intcomma }} €</td>
+                            <td style="width:25%" class="text-right">{{ costs.docker_costs|floatformat:'2'|intcomma }} €</td>
+                            <td style="width:25%" class="text-right">{{ costs.total|floatformat:'2'|intcomma }} €</td>
                         </tr>
                     {% endif %}
                 {% endfor %}

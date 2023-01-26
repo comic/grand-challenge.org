@@ -1,4 +1,5 @@
 import os
+import warnings
 import zipfile
 from collections import namedtuple
 from datetime import timedelta
@@ -70,6 +71,15 @@ def django_db_setup(django_db_setup, django_db_blocker):
         site = Site.objects.get(pk=settings.SITE_ID)
         site.domain = "testserver"
         site.save()
+
+
+def pytest_itemcollected(item):
+    if item.get_closest_marker("playwright") is not None:
+        # See https://github.com/microsoft/playwright-pytest/issues/29
+        warnings.warn(
+            "Setting DJANGO_ALLOW_ASYNC_UNSAFE for playwright support"
+        )
+        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 
 class ChallengeSet(NamedTuple):

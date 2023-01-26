@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from datetime import timedelta
+from json import JSONDecodeError
 from pathlib import Path
 
 from celery import signature
@@ -19,7 +20,7 @@ from django.core.validators import (
 from django.db import models
 from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
-from django.forms import ModelChoiceField, ModelMultipleChoiceField
+from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
@@ -31,6 +32,7 @@ from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
@@ -805,7 +807,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         if self.requires_file:
             return ModelChoiceField
         elif self.is_image_kind:
-            return ModelMultipleChoiceField
+            return FlexibleImageField
         elif self.kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.CHOICE,
@@ -1190,7 +1192,10 @@ class ComponentInterfaceValue(models.Model):
         if not user_upload.is_completed:
             raise ValidationError("User upload is not completed.")
         if self.interface.is_json_kind:
-            value = json.loads(user_upload.read_object())
+            try:
+                value = json.loads(user_upload.read_object())
+            except JSONDecodeError as e:
+                raise ValidationError(e)
             self.interface.validate_against_schema(value=value)
         self._user_upload_validated = True
 

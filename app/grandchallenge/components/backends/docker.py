@@ -225,8 +225,12 @@ class Service(DockerConnectionMixin):
             network = docker_client.inspect_network(
                 name=settings.WORKSTATIONS_NETWORK_NAME
             )
+            host_docker_internal = network["IPAM"]["Config"][0]["Gateway"]
 
-            return {"gc.localhost": network["IPAM"]["Config"][0]["Gateway"]}
+            return {
+                "gc.localhost": host_docker_internal,
+                "minio.localhost": host_docker_internal,
+            }
         else:
             return {}
 

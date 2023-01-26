@@ -95,6 +95,8 @@ class WorkstationConfigSerializer(ModelSerializer):
             "overlay_segments",
             "key_bindings",
             "default_zoom_scale",
+            "default_brush_size",
+            "default_annotation_color",
             "show_image_info_plugin",
             "show_display_plugin",
             "show_image_switcher_plugin",

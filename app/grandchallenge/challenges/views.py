@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.paginator import EmptyPage, Paginator
-from django.db.models import F, Q, Sum
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
@@ -406,11 +406,13 @@ class ChallengeCostOverview(
     permission_required = "challenges.view_challengerequest"
 
     def get_context_data(self, **kwargs):
-        challenges = Challenge.objects.filter(
-            phase__submission_kind=SubmissionKindChoices.ALGORITHM
-        ).annotate(
-            total_cost=Sum(
-                F("accumulated_compute_cost_in_cents")
+        challenges = (
+            Challenge.objects.filter(
+                phase__submission_kind=SubmissionKindChoices.ALGORITHM
+            )
+            .distinct()
+            .annotate(
+                total_cost=F("accumulated_compute_cost_in_cents")
                 + F("accumulated_docker_storage_cost_in_cents")
             )
         )

@@ -7,6 +7,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.subdomains.utils import reverse
 from tests.archives_tests.factories import (
@@ -691,13 +692,60 @@ def test_archive_item_add_image(client, settings):
                 },
                 user=editor,
                 follow=True,
-                data={ci.slug: upload.pk},
+                data={
+                    ci.slug: upload.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                },
             )
     assert response.status_code == 200
-    assert (
-        "image10x10x10.mha"
-        == ArchiveItem.objects.get().values.first().image.name
-    )
+    assert "image10x10x10.mha" == item.values.first().image.name
+    old_civ = item.values.first()
+
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "pk": item.pk,
+                    "interface_slug": ci.slug,
+                    "archive_slug": archive.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    ci.slug: old_civ.image.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                },
+            )
+    assert response.status_code == 200
+    assert item.values.first().image.pk == old_civ.image.pk
+    assert item.values.first() == old_civ
+
+    image = ImageFactory()
+    assign_perm("cases.view_image", editor, image)
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "pk": item.pk,
+                    "interface_slug": ci.slug,
+                    "archive_slug": archive.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    ci.slug: image.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_SEARCH.name,
+                },
+            )
+    assert response.status_code == 200
+    assert item.values.first().image.pk == image.pk
+    assert item.values.first() != old_civ
 
 
 @pytest.mark.django_db

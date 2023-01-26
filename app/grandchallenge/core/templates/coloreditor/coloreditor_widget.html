@@ -1,0 +1,14 @@
+<input type="{{ widget.type }}"
+ id="{{ id }}"
+ class="jscolor form-control"
+ name="{{ widget.name }}"
+ value="{% firstof widget.value '' %}"
+ placeholder="{% firstof widget.placeholder 'None' %}"
+ data-jscolor="{hash:true,width:225,height:150,format:'{{ widget.format }}',required:{% if widget.required %}true{% else %}false{% endif %}}"
+ {% if widget.required %}required{% endif %}
+ {% for name, value in widget.attrs.items %}
+     {% if value is not False %}
+         {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}
+     {% endif %}
+ {% endfor %}
+/>
