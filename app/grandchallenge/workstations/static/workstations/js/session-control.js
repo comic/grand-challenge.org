@@ -68,10 +68,11 @@ function genSessionControllersHook() {
 }
 
 function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
+    const messageId = UUIDv4();
     const msg = {
                 sessionControl: {
                     header: {
-                        id: UUIDv4()
+                        id: messageId
                     },
                     ...action,
                 }
@@ -83,11 +84,11 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
         if (!receivedMsg) {
             return
         }
-        const ack = msg.header.acknowledge;
+        const ack = receivedMsg.header.acknowledge;
         if (!ack) {
             return
         }
-        if (msg.header.id) {
+        if ( ack.id === messageId ) {
             ackCallback();
             window.removeEventListener('message', checkAckMessage);
         }
