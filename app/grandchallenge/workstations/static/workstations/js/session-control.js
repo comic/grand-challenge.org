@@ -67,7 +67,7 @@ function genSessionControllersHook() {
     }
 }
 
-function sendSessionControlMessage(window, origin, action, ackCallback) {
+function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
     const msg = {
                 sessionControl: {
                     header: {
@@ -76,7 +76,7 @@ function sendSessionControlMessage(window, origin, action, ackCallback) {
                     ...action,
                 }
             };
-    window.postMessage(msg, origin);
+    targetWindow.postMessage(msg, origin);
 
     function checkAckMessage(event) {
         const receivedMsg = event.data.sessionControl;
