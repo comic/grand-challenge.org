@@ -1,6 +1,5 @@
 import pytest
 from allauth.account.models import EmailAddress
-from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import force_authenticate
 
@@ -9,7 +8,7 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import PolicyFactory, UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.utils import get_view_for_user
-
+from grandchallenge.profiles.forms import SignupForm
 
 @pytest.mark.django_db
 class TestSignInRedirect:
@@ -185,8 +184,9 @@ class TestProfileViewSets:
 
 
 @pytest.mark.django_db
-class TestAccountCreation(TestCase):
-    def test_signup_user(self):
+class TestAccountCreation:
+    
+    def test_signup_user(self, client):
         data = {
             "email": "test@gmail.com",
             "username": "test2345",
@@ -202,18 +202,15 @@ class TestAccountCreation(TestCase):
             "password1": "NPAEu_5=fX4d",
             "password2": "NPAEu_5=fX4d",
         }
-        response = self.client.post(
+        response = client.post(
             reverse("account_signup"),
             data,
             follow=True,
-            secure=True,
         )
         assert response.template_name == ["account/verification_sent.html"]
 
-        # self.assertFalse(response.content.decode())
-
     @pytest.mark.django_db
-    def test_signup_user_with_email_username(self):
+    def test_signup_user_with_email_username(self, client):
         data = {
             "email": "test@gmail.com",
             "username": "test@gmail.com",
@@ -229,13 +226,11 @@ class TestAccountCreation(TestCase):
             "password1": "blarg12345",
             "password2": "blarg12345",
         }
-        response = self.client.post(
+        response = client.post(
             reverse("account_signup"),
             data,
             follow=True,
-            secure=True,
         )
         assert response.template_name == ["account/signup.html"]
-        self.assertContains(
-            response, "Your username cannot be an email address"
-        )
+        assert "You cannot use an email address as a username" in response.content.decode()
+

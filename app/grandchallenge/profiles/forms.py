@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.forms import CheckboxInput, Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import EmailValidator
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -77,12 +78,14 @@ class UserProfileForm(forms.ModelForm):
             raise ValidationError("Account details invalid")
 
         username = self.cleaned_data.get("username", "")
+        try:
+            EmailValidator()(username)
+        except ValidationError:
+            # Username is not an email address
+            pass
+        else:
+            raise ValidationError("You cannot use an email address as a username")
 
-        if re.match(
-            r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", username
-        ):
-            # standard python email regex, avoids the RFC nightmare email regex
-            raise ValidationError("Your username cannot be an email address")
 
 
 class SignupForm(UserProfileForm):
