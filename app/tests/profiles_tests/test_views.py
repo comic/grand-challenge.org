@@ -8,7 +8,6 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import PolicyFactory, UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.utils import get_view_for_user
-from grandchallenge.profiles.forms import SignupForm
 
 @pytest.mark.django_db
 class TestSignInRedirect:
