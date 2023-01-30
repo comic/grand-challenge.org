@@ -9,6 +9,7 @@ from tests.factories import PolicyFactory, UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.utils import get_view_for_user
 
+
 @pytest.mark.django_db
 class TestSignInRedirect:
     def get_redirect_response(self, client, next=None):
@@ -184,7 +185,6 @@ class TestProfileViewSets:
 
 @pytest.mark.django_db
 class TestAccountCreation:
-    
     def test_signup_user(self, client):
         data = {
             "email": "test@gmail.com",
@@ -231,5 +231,7 @@ class TestAccountCreation:
             follow=True,
         )
         assert response.template_name == ["account/signup.html"]
-        assert "You cannot use an email address as a username" in response.content.decode()
-
+        assert (
+            "You cannot use an email address as a username"
+            in response.content.decode()
+        )

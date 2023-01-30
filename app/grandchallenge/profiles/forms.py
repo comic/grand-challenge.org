@@ -1,9 +1,9 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.forms import CheckboxInput, Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import EmailValidator
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -82,8 +82,9 @@ class UserProfileForm(forms.ModelForm):
             # Username is not an email address
             pass
         else:
-            raise ValidationError("You cannot use an email address as a username")
-
+            raise ValidationError(
+                "You cannot use an email address as a username"
+            )
 
 
 class SignupForm(UserProfileForm):
