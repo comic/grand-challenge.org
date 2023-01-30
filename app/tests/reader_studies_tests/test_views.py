@@ -654,7 +654,7 @@ def test_add_files_to_display_set(client, settings):
     assert response.status_code == 302
     assert ds.values.count() == 0
     assert Notification.objects.count() == 2
-    notification = Notification.objects.first()
+    notification = Notification.objects.exclude(pk=notification.pk).get()
     msg = notification.print_notification(user=notification.user)
     assert ci_json.title in msg
     assert str(ds.pk) in msg

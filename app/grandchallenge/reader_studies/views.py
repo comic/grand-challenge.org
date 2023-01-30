@@ -494,7 +494,7 @@ class QuestionOptionMixin:
     def validate_options(self, form, _super):
         context = self.get_context_data()
         options = context["options"]
-        if form.data["answer_type"] not in [
+        if form.cleaned_data["answer_type"] not in [
             Question.AnswerType.CHOICE,
             Question.AnswerType.MULTIPLE_CHOICE,
             Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
@@ -547,10 +547,6 @@ class QuestionUpdate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        form_fields = context["form"].fields
-        for field_name in self.object.read_only_fields:
-            form_fields[field_name].required = False
-            form_fields[field_name].disabled = True
         if self.request.POST:
             context["options"] = CategoricalOptionFormSet(
                 self.request.POST, instance=self.object
