@@ -13,5 +13,4 @@ def username_is_not_email(username):
         raise ValidationError("You cannot use an email address as a username")
 
 
-# List is needed as
 username_validators = [username_is_not_email, UnicodeUsernameValidator()]
