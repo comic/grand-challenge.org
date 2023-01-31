@@ -358,6 +358,11 @@ SECRET_KEY = os.environ.get(
     "SECRET_KEY", "d=%^l=xa02an9jn-$!*hy1)5yox$a-$2(ejt-2smimh=j4%8*b"
 )
 
+TEST_TEMPLATE_DIR = os.path.join(
+    SITE_ROOT,
+    "tests/templates",
+)
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -366,6 +371,7 @@ TEMPLATES = [
             # django.template.loaders.app_directories.Loader
             os.path.join(SITE_ROOT, "grandchallenge/forums/templates/"),
             MACHINA_MAIN_TEMPLATE_DIR,
+            TEST_TEMPLATE_DIR,
         ],
         "OPTIONS": {
             "context_processors": [

@@ -132,6 +132,7 @@ services:
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
+      DJANGO_LIVE_TEST_SERVER_ADDRESS: 'localhost:9200'
     restart: always
     command: watchfiles "celery -A config worker -l info -c 1 --pool solo -Q workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
     scale: 1

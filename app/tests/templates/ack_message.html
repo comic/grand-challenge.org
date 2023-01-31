@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Messages:</h1>
+    <ol id="messages"></ol>
+    <h1>Acks:</h1>
+    <ol id="acks"></ol>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript">
+        function handleMessage(event) {
+            const eventString = JSON.stringify(event.data)
+            const node = document.createElement("li");
+            node.innerHTML = eventString;
+            const messages = document.getElementById("messages");
+            messages.appendChild(node);
+
+            const msg = {
+                sessionControl: {
+                    header: {
+                        acknowledge: {
+                            id: event.data.sessionControl.header.id
+                        }
+                    }
+                }
+            };
+            event.source.postMessage(msg, event.origin);
+            const node2 = document.createElement("li");
+            node2.innerHTML = JSON.stringify(msg);
+            const acks = document.getElementById("acks");
+            acks.appendChild(node2);
+        }
+
+        function handleMessageWithDelay(event) {
+            setTimeout(handleMessage, 15000, event)
+        }
+
+        function enableMockAcks() {
+            window.addEventListener("message", handleMessage, false);
+        }
+
+        function enableMockAcksWithDelay() {
+            window.removeEventListener("message", handleMessage);
+            window.addEventListener("message", handleMessageWithDelay, false);
+        }
+
+        function disableMockAcks() {
+            window.removeEventListener("message", handleMessage);
+        }
+    </script>
+{% endblock %}
