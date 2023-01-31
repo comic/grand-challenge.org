@@ -2,20 +2,28 @@ import json
 from pathlib import Path
 
 import pytest
-from django.conf.settings import settings
+from django.conf import settings
 from django.views.generic import TemplateView
 
+import tests.settings as test_settings
 from tests.utils import playwright_trace
 
 
 class SessionControlView(TemplateView):
     url_route = "session-control/"
-    template_name = "playwright.html"
+    template_name = "session_control.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {"domain": test_settings.DJANGO_LIVE_TEST_SERVER_ADDRESS}
+        )
+        return context
 
 
 class WorkstationView(TemplateView):
-    url_route = "ack-message/"
-    template_name = "ack_message.html"
+    url_route = "workstation/"
+    template_name = "workstation.html"
 
 
 class SessionCreationView(TemplateView):
@@ -25,16 +33,17 @@ class SessionCreationView(TemplateView):
 
 @pytest.mark.playwright
 def test_viewer_session_control(playwright_live_server, page):
-    with playwright_trace(
-        page.context, directory=Path("/app/tests/test_results")
-    ):
+    with playwright_trace(page.context, directory=Path("/app/test_results")):
         url = playwright_live_server
         session_create_view = (
+            f"{url.scheme}://{url.netloc}/{SessionCreationView.url_route}"
+        )
+        session_control_view = (
             f"{url.scheme}://{url.netloc}/{SessionControlView.url_route}"
         )
         subdomain = settings.WORKSTATIONS_ACTIVE_REGIONS[0]
         mock_workstation_view = f"{url.scheme}://{subdomain}.{url.netloc}/{WorkstationView.url_route}"
-        page.goto(session_create_view)
+        page.goto(session_control_view)
 
         # Test if a fresh click opens up a new page
         with page.expect_popup() as viewer_page_info:

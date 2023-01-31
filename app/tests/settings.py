@@ -13,6 +13,12 @@ SESSION_COOKIE_DOMAIN = ".testserver"
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, ".localhost"]
 SECURE_SSL_REDIRECT = False
 
+TEST_TEMPLATE_DIR = os.path.join(
+    SITE_ROOT,  # noqa 405
+    "tests/templates",
+)
+TEMPLATES[0]["DIRS"].append(TEST_TEMPLATE_DIR)  # noqa 405
+
 # Speed up token generation in tests
 REST_KNOX[  # noqa F405
     "SECURE_HASH_ALGORITHM"
