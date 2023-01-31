@@ -114,6 +114,7 @@ pytest-randomly = "*"
 sphinxcontrib-django = "*"
 django-capture-on-commit-callbacks = "*"  # Backport from Django 4.0, can be removed
 amass = "*"
+aiohttp = "^3.8" # Fix for amass dependency
 watchfiles = "*"
 
 [tool.amass]
