@@ -1,6 +1,5 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import EmailValidator
 from django.forms import CheckboxInput, Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -74,17 +73,6 @@ class UserProfileForm(forms.ModelForm):
             # Hack around a scripts creating
             # accounts with names fooAB barAB etc.
             raise ValidationError("Account details invalid")
-
-        username = self.cleaned_data.get("username", "")
-        try:
-            EmailValidator()(username)
-        except ValidationError:
-            # Username is not an email address
-            pass
-        else:
-            raise ValidationError(
-                "You cannot use an email address as a username"
-            )
 
 
 class SignupForm(UserProfileForm):
