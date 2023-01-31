@@ -1,13 +1,18 @@
+from contextlib import nullcontext
+
 import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.profiles.validators import username_is_not_email
 
 
-def test_username_is_not_email():
-    username_is_not_email("test")
-
-
-def test_username_is_email_validator():
-    with pytest.raises(ValidationError):
-        username_is_not_email("test@gmail.com")
+@pytest.mark.parametrize(
+    "test_input,expectation",
+    [
+        ("test", nullcontext()),
+        ("test@gmail.com", pytest.raises(ValidationError)),
+    ],
+)
+def test_username_validation(test_input, expectation):
+    with expectation:
+        username_is_not_email(test_input)
