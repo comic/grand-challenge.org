@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Callable
 from urllib.parse import urlparse
 
@@ -226,3 +227,18 @@ def recurse_callbacks(callbacks):
 
     if new_callbacks:
         recurse_callbacks(callbacks=new_callbacks)
+
+
+@contextlib.contextmanager
+def playwright_trace(context, directory=None, name="trace"):
+    directory.mkdir(parents=True, exist_ok=True)
+    trace_path = directory / f"{name}.zip"
+    i = 0
+    while trace_path.exists():
+        trace_path = directory / f"{name}{i}.zip"
+        i += 1
+    context.tracing.start(screenshots=True, snapshots=True, sources=True)
+    try:
+        yield
+    finally:
+        context.tracing.stop(path=trace_path)

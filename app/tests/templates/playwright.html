@@ -3,10 +3,14 @@
 {% load static %}
 
 {% block content %}
+    <div>
+        Template: <b>{{ view.template_name }}</b>
+    </div>
+
     <button class="btn btn-primary"
             data-session-control
             data-create-session-url='http://localhost:9200/new-session/'
-            data-domain="localhost:9200"
+            data-domain="localhost"
             data-workstation-query='queryParam=12345'
             data-workstation-window-identifier='workstation-context'>
         <i class="fas fa-eye"></i> Launch new Session
