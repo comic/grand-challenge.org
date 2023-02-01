@@ -125,3 +125,14 @@ def test_flexible_image_widget(client):
         },
     )
     assert 'class="user-upload"' in str(response2.content)
+
+    response3 = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=user,
+        data={
+            f"WidgetChoice-{ci.slug}": WidgetChoices.UNDEFINED.name,
+            "interface_slug": ci.slug,
+        },
+    )
+    assert response3.content == b""

@@ -11,7 +11,7 @@
     {% if widget.attrs.current_value %}
         <option value="{{ widget.attrs.current_value.image.pk }}">{{ widget.attrs.current_value }}</option>
     {% else %}
-        <option value="">Choose data source...</option>
+        <option value="{{ widget.attrs.widget_choices.UNDEFINED }}">Choose data source...</option>
     {% endif %}
     <option value="{{ widget.attrs.widget_choices.IMAGE_SEARCH }}">Select previously uploaded image</option>
     <option value="{{ widget.attrs.widget_choices.IMAGE_UPLOAD }}">Upload new image</option>
