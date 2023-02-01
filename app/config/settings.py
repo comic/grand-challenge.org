@@ -2,6 +2,7 @@ import os
 import re
 from datetime import datetime, timedelta
 from itertools import product
+from pathlib import Path
 
 import sentry_sdk
 from celery.schedules import crontab
@@ -52,7 +53,7 @@ IGNORABLE_404_URLS = [
 
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the config dir. We need to  go one dir higher so path.join("..")
-SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
 DATABASES = {
     "default": {

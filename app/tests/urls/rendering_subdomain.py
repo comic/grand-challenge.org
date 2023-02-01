@@ -6,6 +6,8 @@ from config.urls.rendering_subdomain import (
 from tests.workstations_tests.test_session_control import WorkstationView
 
 urlpatterns = [
-    *subdomain_urlpatterns,
-    *[path(route=v.url_route, view=v.as_view()) for v in (WorkstationView,)],
-]
+    path(
+        "workstation/",
+        WorkstationView.as_view(),
+    ),
+] + subdomain_urlpatterns

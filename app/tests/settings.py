@@ -14,8 +14,7 @@ ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, ".localhost"]
 SECURE_SSL_REDIRECT = False
 
 TEST_TEMPLATE_DIR = os.path.join(
-    SITE_ROOT,  # noqa 405
-    "tests/templates",
+    SITE_ROOT / "tests/templates",  # noqa 405
 )
 TEMPLATES[0]["DIRS"].append(TEST_TEMPLATE_DIR)  # noqa 405
 
@@ -37,8 +36,6 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 ROOT_URLCONF = "tests.urls.root"
 RENDERING_SUBDOMAIN_URL_CONF = "tests.urls.rendering_subdomain"
 DEFAULT_SCHEME = "http"
-
-DJANGO_LIVE_TEST_SERVER_ADDRESS = os.getenv("DJANGO_LIVE_TEST_SERVER_ADDRESS")
 
 CELERY_BROKER = "memory"
 CELERY_BROKER_URL = "memory://"

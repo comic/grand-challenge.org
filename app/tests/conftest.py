@@ -17,7 +17,6 @@ from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from guardian.shortcuts import assign_perm
 
-import tests.settings as test_settings
 from grandchallenge.cases.models import Image
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import ComponentInterface
@@ -689,6 +688,7 @@ def playwright_live_server(django_db_setup, live_server, django_db_blocker):
     with django_db_blocker.unblock():
         # Set the default domain that is used in subdomain extraction
         site = Site.objects.get(pk=settings.SITE_ID)
-        site.domain = test_settings.DJANGO_LIVE_TEST_SERVER_ADDRESS
+        url = urlparse(live_server.url)
+        site.domain = url.netloc
         site.save()
-    return urlparse(live_server.url)
+    return url

@@ -5,44 +5,37 @@ import pytest
 from django.conf import settings
 from django.views.generic import TemplateView
 
-import tests.settings as test_settings
 from tests.utils import playwright_trace
 
 
 class SessionControlView(TemplateView):
-    url_route = "session-control/"
     template_name = "session_control.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
-        context.update(
-            {"domain": test_settings.DJANGO_LIVE_TEST_SERVER_ADDRESS}
-        )
+        context.update({"domain": settings.DJANGO_LIVE_TEST_SERVER_ADDRESS})
         return context
 
 
 class WorkstationView(TemplateView):
-    url_route = "workstation/"
     template_name = "workstation.html"
 
 
 class SessionCreationView(TemplateView):
-    url_route = "new-session/"
     template_name = "new_session.html"
 
 
 @pytest.mark.playwright
-def test_viewer_session_control(playwright_live_server, page):
+def test_viewer_session_control(playwright_live_server, page, settings):
     with playwright_trace(page.context, directory=Path("/app/test_results")):
         url = playwright_live_server
-        session_create_view = (
-            f"{url.scheme}://{url.netloc}/{SessionCreationView.url_route}"
-        )
-        session_control_view = (
-            f"{url.scheme}://{url.netloc}/{SessionControlView.url_route}"
-        )
+        settings.DJANGO_LIVE_TEST_SERVER_ADDRESS = f"{url.netloc}"
+        session_create_view = f"{url.scheme}://{url.netloc}/new-session/"
+        session_control_view = f"{url.scheme}://{url.netloc}/session-control/"
         subdomain = settings.WORKSTATIONS_ACTIVE_REGIONS[0]
-        mock_workstation_view = f"{url.scheme}://{subdomain}.{url.netloc}/{WorkstationView.url_route}"
+        mock_workstation_view = (
+            f"{url.scheme}://{subdomain}.{url.netloc}/workstation/"
+        )
         page.goto(session_control_view)
 
         # Test if a fresh click opens up a new page

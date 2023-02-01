@@ -7,12 +7,6 @@ from tests.workstations_tests.test_session_control import (
 )
 
 urlpatterns = [
-    *root_urlpatterns,
-    *[
-        path(route=v.url_route, view=v.as_view())
-        for v in (
-            SessionControlView,
-            SessionCreationView,
-        )
-    ],
-]
+    path("session-control/", SessionControlView.as_view()),
+    path("new-session/", SessionCreationView.as_view()),
+] + root_urlpatterns
