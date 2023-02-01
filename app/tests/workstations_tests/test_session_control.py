@@ -13,7 +13,14 @@ class SessionControlView(TemplateView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
-        context.update({"domain": settings.DJANGO_LIVE_TEST_SERVER_ADDRESS})
+        context.update(
+            {
+                "netloc": settings.DJANGO_LIVE_TEST_SERVER_ADDRESS,
+                "domain": settings.DJANGO_LIVE_TEST_SERVER_ADDRESS.split(":")[
+                    0
+                ],
+            }
+        )
         return context
 
 
