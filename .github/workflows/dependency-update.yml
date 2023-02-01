@@ -61,5 +61,5 @@ jobs:
           commit-message: "Automated dependency update"
           branch-suffix: "short-commit-hash"
           delete-branch: true
-          title: "Automated dependency update"
+          title: "Update dependencies"
           body: "Output:\n\n```\n${{ steps.dependency-update.outputs.poetry-log }}\n```"
