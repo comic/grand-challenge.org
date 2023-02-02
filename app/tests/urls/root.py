@@ -8,7 +8,13 @@ from tests.workstations_tests.test_session_control import (
 )
 
 urlpatterns = [
-    path("session-control/", SessionControlView.as_view()),
-    path("new-session/", SessionCreationView.as_view()),
-    path("workstation/", WorkstationView.as_view()),
+    path(
+        "session-control/",
+        SessionControlView.as_view(),
+        name="session-control-test",
+    ),
+    path(
+        "new-session/", SessionCreationView.as_view(), name="new-session-test"
+    ),
+    path("workstation/", WorkstationView.as_view(), name="workstation-mock"),
 ] + root_urlpatterns

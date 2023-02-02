@@ -9,7 +9,7 @@
 
     <button class="btn btn-primary"
             data-session-control
-            data-create-session-url='http://{{ netloc }}/new-session/'
+            data-create-session-url='{% url 'new-session-test' %}'
             data-domain="{{ domain }}"
             data-workstation-query='queryParam=12345'
             data-workstation-window-identifier='workstation-context'>

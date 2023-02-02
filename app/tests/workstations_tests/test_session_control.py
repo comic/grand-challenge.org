@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 
 import pytest
 from django.conf import settings
+from django.urls import reverse
 from django.views.generic import TemplateView
 
 
@@ -34,9 +35,15 @@ class SessionCreationView(TemplateView):
 def test_viewer_session_control(live_server, page, settings):
     url = urlparse(live_server.url)
     settings.DJANGO_LIVE_TEST_SERVER_ADDRESS = f"{url.netloc}"
-    session_create_view = f"{url.scheme}://{url.netloc}/new-session/"
-    session_control_view = f"{url.scheme}://{url.netloc}/session-control/"
-    mock_workstation_view = f"{url.scheme}://{url.netloc}/workstation/"
+    session_create_view = (
+        f"{url.scheme}://{url.netloc}{reverse('new-session-test')}"
+    )
+    session_control_view = (
+        f"{url.scheme}://{url.netloc}{reverse('session-control-test')}"
+    )
+    mock_workstation_view = (
+        f"{url.scheme}://{url.netloc}{reverse('workstation-mock')}"
+    )
     page.goto(session_control_view)
 
     # Test if a fresh click opens up a new page
@@ -60,7 +67,7 @@ def test_viewer_session_control(live_server, page, settings):
     sent_msg = json.loads(
         viewer_page.locator("#acks :nth-child(1)").inner_text()
     )
-    assert "acknowledge" in sent_msg["sessionControl"]["header"]
+    assert "acknowledge" in sent_msg["sessionControl"]["meta"]
 
     # Test that if acknowledge sent too late, a new session will be created
     viewer_page.evaluate("enableMockAcksWithDelay()")
