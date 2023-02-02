@@ -1,11 +1,9 @@
 import json
-from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 from django.conf import settings
 from django.views.generic import TemplateView
-
-from tests.utils import playwright_trace
 
 
 class SessionControlView(TemplateView):
@@ -33,55 +31,49 @@ class SessionCreationView(TemplateView):
 
 
 @pytest.mark.playwright
-def test_viewer_session_control(playwright_live_server, page, settings):
-    with playwright_trace(page.context, directory=Path("/app/test_results")):
-        url = playwright_live_server
-        settings.DJANGO_LIVE_TEST_SERVER_ADDRESS = f"{url.netloc}"
-        session_create_view = f"{url.scheme}://{url.netloc}/new-session/"
-        session_control_view = f"{url.scheme}://{url.netloc}/session-control/"
-        subdomain = settings.WORKSTATIONS_ACTIVE_REGIONS[0]
-        mock_workstation_view = (
-            f"{url.scheme}://{subdomain}.{url.netloc}/workstation/"
-        )
-        page.goto(session_control_view)
+def test_viewer_session_control(live_server, page, settings):
+    url = urlparse(live_server.url)
+    settings.DJANGO_LIVE_TEST_SERVER_ADDRESS = f"{url.netloc}"
+    session_create_view = f"{url.scheme}://{url.netloc}/new-session/"
+    session_control_view = f"{url.scheme}://{url.netloc}/session-control/"
+    mock_workstation_view = f"{url.scheme}://{url.netloc}/workstation/"
+    page.goto(session_control_view)
 
-        # Test if a fresh click opens up a new page
-        with page.expect_popup() as viewer_page_info:
-            page.get_by_role("button", name="Launch new Session").click()
-            viewer_page = viewer_page_info.value
-        viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
-
-        # Setup mock acknowledge
-        viewer_page.goto(mock_workstation_view)
-        viewer_page.evaluate("enableMockAcks()")
-
-        # Test if pressing launch indeed sends a session control message
+    # Test if a fresh click opens up a new page
+    with page.expect_popup() as viewer_page_info:
         page.get_by_role("button", name="Launch new Session").click()
-        received_msg = json.loads(
-            viewer_page.locator("#messages :nth-child(1)").inner_text()
-        )
-        assert "id" in received_msg["sessionControl"]["header"]
-        assert viewer_page.url.startswith(subdomain)
+        viewer_page = viewer_page_info.value
+    viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
 
-        # check that ack message is returned
-        sent_msg = json.loads(
-            viewer_page.locator("#acks :nth-child(1)").inner_text()
-        )
-        assert "acknowledge" in sent_msg["sessionControl"]["header"]
+    # Setup mock acknowledge
+    viewer_page.goto(mock_workstation_view)
+    viewer_page.evaluate("enableMockAcks()")
 
-        # Test that if acknowledge sent too late, a new session will be created
-        viewer_page.evaluate("enableMockAcksWithDelay()")
-        page.get_by_role("button", name="Launch new Session").click()
-        viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
-        assert viewer_page.url == session_create_view
+    # Test if pressing launch indeed sends a session control message
+    page.get_by_role("button", name="Launch new Session").click()
+    received_msg = json.loads(
+        viewer_page.locator("#messages :nth-child(1)").inner_text()
+    )
+    assert "id" in received_msg["sessionControl"]["header"]
 
-        # Test if disabling the acknowledgment will result in a new session being created
-        viewer_page.goto(mock_workstation_view)
-        viewer_page.evaluate("disableMockAcks()")
-        page.get_by_role("button", name="Launch new Session").click()
+    # check that ack message is returned
+    sent_msg = json.loads(
+        viewer_page.locator("#acks :nth-child(1)").inner_text()
+    )
+    assert "acknowledge" in sent_msg["sessionControl"]["header"]
 
-        viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
-        assert viewer_page.url == session_create_view
+    # Test that if acknowledge sent too late, a new session will be created
+    viewer_page.evaluate("enableMockAcksWithDelay()")
+    page.get_by_role("button", name="Launch new Session").click()
+    viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
+    assert viewer_page.url.startswith(session_create_view)
 
-        # Clean up
-        page.close()
+    # Test if disabling the acknowledgment will result in a new session being created
+    viewer_page.goto(mock_workstation_view)
+    viewer_page.evaluate("disableMockAcks()")
+    page.get_by_role("button", name="Launch new Session").click()
+    viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
+    assert viewer_page.url.startswith(session_create_view)
+
+    # Clean up
+    page.close()

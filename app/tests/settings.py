@@ -10,7 +10,7 @@ os.environ["PROTECTED_S3_CUSTOM_DOMAIN"] = "testserver/media"
 from config.settings import *  # noqa: F401, F403, E402, I251
 
 SESSION_COOKIE_DOMAIN = ".testserver"
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, ".localhost"]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 SECURE_SSL_REDIRECT = False
 
 TEST_TEMPLATE_DIR = os.path.join(
@@ -34,8 +34,6 @@ ACCOUNT_RATE_LIMITS = {}
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 ROOT_URLCONF = "tests.urls.root"
-RENDERING_SUBDOMAIN_URL_CONF = "tests.urls.rendering_subdomain"
-DEFAULT_SCHEME = "http"
 
 CELERY_BROKER = "memory"
 CELERY_BROKER_URL = "memory://"

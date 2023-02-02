@@ -5,7 +5,6 @@ from collections import namedtuple
 from datetime import timedelta
 from pathlib import Path
 from typing import NamedTuple
-from urllib.parse import urlparse
 
 import pytest
 from django.conf import settings
@@ -681,14 +680,3 @@ def authenticated_staff_user(client):
         totp_device=totp_device,
     )
     return user
-
-
-@pytest.fixture(scope="session")
-def playwright_live_server(django_db_setup, live_server, django_db_blocker):
-    with django_db_blocker.unblock():
-        # Set the default domain that is used in subdomain extraction
-        site = Site.objects.get(pk=settings.SITE_ID)
-        url = urlparse(live_server.url)
-        site.domain = url.netloc
-        site.save()
-    return url

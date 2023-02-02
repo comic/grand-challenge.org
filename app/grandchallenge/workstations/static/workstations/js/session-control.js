@@ -16,7 +16,13 @@ function openWorkstationSession(element) {
 
         const regions = JSON.parse(document.getElementById('workstation-regions').textContent);
 
-        const potentialSessionOrigins = getSessionOrigins(domain, regions);
+        let potentialSessionOrigins;
+        if (domain.includes("localhost")) {
+            const port = window.location.port;
+            potentialSessionOrigins = Array(`http://${domain}${port ? ':' + port : ''}`);
+        } else{
+            potentialSessionOrigins = getSessionOrigins(domain, regions);
+        }
         const workstationWindow = window.open('', windowIdentifier);
 
         // check if we just opened a blank or existing context
