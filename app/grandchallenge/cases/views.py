@@ -217,6 +217,10 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             # is the current image, this enables switching back from one of the
             # above widgets to the chosen image
             return HttpResponse()
+        elif widget_name == WidgetChoices.UNDEFINED.name:
+            # this happens when switching back from one of the
+            # above widgets to the "Choose data source" option
+            return HttpResponse()
         else:
             raise RuntimeError("Unknown widget type")
 

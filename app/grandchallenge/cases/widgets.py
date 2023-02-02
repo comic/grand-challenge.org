@@ -17,6 +17,7 @@ from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 class WidgetChoices(TextChoices):
     IMAGE_SEARCH = "IMAGE_SEARCH"
     IMAGE_UPLOAD = "IMAGE_UPLOAD"
+    UNDEFINED = "UNDEFINED"
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
