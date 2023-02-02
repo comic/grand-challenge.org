@@ -61,7 +61,7 @@ def test_viewer_session_control(live_server, page, settings):
     received_msg = json.loads(
         viewer_page.locator("#messages :nth-child(1)").inner_text()
     )
-    assert "id" in received_msg["sessionControl"]["header"]
+    assert "id" in received_msg["sessionControl"]["meta"]
 
     # check that ack message is returned
     sent_msg = json.loads(

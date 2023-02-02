@@ -7,6 +7,7 @@ function openWorkstationSession(element) {
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
         const domain = element.dataset.domain;
+        const debug = element.dataset.debug;
         const timeout = 3000;
 
         if (event.ctrlKey) {
@@ -16,13 +17,7 @@ function openWorkstationSession(element) {
 
         const regions = JSON.parse(document.getElementById('workstation-regions').textContent);
 
-        let potentialSessionOrigins;
-        if (domain.includes("localhost")) {
-            const port = window.location.port;
-            potentialSessionOrigins = Array(`http://${domain}${port ? ':' + port : ''}`);
-        } else{
-            potentialSessionOrigins = getSessionOrigins(domain, regions);
-        }
+        const potentialSessionOrigins = getSessionOrigins(domain, regions, debug);
         const workstationWindow = window.open('', windowIdentifier);
 
         // check if we just opened a blank or existing context
@@ -54,11 +49,15 @@ function openWorkstationSession(element) {
     }
 }
 
-function getSessionOrigins(hostname, regions) {
+function getSessionOrigins(hostname, regions, debug) {
     const protocol = window.location.protocol;
     const port = window.location.port;
 
-    return regions.map((region) => `${protocol}//${region}.${hostname}${port ? ':' + port : ''}`);
+    if (debug){
+        return Array(`${protocol}//${hostname}${port ? ':' + port : ''}`);
+    } else {
+        return regions.map((region) => `${protocol}//${region}.${hostname}${port ? ':' + port : ''}`);
+    }
 }
 
 
@@ -77,7 +76,7 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
     const messageId = UUIDv4();
     const msg = {
                 sessionControl: {
-                    header: {
+                    meta: {
                         id: messageId
                     },
                     ...action,
@@ -90,7 +89,7 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
         if (!receivedMsg) {
             return
         }
-        const ack = receivedMsg.header.acknowledge;
+        const ack = receivedMsg.meta.acknowledge;
         if (!ack) {
             return
         }
