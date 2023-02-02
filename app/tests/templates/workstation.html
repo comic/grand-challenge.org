@@ -35,17 +35,8 @@
             acks.appendChild(node2);
         }
 
-        function handleMessageWithDelay(event) {
-            setTimeout(handleMessage, 15000, event)
-        }
-
         function enableMockAcks() {
             window.addEventListener("message", handleMessage, false);
-        }
-
-        function enableMockAcksWithDelay() {
-            window.removeEventListener("message", handleMessage);
-            window.addEventListener("message", handleMessageWithDelay, false);
         }
 
         function disableMockAcks() {

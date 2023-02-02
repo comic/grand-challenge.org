@@ -69,9 +69,8 @@ def test_viewer_session_control(live_server, page, settings):
     )
     assert "acknowledge" in sent_msg["sessionControl"]["meta"]
 
-    # Test that if acknowledge sent too late, a new session will be created
-    viewer_page.evaluate("enableMockAcksWithDelay()")
-    page.get_by_role("button", name="Launch new Session").click()
+    # Set timeout to 0, test that a new session will be created
+    page.get_by_role("button", name="Test timeout").click()
     viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
     assert viewer_page.url.startswith(session_create_view)
 
