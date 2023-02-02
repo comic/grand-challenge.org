@@ -1,26 +1,12 @@
 import json
-from urllib.parse import urlparse
 
 import pytest
-from django.conf import settings
 from django.urls import reverse
 from django.views.generic import TemplateView
 
 
 class SessionControlView(TemplateView):
     template_name = "session_control.html"
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data()
-        context.update(
-            {
-                "netloc": settings.DJANGO_LIVE_TEST_SERVER_ADDRESS,
-                "domain": settings.DJANGO_LIVE_TEST_SERVER_ADDRESS.split(":")[
-                    0
-                ],
-            }
-        )
-        return context
 
 
 class WorkstationView(TemplateView):
@@ -33,17 +19,10 @@ class SessionCreationView(TemplateView):
 
 @pytest.mark.playwright
 def test_viewer_session_control(live_server, page, settings):
-    url = urlparse(live_server.url)
-    settings.DJANGO_LIVE_TEST_SERVER_ADDRESS = f"{url.netloc}"
-    session_create_view = (
-        f"{url.scheme}://{url.netloc}{reverse('new-session-test')}"
-    )
-    session_control_view = (
-        f"{url.scheme}://{url.netloc}{reverse('session-control-test')}"
-    )
-    mock_workstation_view = (
-        f"{url.scheme}://{url.netloc}{reverse('workstation-mock')}"
-    )
+    settings.WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = [live_server.url]
+    session_create_view = f"{live_server}{reverse('new-session-test')}"
+    session_control_view = f"{live_server}{reverse('session-control-test')}"
+    mock_workstation_view = f"{live_server}{reverse('workstation-mock')}"
     page.goto(session_control_view)
 
     # Test if a fresh click opens up a new page

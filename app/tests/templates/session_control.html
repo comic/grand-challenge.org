@@ -10,10 +10,8 @@
     <button class="btn btn-primary"
             data-session-control
             data-create-session-url='{% url 'new-session-test' %}'
-            data-domain="{{ domain }}"
             data-workstation-query='queryParam=12345'
             data-workstation-window-identifier='workstation-context'
-            data-debug=True
     >
         <i class="fas fa-eye"></i> Launch new Session
     </button>
@@ -21,10 +19,8 @@
     <button class="btn btn-primary"
             data-session-control
             data-create-session-url='{% url 'new-session-test' %}'
-            data-domain="{{ domain }}"
             data-workstation-query='queryParam=12345'
             data-workstation-window-identifier='workstation-context'
-            data-debug=True
             data-timeout="0"
     >
         <i class="fas fa-eye"></i> Test timeout
@@ -34,6 +30,6 @@
 
 {% block script %}
     {{ block.super }}
-    {{ regions|json_script:"workstation-regions" }}
+    {{ domains|json_script:"workstation-domains" }}
     <script src="{% static 'workstations/js/session-control.js' %}"></script>
 {% endblock %}

@@ -48,7 +48,6 @@
               title="View in viewer"
               data-session-control
               data-create-session-url='{% url 'workstations:workstation-session-create' slug=object.reader_study.workstation.slug %}'
-              data-domain="{{ request.site.domain }}"
               data-workstation-query='{% workstation_query display_set=object config=reader_study.workstation_config %}'
               data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
       >

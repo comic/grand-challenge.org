@@ -6,8 +6,6 @@ function openWorkstationSession(element) {
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
-        const domain = element.dataset.domain;
-        const debug = element.dataset.debug;
         const timeout = element.dataset.timeout || 3000;
 
         if (event.ctrlKey) {
@@ -15,9 +13,7 @@ function openWorkstationSession(element) {
             return;
         }
 
-        const regions = JSON.parse(document.getElementById('workstation-regions').textContent);
-
-        const potentialSessionOrigins = getSessionOrigins(domain, regions, debug);
+        const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
         const workstationWindow = window.open('', windowIdentifier);
 
         // check if we just opened a blank or existing context
@@ -48,18 +44,6 @@ function openWorkstationSession(element) {
         }
     }
 }
-
-function getSessionOrigins(hostname, regions, debug) {
-    const protocol = window.location.protocol;
-    const port = window.location.port;
-
-    if (debug){
-        return Array(`${protocol}//${hostname}${port ? ':' + port : ''}`);
-    } else {
-        return regions.map((region) => `${protocol}//${region}.${hostname}${port ? ':' + port : ''}`);
-    }
-}
-
 
 function genSessionControllersHook() {
      const data = document.currentScript.dataset;

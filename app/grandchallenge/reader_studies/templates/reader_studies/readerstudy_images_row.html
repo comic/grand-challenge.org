@@ -15,7 +15,6 @@
 
 <button class="btn badge badge-primary" data-session-control
    data-create-session-url='{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}'
-   data-domain="{{ request.site.domain }}"
    data-workstation-query='{% workstation_query image=object config=reader_study.workstation_config %}'
    data-workstation-window-identifier='workstation-{{ reader_study|meta_attr:'app_label' }}'
 >
