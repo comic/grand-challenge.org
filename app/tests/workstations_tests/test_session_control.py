@@ -48,7 +48,25 @@ def test_viewer_session_control(live_server, page, settings):
     )
     assert "acknowledge" in sent_msg["sessionControl"]["meta"]
 
+    # check that an ack with the wrong id is ignored
+    viewer_page.goto(mock_workstation_view)
+    viewer_page.evaluate("enableIncorrectMockAck()")
+    page.get_by_role("button", name="Launch new Session").click()
+    received_msg2 = json.loads(
+        viewer_page.locator("#messages :nth-child(1)").inner_text()
+    )
+    sent_msg2 = json.loads(
+        viewer_page.locator("#acks :nth-child(1)").inner_text()
+    )
+    assert (
+        received_msg2["sessionControl"]["meta"]["id"]
+        != sent_msg2["sessionControl"]["meta"]["acknowledge"]["id"]
+    )
+    viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
+    assert viewer_page.url.startswith(session_create_view)
+
     # Set timeout to 0, test that a new session will be created
+    viewer_page.goto(mock_workstation_view)
     page.get_by_role("button", name="Test timeout").click()
     viewer_page.get_by_text(SessionCreationView.template_name).wait_for()
     assert viewer_page.url.startswith(session_create_view)
