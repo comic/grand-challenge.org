@@ -6,15 +6,14 @@ function openWorkstationSession(element) {
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
+        const timeout = element.dataset.timeout || 3000;
 
         if (event.ctrlKey) {
             window.open(creationURI);
             return;
         }
 
-        // PoC Hack: ToDo query any existing session
-        const sessionOrigin = element.dataset.sessionOrigin;
-
+        const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
         const workstationWindow = window.open('', windowIdentifier);
 
         // check if we just opened a blank or existing context
@@ -27,16 +26,21 @@ function openWorkstationSession(element) {
             console.warn(err);
         }
 
-        if (workstationWindow === null || isBlankContext) {
+        if (workstationWindow === null || isBlankContext ) {
             window.open(creationURI, windowIdentifier);
         } else {
             workstationWindow.focus();
-            const msg = {
-                sessionControl: {
-                    loadQuery: query
-                }
-            }
-            workstationWindow.postMessage(msg, sessionOrigin);
+
+            const fallback = setTimeout(() => {
+                // Assume window is non-responsive
+                window.open(creationURI, windowIdentifier);
+            }, timeout);
+
+            potentialSessionOrigins.forEach((origin) => {
+                sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
+                    clearTimeout(fallback)
+                });
+            });
         }
     }
 }
@@ -50,6 +54,41 @@ function genSessionControllersHook() {
             element.onclick = openWorkstationSession(element);
         }
     }
+}
+
+function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
+    const messageId = UUIDv4();
+    const msg = {
+                sessionControl: {
+                    meta: {
+                        id: messageId
+                    },
+                    ...action,
+                }
+            };
+    targetWindow.postMessage(msg, origin);
+
+    function checkAckMessage(event) {
+        const receivedMsg = event.data.sessionControl;
+        if (!receivedMsg) {
+            return
+        }
+        const ack = receivedMsg.meta.acknowledge;
+        if (!ack) {
+            return
+        }
+        if ( ack.id === messageId ) {
+            ackCallback();
+            window.removeEventListener('message', checkAckMessage);
+        }
+    }
+    window.addEventListener('message', checkAckMessage);
+}
+
+function UUIDv4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
 }
 
 let sessionControllersHook;
@@ -71,4 +110,4 @@ $(document).ready(() => {
     htmx.onLoad(function() {
         sessionControllersHook()
     });
-})
+});

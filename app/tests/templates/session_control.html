@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <div>
+        Template: <b>{{ view.template_name }}</b>
+    </div>
+
+    <button class="btn btn-primary"
+            data-session-control
+            data-create-session-url='{% url 'new-session-test' %}'
+            data-workstation-query='queryParam=12345'
+            data-workstation-window-identifier='workstation-context'
+    >
+        <i class="fas fa-eye"></i> Launch new Session
+    </button>
+
+    <button class="btn btn-primary"
+            data-session-control
+            data-create-session-url='{% url 'new-session-test' %}'
+            data-workstation-query='queryParam=12345'
+            data-workstation-window-identifier='workstation-context'
+            data-timeout="0"
+    >
+        <i class="fas fa-eye"></i> Test timeout
+    </button>
+{% endblock %}
+
+
+{% block script %}
+    {{ block.super }}
+    {{ workstation_domains|json_script:"workstation-domains" }}
+    <script src="{% static 'workstations/js/session-control.js' %}"></script>
+{% endblock %}

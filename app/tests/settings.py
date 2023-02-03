@@ -13,6 +13,8 @@ SESSION_COOKIE_DOMAIN = ".testserver"
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 SECURE_SSL_REDIRECT = False
 
+TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
+
 # Speed up token generation in tests
 REST_KNOX[  # noqa F405
     "SECURE_HASH_ALGORITHM"
@@ -27,6 +29,8 @@ FORUMS_MIN_ACCOUNT_AGE_DAYS = 0
 ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN = 0
 ACCOUNT_RATE_LIMITS = {}
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
+ROOT_URLCONF = "tests.urls.root"
 
 CELERY_BROKER = "memory"
 CELERY_BROKER_URL = "memory://"

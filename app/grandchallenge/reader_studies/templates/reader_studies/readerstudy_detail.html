@@ -121,7 +121,6 @@
                     <button class="btn btn-primary"
                             data-session-control
                             data-create-session-url='{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}'
-                            data-session-origin="https://us-east-1.{{ request.site.domain }}"
                             data-workstation-query='{% workstation_query reader_study=object %}'
                             data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'>
                         <i class="fas fa-eye"></i> Launch this Reader Study
@@ -434,7 +433,7 @@
 {% block script %}
     {{ block.super }}
     <script src="{% static "js/refresh_sidebar.js" %}"></script>
-
+    {{ workstation_domains|json_script:"workstation-domains" }}
     <script src="{% static 'workstations/js/session-control.js' %}"></script>
 
 {% endblock %}

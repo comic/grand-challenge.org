@@ -70,7 +70,6 @@
     <button class="btn badge badge-primary"
             title="View algorithm result"
             data-session-control
-            data-session-origin="https://us-east-1.{{ request.site.domain }}"
             data-create-session-url='{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}'
             data-workstation-query='{% workstation_query algorithm_job=object config=algorithm.workstation_config %}'
             data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'>
