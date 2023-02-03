@@ -6,17 +6,14 @@ function openWorkstationSession(element) {
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
-        const domain = element.dataset.domain;
-        const timeout = 3000;
+        const timeout = element.dataset.timeout || 3000;
 
         if (event.ctrlKey) {
             window.open(creationURI);
             return;
         }
 
-        const regions = JSON.parse(document.getElementById('workstation-regions').textContent);
-        const potentialSessionOrigins = getSessionOrigins(domain, regions);
-
+        const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
         const workstationWindow = window.open('', windowIdentifier);
 
         // check if we just opened a blank or existing context
@@ -48,14 +45,6 @@ function openWorkstationSession(element) {
     }
 }
 
-function getSessionOrigins(hostname, regions) {
-    const protocol = "https";
-    const port = window.location.port;
-
-    return regions.map((region) => `${protocol}://${region}.${hostname}${port ? ':' + port : ''}`);
-}
-
-
 function genSessionControllersHook() {
      const data = document.currentScript.dataset;
      const querySelector = (typeof data.sessionControlQuerySelector === 'undefined') ? '[data-session-control]' : data.sessionControlQuerySelector;
@@ -71,7 +60,7 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
     const messageId = UUIDv4();
     const msg = {
                 sessionControl: {
-                    header: {
+                    meta: {
                         id: messageId
                     },
                     ...action,
@@ -84,7 +73,7 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
         if (!receivedMsg) {
             return
         }
-        const ack = receivedMsg.header.acknowledge;
+        const ack = receivedMsg.meta.acknowledge;
         if (!ack) {
             return
         }

@@ -2,6 +2,7 @@ import os
 import re
 from datetime import datetime, timedelta
 from itertools import product
+from pathlib import Path
 
 import sentry_sdk
 from celery.schedules import crontab
@@ -52,7 +53,7 @@ IGNORABLE_404_URLS = [
 
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the config dir. We need to  go one dir higher so path.join("..")
-SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
 DATABASES = {
     "default": {
@@ -386,7 +387,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.about_page",
                 "grandchallenge.core.context_processors.newsletter_signup",
                 "grandchallenge.core.context_processors.viewport_names",
-                "grandchallenge.core.context_processors.workstation_regions",
+                "grandchallenge.core.context_processors.workstation_domains",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
@@ -1112,6 +1113,8 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 }
 # Number of minutes grace period before the container is stopped
 WORKSTATIONS_GRACE_MINUTES = 5
+
+WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 
 CELERY_BEAT_SCHEDULE = {
     "delete_users_who_dont_login": {
