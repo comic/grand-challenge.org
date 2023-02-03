@@ -6,7 +6,7 @@ function openWorkstationSession(element) {
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
-        const timeout = element.dataset.timeout || 3000;
+        const timeout = element.dataset.timeout || 1000;
 
         if (event.ctrlKey) {
             window.open(creationURI);
@@ -17,6 +17,8 @@ function openWorkstationSession(element) {
             copyTextToClipboard(query);
             return;
         }
+
+        setSpinner(element);
 
         const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
         const workstationWindow = window.open('', windowIdentifier);
@@ -32,19 +34,17 @@ function openWorkstationSession(element) {
         }
 
         if (workstationWindow === null || isBlankContext) {
-            window.open(creationURI, windowIdentifier);
+            createNewSessionWindow(creationURI, windowIdentifier, element);
         } else {
-            workstationWindow.focus();
-
             const fallback = setTimeout(() => {
                 // Assume window is non-responsive
-                window.open(creationURI, windowIdentifier);
+                createNewSessionWindow(creationURI, windowIdentifier, element);
             }, timeout);
 
             potentialSessionOrigins.forEach((origin) => {
                 sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
                     clearTimeout(fallback)
-                });
+                }, element);
             });
         }
     }
@@ -57,7 +57,7 @@ function hookSessionControllers() {
     }
 }
 
-function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
+function sendSessionControlMessage(targetWindow, origin, action, ackCallback, triggeringElement) {
     const messageId = UUIDv4();
     const msg = {
         sessionControl: {
@@ -80,6 +80,8 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
         }
         if (ack.id === messageId) {
             ackCallback();
+            targetWindow.focus(); // absolutely necessary in Firefox, in Chrome/Edge window.open() already focusses the window
+            removeSpinner(triggeringElement);
             window.removeEventListener('message', checkAckMessage);
         }
     }
@@ -99,6 +101,24 @@ function copyTextToClipboard(text) {
     navigator.clipboard.write(data).then(function () {
         console.log("Copied to clipboard successfully!");
     });
+}
+
+function setSpinner(element) {
+    element.querySelector("i").style.display = "none";
+    const spinner = document.createElement("span");
+    spinner.classList.add("spinner-border", "spinner-border-sm");
+    element.prepend(spinner);
+}
+
+function removeSpinner(element) {
+    const spinner = element.querySelector("span");
+    element.removeChild(spinner);
+    element.querySelector("i").style.display = "inline-block";
+}
+
+function createNewSessionWindow(creationURI, windowIdentifier, triggeringElement){
+    window.open(creationURI, windowIdentifier);
+    removeSpinner(triggeringElement);
 }
 
 $(document).ready(() => {
