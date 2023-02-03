@@ -64,7 +64,7 @@
 
 {% block script %}
     {{ block.super }}
-    {{ domains|json_script:"workstation-domains" }}
+    {{ workstation_domains|json_script:"workstation-domains" }}
     <script type="text/javascript">
         $('#resultInfoModal').on('show.bs.modal', function (event) {
             let button = $(event.relatedTarget);

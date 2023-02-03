@@ -86,7 +86,7 @@ def viewport_names(*_, **__):
 
 def workstation_domains(*_, **__):
     return {
-        "domains": [
+        "workstation_domains": [
             *[
                 f"https://{region}{settings.SESSION_COOKIE_DOMAIN}"
                 for region in settings.WORKSTATIONS_ACTIVE_REGIONS

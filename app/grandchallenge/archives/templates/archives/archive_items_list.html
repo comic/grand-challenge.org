@@ -29,7 +29,7 @@
 
 {% block script %}
     {{ block.super }}
-    {{ domains|json_script:"workstation-domains" }}
+    {{ workstation_domains|json_script:"workstation-domains" }}
     <script src="{% static 'workstations/js/session-control.js' %}"></script>
 
 {% endblock %}
