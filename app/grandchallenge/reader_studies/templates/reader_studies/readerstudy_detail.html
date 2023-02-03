@@ -434,6 +434,6 @@
     {{ block.super }}
     <script src="{% static "js/refresh_sidebar.js" %}"></script>
     {{ workstation_domains|json_script:"workstation-domains" }}
-    <script src="{% static 'workstations/js/session-control.js' %}"></script>
+    <script type="module" src="{% static 'workstations/js/session-control.mjs' %}"></script>
 
 {% endblock %}

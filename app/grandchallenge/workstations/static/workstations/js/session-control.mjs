@@ -13,6 +13,11 @@ function openWorkstationSession(element) {
             return;
         }
 
+        if (event.altKey) {
+            copyTextToClipboard(query);
+            return;
+        }
+
         const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
         const workstationWindow = window.open('', windowIdentifier);
 
@@ -26,7 +31,7 @@ function openWorkstationSession(element) {
             console.warn(err);
         }
 
-        if (workstationWindow === null || isBlankContext ) {
+        if (workstationWindow === null || isBlankContext) {
             window.open(creationURI, windowIdentifier);
         } else {
             workstationWindow.focus();
@@ -45,27 +50,23 @@ function openWorkstationSession(element) {
     }
 }
 
-function genSessionControllersHook() {
-     const data = document.currentScript.dataset;
-     const querySelector = (typeof data.sessionControlQuerySelector === 'undefined') ? '[data-session-control]' : data.sessionControlQuerySelector;
-     return () => {
-        const sessionControllerElements = document.querySelectorAll(querySelector);
-        for (let element of sessionControllerElements) {
-            element.onclick = openWorkstationSession(element);
-        }
+function hookSessionControllers() {
+    const sessionControllerElements = document.querySelectorAll('[data-session-control]');
+    for (const element of sessionControllerElements) {
+        element.onclick = openWorkstationSession(element);
     }
 }
 
 function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
     const messageId = UUIDv4();
     const msg = {
-                sessionControl: {
-                    meta: {
-                        id: messageId
-                    },
-                    ...action,
-                }
-            };
+        sessionControl: {
+            meta: {
+                id: messageId
+            },
+            ...action,
+        }
+    };
     targetWindow.postMessage(msg, origin);
 
     function checkAckMessage(event) {
@@ -77,37 +78,43 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
         if (!ack) {
             return
         }
-        if ( ack.id === messageId ) {
+        if (ack.id === messageId) {
             ackCallback();
             window.removeEventListener('message', checkAckMessage);
         }
     }
+
     window.addEventListener('message', checkAckMessage);
 }
 
 function UUIDv4() {
-  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-  );
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
 }
 
-let sessionControllersHook;
-if (typeof sessionControllersHook === 'undefined') { // singleton
-    sessionControllersHook = genSessionControllersHook();
+function copyTextToClipboard(text) {
+    const blob = new Blob([text], {type: "text/plain"});
+    const data = [new ClipboardItem({ "text/plain": blob })];
+    navigator.clipboard.write(data).then(function () {
+        console.log("Copied to clipboard successfully!");
+    });
 }
 
 $(document).ready(() => {
     // Run default once
-    sessionControllersHook();
+    hookSessionControllers();
 
     // Sometimes content insertion is deferred and might result in adding session-control elements later:
     //  add listeners:
 
     // ajax-based tables
-    $('#ajaxDataTable').on('draw.dt', () => {sessionControllersHook()});
+    $('#ajaxDataTable').on('draw.dt', () => {
+        hookSessionControllers()
+    });
 
     // htmx-based tables
-    htmx.onLoad(function() {
-        sessionControllersHook()
+    htmx.onLoad(function () {
+        hookSessionControllers()
     });
 });
