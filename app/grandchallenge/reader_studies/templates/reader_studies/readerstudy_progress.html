@@ -123,5 +123,5 @@
     <script src="{% static 'reader_studies/js/remove_answers.js' %}"></script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
     {{ workstation_domains|json_script:"workstation-domains" }}
-    <script src="{% static 'workstations/js/session-control.js' %}"></script>
+    <script type="module" src="{% static 'workstations/js/session-control.mjs' %}"></script>
 {% endblock %}

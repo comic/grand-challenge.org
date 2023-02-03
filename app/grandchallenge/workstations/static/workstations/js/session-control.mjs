@@ -50,14 +50,10 @@ function openWorkstationSession(element) {
     }
 }
 
-function genSessionControllersHook() {
-    const data = document.currentScript.dataset;
-    const querySelector = (typeof data.sessionControlQuerySelector === 'undefined') ? '[data-session-control]' : data.sessionControlQuerySelector;
-    return () => {
-        const sessionControllerElements = document.querySelectorAll(querySelector);
-        for (let element of sessionControllerElements) {
-            element.onclick = openWorkstationSession(element);
-        }
+function hookSessionControllers() {
+    const sessionControllerElements = document.querySelectorAll('[data-session-control]');
+    for (const element of sessionControllerElements) {
+        element.onclick = openWorkstationSession(element);
     }
 }
 
@@ -105,25 +101,20 @@ function copyTextToClipboard(text) {
     });
 }
 
-let sessionControllersHook;
-if (typeof sessionControllersHook === 'undefined') { // singleton
-    sessionControllersHook = genSessionControllersHook();
-}
-
 $(document).ready(() => {
     // Run default once
-    sessionControllersHook();
+    hookSessionControllers();
 
     // Sometimes content insertion is deferred and might result in adding session-control elements later:
     //  add listeners:
 
     // ajax-based tables
     $('#ajaxDataTable').on('draw.dt', () => {
-        sessionControllersHook()
+        hookSessionControllers()
     });
 
     // htmx-based tables
     htmx.onLoad(function () {
-        sessionControllersHook()
+        hookSessionControllers()
     });
 });
