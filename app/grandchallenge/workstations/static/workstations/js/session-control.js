@@ -6,7 +6,7 @@ function openWorkstationSession(element) {
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
         const creationURI = `${url}?${query}`;
-        const timeout = element.dataset.timeout || 3000;
+        const timeout = element.dataset.timeout;
 
         if (event.ctrlKey) {
             window.open(creationURI);

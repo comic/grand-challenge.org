@@ -388,6 +388,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.newsletter_signup",
                 "grandchallenge.core.context_processors.viewport_names",
                 "grandchallenge.core.context_processors.workstation_domains",
+                "grandchallenge.core.context_processors.workstation_session_control_timeout",
                 "machina.core.context_processors.metadata",
             ],
             "loaders": [
@@ -1115,6 +1116,9 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 WORKSTATIONS_GRACE_MINUTES = 5
 
 WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
+WORKSTATIONS_SESSION_CONTROL_TIMEOUT = int(
+    os.environ.get("WORKSTATIONS_SESSION_CONTROL_TIMEOUT", "3000")
+)
 
 CELERY_BEAT_SCHEDULE = {
     "delete_users_who_dont_login": {

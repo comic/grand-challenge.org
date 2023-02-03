@@ -119,6 +119,7 @@
                         data-create-session-url='{% url 'workstations:workstation-session-create' slug=object.algorithm_image.algorithm.workstation.slug %}'
                         data-workstation-query='{% workstation_query algorithm_job=object config=object.algorithm_image.algorithm.workstation_config %}'
                         data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
+                        data-timeout="{{ workstation_session_control_timeout }}"
                 >
                     <i class="fa fa-eye"></i> Open Result in Viewer
                 </button>

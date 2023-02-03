@@ -122,7 +122,9 @@
                             data-session-control
                             data-create-session-url='{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}'
                             data-workstation-query='{% workstation_query reader_study=object %}'
-                            data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'>
+                            data-workstation-window-identifier='workstation-{{ object|meta_attr:'app_label' }}'
+                            data-timeout="{{ workstation_session_control_timeout }}"
+                    >
                         <i class="fas fa-eye"></i> Launch this Reader Study
                     </button>
                 </p>

@@ -94,3 +94,9 @@ def workstation_domains(*_, **__):
             *settings.WORKSTATIONS_EXTRA_BROADCAST_DOMAINS,
         ]
     }
+
+
+def workstation_session_control_timeout(*_, **__):
+    return {
+        "workstation_session_control_timeout": settings.WORKSTATIONS_SESSION_CONTROL_TIMEOUT
+    }
