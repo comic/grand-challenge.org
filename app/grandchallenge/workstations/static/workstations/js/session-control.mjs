@@ -43,8 +43,10 @@ function openWorkstationSession(element) {
 
             potentialSessionOrigins.forEach((origin) => {
                 sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
-                    clearTimeout(fallback)
-                }, element);
+                    clearTimeout(fallback);
+                    workstationWindow.focus(); // absolutely necessary in Firefox, in Chrome/Edge window.open() already focuses the window
+                    removeSpinner(element);
+                });
             });
         }
     }
@@ -57,7 +59,7 @@ function hookSessionControllers() {
     }
 }
 
-function sendSessionControlMessage(targetWindow, origin, action, ackCallback, triggeringElement) {
+function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
     const messageId = UUIDv4();
     const msg = {
         sessionControl: {
@@ -80,8 +82,6 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback, tr
         }
         if (ack.id === messageId) {
             ackCallback();
-            targetWindow.focus(); // absolutely necessary in Firefox, in Chrome/Edge window.open() already focusses the window
-            removeSpinner(triggeringElement);
             window.removeEventListener('message', checkAckMessage);
         }
     }
