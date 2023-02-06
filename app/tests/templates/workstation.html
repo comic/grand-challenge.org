@@ -12,7 +12,7 @@
 
 {% block script %}
     <script type="text/javascript">
-        function handleMessage(event) {
+        function handleMessage(event, randomId) {
             const eventString = JSON.stringify(event.data)
             const node = document.createElement("li");
             node.innerHTML = eventString;
@@ -23,7 +23,7 @@
                 sessionControl: {
                     meta: {
                         acknowledge: {
-                            id: event.data.sessionControl.meta.id
+                            id: `${randomId ? randomId : event.data.sessionControl.meta.id}`
                         }
                     }
                 }
@@ -35,8 +35,16 @@
             acks.appendChild(node2);
         }
 
+        function sendAckWithWrongId(event) {
+            return handleMessage(event, crypto.randomUUID());
+        }
+
         function enableMockAcks() {
             window.addEventListener("message", handleMessage, false);
+        }
+
+        function enableIncorrectMockAck() {
+            window.addEventListener("message", sendAckWithWrongId, false);
         }
 
         function disableMockAcks() {

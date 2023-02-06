@@ -60,7 +60,7 @@ function hookSessionControllers() {
 }
 
 function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
-    const messageId = UUIDv4();
+    const messageId = crypto.randomUUID();
     const msg = {
         sessionControl: {
             meta: {
@@ -87,12 +87,6 @@ function sendSessionControlMessage(targetWindow, origin, action, ackCallback) {
     }
 
     window.addEventListener('message', checkAckMessage);
-}
-
-function UUIDv4() {
-    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-    );
 }
 
 function copyTextToClipboard(text) {
