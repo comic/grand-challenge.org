@@ -13,10 +13,8 @@
 {{ object.origin.creator|user_profile_link }}
 <split></split>
 
-<button class="btn badge badge-primary" data-session-control
-   data-create-session-url='{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}'
-   data-workstation-query='{% workstation_query image=object config=reader_study.workstation_config %}'
-   data-workstation-window-identifier='workstation-{{ reader_study|meta_attr:'app_label' }}'
+<button class="btn badge badge-primary"
+        {% workstation_session_control_data workstation=reader_study.workstation context_object=reader_study image=object config=reader_study.workstation_config %}
 >
     <i class="fa fa-eye"></i> View Case
 </button>

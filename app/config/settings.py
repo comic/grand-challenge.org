@@ -1114,6 +1114,7 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 # Number of minutes grace period before the container is stopped
 WORKSTATIONS_GRACE_MINUTES = 5
 
+# Extra domains to broadcast workstation control messages to. Used in tests.
 WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 
 CELERY_BEAT_SCHEDULE = {

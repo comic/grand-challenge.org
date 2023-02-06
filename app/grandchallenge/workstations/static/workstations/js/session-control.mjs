@@ -1,5 +1,3 @@
-'use strict';
-
 function openWorkstationSession(element) {
     return (event) => {
         const windowIdentifier = element.dataset.workstationWindowIdentifier;
