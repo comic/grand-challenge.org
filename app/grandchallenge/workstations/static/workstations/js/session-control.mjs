@@ -111,7 +111,7 @@ function setSpinner(element) {
 }
 
 function removeSpinner(element) {
-    const spinner = element.querySelector("span");
+    const spinner = element.querySelector(".spinner-border");
     element.removeChild(spinner);
     element.querySelector("i").style.display = "inline-block";
 }
