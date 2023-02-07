@@ -202,7 +202,7 @@ def test_workstation_session_control_data():
     url = reverse(
         "workstations:workstation-session-create", kwargs={"slug": wk.slug}
     )
-    assert f'data-create-session-url="{url}"' in data
+    assert f"data-create-session-url={url!r}" in data  # noqa B907
     assert 'data-workstation-query=""' in data
     assert (
         f'data-workstation-window-identifier="workstation-{obj._meta.app_label}"'
