@@ -200,7 +200,7 @@ def test_workstation_session_control_data():
     )
     assert "data-session-control" in data
     assert (
-        f'data-create-session-url="{reverse("workstations:workstation-session-create", kwargs={"slug": wk.slug})}"'
+        f'data-create-session-url="{reverse("workstations:workstation-session-create", kwargs={"slug": wk.slug})!r}"'
         in data
     )
     assert 'data-workstation-query=""' in data
