@@ -1,9 +1,18 @@
+import pytest
+
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_query_string,
+    workstation_session_control_data,
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveItemFactory
-from tests.factories import ImageFactory, UserFactory, WorkstationConfigFactory
+from tests.factories import (
+    ImageFactory,
+    UserFactory,
+    WorkstationConfigFactory,
+    WorkstationFactory,
+)
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
@@ -174,3 +183,34 @@ def test_workstation_query_for_images(settings):
         f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" not in qs
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
+
+
+@pytest.mark.django_db
+def test_workstation_session_control_data():
+    wk = WorkstationFactory()
+    obj = ReaderStudyFactory()
+    with pytest.raises(TypeError):
+        workstation_session_control_data()
+        workstation_session_control_data(workstation=wk)
+        workstation_session_control_data(context_object=obj)
+
+    data = workstation_session_control_data(
+        workstation=wk,
+        context_object=obj,
+    )
+    assert "data-session-control" in data
+    assert (
+        f'data-create-session-url="{reverse("workstations:workstation-session-create", kwargs={"slug": wk.slug})}"'
+        in data
+    )
+    assert 'data-workstation-query=""' in data
+    assert (
+        f'data-workstation-window-identifier="workstation-{obj._meta.app_label}"'
+        in data
+    )
+
+    data2 = workstation_session_control_data(
+        workstation=wk, context_object=obj, reader_study=obj, timeout=200
+    )
+    assert f'data-workstation-query="readerStudy={obj.pk}"' in data2
+    assert 'data-timeout="200"' in data2
