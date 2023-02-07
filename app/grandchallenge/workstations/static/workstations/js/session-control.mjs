@@ -136,9 +136,11 @@ $(document).ready(() => {
     //  add listeners:
 
     // ajax-based tables
+    $('#ajaxDataTable').on('init.dt', () => {
+        setUpOberserver()
+    })
     $('#ajaxDataTable').on('draw.dt childRow.dt', () => {
         hookSessionControllers()
-        setUpOberserver()
     });
 
     // htmx-based tables
