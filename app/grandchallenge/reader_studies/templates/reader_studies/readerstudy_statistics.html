@@ -93,6 +93,5 @@
             });
         });
     </script>
-    {{ workstation_domains|json_script:"workstation-domains" }}
-    <script type="module" src="{% static 'workstations/js/session-control.mjs' %}"></script>
+    {% include 'workstations/partials/session-control.html' %}
 {% endblock %}

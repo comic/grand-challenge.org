@@ -121,8 +121,7 @@
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
     <script src="{% static 'reader_studies/js/autocomplete_htmx.js' %}" type="text/javascript"></script>
-    {{ workstation_domains|json_script:"workstation-domains" }}
-    <script type="module" src="{% static 'workstations/js/session-control.mjs' %}"></script>
+    {% include 'workstations/partials/session-control.html' %}
     {{ form_media }}
 
     <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">

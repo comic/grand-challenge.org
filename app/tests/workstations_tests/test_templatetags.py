@@ -199,10 +199,10 @@ def test_workstation_session_control_data():
         context_object=obj,
     )
     assert "data-session-control" in data
-    assert (
-        f'data-create-session-url="{reverse("workstations:workstation-session-create", kwargs={"slug": wk.slug})!r}"'
-        in data
+    url = reverse(
+        "workstations:workstation-session-create", kwargs={"slug": wk.slug}
     )
+    assert f'data-create-session-url="{url}"' in data
     assert 'data-workstation-query=""' in data
     assert (
         f'data-workstation-window-identifier="workstation-{obj._meta.app_label}"'

@@ -100,6 +100,6 @@ def workstation_session_control_data(
         "data-timeout": timeout if timeout else False,
     }
     return render_to_string(
-        "workstations/session-control-data.html",
+        "workstations/partials/session-control-data.html",
         {"session_control_data": data_attrs.items()},
     )
