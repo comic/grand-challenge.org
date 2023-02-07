@@ -1,0 +1,1 @@
+data-session-control {% for name, value in session_control_data %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}

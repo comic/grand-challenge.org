@@ -1,5 +1,6 @@
 from django import template
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.utils.http import urlencode
 
 from grandchallenge.subdomains.utils import reverse
@@ -83,13 +84,8 @@ def get_workstation_query_string(  # noqa: C901
 
 
 @register.simple_tag()
-def workstation_query(**kwargs):
-    return get_workstation_query_string(**kwargs)
-
-
-@register.simple_tag()
 def workstation_session_control_data(
-    workstation=None, context_object=None, timeout=None, **kwargs
+    *, workstation, context_object, timeout=None, **kwargs
 ):
     create_session_url = reverse(
         "workstations:workstation-session-create",
@@ -97,10 +93,13 @@ def workstation_session_control_data(
     )
     workstation_query_string = get_workstation_query_string(**kwargs)
     window_identifier = f"workstation-{context_object._meta.app_label}"
-    return (
-        f"data-session-control "
-        f"data-create-session-url= {create_session_url} "
-        f"data-workstation-query= {workstation_query_string} "
-        f"data-workstation-window-identifier= {window_identifier} "
-        f"data-timeout= {timeout if timeout else ''}"
+    data_attrs = {
+        "data-create-session-url": create_session_url,
+        "data-workstation-query": workstation_query_string,
+        "data-workstation-window-identifier": window_identifier,
+        "data-timeout": timeout if timeout else False,
+    }
+    return render_to_string(
+        "workstations/session-control-data.html",
+        {"session_control_data": data_attrs.items()},
     )
