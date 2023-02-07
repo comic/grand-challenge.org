@@ -113,6 +113,21 @@ function createNewSessionWindow(creationURI, windowIdentifier, triggeringElement
     removeSpinner(triggeringElement);
 }
 
+function setUpOberserver(){
+    // MutationObserver to listen to DOM changes on the display set cards
+    // this is necessary to initiate the session control hooks after a
+    // display set update
+    const targetNodes = document.querySelectorAll('[id^="collapse-"]');
+    const config = { attributes: true, childList: true, subtree: true };
+    const observer = new MutationObserver(function(mutations) {
+        hookSessionControllers()
+    });
+    [...targetNodes].forEach(target => {
+        console.log(target)
+        observer.observe(target, config);
+    });
+}
+
 $(document).ready(() => {
     // Run default once
     hookSessionControllers();
@@ -121,8 +136,9 @@ $(document).ready(() => {
     //  add listeners:
 
     // ajax-based tables
-    $('#ajaxDataTable').on('draw.dt', () => {
+    $('#ajaxDataTable').on('draw.dt childRow.dt', () => {
         hookSessionControllers()
+        setUpOberserver()
     });
 
     // htmx-based tables
