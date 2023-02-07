@@ -18,34 +18,39 @@ function openWorkstationSession(element) {
 
         setSpinner(element);
 
-        const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
-        const workstationWindow = window.open('', windowIdentifier);
-
-        // check if we just opened a blank or existing context
-        let isBlankContext = false;
         try {
-            isBlankContext = workstationWindow.document.location.href === "about:blank";
-        } catch (err) {
-            // ignore any errors with getting the href as it entails we did not open
-            // the context
-            console.warn(err);
-        }
+            const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
+            const workstationWindow = window.open('', windowIdentifier);
 
-        if (workstationWindow === null || isBlankContext) {
-            createNewSessionWindow(creationURI, windowIdentifier, element);
-        } else {
-            const fallback = setTimeout(() => {
-                // Assume window is non-responsive
+            // check if we just opened a blank or existing context
+            let isBlankContext = false;
+            try {
+                isBlankContext = workstationWindow.document.location.href === "about:blank";
+            } catch (err) {
+                // ignore any errors with getting the href as it entails we did not open
+                // the context
+                console.warn(err);
+            }
+
+            if (workstationWindow === null || isBlankContext) {
                 createNewSessionWindow(creationURI, windowIdentifier, element);
-            }, timeout);
+            } else {
+                const fallback = setTimeout(() => {
+                    // Assume window is non-responsive
+                    createNewSessionWindow(creationURI, windowIdentifier, element);
+                }, timeout);
 
-            potentialSessionOrigins.forEach((origin) => {
-                sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
-                    clearTimeout(fallback);
-                    workstationWindow.focus(); // absolutely necessary in Firefox, in Chrome/Edge window.open() already focuses the window
-                    removeSpinner(element);
+                potentialSessionOrigins.forEach((origin) => {
+                    sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
+                        clearTimeout(fallback);
+                        workstationWindow.focus(); // absolutely necessary in Firefox, in Chrome/Edge window.open() already focuses the window
+                        removeSpinner(element);
+                    });
                 });
-            });
+            }
+        } catch (error) {
+            removeSpinner(element);
+            throw error;
         }
     }
 }
@@ -96,6 +101,7 @@ function copyTextToClipboard(text) {
 }
 
 function setSpinner(element) {
+    element.disabled = true;
     element.querySelector("i").style.display = "none";
     const spinner = document.createElement("span");
     spinner.classList.add("spinner-border", "spinner-border-sm");
@@ -106,6 +112,7 @@ function removeSpinner(element) {
     const spinner = element.querySelector(".spinner-border");
     element.removeChild(spinner);
     element.querySelector("i").style.display = "inline-block";
+    element.disabled = false;
 }
 
 function createNewSessionWindow(creationURI, windowIdentifier, triggeringElement){
