@@ -198,19 +198,19 @@ def test_workstation_session_control_data():
         workstation=wk,
         context_object=obj,
     )
-    assert "data-session-control" in data
     url = reverse(
         "workstations:workstation-session-create", kwargs={"slug": wk.slug}
     )
-    assert f"data-create-session-url={url!r}" in data  # noqa B907
-    assert 'data-workstation-query=""' in data
     assert (
-        f'data-workstation-window-identifier="workstation-{obj._meta.app_label}"'
-        in data
+        data
+        == f'data-session-control data-create-session-url="{url}" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}"'
     )
+    assert "timeout" not in data
 
     data2 = workstation_session_control_data(
         workstation=wk, context_object=obj, reader_study=obj, timeout=200
     )
-    assert f'data-workstation-query="readerStudy={obj.pk}"' in data2
-    assert 'data-timeout="200"' in data2
+    assert (
+        data2
+        == f'data-session-control data-create-session-url="{url}" data-workstation-query="readerStudy={obj.pk}" data-workstation-window-identifier="workstation-{obj._meta.app_label}" data-timeout="200"'
+    )
