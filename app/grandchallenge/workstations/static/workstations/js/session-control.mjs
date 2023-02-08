@@ -20,16 +20,20 @@ function openWorkstationSession(element) {
 
         try {
             const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
-            const workstationWindow = window.open('', windowIdentifier);
+            let workstationWindow = window.open('', windowIdentifier);
 
             // check if we just opened a blank or existing context
             let isBlankContext = false;
             try {
                 isBlankContext = workstationWindow.document.location.href === "about:blank";
             } catch (err) {
-                // ignore any errors with getting the href as it entails we did not open
-                // the context
-                console.warn(err);
+                if (err.name == 'SecurityError') {
+                    // catch SecurityErrors (i.e. blocked CORS requests) so that we can open a new window with a new session
+                    workstationWindow = null;
+                } else {
+                    // reraise all other errors
+                    throw(err);
+                }
             }
 
             if (workstationWindow === null || isBlankContext) {
