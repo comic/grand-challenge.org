@@ -454,6 +454,7 @@ DJANGO_APPS = [
     "django.contrib.flatpages",
     "django.contrib.sitemaps",
     "django.contrib.redirects",
+    "django.forms",
 ]
 
 THIRD_PARTY_APPS = [

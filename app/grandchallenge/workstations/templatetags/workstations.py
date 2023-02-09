@@ -1,6 +1,6 @@
 from django import template
 from django.conf import settings
-from django.forms.renderers import DjangoTemplates
+from django.template.loader import render_to_string
 from django.utils.http import urlencode
 
 from grandchallenge.subdomains.utils import reverse
@@ -100,6 +100,6 @@ def workstation_session_control_data(
         "data-workstation-window-identifier": window_identifier,
         "data-timeout": timeout,
     }
-    return DjangoTemplates().render(
+    return render_to_string(
         "django/forms/widgets/attrs.html", {"widget": {"attrs": data_attrs}}
     )
