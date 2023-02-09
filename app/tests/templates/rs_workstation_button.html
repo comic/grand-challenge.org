@@ -1,0 +1,5 @@
+{% load workstations %}
+
+<button class="btn btn-primary"
+        {% workstation_session_control_data workstation=reader_study.workstation context_object=reader_study reader_study=reader_study %}
+></button>

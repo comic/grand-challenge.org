@@ -1,5 +1,9 @@
 import pytest
+from django.shortcuts import get_object_or_404
+from django.utils.functional import cached_property
+from django.views.generic import TemplateView
 
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_query_string,
@@ -214,3 +218,38 @@ def test_workstation_session_control_data():
         data2
         == f'data-session-control data-create-session-url="{url}" data-workstation-query="readerStudy={obj.pk}" data-workstation-window-identifier="workstation-{obj._meta.app_label}" data-timeout="200"'  # noqa B907
     )
+
+
+class RSWorkstationButtonTestView(TemplateView):
+    template_name = "rs_workstation_button.html"
+
+    @cached_property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "reader_study": self.reader_study,
+            }
+        )
+        return context
+
+
+@pytest.mark.django_db
+def test_workstation_session_control_data_tag_in_context(rf):
+    wk = WorkstationFactory()
+    rs = ReaderStudyFactory(workstation=wk)
+    request = rf.get(
+        reverse("rs-workstation-button", kwargs={"slug": rs.slug})
+    )
+    response = RSWorkstationButtonTestView.as_view()(
+        request, **{"slug": rs.slug}
+    ).render()
+    data = workstation_session_control_data(
+        workstation=wk,
+        context_object=rs,
+        reader_study=rs,
+    )
+    assert data in str(response.content)

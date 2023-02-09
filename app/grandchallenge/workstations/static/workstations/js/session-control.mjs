@@ -134,7 +134,6 @@ function setUpOberserver(){
         hookSessionControllers()
     });
     [...targetNodes].forEach(target => {
-        console.log(target)
         observer.observe(target, config);
     });
 }
