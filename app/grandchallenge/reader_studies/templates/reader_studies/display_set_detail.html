@@ -5,6 +5,7 @@
 {% load reader_study_tags %}
 {% load bleach %}
 {% load crispy_forms_tags %}
+{% load meta_attr %}
 
 <div class="card-body py-1" id="ds-content-{{ object.id }}">
 
@@ -43,8 +44,11 @@
       >
           Edit
       </button>
-    <a href="{% url 'workstations:workstation-session-create' slug=object.reader_study.workstation.slug %}?{% workstation_query display_set=object config=reader_study.workstation_config %}" class="btn btn-primary">
-      <i class="fa fa-eye"></i> View Display Set
-    </a>
+      <button class="btn btn-primary btn-sm"
+              title="View in viewer"
+              {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object config=object.reader_study.workstation_config %}
+      >
+          <i class="fa fa-eye"></i> View Display Set
+      </button>
   </div>
 </div>

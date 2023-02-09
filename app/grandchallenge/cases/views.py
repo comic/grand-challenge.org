@@ -1,6 +1,7 @@
 from functools import reduce
 from operator import or_
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404, HttpResponse
@@ -38,6 +39,7 @@ from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.workstations.models import Workstation
 
 
 class RawImageUploadSessionList(
@@ -64,6 +66,17 @@ class RawImageUploadSessionDetail(
     permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "workstation": Workstation.objects.filter(
+                    slug=settings.DEFAULT_WORKSTATION_SLUG
+                ).get()
+            }
+        )
+        return context
 
 
 class OSDImageDetail(

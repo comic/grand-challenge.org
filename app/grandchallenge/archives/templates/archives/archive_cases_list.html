@@ -1,5 +1,6 @@
 {% extends "datatables/list_base.html" %}
 {% load guardian_tags %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -24,4 +25,9 @@
     {% endif %}
 
     {{ block.super }}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {% include 'workstations/partials/session-control.html' %}
 {% endblock %}

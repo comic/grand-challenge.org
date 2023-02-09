@@ -82,3 +82,15 @@ def newsletter_signup(*_, **__):
 
 def viewport_names(*_, **__):
     return {"viewport_names": ViewportNames.values}
+
+
+def workstation_domains(*_, **__):
+    return {
+        "workstation_domains": [
+            *[
+                f"https://{region}{settings.SESSION_COOKIE_DOMAIN}"
+                for region in settings.WORKSTATIONS_ACTIVE_REGIONS
+            ],
+            *settings.WORKSTATIONS_EXTRA_BROADCAST_DOMAINS,
+        ]
+    }

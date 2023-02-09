@@ -3,6 +3,7 @@
 {% load url %}
 {% load workstations %}
 {% load pathlib %}
+{% load static %}
 
 {% block title %}Upload Session {{ object.pk }} - {{ block.super }}{% endblock %}
 
@@ -106,11 +107,13 @@
                             </ul>
                         </td>
                         <td>
-                            <a href="{% url 'workstations:default-session-create' %}?{% workstation_query image=image %}">
-                                <span class="badge badge-primary">
+                            <button class="btn badge badge-primary"
+                               {% workstation_session_control_data workstation=workstation context_object=image image=image %}
+                            >
+                                <span>
                                     <i class="fa fa-eye"></i> View Image
                                 </span>
-                            </a>
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -122,4 +125,9 @@
             <div class="alert alert-danger">No images imported.</div>
         {% endif %}
     {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {% include 'workstations/partials/session-control.html' %}
 {% endblock %}

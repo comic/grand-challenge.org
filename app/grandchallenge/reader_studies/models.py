@@ -147,7 +147,7 @@ as for each case are displayed in the ``statistics`` view.
 """
 
 from grandchallenge.workstations.templatetags.workstations import (
-    workstation_query,
+    get_workstation_query_string,
 )
 
 CASE_TEXT_SCHEMA = {
@@ -862,7 +862,7 @@ class DisplaySet(UUIDModel):
             "workstations:workstation-session-create",
             kwargs={"slug": self.reader_study.workstation.slug},
         )
-        query = workstation_query(display_set=self)
+        query = get_workstation_query_string(display_set=self)
         return f"{url}?{query}"
 
     @property

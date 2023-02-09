@@ -1,9 +1,19 @@
+import pytest
+from django.shortcuts import render
+
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.templatetags.workstations import (
-    workstation_query,
+    get_workstation_query_string,
+    workstation_session_control_data,
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveItemFactory
-from tests.factories import ImageFactory, UserFactory, WorkstationConfigFactory
+from tests.factories import (
+    ImageFactory,
+    UserFactory,
+    WorkstationConfigFactory,
+    WorkstationFactory,
+)
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
@@ -17,7 +27,7 @@ def test_workstation_query_for_reader_studies(settings):
     config = WorkstationConfigFactory.build()
     user = UserFactory.build()
 
-    qs = workstation_query(reader_study=reader_study, user=user)
+    qs = get_workstation_query_string(reader_study=reader_study, user=user)
     assert "&" in qs
     assert (
         f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
@@ -29,7 +39,7 @@ def test_workstation_query_for_reader_studies(settings):
         in qs
     )
 
-    qs = workstation_query(reader_study=reader_study)
+    qs = get_workstation_query_string(reader_study=reader_study)
     assert "&" in qs
     assert (
         f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
@@ -41,7 +51,7 @@ def test_workstation_query_for_reader_studies(settings):
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = workstation_query(reader_study=reader_study, config=config)
+    qs = get_workstation_query_string(reader_study=reader_study, config=config)
     assert "&" in qs
     assert (
         f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
@@ -55,7 +65,7 @@ def test_workstation_query_for_reader_studies(settings):
 
     reader_study.workstation_config = None
 
-    qs = workstation_query(reader_study=reader_study)
+    qs = get_workstation_query_string(reader_study=reader_study)
     assert "&" not in qs
     assert (
         f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
@@ -71,7 +81,7 @@ def test_workstation_query_for_display_sets(settings):
     config = WorkstationConfigFactory.build()
     display_set = DisplaySetFactory.build(reader_study=reader_study)
 
-    qs = workstation_query(display_set=display_set)
+    qs = get_workstation_query_string(display_set=display_set)
     assert "&" in qs
     assert (
         f"{settings.WORKSTATIONS_DISPLAY_SET_QUERY_PARAM}={display_set.pk}"
@@ -83,7 +93,7 @@ def test_workstation_query_for_display_sets(settings):
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = workstation_query(display_set=display_set, config=config)
+    qs = get_workstation_query_string(display_set=display_set, config=config)
     assert "&" in qs
     assert (
         f"{settings.WORKSTATIONS_DISPLAY_SET_QUERY_PARAM}={display_set.pk}"
@@ -97,7 +107,7 @@ def test_workstation_query_for_display_sets(settings):
 
     reader_study.workstation_config = None
 
-    qs = workstation_query(display_set=display_set)
+    qs = get_workstation_query_string(display_set=display_set)
     assert "&" not in qs
     assert (
         f"{settings.WORKSTATIONS_DISPLAY_SET_QUERY_PARAM}={display_set.pk}"
@@ -110,7 +120,7 @@ def test_workstation_query_for_archive_items(settings):
     config = WorkstationConfigFactory.build()
     archive_item = ArchiveItemFactory.build()
 
-    qs = workstation_query(archive_item=archive_item, config=config)
+    qs = get_workstation_query_string(archive_item=archive_item, config=config)
     assert "&" in qs
     assert (
         f"{settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM}={archive_item.pk}"
@@ -118,7 +128,7 @@ def test_workstation_query_for_archive_items(settings):
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
 
-    qs = workstation_query(archive_item=archive_item)
+    qs = get_workstation_query_string(archive_item=archive_item)
     assert "&" not in qs
     assert (
         f"{settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM}={archive_item.pk}"
@@ -131,14 +141,16 @@ def test_workstation_query_for_algorithms(settings):
     algorithm_job = AlgorithmJobFactory.build()
     config = WorkstationConfigFactory.build()
 
-    qs = workstation_query(algorithm_job=algorithm_job)
+    qs = get_workstation_query_string(algorithm_job=algorithm_job)
     assert "&" not in qs
     assert (
         f"{settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM}={algorithm_job.pk}"
         in qs
     )
 
-    qs = workstation_query(algorithm_job=algorithm_job, config=config)
+    qs = get_workstation_query_string(
+        algorithm_job=algorithm_job, config=config
+    )
     assert "&" in qs
     assert (
         f"{settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM}={algorithm_job.pk}"
@@ -151,7 +163,7 @@ def test_workstation_query_for_images(settings):
     image, overlay = ImageFactory.build_batch(2)
     config = WorkstationConfigFactory.build()
 
-    qs = workstation_query(image=image)
+    qs = get_workstation_query_string(image=image)
     assert "&" not in qs
     assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
     assert (
@@ -159,16 +171,63 @@ def test_workstation_query_for_images(settings):
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = workstation_query(image=image, overlay=overlay)
+    qs = get_workstation_query_string(image=image, overlay=overlay)
     assert "&" in qs
     assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
     assert f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" in qs
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = workstation_query(image=image, config=config)
+    qs = get_workstation_query_string(image=image, config=config)
     assert "&" in qs
     assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
     assert (
         f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" not in qs
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
+
+
+@pytest.mark.django_db
+def test_workstation_session_control_data():
+    wk = WorkstationFactory()
+    obj = ReaderStudyFactory()
+    with pytest.raises(TypeError):
+        workstation_session_control_data()
+        workstation_session_control_data(workstation=wk)
+        workstation_session_control_data(context_object=obj)
+
+    data = workstation_session_control_data(
+        workstation=wk,
+        context_object=obj,
+    )
+    url = reverse(
+        "workstations:workstation-session-create", kwargs={"slug": wk.slug}
+    )
+    assert (
+        data
+        == f' data-session-control data-create-session-url="{url}" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}"'  # noqa B907
+    )
+    assert "timeout" not in data
+
+    data2 = workstation_session_control_data(
+        workstation=wk, context_object=obj, reader_study=obj, timeout=200
+    )
+    assert (
+        data2
+        == f' data-session-control data-create-session-url="{url}" data-workstation-query="readerStudy={obj.pk}" data-workstation-window-identifier="workstation-{obj._meta.app_label}" data-timeout="200"'  # noqa B907
+    )
+
+
+@pytest.mark.django_db
+def test_workstation_session_control_data_tag_in_context(rf):
+    workstation = WorkstationFactory()
+    image = ImageFactory()
+    request = rf.get("/foo/")
+    response = render(
+        request,
+        "workstation_button.html",
+        {"workstation": workstation, "image": image},
+    )
+    data = workstation_session_control_data(
+        workstation=workstation, context_object=image, image=image
+    )
+    assert data in str(response.content)

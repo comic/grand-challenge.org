@@ -112,7 +112,7 @@ def test_rendering_challenge_settings(
 @pytest.mark.parametrize(
     "subdomain,expected_subdomain,expected_challenge,expected_url_conf",
     [
-        (None, None, False, "config.urls.root"),
+        (None, None, False, "tests.urls.root"),
         ("c", "c", True, "config.urls.challenge_subdomain"),
         ("C", "c", True, "config.urls.challenge_subdomain"),
         ("us-east-1", "us-east-1", False, "config.urls.rendering_subdomain"),

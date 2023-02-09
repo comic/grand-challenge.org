@@ -6,6 +6,7 @@
 {% load workstations %}
 {% load static %}
 {% load url %}
+{% load meta_attr %}
 
 {% block title %}
     Algorithm Result - {{ block.super }}
@@ -113,10 +114,11 @@
             {% endfor %}
 
             {% if object.status == object.SUCCESS %}
-                <a class="btn btn-primary my-3"
-                   href="{% url 'workstations:workstation-session-create' slug=object.algorithm_image.algorithm.workstation.slug %}?{% workstation_query algorithm_job=object config=object.algorithm_image.algorithm.workstation_config %}">
+                <button class="btn btn-primary my-3"
+                        {% workstation_session_control_data workstation=object.algorithm_image.algorithm.workstation context_object=object algorithm_job=object config=object.algorithm_image.algorithm.workstation_config %}
+                >
                     <i class="fa fa-eye"></i> Open Result in Viewer
-                </a>
+                </button>
             {% endif %}
 
             <h3>Result Reference Data</h3>
@@ -362,6 +364,7 @@
 
 {% block script %}
     {{ block.super }}
+    {% include 'workstations/partials/session-control.html' %}
 
     <script type="text/javascript">
         $('#resultInfoModal').on('show.bs.modal', function (event) {

@@ -1,12 +1,14 @@
 from django import template
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.utils.http import urlencode
+
+from grandchallenge.subdomains.utils import reverse
 
 register = template.Library()
 
 
-@register.simple_tag()
-def workstation_query(  # noqa: C901
+def get_workstation_query_string(  # noqa: C901
     image=None,
     overlay=None,
     reader_study=None,
@@ -79,3 +81,25 @@ def workstation_query(  # noqa: C901
         )
 
     return urlencode(query)
+
+
+@register.simple_tag()
+def workstation_session_control_data(
+    *, workstation, context_object, timeout=False, **kwargs
+):
+    create_session_url = reverse(
+        "workstations:workstation-session-create",
+        kwargs={"slug": workstation.slug},
+    )
+    workstation_query_string = get_workstation_query_string(**kwargs)
+    window_identifier = f"workstation-{context_object._meta.app_label}"
+    data_attrs = {
+        "data-session-control": True,
+        "data-create-session-url": create_session_url,
+        "data-workstation-query": workstation_query_string,
+        "data-workstation-window-identifier": window_identifier,
+        "data-timeout": timeout,
+    }
+    return render_to_string(
+        "django/forms/widgets/attrs.html", {"widget": {"attrs": data_attrs}}
+    )
