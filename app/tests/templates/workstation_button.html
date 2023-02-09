@@ -1,0 +1,5 @@
+{% load workstations %}
+
+<button class="btn btn-primary"
+        {% workstation_session_control_data workstation=workstation context_object=image image=image %}
+></button>
