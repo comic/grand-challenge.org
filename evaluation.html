@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Evaluation &mdash; grand-challenge.org  documentation</title>
@@ -11,10 +11,8 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -29,11 +27,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> grand-challenge.org
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            grand-challenge.org
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -81,7 +83,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Evaluation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/evaluation.rst.txt" rel="nofollow"> View page source</a>
@@ -204,7 +206,7 @@ is one number per evaluation. For example:</p>
 <dt class="sig sig-object py" id="grandchallenge.evaluation.models.Phase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.evaluation.models.</span></span><span class="sig-name descname"><span class="pre">Phase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view_content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">challenge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_jsonpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_error_jsonpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_default_sort</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_decimal_places</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_results_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_method_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_display_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator_must_be_verified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_submission_comments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_submission_comments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_supplementary_file_link</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_url_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_url_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_url_help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_supplementary_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_limit_period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submissions_open_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submissions_close_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_page_html</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_publish_new_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_all_metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm_time_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workstation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workstation_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hanging_protocol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v4.1)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
 <li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v4.1)"><em>DateTimeField</em></a>) – Created</p></li>
@@ -246,7 +248,7 @@ is one number per evaluation. For example:</p>
 </dl>
 <p>Relationship fields:</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>challenge</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Challenge</span></code>) – Challenge (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">phase</span></code>)</p></li>
 <li><p><strong>archive</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Archive</span></code>) – Archive. Which archive should be used as the source dataset for this phase? (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">phase</span></code>)</p></li>
@@ -265,7 +267,7 @@ is one number per evaluation. For example:</p>
 </dl>
 <p>Reverse relationships:</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>phaseuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <code class="xref py py-class docutils literal notranslate"><span class="pre">PhaseUserObjectPermission</span></code>) – All phase user object permissions of this phase (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
 <li><p><strong>phasegroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <code class="xref py py-class docutils literal notranslate"><span class="pre">PhaseGroupObjectPermission</span></code>) – All phase group object permissions of this phase (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
@@ -336,13 +338,13 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 one result, and if a key does not exist it will return an empty string as
 template tags should not raise errors.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>obj</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – The dictionary to query</p></li>
 <li><p><strong>jsonpath</strong> – The path to the object (singular)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The most relevant object in the dictionary</p>
 </dd>
 </dl>
