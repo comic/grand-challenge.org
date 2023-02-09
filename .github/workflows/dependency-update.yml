@@ -33,8 +33,7 @@ jobs:
         id: dependency-update
         timeout-minutes: 5
         run: |
-          POETRY_LOG=$(poetry update --lock --no-interaction --no-ansi)
-          echo "poetry-log=$POETRY_LOG" >> $GITHUB_OUTPUT
+          poetry update --lock --no-interaction --no-ansi
       - name: Set DOCKER_GID
         run: |
           echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
@@ -58,8 +57,8 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
-          commit-message: "Automated dependency update"
+          commit-message: "Update dependencies"
           branch-suffix: "short-commit-hash"
           delete-branch: true
           title: "Update dependencies"
-          body: "Output:\n\n```\n${{ steps.dependency-update.outputs.poetry-log }}\n```"
+          body: "Automated dependency update, see changes to `poetry.lock`."
