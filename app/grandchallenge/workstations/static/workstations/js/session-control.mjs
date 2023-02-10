@@ -25,14 +25,13 @@ function openWorkstationSession(element) {
             // check if we just opened a blank or existing context
             let isBlankContext = false;
             try {
-                isBlankContext = workstationWindow.document.location.href === "about:blank";
+                isBlankContext = workstationWindow.document.location.href === 'about:blank';
             } catch (err) {
-                if (err.name == 'SecurityError') {
-                    // catch SecurityErrors (i.e. blocked CORS requests) so that we can open a new window with a new session
+                // A SecurityError (i.e. blocked CORS requests) suggests that the window is likely an existing session
+                // on another origin. Other errors should result in a forced new session
+                if (err.name !== 'SecurityError') {
+                    console.error(err);
                     workstationWindow = null;
-                } else {
-                    // reraise all other errors
-                    throw(err);
                 }
             }
 
@@ -47,7 +46,8 @@ function openWorkstationSession(element) {
                 potentialSessionOrigins.forEach((origin) => {
                     sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
                         clearTimeout(fallback);
-                        workstationWindow.focus(); // absolutely necessary in Firefox, in Chrome/Edge window.open() already focuses the window
+                        // focus() needed in Firefox, in Chromium engines the open() already focuses the window
+                        workstationWindow.focus();
                         removeSpinner(element);
                     });
                 });
@@ -119,7 +119,7 @@ function removeSpinner(element) {
     element.disabled = false;
 }
 
-function createNewSessionWindow(creationURI, windowIdentifier, triggeringElement){
+function createNewSessionWindow(creationURI, windowIdentifier, triggeringElement) {
     window.open(creationURI, windowIdentifier);
     removeSpinner(triggeringElement);
 }
