@@ -27,8 +27,9 @@ function openWorkstationSession(element) {
             try {
                 isBlankContext = workstationWindow.document.location.href === 'about:blank';
             } catch (err) {
-                // A SecurityError (i.e. blocked CORS requests) suggests that the window is likely an existing session
-                // on another origin. Other errors should result in a forced new session
+                // A SecurityError (i.e. blocked CORS requests) suggests that
+                // the window is likely an existing session on a different origin.
+                // Other errors should result in forcing a new session
                 if (err.name !== 'SecurityError') {
                     console.error(err);
                     workstationWindow = null;
@@ -46,7 +47,8 @@ function openWorkstationSession(element) {
                 potentialSessionOrigins.forEach((origin) => {
                     sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
                         clearTimeout(fallback);
-                        // focus() needed in Firefox, in Chromium engines the open() already focuses the window
+                        // focus() needed in Firefox, in Chromium engines
+                        // the open() already focuses the window
                         workstationWindow.focus();
                         removeSpinner(element);
                     });
