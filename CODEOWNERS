@@ -8,6 +8,7 @@
 # modifies JS files, only @js-owner and not the global
 # owner(s) will be requested for a review.
 *.js    @HarmvZ
+*.mjs   @HarmvZ
 
 # Owners of specific Django applications
 /app/grandchallenge/algorithms/       @amickan
