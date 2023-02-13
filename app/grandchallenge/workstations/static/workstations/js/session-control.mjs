@@ -20,13 +20,12 @@ function openWorkstationSession(element) {
 
         function createNewSessionWindow() {
             window.open(creationURI, windowIdentifier);
+            removeSpinner(element);
         }
 
         try {
             const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
             let workstationWindow = window.open('', windowIdentifier);
-
-
 
             // check if we just opened a blank or existing context
             let isBlankContext = false;
@@ -34,7 +33,7 @@ function openWorkstationSession(element) {
                 isBlankContext = workstationWindow.document.location.href === 'about:blank';
             } catch (err) {
                 // A SecurityError (i.e. blocked CORS requests) suggests that
-                // the window is likely an existing session on a different origin.
+                // the window is likely an existing session (that has a different origin).
                 // Other errors should result in forcing a new session
                 if (err.name !== 'SecurityError') {
                    createNewSessionWindow();
@@ -50,18 +49,21 @@ function openWorkstationSession(element) {
                     createNewSessionWindow();
                 }, timeout);
 
+                function onMessageIsSuccess() {
+                    clearTimeout(fallbackTimer);
+                    // focus() needed in Firefox, in Chromium engines
+                    // the open() already focuses the window
+                    workstationWindow.focus();
+                    removeSpinner(element);
+                };
+
                 potentialSessionOrigins.forEach((origin) => {
-                    sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
-                        clearTimeout(fallbackTimer);
-                        // focus() needed in Firefox, in Chromium engines
-                        // the open() already focuses the window
-                        workstationWindow.focus();
-                        removeSpinner(element);
-                    });
+                    sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, onMessageIsSuccess);
                 });
             }
-        } finally {
+        } catch(err) {
             removeSpinner(element);
+            throw err;
         }
     }
 }
@@ -121,6 +123,9 @@ function setSpinner(element) {
 
 function removeSpinner(element) {
     const spinner = element.querySelector(".spinner-border");
+    if (spinner === null) {
+
+    }
     element.removeChild(spinner);
     element.querySelector("i").style.display = "inline-block";
     element.disabled = false;
