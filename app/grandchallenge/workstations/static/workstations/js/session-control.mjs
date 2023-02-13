@@ -123,10 +123,9 @@ function setSpinner(element) {
 
 function removeSpinner(element) {
     const spinner = element.querySelector(".spinner-border");
-    if (spinner === null) {
-
+    if (spinner !== null) {
+        element.removeChild(spinner);
     }
-    element.removeChild(spinner);
     element.querySelector("i").style.display = "inline-block";
     element.disabled = false;
 }
