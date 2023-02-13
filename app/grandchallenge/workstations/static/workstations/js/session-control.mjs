@@ -18,9 +18,15 @@ function openWorkstationSession(element) {
 
         setSpinner(element);
 
+        function createNewSessionWindow() {
+            window.open(creationURI, windowIdentifier);
+        }
+
         try {
             const potentialSessionOrigins = JSON.parse(document.getElementById('workstation-domains').textContent);
             let workstationWindow = window.open('', windowIdentifier);
+
+
 
             // check if we just opened a blank or existing context
             let isBlankContext = false;
@@ -31,22 +37,22 @@ function openWorkstationSession(element) {
                 // the window is likely an existing session on a different origin.
                 // Other errors should result in forcing a new session
                 if (err.name !== 'SecurityError') {
-                    console.error(err);
-                    workstationWindow = null;
+                   createNewSessionWindow();
+                   throw err;
                 }
             }
 
-            if (workstationWindow === null || isBlankContext) {
-                createNewSessionWindow(creationURI, windowIdentifier, element);
+            if (isBlankContext) {
+                createNewSessionWindow();
             } else {
-                const fallback = setTimeout(() => {
+                const fallbackTimer = setTimeout(() => {
                     // Assume window is non-responsive
-                    createNewSessionWindow(creationURI, windowIdentifier, element);
+                    createNewSessionWindow();
                 }, timeout);
 
                 potentialSessionOrigins.forEach((origin) => {
                     sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, () => {
-                        clearTimeout(fallback);
+                        clearTimeout(fallbackTimer);
                         // focus() needed in Firefox, in Chromium engines
                         // the open() already focuses the window
                         workstationWindow.focus();
@@ -54,9 +60,8 @@ function openWorkstationSession(element) {
                     });
                 });
             }
-        } catch (error) {
+        } finally {
             removeSpinner(element);
-            throw error;
         }
     }
 }
@@ -119,11 +124,6 @@ function removeSpinner(element) {
     element.removeChild(spinner);
     element.querySelector("i").style.display = "inline-block";
     element.disabled = false;
-}
-
-function createNewSessionWindow(creationURI, windowIdentifier, triggeringElement) {
-    window.open(creationURI, windowIdentifier);
-    removeSpinner(triggeringElement);
 }
 
 function setUpOberserver(){
