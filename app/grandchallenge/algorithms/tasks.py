@@ -189,7 +189,6 @@ def create_algorithm_jobs_for_session(
             algorithm_image=algorithm_image,
             civ_sets=civ_sets,
             creator=session.creator,
-            extra_viewer_groups=algorithm_editors,
             extra_logs_viewer_groups=algorithm_editors,
             task_on_success=task_on_success,
         )
@@ -370,7 +369,6 @@ def create_algorithm_jobs(
                 time_limit=time_limit,
             )
             j.inputs.set(civ_set)
-
             if extra_viewer_groups is not None:
                 j.viewer_groups.add(*extra_viewer_groups)
 

@@ -1,4 +1,4 @@
-from guardian.shortcuts import assign_perm
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -12,6 +12,7 @@ from rest_framework.relations import (
 )
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -151,9 +152,13 @@ class JobPostSerializer(JobSerializer):
         if "request" in self.context:
             user = self.context["request"].user
 
-            self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                "algorithms.execute_algorithm",
+            self.fields["algorithm"].queryset = (
+                get_objects_for_user(
+                    user,
+                    "algorithms.execute_algorithm",
+                )
+                .select_related("editors_group")
+                .prefetch_related("algorithm_container_images")
             )
 
     def validate(self, data):
@@ -165,7 +170,7 @@ class JobPostSerializer(JobSerializer):
                 "Algorithm image is not ready to be used"
             )
         data["creator"] = user
-        data["algorithm_image"] = alg.latest_executable_image
+        data["algorithm"] = alg
 
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided
@@ -197,14 +202,8 @@ class JobPostSerializer(JobSerializer):
 
     def create(self, validated_data):
         inputs_data = validated_data.pop("inputs")
-        job = Job.objects.create(**validated_data)
-
-        # TODO AUG2021 JM permission management should be done in 1 place
-        # The execution for jobs over the API or non-sessions needs
-        # to be cleaned up. See callers of `execute_jobs`.
-        editors_group = job.algorithm_image.algorithm.editors_group
-        job.viewer_groups.add(editors_group)
-        assign_perm("algorithms.view_logs", editors_group, job)
+        algorithm = validated_data.pop("algorithm")
+        creator = validated_data.pop("creator")
 
         component_interface_values = []
         upload_pks = {}
@@ -228,11 +227,9 @@ class JobPostSerializer(JobSerializer):
             component_interface_values.append(civ)
 
         # use interface defaults if no value was provided
-        algorithm_input_pks = {
-            a.pk for a in job.algorithm_image.algorithm.inputs.all()
-        }
+        algorithm_input_pks = {a.pk for a in algorithm.inputs.all()}
         input_pks = {i["interface"].pk for i in inputs_data}
-        defaults = job.algorithm_image.algorithm.inputs.filter(
+        defaults = algorithm.inputs.filter(
             id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=False,
         )
@@ -245,7 +242,12 @@ class JobPostSerializer(JobSerializer):
             civ.save()
             component_interface_values.append(civ)
 
-        job.inputs.add(*component_interface_values)
-        job.run_job(upload_pks=upload_pks, user_upload_pks=user_upload_pks)
+        with transaction.atomic():
+            jobs = create_algorithm_jobs(
+                algorithm_image=algorithm.latest_executable_image,
+                civ_sets=[{*component_interface_values}],
+                creator=creator,
+                extra_logs_viewer_groups=[algorithm.editors_group],
+            )
 
-        return job
+        return jobs[0]

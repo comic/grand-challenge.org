@@ -599,11 +599,15 @@ class Job(UUIDModel, ComponentJob):
 
         if adding:
             self.init_permissions()
-            followers = list(
-                self.algorithm_image.algorithm.editors_group.user_set.all()
-            )
+
             if self.creator:
-                followers.append(self.creator)
+                # for jobs created through the API or via the Try out Alg button
+                followers = [self.creator]
+            else:
+                # for algorithm jobs created through challenges or archives
+                followers = list(
+                    self.algorithm_image.algorithm.editors_group.user_set.all()
+                )
             for follower in set(followers):
                 if not is_following(
                     user=follower,
