@@ -201,8 +201,17 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
                 status=AlgorithmPermissionRequest.PENDING,
             ).count()
         )
+
+        job_stats = self.object.job_statistics
+
         context.update(
-            {"pending_permission_requests": pending_permission_requests}
+            {
+                "pending_permission_requests": pending_permission_requests,
+                "total_runs": job_stats["total_jobs"],
+                "total_failed_runs": job_stats["successful_jobs"],
+                "total_successful_runs": job_stats["failed_jobs"],
+                "algorithm_run_stats_by_user": job_stats["user_stats"],
+            }
         )
 
         return context

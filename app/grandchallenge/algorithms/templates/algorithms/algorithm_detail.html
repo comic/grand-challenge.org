@@ -272,12 +272,24 @@
                         with its default configuration.
                     {% endif %}
                 </p>
+                <h5>Usage statistics:</h5>
+                <ul>
+                    <li>This algorithm has been used {{ total_runs }} times in total. {{ total_successful_runs }} of these algorithms runs succeeded, {{ total_failed_runs }} failed. </li>
+                    <li>The following users have used the algorithm:
+                        <ul>
+                            {% for user, stats in algorithm_run_stats_by_user.items %}
+                                <li>{{ user|user_profile_link }}: {{ stats.num_jobs }} run{{ stats.num_jobs|pluralize }}, latest run {{ stats.latest_job|naturaltime }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                 {% if object.average_duration %}
-                    <p>
+                    <li>
                         On average, successful jobs for this algorithm have
                         taken {{ object.average_duration|naturaldelta }}.
-                    </p>
+                    </li>
                 {% endif %}
+                </ul>
+                <br>
                 {% if object.editor_notes %}
                     <h4>Notes</h4>
                     {{ object.editor_notes|md2html }}

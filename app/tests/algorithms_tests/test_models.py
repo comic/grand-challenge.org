@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils import timezone
+from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import (
@@ -14,9 +15,11 @@ from grandchallenge.components.models import (
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
+    AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 
@@ -243,3 +246,29 @@ def test_new_display_set_created_on_reader_study_change():
 
     assert rs1.display_sets.count() == 1
     assert rs2.display_sets.count() == 1
+
+
+@pytest.mark.django_db
+def test_job_stats_for_algorithm():
+    alg_img = AlgorithmImageFactory()
+    j1, j2, j3 = AlgorithmJobFactory.create_batch(3, algorithm_image=alg_img)
+    j1.status = Job.SUCCESS
+    j1.creator = UserFactory()
+    j2.status = Job.FAILURE
+    j2.creator = j1.creator
+    j2.created = now() - timedelta(days=1)
+    j3.status = Job.SUCCESS
+    j3.creator = UserFactory()
+    j1.save()
+    j2.save()
+    j3.save()
+
+    stats = alg_img.algorithm.job_statistics
+    assert stats["total_jobs"] == 3
+    assert stats["successful_jobs"] == 2
+    assert stats["failed_jobs"] == 1
+    assert len(stats["user_stats"]) == 2
+    assert stats["user_stats"][j1.creator]["latest_job"] == j1.created
+    assert stats["user_stats"][j1.creator]["num_jobs"] == 2
+    assert stats["user_stats"][j3.creator]["latest_job"] == j3.created
+    assert stats["user_stats"][j3.creator]["num_jobs"] == 1

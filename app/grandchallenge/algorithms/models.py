@@ -405,6 +405,34 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         except AttributeError:
             return False
 
+    @cached_property
+    def job_statistics(self):
+        jobs = (
+            Job.objects.filter(algorithm_image__algorithm=self)
+            .order_by("creator", "-created")
+            .select_related("creator__user_profile")
+        )
+        stats = {
+            "total_jobs": 0,
+            "successful_jobs": 0,
+            "failed_jobs": 0,
+            "user_stats": {},
+        }
+        for job in jobs:
+            stats["total_jobs"] += 1
+            if job.status == Job.SUCCESS:
+                stats["successful_jobs"] += 1
+            if job.status == Job.FAILURE:
+                stats["failed_jobs"] += 1
+            if job.creator not in stats["user_stats"].keys():
+                stats["user_stats"][job.creator] = {
+                    "latest_job": job.created,
+                    "num_jobs": 0,
+                }
+            stats["user_stats"][job.creator]["num_jobs"] += 1
+
+        return stats
+
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
