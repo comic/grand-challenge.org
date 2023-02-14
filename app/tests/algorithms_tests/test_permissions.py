@@ -289,7 +289,46 @@ class TestJobPermissions(TestCase):
 
         # Editors and viewers should be able to view the job
         assert get_groups_with_set_perms(job) == {
-            ai.algorithm.editors_group: {"view_job", "view_logs"},
+            ai.algorithm.editors_group: {"view_logs"},
+            job.viewers: {"view_job"},
+        }
+        # The Session Creator should be able to change the job
+        # and view the logs
+        assert get_users_with_set_perms(
+            job, attach_perms=True, with_group_users=False
+        ) == {u: {"change_job"}}
+        # The only member of the viewers group should be the creator
+        assert {*job.viewers.user_set.all()} == {u}
+
+    def test_job_permissions_for_api_post(self):
+        ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
+        u = UserFactory()
+        ai.algorithm.add_editor(u)
+        image = ImageFactory()
+        assign_perm(f"view_{image._meta.model_name}", u, image)
+
+        _ = get_view_for_user(
+            viewname="api:algorithms-job-list",
+            client=self.client,
+            method=self.client.post,
+            user=u,
+            data={
+                "algorithm": ai.algorithm.api_url,
+                "inputs": [
+                    {
+                        "interface": ai.algorithm.inputs.get().slug,
+                        "image": image.api_url,
+                    },
+                ],
+            },
+            content_type="application/json",
+        )
+
+        job = Job.objects.get()
+
+        # Editors and viewers should be able to view the job
+        assert get_groups_with_set_perms(job) == {
+            ai.algorithm.editors_group: {"view_logs"},
             job.viewers: {"view_job"},
         }
         # The Session Creator should be able to change the job
