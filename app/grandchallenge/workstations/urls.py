@@ -1,6 +1,7 @@
 from django.urls import path
 
 from grandchallenge.workstations.views import (
+    DebugSessionCreate,
     SessionCreate,
     WorkstationCreate,
     WorkstationDetail,
@@ -18,7 +19,6 @@ app_name = "workstations"
 urlpatterns = [
     path("", WorkstationList.as_view(), name="list"),
     path("create/", WorkstationCreate.as_view(), name="create"),
-    # TODO - add region
     path(
         "sessions/create/",
         SessionCreate.as_view(),
@@ -28,6 +28,11 @@ urlpatterns = [
         "<slug>/sessions/create/",
         SessionCreate.as_view(),
         name="workstation-session-create",
+    ),
+    path(
+        "<slug>/sessions/debug/create/",
+        DebugSessionCreate.as_view(),
+        name="workstation-debug-session-create",
     ),
     path(
         "<slug>/editors/update/",

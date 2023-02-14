@@ -29,6 +29,7 @@ from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.verifications.views import VerificationRequiredMixin
 from grandchallenge.workstations.forms import (
+    DebugSessionForm,
     SessionForm,
     WorkstationForm,
     WorkstationImageForm,
@@ -297,7 +298,8 @@ class SessionCreate(
             user=self.request.user,
             workstation_image=self.workstation_image,
             region=form.cleaned_data["region"],
-            ping_times=form.cleaned_data["ping_times"],
+            ping_times=form.cleaned_data.get("ping_times"),
+            extra_env_vars=form.cleaned_data.get("extra_env_vars"),
         )
 
         url = session.get_absolute_url()
@@ -307,6 +309,19 @@ class SessionCreate(
             url = f"{url}?{qs}"
 
         return HttpResponseRedirect(url)
+
+
+class DebugSessionCreate(SessionCreate):
+    permission_required = (
+        f"{Workstation._meta.app_label}.change_{Workstation._meta.model_name}"
+    )
+    form_class = DebugSessionForm
+    template_name_suffix = "_debug_form"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
 
 class SessionDetail(

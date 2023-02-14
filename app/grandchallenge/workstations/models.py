@@ -29,6 +29,7 @@ from grandchallenge.core.storage import (
     protected_s3_storage,
     public_s3_storage,
 )
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
@@ -271,6 +272,41 @@ class WorkstationImageGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
+ENV_VARS_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-06/schema",
+    "type": "array",
+    "title": "The Environment Variables Schema",
+    "description": "Defines environment variable names and values",
+    "items": {
+        "$id": "#/items",
+        "type": "object",
+        "title": "The Environment Variable Schema",
+        "description": "Defines an environment variable",
+        "required": ["name", "value"],
+        "additionalProperties": False,
+        "properties": {
+            "name": {
+                "$id": "#/items/properties/name",
+                "type": "string",
+                "title": "The Name Schema",
+                "description": "The name of this environment variable",
+                "default": "ENV_VAR",
+                "pattern": r"^[A-Z0-9\_]+$",
+                "examples": ["ENV_VAR"],
+            },
+            "value": {
+                "$id": "#/items/properties/value",
+                "type": "string",
+                "title": "The Value Schema",
+                "description": "The value of this environment variable",
+                "default": "env_var_value",
+                "examples": ["env_var_value"],
+            },
+        },
+    },
+}
+
+
 class Session(UUIDModel):
     """
     Tracks who has launched workstation images. The ``WorkstationImage`` will
@@ -365,6 +401,12 @@ class Session(UUIDModel):
     history = HistoricalRecords(
         excluded_fields=["logs", "ping_times", "auth_token"]
     )
+    extra_env_vars = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Extra environment variables to include in this session",
+        validators=[JSONValidator(schema=ENV_VARS_SCHEMA)],
+    )
 
     class Meta(UUIDModel.Meta):
         ordering = ("created", "creator")
@@ -412,13 +454,17 @@ class Session(UUIDModel):
         -------
             The environment variables that should be set on the container.
         """
-        env = {
-            "NGINX_RESOLVER": settings.WORKSTATIONS_DNS_RESOLVER,
-            "GRAND_CHALLENGE_API_ROOT": unquote(reverse("api:api-root")),
-            "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
-            "WORKSTATION_SESSION_ID": str(self.pk),
-            "CIRRUS_KEEP_ALIVE_METHOD": "old",
-        }
+        env = {var["name"]: var["value"] for var in self.extra_env_vars}
+
+        env.update(
+            {
+                "NGINX_RESOLVER": settings.WORKSTATIONS_DNS_RESOLVER,
+                "GRAND_CHALLENGE_API_ROOT": unquote(reverse("api:api-root")),
+                "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
+                "WORKSTATION_SESSION_ID": str(self.pk),
+                "CIRRUS_KEEP_ALIVE_METHOD": "old",
+            }
+        )
 
         if self.creator:
             if self.auth_token:
