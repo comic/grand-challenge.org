@@ -76,7 +76,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
 def pytest_itemcollected(item):
     if item.get_closest_marker("playwright") is not None:
         # See https://github.com/microsoft/playwright-pytest/issues/29
-        warnings.warn(
+        warnings.warn(  # noqa: B028
             "Setting DJANGO_ALLOW_ASYNC_UNSAFE for playwright support"
         )
         os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"

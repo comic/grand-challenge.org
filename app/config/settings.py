@@ -466,6 +466,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
+    "crispy_bootstrap4",
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "dal",  # for autocompletion of selection fields
@@ -1032,6 +1033,7 @@ COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
 )
 
 # Set which template pack to use for forms
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # When using bootstrap error messages need to be renamed to danger

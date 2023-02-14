@@ -41,6 +41,7 @@ celery = {version = "!=5.0.6", extras = ["redis", "sqs"]}
 django = "<3.3"
 django-countries = "*"
 django-crispy-forms = "*"
+crispy-bootstrap4 = "*"
 djangorestframework = "*"
 drf-spectacular = "*"
 python-magic = "*"
