@@ -517,8 +517,8 @@ class Job(UUIDModel, ComponentJob):
         help_text=(
             "If True, allow anyone to download this result along "
             "with the input image. Otherwise, only the job creator and "
-            "algorithm editor(s) will have permission to download and view "
-            "this result."
+            "users explicitly added as viewers of this job "
+            "will have permission to download and view this result."
         ),
     )
     comment = models.TextField(blank=True, default="")

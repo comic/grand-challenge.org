@@ -43,6 +43,9 @@
             (a user receives a 1000 credits a month).
             A job credit of zero means users can try this algorithm an unlimited number of times.
         </p>
+        <p>By default, you are only able to see the results of algorithm jobs that you created yourself. Access to results
+            and logs from other user's algorithm runs needs be granted explicitly by the respective user.
+        </p>
         {% crispy form %}
     {% else %}
         {% if remaining_jobs <= 0 %}
@@ -62,6 +65,8 @@
                     allowing you to upload {{ remaining_jobs }} image{{ remaining_jobs|pluralize }}.
                 </p>
             {% endif %}
+            <p>By default, only you will be able to view the results. The editors of the algorithm can only see the result
+                if you add them to the viewers group for the result on the result's detail page. </p>
             {% crispy form %}
         {% endif %}
         <p>
