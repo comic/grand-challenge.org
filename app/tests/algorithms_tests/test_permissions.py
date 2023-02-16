@@ -15,6 +15,8 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs_for_archive,
     create_algorithm_jobs_for_session,
 )
+from grandchallenge.cases.widgets import WidgetChoices
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
 )
@@ -25,7 +27,11 @@ from tests.algorithms_tests.factories import (
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.cases_tests import RESOURCE_PATH
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.evaluation_tests.test_permissions import (
     get_groups_with_set_perms,
@@ -33,11 +39,13 @@ from tests.evaluation_tests.test_permissions import (
 )
 from tests.factories import (
     ImageFactory,
+    ImageFileFactory,
     UploadSessionFactory,
     UserFactory,
     WorkstationFactory,
 )
-from tests.utils import get_view_for_user
+from tests.uploads_tests.factories import create_upload_from_file
+from tests.utils import get_view_for_user, recurse_callbacks
 
 
 @pytest.mark.django_db
@@ -300,45 +308,6 @@ class TestJobPermissions(TestCase):
         # The only member of the viewers group should be the creator
         assert {*job.viewers.user_set.all()} == {u}
 
-    def test_job_permissions_for_api_post(self):
-        ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
-        u = UserFactory()
-        ai.algorithm.add_editor(u)
-        image = ImageFactory()
-        assign_perm(f"view_{image._meta.model_name}", u, image)
-
-        _ = get_view_for_user(
-            viewname="api:algorithms-job-list",
-            client=self.client,
-            method=self.client.post,
-            user=u,
-            data={
-                "algorithm": ai.algorithm.api_url,
-                "inputs": [
-                    {
-                        "interface": ai.algorithm.inputs.get().slug,
-                        "image": image.api_url,
-                    },
-                ],
-            },
-            content_type="application/json",
-        )
-
-        job = Job.objects.get()
-
-        # Editors and viewers should be able to view the job
-        assert get_groups_with_set_perms(job) == {
-            ai.algorithm.editors_group: {"view_logs"},
-            job.viewers: {"view_job"},
-        }
-        # The Session Creator should be able to change the job
-        # and view the logs
-        assert get_users_with_set_perms(
-            job, attach_perms=True, with_group_users=False
-        ) == {u: {"change_job"}}
-        # The only member of the viewers group should be the creator
-        assert {*job.viewers.user_set.all()} == {u}
-
     def test_job_permissions_for_archive(self):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         archive = ArchiveFactory()
@@ -426,3 +395,107 @@ class TestJobPermissions(TestCase):
         )
         # No-one should be in the viewers group
         assert {*job.viewers.user_set.all()} == set()
+
+
+@pytest.mark.django_db
+def test_job_permissions_for_api_post(client, settings, algorithm_image):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+    recurse_callbacks(callbacks=callbacks)
+    ai.refresh_from_db()
+
+    u = UserFactory()
+    ai.algorithm.add_editor(u)
+    s = UploadSessionFactory(creator=u)
+    image_file = ImageFileFactory()
+    s.image_set.set([image_file.image])
+
+    with capture_on_commit_callbacks(execute=True):
+        _ = get_view_for_user(
+            viewname="api:algorithms-job-list",
+            client=client,
+            method=client.post,
+            user=u,
+            data={
+                "algorithm": ai.algorithm.api_url,
+                "inputs": [
+                    {
+                        "interface": ai.algorithm.inputs.get().slug,
+                        "upload_session": s.api_url,
+                    },
+                ],
+            },
+            content_type="application/json",
+        )
+    job = Job.objects.get()
+
+    # Editors and viewers should be able to view the job
+    assert get_groups_with_set_perms(job) == {
+        ai.algorithm.editors_group: {"view_logs"},
+        job.viewers: {"view_job"},
+    }
+    # The Session Creator should be able to change the job
+    # and view the logs
+    assert get_users_with_set_perms(
+        job, attach_perms=True, with_group_users=False
+    ) == {u: {"change_job"}}
+    # The only member of the viewers group should be the creator
+    assert {*job.viewers.user_set.all()} == {u}
+
+
+@pytest.mark.django_db
+def test_job_permissions_for_experiment_create(
+    client, settings, algorithm_image
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    with capture_on_commit_callbacks() as callbacks:
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+    recurse_callbacks(callbacks=callbacks)
+
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
+    )
+    ai.algorithm.inputs.set([ci])
+    ai.algorithm.users_group.user_set.add(user)
+
+    upload = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha",
+        creator=user,
+    )
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            _ = get_view_for_user(
+                viewname="algorithms:execution-session-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=user,
+                follow=True,
+                data={
+                    ci.slug: upload.pk,
+                    f"WidgetChoice-{ci.slug}": WidgetChoices.IMAGE_UPLOAD.name,
+                },
+            )
+
+    job = Job.objects.get()
+
+    # Editors and viewers should be able to view the job
+    assert get_groups_with_set_perms(job) == {
+        ai.algorithm.editors_group: {"view_logs"},
+        job.viewers: {"view_job"},
+    }
+    # The Session Creator should be able to change the job
+    # and view the logs
+    assert get_users_with_set_perms(
+        job, attach_perms=True, with_group_users=False
+    ) == {user: {"change_job"}}
+    # The only member of the viewers group should be the creator
+    assert {*job.viewers.user_set.all()} == {user}

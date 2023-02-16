@@ -6,6 +6,7 @@ import boto3
 from botocore.exceptions import ClientError
 from celery import chain, chord, group, shared_task
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import File
 from django.db import transaction
@@ -15,10 +16,7 @@ from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm
 from redis.exceptions import LockError
 
-from grandchallenge.algorithms.exceptions import (
-    ImageImportError,
-    TooManyJobsScheduled,
-)
+from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import (
     DEFAULT_INPUT_INTERFACE_SLUG,
     Algorithm,
@@ -38,7 +36,6 @@ from grandchallenge.components.tasks import (
     add_images_to_component_interface_value,
 )
 from grandchallenge.core.cache import _cache_key_from_method
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.credits.models import Credit
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
@@ -47,9 +44,25 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def run_algorithm_job_for_inputs(*, job_pk, upload_pks, user_upload_pks):
+def run_algorithm_job_for_inputs(
+    *,
+    job_pk,
+    upload_pks=None,
+    user_upload_pks=None,
+    extra_viewer_group_pks=None,
+    extra_logs_viewer_group_pks=None,
+):
     job = Job.objects.get(pk=job_pk)
-    start_jobs = execute_algorithm_job_for_inputs.signature(
+    if extra_viewer_group_pks is not None:
+        job.viewer_groups.add(
+            *Group.objects.filter(pk__in=extra_viewer_group_pks)
+        )
+
+    if extra_logs_viewer_group_pks is not None:
+        for g in Group.objects.filter(pk__in=extra_logs_viewer_group_pks):
+            assign_perm("algorithms.view_logs", g, job)
+
+    start_job = execute_algorithm_job_for_inputs.signature(
         kwargs={"job_pk": job_pk}, immutable=True
     )
     if upload_pks:
@@ -72,7 +85,7 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks, user_upload_pks):
                 for civ_pk, upload_pk in upload_pks.items()
             ]
         )
-        start_jobs = chord(image_tasks, start_jobs).on_error(
+        start_job = chord(image_tasks, start_job).on_error(
             on_job_creation_error.s(job_pk=job_pk)
         )
     if user_upload_pks:
@@ -91,10 +104,10 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks, user_upload_pks):
                 for civ_pk, upload_pk in user_upload_pks.items()
             ]
         )
-        start_jobs = chord(file_tasks, start_jobs).on_error(
+        start_job = chord(file_tasks, start_job).on_error(
             on_job_creation_error.s(job_pk=job_pk)
         )
-    on_commit(start_jobs.apply_async)
+    on_commit(start_job.apply_async)
 
 
 @shared_task(bind=True)
@@ -102,22 +115,14 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
     job_pk = kwargs.pop("job_pk")
     job = Job.objects.get(pk=job_pk)
 
-    # Send an email to the algorithm editors and creator on job failure
+    # Send email to creator on job failure
     linked_task = send_failed_job_notification.signature(
         kwargs={"job_pk": job.pk}, immutable=True
     )
 
     error_message = ""
-    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
-    if missing_inputs:
-        error_message += (
-            f"Job can't be started, input is missing for "
-            f"{oxford_comma([c.interface.title for c in missing_inputs])}"
-        )
-
     res = self.AsyncResult(task_id).result
-
-    if isinstance(res, ImageImportError):
+    if str(res).startswith("ImageImportError"):
         error_message += str(res)
 
     job.update_status(status=job.CANCELLED, error_message=error_message)
@@ -128,28 +133,13 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
 @shared_task
 def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
-
-    # Send an email to the algorithm editors and creator on job failure
+    # Send email to creator on job failure
     task_on_success = send_failed_job_notification.signature(
         kwargs={"job_pk": str(job.pk)}, immutable=True
     )
-
-    # check if all ComponentInterfaceValue's have a value.
-    # Todo: move this check to execute() code when using inputs is done
-    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
-    if missing_inputs:
-        job.update_status(
-            status=job.CANCELLED,
-            error_message=(
-                f"Job can't be started, input is missing for "
-                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
-            ),
-        )
-        on_commit(task_on_success.apply_async)
-    else:
-        job.task_on_success = task_on_success
-        job.save()
-        on_commit(job.execute)
+    job.task_on_success = task_on_success
+    job.save()
+    on_commit(job.execute)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
@@ -162,7 +152,7 @@ def create_algorithm_jobs_for_session(
     # Editors group should be able to view session jobs for debugging
     algorithm_editors = [algorithm_image.algorithm.editors_group]
 
-    # Send an email to the algorithm editors and creator on job failure
+    # Send email to creator on job failure
     task_on_success = send_failed_session_jobs_notifications.signature(
         kwargs={
             "session_pk": str(session.pk),

@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db.transaction import on_commit
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -12,7 +12,7 @@ from rest_framework.relations import (
 )
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
+from grandchallenge.algorithms.tasks import run_algorithm_job_for_inputs
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -171,6 +171,7 @@ class JobPostSerializer(JobSerializer):
             )
         data["creator"] = user
         data["algorithm"] = alg
+        data["algorithm_image"] = alg.latest_executable_image
 
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided
@@ -203,7 +204,7 @@ class JobPostSerializer(JobSerializer):
     def create(self, validated_data):
         inputs_data = validated_data.pop("inputs")
         algorithm = validated_data.pop("algorithm")
-        creator = validated_data.pop("creator")
+        job = Job.objects.create(**validated_data)
 
         component_interface_values = []
         upload_pks = {}
@@ -242,12 +243,16 @@ class JobPostSerializer(JobSerializer):
             civ.save()
             component_interface_values.append(civ)
 
-        with transaction.atomic():
-            jobs = create_algorithm_jobs(
-                algorithm_image=algorithm.latest_executable_image,
-                civ_sets=[{*component_interface_values}],
-                creator=creator,
-                extra_logs_viewer_groups=[algorithm.editors_group],
-            )
+        job.inputs.add(*component_interface_values)
+        run_job = run_algorithm_job_for_inputs.signature(
+            kwargs={
+                "job_pk": job.pk,
+                "upload_pks": upload_pks,
+                "user_upload_pks": user_upload_pks,
+                "extra_logs_viewer_group_pks": [algorithm.editors_group.pk],
+            },
+            immutable=True,
+        )
+        on_commit(run_job.apply_async)
 
-        return jobs[0]
+        return job

@@ -16,6 +16,7 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db.models import OuterRef, Subquery
+from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -32,7 +33,7 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
-from guardian.shortcuts import assign_perm, get_perms
+from guardian.shortcuts import get_perms
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -71,7 +72,10 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
+from grandchallenge.algorithms.tasks import (
+    create_algorithm_jobs_for_session,
+    run_algorithm_job_for_inputs,
+)
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.widgets import WidgetChoices
@@ -489,12 +493,6 @@ class AlgorithmExperimentCreate(
             algorithm_image=self.algorithm.latest_executable_image,
         )
 
-        # TODO AUG2021 JM permission management should be done in 1 place
-        # The execution for jobs over the API or non-sessions needs
-        # to be cleaned up. See callers of `execute_jobs`.
-        job.viewer_groups.add(self.algorithm.editors_group)
-        assign_perm("algorithms.view_logs", self.algorithm.editors_group, job)
-
         upload_pks = {}
         civs = []
 
@@ -539,7 +537,17 @@ class AlgorithmExperimentCreate(
                 civs.append(civ)
 
         job.inputs.add(*civs)
-        job.run_job(upload_pks=upload_pks)
+        run_job = run_algorithm_job_for_inputs.signature(
+            kwargs={
+                "job_pk": job.pk,
+                "upload_pks": upload_pks,
+                "extra_logs_viewer_group_pks": [
+                    self.algorithm.editors_group.pk
+                ],
+            },
+            immutable=True,
+        )
+        on_commit(run_job.apply_async)
 
         return HttpResponseRedirect(
             reverse(

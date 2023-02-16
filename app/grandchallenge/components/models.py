@@ -48,6 +48,7 @@ from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
 )
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONSchemaValidator,
@@ -1402,7 +1403,22 @@ class ComponentJob(models.Model):
         }
 
     def execute(self):
-        return provision_job.signature(**self.signature_kwargs).apply_async()
+        missing_inputs = list(
+            civ for civ in self.inputs.all() if not civ.has_value
+        )
+        if missing_inputs:
+            self.update_status(
+                status=self.CANCELLED,
+                error_message=(
+                    f"Job can't be started, input is missing for "
+                    f"{oxford_comma([c.interface.title for c in missing_inputs])}"
+                ),
+            )
+            on_commit(self.task_on_success.apply_async)
+        else:
+            return provision_job.signature(
+                **self.signature_kwargs
+            ).apply_async()
 
     def execute_task_on_success(self):
         deprovision_job.signature(**self.signature_kwargs).apply_async()

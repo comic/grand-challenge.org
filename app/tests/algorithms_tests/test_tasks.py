@@ -14,7 +14,6 @@ from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
-    execute_algorithm_job_for_inputs,
     filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
     send_failed_job_notification,
@@ -71,7 +70,9 @@ class TestCreateAlgorithmJobs:
         j.inputs.set([civ])
         assert Job.objects.count() == 1
         run_algorithm_job_for_inputs(
-            job_pk=j.pk, upload_pks=[], user_upload_pks=[]
+            job_pk=j.pk,
+            upload_pks=[],
+            user_upload_pks=[],
         )
         assert Job.objects.count() == 1
 
@@ -569,11 +570,7 @@ def test_add_images_to_component_interface_value():
 
 
 @pytest.mark.django_db
-def test_execute_algorithm_job_for_inputs(client, settings):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_execute_algorithm_job_with_missing_inputs(client):
     creator = UserFactory()
 
     # Create the algorithm image
@@ -585,8 +582,10 @@ def test_execute_algorithm_job_for_inputs(client, settings):
     civ = ComponentInterfaceValue.objects.create(interface=ci)
     job = Job.objects.create(creator=creator, algorithm_image=alg)
     job.inputs.add(civ)
-    execute_algorithm_job_for_inputs(job_pk=job.pk)
-
+    job.task_on_success = send_failed_job_notification.signature(
+        kwargs={"job_pk": str(job.pk)}, immutable=True
+    )
+    job.execute()
     job.refresh_from_db()
     assert job.status == Job.CANCELLED
     assert "Job can't be started, input is missing for " in job.error_message
