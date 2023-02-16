@@ -320,7 +320,12 @@ class DebugSessionCreate(SessionCreate):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "workstation": self.workstation_image.workstation,
+            }
+        )
         return kwargs
 
 

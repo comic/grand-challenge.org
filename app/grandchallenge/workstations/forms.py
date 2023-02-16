@@ -75,9 +75,10 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
         ],
     )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, user, workstation, **kwargs):
         super().__init__(*args, **kwargs)
         self.__user = user
+        self.__workstation = workstation
         self.fields["extra_env_vars"].initial = [
             {"name": "LOG_LEVEL", "value": "DEBUG"},
             {"name": "CIRRUS_PROFILING_ENABLED", "value": "True"},
@@ -88,11 +89,13 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
 
         if Session.objects.filter(
             creator=self.__user,
+            workstation_image__workstation=self.__workstation,
             status__in=[Session.QUEUED, Session.STARTED, Session.RUNNING],
             region=cleaned_data["region"],
         ).exists():
             raise ValidationError(
-                "You already have a running workstation, please wait for that session to finish"
+                "You already have a running workstation in the selected "
+                "region, please wait for that session to finish"
             )
 
         return cleaned_data

@@ -458,7 +458,6 @@ class Session(UUIDModel):
 
         env.update(
             {
-                "NGINX_RESOLVER": settings.WORKSTATIONS_DNS_RESOLVER,
                 "GRAND_CHALLENGE_API_ROOT": unquote(reverse("api:api-root")),
                 "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
                 "WORKSTATION_SESSION_ID": str(self.pk),
