@@ -106,6 +106,7 @@
     <span class="n">protected_s3_storage</span><span class="p">,</span>
     <span class="n">public_s3_storage</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="n">JSONValidator</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.workstations.emails</span> <span class="kn">import</span> <span class="n">send_new_feedback_email_to_staff</span>
 
@@ -348,6 +349,41 @@
     <span class="p">)</span></div>
 
 
+<span class="n">ENV_VARS_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json-schema.org/draft-06/schema&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Environment Variables Schema&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Defines environment variable names and values&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Environment Variable Schema&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Defines an environment variable&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/name&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Name Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The name of this environment variable&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;ENV_VAR&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;^[A-Z0-9\_]+$&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;ENV_VAR&quot;</span><span class="p">],</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/value&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Value Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The value of this environment variable&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;env_var_value&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;env_var_value&quot;</span><span class="p">],</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+
 <div class="viewcode-block" id="Session"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session">[docs]</a><span class="k">class</span> <span class="nc">Session</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tracks who has launched workstation images. The ``WorkstationImage`` will</span>
@@ -442,6 +478,12 @@
     <span class="n">history</span> <span class="o">=</span> <span class="n">HistoricalRecords</span><span class="p">(</span>
         <span class="n">excluded_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="s2">&quot;ping_times&quot;</span><span class="p">,</span> <span class="s2">&quot;auth_token&quot;</span><span class="p">]</span>
     <span class="p">)</span>
+    <span class="n">extra_env_vars</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Extra environment variables to include in this session&quot;</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">ENV_VARS_SCHEMA</span><span class="p">)],</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;creator&quot;</span><span class="p">)</span>
@@ -489,13 +531,16 @@
 <span class="sd">        -------</span>
 <span class="sd">            The environment variables that should be set on the container.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">env</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;NGINX_RESOLVER&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATIONS_DNS_RESOLVER</span><span class="p">,</span>
-            <span class="s2">&quot;GRAND_CHALLENGE_API_ROOT&quot;</span><span class="p">:</span> <span class="n">unquote</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;api:api-root&quot;</span><span class="p">)),</span>
-            <span class="s2">&quot;WORKSTATION_SENTRY_DSN&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATION_SENTRY_DSN</span><span class="p">,</span>
-            <span class="s2">&quot;WORKSTATION_SESSION_ID&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
-            <span class="s2">&quot;CIRRUS_KEEP_ALIVE_METHOD&quot;</span><span class="p">:</span> <span class="s2">&quot;old&quot;</span><span class="p">,</span>
-        <span class="p">}</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="p">{</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]:</span> <span class="n">var</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_env_vars</span><span class="p">}</span>
+
+        <span class="n">env</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;GRAND_CHALLENGE_API_ROOT&quot;</span><span class="p">:</span> <span class="n">unquote</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;api:api-root&quot;</span><span class="p">)),</span>
+                <span class="s2">&quot;WORKSTATION_SENTRY_DSN&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATION_SENTRY_DSN</span><span class="p">,</span>
+                <span class="s2">&quot;WORKSTATION_SESSION_ID&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                <span class="s2">&quot;CIRRUS_KEEP_ALIVE_METHOD&quot;</span><span class="p">:</span> <span class="s2">&quot;old&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
