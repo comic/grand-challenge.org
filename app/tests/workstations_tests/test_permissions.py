@@ -43,6 +43,7 @@ def test_create_view_permission(client):
         "workstations:image-update",
         "workstations:editors-update",
         "workstations:users-update",
+        "workstations:workstation-debug-session-create",
     ],
 )
 def test_workstation_editor_permissions(
@@ -57,6 +58,10 @@ def test_workstation_editor_permissions(
         (authenticated_staff_user, 403),
         (None, 302),
     )
+
+    two_workstation_sets.ws1.image.is_manifest_valid = True
+    two_workstation_sets.ws1.image.is_in_registry = True
+    two_workstation_sets.ws1.image.save()
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 

@@ -6,7 +6,8 @@ def get_or_create_active_session(
     user,
     workstation_image: WorkstationImage,
     region: str,
-    ping_times: str = None,
+    ping_times=None,
+    extra_env_vars=None,
 ) -> Session:
     """
     Queries the database to see if there is an active session for this user and
@@ -40,7 +41,9 @@ def get_or_create_active_session(
             creator=user,
             workstation_image=workstation_image,
             region=region,
-            ping_times=ping_times,
+            # Ping times and env vars are only set for new Sessions
+            ping_times=ping_times or None,
+            extra_env_vars=extra_env_vars or [],
         )
 
     return session

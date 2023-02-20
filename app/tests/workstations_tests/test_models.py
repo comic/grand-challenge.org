@@ -319,3 +319,25 @@ def test_staff_email_for_new_feedback():
     assert mail.outbox[0].to == [staff.email]
     assert mail.outbox[0].to != [user.email]
     assert "New Session Feedback" in mail.outbox[0].subject
+
+
+@pytest.mark.django_db
+def test_extra_env_vars():
+    session = Session(
+        extra_env_vars=[
+            {"name": "TEST", "value": "12345"},
+            {
+                "name": "GRAND_CHALLENGE_API_ROOT",
+                "value": "should not be overwritten",
+            },
+        ],
+        id="9863c19d-879f-411e-91da-eb5bcdcc1e41",
+    )
+
+    assert session.environment == {
+        "CIRRUS_KEEP_ALIVE_METHOD": "old",
+        "GRAND_CHALLENGE_API_ROOT": "https://testserver/api/v1/",
+        "TEST": "12345",
+        "WORKSTATION_SENTRY_DSN": "",
+        "WORKSTATION_SESSION_ID": "9863c19d-879f-411e-91da-eb5bcdcc1e41",
+    }

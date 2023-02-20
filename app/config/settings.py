@@ -466,6 +466,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
+    "crispy_bootstrap4",
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "dal",  # for autocompletion of selection fields
@@ -1032,6 +1033,7 @@ COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
 )
 
 # Set which template pack to use for forms
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # When using bootstrap error messages need to be renamed to danger
@@ -1059,9 +1061,6 @@ WORKBENCH_ADMIN_USERNAME = os.environ.get("WORKBENCH_ADMIN_USERNAME", "demo")
 # The workstation that is accessible by all authorised users
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
     "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
-)
-WORKSTATIONS_DNS_RESOLVER = os.environ.get(
-    "WORKSTATIONS_DNS_RESOLVER", "1.1.1.1"
 )
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
