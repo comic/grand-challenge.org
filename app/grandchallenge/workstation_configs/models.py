@@ -277,7 +277,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         max_digits=16,  # 1000 km
         decimal_places=7,
         validators=[MinValueValidator(limit_value=1e-6)],  # 1 nm
-        help_text="Default brush size in diameter millimeters for creating annotations",
+        help_text="Default brush diameter in millimeters for creating annotations",
     )
 
     default_annotation_color = HexColorField(

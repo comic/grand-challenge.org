@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             field=models.DecimalField(
                 blank=True,
                 decimal_places=7,
-                help_text="Default brush size in diameter millimeters for creating annotations",
+                help_text="Default brush diameter in millimeters for creating annotations",
                 max_digits=16,
                 null=True,
                 validators=[
