@@ -1,10 +1,13 @@
 from crispy_forms.helper import FormHelper
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.forms import ChoiceField, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.workstations.models import (
+    ENV_VARS_SCHEMA,
     Session,
     Workstation,
     WorkstationImage,
@@ -60,3 +63,46 @@ class SessionForm(ModelForm):
     class Meta:
         model = Session
         fields = ("region", "ping_times")
+
+
+class DebugSessionForm(SaveFormInitMixin, ModelForm):
+    region = ChoiceField(
+        required=True,
+        choices=[
+            c
+            for c in Session.Region.choices
+            if c[0] in settings.WORKSTATIONS_ACTIVE_REGIONS
+        ],
+    )
+
+    def __init__(self, *args, user, workstation, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__user = user
+        self.__workstation = workstation
+        self.fields["extra_env_vars"].initial = [
+            {"name": "LOG_LEVEL", "value": "DEBUG"},
+            {"name": "CIRRUS_PROFILING_ENABLED", "value": "True"},
+        ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if Session.objects.filter(
+            creator=self.__user,
+            workstation_image__workstation=self.__workstation,
+            status__in=[Session.QUEUED, Session.STARTED, Session.RUNNING],
+            region=cleaned_data["region"],
+        ).exists():
+            raise ValidationError(
+                "You already have a running workstation in the selected "
+                "region, please wait for that session to finish"
+            )
+
+        return cleaned_data
+
+    class Meta:
+        model = Session
+        fields = ("region", "extra_env_vars")
+        widgets = {
+            "extra_env_vars": JSONEditorWidget(schema=ENV_VARS_SCHEMA),
+        }

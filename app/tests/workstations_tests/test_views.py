@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -266,7 +268,44 @@ def test_session_create(client):
 
     # Should select the most recent workstation
     assert sessions[0].workstation_image == wsi_new
+    assert sessions[0].extra_env_vars == []
     assert sessions[0].creator == user
+
+
+@pytest.mark.django_db
+def test_debug_session_create(client):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    env_vars = [{"name": "TEST", "value": "12345"}]
+
+    ws.add_editor(user=user)
+
+    wsi = WorkstationImageFactory(
+        workstation=ws, is_manifest_valid=True, is_in_registry=True
+    )
+
+    assert Session.objects.count() == 0
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:workstation-debug-session-create",
+        reverse_kwargs={"slug": ws.slug},
+        user=user,
+        data={
+            "region": "eu-central-1",
+            "extra_env_vars": json.dumps(env_vars),
+        },
+    )
+
+    assert response.status_code == 302
+
+    session = Session.objects.get()
+
+    assert session.workstation_image == wsi
+    assert session.creator == user
+    assert session.extra_env_vars == env_vars
+    assert response.url == session.get_absolute_url()
 
 
 @pytest.mark.django_db

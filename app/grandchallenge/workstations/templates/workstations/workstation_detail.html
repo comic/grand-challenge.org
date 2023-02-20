@@ -154,5 +154,9 @@
             <i class="fas fa-flask"></i> Start a new session
         </a>
 
+        <a class="btn btn-warning" href="{% url 'workstations:workstation-debug-session-create' slug=object.slug %}">
+            <i class="fas fa-flask"></i> Start a new debug session
+        </a>
+
     {% endif %}
 {% endblock %}
