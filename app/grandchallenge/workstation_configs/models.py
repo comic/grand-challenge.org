@@ -274,10 +274,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     default_brush_size = models.DecimalField(
         blank=True,
         null=True,
-        max_digits=8,
+        max_digits=16,  # 1000 km
         decimal_places=7,
         validators=[MinValueValidator(limit_value=1e-6)],  # 1 nm
-        help_text="Default brush size in millimeter for creating annotations",
+        help_text="Default brush size in diameter millimeters for creating annotations",
     )
 
     default_annotation_color = HexColorField(
