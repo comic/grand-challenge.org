@@ -1024,7 +1024,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">:</span>
             <span class="n">Notification</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
-                <span class="nb">type</span><span class="o">=</span><span class="n">NotificationType</span><span class="o">.</span><span class="n">NotificationTypeChoices</span><span class="o">.</span><span class="n">EVALUATION_STATUS</span><span class="p">,</span>
+                <span class="n">kind</span><span class="o">=</span><span class="n">NotificationType</span><span class="o">.</span><span class="n">NotificationTypeChoices</span><span class="o">.</span><span class="n">EVALUATION_STATUS</span><span class="p">,</span>
                 <span class="n">actor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span>
                 <span class="n">action_object</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
@@ -1033,7 +1033,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
             <span class="n">Notification</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
-                <span class="nb">type</span><span class="o">=</span><span class="n">NotificationType</span><span class="o">.</span><span class="n">NotificationTypeChoices</span><span class="o">.</span><span class="n">EVALUATION_STATUS</span><span class="p">,</span>
+                <span class="n">kind</span><span class="o">=</span><span class="n">NotificationType</span><span class="o">.</span><span class="n">NotificationTypeChoices</span><span class="o">.</span><span class="n">EVALUATION_STATUS</span><span class="p">,</span>
                 <span class="n">actor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="s2">&quot;succeeded&quot;</span><span class="p">,</span>
                 <span class="n">action_object</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
