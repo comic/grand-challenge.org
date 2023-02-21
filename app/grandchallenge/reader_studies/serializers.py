@@ -22,7 +22,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -128,13 +128,10 @@ class DisplaySetPostSerializer(DisplaySetSerializer):
         super().__init__(*args, **kwargs)
         if "request" in self.context:
             user = self.context["request"].user
-            self.fields["reader_study"].queryset = get_objects_for_user(
-                user,
-                "reader_studies.change_readerstudy",
-            )
-            self.fields["values"].queryset = get_objects_for_user(
-                user,
-                "reader_studies.change_displayset",
+            self.fields["reader_study"].queryset = filter_by_permission(
+                queryset=ReaderStudy.objects.all(),
+                user=user,
+                codename="change_readerstudy",
             )
 
 
@@ -187,9 +184,10 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         super().__init__(*args, **kwargs)
         if "request" in self.context:
             user = self.context["request"].user
-            self.fields["display_set"].queryset = get_objects_for_user(
-                user,
-                "reader_studies.view_displayset",
+            self.fields["display_set"].queryset = filter_by_permission(
+                queryset=DisplaySet.objects.all(),
+                user=user,
+                codename="view_displayset",
             )
 
     def validate(self, attrs):

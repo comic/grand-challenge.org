@@ -14,7 +14,7 @@ from grandchallenge.archives.tasks import (
 )
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.reader_studies.models import Answer, DisplaySet
 from grandchallenge.reader_studies.tasks import (
@@ -119,32 +119,39 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             self.fields["uploads"] = HyperlinkedRelatedField(
                 source="user_uploads",
                 many=True,
-                queryset=get_objects_for_user(
-                    user,
-                    "uploads.change_userupload",
-                ).filter(status=UserUpload.StatusChoices.COMPLETED),
+                queryset=filter_by_permission(
+                    queryset=UserUpload.objects.filter(
+                        status=UserUpload.StatusChoices.COMPLETED
+                    ),
+                    user=user,
+                    codename="change_userupload",
+                ),
                 view_name="api:upload-detail",
                 required=True,
             )
 
-            self.fields["archive"].queryset = get_objects_for_user(
-                user,
-                "archives.upload_archive",
+            self.fields["archive"].queryset = filter_by_permission(
+                queryset=Archive.objects.all(),
+                user=user,
+                codename="upload_archive",
             )
 
-            self.fields["answer"].queryset = get_objects_for_user(
-                user,
-                "reader_studies.change_answer",
+            self.fields["answer"].queryset = filter_by_permission(
+                queryset=Answer.objects.all(),
+                user=user,
+                codename="change_answer",
             )
 
-            self.fields["archive_item"].queryset = get_objects_for_user(
-                user,
-                "archives.change_archiveitem",
+            self.fields["archive_item"].queryset = filter_by_permission(
+                queryset=ArchiveItem.objects.all(),
+                user=user,
+                codename="change_archiveitem",
             )
 
-            self.fields["display_set"].queryset = get_objects_for_user(
-                user,
-                "reader_studies.change_displayset",
+            self.fields["display_set"].queryset = filter_by_permission(
+                queryset=DisplaySet.objects.all(),
+                user=user,
+                codename="change_displayset",
             )
 
     @property

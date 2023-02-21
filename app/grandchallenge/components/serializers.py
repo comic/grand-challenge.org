@@ -7,7 +7,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,
@@ -91,19 +91,24 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         if "request" in self.context:
             user = self.context["request"].user
 
-            self.fields["image"].queryset = get_objects_for_user(
-                user,
-                "cases.view_image",
+            self.fields["image"].queryset = filter_by_permission(
+                queryset=Image.objects.all(),
+                user=user,
+                codename="view_image",
             )
 
-            self.fields["upload_session"].queryset = get_objects_for_user(
-                user,
-                "cases.change_rawimageuploadsession",
-            ).filter(status=RawImageUploadSession.PENDING)
+            self.fields["upload_session"].queryset = filter_by_permission(
+                queryset=RawImageUploadSession.objects.filter(
+                    status=RawImageUploadSession.PENDING
+                ),
+                user=user,
+                codename="change_rawimageuploadsession",
+            )
 
-            self.fields["user_upload"].queryset = get_objects_for_user(
-                user,
-                "uploads.change_userupload",
+            self.fields["user_upload"].queryset = filter_by_permission(
+                queryset=UserUpload.objects.all(),
+                user=user,
+                codename="change_userupload",
             )
 
     def validate(self, attrs):

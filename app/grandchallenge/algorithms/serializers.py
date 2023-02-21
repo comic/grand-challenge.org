@@ -22,7 +22,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -151,9 +151,10 @@ class JobPostSerializer(JobSerializer):
         if "request" in self.context:
             user = self.context["request"].user
 
-            self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                "algorithms.execute_algorithm",
+            self.fields["algorithm"].queryset = filter_by_permission(
+                queryset=Algorithm.objects.all(),
+                user=user,
+                codename="execute_algorithm",
             )
 
     def validate(self, data):

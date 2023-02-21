@@ -13,7 +13,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -79,8 +79,10 @@ class ArchiveItemPostSerializer(ArchiveItemSerializer):
         if "request" in self.context:
             user = self.context["request"].user
 
-            self.fields["archive"].queryset = get_objects_for_user(
-                user, "archives.upload_archive"
+            self.fields["archive"].queryset = filter_by_permission(
+                queryset=Archive.objects.all(),
+                user=user,
+                codename="upload_archive",
             )
 
     def create(self, validated_data):
