@@ -287,9 +287,10 @@ class TestJobPermissions(TestCase):
 
         job = Job.objects.get()
 
-        # Editors and viewers should be able to view the job
+        # Editors should be able to view the logs
+        # and viewers should be able to view the job
         assert get_groups_with_set_perms(job) == {
-            ai.algorithm.editors_group: {"view_job", "view_logs"},
+            ai.algorithm.editors_group: {"view_logs"},
             job.viewers: {"view_job"},
         }
         # The Session Creator should be able to change the job

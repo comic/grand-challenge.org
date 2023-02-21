@@ -102,7 +102,7 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
     job_pk = kwargs.pop("job_pk")
     job = Job.objects.get(pk=job_pk)
 
-    # Send an email to the algorithm editors and creator on job failure
+    # Notify the job creator on failure
     linked_task = send_failed_job_notification.signature(
         kwargs={"job_pk": job.pk}, immutable=True
     )
@@ -129,7 +129,7 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
 def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
-    # Send an email to the algorithm editors and creator on job failure
+    # Notify the job creator failure
     task_on_success = send_failed_job_notification.signature(
         kwargs={"job_pk": str(job.pk)}, immutable=True
     )
@@ -159,10 +159,7 @@ def create_algorithm_jobs_for_session(
     session = RawImageUploadSession.objects.get(pk=upload_session_pk)
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
-    # Editors group should be able to view session jobs for debugging
-    algorithm_editors = [algorithm_image.algorithm.editors_group]
-
-    # Send an email to the algorithm editors and creator on job failure
+    # Notify the creator on job failure
     task_on_success = send_failed_session_jobs_notifications.signature(
         kwargs={
             "session_pk": str(session.pk),
@@ -189,8 +186,8 @@ def create_algorithm_jobs_for_session(
             algorithm_image=algorithm_image,
             civ_sets=civ_sets,
             creator=session.creator,
-            extra_viewer_groups=algorithm_editors,
-            extra_logs_viewer_groups=algorithm_editors,
+            # Editors group should be able to view the logs for debugging
+            extra_logs_viewer_groups=[algorithm_image.algorithm.editors_group],
             task_on_success=task_on_success,
         )
 
@@ -462,6 +459,7 @@ def send_failed_job_notification(*, job_pk):
         experiment_url = reverse(
             "algorithms:job-list", kwargs={"slug": algorithm.slug}
         )
+        # TODO Check this only notifies the creator
         Notification.send(
             type=NotificationType.NotificationTypeChoices.JOB_STATUS,
             actor=job.creator,
