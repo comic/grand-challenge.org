@@ -109,10 +109,13 @@ retina_archive_structures:
 		bash -c "python manage.py runscript create_retina_archive_structures"
 
 
-algorithm_evaluation_fixtures:
+scripts/algorithm_io.tar:
 	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
 	docker save algorithm_io -o scripts/algorithm_io.tar
 	chmod a+r scripts/algorithm_io.tar
+
+
+algorithm_evaluation_fixtures: scripts/algorithm_io.tar
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
@@ -120,10 +123,7 @@ algorithm_evaluation_fixtures:
 		python manage.py runscript algorithm_evaluation_fixtures
 
 
-cost_fixtures:
-	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
-	docker save algorithm_io -o scripts/algorithm_io.tar
-	chmod a+r scripts/algorithm_io.tar
+cost_fixtures: scripts/algorithm_io.tar
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \

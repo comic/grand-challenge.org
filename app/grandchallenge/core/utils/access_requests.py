@@ -52,7 +52,7 @@ def process_access_request(request_object):
         send_action=False,
     )
     Notification.send(
-        type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
+        kind=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
         message="requested access to",
         actor=request_object.user,
         target=request_object.base_object,

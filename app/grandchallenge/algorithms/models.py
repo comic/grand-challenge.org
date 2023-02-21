@@ -26,6 +26,7 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    ComponentJobManager,
 )
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -505,7 +506,33 @@ class JobQuerySet(models.QuerySet):
         )
 
 
+class JobManager(ComponentJobManager):
+    def create(
+        self,
+        *,
+        input_civ_set=None,
+        extra_viewer_groups=None,
+        extra_logs_viewer_groups=None,
+        **kwargs,
+    ):
+        obj = super().create(**kwargs)
+
+        if input_civ_set is not None:
+            obj.inputs.set(input_civ_set)
+
+        if extra_viewer_groups is not None:
+            obj.viewer_groups.add(*extra_viewer_groups)
+
+        if extra_logs_viewer_groups is not None:
+            for group in extra_logs_viewer_groups:
+                assign_perm("algorithms.view_logs", group, obj)
+
+        return obj
+
+
 class Job(UUIDModel, ComponentJob):
+    objects = JobManager.as_manager()
+
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.PROTECT
     )
@@ -599,28 +626,7 @@ class Job(UUIDModel, ComponentJob):
 
         if adding:
             self.init_permissions()
-            followers = list(
-                self.algorithm_image.algorithm.editors_group.user_set.all()
-            )
-            if self.creator:
-                followers.append(self.creator)
-            for follower in set(followers):
-                if not is_following(
-                    user=follower,
-                    obj=self.algorithm_image.algorithm,
-                    flag="job-active",
-                ) and not is_following(
-                    user=follower,
-                    obj=self.algorithm_image.algorithm,
-                    flag="job-inactive",
-                ):
-                    follow(
-                        user=follower,
-                        obj=self.algorithm_image.algorithm,
-                        actor_only=False,
-                        send_action=False,
-                        flag="job-active",
-                    )
+            self.init_followers()
 
         if adding or self._public_orig != self.public:
             self.update_viewer_groups_for_public()
@@ -643,6 +649,25 @@ class Job(UUIDModel, ComponentJob):
             self.viewers.user_set.add(self.creator)
             assign_perm("change_job", self.creator, self)
 
+    def init_followers(self):
+        if self.creator:
+            if not is_following(
+                user=self.creator,
+                obj=self.algorithm_image.algorithm,
+                flag="job-active",
+            ) and not is_following(
+                user=self.creator,
+                obj=self.algorithm_image.algorithm,
+                flag="job-inactive",
+            ):
+                follow(
+                    user=self.creator,
+                    obj=self.algorithm_image.algorithm,
+                    actor_only=False,
+                    send_action=False,
+                    flag="job-active",
+                )
+
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
@@ -659,21 +684,24 @@ class Job(UUIDModel, ComponentJob):
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
 
-    def run_job(self, upload_pks=None, user_upload_pks=None):
+    def sort_inputs_and_execute(
+        self, upload_session_pks=None, user_upload_pks=None
+    ):
         # Local import to avoid circular dependency
         from grandchallenge.algorithms.tasks import (
             run_algorithm_job_for_inputs,
         )
 
-        run_job = run_algorithm_job_for_inputs.signature(
-            kwargs={
-                "job_pk": self.pk,
-                "upload_pks": upload_pks,
-                "user_upload_pks": user_upload_pks,
-            },
-            immutable=True,
+        on_commit(
+            run_algorithm_job_for_inputs.signature(
+                kwargs={
+                    "job_pk": self.pk,
+                    "upload_session_pks": upload_session_pks,
+                    "user_upload_pks": user_upload_pks,
+                },
+                immutable=True,
+            ).apply_async
         )
-        on_commit(run_job.apply_async)
 
     @cached_property
     def slug_to_output(self):

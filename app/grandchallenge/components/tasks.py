@@ -1002,7 +1002,7 @@ def add_file_to_component_interface_value(
 
     if error is not None:
         Notification.send(
-            type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
             actor=user_upload.creator,
             message=f"File for interface {civ.interface.title} failed validation.",
             target=target,

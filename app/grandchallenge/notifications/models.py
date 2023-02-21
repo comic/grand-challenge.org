@@ -58,7 +58,7 @@ class Notification(UUIDModel):
         max_length=20,
         choices=Type.choices,
         default=Type.GENERIC,
-        help_text=("Of what type is this notification?"),
+        help_text="Of what type is this notification?",
     )
 
     read = models.BooleanField(default=False, db_index=True)
@@ -134,76 +134,24 @@ class Notification(UUIDModel):
         assign_perm("change_notification", self.user, self)
 
     @staticmethod
-    def send(type, **kwargs):  # noqa: C901
-        actor = kwargs.pop("actor", None)
-        action_object = kwargs.pop("action_object", None)
-        target = kwargs.pop("target", None)
-        message = kwargs.pop("message", None)
-        description = kwargs.pop("description", None)
-        context_class = kwargs.pop("context_class", None)
-        if (
-            type == NotificationType.NotificationTypeChoices.FORUM_POST
-            or type
-            == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
-            or type == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
-            and target._meta.model_name != "algorithm"
-            or type == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
-        ):
-            if actor:
-                receivers = [
-                    follower
-                    for follower in followers(target)
-                    if follower != actor
-                ]
-            else:
-                receivers = followers(target)
-        elif (
-            type == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
-            and target._meta.model_name == "algorithm"
-        ):
-            receivers = [
-                follower
-                for follower in followers(target, flag="access_request")
-                if follower != actor
-            ]
-        elif type == NotificationType.NotificationTypeChoices.NEW_ADMIN:
-            receivers = [action_object]
-        elif (
-            type == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
-        ):
-            receivers = [
-                admin
-                for admin in target.challenge.get_admins()
-                if is_following(admin, target)
-            ]
-            if actor and is_following(actor, target):
-                receivers.append(actor)
-        elif type == NotificationType.NotificationTypeChoices.MISSING_METHOD:
-            receivers = [
-                admin
-                for admin in target.challenge.get_admins()
-                if is_following(admin, target)
-            ]
-        elif type == NotificationType.NotificationTypeChoices.JOB_STATUS:
-            receivers = [
-                editor
-                for editor in target.editors_group.user_set.all()
-                if is_following(editor, target, flag="job-active")
-            ]
-            if actor and is_following(actor, target, flag="job-active"):
-                receivers.append(actor)
-        elif (
-            type
-            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
-        ):
-            receivers = followers(action_object)
-        elif type == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS:
-            receivers = [actor]
+    def send(
+        *,
+        kind,
+        actor=None,
+        action_object=None,
+        target=None,
+        message=None,
+        description=None,
+        context_class=None,
+    ):
+        receivers = Notification.get_receivers(
+            action_object=action_object, actor=actor, kind=kind, target=target
+        )
 
-        for receiver in set(receivers):
+        for receiver in receivers:
             Notification.objects.create(
                 user=receiver,
-                type=type,
+                type=kind,
                 message=message,
                 actor=actor,
                 action_object=action_object,
@@ -211,6 +159,67 @@ class Notification(UUIDModel):
                 description=description,
                 context_class=context_class,
             )
+
+    @staticmethod
+    def get_receivers(*, kind, actor, action_object, target):  # noqa: C901
+        if (
+            kind == NotificationType.NotificationTypeChoices.FORUM_POST
+            or kind
+            == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
+            or kind == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+            and target._meta.model_name != "algorithm"
+            or kind == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
+        ):
+            if actor:
+                return {
+                    follower
+                    for follower in followers(target)
+                    if follower != actor
+                }
+            else:
+                return followers(target)
+        elif (
+            kind == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+            and target._meta.model_name == "algorithm"
+        ):
+            return {
+                follower
+                for follower in followers(target, flag="access_request")
+                if follower != actor
+            }
+        elif kind == NotificationType.NotificationTypeChoices.NEW_ADMIN:
+            return {action_object}
+        elif (
+            kind == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+        ):
+            receivers = {
+                admin
+                for admin in target.challenge.get_admins()
+                if is_following(admin, target)
+            }
+            if actor and is_following(actor, target):
+                receivers.add(actor)
+            return receivers
+        elif kind == NotificationType.NotificationTypeChoices.MISSING_METHOD:
+            return {
+                admin
+                for admin in target.challenge.get_admins()
+                if is_following(admin, target)
+            }
+        elif kind == NotificationType.NotificationTypeChoices.JOB_STATUS:
+            if actor and is_following(actor, target, flag="job-active"):
+                return {actor}
+            else:
+                return set()
+        elif (
+            kind
+            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
+        ):
+            return followers(action_object)
+        elif kind == NotificationType.NotificationTypeChoices.FILE_COPY_STATUS:
+            return {actor}
+        else:
+            raise RuntimeError(f"Unhandled notification type {kind!r}")
 
     def print_notification(self, user):  # noqa: C901
         if self.type == NotificationType.NotificationTypeChoices.FORUM_POST:

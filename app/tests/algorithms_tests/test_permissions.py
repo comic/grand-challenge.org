@@ -1,7 +1,6 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import (
     assign_perm,
@@ -11,10 +10,12 @@ from guardian.shortcuts import (
 )
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.serializers import JobPostSerializer
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs_for_archive,
     create_algorithm_jobs_for_session,
 )
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
 )
@@ -25,7 +26,10 @@ from tests.algorithms_tests.factories import (
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.evaluation_tests.test_permissions import (
     get_groups_with_set_perms,
@@ -270,8 +274,95 @@ def test_public_job_group_permissions():
     assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
 
 
-class TestJobPermissions(TestCase):
+@pytest.mark.django_db
+class TestJobPermissions:
     """The permissions for jobs will depend on their creation"""
+
+    @staticmethod
+    def _validate_created_job_perms(*, algorithm_image, job, user):
+        # Editors should be able to view the logs
+        # and viewers should be able to view the job
+        assert get_groups_with_set_perms(job) == {
+            algorithm_image.algorithm.editors_group: {"view_logs"},
+            job.viewers: {"view_job"},
+        }
+        # The Session Creator should be able to change the job
+        # and view the logs
+        assert get_users_with_set_perms(
+            job, attach_perms=True, with_group_users=False
+        ) == {user: {"change_job"}}
+        # The only member of the viewers group should be the creator
+        assert {*job.viewers.user_set.all()} == {user}
+
+    def test_job_permissions_from_template(self, client):
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True, is_in_registry=True
+        )
+
+        user = UserFactory()
+        editor = UserFactory()
+
+        algorithm_image.algorithm.add_user(user)
+        algorithm_image.algorithm.add_editor(editor)
+        ci = ComponentInterfaceFactory(
+            kind=InterfaceKind.InterfaceKindChoices.ANY,
+            store_in_database=True,
+        )
+        algorithm_image.algorithm.inputs.set([ci])
+
+        response = get_view_for_user(
+            viewname="algorithms:execution-session-create",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "slug": algorithm_image.algorithm.slug,
+            },
+            user=user,
+            follow=True,
+            data={ci.slug: '{"Foo": "bar"}'},
+        )
+        assert response.status_code == 200
+
+        job = Job.objects.get()
+
+        self._validate_created_job_perms(
+            algorithm_image=algorithm_image, job=job, user=user
+        )
+
+    def test_job_permissions_from_api(self, rf):
+        # setup
+        user = UserFactory()
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True, is_in_registry=True
+        )
+        interfaces = {
+            ComponentInterfaceFactory(
+                kind=ComponentInterface.Kind.STRING,
+                title="TestInterface 1",
+                default_value="default",
+            ),
+        }
+        algorithm_image.algorithm.inputs.set(interfaces)
+        algorithm_image.algorithm.add_user(user)
+        algorithm_image.algorithm.add_editor(UserFactory())
+
+        job = {"algorithm": algorithm_image.algorithm.api_url, "inputs": []}
+
+        # test
+        request = rf.get("/foo")
+        request.user = user
+        serializer = JobPostSerializer(data=job, context={"request": request})
+
+        # verify
+        assert serializer.is_valid()
+        serializer.create(serializer.validated_data)
+        job = Job.objects.get()
+        assert job.creator == user
+        assert len(job.inputs.all()) == 1
+
+        self._validate_created_job_perms(
+            algorithm_image=algorithm_image, job=job, user=user
+        )
 
     def test_job_permissions_for_session(self):
         ai = AlgorithmImageFactory()
@@ -287,18 +378,7 @@ class TestJobPermissions(TestCase):
 
         job = Job.objects.get()
 
-        # Editors and viewers should be able to view the job
-        assert get_groups_with_set_perms(job) == {
-            ai.algorithm.editors_group: {"view_job", "view_logs"},
-            job.viewers: {"view_job"},
-        }
-        # The Session Creator should be able to change the job
-        # and view the logs
-        assert get_users_with_set_perms(
-            job, attach_perms=True, with_group_users=False
-        ) == {u: {"change_job"}}
-        # The only member of the viewers group should be the creator
-        assert {*job.viewers.user_set.all()} == {u}
+        self._validate_created_job_perms(algorithm_image=ai, job=job, user=u)
 
     def test_job_permissions_for_archive(self):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)

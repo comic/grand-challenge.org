@@ -125,7 +125,7 @@ def add_file_to_display_set(
 
     if error is not None:
         Notification.send(
-            type=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
             actor=user_upload.creator,
             message=f"File for interface {interface.title} failed validation.",
             target=display_set.reader_study,
