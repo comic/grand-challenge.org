@@ -32,7 +32,7 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
-from guardian.shortcuts import assign_perm, get_perms
+from guardian.shortcuts import get_perms
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -468,26 +468,15 @@ class AlgorithmExperimentCreate(
         return context
 
     def form_valid(self, form):
-        def create_upload(image_files):
+        def create_upload_session(image_files):
             upload_session = RawImageUploadSession.objects.create(
                 creator=self.request.user
             )
             upload_session.user_uploads.set(image_files)
             return upload_session.pk
 
-        job = Job.objects.create(
-            creator=self.request.user,
-            algorithm_image=self.algorithm.latest_executable_image,
-        )
-
-        # TODO AUG2021 JM permission management should be done in 1 place
-        # The execution for jobs over the API or non-sessions needs
-        # to be cleaned up. See callers of `execute_jobs`.
-        job.viewer_groups.add(self.algorithm.editors_group)
-        assign_perm("algorithms.view_logs", self.algorithm.editors_group, job)
-
-        upload_pks = {}
-        civs = []
+        component_interface_values = []
+        upload_session_pks = {}
 
         interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
 
@@ -506,14 +495,16 @@ class AlgorithmExperimentCreate(
                         if created:
                             civ.full_clean()
                             civ.save()
-                        civs.append(civ)
+                        component_interface_values.append(civ)
                     elif widget == WidgetChoices.IMAGE_UPLOAD:
                         # create civ without image, image will be added when import completes
                         civ = ComponentInterfaceValue.objects.create(
                             interface=ci
                         )
-                        civs.append(civ)
-                        upload_pks[civ.pk] = create_upload(value)
+                        component_interface_values.append(civ)
+                        upload_session_pks[civ.pk] = create_upload_session(
+                            value
+                        )
                     else:
                         raise RuntimeError(
                             f"{widget} is not a valid widget choice."
@@ -524,13 +515,18 @@ class AlgorithmExperimentCreate(
                 civ.full_clean()
                 civ.save()
                 value.delete()
-                civs.append(civ)
+                component_interface_values.append(civ)
             else:
                 civ = ci.create_instance(value=value)
-                civs.append(civ)
+                component_interface_values.append(civ)
 
-        job.inputs.add(*civs)
-        job.run_job(upload_pks=upload_pks)
+        job = Job.objects.create(
+            creator=self.request.user,
+            algorithm_image=self.algorithm.latest_executable_image,
+            extra_logs_viewer_groups=[self.algorithm.editors_group],
+            input_civ_set=component_interface_values,
+        )
+        job.sort_inputs_and_execute(upload_session_pks=upload_session_pks)
 
         return HttpResponseRedirect(
             reverse(

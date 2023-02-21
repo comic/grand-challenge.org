@@ -170,7 +170,7 @@ def _create_submission(algorithm, challenge, archive_items):
     ai = algorithm.algorithm_container_images.last()
     eval_inputs = []
     for _ in range(archive_items):
-        j = Job.objects.create(
+        job = Job.objects.create(
             algorithm_image=ai,
             started_at=now() - timedelta(minutes=random.randint(5, 120)),
             completed_at=now(),
@@ -182,7 +182,7 @@ def _create_submission(algorithm, challenge, archive_items):
         civ.value = ({"foo": "bar"},)
         civ.save()
         eval_inputs.append(civ)
-        j.outputs.add(civ)
+        job.outputs.add(civ)
     phase = challenge.phase_set.first()
     sub = Submission.objects.create(
         creator=algorithm.editors_group.user_set.get(),

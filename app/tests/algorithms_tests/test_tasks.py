@@ -72,7 +72,7 @@ class TestCreateAlgorithmJobs:
         j.inputs.set([civ])
         assert Job.objects.count() == 1
         run_algorithm_job_for_inputs(
-            job_pk=j.pk, upload_pks=[], user_upload_pks=[]
+            job_pk=j.pk, upload_session_pks=[], user_upload_pks=[]
         )
         assert Job.objects.count() == 1
 
@@ -377,9 +377,8 @@ def test_algorithm_multiple_inputs(
     alg.algorithm.outputs.set(
         [ComponentInterface.objects.get(slug="results-json-file")]
     )
-    # create the job
-    job = Job.objects.create(creator=creator, algorithm_image=alg)
 
+    input_civ_set = []
     expected = []
     for ci in ComponentInterface.objects.exclude(
         kind=InterfaceKindChoices.ZIP
@@ -390,7 +389,7 @@ def test_algorithm_multiple_inputs(
                 / "resources"
                 / "input_file.tif"
             )
-            job.inputs.add(
+            input_civ_set.append(
                 ComponentInterfaceValueFactory(
                     interface=ci, image=image_file.image
                 )
@@ -400,17 +399,21 @@ def test_algorithm_multiple_inputs(
             civ = ComponentInterfaceValueFactory(interface=ci)
             civ.file.save("test", File(BytesIO(b"")))
             civ.save()
-            job.inputs.add(civ)
+            input_civ_set.append(civ)
             expected.append("file")
         else:
-            job.inputs.add(
+            input_civ_set.append(
                 ComponentInterfaceValueFactory(interface=ci, value="test")
             )
             expected.append("test")
 
+    job = Job.objects.create(
+        creator=creator, algorithm_image=alg, input_civ_set=input_civ_set
+    )
+
     with capture_on_commit_callbacks() as callbacks:
         run_algorithm_job_for_inputs(
-            job_pk=job.pk, upload_pks=[], user_upload_pks=[]
+            job_pk=job.pk, upload_session_pks=[], user_upload_pks=[]
         )
     recurse_callbacks(callbacks=callbacks)
 
@@ -447,20 +450,23 @@ def test_algorithm_input_image_multiple_files(
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
-    # create the job
-    job = Job.objects.create(creator=creator, algorithm_image=alg)
     us = RawImageUploadSessionFactory()
 
     ImageFactory(origin=us), ImageFactory(origin=us)
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
 
     civ = ComponentInterfaceValue.objects.create(interface=ci)
-    job.inputs.add(civ)
+
+    job = Job.objects.create(
+        creator=creator, algorithm_image=alg, input_civ_set=[civ]
+    )
 
     with pytest.raises(ImageImportError):
         with capture_on_commit_callbacks(execute=True):
             run_algorithm_job_for_inputs(
-                job_pk=job.pk, upload_pks={civ.pk: us.pk}, user_upload_pks=[]
+                job_pk=job.pk,
+                upload_session_pks={civ.pk: us.pk},
+                user_upload_pks=[],
             )
 
     # TODO: celery errorhandling with the .on_error seems to not work when
@@ -491,12 +497,15 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
     alg = AlgorithmImageFactory()
     alg.algorithm.add_editor(creator)
 
-    ci = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    civ = ComponentInterfaceValueFactory(interface=ci)
-
+    ci = ComponentInterfaceFactory(
+        kind="JSON",
+        store_in_database=False,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
     alg.algorithm.inputs.add(ci)
-    # create the job
-    job = Job.objects.create(creator=creator, algorithm_image=alg)
 
     upload = UserUploadFactory(filename="file.json", creator=creator)
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1])
@@ -505,16 +514,17 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
         parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
     )
     upload.save()
-    ci.schema = {
-        "$schema": "http://json-schema.org/draft-07/schema",
-        "type": "array",
-    }
-    ci.save()
+
+    civ = ComponentInterfaceValueFactory(interface=ci)
+
+    job = Job.objects.create(
+        creator=creator, algorithm_image=alg, input_civ_set=[civ]
+    )
 
     with capture_on_commit_callbacks(execute=True):
         run_algorithm_job_for_inputs(
             job_pk=job.pk,
-            upload_pks=[],
+            upload_session_pks=[],
             user_upload_pks={civ.pk: upload.pk},
         )
     assert Notification.objects.count() == 1
@@ -535,7 +545,7 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
     with capture_on_commit_callbacks(execute=True):
         run_algorithm_job_for_inputs(
             job_pk=job.pk,
-            upload_pks=[],
+            upload_session_pks=[],
             user_upload_pks={civ2.pk: upload2.pk},
         )
     civ2.refresh_from_db()
@@ -584,8 +594,9 @@ def test_execute_algorithm_job_for_inputs(client, settings):
     # create the job without value for the ComponentInterfaceValues
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
     civ = ComponentInterfaceValue.objects.create(interface=ci)
-    job = Job.objects.create(creator=creator, algorithm_image=alg)
-    job.inputs.add(civ)
+    job = Job.objects.create(
+        creator=creator, algorithm_image=alg, input_civ_set=[civ]
+    )
     execute_algorithm_job_for_inputs(job_pk=job.pk)
 
     job.refresh_from_db()
@@ -692,7 +703,9 @@ def test_failed_job_notifications(client, settings):
     alg = AlgorithmImageFactory()
     alg.algorithm.add_editor(editor)
 
-    job = Job.objects.create(creator=creator, algorithm_image=alg)
+    job = Job.objects.create(
+        creator=creator, algorithm_image=alg, input_civ_set=[]
+    )
 
     # mark job as failed
     job.status = Job.FAILURE
@@ -726,7 +739,9 @@ def test_failed_job_notifications(client, settings):
         user=creator,
     )
 
-    job = Job.objects.create(creator=creator, algorithm_image=alg)
+    job = Job.objects.create(
+        creator=creator, algorithm_image=alg, input_civ_set=[]
+    )
 
     # mark job as failed
     job.status = Job.FAILURE

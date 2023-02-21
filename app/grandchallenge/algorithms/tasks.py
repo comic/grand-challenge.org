@@ -12,7 +12,6 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
-from guardian.shortcuts import assign_perm
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.exceptions import (
@@ -47,54 +46,60 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def run_algorithm_job_for_inputs(*, job_pk, upload_pks, user_upload_pks):
+def run_algorithm_job_for_inputs(
+    *, job_pk, upload_session_pks, user_upload_pks
+):
     job = Job.objects.get(pk=job_pk)
-    start_jobs = execute_algorithm_job_for_inputs.signature(
+    canvas = execute_algorithm_job_for_inputs.signature(
         kwargs={"job_pk": job_pk}, immutable=True
     )
-    if upload_pks:
+
+    if upload_session_pks:
         image_tasks = group(
             # Chords and iterator groups are broken in Celery, send a list
             # instead, see https://github.com/celery/celery/issues/7285
             [
                 chain(
                     build_images.signature(
-                        kwargs={"upload_session_pk": upload_pk}, immutable=True
+                        kwargs={"upload_session_pk": upload_session_pk},
+                        immutable=True,
                     ),
                     add_images_to_component_interface_value.signature(
                         kwargs={
                             "component_interface_value_pk": civ_pk,
-                            "upload_session_pk": upload_pk,
+                            "upload_session_pk": upload_session_pk,
                         },
                         immutable=True,
                     ),
                 )
-                for civ_pk, upload_pk in upload_pks.items()
+                for civ_pk, upload_session_pk in upload_session_pks.items()
             ]
         )
-        start_jobs = chord(image_tasks, start_jobs).on_error(
+        canvas = chord(image_tasks, canvas).on_error(
             on_job_creation_error.s(job_pk=job_pk)
         )
+
     if user_upload_pks:
         file_tasks = group(
             [
                 add_file_to_component_interface_value.signature(
                     kwargs={
                         "component_interface_value_pk": civ_pk,
-                        "user_upload_pk": upload_pk,
+                        "user_upload_pk": user_upload_pk,
                         "target_pk": job.algorithm_image.algorithm.pk,
                         "target_app": "algorithms",
                         "target_model": "algorithm",
                     },
                     immutable=True,
                 )
-                for civ_pk, upload_pk in user_upload_pks.items()
+                for civ_pk, user_upload_pk in user_upload_pks.items()
             ]
         )
-        start_jobs = chord(file_tasks, start_jobs).on_error(
+        canvas = chord(file_tasks, canvas).on_error(
             on_job_creation_error.s(job_pk=job_pk)
         )
-    on_commit(start_jobs.apply_async)
+
+    on_commit(canvas.apply_async)
 
 
 @shared_task(bind=True)
@@ -351,35 +356,26 @@ def create_algorithm_jobs(
         time_limit = settings.ALGORITHMS_JOB_TIME_LIMIT_SECONDS
 
     jobs = []
-    job_count = 0
 
     for civ_set in civ_sets:
 
-        if job_count >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
+        if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
             raise TooManyJobsScheduled
 
         with transaction.atomic():
-            j = Job.objects.create(
+            job = Job.objects.create(
                 creator=creator,
                 algorithm_image=algorithm_image,
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
                 time_limit=time_limit,
+                extra_viewer_groups=extra_viewer_groups,
+                extra_logs_viewer_groups=extra_logs_viewer_groups,
+                input_civ_set=civ_set,
             )
-            j.inputs.set(civ_set)
+            on_commit(job.execute)
 
-            if extra_viewer_groups is not None:
-                j.viewer_groups.add(*extra_viewer_groups)
-
-            if extra_logs_viewer_groups is not None:
-                for g in extra_logs_viewer_groups:
-                    assign_perm("algorithms.view_logs", g, j)
-
-            jobs.append(j)
-
-            on_commit(j.execute)
-
-            job_count += 1
+            jobs.append(job)
 
     return jobs
 
