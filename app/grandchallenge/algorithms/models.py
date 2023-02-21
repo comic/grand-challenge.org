@@ -599,28 +599,7 @@ class Job(UUIDModel, ComponentJob):
 
         if adding:
             self.init_permissions()
-            followers = list(
-                self.algorithm_image.algorithm.editors_group.user_set.all()
-            )
-            if self.creator:
-                followers.append(self.creator)
-            for follower in set(followers):
-                if not is_following(
-                    user=follower,
-                    obj=self.algorithm_image.algorithm,
-                    flag="job-active",
-                ) and not is_following(
-                    user=follower,
-                    obj=self.algorithm_image.algorithm,
-                    flag="job-inactive",
-                ):
-                    follow(
-                        user=follower,
-                        obj=self.algorithm_image.algorithm,
-                        actor_only=False,
-                        send_action=False,
-                        flag="job-active",
-                    )
+            self.init_followers()
 
         if adding or self._public_orig != self.public:
             self.update_viewer_groups_for_public()
@@ -642,6 +621,25 @@ class Job(UUIDModel, ComponentJob):
         if self.creator:
             self.viewers.user_set.add(self.creator)
             assign_perm("change_job", self.creator, self)
+
+    def init_followers(self):
+        if self.creator:
+            if not is_following(
+                user=self.creator,
+                obj=self.algorithm_image.algorithm,
+                flag="job-active",
+            ) and not is_following(
+                user=self.creator,
+                obj=self.algorithm_image.algorithm,
+                flag="job-inactive",
+            ):
+                follow(
+                    user=self.creator,
+                    obj=self.algorithm_image.algorithm,
+                    actor_only=False,
+                    send_action=False,
+                    flag="job-active",
+                )
 
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(

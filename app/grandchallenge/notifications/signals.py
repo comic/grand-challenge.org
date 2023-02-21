@@ -37,7 +37,7 @@ def create_topic_notification(sender, *, instance, created, **_):
 
         if int(instance.type) == int(Topic.TOPIC_ANNOUNCE):
             Notification.send(
-                type=NotificationType.NotificationTypeChoices.FORUM_POST,
+                kind=NotificationType.NotificationTypeChoices.FORUM_POST,
                 actor=instance.poster,
                 message="announced",
                 action_object=instance,
@@ -46,7 +46,7 @@ def create_topic_notification(sender, *, instance, created, **_):
             )
         else:
             Notification.send(
-                type=NotificationType.NotificationTypeChoices.FORUM_POST,
+                kind=NotificationType.NotificationTypeChoices.FORUM_POST,
                 actor=instance.poster,
                 message="posted",
                 action_object=instance,
@@ -68,7 +68,7 @@ def create_post_notification(sender, *, instance, created, **_):
             send_action=False,
         )
         Notification.send(
-            type=NotificationType.NotificationTypeChoices.FORUM_POST_REPLY,
+            kind=NotificationType.NotificationTypeChoices.FORUM_POST_REPLY,
             actor=instance.poster,
             message="replied to",
             target=instance.topic,

@@ -202,7 +202,7 @@ def create_algorithm_jobs_for_session(
                 },
             )
             Notification.send(
-                type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+                kind=NotificationType.NotificationTypeChoices.JOB_STATUS,
                 actor=session.creator,
                 message=f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
                 f"{algorithm_image.algorithm.title} were not started because "
@@ -459,9 +459,8 @@ def send_failed_job_notification(*, job_pk):
         experiment_url = reverse(
             "algorithms:job-list", kwargs={"slug": algorithm.slug}
         )
-        # TODO Check this only notifies the creator
         Notification.send(
-            type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+            kind=NotificationType.NotificationTypeChoices.JOB_STATUS,
             actor=job.creator,
             message=f"Unfortunately one of the jobs for algorithm {algorithm.title} "
             f"failed with an error",
@@ -505,7 +504,7 @@ def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
                 kwargs={"slug": algorithm.slug, "pk": session_pk},
             )
             Notification.send(
-                type=NotificationType.NotificationTypeChoices.JOB_STATUS,
+                kind=NotificationType.NotificationTypeChoices.JOB_STATUS,
                 actor=session.creator,
                 message=f"Unfortunately {failed_jobs_count} of the jobs for "
                 f"algorithm {algorithm.title} failed with an error ",

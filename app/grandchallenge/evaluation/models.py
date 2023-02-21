@@ -947,7 +947,7 @@ class Evaluation(UUIDModel, ComponentJob):
 
         if self.status == self.FAILURE:
             Notification.send(
-                type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
+                kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
                 message="failed",
                 action_object=self,
@@ -956,7 +956,7 @@ class Evaluation(UUIDModel, ComponentJob):
 
         if self.status == self.SUCCESS:
             Notification.send(
-                type=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
+                kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
                 message="succeeded",
                 action_object=self,

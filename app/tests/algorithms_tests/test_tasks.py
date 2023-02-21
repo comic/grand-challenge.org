@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from actstream.models import Follow
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import File
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
@@ -700,31 +701,29 @@ def test_failed_job_notifications(client, settings):
     with capture_on_commit_callbacks(execute=True):
         send_failed_job_notification(job_pk=job.pk)
 
-    # 2 notifications: for the editor of the algorithm and the job creator
-    assert Notification.objects.count() == 2
-    assert creator.username in str(Notification.objects.all())
-    assert editor.username in str(Notification.objects.all())
-    for notification in Notification.objects.all():
-        assert (
-            f"Unfortunately one of the jobs for algorithm {alg.algorithm.title} failed with an error"
-            in notification.print_notification(user=notification.user)
-        )
+    # 1 notification for the job creator
+    notification = Notification.objects.get()
+    assert notification.user == creator
+    assert (
+        f"Unfortunately one of the jobs for algorithm {alg.algorithm.title} failed with an error"
+        in notification.print_notification(user=creator.username)
+    )
 
     # delete notifications for easier testing below
     Notification.objects.all().delete()
-    # unsubscribe editor from job notifications
+    # unsubscribe creator from job notifications
     _ = get_view_for_user(
         viewname="api:follow-detail",
         client=client,
         method=client.patch,
         reverse_kwargs={
-            "pk": Follow.objects.filter(user=editor, flag="job-active")
+            "pk": Follow.objects.filter(user=creator, flag="job-active")
             .get()
             .pk
         },
         content_type="application/json",
         data={"flag": "job-inactive"},
-        user=editor,
+        user=creator,
     )
 
     job = Job.objects.create(creator=creator, algorithm_image=alg)
@@ -736,8 +735,8 @@ def test_failed_job_notifications(client, settings):
     with capture_on_commit_callbacks(execute=True):
         send_failed_job_notification(job_pk=job.pk)
 
-    assert Notification.objects.count() == 1
-    assert Notification.objects.get().user is not editor
+    with pytest.raises(ObjectDoesNotExist):
+        Notification.objects.get()
 
 
 @pytest.mark.django_db

@@ -343,7 +343,7 @@ def _handle_raw_files(
 
         if upload_session.creator:
             Notification.send(
-                type=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=f"failed with {n_errors} error{pluralize(n_errors)}",
                 action_object=upload_session,
             )
