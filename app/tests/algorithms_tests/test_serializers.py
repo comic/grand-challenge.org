@@ -114,7 +114,7 @@ def test_algorithm_job_post_serializer_validations(
         [interfaces[title] for title in algorithm_interface_titles]
     )
     if add_user:
-        algorithm_image.algorithm.add_editor(user)
+        algorithm_image.algorithm.add_user(user)
 
     algorithm_image.algorithm.save()
 
