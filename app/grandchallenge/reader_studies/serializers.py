@@ -9,11 +9,7 @@ from rest_framework.fields import (
     ReadOnlyField,
     URLField,
 )
-from rest_framework.relations import (
-    HyperlinkedRelatedField,
-    RelatedField,
-    SlugRelatedField,
-)
+from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
     ModelSerializer,
@@ -33,7 +29,6 @@ from grandchallenge.hanging_protocols.serializers import (
 from grandchallenge.reader_studies.models import (
     AcceptRejectFindingsWidget,
     Answer,
-    AnswerWidgetKindChoices,
     CategoricalOption,
     DisplaySet,
     Question,
@@ -60,12 +55,10 @@ class AcceptRejectFindingsWidgetSerializer(ModelSerializer):
         fields = ["kind"]
 
 
-class AnswerWidgetSerializer(RelatedField):
+class AnswerWidgetSerializer(CharField):
     def to_representation(self, value):
-        if value.kind == AnswerWidgetKindChoices.ACCEPT_REJECT:
-            return AcceptRejectFindingsWidgetSerializer(
-                value.acceptrejectfindingswidget
-            ).data
+        if isinstance(value, AcceptRejectFindingsWidget):
+            return AcceptRejectFindingsWidgetSerializer(value).data
         else:
             raise Exception("Unexpected answer widget type.")
 
