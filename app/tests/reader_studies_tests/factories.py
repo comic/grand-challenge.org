@@ -1,6 +1,7 @@
 import factory
 
 from grandchallenge.reader_studies.models import (
+    AcceptRejectFindingsWidget,
     Answer,
     CategoricalOption,
     DisplaySet,
@@ -46,3 +47,8 @@ class CategoricalOptionFactory(factory.django.DjangoModelFactory):
         model = CategoricalOption
 
     question = factory.SubFactory(QuestionFactory)
+
+
+class AcceptRejectFindingsWidgetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AcceptRejectFindingsWidget

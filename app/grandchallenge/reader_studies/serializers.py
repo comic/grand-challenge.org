@@ -54,12 +54,12 @@ class CategoricalOptionSerializer(ModelSerializer):
 class AcceptRejectFindingsWidgetSerializer(ModelSerializer):
     class Meta:
         model = AcceptRejectFindingsWidget
-        fields = ["kind", "enable_annotations"]
+        fields = ["kind"]
 
 
 class AnswerWidgetSerializer(RelatedField):
     def to_representation(self, value):
-        if value.kind == AnswerWidgetKindChoices.ACPT_RJCT:
+        if value.kind == AnswerWidgetKindChoices.ACCEPT_REJECT:
             return AcceptRejectFindingsWidgetSerializer(
                 value.acceptrejectfindingswidget
             ).data

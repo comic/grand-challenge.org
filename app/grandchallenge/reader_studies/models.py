@@ -1192,6 +1192,34 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         )
 
     def clean(self):
+        super().clean()
+        self._clean_answer_widget()
+        self._clean_answer_type()
+        self._clean_interface()
+
+    def _clean_answer_widget(self):
+        if (
+            self.answer_widget
+            and self.answer_widget.kind
+            == AnswerWidgetKindChoices.ACCEPT_REJECT
+        ):
+            if (
+                self.answer_type
+                not in AnswerType.get_multiple_annotation_types()
+            ):
+                raise ValidationError(
+                    f"The AcceptRejectFindings widget can only be enabled for the following answer types: {', '.join(AnswerType.get_multiple_annotation_types())}."
+                )
+            if self.required:
+                raise ValidationError(
+                    "In order to use the AcceptRejectFindings widget, uncheck the 'required' box."
+                )
+            if not self.interface:
+                raise ValidationError(
+                    "In order to use the AcceptRejectFindings widget, you need to provide a default answer. Read more about that <a href='/documentation/define-your-cases/#defaults'>here</a>"
+                )
+
+    def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
         if (
@@ -1210,6 +1238,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "(otherwise the user will need to tick a box for each image!)"
             )
 
+    def _clean_interface(self):
         if (
             self.interface
             and self.interface not in self.allowed_component_interfaces
@@ -1527,12 +1556,12 @@ class ReaderStudyPermissionRequest(RequestBase):
 
 
 class AnswerWidgetKindChoices(models.TextChoices):
-    ACPT_RJCT = "ACPT_RJCT", _("Accept/Reject widget")
+    ACCEPT_REJECT = "ACCEPT_REJECT", _("Accept/Reject Findings Widget")
 
 
 class AnswerWidget(models.Model):
     kind = models.CharField(
-        max_length=10,
+        max_length=255,
         choices=AnswerWidgetKindChoices.choices,
     )
 
@@ -1550,12 +1579,7 @@ class AnswerWidget(models.Model):
 
 class AcceptRejectFindingsWidget(AnswerWidget):
 
-    WIDGET_KIND = AnswerWidgetKindChoices.ACPT_RJCT
-
-    enable_annotations = models.BooleanField(
-        default=False,
-        help_text=("Enable readers to correct existing annotations."),
-    )
+    WIDGET_KIND = AnswerWidgetKindChoices.ACCEPT_REJECT
 
     @staticmethod
     def supported_answer_types():
