@@ -11,7 +11,6 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -1198,26 +1197,26 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         self._clean_interface()
 
     def _clean_answer_widget(self):
-        if (
-            self.answer_widget
-            and self.answer_widget.kind
-            == AnswerWidgetKindChoices.ACCEPT_REJECT
-        ):
+        if self.answer_widget:
             if (
                 self.answer_type
-                not in AnswerType.get_multiple_annotation_types()
+                not in self.answer_widget.supported_answer_types()
             ):
                 raise ValidationError(
-                    f"The AcceptRejectFindings widget can only be enabled for the following answer types: {', '.join(AnswerType.get_multiple_annotation_types())}."
+                    f"The {self.answer_widget} can only be enabled for the following answer types: {', '.join(self.answer_widget.supported_answer_types())}."
                 )
-            if self.required:
-                raise ValidationError(
-                    "In order to use the AcceptRejectFindings widget, uncheck the 'required' box."
-                )
-            if not self.interface:
-                raise ValidationError(
-                    "In order to use the AcceptRejectFindings widget, you need to provide a default answer."
-                )
+            if (
+                self.answer_widget.kind
+                == AnswerWidgetKindChoices.ACCEPT_REJECT
+            ):
+                if self.required:
+                    raise ValidationError(
+                        "In order to use the AcceptRejectFindings widget, uncheck the 'required' box."
+                    )
+                if not self.interface:
+                    raise ValidationError(
+                        "In order to use the AcceptRejectFindings widget, you need to provide a default answer."
+                    )
 
     def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
@@ -1556,14 +1555,17 @@ class ReaderStudyPermissionRequest(RequestBase):
 
 
 class AnswerWidgetKindChoices(models.TextChoices):
-    ACCEPT_REJECT = "ACCEPT_REJECT", _("Accept/Reject Findings Widget")
+    ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
 
 
 class AnswerWidget(models.Model):
+
     kind = models.CharField(
-        max_length=255,
-        choices=AnswerWidgetKindChoices.choices,
+        max_length=255, choices=AnswerWidgetKindChoices.choices, editable=False
     )
+
+    def __str__(self):
+        return self.get_kind_display()
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -1573,6 +1575,7 @@ class AnswerWidget(models.Model):
             self.kind = self.WIDGET_KIND
             self.save()
 
+    @staticmethod
     def supported_answer_types(self):
         raise NotImplementedError("Subclasses must implement this method.")
 
