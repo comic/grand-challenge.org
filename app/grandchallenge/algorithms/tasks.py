@@ -130,30 +130,64 @@ def on_job_creation_error(self, task_id, *args, **kwargs):
     on_commit(linked_task.apply_async)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def execute_algorithm_job_for_inputs(*, job_pk):
-    job = Job.objects.get(pk=job_pk)
+    with transaction.atomic():
+        job = Job.objects.get(pk=job_pk)
 
-    # Notify the job creator failure
-    task_on_success = send_failed_job_notification.signature(
-        kwargs={"job_pk": str(job.pk)}, immutable=True
-    )
-
-    # check if all ComponentInterfaceValue's have a value.
-    # Todo: move this check to execute() code when using inputs is done
-    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
-    if missing_inputs:
-        job.update_status(
-            status=job.CANCELLED,
-            error_message=(
-                f"Job can't be started, input is missing for "
-                f"{oxford_comma([c.interface.title for c in missing_inputs])}"
-            ),
+        # Notify the job creator on failure
+        linked_task = send_failed_job_notification.signature(
+            kwargs={"job_pk": str(job.pk)}, immutable=True
         )
-        on_commit(task_on_success.apply_async)
-    else:
-        job.task_on_success = task_on_success
-        job.save()
+
+        # check if all ComponentInterfaceValue's have a value.
+        missing_inputs = list(
+            civ for civ in job.inputs.all() if not civ.has_value
+        )
+
+        if missing_inputs:
+            job.update_status(
+                status=job.CANCELLED,
+                error_message=(
+                    f"Job can't be started, input is missing for "
+                    f"{oxford_comma([c.interface.title for c in missing_inputs])}"
+                ),
+            )
+            on_commit(linked_task.apply_async)
+        else:
+            job.task_on_success = linked_task
+            job.save()
+            on_commit(
+                execute_algorithm_job.signature(
+                    kwargs={"job_pk": job_pk}, immutable=True
+                ).apply_async
+            )
+
+
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
+    throws=(TooManyJobsScheduled,),
+)
+def execute_algorithm_job(*, job_pk, retries=0):
+    def retry_with_delay():
+        _retry(
+            task=execute_algorithm_job,
+            signature_kwargs={
+                "kwargs": {
+                    "job_pk": job_pk,
+                },
+                "immutable": True,
+            },
+            retries=retries,
+        )
+
+    with transaction.atomic():
+        if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+            logger.info("Retrying task as too many jobs scheduled")
+            retry_with_delay()
+            raise TooManyJobsScheduled
+
+        job = Job.objects.get(pk=job_pk)
         on_commit(job.execute)
 
 
