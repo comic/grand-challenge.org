@@ -1130,7 +1130,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "image_port",
                 "required",
                 "overlay_segments",
-                "answer_widget",
             ]
         return []
 
@@ -1568,22 +1567,15 @@ class AnswerWidget(models.Model):
     def __str__(self):
         return self.get_kind_display()
 
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.kind = self.WIDGET_KIND
-            self.save()
-
     @staticmethod
     def supported_answer_types(self):
         raise NotImplementedError("Subclasses must implement this method.")
 
 
 class AcceptRejectFindingsWidget(AnswerWidget):
-
-    WIDGET_KIND = AnswerWidgetKindChoices.ACCEPT_REJECT
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.kind = AnswerWidgetKindChoices.ACCEPT_REJECT
 
     @staticmethod
     def supported_answer_types():

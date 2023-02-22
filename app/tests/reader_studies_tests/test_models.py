@@ -81,7 +81,6 @@ def test_read_only_fields():
         "image_port",
         "required",
         "overlay_segments",
-        "answer_widget",
     ]
 
 
