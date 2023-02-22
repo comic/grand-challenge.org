@@ -40,6 +40,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
+from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
@@ -396,6 +397,20 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
+
+    def get_remaining_jobs(self, user):
+        """Get the number of jobs a user can schedule now"""
+        if self.is_editor(user=user):
+            # Not limited by credits
+            return
+        else:
+            user_credit = Credit.objects.get(user=user)
+            jobs = Job.credits_set.spent_credits(user=user)
+            if jobs["total"]:
+                credits_left = user_credit.credits - jobs["total"]
+            else:
+                credits_left = user_credit.credits
+            return max(credits_left, 0) // max(self.credits_per_job, 1)
 
     @cached_property
     def public_test_case(self):

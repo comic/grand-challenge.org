@@ -369,19 +369,10 @@ def create_algorithm_jobs(
         civ_sets=civ_sets, algorithm_image=algorithm_image
     )
 
-    if (
-        creator
-        and not algorithm_image.algorithm.is_editor(creator)
-        and algorithm_image.algorithm.credits_per_job > 0
-    ):
-        n_jobs = remaining_jobs(
-            creator=creator, algorithm_image=algorithm_image
-        )
-        if n_jobs > 0:
+    if creator is not None:
+        n_jobs = algorithm_image.algorithm.get_remaining_jobs(user=creator)
+        if n_jobs is not None:
             civ_sets = civ_sets[:n_jobs]
-        else:
-            # Out of credits
-            return []
 
     if max_jobs is not None:
         civ_sets = civ_sets[:max_jobs]

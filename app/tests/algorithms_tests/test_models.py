@@ -12,11 +12,13 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
+from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmJobFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 
@@ -243,3 +245,67 @@ def test_new_display_set_created_on_reader_study_change():
 
     assert rs1.display_sets.count() == 1
     assert rs2.display_sets.count() == 1
+
+
+@pytest.mark.django_db
+class TestRemainingJobs:
+    def test_unlimited_jobs(self):
+        algorithm = AlgorithmFactory(credits_per_job=100)
+        user = UserFactory()
+
+        assert algorithm.get_remaining_jobs(user=user) is not None
+
+        algorithm.add_editor(user=user)
+
+        assert algorithm.get_remaining_jobs(user=user) is None
+
+    @pytest.mark.parametrize(
+        "credits_per_job,user_credits,expected_jobs",
+        (
+            (100, 0, 0),
+            (100, 50, 0),
+            (100, 200, 2),
+            (0, 100, 100),
+        ),
+    )
+    def test_remaining_jobs(
+        self, credits_per_job, user_credits, expected_jobs
+    ):
+        algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
+        user = UserFactory()
+
+        user_credit = Credit.objects.get(user=user)
+        user_credit.credits = user_credits
+        user_credit.save()
+
+        assert algorithm.get_remaining_jobs(user=user) == expected_jobs
+
+    @pytest.mark.parametrize(
+        "credits_per_job,user_credits,expected_jobs",
+        (
+            (100, 0, 0),
+            (100, 50, 0),
+            (100, 200, 0),
+            (0, 100, 100),
+            (1, 100, 98),
+        ),
+    )
+    def test_remaining_jobs_with_existing(
+        self, credits_per_job, user_credits, expected_jobs
+    ):
+        algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
+        user = UserFactory()
+
+        algorithm2 = AlgorithmFactory(credits_per_job=credits_per_job)
+
+        AlgorithmJobFactory(algorithm_image__algorithm=algorithm, creator=None)
+        AlgorithmJobFactory(algorithm_image__algorithm=algorithm, creator=user)
+        AlgorithmJobFactory(
+            algorithm_image__algorithm=algorithm2, creator=user
+        )
+
+        user_credit = Credit.objects.get(user=user)
+        user_credit.credits = user_credits
+        user_credit.save()
+
+        assert algorithm.get_remaining_jobs(user=user) == expected_jobs
