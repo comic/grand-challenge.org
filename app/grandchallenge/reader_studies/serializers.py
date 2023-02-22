@@ -9,7 +9,11 @@ from rest_framework.fields import (
     ReadOnlyField,
     URLField,
 )
-from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
+from rest_framework.relations import (
+    HyperlinkedRelatedField,
+    RelatedField,
+    SlugRelatedField,
+)
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
     ModelSerializer,
@@ -27,7 +31,9 @@ from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
 from grandchallenge.reader_studies.models import (
+    AcceptRejectFindingsWidget,
     Answer,
+    AnswerWidgetKindChoices,
     CategoricalOption,
     DisplaySet,
     Question,
@@ -45,6 +51,22 @@ class CategoricalOptionSerializer(ModelSerializer):
         fields = ("id", "title", "default")
 
 
+class AcceptRejectFindingsWidgetSerializer(ModelSerializer):
+    class Meta:
+        model = AcceptRejectFindingsWidget
+        fields = ["kind", "enable_annotations"]
+
+
+class AnswerWidgetSerializer(RelatedField):
+    def to_representation(self, value):
+        if value.kind == AnswerWidgetKindChoices.ACPT_RJCT:
+            return AcceptRejectFindingsWidgetSerializer(
+                value.acceptrejectfindingswidget
+            ).data
+        else:
+            raise Exception("Unexpected answer widget type.")
+
+
 class QuestionSerializer(HyperlinkedModelSerializer):
     answer_type = CharField(source="get_answer_type_display", read_only=True)
     reader_study = HyperlinkedRelatedField(
@@ -55,6 +77,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     options = CategoricalOptionSerializer(many=True, read_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
     look_up_table = LookUpTableSerializer(read_only=True)
+    answer_widget = AnswerWidgetSerializer(read_only=True)
 
     class Meta:
         model = Question
@@ -72,6 +95,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "interface",
             "overlay_segments",
             "look_up_table",
+            "answer_widget",
         )
 
 

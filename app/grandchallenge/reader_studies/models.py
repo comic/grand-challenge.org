@@ -11,6 +11,7 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -962,6 +963,18 @@ class AnswerType(models.TextChoices):
             AnswerType.MULTIPLE_ELLIPSES,
         ]
 
+    @staticmethod
+    def get_multiple_annotation_types():
+        return [
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            AnswerType.MULTIPLE_POINTS,
+            AnswerType.MULTIPLE_POLYGONS,
+            AnswerType.MULTIPLE_LINES,
+            AnswerType.MULTIPLE_ANGLES,
+            AnswerType.MULTIPLE_ELLIPSES,
+        ]
+
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
@@ -1074,6 +1087,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     order = models.PositiveSmallIntegerField(default=100)
     interface = models.ForeignKey(
         ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
+    )
+    answer_widget = models.ForeignKey(
+        "AnswerWidget", on_delete=models.PROTECT, null=True, blank=True
     )
 
     class Meta:
@@ -1508,3 +1524,39 @@ class ReaderStudyPermissionRequest(RequestBase):
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)
+
+
+class AnswerWidgetKindChoices(models.TextChoices):
+    ACPT_RJCT = "ACPT_RJCT", _("Accept/Reject widget")
+
+
+class AnswerWidget(models.Model):
+    kind = models.CharField(
+        max_length=10,
+        choices=AnswerWidgetKindChoices.choices,
+    )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.kind = self.WIDGET_KIND
+            self.save()
+
+    def supported_answer_types(self):
+        raise NotImplementedError("Subclasses must implement this method.")
+
+
+class AcceptRejectFindingsWidget(AnswerWidget):
+
+    WIDGET_KIND = AnswerWidgetKindChoices.ACPT_RJCT
+
+    enable_annotations = models.BooleanField(
+        default=False,
+        help_text=("Enable readers to correct existing annotations."),
+    )
+
+    @staticmethod
+    def supported_answer_types():
+        return AnswerType.get_multiple_annotation_types()
