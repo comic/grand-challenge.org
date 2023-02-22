@@ -1216,7 +1216,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 )
             if not self.interface:
                 raise ValidationError(
-                    "In order to use the AcceptRejectFindings widget, you need to provide a default answer. Read more about that <a href='/documentation/define-your-cases/#defaults'>here</a>"
+                    "In order to use the AcceptRejectFindings widget, you need to provide a default answer."
                 )
 
     def _clean_answer_type(self):
