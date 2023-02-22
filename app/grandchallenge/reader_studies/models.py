@@ -1130,6 +1130,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "image_port",
                 "required",
                 "overlay_segments",
+                "answer_widget",
             ]
         return []
 
