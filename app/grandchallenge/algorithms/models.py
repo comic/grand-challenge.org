@@ -407,6 +407,15 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 credits_left = user_credit.credits
             return max(credits_left, 0) // max(self.credits_per_job, 1)
 
+    @property
+    def usage_statistics(self):
+        return (
+            Job.objects.filter(algorithm_image__algorithm=self)
+            .values("status", "created__year", "created__month")
+            .annotate(job_count=Count("status"))
+            .order_by("created__year", "created__month", "status")
+        )
+
     @cached_property
     def public_test_case(self):
         try:

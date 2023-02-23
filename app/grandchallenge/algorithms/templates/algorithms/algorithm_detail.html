@@ -141,6 +141,9 @@
                 <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
             {% endif %}
             <h3 class="my-3">About</h3>
+
+            {{ object.usage_statistics }}
+
             {% if object.display_editors %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Creator{{ object.editors_group.user_set.all|pluralize }}:</div>

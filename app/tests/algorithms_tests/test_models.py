@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
 from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
+    AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -307,3 +308,49 @@ class TestJobLimits:
         user_credit.save()
 
         assert algorithm.get_jobs_limit(user=user) == expected_jobs
+
+
+@pytest.mark.django_db
+def test_usage_statistics():
+    algorithm_image = AlgorithmImageFactory()
+
+    AlgorithmJobFactory()  # for another job, should not be included in stats
+
+    for year, month, status in (
+        (2020, 1, Job.SUCCESS),
+        (2020, 1, Job.PENDING),
+        (2020, 2, Job.SUCCESS),
+        (2022, 1, Job.SUCCESS),
+        (2022, 1, Job.SUCCESS),
+    ):
+        job = AlgorithmJobFactory(algorithm_image=algorithm_image)
+        job.created = datetime(year, month, 1, tzinfo=timezone.utc)
+        job.status = status
+        job.save()
+
+    assert [*algorithm_image.algorithm.usage_statistics] == [
+        {
+            "status": Job.PENDING,
+            "created__year": 2020,
+            "created__month": 1,
+            "job_count": 1,
+        },
+        {
+            "status": Job.SUCCESS,
+            "created__year": 2020,
+            "created__month": 1,
+            "job_count": 1,
+        },
+        {
+            "status": Job.SUCCESS,
+            "created__year": 2020,
+            "created__month": 2,
+            "job_count": 1,
+        },
+        {
+            "status": Job.SUCCESS,
+            "created__year": 2022,
+            "created__month": 1,
+            "job_count": 2,
+        },
+    ]
