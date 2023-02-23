@@ -20,8 +20,8 @@ from tests.components_tests.factories import (
 )
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
-    AcceptRejectFindingsWidgetFactory,
     AnswerFactory,
+    AnswerWidgetFactory,
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
@@ -520,8 +520,7 @@ def test_workstation_url():
 
 @pytest.mark.django_db
 def test_accept_reject_findings_widget():
-    widget = AcceptRejectFindingsWidgetFactory()
-    assert widget.KIND == AnswerWidgetKindChoices.ACCEPT_REJECT
+    widget = AnswerWidgetFactory(kind=AnswerWidgetKindChoices.ACCEPT_REJECT)
     assert widget.supported_answer_types() == [
         AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
         AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,

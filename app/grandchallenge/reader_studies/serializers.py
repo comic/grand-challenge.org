@@ -27,8 +27,8 @@ from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
 from grandchallenge.reader_studies.models import (
-    AcceptRejectFindingsWidget,
     Answer,
+    AnswerWidget,
     CategoricalOption,
     DisplaySet,
     Question,
@@ -46,21 +46,13 @@ class CategoricalOptionSerializer(ModelSerializer):
         fields = ("id", "title", "default")
 
 
-class AcceptRejectFindingsWidgetSerializer(ModelSerializer):
+class AnswerWidgetSerializer(ModelSerializer):
 
-    kind = CharField(source="get_kind", read_only=True)
+    kind = CharField(source="get_kind_display", read_only=True)
 
     class Meta:
-        model = AcceptRejectFindingsWidget
+        model = AnswerWidget
         fields = ["kind"]
-
-
-class AnswerWidgetSerializer(CharField):
-    def to_representation(self, value):
-        if isinstance(value, AcceptRejectFindingsWidget):
-            return AcceptRejectFindingsWidgetSerializer(value).data
-        else:
-            raise Exception("Unexpected answer widget type.")
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):

@@ -1525,32 +1525,22 @@ class AnswerWidgetKindChoices(models.TextChoices):
 
 class AnswerWidget(models.Model):
 
-    KIND = None
+    kind = models.CharField(
+        max_length=255,
+        choices=AnswerWidgetKindChoices.choices,
+    )
 
     def __str__(self):
-        return f"{self.get_kind()} widget"
+        return f"{self.get_kind_display} widget"
 
-    @classmethod
-    def get_kind(cls):
-        return AnswerWidgetKindChoices[cls.KIND].label
-
-    @staticmethod
-    def supported_answer_types():
-        raise NotImplementedError("Subclasses must implement this method.")
-
-
-class AcceptRejectFindingsWidget(AnswerWidget):
-
-    KIND = AnswerWidgetKindChoices.ACCEPT_REJECT
-
-    @staticmethod
-    def supported_answer_types():
-        return [
-            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-            AnswerType.MULTIPLE_POINTS,
-            AnswerType.MULTIPLE_POLYGONS,
-            AnswerType.MULTIPLE_LINES,
-            AnswerType.MULTIPLE_ANGLES,
-            AnswerType.MULTIPLE_ELLIPSES,
-        ]
+    def supported_answer_types(self):
+        if self.kind == AnswerWidgetKindChoices.ACCEPT_REJECT:
+            return [
+                AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+                AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+                AnswerType.MULTIPLE_POINTS,
+                AnswerType.MULTIPLE_POLYGONS,
+                AnswerType.MULTIPLE_LINES,
+                AnswerType.MULTIPLE_ANGLES,
+                AnswerType.MULTIPLE_ELLIPSES,
+            ]
