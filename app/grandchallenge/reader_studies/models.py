@@ -1565,11 +1565,12 @@ class AnswerWidget(models.Model):
     def __str__(self):
         return f"{self.get_kind()} widget"
 
-    def get_kind(self):
-        return AnswerWidgetKindChoices[self.KIND].label
+    @classmethod
+    def get_kind(cls):
+        return AnswerWidgetKindChoices[cls.KIND].label
 
     @staticmethod
-    def supported_answer_types(self):
+    def supported_answer_types():
         raise NotImplementedError("Subclasses must implement this method.")
 
 
