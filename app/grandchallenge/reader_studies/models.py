@@ -1531,7 +1531,7 @@ class AnswerWidget(models.Model):
     )
 
     def __str__(self):
-        return f"{self.get_kind_display} widget"
+        return f"{self.kind} widget"
 
     def supported_answer_types(self):
         if self.kind == AnswerWidgetKindChoices.ACCEPT_REJECT:
