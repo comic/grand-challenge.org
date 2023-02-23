@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Algorithm Experiment - {{ block.super }}
+    Algorithm Job Progress - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -17,7 +17,7 @@
             href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Experiment
+            aria-current="page">Progress
         </li>
     </ol>
 {% endblock %}
@@ -35,7 +35,7 @@
                         <i class="text-success fa fa-check fa-2x"></i>
                     </div>
                 </div>
-                <a href="{% url 'algorithms:execution-session-create' slug=object.algorithm_image.algorithm.slug %}"
+                <a href="{% url 'algorithms:job-create' slug=object.algorithm_image.algorithm.slug %}"
                    class="stretched-link"></a>
             </div>
         </div>

@@ -11,10 +11,7 @@ from guardian.shortcuts import (
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import JobPostSerializer
-from grandchallenge.algorithms.tasks import (
-    create_algorithm_jobs_for_archive,
-    create_algorithm_jobs_for_session,
-)
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
@@ -311,7 +308,7 @@ class TestJobPermissions:
         algorithm_image.algorithm.inputs.set([ci])
 
         response = get_view_for_user(
-            viewname="algorithms:execution-session-create",
+            viewname="algorithms:job-create",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -363,22 +360,6 @@ class TestJobPermissions:
         self._validate_created_job_perms(
             algorithm_image=algorithm_image, job=job, user=user
         )
-
-    def test_job_permissions_for_session(self):
-        ai = AlgorithmImageFactory()
-
-        u = UserFactory()
-        s = UploadSessionFactory(creator=u)
-        im = ImageFactory()
-        s.image_set.set([im])
-
-        create_algorithm_jobs_for_session(
-            upload_session_pk=s.pk, algorithm_image_pk=ai.pk
-        )
-
-        job = Job.objects.get()
-
-        self._validate_created_job_perms(algorithm_image=ai, job=job, user=u)
 
     def test_job_permissions_for_archive(self):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)

@@ -62,17 +62,10 @@
             {% endif %}
 
             {% if "execute_algorithm" in algorithm_perms and object.latest_executable_image %}
-                {% if object.supports_batch_upload %}
-                    <a class="nav-link"
-                       href="{% url 'algorithms:execution-session-create-batch' slug=object.slug %}">
-                        <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
-                    </a>
-                {% else %}
-                    <a class="nav-link"
-                       href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                        <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
-                    </a>
-                {% endif %}
+                <a class="nav-link"
+                   href="{% url 'algorithms:job-create' slug=object.slug %}">
+                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
+                </a>
             {% endif %}
 
 
@@ -111,7 +104,7 @@
 
         {% if object.public and not object.public_test_case %}
             <div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-triangle mr-1"></i> Please upload a public test case for your latest algorithm image <a href="{% url 'algorithms:execution-session-create' slug=object.slug %}">here</a>.
+                <i class="fas fa-exclamation-triangle mr-1"></i> Please upload a public test case for your latest algorithm image <a href="{% url 'algorithms:job-create' slug=object.slug %}">here</a>.
             </div>
         {% endif %}
     {% endif %}
@@ -461,7 +454,7 @@
                     <div class="col-12 d-flex justify-content-center">
                         <a type="button" class="btn btn-sm btn-secondary mr-1" href="{% url 'algorithms:update' slug=object.slug %}">Update Settings</a>
                         <a type="button" class="btn btn-sm btn-secondary mr-1" href="{% url 'algorithms:description-update' slug=object.slug %}">Update Description</a>
-                        <a type="button" class="btn btn-sm btn-secondary" href="{% url 'algorithms:execution-session-create' slug=object.slug %}">Add Test Case</a>
+                        <a type="button" class="btn btn-sm btn-secondary" href="{% url 'algorithms:job-create' slug=object.slug %}">Add Test Case</a>
                     </div>
                     <div class="col-12 d-flex justify-content-center">
                         <a type="button" class="btn btn-sm btn-primary {% if not object.mechanism or not object.summary or not object.public_test_case or not object.contact_email or not object.display_editors %}disabled{% endif %}" hx-post="{% url 'algorithms:publish' slug=object.slug %}" hx-vals='{"public": true}'>Publish algorithm</a>

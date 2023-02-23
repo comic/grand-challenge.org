@@ -40,6 +40,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
+from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
@@ -246,11 +247,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def api_url(self) -> str:
         return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
 
-    @property
-    def supports_batch_upload(self):
-        inputs = {inpt.slug for inpt in self.inputs.all()}
-        return inputs == {"generic-medical-image"}
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -397,6 +393,20 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
 
+    def get_jobs_limit(self, user):
+        """Get the maximum number of jobs a user can schedule now"""
+        if self.is_editor(user=user):
+            # Not limited by credits
+            return
+        else:
+            user_credit = Credit.objects.get(user=user)
+            jobs = Job.objects.spent_credits(user=user)
+            if jobs["total"]:
+                credits_left = user_credit.credits - jobs["total"]
+            else:
+                credits_left = user_credit.credits
+            return max(credits_left, 0) // max(self.credits_per_job, 1)
+
     @cached_property
     def public_test_case(self):
         try:
@@ -487,25 +497,6 @@ class AlgorithmImageGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class JobQuerySet(models.QuerySet):
-    def spent_credits(self, user):
-        now = timezone.now()
-        period = timedelta(days=30)
-        user_groups = Group.objects.filter(user=user)
-
-        return (
-            self.filter(creator=user, created__range=[now - period, now])
-            .distinct()
-            .order_by("created")
-            .select_related("algorithm_image__algorithm")
-            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
-            .aggregate(
-                total=Sum("algorithm_image__algorithm__credits_per_job"),
-                oldest=Min("created"),
-            )
-        )
-
-
 class JobManager(ComponentJobManager):
     def create(
         self,
@@ -528,6 +519,23 @@ class JobManager(ComponentJobManager):
                 assign_perm("algorithms.view_logs", group, obj)
 
         return obj
+
+    def spent_credits(self, user):
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_groups = Group.objects.filter(user=user)
+
+        return (
+            self.filter(creator=user, created__range=[now - period, now])
+            .distinct()
+            .order_by("created")
+            .select_related("algorithm_image__algorithm")
+            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
+            .aggregate(
+                total=Sum("algorithm_image__algorithm__credits_per_job"),
+                oldest=Min("created"),
+            )
+        )
 
 
 class Job(UUIDModel, ComponentJob):
@@ -559,7 +567,6 @@ class Job(UUIDModel, ComponentJob):
         on_delete=models.PROTECT,
         related_name="viewers_of_algorithm_job",
     )
-    credits_set = JobQuerySet.as_manager()
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         ordering = ("created",)

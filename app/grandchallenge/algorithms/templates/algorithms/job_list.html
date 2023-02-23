@@ -22,17 +22,10 @@
 
     {% if "execute_algorithm" in algorithm_perms and algorithm.latest_executable_image %}
         <p>
-            {% if algorithm.supports_batch_upload %}
-                <a class="btn btn-primary"
-                   href="{% url 'algorithms:execution-session-create-batch' slug=algorithm.slug %}">
-                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
-                </a>
-            {% else %}
-                <a class="btn btn-primary"
-                   href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}">
-                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
-                </a>
-            {% endif %}
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:job-create' slug=algorithm.slug %}">
+                <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
+            </a>
         </p>
     {% endif %}
 

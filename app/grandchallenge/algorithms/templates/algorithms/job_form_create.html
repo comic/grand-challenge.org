@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+{% load bleach %}
+{% load random_encode %}
+
+{% block title %}
+    Try-out Algorithm - {{ block.super }}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+        </a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Try-out Algorithm
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Try-out Algorithm</h2>
+
+    {{ algorithm.job_create_page_markdown|md2html }}
+
+    {% if form.jobs_limit < 1 %}
+        <p>
+            You have run out of credits to try this algorithm.
+            You can request more credits by sending an e-mail to
+            <a href="{{ 'mailto:support@grand-challenge.org'|random_encode|safe }}" class="text-radboud">
+                support@grand-challenge.org</a>.
+        </p>
+    {% else %}
+        <p>
+            Select the data that you would like to run the algorithm on.
+        </p>
+        <p>
+            {% if form.jobs_limit > 0 %}
+                You receive {{ request.user.user_credit.credits }} credits per month.
+                Using this algorithm requires {{ algorithm.credits_per_job }}
+                credit{{ algorithm.credits_per_job|pluralize }} per job.
+                You can create up to {{ form.jobs_limit }} job{{ form.jobs_limit|pluralize }} for this algorithm.
+            {% endif %}
+        </p>
+
+        <form method="POST">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <input type="submit" name="save" value="Submit" class="btn btn-primary" id="submit-id-save">
+        </form>
+
+        <p>
+            By running this algorithm you agree to the
+            <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General
+                Terms of Service</a>{% if algorithm.additional_terms_markdown %},
+            as well as this algorithm's specific Terms of Service:
+            {% else %}.
+            {% endif %}
+        </p>
+
+        {{ algorithm.additional_terms_markdown|md2html }}
+
+    {% endif %}
+
+{% endblock %}
