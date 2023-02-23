@@ -962,18 +962,6 @@ class AnswerType(models.TextChoices):
             AnswerType.MULTIPLE_ELLIPSES,
         ]
 
-    @staticmethod
-    def get_multiple_annotation_types():
-        return [
-            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-            AnswerType.MULTIPLE_POINTS,
-            AnswerType.MULTIPLE_POLYGONS,
-            AnswerType.MULTIPLE_LINES,
-            AnswerType.MULTIPLE_ANGLES,
-            AnswerType.MULTIPLE_ELLIPSES,
-        ]
-
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
@@ -1580,4 +1568,12 @@ class AcceptRejectFindingsWidget(AnswerWidget):
 
     @staticmethod
     def supported_answer_types():
-        return AnswerType.get_multiple_annotation_types()
+        return [
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            AnswerType.MULTIPLE_POINTS,
+            AnswerType.MULTIPLE_POLYGONS,
+            AnswerType.MULTIPLE_LINES,
+            AnswerType.MULTIPLE_ANGLES,
+            AnswerType.MULTIPLE_ELLIPSES,
+        ]

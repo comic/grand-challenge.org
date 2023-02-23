@@ -584,7 +584,12 @@ def test_clean_answer_widget(required, answer_type, widget, interface, error):
 def test_accept_reject_findings_widget():
     widget = AcceptRejectFindingsWidgetFactory()
     assert widget.KIND == AnswerWidgetKindChoices.ACCEPT_REJECT
-    assert (
-        widget.supported_answer_types()
-        == AnswerType.get_multiple_annotation_types()
-    )
+    assert widget.supported_answer_types() == [
+        AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+        AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+        AnswerType.MULTIPLE_POINTS,
+        AnswerType.MULTIPLE_POLYGONS,
+        AnswerType.MULTIPLE_LINES,
+        AnswerType.MULTIPLE_ANGLES,
+        AnswerType.MULTIPLE_ELLIPSES,
+    ]
