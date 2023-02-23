@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load url %}
-{% load get_obj_perms from guardian_tags %}
 {% load bleach %}
 {% load random_encode %}
-{% load static %}
 
 {% block title %}
     Try-out Algorithm - {{ block.super }}
@@ -30,7 +28,6 @@
 {% endblock %}
 
 {% block content %}
-    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
     <h2>Try-out Algorithm</h2>
 
     {{ algorithm.job_create_page_markdown|md2html }}
