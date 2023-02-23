@@ -441,7 +441,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 "x": {
                     "timeUnit": "yearmonth",
                     "field": "Timestamp",
-                    "type": "ordinal",
+                    "type": "quantitative",
                     "axis": {"title": "Date"},
                 },
                 "y": {
@@ -452,7 +452,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 "tooltip": [
                     {
                         "field": "Timestamp",
-                        "type": "ordinal",
+                        "type": "quantitative",
                         "timeUnit": "yearmonth",
                     },
                     {"field": "Status", "type": "nominal"},
