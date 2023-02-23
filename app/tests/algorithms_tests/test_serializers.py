@@ -1,5 +1,6 @@
 import pytest
 from guardian.shortcuts import assign_perm
+from rest_framework.exceptions import ErrorDetail
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import (
@@ -197,3 +198,89 @@ def test_algorithm_job_post_serializer_create(rf):
     job = Job.objects.first()
     assert job.creator == user
     assert len(job.inputs.all()) == 3
+
+
+@pytest.mark.django_db
+class TestJobCreateLimits:
+    def test_form_invalid_without_enough_credits(self, rf):
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            algorithm__credits_per_job=100,
+        )
+        algorithm_image.algorithm.inputs.clear()
+        user = UserFactory()
+
+        user.user_credit.credits = 0
+        user.user_credit.save()
+
+        algorithm_image.algorithm.add_user(user=user)
+
+        request = rf.get("/foo")
+        request.user = user
+        serializer = JobPostSerializer(
+            data={
+                "algorithm": algorithm_image.algorithm.api_url,
+                "inputs": [],
+            },
+            context={"request": request},
+        )
+
+        assert not serializer.is_valid()
+        assert serializer.errors == {
+            "non_field_errors": [
+                ErrorDetail(
+                    string="You have run out of algorithm credits",
+                    code="invalid",
+                )
+            ]
+        }
+
+    def test_form_valid_for_editor(self, rf):
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            algorithm__credits_per_job=100,
+        )
+        algorithm_image.algorithm.inputs.clear()
+        user = UserFactory()
+
+        user.user_credit.credits = 0
+        user.user_credit.save()
+
+        algorithm_image.algorithm.add_editor(user=user)
+
+        request = rf.get("/foo")
+        request.user = user
+        serializer = JobPostSerializer(
+            data={
+                "algorithm": algorithm_image.algorithm.api_url,
+                "inputs": [],
+            },
+            context={"request": request},
+        )
+
+        assert serializer.is_valid()
+
+    def test_form_valid_with_credits(self, rf):
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            algorithm__credits_per_job=1,
+        )
+        algorithm_image.algorithm.inputs.clear()
+        user = UserFactory()
+
+        algorithm_image.algorithm.add_user(user=user)
+
+        request = rf.get("/foo")
+        request.user = user
+        serializer = JobPostSerializer(
+            data={
+                "algorithm": algorithm_image.algorithm.api_url,
+                "inputs": [],
+            },
+            context={"request": request},
+        )
+
+        assert serializer.is_valid()

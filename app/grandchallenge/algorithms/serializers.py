@@ -167,6 +167,14 @@ class JobPostSerializer(JobSerializer):
         data["creator"] = user
         data["algorithm_image"] = alg.latest_executable_image
 
+        jobs_limit = alg.latest_executable_image.algorithm.get_jobs_limit(
+            user=data["creator"]
+        )
+        if jobs_limit is not None and jobs_limit < 1:
+            raise serializers.ValidationError(
+                "You have run out of algorithm credits"
+            )
+
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided
         algorithm_input_pks = {a.pk for a in alg.inputs.all()}
