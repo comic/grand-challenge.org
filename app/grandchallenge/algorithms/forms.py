@@ -80,7 +80,7 @@ class ModelFactsTextField(Field):
     template = "algorithms/model_facts_field.html"
 
 
-class AlgorithmInputsForm(SaveFormInitMixin, Form):
+class JobCreateForm(SaveFormInitMixin, Form):
     def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -101,6 +101,14 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
     @cached_property
     def jobs_limit(self):
         return self._algorithm.get_jobs_limit(user=self._user)
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.jobs_limit is not None and self.jobs_limit < 1:
+            raise ValidationError("You have run out of algorithm credits")
+
+        return cleaned_data
 
 
 # Exclude interfaces that are not aimed at algorithms from user selection

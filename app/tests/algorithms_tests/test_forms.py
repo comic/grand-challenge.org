@@ -4,6 +4,7 @@ from actstream.actions import is_following
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmPublishForm,
+    JobCreateForm,
     JobForm,
 )
 from grandchallenge.algorithms.models import (
@@ -445,3 +446,44 @@ def test_only_publish_successful_jobs():
 
     form = JobForm(instance=job_success, data={"public": True})
     assert form.is_valid()
+
+
+@pytest.mark.django_db
+class TestJobCreateLimits:
+    def test_form_invalid_without_enough_credits(self):
+        algorithm = AlgorithmFactory(credits_per_job=100)
+        algorithm.inputs.clear()
+        user = UserFactory()
+
+        user.user_credit.credits = 0
+        user.user_credit.save()
+
+        form = JobCreateForm(algorithm=algorithm, user=user, data={})
+
+        assert not form.is_valid()
+        assert form.errors == {
+            "__all__": ["You have run out of algorithm credits"]
+        }
+
+    def test_form_valid_for_editor(self):
+        algorithm = AlgorithmFactory(credits_per_job=100)
+        algorithm.inputs.clear()
+        user = UserFactory()
+
+        user.user_credit.credits = 0
+        user.user_credit.save()
+
+        algorithm.add_editor(user=user)
+
+        form = JobCreateForm(algorithm=algorithm, user=user, data={})
+
+        assert form.is_valid()
+
+    def test_form_valid_with_credits(self):
+        algorithm = AlgorithmFactory(credits_per_job=1)
+        algorithm.inputs.clear()
+        user = UserFactory()
+
+        form = JobCreateForm(algorithm=algorithm, user=user, data={})
+
+        assert form.is_valid()

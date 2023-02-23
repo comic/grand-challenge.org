@@ -47,12 +47,12 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmImportForm,
-    AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
     AlgorithmRepoForm,
     AlgorithmUpdateForm,
     DisplaySetFromJobForm,
+    JobCreateForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -339,7 +339,7 @@ class JobCreate(
     UserFormKwargsMixin,
     FormView,
 ):
-    form_class = AlgorithmInputsForm
+    form_class = JobCreateForm
     template_name = "algorithms/job_form_create.html"
     permission_required = "algorithms.execute_algorithm"
     raise_exception = True
