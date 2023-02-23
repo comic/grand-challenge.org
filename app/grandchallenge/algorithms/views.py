@@ -1,5 +1,4 @@
 import logging
-from datetime import timedelta
 
 import requests
 from django.conf import settings
@@ -19,7 +18,6 @@ from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -86,7 +84,6 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
-from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
@@ -351,42 +348,6 @@ class JobCreate(
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_remaining_jobs(self, *, credits_per_job: int) -> dict:
-        """
-        Determines the number of jobs left for the user and when the next job can be started
-
-        :return: A dictionary containing remaining_jobs (int) and
-        next_job_at (datetime)
-        """
-        now = timezone.now()
-        period = timedelta(days=30)
-        user_credit = Credit.objects.get(user=self.request.user)
-
-        if credits_per_job == 0:
-            return {
-                "remaining_jobs": 1,
-                "next_job_at": now,
-                "user_credits": user_credit.credits,
-            }
-
-        jobs = Job.objects.spent_credits(user=self.request.user)
-
-        if jobs["oldest"]:
-            next_job_at = jobs["oldest"] + period
-        else:
-            next_job_at = now
-
-        if jobs["total"]:
-            total_jobs = user_credit.credits - jobs["total"]
-        else:
-            total_jobs = user_credit.credits
-
-        return {
-            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
-            "next_job_at": next_job_at,
-            "user_credits": total_jobs,
-        }
-
     def get_permission_object(self):
         return self.algorithm
 
@@ -399,11 +360,6 @@ class JobCreate(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
-        context.update(
-            self.get_remaining_jobs(
-                credits_per_job=self.algorithm.credits_per_job
-            )
-        )
         return context
 
     def form_valid(self, form):
@@ -681,6 +637,7 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     model = Job
     form_class = JobForm
     permission_required = "algorithms.change_job"
+    template_name_suffix = "_form_update"
     raise_exception = True
 
 

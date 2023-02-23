@@ -32,6 +32,7 @@ from django.forms import (
 )
 from django.forms.widgets import MultipleHiddenInput, PasswordInput
 from django.urls import Resolver404, resolve
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
@@ -80,22 +81,26 @@ class ModelFactsTextField(Field):
 
 
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
-    def __init__(self, *args, algorithm=None, user=None, **kwargs):
+    def __init__(self, *args, algorithm, user, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if algorithm is None:
-            return
+        self._algorithm = algorithm
+        self._user = user
 
         self.helper = FormHelper()
 
-        for inp in algorithm.inputs.all():
+        for inp in self._algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(
                 instance=inp,
                 initial=inp.default_value,
-                user=user,
+                user=self._user,
                 required=(inp.kind != InterfaceKindChoices.BOOL),
                 help_text=clean(inp.description) if inp.description else "",
             ).field
+
+    @cached_property
+    def jobs_limit(self):
+        return self._algorithm.get_jobs_limit(user=self._user)
 
 
 # Exclude interfaces that are not aimed at algorithms from user selection
