@@ -310,6 +310,7 @@ def create_algorithm_jobs(
 
         with transaction.atomic():
             job = Job.objects.create(
+                creator=None,  # System jobs, so no creator
                 algorithm_image=algorithm_image,
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
