@@ -368,14 +368,14 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
-                "execution-session-create",
+                "job-create",
                 {"slug": ai.algorithm.slug},
                 "execute_algorithm",
                 ai.algorithm,
                 None,
             ),
             (
-                "job-experiment-detail",
+                "job-progress-detail",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "view_job",
                 j,
@@ -858,7 +858,7 @@ def test_create_job_with_json_file(client, settings, algorithm_io_image):
         with capture_on_commit_callbacks(execute=True):
             with capture_on_commit_callbacks(execute=True):
                 response = get_view_for_user(
-                    viewname="algorithms:execution-session-create",
+                    viewname="algorithms:job-create",
                     client=client,
                     method=client.post,
                     reverse_kwargs={
@@ -876,7 +876,7 @@ def test_create_job_with_json_file(client, settings, algorithm_io_image):
 
 
 @pytest.mark.django_db
-def test_algorithm_experiment_create_with_image_input(
+def test_algorithm_job_create_with_image_input(
     settings, client, algorithm_io_image
 ):
     settings.task_eager_propagates = (True,)
@@ -901,7 +901,7 @@ def test_algorithm_experiment_create_with_image_input(
     with capture_on_commit_callbacks(execute=True):
         with capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
-                viewname="algorithms:execution-session-create",
+                viewname="algorithms:job-create",
                 client=client,
                 method=client.post,
                 reverse_kwargs={
@@ -922,7 +922,7 @@ def test_algorithm_experiment_create_with_image_input(
     with capture_on_commit_callbacks(execute=True):
         with capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
-                viewname="algorithms:execution-session-create",
+                viewname="algorithms:job-create",
                 client=client,
                 method=client.post,
                 reverse_kwargs={
@@ -946,7 +946,7 @@ def test_algorithm_experiment_create_with_image_input(
     with capture_on_commit_callbacks(execute=True):
         with capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
-                viewname="algorithms:execution-session-create",
+                viewname="algorithms:job-create",
                 client=client,
                 method=client.post,
                 reverse_kwargs={

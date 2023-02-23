@@ -5,7 +5,6 @@ from grandchallenge.algorithms.views import (
     AlgorithmCreate,
     AlgorithmDescriptionUpdate,
     AlgorithmDetail,
-    AlgorithmExperimentCreate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
     AlgorithmImageUpdate,
@@ -18,8 +17,9 @@ from grandchallenge.algorithms.views import (
     AlgorithmUpdate,
     DisplaySetFromJobCreate,
     EditorsUpdate,
+    JobCreate,
     JobDetail,
-    JobExperimentDetail,
+    JobProgressDetail,
     JobsList,
     JobUpdate,
     JobViewersUpdate,
@@ -56,12 +56,8 @@ urlpatterns = [
         AlgorithmImageUpdate.as_view(),
         name="image-update",
     ),
-    path(
-        "<slug>/experiments/create/",
-        AlgorithmExperimentCreate.as_view(),
-        name="execution-session-create",
-    ),
     path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
+    path("<slug>/jobs/create/", JobCreate.as_view(), name="job-create"),
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
         "<slug>/jobs/<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"
@@ -72,9 +68,9 @@ urlpatterns = [
         name="display-set-from-job-create",
     ),
     path(
-        "<slug>/jobs/<uuid:pk>/experiment/",
-        JobExperimentDetail.as_view(),
-        name="job-experiment-detail",
+        "<slug>/jobs/<uuid:pk>/progress/",
+        JobProgressDetail.as_view(),
+        name="job-progress-detail",
     ),
     path(
         "<slug>/jobs/<uuid:pk>/viewers/update/",

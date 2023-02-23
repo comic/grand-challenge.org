@@ -308,7 +308,7 @@ class TestJobPermissions:
         algorithm_image.algorithm.inputs.set([ci])
 
         response = get_view_for_user(
-            viewname="algorithms:execution-session-create",
+            viewname="algorithms:job-create",
             client=client,
             method=client.post,
             reverse_kwargs={

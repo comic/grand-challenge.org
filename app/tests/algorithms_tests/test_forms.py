@@ -289,21 +289,19 @@ def test_algorithm_update_contains_repo_name(client, uploaded_image):
         ),
     ),
 )
-def test_create_experiment_input_fields(
+def test_create_job_input_fields(
     client, component_interfaces, slug, content_parts
 ):
     alg, creator = create_algorithm_with_input(slug)
 
-    def load_create_experiment_form():
-        return get_view_for_user(
-            viewname="algorithms:execution-session-create",
-            client=client,
-            reverse_kwargs={"slug": alg.slug},
-            follow=True,
-            user=creator,
-        )
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        follow=True,
+        user=creator,
+    )
 
-    response = load_create_experiment_form()
     assert response.status_code == 200
     for c in content_parts:
         assert c in response.rendered_content
@@ -323,23 +321,20 @@ def test_create_experiment_input_fields(
         "multiple-polygons",
     ],
 )
-def test_create_experiment_json_input_field_validation(
+def test_create_job_json_input_field_validation(
     client, component_interfaces, slug
 ):
     alg, creator = create_algorithm_with_input(slug)
 
-    def try_create_algorithm_experiment():
-        return get_view_for_user(
-            viewname="algorithms:execution-session-create",
+    with pytest.raises(TypeError) as e:
+        get_view_for_user(
+            viewname="algorithms:job-create",
             client=client,
             reverse_kwargs={"slug": alg.slug},
             method=client.post,
             follow=True,
             user=creator,
         )
-
-    with pytest.raises(TypeError) as e:
-        try_create_algorithm_experiment()
     assert (
         "the JSON object must be str, bytes or bytearray, not NoneType"
         in str(e)
@@ -360,22 +355,20 @@ def test_create_experiment_json_input_field_validation(
         ("float", ['class="invalid-feedback"', "This field is required."]),
     ),
 )
-def test_create_experiment_simple_input_field_validation(
+def test_create_job_simple_input_field_validation(
     client, component_interfaces, slug, content_parts
 ):
     alg, creator = create_algorithm_with_input(slug)
 
-    def try_create_algorithm_experiment():
-        return get_view_for_user(
-            viewname="algorithms:execution-session-create",
-            client=client,
-            reverse_kwargs={"slug": alg.slug},
-            method=client.post,
-            follow=True,
-            user=creator,
-        )
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        method=client.post,
+        follow=True,
+        user=creator,
+    )
 
-    response = try_create_algorithm_experiment()
     assert response.status_code == 200
     for c in content_parts:
         assert c in response.rendered_content

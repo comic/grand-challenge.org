@@ -387,16 +387,14 @@ def send_failed_job_notification(*, job_pk):
 
     if job.status == Job.FAILURE and job.creator is not None:
         algorithm = job.algorithm_image.algorithm
-        experiment_url = reverse(
-            "algorithms:job-list", kwargs={"slug": algorithm.slug}
-        )
+        url = reverse("algorithms:job-list", kwargs={"slug": algorithm.slug})
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.JOB_STATUS,
             actor=job.creator,
             message=f"Unfortunately one of the jobs for algorithm {algorithm.title} "
             f"failed with an error",
             target=algorithm,
-            description=experiment_url,
+            description=url,
         )
 
 

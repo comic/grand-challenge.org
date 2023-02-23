@@ -336,14 +336,14 @@ class AlgorithmImageUpdate(
         return context
 
 
-class AlgorithmExperimentCreate(
+class JobCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     UserFormKwargsMixin,
     FormView,
 ):
     form_class = AlgorithmInputsForm
-    template_name = "algorithms/algorithm_inputs_form.html"
+    template_name = "algorithms/job_form_create.html"
     permission_required = "algorithms.execute_algorithm"
     raise_exception = True
 
@@ -469,16 +469,16 @@ class AlgorithmExperimentCreate(
 
         return HttpResponseRedirect(
             reverse(
-                "algorithms:job-experiment-detail",
+                "algorithms:job-progress-detail",
                 kwargs={"slug": self.kwargs["slug"], "pk": job.pk},
             )
         )
 
 
-class JobExperimentDetail(
+class JobProgressDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
-    template_name = "algorithms/job_experiment_detail.html"
+    template_name = "algorithms/job_progress_detail.html"
     permission_required = "algorithms.view_job"
     model = Job
     raise_exception = True

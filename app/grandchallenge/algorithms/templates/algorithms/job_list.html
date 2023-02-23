@@ -23,7 +23,7 @@
     {% if "execute_algorithm" in algorithm_perms and algorithm.latest_executable_image %}
         <p>
             <a class="btn btn-primary"
-               href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}">
+               href="{% url 'algorithms:job-create' slug=algorithm.slug %}">
                 <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
             </a>
         </p>
