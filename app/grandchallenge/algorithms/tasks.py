@@ -370,9 +370,9 @@ def create_algorithm_jobs(
     )
 
     if creator is not None:
-        n_jobs = algorithm_image.algorithm.get_remaining_jobs(user=creator)
-        if n_jobs is not None:
-            civ_sets = civ_sets[:n_jobs]
+        jobs_limit = algorithm_image.algorithm.get_jobs_limit(user=creator)
+        if jobs_limit is not None:
+            civ_sets = civ_sets[:jobs_limit]
 
     if max_jobs is not None:
         civ_sets = civ_sets[:max_jobs]
@@ -459,16 +459,6 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
         valid_job_inputs.append(valid_input)
 
     return valid_job_inputs
-
-
-def remaining_jobs(*, creator, algorithm_image):
-    user_credit = Credit.objects.get(user=creator)
-    jobs = Job.credits_set.spent_credits(user=creator)
-    if jobs["total"]:
-        total_jobs = user_credit.credits - jobs["total"]
-    else:
-        total_jobs = user_credit.credits
-    return int(total_jobs / max(algorithm_image.algorithm.credits_per_job, 1))
 
 
 @shared_task

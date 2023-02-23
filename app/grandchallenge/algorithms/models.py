@@ -398,14 +398,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def remove_user(self, user):
         return user.groups.remove(self.users_group)
 
-    def get_remaining_jobs(self, user):
-        """Get the number of jobs a user can schedule now"""
+    def get_jobs_limit(self, user):
+        """Get the maximum number of jobs a user can schedule now"""
         if self.is_editor(user=user):
             # Not limited by credits
             return
         else:
             user_credit = Credit.objects.get(user=user)
-            jobs = Job.credits_set.spent_credits(user=user)
+            jobs = Job.objects.spent_credits(user=user)
             if jobs["total"]:
                 credits_left = user_credit.credits - jobs["total"]
             else:
@@ -502,25 +502,6 @@ class AlgorithmImageGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class JobQuerySet(models.QuerySet):
-    def spent_credits(self, user):
-        now = timezone.now()
-        period = timedelta(days=30)
-        user_groups = Group.objects.filter(user=user)
-
-        return (
-            self.filter(creator=user, created__range=[now - period, now])
-            .distinct()
-            .order_by("created")
-            .select_related("algorithm_image__algorithm")
-            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
-            .aggregate(
-                total=Sum("algorithm_image__algorithm__credits_per_job"),
-                oldest=Min("created"),
-            )
-        )
-
-
 class JobManager(ComponentJobManager):
     def create(
         self,
@@ -543,6 +524,23 @@ class JobManager(ComponentJobManager):
                 assign_perm("algorithms.view_logs", group, obj)
 
         return obj
+
+    def spent_credits(self, user):
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_groups = Group.objects.filter(user=user)
+
+        return (
+            self.filter(creator=user, created__range=[now - period, now])
+            .distinct()
+            .order_by("created")
+            .select_related("algorithm_image__algorithm")
+            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
+            .aggregate(
+                total=Sum("algorithm_image__algorithm__credits_per_job"),
+                oldest=Min("created"),
+            )
+        )
 
 
 class Job(UUIDModel, ComponentJob):
@@ -574,7 +572,6 @@ class Job(UUIDModel, ComponentJob):
         on_delete=models.PROTECT,
         related_name="viewers_of_algorithm_job",
     )
-    credits_set = JobQuerySet.as_manager()
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         ordering = ("created",)

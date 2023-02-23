@@ -248,16 +248,16 @@ def test_new_display_set_created_on_reader_study_change():
 
 
 @pytest.mark.django_db
-class TestRemainingJobs:
+class TestJobLimits:
     def test_unlimited_jobs(self):
         algorithm = AlgorithmFactory(credits_per_job=100)
         user = UserFactory()
 
-        assert algorithm.get_remaining_jobs(user=user) is not None
+        assert algorithm.get_jobs_limit(user=user) is not None
 
         algorithm.add_editor(user=user)
 
-        assert algorithm.get_remaining_jobs(user=user) is None
+        assert algorithm.get_jobs_limit(user=user) is None
 
     @pytest.mark.parametrize(
         "credits_per_job,user_credits,expected_jobs",
@@ -268,9 +268,7 @@ class TestRemainingJobs:
             (0, 100, 100),
         ),
     )
-    def test_remaining_jobs(
-        self, credits_per_job, user_credits, expected_jobs
-    ):
+    def test_limited_jobs(self, credits_per_job, user_credits, expected_jobs):
         algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
         user = UserFactory()
 
@@ -278,7 +276,7 @@ class TestRemainingJobs:
         user_credit.credits = user_credits
         user_credit.save()
 
-        assert algorithm.get_remaining_jobs(user=user) == expected_jobs
+        assert algorithm.get_jobs_limit(user=user) == expected_jobs
 
     @pytest.mark.parametrize(
         "credits_per_job,user_credits,expected_jobs",
@@ -290,7 +288,7 @@ class TestRemainingJobs:
             (1, 100, 98),
         ),
     )
-    def test_remaining_jobs_with_existing(
+    def test_limited_jobs_with_existing(
         self, credits_per_job, user_credits, expected_jobs
     ):
         algorithm = AlgorithmFactory(credits_per_job=credits_per_job)
@@ -308,4 +306,4 @@ class TestRemainingJobs:
         user_credit.credits = user_credits
         user_credit.save()
 
-        assert algorithm.get_remaining_jobs(user=user) == expected_jobs
+        assert algorithm.get_jobs_limit(user=user) == expected_jobs

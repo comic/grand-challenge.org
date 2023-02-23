@@ -361,7 +361,7 @@ class RemainingJobsMixin:
                 "user_credits": user_credit.credits,
             }
 
-        jobs = Job.credits_set.spent_credits(user=self.request.user)
+        jobs = Job.objects.spent_credits(user=self.request.user)
 
         if jobs["oldest"]:
             next_job_at = jobs["oldest"] + period
