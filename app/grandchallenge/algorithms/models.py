@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from actstream.actions import follow, is_following
 from actstream.models import Follow
@@ -407,7 +407,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 credits_left = user_credit.credits
             return max(credits_left, 0) // max(self.credits_per_job, 1)
 
-    @property
+    @cached_property
     def usage_statistics(self):
         return (
             Job.objects.filter(algorithm_image__algorithm=self)
@@ -415,6 +415,58 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             .annotate(job_count=Count("status"))
             .order_by("created__year", "created__month", "status")
         )
+
+    @property
+    def usage_chart(self):
+        status_options = {k: v for k, v in Job.status.field.choices}
+
+        return {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": "container",
+            "padding": 0,
+            "data": {
+                "values": [
+                    {
+                        "Status": status_options[datum["status"]],
+                        "Timestamp": datetime(
+                            datum["created__year"], datum["created__month"], 1
+                        ).isoformat(),
+                        "Jobs": datum["job_count"],
+                    }
+                    for datum in self.usage_statistics
+                ]
+            },
+            "mark": "bar",
+            "encoding": {
+                "x": {
+                    "timeUnit": "yearmonth",
+                    "field": "Timestamp",
+                    "type": "ordinal",
+                    "axis": {"title": "Date"},
+                },
+                "y": {
+                    "field": "Jobs",
+                    "type": "quantitative",
+                    "title": "Jobs Count",
+                },
+                "tooltip": [
+                    {
+                        "field": "Timestamp",
+                        "type": "ordinal",
+                        "timeUnit": "yearmonth",
+                    },
+                    {"field": "Status", "type": "nominal"},
+                    {"field": "Jobs", "type": "quantitative"},
+                ],
+                "color": {
+                    "field": "Status",
+                    "scale": {
+                        "domain": [*status_options.values()],
+                    },
+                    "type": "nominal",
+                },
+            },
+        }
 
     @cached_property
     def public_test_case(self):

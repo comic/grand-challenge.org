@@ -141,9 +141,6 @@
                 <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
             {% endif %}
             <h3 class="my-3">About</h3>
-
-            {{ object.usage_statistics }}
-
             {% if object.display_editors %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Creator{{ object.editors_group.user_set.all|pluralize }}:</div>
@@ -277,6 +274,10 @@
                 {% if object.editor_notes %}
                     <h4>Notes</h4>
                     {{ object.editor_notes|md2html }}
+                {% endif %}
+                {% if object.usage_statistics %}
+                    <h4>Algorithm Usage</h4>
+                    <div class="w-100" id="runtimeMetricsChart"></div>
                 {% endif %}
                 <p>
                     <a class="btn btn-primary"
@@ -476,4 +477,13 @@
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
             })
     </script>
+
+    {% if object.usage_statistics and "change_algorithm" in algorithm_perms %}
+        <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+
+        {{ object.usage_chart|json_script:"runtimeMetricsData" }}
+        <script type="module" src="{% static "algorithms/js/render_runtime_metrics_chart.js" %}"></script>
+    {% endif %}
 {% endblock %}
