@@ -117,7 +117,7 @@ You can read and parse these with</p>
     <span class="n">val</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>When creating a new experiment for an algorithm, you can provide values for all <code class="docutils literal notranslate"><span class="pre">ComponentInterfaces</span></code> using the form provided.</p>
+<p>When creating a new job for an algorithm, you can provide values for all <code class="docutils literal notranslate"><span class="pre">ComponentInterfaces</span></code> using the form provided.</p>
 <section id="image-files">
 <h3>Image files<a class="headerlink" href="#image-files" title="Permalink to this heading"></a></h3>
 <p>Grand Challenge works with two image formats that will need to be read or written by your algorithm container image <code class="docutils literal notranslate"><span class="pre">.mha</span></code> and <code class="docutils literal notranslate"><span class="pre">.tif</span></code>.</p>
@@ -125,8 +125,8 @@ You can read and parse these with</p>
 </section>
 <section id="execution">
 <h2>Execution<a class="headerlink" href="#execution" title="Permalink to this heading"></a></h2>
-<p>A container will be created from the container image whenever you create an experiment for your algorithm.</p>
-<p>Any output for both <cite>stdout</cite> and <cite>stderr</cite> is captured. The output for <cite>stderr</cite> gets marked as a warning in the experiment’s result.</p>
+<p>A container will be created from the container image whenever you create a job for your algorithm.</p>
+<p>Any output for both <cite>stdout</cite> and <cite>stderr</cite> is captured. The output for <cite>stderr</cite> gets marked as a warning in the job’s result.</p>
 <p>If an algorithm does not properly run, it should exit with a non zero exit code. The job for the algorithm then gets marked as failed.</p>
 </section>
 <section id="algorithm-outputs">

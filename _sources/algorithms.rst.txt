@@ -26,7 +26,7 @@ You can read and parse these with
     with open("/input/{relative_path}") as f:
         val = json.loads(f.read())
 
-When creating a new experiment for an algorithm, you can provide values for all ``ComponentInterfaces`` using the form provided.
+When creating a new job for an algorithm, you can provide values for all ``ComponentInterfaces`` using the form provided.
 
 Image files
 -----------
@@ -36,9 +36,9 @@ Grand Challenge works with two image formats that will need to be read or writte
 Execution
 =========
 
-A container will be created from the container image whenever you create an experiment for your algorithm.
+A container will be created from the container image whenever you create a job for your algorithm.
 
-Any output for both `stdout` and `stderr` is captured. The output for `stderr` gets marked as a warning in the experiment's result.
+Any output for both `stdout` and `stderr` is captured. The output for `stderr` gets marked as a warning in the job's result.
 
 If an algorithm does not properly run, it should exit with a non zero exit code. The job for the algorithm then gets marked as failed.
 
