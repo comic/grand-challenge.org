@@ -1180,31 +1180,8 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     def clean(self):
         super().clean()
-        self._clean_answer_widget()
         self._clean_answer_type()
         self._clean_interface()
-
-    def _clean_answer_widget(self):
-        if self.answer_widget:
-            if (
-                self.answer_type
-                not in self.answer_widget.supported_answer_types()
-            ):
-                raise ValidationError(
-                    f"The {self.answer_widget} can only be enabled for the following answer types: {', '.join(self.answer_widget.supported_answer_types())}."
-                )
-            if (
-                self.answer_widget.KIND
-                == AnswerWidgetKindChoices.ACCEPT_REJECT
-            ):
-                if self.required:
-                    raise ValidationError(
-                        "In order to use the AcceptRejectFindings widget, uncheck the 'required' box."
-                    )
-                if not self.interface:
-                    raise ValidationError(
-                        "In order to use the AcceptRejectFindings widget, you need to provide a default answer."
-                    )
 
     def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn

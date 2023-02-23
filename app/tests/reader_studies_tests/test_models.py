@@ -1,5 +1,3 @@
-from contextlib import nullcontext
-
 import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
@@ -10,7 +8,6 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.reader_studies.models import (
-    AcceptRejectFindingsWidget,
     Answer,
     AnswerType,
     AnswerWidgetKindChoices,
@@ -519,65 +516,6 @@ def test_workstation_url():
         display_set.workstation_url
         == f"https://testserver/viewers/{workstation.slug}/sessions/create/?displaySet={display_set.pk}"
     )
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "required, answer_type, widget, interface, error",
-    (
-        (
-            True,
-            AnswerType.MULTIPLE_POINTS,
-            AcceptRejectFindingsWidget,
-            True,
-            pytest.raises(ValidationError),
-        ),
-        (
-            False,
-            AnswerType.POINT,
-            AcceptRejectFindingsWidget,
-            True,
-            pytest.raises(ValidationError),
-        ),
-        (
-            False,
-            AnswerType.MULTIPLE_POINTS,
-            AcceptRejectFindingsWidget,
-            False,
-            pytest.raises(ValidationError),
-        ),
-        (
-            False,
-            AnswerType.MULTIPLE_POINTS,
-            AcceptRejectFindingsWidget,
-            True,
-            nullcontext(),
-        ),
-    ),
-)
-def test_clean_answer_widget(required, answer_type, widget, interface, error):
-    widget_instance = widget.objects.create()
-
-    if interface:
-        kind = [
-            member
-            for name, member in ComponentInterface.Kind.__members__.items()
-            if name == answer_type.name
-        ]
-        ci = ComponentInterfaceFactory(kind=kind[0])
-    else:
-        ci = None
-
-    q = QuestionFactory(
-        question_text="foo",
-        required=required,
-        answer_type=answer_type,
-        answer_widget=widget_instance,
-        interface=ci,
-    )
-
-    with error:
-        q._clean_answer_widget()
 
 
 @pytest.mark.django_db
