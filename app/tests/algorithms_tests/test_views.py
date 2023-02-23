@@ -21,7 +21,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -178,22 +177,6 @@ def test_algorithm_image_create_detail(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_run(client):
-    user = UserFactory()
-    ai1 = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
-    ai1.algorithm.users_group.user_set.add(user)
-
-    response = get_view_for_user(
-        viewname="algorithms:execution-session-create-batch",
-        reverse_kwargs={"slug": slugify(ai1.algorithm.slug)},
-        client=client,
-        user=user,
-    )
-
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
 def test_algorithm_permission_request_list(client):
     user = UserFactory()
     editor = UserFactory()
@@ -338,7 +321,6 @@ def test_algorithm_jobs_list_view(client):
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
-        s = RawImageUploadSessionFactory()
         u = UserFactory()
         j = AlgorithmJobFactory(algorithm_image=ai, status=Job.SUCCESS)
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
@@ -386,24 +368,10 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
-                "execution-session-create-batch",
-                {"slug": ai.algorithm.slug},
-                "execute_algorithm",
-                ai.algorithm,
-                None,
-            ),
-            (
                 "execution-session-create",
                 {"slug": ai.algorithm.slug},
                 "execute_algorithm",
                 ai.algorithm,
-                None,
-            ),
-            (
-                "execution-session-detail",
-                {"slug": ai.algorithm.slug, "pk": s.pk},
-                "view_rawimageuploadsession",
-                s,
                 None,
             ),
             (

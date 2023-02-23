@@ -231,7 +231,6 @@ def create_algorithm_jobs_for_evaluation(
                         "values__interface"
                     )
                 ],
-                creator=None,
                 extra_viewer_groups=challenge_admins,
                 extra_logs_viewer_groups=challenge_admins,
                 task_on_success=task_on_success,

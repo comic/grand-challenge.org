@@ -338,7 +338,7 @@ class Session(UUIDModel):
     FAILED = 3
     STOPPED = 4
 
-    # These should match the values in session.js
+    # These should match the values in workstations/js/session.js
     STATUS_CHOICES = (
         (QUEUED, "Queued"),
         (STARTED, "Started"),

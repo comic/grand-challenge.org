@@ -17,7 +17,7 @@ from django.core.exceptions import (
 )
 from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -71,8 +71,6 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
-from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
@@ -338,8 +336,18 @@ class AlgorithmImageUpdate(
         return context
 
 
-class RemainingJobsMixin:
-    @property
+class AlgorithmExperimentCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UserFormKwargsMixin,
+    FormView,
+):
+    form_class = AlgorithmInputsForm
+    template_name = "algorithms/algorithm_inputs_form.html"
+    permission_required = "algorithms.execute_algorithm"
+    raise_exception = True
+
+    @cached_property
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
@@ -378,75 +386,6 @@ class RemainingJobsMixin:
             "next_job_at": next_job_at,
             "user_credits": total_jobs,
         }
-
-
-class AlgorithmExecutionSessionCreate(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    UserFormKwargsMixin,
-    CreateView,
-    RemainingJobsMixin,
-):
-    model = RawImageUploadSession
-    form_class = UploadRawImagesForm
-    template_name = "algorithms/algorithm_execution_session_create.html"
-    permission_required = "algorithms.execute_algorithm"
-    raise_exception = True
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "linked_task": create_algorithm_jobs_for_session.signature(
-                    kwargs={
-                        "algorithm_image_pk": self.algorithm.latest_executable_image.pk
-                    },
-                    immutable=True,
-                )
-            }
-        )
-        return kwargs
-
-    def get_permission_object(self):
-        return self.algorithm
-
-    def get_initial(self):
-        if self.algorithm.latest_executable_image is None:
-            raise Http404()
-        return super().get_initial()
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
-        context.update(
-            self.get_remaining_jobs(
-                credits_per_job=self.algorithm.credits_per_job
-            )
-        )
-        return context
-
-    def get_success_url(self):
-        return reverse(
-            "algorithms:execution-session-detail",
-            kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
-        )
-
-
-class AlgorithmExperimentCreate(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    UserFormKwargsMixin,
-    FormView,
-    RemainingJobsMixin,
-):
-    form_class = AlgorithmInputsForm
-    template_name = "algorithms/algorithm_inputs_form.html"
-    permission_required = "algorithms.execute_algorithm"
-    raise_exception = True
 
     def get_permission_object(self):
         return self.algorithm
@@ -547,29 +486,6 @@ class JobExperimentDetail(
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.select_related("algorithm_image__algorithm")
-
-
-class AlgorithmExecutionSessionDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = RawImageUploadSession
-    template_name = "algorithms/executionsession_detail.html"
-    permission_required = "cases.view_rawimageuploadsession"
-    raise_exception = True
-
-    @cached_property
-    def algorithm(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "algorithm": self.algorithm,
-                "job_list_api_url": reverse("api:algorithms-job-list"),
-            }
-        )
-        return context
 
 
 class JobsList(PaginatedTableListView):

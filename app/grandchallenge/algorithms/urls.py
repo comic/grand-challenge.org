@@ -5,8 +5,6 @@ from grandchallenge.algorithms.views import (
     AlgorithmCreate,
     AlgorithmDescriptionUpdate,
     AlgorithmDetail,
-    AlgorithmExecutionSessionCreate,
-    AlgorithmExecutionSessionDetail,
     AlgorithmExperimentCreate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
@@ -59,19 +57,9 @@ urlpatterns = [
         name="image-update",
     ),
     path(
-        "<slug>/experiments/create/batch/",
-        AlgorithmExecutionSessionCreate.as_view(),
-        name="execution-session-create-batch",
-    ),
-    path(
         "<slug>/experiments/create/",
         AlgorithmExperimentCreate.as_view(),
         name="execution-session-create",
-    ),
-    path(
-        "<slug>/experiments/<uuid:pk>/",
-        AlgorithmExecutionSessionDetail.as_view(),
-        name="execution-session-detail",
     ),
     path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),

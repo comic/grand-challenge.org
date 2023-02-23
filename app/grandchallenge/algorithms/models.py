@@ -247,11 +247,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     def api_url(self) -> str:
         return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
 
-    @property
-    def supports_batch_upload(self):
-        inputs = {inpt.slug for inpt in self.inputs.all()}
-        return inputs == {"generic-medical-image"}
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 

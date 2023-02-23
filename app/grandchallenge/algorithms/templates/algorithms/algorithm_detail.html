@@ -62,17 +62,10 @@
             {% endif %}
 
             {% if "execute_algorithm" in algorithm_perms and object.latest_executable_image %}
-                {% if object.supports_batch_upload %}
-                    <a class="nav-link"
-                       href="{% url 'algorithms:execution-session-create-batch' slug=object.slug %}">
-                        <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
-                    </a>
-                {% else %}
-                    <a class="nav-link"
-                       href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                        <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
-                    </a>
-                {% endif %}
+                <a class="nav-link"
+                   href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
+                </a>
             {% endif %}
 
 

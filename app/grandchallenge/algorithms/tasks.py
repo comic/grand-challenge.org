@@ -18,19 +18,9 @@ from grandchallenge.algorithms.exceptions import (
     ImageImportError,
     TooManyJobsScheduled,
 )
-from grandchallenge.algorithms.models import (
-    DEFAULT_INPUT_INTERFACE_SLUG,
-    Algorithm,
-    AlgorithmImage,
-    Job,
-)
+from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive
-from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.tasks import build_images
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
 from grandchallenge.components.tasks import (
     _retry,
     add_file_to_component_interface_value,
@@ -191,66 +181,6 @@ def execute_algorithm_job(*, job_pk, retries=0):
         on_commit(job.execute)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def create_algorithm_jobs_for_session(
-    *, upload_session_pk, algorithm_image_pk
-):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
-
-    # Notify the creator on job failure
-    task_on_success = send_failed_session_jobs_notifications.signature(
-        kwargs={
-            "session_pk": str(session.pk),
-            "algorithm_pk": str(algorithm_image.algorithm.pk),
-        },
-        immutable=True,
-    )
-
-    default_input_interface = ComponentInterface.objects.get(
-        slug=DEFAULT_INPUT_INTERFACE_SLUG
-    )
-
-    with transaction.atomic():
-        civ_sets = [
-            {
-                ComponentInterfaceValue.objects.create(
-                    interface=default_input_interface, image=image
-                )
-            }
-            for image in session.image_set.all()
-        ]
-
-        new_jobs = create_algorithm_jobs(
-            algorithm_image=algorithm_image,
-            civ_sets=civ_sets,
-            creator=session.creator,
-            # Editors group should be able to view the logs for debugging
-            extra_logs_viewer_groups=[algorithm_image.algorithm.editors_group],
-            task_on_success=task_on_success,
-        )
-
-        unscheduled_jobs = len(civ_sets) - len(new_jobs)
-
-        if session.creator is not None and unscheduled_jobs:
-            experiment_url = reverse(
-                "algorithms:execution-session-detail",
-                kwargs={
-                    "slug": algorithm_image.algorithm.slug,
-                    "pk": upload_session_pk,
-                },
-            )
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.JOB_STATUS,
-                actor=session.creator,
-                message=f"Unfortunately {unscheduled_jobs} of the jobs for algorithm "
-                f"{algorithm_image.algorithm.title} were not started because "
-                f"the number of allowed jobs was reached.",
-                target=algorithm_image.algorithm,
-                description=experiment_url,
-            )
-
-
 @shared_task(
     **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"],
     throws=(
@@ -314,7 +244,6 @@ def create_algorithm_jobs_for_archive(
                                 "values__interface"
                             )
                         ],
-                        creator=None,
                         extra_viewer_groups=archive_groups,
                         # NOTE: no emails in case the logs leak data
                         # to the algorithm editors
@@ -330,7 +259,6 @@ def create_algorithm_jobs(
     *,
     algorithm_image,
     civ_sets,
-    creator=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
     max_jobs=None,
@@ -348,8 +276,6 @@ def create_algorithm_jobs(
     civ_sets
         The sets of component interface values that will be used as input
         for the algorithm image
-    creator
-        The creator of the algorithm jobs
     extra_viewer_groups
         The groups that will also get permission to view the jobs
     extra_logs_viewer_groups
@@ -369,11 +295,6 @@ def create_algorithm_jobs(
         civ_sets=civ_sets, algorithm_image=algorithm_image
     )
 
-    if creator is not None:
-        jobs_limit = algorithm_image.algorithm.get_jobs_limit(user=creator)
-        if jobs_limit is not None:
-            civ_sets = civ_sets[:jobs_limit]
-
     if max_jobs is not None:
         civ_sets = civ_sets[:max_jobs]
 
@@ -389,7 +310,6 @@ def create_algorithm_jobs(
 
         with transaction.atomic():
             job = Job.objects.create(
-                creator=creator,
                 algorithm_image=algorithm_image,
                 task_on_success=task_on_success,
                 task_on_failure=task_on_failure,
@@ -478,50 +398,6 @@ def send_failed_job_notification(*, job_pk):
             target=algorithm,
             description=experiment_url,
         )
-
-
-@shared_task
-def send_failed_session_jobs_notifications(*, session_pk, algorithm_pk):
-    session = RawImageUploadSession.objects.get(pk=session_pk)
-    algorithm = Algorithm.objects.get(pk=algorithm_pk)
-
-    queryset = Job.objects.filter(
-        inputs__image__in=session.image_set.all()
-    ).distinct()
-
-    pending_jobs = queryset.exclude(
-        status__in=[Job.SUCCESS, Job.FAILURE, Job.CANCELLED]
-    )
-    failed_jobs = queryset.filter(status=Job.FAILURE)
-
-    if pending_jobs.exists():
-        # Nothing to do
-        return
-    elif session.creator is not None:
-        # TODO this task isn't really idempotent
-        # This task is not guaranteed to only be delivered once after
-        # all jobs have completed. We could end up in a situation where
-        # this is run multiple times after the action is sent and
-        # multiple notifications sent with the same message.
-        # We cannot really check if the action has already been sent
-        # which would then reduce this down to a race condition, but
-        # still a problem.
-        # We could of course just notify on each failure, but then
-        # this should be an on_error task for each job.
-        failed_jobs_count = failed_jobs.count()
-        if failed_jobs_count:
-            experiment_url = reverse(
-                "algorithms:execution-session-detail",
-                kwargs={"slug": algorithm.slug, "pk": session_pk},
-            )
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.JOB_STATUS,
-                actor=session.creator,
-                message=f"Unfortunately {failed_jobs_count} of the jobs for "
-                f"algorithm {algorithm.title} failed with an error ",
-                target=algorithm,
-                description=experiment_url,
-            )
 
 
 class ChallengeNameAndUrl(NamedTuple):
