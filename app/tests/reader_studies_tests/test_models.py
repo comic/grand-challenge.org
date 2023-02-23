@@ -583,7 +583,7 @@ def test_clean_answer_widget(required, answer_type, widget, interface, error):
 @pytest.mark.django_db
 def test_accept_reject_findings_widget():
     widget = AcceptRejectFindingsWidgetFactory()
-    assert widget.kind == AnswerWidgetKindChoices.ACCEPT_REJECT
+    assert widget.KIND == AnswerWidgetKindChoices.ACCEPT_REJECT
     assert (
         widget.supported_answer_types()
         == AnswerType.get_multiple_annotation_types()

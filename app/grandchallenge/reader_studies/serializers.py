@@ -48,7 +48,7 @@ class CategoricalOptionSerializer(ModelSerializer):
 
 class AcceptRejectFindingsWidgetSerializer(ModelSerializer):
 
-    kind = CharField(source="get_kind_display", read_only=True)
+    kind = CharField(source="get_kind", read_only=True)
 
     class Meta:
         model = AcceptRejectFindingsWidget

@@ -1206,7 +1206,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                     f"The {self.answer_widget} can only be enabled for the following answer types: {', '.join(self.answer_widget.supported_answer_types())}."
                 )
             if (
-                self.answer_widget.kind
+                self.answer_widget.KIND
                 == AnswerWidgetKindChoices.ACCEPT_REJECT
             ):
                 if self.required:
@@ -1560,12 +1560,13 @@ class AnswerWidgetKindChoices(models.TextChoices):
 
 class AnswerWidget(models.Model):
 
-    kind = models.CharField(
-        max_length=255, choices=AnswerWidgetKindChoices.choices, editable=False
-    )
+    KIND = None
 
     def __str__(self):
-        return self.get_kind_display()
+        return f"{self.get_kind()} widget"
+
+    def get_kind(self):
+        return AnswerWidgetKindChoices[self.KIND].label
 
     @staticmethod
     def supported_answer_types(self):
@@ -1573,9 +1574,8 @@ class AnswerWidget(models.Model):
 
 
 class AcceptRejectFindingsWidget(AnswerWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.kind = AnswerWidgetKindChoices.ACCEPT_REJECT
+
+    KIND = AnswerWidgetKindChoices.ACCEPT_REJECT
 
     @staticmethod
     def supported_answer_types():
