@@ -521,7 +521,8 @@ def test_workstation_url():
 @pytest.mark.django_db
 def test_accept_reject_findings_widget():
     widget = QuestionWidgetFactory(
-        kind=QuestionWidgetKindChoices.ACCEPT_REJECT
+        kind=QuestionWidgetKindChoices.ACCEPT_REJECT,
+        question=QuestionFactory(),
     )
     assert widget.supported_answer_types() == [
         AnswerType.MULTIPLE_2D_BOUNDING_BOXES,

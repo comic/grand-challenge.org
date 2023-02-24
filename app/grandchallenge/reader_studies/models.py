@@ -1075,9 +1075,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     interface = models.ForeignKey(
         ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
     )
-    widget = models.OneToOneField(
-        "QuestionWidget", on_delete=models.PROTECT, null=True, blank=True
-    )
 
     class Meta:
         ordering = ("order", "created")
@@ -1528,6 +1525,9 @@ class QuestionWidget(models.Model):
     kind = models.CharField(
         max_length=13,
         choices=QuestionWidgetKindChoices.choices,
+    )
+    question = models.OneToOneField(
+        Question, on_delete=models.CASCADE, related_name="widget"
     )
 
     def __str__(self):

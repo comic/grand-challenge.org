@@ -13,10 +13,9 @@ def test_widget_on_question_serializer(rf):
     qu = QuestionFactory()
     serializer = QuestionSerializer(qu, context={"request": rf.get("/foo")})
     assert not serializer.data["widget"]
-    qu.widget = QuestionWidgetFactory(
-        kind=QuestionWidgetKindChoices.ACCEPT_REJECT
+    QuestionWidgetFactory(
+        kind=QuestionWidgetKindChoices.ACCEPT_REJECT, question=qu
     )
-    qu.save()
     serializer2 = QuestionSerializer(qu, context={"request": rf.get("/foo")})
     assert serializer2.data["widget"] == {
         "kind": QuestionWidgetKindChoices.ACCEPT_REJECT.label
