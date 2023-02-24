@@ -1075,8 +1075,8 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     interface = models.ForeignKey(
         ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
     )
-    answer_widget = models.ForeignKey(
-        "AnswerWidget", on_delete=models.PROTECT, null=True, blank=True
+    widget = models.OneToOneField(
+        "QuestionWidget", on_delete=models.PROTECT, null=True, blank=True
     )
 
     class Meta:
@@ -1519,22 +1519,22 @@ class ReaderStudyPermissionRequest(RequestBase):
         unique_together = (("reader_study", "user"),)
 
 
-class AnswerWidgetKindChoices(models.TextChoices):
+class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
 
 
-class AnswerWidget(models.Model):
+class QuestionWidget(models.Model):
 
     kind = models.CharField(
-        max_length=255,
-        choices=AnswerWidgetKindChoices.choices,
+        max_length=13,
+        choices=QuestionWidgetKindChoices.choices,
     )
 
     def __str__(self):
         return f"{self.kind} widget"
 
     def supported_answer_types(self):
-        if self.kind == AnswerWidgetKindChoices.ACCEPT_REJECT:
+        if self.kind == QuestionWidgetKindChoices.ACCEPT_REJECT:
             return [
                 AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
                 AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,

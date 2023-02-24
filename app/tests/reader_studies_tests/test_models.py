@@ -10,8 +10,8 @@ from grandchallenge.components.models import (
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
-    AnswerWidgetKindChoices,
     Question,
+    QuestionWidgetKindChoices,
     ReaderStudy,
 )
 from tests.components_tests.factories import (
@@ -21,9 +21,9 @@ from tests.components_tests.factories import (
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
-    AnswerWidgetFactory,
     DisplaySetFactory,
     QuestionFactory,
+    QuestionWidgetFactory,
     ReaderStudyFactory,
 )
 from tests.utils import get_view_for_user
@@ -520,7 +520,9 @@ def test_workstation_url():
 
 @pytest.mark.django_db
 def test_accept_reject_findings_widget():
-    widget = AnswerWidgetFactory(kind=AnswerWidgetKindChoices.ACCEPT_REJECT)
+    widget = QuestionWidgetFactory(
+        kind=QuestionWidgetKindChoices.ACCEPT_REJECT
+    )
     assert widget.supported_answer_types() == [
         AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
         AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,

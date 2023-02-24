@@ -28,10 +28,10 @@ from grandchallenge.hanging_protocols.serializers import (
 )
 from grandchallenge.reader_studies.models import (
     Answer,
-    AnswerWidget,
     CategoricalOption,
     DisplaySet,
     Question,
+    QuestionWidget,
     ReaderStudy,
 )
 from grandchallenge.reader_studies.tasks import add_scores_for_display_set
@@ -46,12 +46,12 @@ class CategoricalOptionSerializer(ModelSerializer):
         fields = ("id", "title", "default")
 
 
-class AnswerWidgetSerializer(ModelSerializer):
+class QuestionWidgetSerializer(ModelSerializer):
 
     kind = CharField(source="get_kind_display", read_only=True)
 
     class Meta:
-        model = AnswerWidget
+        model = QuestionWidget
         fields = ["kind"]
 
 
@@ -65,7 +65,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     options = CategoricalOptionSerializer(many=True, read_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
     look_up_table = LookUpTableSerializer(read_only=True)
-    answer_widget = AnswerWidgetSerializer(read_only=True)
+    answer_widget = QuestionWidgetSerializer(read_only=True)
 
     class Meta:
         model = Question
