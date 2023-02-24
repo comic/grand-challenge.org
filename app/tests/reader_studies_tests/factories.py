@@ -5,6 +5,7 @@ from grandchallenge.reader_studies.models import (
     CategoricalOption,
     DisplaySet,
     Question,
+    QuestionWidget,
     ReaderStudy,
 )
 from tests.factories import UserFactory, WorkstationFactory
@@ -46,3 +47,8 @@ class CategoricalOptionFactory(factory.django.DjangoModelFactory):
         model = CategoricalOption
 
     question = factory.SubFactory(QuestionFactory)
+
+
+class QuestionWidgetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = QuestionWidget

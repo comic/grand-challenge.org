@@ -1176,6 +1176,11 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         )
 
     def clean(self):
+        super().clean()
+        self._clean_answer_type()
+        self._clean_interface()
+
+    def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
         if (
@@ -1194,6 +1199,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "(otherwise the user will need to tick a box for each image!)"
             )
 
+    def _clean_interface(self):
         if (
             self.interface
             and self.interface not in self.allowed_component_interfaces
@@ -1508,3 +1514,33 @@ class ReaderStudyPermissionRequest(RequestBase):
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)
+
+
+class QuestionWidgetKindChoices(models.TextChoices):
+    ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
+
+
+class QuestionWidget(models.Model):
+
+    kind = models.CharField(
+        max_length=13,
+        choices=QuestionWidgetKindChoices.choices,
+    )
+    question = models.OneToOneField(
+        Question, on_delete=models.CASCADE, related_name="widget"
+    )
+
+    def __str__(self):
+        return f"{self.kind} widget"
+
+    def supported_answer_types(self):
+        if self.kind == QuestionWidgetKindChoices.ACCEPT_REJECT:
+            return [
+                AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+                AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+                AnswerType.MULTIPLE_POINTS,
+                AnswerType.MULTIPLE_POLYGONS,
+                AnswerType.MULTIPLE_LINES,
+                AnswerType.MULTIPLE_ANGLES,
+                AnswerType.MULTIPLE_ELLIPSES,
+            ]
