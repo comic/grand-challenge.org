@@ -13,7 +13,7 @@ def test_widget_on_question_serializer(rf):
     qu = QuestionFactory()
     serializer = QuestionSerializer(qu, context={"request": rf.get("/foo")})
     assert not serializer.data["widget"]
-    qu.answer_widget = QuestionWidgetFactory(
+    qu.widget = QuestionWidgetFactory(
         kind=QuestionWidgetKindChoices.ACCEPT_REJECT
     )
     qu.save()
