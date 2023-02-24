@@ -3,7 +3,6 @@
 {% load crispy_forms_tags %}
 {% load url %}
 {% load profiles %}
-{% load guardian_tags %}
 {% load bleach %}
 {% load humanize %}
 {% load remove_whitespace %}
@@ -25,8 +24,6 @@
 {% endblock %}
 
 {% block sidebar %}
-    {% get_obj_perms request.user for object as "algorithm_perms" %}
-
     <div class="col-12 col-md-4 col-lg-3 mb-3">
         <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
             aria-orientation="vertical">
@@ -85,8 +82,6 @@
 {% endblock %}
 
 {% block content %}
-    {% get_obj_perms request.user for object as "algorithm_perms" %}
-
     {% if 'change_algorithm' in algorithm_perms %}
         {% if object.display_editors == None or not object.contact_email %}
             <div class="alert alert-warning" role="alert">
@@ -274,6 +269,17 @@
                 {% if object.editor_notes %}
                     <h4>Notes</h4>
                     {{ object.editor_notes|md2html }}
+                {% endif %}
+                {% if object.usage_statistics %}
+                    <h4>Algorithm Usage</h4>
+                    <div class="w-100" id="runtimeMetricsChart"></div>
+                    <h5>Totals</h5>
+                    <dl class="inline">
+                        {% for job_status, job_count in object.usage_totals.items %}
+                            <dt>{{ job_status }}</dt>
+                            <dd>{{ job_count }}</dd>
+                        {% endfor %}
+                    </dl>
                 {% endif %}
                 <p>
                     <a class="btn btn-primary"
@@ -473,4 +479,13 @@
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
             })
     </script>
+
+    {% if object.usage_statistics and "change_algorithm" in algorithm_perms %}
+        <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+        <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+
+        {{ object.usage_chart|json_script:"runtimeMetricsData" }}
+        <script type="module" src="{% static "algorithms/js/render_runtime_metrics_chart.js" %}"></script>
+    {% endif %}
 {% endblock %}

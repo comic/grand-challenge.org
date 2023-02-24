@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,6 +15,7 @@ from grandchallenge.components.models import (
 from grandchallenge.credits.models import Credit
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
+    AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -307,3 +308,87 @@ class TestJobLimits:
         user_credit.save()
 
         assert algorithm.get_jobs_limit(user=user) == expected_jobs
+
+
+@pytest.mark.django_db
+def test_usage_statistics():
+    algorithm_image = AlgorithmImageFactory()
+
+    AlgorithmJobFactory()  # for another job, should not be included in stats
+
+    for year, month, status in (
+        (2020, 1, Job.SUCCESS),
+        (2020, 1, Job.PENDING),
+        (2020, 1, Job.CANCELLED),
+        (2020, 2, Job.SUCCESS),
+        (2022, 1, Job.SUCCESS),
+        (2022, 1, Job.SUCCESS),
+    ):
+        job = AlgorithmJobFactory(algorithm_image=algorithm_image)
+        job.created = datetime(year, month, 1, tzinfo=timezone.utc)
+        job.status = status
+        job.save()
+
+    assert algorithm_image.algorithm.usage_totals == {
+        "Cancelled": 1,
+        "Failed": 0,
+        "Succeeded": 4,
+    }
+    assert algorithm_image.algorithm.usage_chart == {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "width": "container",
+        "padding": 0,
+        "data": {
+            "values": [
+                {
+                    "Status": "Succeeded",
+                    "Timestamp": "2020-01-01T00:00:00",
+                    "Jobs": 1,
+                },
+                {
+                    "Status": "Cancelled",
+                    "Timestamp": "2020-01-01T00:00:00",
+                    "Jobs": 1,
+                },
+                {
+                    "Status": "Succeeded",
+                    "Timestamp": "2020-02-01T00:00:00",
+                    "Jobs": 1,
+                },
+                {
+                    "Status": "Succeeded",
+                    "Timestamp": "2022-01-01T00:00:00",
+                    "Jobs": 2,
+                },
+            ]
+        },
+        "mark": "bar",
+        "encoding": {
+            "x": {
+                "timeUnit": "yearmonth",
+                "field": "Timestamp",
+                "type": "quantitative",
+                "title": "Date",
+            },
+            "y": {
+                "field": "Jobs",
+                "type": "quantitative",
+                "title": "Jobs Count",
+                "stack": True,
+            },
+            "tooltip": [
+                {
+                    "field": "Timestamp",
+                    "type": "quantitative",
+                    "timeUnit": "yearmonth",
+                },
+                {"field": "Status", "type": "nominal"},
+                {"field": "Jobs", "type": "quantitative"},
+            ],
+            "color": {
+                "field": "Status",
+                "scale": {"domain": ["Succeeded", "Cancelled", "Failed"]},
+                "type": "nominal",
+            },
+        },
+    }

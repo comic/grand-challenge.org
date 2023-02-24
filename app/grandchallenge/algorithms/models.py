@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from actstream.actions import follow, is_following
 from actstream.models import Follow
@@ -406,6 +406,98 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             else:
                 credits_left = user_credit.credits
             return max(credits_left, 0) // max(self.credits_per_job, 1)
+
+    @property
+    def usage_chart_statuses(self):
+        """What statuses should be included on the chart"""
+        return [Job.SUCCESS, Job.CANCELLED, Job.FAILURE]
+
+    @property
+    def usage_chart_status_choices(self):
+        """A map of int to string for Job.choice"""
+        return dict(Job.status.field.choices)
+
+    @cached_property
+    def usage_statistics(self):
+        """The number of jobs for this algorithm faceted by month and status"""
+        return (
+            Job.objects.filter(
+                algorithm_image__algorithm=self,
+                status__in=self.usage_chart_statuses,
+            )
+            .values("status", "created__year", "created__month")
+            .annotate(job_count=Count("status"))
+            .order_by("created__year", "created__month", "status")
+        )
+
+    @property
+    def usage_totals(self):
+        """The number of jobs for this algorithm faceted by status"""
+        totals = {status: 0 for status in self.usage_chart_statuses}
+
+        for datum in self.usage_statistics:
+            totals[datum["status"]] += datum["job_count"]
+
+        return {
+            self.usage_chart_status_choices[k]: v for k, v in totals.items()
+        }
+
+    @property
+    def usage_chart(self):
+        """Vega lite chart of the usage of this algorithm"""
+        status_options = self.usage_chart_status_choices
+
+        return {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": "container",
+            "padding": 0,
+            "data": {
+                "values": [
+                    {
+                        "Status": status_options[datum["status"]],
+                        "Timestamp": datetime(
+                            datum["created__year"], datum["created__month"], 1
+                        ).isoformat(),
+                        "Jobs": datum["job_count"],
+                    }
+                    for datum in self.usage_statistics
+                ]
+            },
+            "mark": "bar",
+            "encoding": {
+                "x": {
+                    "timeUnit": "yearmonth",
+                    "field": "Timestamp",
+                    "type": "quantitative",
+                    "title": "Date",
+                },
+                "y": {
+                    "field": "Jobs",
+                    "type": "quantitative",
+                    "title": "Jobs Count",
+                    "stack": True,
+                },
+                "tooltip": [
+                    {
+                        "field": "Timestamp",
+                        "type": "quantitative",
+                        "timeUnit": "yearmonth",
+                    },
+                    {"field": "Status", "type": "nominal"},
+                    {"field": "Jobs", "type": "quantitative"},
+                ],
+                "color": {
+                    "field": "Status",
+                    "scale": {
+                        "domain": [
+                            status_options[status]
+                            for status in self.usage_chart_statuses
+                        ],
+                    },
+                    "type": "nominal",
+                },
+            },
+        }
 
     @cached_property
     def public_test_case(self):
