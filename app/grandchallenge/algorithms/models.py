@@ -432,6 +432,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     @property
     def usage_totals(self):
+        """The number of jobs for this algorithm faceted by status"""
         totals = {status: 0 for status in self.usage_chart_statuses}
 
         for datum in self.usage_statistics:
@@ -474,6 +475,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                     "field": "Jobs",
                     "type": "quantitative",
                     "title": "Jobs Count",
+                    "stack": True,
                 },
                 "tooltip": [
                     {
