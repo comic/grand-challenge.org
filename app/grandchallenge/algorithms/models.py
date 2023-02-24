@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -406,6 +407,20 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             else:
                 credits_left = user_credit.credits
             return max(credits_left, 0) // max(self.credits_per_job, 1)
+
+    @cached_property
+    def user_statistics(self):
+        return (
+            get_user_model()
+            .objects.select_related("verification", "user_profile")
+            .annotate(
+                job_count=Count(
+                    "pk", filter=Q(job__algorithm_image__algorithm=self)
+                )
+            )
+            .filter(job_count__gt=0)
+            .order_by("-job_count")[:10]
+        )
 
     @property
     def usage_chart_statuses(self):

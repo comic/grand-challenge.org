@@ -310,6 +310,25 @@ class TestJobLimits:
         assert algorithm.get_jobs_limit(user=user) == expected_jobs
 
 
+@pytest.mark.django_db()
+def test_user_statistics():
+    algorithm_image = AlgorithmImageFactory()
+
+    u1, u2, _ = UserFactory.create_batch(3)
+
+    AlgorithmJobFactory()
+    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=None)
+    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=u1)
+    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=u1)
+    AlgorithmJobFactory(creator=u1)
+    AlgorithmJobFactory(algorithm_image=algorithm_image, creator=u2)
+
+    assert {
+        user.pk: user.job_count
+        for user in algorithm_image.algorithm.user_statistics
+    } == {u1.pk: 2, u2.pk: 1}
+
+
 @pytest.mark.django_db
 def test_usage_statistics():
     algorithm_image = AlgorithmImageFactory()

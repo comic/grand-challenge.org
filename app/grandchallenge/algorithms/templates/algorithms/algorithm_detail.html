@@ -273,13 +273,19 @@
                 {% if object.usage_statistics %}
                     <h4>Algorithm Usage</h4>
                     <div class="w-100" id="runtimeMetricsChart"></div>
-                    <h5>Totals</h5>
+                    <h5>Total Jobs</h5>
                     <dl class="inline">
                         {% for job_status, job_count in object.usage_totals.items %}
                             <dt>{{ job_status }}</dt>
                             <dd>{{ job_count }}</dd>
                         {% endfor %}
                     </dl>
+                    <h5>Top Users</h5>
+                    <ol>
+                        {% for user in object.user_statistics %}
+                            <li>{{ user|user_profile_link }}: {{ user.job_count }} job{{ user.job_count|pluralize }}</li>
+                        {% endfor %}
+                    </ol>
                 {% endif %}
                 <p>
                     <a class="btn btn-primary"
