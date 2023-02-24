@@ -374,6 +374,7 @@ def test_usage_statistics():
                 "field": "Jobs",
                 "type": "quantitative",
                 "title": "Jobs Count",
+                "stack": True,
             },
             "tooltip": [
                 {
