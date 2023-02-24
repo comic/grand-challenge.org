@@ -65,7 +65,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     options = CategoricalOptionSerializer(many=True, read_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
     look_up_table = LookUpTableSerializer(read_only=True)
-    answer_widget = QuestionWidgetSerializer(read_only=True)
+    widget = QuestionWidgetSerializer(read_only=True)
 
     class Meta:
         model = Question
@@ -83,7 +83,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "interface",
             "overlay_segments",
             "look_up_table",
-            "answer_widget",
+            "widget",
         )
 
 
