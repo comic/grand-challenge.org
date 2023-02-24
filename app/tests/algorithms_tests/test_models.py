@@ -319,6 +319,7 @@ def test_usage_statistics():
     for year, month, status in (
         (2020, 1, Job.SUCCESS),
         (2020, 1, Job.PENDING),
+        (2020, 1, Job.CANCELLED),
         (2020, 2, Job.SUCCESS),
         (2022, 1, Job.SUCCESS),
         (2022, 1, Job.SUCCESS),
@@ -328,29 +329,65 @@ def test_usage_statistics():
         job.status = status
         job.save()
 
-    assert [*algorithm_image.algorithm.usage_statistics] == [
-        {
-            "status": Job.PENDING,
-            "created__year": 2020,
-            "created__month": 1,
-            "job_count": 1,
+    assert algorithm_image.algorithm.usage_totals == {
+        "Cancelled": 1,
+        "Failed": 0,
+        "Succeeded": 4,
+    }
+    assert algorithm_image.algorithm.usage_chart == {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "width": "container",
+        "padding": 0,
+        "data": {
+            "values": [
+                {
+                    "Status": "Succeeded",
+                    "Timestamp": "2020-01-01T00:00:00",
+                    "Jobs": 1,
+                },
+                {
+                    "Status": "Cancelled",
+                    "Timestamp": "2020-01-01T00:00:00",
+                    "Jobs": 1,
+                },
+                {
+                    "Status": "Succeeded",
+                    "Timestamp": "2020-02-01T00:00:00",
+                    "Jobs": 1,
+                },
+                {
+                    "Status": "Succeeded",
+                    "Timestamp": "2022-01-01T00:00:00",
+                    "Jobs": 2,
+                },
+            ]
         },
-        {
-            "status": Job.SUCCESS,
-            "created__year": 2020,
-            "created__month": 1,
-            "job_count": 1,
+        "mark": "bar",
+        "encoding": {
+            "x": {
+                "timeUnit": "yearmonth",
+                "field": "Timestamp",
+                "type": "quantitative",
+                "title": "Date",
+            },
+            "y": {
+                "field": "Jobs",
+                "type": "quantitative",
+                "title": "Jobs Count",
+            },
+            "tooltip": [
+                {
+                    "field": "Timestamp",
+                    "type": "quantitative",
+                    "timeUnit": "yearmonth",
+                },
+                {"field": "Status", "type": "nominal"},
+                {"field": "Jobs", "type": "quantitative"},
+            ],
+            "color": {
+                "field": "Status",
+                "scale": {"domain": ["Succeeded", "Cancelled", "Failed"]},
+                "type": "nominal",
+            },
         },
-        {
-            "status": Job.SUCCESS,
-            "created__year": 2020,
-            "created__month": 2,
-            "job_count": 1,
-        },
-        {
-            "status": Job.SUCCESS,
-            "created__year": 2022,
-            "created__month": 1,
-            "job_count": 2,
-        },
-    ]
+    }

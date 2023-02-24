@@ -407,18 +407,44 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 credits_left = user_credit.credits
             return max(credits_left, 0) // max(self.credits_per_job, 1)
 
+    @property
+    def usage_chart_statuses(self):
+        """What statuses should be included on the chart"""
+        return [Job.SUCCESS, Job.CANCELLED, Job.FAILURE]
+
+    @property
+    def usage_chart_status_choices(self):
+        """A map of int to string for Job.choice"""
+        return {k: v for k, v in Job.status.field.choices}
+
     @cached_property
     def usage_statistics(self):
+        """The number of jobs for this algorithm faceted by month and status"""
         return (
-            Job.objects.filter(algorithm_image__algorithm=self)
+            Job.objects.filter(
+                algorithm_image__algorithm=self,
+                status__in=self.usage_chart_statuses,
+            )
             .values("status", "created__year", "created__month")
             .annotate(job_count=Count("status"))
             .order_by("created__year", "created__month", "status")
         )
 
     @property
+    def usage_totals(self):
+        totals = {status: 0 for status in self.usage_chart_statuses}
+
+        for datum in self.usage_statistics:
+            totals[datum["status"]] += datum["job_count"]
+
+        return {
+            self.usage_chart_status_choices[k]: v for k, v in totals.items()
+        }
+
+    @property
     def usage_chart(self):
-        status_options = {k: v for k, v in Job.status.field.choices}
+        """Vega lite chart of the usage of this algorithm"""
+        status_options = self.usage_chart_status_choices
 
         return {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
@@ -442,7 +468,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                     "timeUnit": "yearmonth",
                     "field": "Timestamp",
                     "type": "quantitative",
-                    "axis": {"title": "Date"},
+                    "title": "Date",
                 },
                 "y": {
                     "field": "Jobs",
@@ -461,7 +487,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 "color": {
                     "field": "Status",
                     "scale": {
-                        "domain": [*status_options.values()],
+                        "domain": [
+                            status_options[status]
+                            for status in self.usage_chart_statuses
+                        ],
                     },
                     "type": "nominal",
                 },

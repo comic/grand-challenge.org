@@ -278,6 +278,13 @@
                 {% if object.usage_statistics %}
                     <h4>Algorithm Usage</h4>
                     <div class="w-100" id="runtimeMetricsChart"></div>
+                    <h5>Totals</h5>
+                    <dl class="inline">
+                        {% for job_status, job_count in object.usage_totals.items %}
+                            <dt>{{ job_status }}</dt>
+                            <dd>{{ job_count }}</dd>
+                        {% endfor %}
+                    </dl>
                 {% endif %}
                 <p>
                     <a class="btn btn-primary"
