@@ -415,7 +415,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @property
     def usage_chart_status_choices(self):
         """A map of int to string for Job.choice"""
-        return {k: v for k, v in Job.status.field.choices}
+        return dict(Job.status.field.choices)
 
     @cached_property
     def usage_statistics(self):
