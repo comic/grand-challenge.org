@@ -1,6 +1,5 @@
 import pytest
 
-from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -57,12 +56,12 @@ def test_add_image_to_display_set(settings):
 
     error_message = "Image imports should result in a single image"
 
-    with pytest.raises(ImageImportError):
-        add_image_to_display_set(
-            upload_session_pk=us.pk,
-            display_set_pk=ds.pk,
-            interface_pk=ci.pk,
-        )
+    add_image_to_display_set(
+        upload_session_pk=us.pk,
+        display_set_pk=ds.pk,
+        interface_pk=ci.pk,
+    )
+
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     us.refresh_from_db()
     assert us.status == RawImageUploadSession.FAILURE
@@ -70,12 +69,11 @@ def test_add_image_to_display_set(settings):
 
     im1, im2 = ImageFactory.create_batch(2, origin=us)
 
-    with pytest.raises(ImageImportError):
-        add_image_to_display_set(
-            upload_session_pk=us.pk,
-            display_set_pk=ds.pk,
-            interface_pk=ci.pk,
-        )
+    add_image_to_display_set(
+        upload_session_pk=us.pk,
+        display_set_pk=ds.pk,
+        interface_pk=ci.pk,
+    )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     us.refresh_from_db()
     assert us.status == RawImageUploadSession.FAILURE

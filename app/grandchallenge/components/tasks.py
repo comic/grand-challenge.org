@@ -25,7 +25,6 @@ from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
-from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.cases.models import ImageFile, RawImageUploadSession
 from grandchallenge.cases.utils import get_sitk_image
 from grandchallenge.components.backends.exceptions import (
@@ -941,30 +940,34 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
     return [str(s) for s in services_to_stop]
 
 
-@shared_task
-def add_images_to_component_interface_value(
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"],
+)
+def add_image_to_component_interface_value(
     *, component_interface_value_pk, upload_session_pk
 ):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    with transaction.atomic():
+        session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
-    if session.image_set.count() != 1:
-        error_message = "Image imports should result in a single image"
-        session.status = RawImageUploadSession.FAILURE
-        session.error_message = error_message
-        session.save()
-        raise ImageImportError(error_message)
+        if session.image_set.count() != 1:
+            session.status = RawImageUploadSession.FAILURE
+            session.error_message = (
+                "Image imports should result in a single image"
+            )
+            session.save()
+            return
 
-    civ = get_model_instance(
-        pk=component_interface_value_pk,
-        app_label="components",
-        model_name="componentinterfacevalue",
-    )
+        civ = get_model_instance(
+            pk=component_interface_value_pk,
+            app_label="components",
+            model_name="componentinterfacevalue",
+        )
 
-    civ.image = session.image_set.get()
-    civ.full_clean()
-    civ.save()
+        civ.image = session.image_set.get()
+        civ.full_clean()
+        civ.save()
 
-    civ.image.update_viewer_groups_permissions()
+        civ.image.update_viewer_groups_permissions()
 
 
 @shared_task

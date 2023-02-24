@@ -1181,7 +1181,10 @@ class ComponentInterfaceValue(models.Model):
         if self.interface.saved_in_object_store:
             self._validate_file_only()
             with self.file.open("r") as f:
-                value = json.loads(f.read().decode("utf-8"))
+                try:
+                    value = json.loads(f.read().decode("utf-8"))
+                except JSONDecodeError as e:
+                    raise ValidationError(e)
         else:
             self._validate_value_only()
             value = self.value

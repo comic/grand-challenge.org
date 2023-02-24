@@ -15,7 +15,6 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
 from config.denylist import USERNAME_DENYLIST
-from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.markdown import BS4Extension
@@ -829,7 +828,7 @@ if SENTRY_DSN:
         traces_sample_rate=float(
             os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
-        ignore_errors=[PriorStepFailed, ImageImportError],
+        ignore_errors=[PriorStepFailed],
     )
     ignore_logger("django.security.DisallowedHost")
     ignore_logger("aws_xray_sdk")
