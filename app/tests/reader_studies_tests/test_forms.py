@@ -46,6 +46,7 @@ from tests.reader_studies_tests.factories import (
     CategoricalOptionFactory,
     DisplaySetFactory,
     QuestionFactory,
+    QuestionWidgetFactory,
     ReaderStudyFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
@@ -1179,6 +1180,24 @@ def test_display_set_add_interface_form():
 def test_question_form_answer_widget_choices(answer_type, choices):
     form = QuestionForm(initial={"answer_type": answer_type})
     assert form.widget_choices() == choices
+
+
+@pytest.mark.django_db
+def test_question_form_initial_widget():
+    q = QuestionFactory()
+    form = QuestionForm(
+        initial={"answer_type": AnswerType.MULTIPLE_POINTS}, instance=q
+    )
+    assert not form.initial_widget()
+
+    w = QuestionWidgetFactory(
+        question=q, kind=QuestionWidgetKindChoices.ACCEPT_REJECT
+    )
+    assert q.widget == w
+    form2 = QuestionForm(
+        initial={"answer_type": AnswerType.MULTIPLE_POINTS}, instance=q
+    )
+    assert form2.initial_widget() == QuestionWidgetKindChoices.ACCEPT_REJECT
 
 
 @pytest.mark.django_db
