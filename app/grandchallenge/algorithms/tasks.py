@@ -4,7 +4,7 @@ from typing import NamedTuple
 
 import boto3
 from botocore.exceptions import ClientError
-from celery import chain, chord, group, shared_task
+from celery import chain, group, shared_task
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
@@ -14,17 +14,14 @@ from django.db.transaction import on_commit
 from django.utils._os import safe_join
 from redis.exceptions import LockError
 
-from grandchallenge.algorithms.exceptions import (
-    ImageImportError,
-    TooManyJobsScheduled,
-)
+from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.tasks import (
     _retry,
     add_file_to_component_interface_value,
-    add_images_to_component_interface_value,
+    add_image_to_component_interface_value,
 )
 from grandchallenge.core.cache import _cache_key_from_method
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -35,26 +32,23 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def run_algorithm_job_for_inputs(
     *, job_pk, upload_session_pks, user_upload_pks
 ):
-    job = Job.objects.get(pk=job_pk)
-    canvas = execute_algorithm_job_for_inputs.signature(
-        kwargs={"job_pk": job_pk}, immutable=True
-    )
+    with transaction.atomic():
+        job = Job.objects.get(pk=job_pk)
 
-    if upload_session_pks:
-        image_tasks = group(
-            # Chords and iterator groups are broken in Celery, send a list
-            # instead, see https://github.com/celery/celery/issues/7285
-            [
+        assignment_tasks = []
+
+        if upload_session_pks:
+            assignment_tasks.extend(
                 chain(
                     build_images.signature(
                         kwargs={"upload_session_pk": upload_session_pk},
                         immutable=True,
                     ),
-                    add_images_to_component_interface_value.signature(
+                    add_image_to_component_interface_value.signature(
                         kwargs={
                             "component_interface_value_pk": civ_pk,
                             "upload_session_pk": upload_session_pk,
@@ -63,15 +57,10 @@ def run_algorithm_job_for_inputs(
                     ),
                 )
                 for civ_pk, upload_session_pk in upload_session_pks.items()
-            ]
-        )
-        canvas = chord(image_tasks, canvas).on_error(
-            on_job_creation_error.s(job_pk=job_pk)
-        )
+            )
 
-    if user_upload_pks:
-        file_tasks = group(
-            [
+        if user_upload_pks:
+            assignment_tasks.extend(
                 add_file_to_component_interface_value.signature(
                     kwargs={
                         "component_interface_value_pk": civ_pk,
@@ -83,41 +72,16 @@ def run_algorithm_job_for_inputs(
                     immutable=True,
                 )
                 for civ_pk, user_upload_pk in user_upload_pks.items()
-            ]
-        )
-        canvas = chord(file_tasks, canvas).on_error(
-            on_job_creation_error.s(job_pk=job_pk)
-        )
+            )
 
-    on_commit(canvas.apply_async)
-
-
-@shared_task(bind=True)
-def on_job_creation_error(self, task_id, *args, **kwargs):
-    job_pk = kwargs.pop("job_pk")
-    job = Job.objects.get(pk=job_pk)
-
-    # Notify the job creator on failure
-    linked_task = send_failed_job_notification.signature(
-        kwargs={"job_pk": job.pk}, immutable=True
-    )
-
-    error_message = ""
-    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
-    if missing_inputs:
-        error_message += (
-            f"Job can't be started, input is missing for "
-            f"{oxford_comma([c.interface.title for c in missing_inputs])}"
+        canvas = chain(
+            group(assignment_tasks),
+            execute_algorithm_job_for_inputs.signature(
+                kwargs={"job_pk": job_pk}, immutable=True
+            ),
         )
 
-    res = self.AsyncResult(task_id).result
-
-    if isinstance(res, ImageImportError):
-        error_message += str(res)
-
-    job.update_status(status=job.CANCELLED, error_message=error_message)
-
-    on_commit(linked_task.apply_async)
+        on_commit(canvas.apply_async)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])

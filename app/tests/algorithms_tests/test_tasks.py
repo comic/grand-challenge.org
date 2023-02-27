@@ -11,7 +11,6 @@ from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from requests import put
 
-from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
@@ -27,7 +26,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.tasks import (
-    add_images_to_component_interface_value,
+    add_image_to_component_interface_value,
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
@@ -389,26 +388,18 @@ def test_algorithm_input_image_multiple_files(
         creator=creator, algorithm_image=alg, input_civ_set=[civ]
     )
 
-    with pytest.raises(ImageImportError):
-        with capture_on_commit_callbacks(execute=True):
-            run_algorithm_job_for_inputs(
-                job_pk=job.pk,
-                upload_session_pks={civ.pk: us.pk},
-                user_upload_pks=[],
-            )
+    with capture_on_commit_callbacks(execute=True):
+        run_algorithm_job_for_inputs(
+            job_pk=job.pk,
+            upload_session_pks={civ.pk: us.pk},
+            user_upload_pks=[],
+        )
 
-    # TODO: celery errorhandling with the .on_error seems to not work when
-    # TASK_ALWAYS_EAGER is set to True. The error function does get called
-    # when running normally, but unfortunately it is currently hard to test.
-    # We should look into this at some point.
-
-    # job = Job.objects.first()
-    # assert job.status == job.FAILURE
-    # assert job.error_message == (
-    #     "Job can't be started, input is missing for "
-    #     "['Generic Medical Image'] "
-    #     "ValueError('Image imports should result in a single image')"
-    # )
+    job = Job.objects.first()
+    assert job.status == job.CANCELLED
+    assert job.error_message == (
+        "Job can't be started, input is missing for Generic Medical Image"
+    )
 
 
 @pytest.mark.django_db
@@ -482,7 +473,7 @@ def test_algorithm_input_user_upload(client, settings, component_interfaces):
 
 
 @pytest.mark.django_db
-def test_add_images_to_component_interface_value():
+def test_add_image_to_component_interface_value():
     # Override the celery settings
     us = RawImageUploadSessionFactory()
     ImageFactory(origin=us), ImageFactory(origin=us)
@@ -490,17 +481,18 @@ def test_add_images_to_component_interface_value():
 
     civ = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
 
-    with pytest.raises(ImageImportError) as err:
-        add_images_to_component_interface_value(
-            component_interface_value_pk=civ.pk, upload_session_pk=us.pk
-        )
-    assert "Image imports should result in a single image" in str(err)
+    add_image_to_component_interface_value(
+        component_interface_value_pk=civ.pk, upload_session_pk=us.pk
+    )
+    us.refresh_from_db()
+    civ.refresh_from_db()
+    assert us.error_message == "Image imports should result in a single image"
     assert civ.image is None
 
     us2 = RawImageUploadSessionFactory()
     image = ImageFactory(origin=us2)
     civ2 = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
-    add_images_to_component_interface_value(
+    add_image_to_component_interface_value(
         component_interface_value_pk=civ2.pk, upload_session_pk=us2.pk
     )
     civ2.refresh_from_db()

@@ -11,7 +11,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import (
-    add_images_to_component_interface_value,
+    add_image_to_component_interface_value,
 )
 
 
@@ -64,7 +64,7 @@ def add_images_to_archive_item(
         archive_item.values.add(new_civ)
 
         on_commit(
-            add_images_to_component_interface_value.signature(
+            add_image_to_component_interface_value.signature(
                 kwargs={
                     "component_interface_value_pk": new_civ.pk,
                     "upload_session_pk": upload_session_pk,
@@ -166,7 +166,7 @@ def start_archive_item_update_tasks(
                     build_images.signature(
                         kwargs={"upload_session_pk": upload_pk}
                     ),
-                    add_images_to_component_interface_value.signature(
+                    add_image_to_component_interface_value.signature(
                         kwargs={
                             "component_interface_value_pk": civ_pk,
                             "upload_session_pk": upload_pk,
