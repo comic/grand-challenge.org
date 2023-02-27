@@ -334,7 +334,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def clean_widget(self):
         value = self.cleaned_data.get("widget")
         if value == "":
-            self.instance.widget.delete()
+            try:
+                self.instance.widget.delete()
+            except ObjectDoesNotExist:
+                pass
             return None
         else:
             widget_instance = QuestionWidget(kind=value)
@@ -354,7 +357,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                         ),
                         field=None,
                     )
-
             if not self.errors:
                 widget_instance.question = self.instance
                 widget_instance.save()

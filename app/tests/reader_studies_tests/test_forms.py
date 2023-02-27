@@ -29,6 +29,7 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     Question,
+    QuestionWidgetKindChoices,
     ReaderStudy,
 )
 from grandchallenge.uploads.models import UserUpload
@@ -1124,3 +1125,123 @@ def test_display_set_add_interface_form():
     )
     assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
     assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type, choices",
+    (
+        (AnswerType.SINGLE_LINE_TEXT, [(None, "Default")]),
+        (AnswerType.MULTI_LINE_TEXT, [(None, "Default")]),
+        (AnswerType.BOOL, [(None, "Default")]),
+        (AnswerType.NUMBER, [(None, "Default")]),
+        (AnswerType.POINT, [(None, "Default")]),
+        (
+            AnswerType.MULTIPLE_POINTS,
+            [(None, "Default"), ("ACCEPT_REJECT", "Accept/Reject Findings")],
+        ),
+        (AnswerType.BOUNDING_BOX_2D, [(None, "Default")]),
+        (
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            [(None, "Default"), ("ACCEPT_REJECT", "Accept/Reject Findings")],
+        ),
+        (AnswerType.DISTANCE_MEASUREMENT, [(None, "Default")]),
+        (
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            [(None, "Default"), ("ACCEPT_REJECT", "Accept/Reject Findings")],
+        ),
+        (AnswerType.POLYGON, [(None, "Default")]),
+        (
+            AnswerType.MULTIPLE_POLYGONS,
+            [(None, "Default"), ("ACCEPT_REJECT", "Accept/Reject Findings")],
+        ),
+        (AnswerType.LINE, [(None, "Default")]),
+        (
+            AnswerType.MULTIPLE_LINES,
+            [(None, "Default"), ("ACCEPT_REJECT", "Accept/Reject Findings")],
+        ),
+        (AnswerType.ANGLE, [(None, "Default")]),
+        (
+            AnswerType.MULTIPLE_ANGLES,
+            [(None, "Default"), ("ACCEPT_REJECT", "Accept/Reject Findings")],
+        ),
+        (AnswerType.ELLIPSE, [(None, "Default")]),
+        (
+            AnswerType.MULTIPLE_ELLIPSES,
+            [(None, "Default"), ("ACCEPT_REJECT", "Accept/Reject Findings")],
+        ),
+        (AnswerType.CHOICE, [(None, "Default")]),
+        (AnswerType.MULTIPLE_CHOICE, [(None, "Default")]),
+        (AnswerType.MULTIPLE_CHOICE_DROPDOWN, [(None, "Default")]),
+        (AnswerType.MASK, [(None, "Default")]),
+    ),
+)
+def test_question_form_answer_widget_choices(answer_type, choices):
+    form = QuestionForm(initial={"answer_type": answer_type})
+    assert form.widget_choices() == choices
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type, widget, interface, required, valid, error",
+    (
+        (Question.AnswerType.MULTIPLE_POINTS, None, None, False, True, None),
+        (
+            Question.AnswerType.POINT,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            None,
+            False,
+            False,
+            "ACCEPT_REJECT is not one of the available choices",
+        ),
+        (
+            Question.AnswerType.MULTIPLE_POINTS,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            None,
+            False,
+            False,
+            "To use the Accept/Reject Findings widget you must define a default answer.",
+        ),
+        (
+            Question.AnswerType.MULTIPLE_POINTS,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            InterfaceKindChoices.MULTIPLE_POINTS,
+            True,
+            False,
+            'To use the Accept/Reject Findings widget you must uncheck "required".',
+        ),
+        (
+            Question.AnswerType.MULTIPLE_POINTS,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            InterfaceKindChoices.MULTIPLE_POINTS,
+            False,
+            True,
+            None,
+        ),
+    ),
+)
+def test_question_form_widget_validation(
+    answer_type, widget, interface, required, valid, error
+):
+    q = QuestionFactory()
+    form = QuestionForm(
+        data={
+            "question_text": "foo",
+            "answer_type": answer_type,
+            "direction": Question.Direction.HORIZONTAL,
+            "image_port": Question.ImagePort.MAIN,
+            "order": 100,
+            "widget": widget,
+            "interface": ComponentInterfaceFactory(kind=interface)
+            if interface
+            else None,
+            "required": required,
+            "overlay_segments": "[]",
+        },
+        instance=q,
+    )
+    if valid:
+        assert form.is_valid()
+    else:
+        assert not form.is_valid()
+        assert error in form.errors.as_text()
