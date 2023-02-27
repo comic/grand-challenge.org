@@ -1264,6 +1264,9 @@ GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
 
+# Statistics App
+STATISTICS_SITE_CACHE_KEY = "statistics/site_statistics"
+
 # License keys from https://github.com/licensee/licensee/tree/v9.15.1/vendor/choosealicense.com/_licenses
 OPEN_SOURCE_LICENSES = frozenset(
     (
