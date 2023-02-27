@@ -19,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     BooleanField,
     CharField,
+    ChoiceField,
     FileField,
     Form,
     IntegerField,
@@ -59,6 +60,7 @@ from grandchallenge.reader_studies.models import (
     AnswerType,
     CategoricalOption,
     Question,
+    QuestionWidget,
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
@@ -282,6 +284,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("question_text"),
                 Field("help_text"),
                 Field("answer_type"),
+                Field("widget"),
                 Fieldset(
                     "Add options",
                     Formset("options"),
@@ -309,6 +312,35 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def initial_interface(self):
         return self.interface_choices().first()
+
+    def widget_choices(self):
+        answer_type = self["answer_type"].value()
+        # Setting the initial value on the widget field does not work because
+        # we're overriding the field type (from a ModelChoiceField to a ChoiceField)
+        # So make sure the existing widget is preselected, by making it the first
+        # in the choices list
+        try:
+            old_answer_widget = self.instance.widget
+            choices = [
+                (old_answer_widget.kind, old_answer_widget.get_kind_display()),
+                (None, "Default"),
+            ]
+        except ObjectDoesNotExist:
+            choices = [(None, "Default")]
+
+        if answer_type is None:
+            return choices
+        try:
+            choices_for_answer_type = (
+                QuestionWidget.get_widget_choices_for_answer_type(
+                    answer_type=answer_type
+                )
+            )
+            extra_options = set(choices_for_answer_type) - {choices[0]}
+            choices.extend(list(tuple(extra_options)))
+        except KeyError:
+            pass
+        return choices
 
     def clean(self):
         answer_type = self.cleaned_data.get("answer_type")
@@ -346,6 +378,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "interface",
             "overlay_segments",
             "look_up_table",
+            "widget",
         )
         help_texts = {
             "question_text": (
@@ -358,6 +391,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 "clarification to the reader about this question."
             ),
             "answer_type": "The type of answer that the user will give.",
+            "widget": "The widget to use for displaying this question.",
             "image_port": (
                 "If the user will make a bounding box or measurement, "
                 "on which image port should they do it? "
@@ -403,6 +437,12 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         ModelChoiceField,
         queryset=interface_choices,
         initial=initial_interface,
+        required=False,
+    )
+
+    widget = DynamicField(
+        ChoiceField,
+        choices=widget_choices,
         required=False,
     )
 
