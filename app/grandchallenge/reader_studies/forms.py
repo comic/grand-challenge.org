@@ -61,6 +61,7 @@ from grandchallenge.reader_studies.models import (
     CategoricalOption,
     Question,
     QuestionWidget,
+    QuestionWidgetKindChoices,
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
@@ -315,32 +316,49 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def widget_choices(self):
         answer_type = self["answer_type"].value()
-        # Setting the initial value on the widget field does not work because
-        # we're overriding the field type (from a ModelChoiceField to a ChoiceField)
-        # So make sure the existing widget is preselected, by making it the first
-        # in the choices list
-        try:
-            old_answer_widget = self.instance.widget
-            choices = [
-                (old_answer_widget.kind, old_answer_widget.get_kind_display()),
-                (None, "Default"),
-            ]
-        except ObjectDoesNotExist:
-            choices = [(None, "Default")]
-
-        if answer_type is None:
-            return choices
-        try:
-            choices_for_answer_type = (
+        choices = [(None, "Default")]
+        if answer_type:
+            choices.extend(
                 QuestionWidget.get_widget_choices_for_answer_type(
                     answer_type=answer_type
                 )
             )
-            extra_options = set(choices_for_answer_type) - {choices[0]}
-            choices.extend(list(tuple(extra_options)))
-        except KeyError:
-            pass
         return choices
+
+    def initial_widget(self):
+        try:
+            return self.instance.widget.kind
+        except ObjectDoesNotExist:
+            return None
+
+    def clean_widget(self):
+        value = self.cleaned_data.get("widget")
+        if value == "":
+            self.instance.widget.delete()
+            return None
+        else:
+            widget_instance = QuestionWidget(kind=value)
+
+            if value == QuestionWidgetKindChoices.ACCEPT_REJECT:
+                if not self.cleaned_data.get("interface"):
+                    self.add_error(
+                        error=ValidationError(
+                            f"To use the {widget_instance.get_kind_display()} widget you must define a default answer."
+                        ),
+                        field=None,
+                    )
+                if self.cleaned_data.get("required"):
+                    self.add_error(
+                        error=ValidationError(
+                            f'To use the {widget_instance.get_kind_display()} widget you must uncheck "required".'
+                        ),
+                        field=None,
+                    )
+
+            if not self.errors:
+                widget_instance.question = self.instance
+                widget_instance.save()
+                return widget_instance
 
     def clean(self):
         answer_type = self.cleaned_data.get("answer_type")
@@ -445,6 +463,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         ChoiceField,
         choices=widget_choices,
         required=False,
+        initial=initial_widget,
         widget=Select(attrs={"hx-swap-oob": "True"}),
     )
 
