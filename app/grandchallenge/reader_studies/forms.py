@@ -426,9 +426,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_type": Select(
                 attrs={
                     "hx-get": reverse_lazy(
-                        "reader-studies:question-interfaces"
+                        "reader-studies:question-dynamic-fields"
                     ),
-                    "hx-target": "#id_interface",
+                    "hx-swap": "none",
                 }
             ),
         }
@@ -438,12 +438,14 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         queryset=interface_choices,
         initial=initial_interface,
         required=False,
+        widget=Select(attrs={"hx-swap-oob": "True"}),
     )
 
     widget = DynamicField(
         ChoiceField,
         choices=widget_choices,
         required=False,
+        widget=Select(attrs={"hx-swap-oob": "True"}),
     )
 
 
