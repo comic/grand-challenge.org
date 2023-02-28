@@ -288,7 +288,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("widget"),
                 HTML(
                     f"<div "
-                    f"hx-get='{reverse_lazy('reader-studies:question-widgets')}' "
+                    f"hx-get={reverse_lazy('reader-studies:question-widgets')!r} "
                     f"hx-trigger='change from:#id_answer_type' "
                     f"hx-target='#id_widget' "
                     f"hx-include='[id=id_answer_type]''>"
