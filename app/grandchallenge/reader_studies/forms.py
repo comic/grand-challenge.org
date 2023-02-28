@@ -286,6 +286,14 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("help_text"),
                 Field("answer_type"),
                 Field("widget"),
+                HTML(
+                    f"<div "
+                    f"hx-get='{reverse_lazy('reader-studies:question-widgets')}' "
+                    f"hx-trigger='change from:#id_answer_type' "
+                    f"hx-target='#id_widget' "
+                    f"hx-include='[id=id_answer_type]''>"
+                    f"</div>"
+                ),
                 Fieldset(
                     "Add options",
                     Formset("options"),
@@ -316,7 +324,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def widget_choices(self):
         answer_type = self["answer_type"].value()
-        choices = [(None, "Default")]
+        choices = [("", "Default")]
         if answer_type:
             choices.extend(
                 QuestionWidget.get_widget_choices_for_answer_type(
@@ -329,7 +337,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         try:
             return self.instance.widget.kind
         except ObjectDoesNotExist:
-            return None
+            return ""
 
     def clean_widget(self):
         value = self.cleaned_data.get("widget")
@@ -446,9 +454,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_type": Select(
                 attrs={
                     "hx-get": reverse_lazy(
-                        "reader-studies:question-dynamic-fields"
+                        "reader-studies:question-interfaces"
                     ),
-                    "hx-swap": "none",
+                    "hx-target": "#id_interface",
                 }
             ),
         }
@@ -458,7 +466,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         queryset=interface_choices,
         initial=initial_interface,
         required=False,
-        widget=Select(attrs={"hx-swap-oob": "True"}),
     )
 
     widget = DynamicField(
@@ -466,7 +473,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         choices=widget_choices,
         required=False,
         initial=initial_widget,
-        widget=Select(attrs={"hx-swap-oob": "True"}),
     )
 
 

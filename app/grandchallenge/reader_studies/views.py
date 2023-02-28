@@ -1379,10 +1379,16 @@ class QuestionDelete(
         )
 
 
-class QuestionDynamicFieldsView(View):
+class QuestionInterfacesView(View):
     def get(self, request):
         form = QuestionForm(request.GET)
-        return HttpResponse(content=[form["interface"], form["widget"]])
+        return HttpResponse(form["interface"])
+
+
+class QuestionWidgetsView(View):
+    def get(self, request):
+        form = QuestionForm(request.GET)
+        return HttpResponse(form["widget"])
 
 
 class DisplaySetDetail(
