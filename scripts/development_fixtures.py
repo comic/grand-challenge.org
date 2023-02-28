@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from datetime import timedelta
+from random import randint
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -4512,5 +4513,10 @@ def _set_statistics_cache():
             },
         ],
     }
+
+    for datum in stats["sessions"]:
+        datum["object_count"] = datum[
+            "duration_sum"
+        ].total_seconds() // randint(300, 3600)
 
     cache.set(settings.STATISTICS_SITE_CACHE_KEY, stats, timeout=None)

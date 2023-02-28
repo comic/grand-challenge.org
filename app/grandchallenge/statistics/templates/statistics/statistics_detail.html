@@ -17,8 +17,13 @@
     <h3>Users</h3>
 
     <div class="embed-responsive embed-responsive-21by9">
-        <div class="embed-responsive-item vega-lite-chart" data-vega-lite-chart-key="countries"></div>
-        {{ countries|json_script:"countries" }}
+        <div class="embed-responsive-item vega-lite-chart">
+            {{ countries|json_script:"countries" }}
+        </div>
+    </div>
+
+    <div class="w-100 vega-lite-chart">
+        {{ users|json_script:"users" }}
     </div>
 
     <dl class="inline">
@@ -60,8 +65,9 @@
     <h4>Registrations to public challenges in the past {{ days }} days
         (top {{ max_num_results }})</h4>
 
-    <div class="w-100 vega-lite-chart" data-vega-lite-chart-key="challengeRegistrations"></div>
-    {{ challenge_registrations_period|json_script:"challengeRegistrations" }}
+    <div class="w-100 vega-lite-chart">
+        {{ challenge_registrations_period|json_script:"challengeRegistrations" }}
+    </div>
 
     <br>
 
@@ -94,12 +100,35 @@
     <h4>Submissions to public challenges in the past {{ days }} days
         (top {{ max_num_results }})</h4>
 
-    <div class="w-100 vega-lite-chart" data-vega-lite-chart-key="challengeSubmissions"></div>
-    {{ challenge_submissions_period|json_script:"challengeSubmissions" }}
+    <div class="w-100 vega-lite-chart">
+        {{ challenge_submissions_period|json_script:"challengeSubmissions" }}
+    </div>
 
     <br>
 
+    <h3>Algorithms</h3>
+
+    <div class="w-100 vega-lite-chart">
+        {{ jobs|json_script:"jobs" }}
+    </div>
+
+    <dl class="inline">
+        <dt>Public algorithms</dt>
+        <dd>{{ public_algorithms|intcomma }}</dd>
+
+        <dt>Private algorithms</dt>
+        <dd>{{ private_algorithms|intcomma }}</dd>
+
+        <dt>Total algorithm inference jobs</dt>
+        <dd>{{ jobs_total|intcomma }}</dd>
+    </dl>
+
     <h3>Archives</h3>
+
+    <div class="w-100 vega-lite-chart">
+        {{ images|json_script:"images" }}
+    </div>
+
     <dl class="inline">
         <dt>Public archives</dt>
         <dd>{{ public_archives|intcomma }}</dd>
@@ -107,11 +136,16 @@
         <dt>Private archives</dt>
         <dd>{{ private_archives|intcomma }}</dd>
 
-        <dt>Images</dt>
-        <dd>{{ images|intcomma }}</dd>
+        <dt>Total images</dt>
+        <dd>{{ images_total|intcomma }}</dd>
     </dl>
 
     <h3>Reader Studies</h3>
+
+    <div class="w-100 vega-lite-chart">
+        {{ answers|json_script:"answers" }}
+    </div>
+
     <dl class="inline">
         <dt>Public reader studies</dt>
         <dd>{{ public_reader_studies|intcomma }}</dd>
@@ -122,11 +156,16 @@
         <dt>Questions</dt>
         <dd>{{ questions|intcomma }}</dd>
 
-        <dt>Answers</dt>
-        <dd>{{ answers|intcomma }}</dd>
+        <dt>Total answers</dt>
+        <dd>{{ answers_total|intcomma }}</dd>
     </dl>
 
     <h3>Viewers</h3>
+
+    <div class="w-100 vega-lite-chart">
+        {{ sessions|json_script:"sessions" }}
+    </div>
+
     <dl class="inline">
         <dt>Public viewers</dt>
         <dd>{{ public_workstations|intcomma }}</dd>
@@ -134,26 +173,11 @@
         <dt>Private viewers</dt>
         <dd>{{ private_workstations|intcomma }}</dd>
 
-        <dt>Sessions</dt>
-        <dd>{{ workstation_sessions|intcomma }}</dd>
+        <dt>Total sessions</dt>
+        <dd>{{ sessions_total|intcomma }}</dd>
 
         <dt>Total session duration</dt>
-        <dd>{{ total_session_duration|naturaldelta }}</dd>
-    </dl>
-
-    <h3>Algorithms</h3>
-    <dl class="inline">
-        <dt>Public algorithms</dt>
-        <dd>{{ public_algorithms|intcomma }}</dd>
-
-        <dt>Private algorithms</dt>
-        <dd>{{ private_algorithms|intcomma }}</dd>
-
-        <dt>Total algorithm runs</dt>
-        <dd>{{ algorithm_jobs|intcomma }}</dd>
-
-        <dt>Total algorithms runs (last {{ days }} days)</dt>
-        <dd>{{ algorithm_jobs_period|intcomma }}</dd>
+        <dd>{{ sessions_duration_total|naturaldelta }}</dd>
     </dl>
 {% endblock %}
 

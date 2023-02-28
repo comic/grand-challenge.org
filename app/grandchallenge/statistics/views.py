@@ -1,25 +1,23 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import cache
-from django.db.models import Count, Sum
+from django.db.models import Count
 from django.utils import timezone
 from django.views.generic import TemplateView
 from django_countries import countries
 
 from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.archives.models import Archive
-from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Evaluation as EvaluationJob
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import Question, ReaderStudy
 from grandchallenge.statistics.tasks import update_site_statistics_cache
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.models import Session, Workstation
+from grandchallenge.workstations.models import Workstation
 
 
 class StatisticsDetail(TemplateView):
@@ -37,6 +35,36 @@ class StatisticsDetail(TemplateView):
             }
             for c in challenge_list
         ]
+
+    @staticmethod
+    def _bar_chart_spec(*, values, lookup, title):
+        return {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": "container",
+            "padding": 0,
+            "title": title,
+            "data": {"values": values},
+            "mark": "bar",
+            "encoding": {
+                "x": {
+                    "field": "Month",
+                    "type": "quantitative",
+                    "timeUnit": "yearmonth",
+                },
+                "y": {
+                    "field": lookup,
+                    "type": "quantitative",
+                },
+                "tooltip": [
+                    {
+                        "field": "Month",
+                        "type": "quantitative",
+                        "timeUnit": "yearmonth",
+                    },
+                    {"field": lookup, "type": "quantitative"},
+                ],
+            },
+        }
 
     @staticmethod
     def _horizontal_chart_spec(*, values, lookup, title):
@@ -162,6 +190,21 @@ class StatisticsDetail(TemplateView):
             stats = cache.get(settings.STATISTICS_SITE_CACHE_KEY)
 
         extra = {
+            "users": self._bar_chart_spec(
+                values=[
+                    {
+                        "Month": datetime(
+                            datum["date_joined__year"],
+                            datum["date_joined__month"],
+                            1,
+                        ).isoformat(),
+                        "New Users": datum["object_count"],
+                    }
+                    for datum in stats["users"]
+                ],
+                lookup="New Users",
+                title="New Users per Month",
+            ),
             "users_total": sum(
                 datum["object_count"] for datum in stats["users"]
             ),
@@ -173,6 +216,75 @@ class StatisticsDetail(TemplateView):
                     }
                     for c in stats["countries"]
                 ]
+            ),
+            "jobs": self._bar_chart_spec(
+                values=[
+                    {
+                        "Month": datetime(
+                            datum["created__year"], datum["created__month"], 1
+                        ).isoformat(),
+                        "Inference Jobs": datum["object_count"],
+                    }
+                    for datum in stats["jobs"]
+                ],
+                lookup="Inference Jobs",
+                title="Inference Jobs per Month",
+            ),
+            "jobs_total": sum(
+                datum["object_count"] for datum in stats["jobs"]
+            ),
+            "images": self._bar_chart_spec(
+                values=[
+                    {
+                        "Month": datetime(
+                            datum["created__year"], datum["created__month"], 1
+                        ).isoformat(),
+                        "New Images": datum["object_count"],
+                    }
+                    for datum in stats["images"]
+                ],
+                lookup="New Images",
+                title="New Images per Month",
+            ),
+            "images_total": sum(
+                datum["object_count"] for datum in stats["images"]
+            ),
+            "answers": self._bar_chart_spec(
+                values=[
+                    {
+                        "Month": datetime(
+                            datum["created__year"], datum["created__month"], 1
+                        ).isoformat(),
+                        "New Answers": datum["object_count"],
+                    }
+                    for datum in stats["answers"]
+                ],
+                lookup="New Answers",
+                title="New Answers per Month",
+            ),
+            "answers_total": sum(
+                datum["object_count"] for datum in stats["answers"]
+            ),
+            "sessions": self._bar_chart_spec(
+                values=[
+                    {
+                        "Month": datetime(
+                            datum["created__year"], datum["created__month"], 1
+                        ).isoformat(),
+                        "Total Hours": datum["duration_sum"].total_seconds()
+                        // (60 * 60),
+                    }
+                    for datum in stats["sessions"]
+                ],
+                lookup="Total Hours",
+                title="Total Session Hours per Month",
+            ),
+            "sessions_total": int(
+                sum(datum["object_count"] for datum in stats["sessions"])
+            ),
+            "sessions_duration_total": sum(
+                datum["duration_sum"].total_seconds()
+                for datum in stats["sessions"]
             ),
             "challenge_registrations_period": self._horizontal_chart_spec(
                 values=self._challenge_qs_to_list_with_url(
@@ -254,10 +366,6 @@ class StatisticsDetail(TemplateView):
             "private_algorithms": (
                 Algorithm.objects.filter(public=False).count()
             ),
-            "algorithm_jobs": AlgorithmJob.objects.count(),
-            "algorithm_jobs_period": AlgorithmJob.objects.filter(
-                created__gt=time_period
-            ).count(),
             "public_reader_studies": ReaderStudy.objects.filter(
                 public=True
             ).count(),
@@ -265,22 +373,14 @@ class StatisticsDetail(TemplateView):
                 public=False
             ).count(),
             "questions": Question.objects.count(),
-            "answers": Answer.objects.count(),
             "public_workstations": Workstation.objects.filter(
                 public=True
             ).count(),
             "private_workstations": Workstation.objects.filter(
                 public=False
             ).count(),
-            "workstation_sessions": Session.objects.count(),
-            "total_session_duration": (
-                Session.objects.aggregate(Sum("maximum_duration"))[
-                    "maximum_duration__sum"
-                ]
-            ),
             "public_archives": Archive.objects.filter(public=True).count(),
             "private_archives": Archive.objects.filter(public=False).count(),
-            "images": Image.objects.count(),
         }
 
         context.update(extra)
