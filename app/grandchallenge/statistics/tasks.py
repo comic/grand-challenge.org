@@ -15,22 +15,19 @@ from grandchallenge.workstations.models import Session
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def update_site_statistics_cache():
-    statistics = {}
+    stats = {}
 
-    statistics["users"] = (
+    stats["users"] = (
         get_user_model()
         .objects.values(
-            "verification__is_verified",
             "date_joined__year",
             "date_joined__month",
         )
-        .annotate(object_count=Count("verification__is_verified"))
-        .order_by(
-            "date_joined__year", "date_joined__month", "verification_count"
-        )
+        .annotate(object_count=Count("date_joined__month"))
+        .order_by("date_joined__year", "date_joined__month")
     )
 
-    statistics["countries"] = (
+    stats["countries"] = (
         get_user_model()
         .objects.exclude(user_profile__country="")
         .values("user_profile__country")
@@ -39,13 +36,13 @@ def update_site_statistics_cache():
         .values_list("user_profile__country", "country_count")
     )
 
-    statistics["challenges"] = (
+    stats["challenges"] = (
         Challenge.objects.values("hidden", "created__year", "created__month")
         .annotate(object_count=Count("hidden"))
         .order_by("created__year", "created__month", "hidden")
     )
 
-    statistics["submissions"] = (
+    stats["submissions"] = (
         Submission.objects.values(
             "phase__submission_kind", "created__year", "created__month"
         )
@@ -53,46 +50,46 @@ def update_site_statistics_cache():
         .order_by("created__year", "created__month", "phase__submission_kind")
     )
 
-    statistics["algorithms"] = (
+    stats["algorithms"] = (
         Algorithm.objects.values("public", "created__year", "created__month")
         .annotate(object_count=Count("public"))
         .order_by("created__year", "created__month", "public")
     )
 
-    statistics["jobs"] = (
+    stats["jobs"] = (
         Job.objects.values("created__year", "created__month")
         .annotate(object_count=Count("created__month"))
         .order_by("created__year", "created__month")
     )
 
-    statistics["archives"] = (
+    stats["archives"] = (
         Archive.objects.values("public", "created__year", "created__month")
         .annotate(object_count=Count("public"))
         .order_by("created__year", "created__month", "public")
     )
 
-    statistics["images"] = (
+    stats["images"] = (
         Image.objects.values("created__year", "created__month")
         .annotate(object_count=Count("created__month"))
         .order_by("created__year", "created__month")
     )
 
-    statistics["reader_studies"] = (
+    stats["reader_studies"] = (
         ReaderStudy.objects.values("public", "created__year", "created__month")
         .annotate(object_count=Count("public"))
         .order_by("created__year", "created__month", "public")
     )
 
-    statistics["answers"] = (
+    stats["answers"] = (
         Answer.objects.values("created__year", "created__month")
         .annotate(object_count=Count("created__month"))
         .order_by("created__year", "created__month")
     )
 
-    statistics["sessions"] = (
+    stats["sessions"] = (
         Session.objects.values("created__year", "created__month")
         .annotate(duration_sum=Sum("maximum_duration"))
         .order_by("created__year", "created__month")
     )
 
-    cache.set(settings.STATISTICS_SITE_CACHE_KEY, statistics, timeout=None)
+    cache.set(settings.STATISTICS_SITE_CACHE_KEY, stats, timeout=None)

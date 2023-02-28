@@ -16,15 +16,15 @@
 
     <h3>Users</h3>
 
-    {% include 'grandchallenge/partials/geochart.html' %}
+    <div class="embed-responsive embed-responsive-21by9">
+        <div class="embed-responsive-item vega-lite-chart" data-vega-lite-chart-key="countries"></div>
+        {{ countries|json_script:"countries" }}
+    </div>
 
     <dl class="inline">
 
         <dt>Total users</dt>
-        <dd>{{ number_of_users|intcomma }}</dd>
-
-        <dt>New users (last {{ days }} days)</dt>
-        <dd>{{ new_users_period|intcomma }}</dd>
+        <dd>{{ users_total|intcomma }}</dd>
 
         <dt>Users logged in (last {{ days }} days)</dt>
         <dd>{{ logged_in_period|intcomma }}</dd>
@@ -60,7 +60,8 @@
     <h4>Registrations to public challenges in the past {{ days }} days
         (top {{ max_num_results }})</h4>
 
-    <div class="w-100" id="registrationsChart"></div>
+    <div class="w-100 vega-lite-chart" data-vega-lite-chart-key="challengeRegistrations"></div>
+    {{ challenge_registrations_period|json_script:"challengeRegistrations" }}
 
     <br>
 
@@ -93,7 +94,8 @@
     <h4>Submissions to public challenges in the past {{ days }} days
         (top {{ max_num_results }})</h4>
 
-    <div class="w-100" id="submissionsChart"></div>
+    <div class="w-100 vega-lite-chart" data-vega-lite-chart-key="challengeSubmissions"></div>
+    {{ challenge_submissions_period|json_script:"challengeSubmissions" }}
 
     <br>
 
@@ -161,14 +163,5 @@
     <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
-
-    <script type="module"
-            src="{% static "js/render_geocharts.js" %}"></script>
-
-    {{ challenge_registrations_period|json_script:"challengeRegistrations" }}
-    {{ challenge_submissions_period|json_script:"challengeSubmissions" }}
-    {{ days|json_script:"days" }}
-
-    <script type="module"
-            src="{% static "js/statistics/render_barchart.js" %}"></script>
+    <script type="module" src="{% static "js/statistics/render_charts.mjs" %}"></script>
 {% endblock %}
