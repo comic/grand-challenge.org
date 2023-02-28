@@ -22,14 +22,16 @@
         </div>
     </div>
 
+    <br>
+
     <div class="w-100 vega-lite-chart">
-        {{ users|json_script:"users" }}
+        {{ users.chart|json_script:"users" }}
     </div>
 
     <dl class="inline">
 
         <dt>Total users</dt>
-        <dd>{{ users_total|intcomma }}</dd>
+        <dd>{{ users.totals|intcomma }}</dd>
 
         <dt>Users logged in (last {{ days }} days)</dt>
         <dd>{{ logged_in_period|intcomma }}</dd>
@@ -38,13 +40,17 @@
 
     <h3>Challenges</h3>
 
+    <div class="w-100 vega-lite-chart">
+        {{ challenges.chart|json_script:"challenges" }}
+    </div>
+
     <dl class="inline">
 
-        <dt>Public challenges</dt>
-        <dd>{{ public_challenges|intcomma }}</dd>
+        <dt>Total public challenges</dt>
+        <dd>{{ challenges.totals.Public|intcomma }}</dd>
 
-        <dt>Private challenges</dt>
-        <dd>{{ hidden_challenges|intcomma }}</dd>
+        <dt>Total private challenges</dt>
+        <dd>{{ challenges.totals.Private|intcomma }}</dd>
 
         <dt>Public challenge with the most participants</dt>
         <dd>
@@ -53,11 +59,6 @@
                 ({{ mp_group.num_users|intcomma }}
                 Participant{{ mp_group.num_users|pluralize }})
             </a>
-        </dd>
-
-        <dt>Latest public challenge</dt>
-        <dd>
-            <a href="{{ latest_public_challenge.get_absolute_url }}">{{ latest_public_challenge }}</a>
         </dd>
 
     </dl>
@@ -73,12 +74,16 @@
 
     <h3>Evaluations</h3>
 
-    <dl class="inline">
-        <dt>Total submissions</dt>
-        <dd>{{ submissions|intcomma }}</dd>
+    <div class="w-100 vega-lite-chart">
+        {{ submissions.chart|json_script:"submissions" }}
+    </div>
 
-        <dt>Total submissions (last {{ days }} days)</dt>
-        <dd>{{ submissions_period|intcomma }}</dd>
+    <dl class="inline">
+        <dt>Total prediction submissions</dt>
+        <dd>{{ submissions.totals.Predictions|intcomma }}</dd>
+
+        <dt>Total algorithm submissions</dt>
+        <dd>{{ submissions.totals.Algorithm|intcomma }}</dd>
 
         <dt>Public challenge with the most submissions</dt>
         <dd>
@@ -109,75 +114,95 @@
     <h3>Algorithms</h3>
 
     <div class="w-100 vega-lite-chart">
-        {{ jobs|json_script:"jobs" }}
+        {{ algorithms.chart|json_script:"algorithms" }}
     </div>
 
     <dl class="inline">
-        <dt>Public algorithms</dt>
-        <dd>{{ public_algorithms|intcomma }}</dd>
+        <dt>Total public algorithms</dt>
+        <dd>{{ algorithms.totals.Public|intcomma }}</dd>
 
-        <dt>Private algorithms</dt>
-        <dd>{{ private_algorithms|intcomma }}</dd>
+        <dt>Total private algorithms</dt>
+        <dd>{{ algorithms.totals.Private|intcomma }}</dd>
+    </dl>
 
+    <div class="w-100 vega-lite-chart">
+        {{ jobs.chart|json_script:"jobs" }}
+    </div>
+
+    <dl class="inline">
         <dt>Total algorithm inference jobs</dt>
-        <dd>{{ jobs_total|intcomma }}</dd>
+        <dd>{{ jobs.totals|intcomma }}</dd>
     </dl>
 
     <h3>Archives</h3>
 
     <div class="w-100 vega-lite-chart">
-        {{ images|json_script:"images" }}
+        {{ archives.chart|json_script:"archives" }}
     </div>
 
     <dl class="inline">
-        <dt>Public archives</dt>
-        <dd>{{ public_archives|intcomma }}</dd>
+        <dt>Total public archives</dt>
+        <dd>{{ archives.totals.Public|intcomma }}</dd>
 
-        <dt>Private archives</dt>
-        <dd>{{ private_archives|intcomma }}</dd>
+        <dt>Total private archives</dt>
+        <dd>{{ archives.totals.Private|intcomma }}</dd>
+    </dl>
 
+    <div class="w-100 vega-lite-chart">
+        {{ images.chart|json_script:"images" }}
+    </div>
+
+    <dl class="inline">
         <dt>Total images</dt>
-        <dd>{{ images_total|intcomma }}</dd>
+        <dd>{{ images.totals|intcomma }}</dd>
     </dl>
 
     <h3>Reader Studies</h3>
 
     <div class="w-100 vega-lite-chart">
-        {{ answers|json_script:"answers" }}
+        {{ reader_studies.chart|json_script:"readerStudies" }}
     </div>
 
     <dl class="inline">
-        <dt>Public reader studies</dt>
-        <dd>{{ public_reader_studies|intcomma }}</dd>
+        <dt>Total public reader studies</dt>
+        <dd>{{ reader_studies.totals.Public|intcomma }}</dd>
 
-        <dt>Private reader studies</dt>
-        <dd>{{ private_reader_studies|intcomma }}</dd>
+        <dt>Total private reader studies</dt>
+        <dd>{{ reader_studies.totals.Private|intcomma }}</dd>
+    </dl>
 
+    <div class="w-100 vega-lite-chart">
+        {{ answers.chart|json_script:"answers" }}
+    </div>
+
+    <dl class="inline">
         <dt>Questions</dt>
         <dd>{{ questions|intcomma }}</dd>
 
         <dt>Total answers</dt>
-        <dd>{{ answers_total|intcomma }}</dd>
+        <dd>{{ answers.totals|intcomma }}</dd>
     </dl>
 
     <h3>Viewers</h3>
 
     <div class="w-100 vega-lite-chart">
-        {{ sessions|json_script:"sessions" }}
+        {{ sessions.chart|json_script:"sessions" }}
     </div>
 
     <dl class="inline">
-        <dt>Public viewers</dt>
-        <dd>{{ public_workstations|intcomma }}</dd>
 
-        <dt>Private viewers</dt>
-        <dd>{{ private_workstations|intcomma }}</dd>
-
-        <dt>Total sessions</dt>
-        <dd>{{ sessions_total|intcomma }}</dd>
+        <dt>Total number of sessions</dt>
+        <dd>{{ sessions.totals|intcomma }}</dd>
 
         <dt>Total session duration</dt>
         <dd>{{ sessions_duration_total|naturaldelta }}</dd>
+
+        <dt>Total public viewers</dt>
+        <dd>{{ workstations.True|intcomma }}</dd>
+
+        <dt>Total private viewers</dt>
+        <dd>{{ workstations.False|intcomma }}</dd>
+
     </dl>
 {% endblock %}
 
