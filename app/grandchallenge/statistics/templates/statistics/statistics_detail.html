@@ -2,7 +2,6 @@
 {% load humanize %}
 {% load url %}
 {% load static %}
-{% load naturaldelta %}
 
 {% block title %}Statistics{% endblock %}
 
@@ -134,6 +133,15 @@
         <dd>{{ jobs.totals|intcomma }}</dd>
     </dl>
 
+    <div class="w-100 vega-lite-chart">
+        {{ job_durations.chart|json_script:"jobDurations" }}
+    </div>
+
+    <dl class="inline">
+        <dt>Total algorithm inference hours</dt>
+        <dd>{{ job_durations.totals|intcomma }} hours</dd>
+    </dl>
+
     <h3>Archives</h3>
 
     <div class="w-100 vega-lite-chart">
@@ -176,9 +184,6 @@
     </div>
 
     <dl class="inline">
-        <dt>Questions</dt>
-        <dd>{{ questions|intcomma }}</dd>
-
         <dt>Total answers</dt>
         <dd>{{ answers.totals|intcomma }}</dd>
     </dl>
@@ -191,11 +196,11 @@
 
     <dl class="inline">
 
-        <dt>Total number of sessions</dt>
-        <dd>{{ sessions.totals|intcomma }}</dd>
-
         <dt>Total session duration</dt>
-        <dd>{{ sessions_duration_total|naturaldelta }}</dd>
+        <dd>{{ sessions.totals|intcomma }} hours</dd>
+
+        <dt>Total number of sessions</dt>
+        <dd>{{ sessions_total|intcomma }}</dd>
 
         <dt>Total public viewers</dt>
         <dd>{{ workstations.True|intcomma }}</dd>

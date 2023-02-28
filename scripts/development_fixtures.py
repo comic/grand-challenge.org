@@ -3,7 +3,6 @@ import json
 import logging
 import os
 from datetime import timedelta
-from random import randint
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -3207,119 +3206,357 @@ def _set_statistics_cache():
             },
         ],
         "jobs": [
-            {"created__year": 2018, "created__month": 11, "object_count": 4},
-            {"created__year": 2019, "created__month": 2, "object_count": 13},
-            {"created__year": 2019, "created__month": 3, "object_count": 5},
-            {"created__year": 2019, "created__month": 4, "object_count": 13},
-            {"created__year": 2019, "created__month": 5, "object_count": 11},
-            {"created__year": 2019, "created__month": 6, "object_count": 3},
-            {"created__year": 2019, "created__month": 7, "object_count": 9},
-            {"created__year": 2019, "created__month": 8, "object_count": 2},
-            {"created__year": 2019, "created__month": 9, "object_count": 1},
-            {"created__year": 2019, "created__month": 10, "object_count": 17},
-            {"created__year": 2019, "created__month": 11, "object_count": 19},
-            {"created__year": 2019, "created__month": 12, "object_count": 96},
-            {"created__year": 2020, "created__month": 1, "object_count": 44},
-            {"created__year": 2020, "created__month": 2, "object_count": 105},
-            {"created__year": 2020, "created__month": 3, "object_count": 66},
-            {"created__year": 2020, "created__month": 4, "object_count": 1018},
-            {"created__year": 2020, "created__month": 5, "object_count": 2387},
-            {"created__year": 2020, "created__month": 6, "object_count": 537},
-            {"created__year": 2020, "created__month": 7, "object_count": 96},
-            {"created__year": 2020, "created__month": 8, "object_count": 936},
-            {"created__year": 2020, "created__month": 9, "object_count": 735},
-            {"created__year": 2020, "created__month": 10, "object_count": 509},
+            {
+                "created__year": 2018,
+                "created__month": 11,
+                "object_count": 4,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 2,
+                "object_count": 13,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 3,
+                "object_count": 5,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 4,
+                "object_count": 13,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 5,
+                "object_count": 11,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 6,
+                "object_count": 3,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 7,
+                "object_count": 9,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 8,
+                "object_count": 2,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 9,
+                "object_count": 1,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 10,
+                "object_count": 17,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 11,
+                "object_count": 19,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2019,
+                "created__month": 12,
+                "object_count": 96,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2020,
+                "created__month": 1,
+                "object_count": 44,
+                "duration_sum": None,
+            },
+            {
+                "created__year": 2020,
+                "created__month": 2,
+                "object_count": 105,
+                "duration_sum": timedelta(seconds=1179, microseconds=759658),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 3,
+                "object_count": 66,
+                "duration_sum": timedelta(seconds=19545, microseconds=808182),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 4,
+                "object_count": 1018,
+                "duration_sum": timedelta(
+                    days=6, seconds=49536, microseconds=662881
+                ),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 5,
+                "object_count": 2387,
+                "duration_sum": timedelta(
+                    days=4, seconds=39884, microseconds=43556
+                ),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 6,
+                "object_count": 537,
+                "duration_sum": timedelta(
+                    days=1, seconds=6868, microseconds=479246
+                ),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 7,
+                "object_count": 96,
+                "duration_sum": timedelta(seconds=65866, microseconds=443267),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 8,
+                "object_count": 936,
+                "duration_sum": timedelta(seconds=54429, microseconds=560964),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 9,
+                "object_count": 735,
+                "duration_sum": timedelta(
+                    days=1, seconds=38288, microseconds=382901
+                ),
+            },
+            {
+                "created__year": 2020,
+                "created__month": 10,
+                "object_count": 509,
+                "duration_sum": timedelta(
+                    days=3, seconds=24106, microseconds=187032
+                ),
+            },
             {
                 "created__year": 2020,
                 "created__month": 11,
                 "object_count": 2307,
+                "duration_sum": timedelta(
+                    days=4, seconds=30072, microseconds=653603
+                ),
             },
-            {"created__year": 2020, "created__month": 12, "object_count": 600},
-            {"created__year": 2021, "created__month": 1, "object_count": 404},
-            {"created__year": 2021, "created__month": 2, "object_count": 4768},
-            {"created__year": 2021, "created__month": 3, "object_count": 1774},
-            {"created__year": 2021, "created__month": 4, "object_count": 5762},
-            {"created__year": 2021, "created__month": 5, "object_count": 3347},
-            {"created__year": 2021, "created__month": 6, "object_count": 5565},
-            {"created__year": 2021, "created__month": 7, "object_count": 5495},
-            {"created__year": 2021, "created__month": 8, "object_count": 5337},
-            {"created__year": 2021, "created__month": 9, "object_count": 7823},
+            {
+                "created__year": 2020,
+                "created__month": 12,
+                "object_count": 600,
+                "duration_sum": timedelta(seconds=60592, microseconds=940863),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 1,
+                "object_count": 404,
+                "duration_sum": timedelta(
+                    days=1, seconds=48914, microseconds=453527
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 2,
+                "object_count": 4768,
+                "duration_sum": timedelta(
+                    days=9, seconds=7732, microseconds=427103
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 3,
+                "object_count": 1774,
+                "duration_sum": timedelta(
+                    days=12, seconds=24346, microseconds=246879
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 4,
+                "object_count": 5762,
+                "duration_sum": timedelta(
+                    days=227, seconds=7462, microseconds=153157
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 5,
+                "object_count": 3347,
+                "duration_sum": timedelta(
+                    days=7, seconds=6450, microseconds=418644
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 6,
+                "object_count": 5565,
+                "duration_sum": timedelta(
+                    days=24, seconds=83837, microseconds=160722
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 7,
+                "object_count": 5495,
+                "duration_sum": timedelta(
+                    days=18, seconds=75234, microseconds=172042
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 8,
+                "object_count": 5337,
+                "duration_sum": timedelta(
+                    days=14, seconds=67022, microseconds=366891
+                ),
+            },
+            {
+                "created__year": 2021,
+                "created__month": 9,
+                "object_count": 7823,
+                "duration_sum": timedelta(
+                    days=143, seconds=75929, microseconds=483935
+                ),
+            },
             {
                 "created__year": 2021,
                 "created__month": 10,
                 "object_count": 7404,
+                "duration_sum": timedelta(
+                    days=77, seconds=9690, microseconds=584980
+                ),
             },
-            {"created__year": 2021, "created__month": 11, "object_count": 399},
+            {
+                "created__year": 2021,
+                "created__month": 11,
+                "object_count": 399,
+                "duration_sum": timedelta(
+                    days=27, seconds=36876, microseconds=689138
+                ),
+            },
             {
                 "created__year": 2021,
                 "created__month": 12,
                 "object_count": 5520,
+                "duration_sum": timedelta(
+                    days=6, seconds=86319, microseconds=604256
+                ),
             },
             {
                 "created__year": 2022,
                 "created__month": 1,
                 "object_count": 23105,
+                "duration_sum": timedelta(
+                    days=23, seconds=24137, microseconds=14299
+                ),
             },
-            {"created__year": 2022, "created__month": 2, "object_count": 8894},
+            {
+                "created__year": 2022,
+                "created__month": 2,
+                "object_count": 8894,
+                "duration_sum": timedelta(
+                    days=18, seconds=55472, microseconds=796510
+                ),
+            },
             {
                 "created__year": 2022,
                 "created__month": 3,
                 "object_count": 30942,
+                "duration_sum": timedelta(
+                    days=62, seconds=41930, microseconds=868111
+                ),
             },
             {
                 "created__year": 2022,
                 "created__month": 4,
                 "object_count": 31789,
+                "duration_sum": timedelta(
+                    days=85, seconds=23206, microseconds=650211
+                ),
             },
             {
                 "created__year": 2022,
                 "created__month": 5,
                 "object_count": 15871,
+                "duration_sum": timedelta(
+                    days=356, seconds=15666, microseconds=674202
+                ),
             },
             {
                 "created__year": 2022,
                 "created__month": 6,
                 "object_count": 28062,
+                "duration_sum": timedelta(
+                    days=447, seconds=66891, microseconds=252144
+                ),
             },
             {
                 "created__year": 2022,
                 "created__month": 7,
                 "object_count": 19523,
+                "duration_sum": timedelta(
+                    days=52, seconds=68934, microseconds=809203
+                ),
             },
             {
                 "created__year": 2022,
                 "created__month": 8,
                 "object_count": 29357,
+                "duration_sum": timedelta(
+                    days=99, seconds=53272, microseconds=23620
+                ),
             },
             {
                 "created__year": 2022,
                 "created__month": 9,
                 "object_count": 39006,
+                "duration_sum": timedelta(days=157, seconds=54972),
             },
             {
                 "created__year": 2022,
                 "created__month": 10,
                 "object_count": 23286,
+                "duration_sum": timedelta(days=104, seconds=9086),
             },
             {
                 "created__year": 2022,
                 "created__month": 11,
                 "object_count": 57522,
+                "duration_sum": timedelta(days=231, seconds=6164),
             },
             {
                 "created__year": 2022,
                 "created__month": 12,
                 "object_count": 27913,
+                "duration_sum": timedelta(days=122, seconds=72498),
             },
             {
                 "created__year": 2023,
                 "created__month": 1,
                 "object_count": 17115,
+                "duration_sum": timedelta(days=48, seconds=68862),
             },
             {
                 "created__year": 2023,
                 "created__month": 2,
-                "object_count": 40134,
+                "object_count": 40318,
+                "duration_sum": timedelta(days=71, seconds=17380),
             },
         ],
         "archives": [
@@ -4196,26 +4433,31 @@ def _set_statistics_cache():
                 "created__year": 2019,
                 "created__month": 4,
                 "duration_sum": timedelta(seconds=15000),
+                "object_count": 25,
             },
             {
                 "created__year": 2019,
                 "created__month": 5,
                 "duration_sum": timedelta(seconds=55800),
+                "object_count": 93,
             },
             {
                 "created__year": 2019,
                 "created__month": 6,
                 "duration_sum": timedelta(seconds=21000),
+                "object_count": 35,
             },
             {
                 "created__year": 2019,
                 "created__month": 7,
                 "duration_sum": timedelta(seconds=32400),
+                "object_count": 54,
             },
             {
                 "created__year": 2019,
                 "created__month": 8,
                 "duration_sum": timedelta(seconds=29400),
+                "object_count": 49,
             },
             {
                 "created__year": 2019,
@@ -4223,6 +4465,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=1, seconds=52604, microseconds=391102
                 ),
+                "object_count": 86,
             },
             {
                 "created__year": 2019,
@@ -4230,6 +4473,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=2, seconds=33607, microseconds=830937
                 ),
+                "object_count": 116,
             },
             {
                 "created__year": 2019,
@@ -4237,6 +4481,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=4, seconds=11185, microseconds=489788
                 ),
+                "object_count": 141,
             },
             {
                 "created__year": 2019,
@@ -4244,6 +4489,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=1, seconds=81224, microseconds=424205
                 ),
+                "object_count": 113,
             },
             {
                 "created__year": 2020,
@@ -4251,6 +4497,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=3, seconds=81876, microseconds=602535
                 ),
+                "object_count": 209,
             },
             {
                 "created__year": 2020,
@@ -4258,6 +4505,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=7, seconds=49915, microseconds=273891
                 ),
+                "object_count": 353,
             },
             {
                 "created__year": 2020,
@@ -4265,6 +4513,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=17, seconds=20451, microseconds=157326
                 ),
+                "object_count": 513,
             },
             {
                 "created__year": 2020,
@@ -4272,6 +4521,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=24, seconds=61459, microseconds=875687
                 ),
+                "object_count": 801,
             },
             {
                 "created__year": 2020,
@@ -4279,6 +4529,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=15, seconds=55404, microseconds=30450
                 ),
+                "object_count": 759,
             },
             {
                 "created__year": 2020,
@@ -4286,6 +4537,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=10, seconds=18539, microseconds=315562
                 ),
+                "object_count": 466,
             },
             {
                 "created__year": 2020,
@@ -4293,6 +4545,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=11, seconds=57907, microseconds=942365
                 ),
+                "object_count": 346,
             },
             {
                 "created__year": 2020,
@@ -4300,6 +4553,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=14, seconds=18126, microseconds=40714
                 ),
+                "object_count": 469,
             },
             {
                 "created__year": 2020,
@@ -4307,6 +4561,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=15, seconds=68842, microseconds=304099
                 ),
+                "object_count": 495,
             },
             {
                 "created__year": 2020,
@@ -4314,6 +4569,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=27, seconds=64847, microseconds=328302
                 ),
+                "object_count": 727,
             },
             {
                 "created__year": 2020,
@@ -4321,6 +4577,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=19, seconds=12013, microseconds=811107
                 ),
+                "object_count": 615,
             },
             {
                 "created__year": 2020,
@@ -4328,6 +4585,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=10, seconds=71415, microseconds=872185
                 ),
+                "object_count": 364,
             },
             {
                 "created__year": 2021,
@@ -4335,6 +4593,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=12, seconds=3989, microseconds=902112
                 ),
+                "object_count": 460,
             },
             {
                 "created__year": 2021,
@@ -4342,6 +4601,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=25, seconds=60591, microseconds=637103
                 ),
+                "object_count": 777,
             },
             {
                 "created__year": 2021,
@@ -4349,6 +4609,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=26, seconds=23021, microseconds=694828
                 ),
+                "object_count": 819,
             },
             {
                 "created__year": 2021,
@@ -4356,6 +4617,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=19, seconds=65743, microseconds=821119
                 ),
+                "object_count": 740,
             },
             {
                 "created__year": 2021,
@@ -4363,6 +4625,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=19, seconds=36879, microseconds=218064
                 ),
+                "object_count": 684,
             },
             {
                 "created__year": 2021,
@@ -4370,6 +4633,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=23, seconds=50953, microseconds=160099
                 ),
+                "object_count": 825,
             },
             {
                 "created__year": 2021,
@@ -4377,6 +4641,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=15, seconds=52255, microseconds=46486
                 ),
+                "object_count": 517,
             },
             {
                 "created__year": 2021,
@@ -4384,6 +4649,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=15, seconds=75020, microseconds=710434
                 ),
+                "object_count": 672,
             },
             {
                 "created__year": 2021,
@@ -4391,6 +4657,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=23, seconds=25142, microseconds=56154
                 ),
+                "object_count": 870,
             },
             {
                 "created__year": 2021,
@@ -4398,6 +4665,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=26, seconds=47761, microseconds=589414
                 ),
+                "object_count": 794,
             },
             {
                 "created__year": 2021,
@@ -4405,6 +4673,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=22, seconds=9722, microseconds=255139
                 ),
+                "object_count": 709,
             },
             {
                 "created__year": 2021,
@@ -4412,6 +4681,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=13, seconds=29448, microseconds=468257
                 ),
+                "object_count": 403,
             },
             {
                 "created__year": 2022,
@@ -4419,6 +4689,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=13, seconds=31585, microseconds=368146
                 ),
+                "object_count": 484,
             },
             {
                 "created__year": 2022,
@@ -4426,6 +4697,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=33, seconds=85813, microseconds=713021
                 ),
+                "object_count": 1165,
             },
             {
                 "created__year": 2022,
@@ -4433,6 +4705,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=29, seconds=67850, microseconds=681807
                 ),
+                "object_count": 983,
             },
             {
                 "created__year": 2022,
@@ -4440,6 +4713,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=23, seconds=62733, microseconds=614976
                 ),
+                "object_count": 896,
             },
             {
                 "created__year": 2022,
@@ -4447,6 +4721,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=25, seconds=18807, microseconds=952580
                 ),
+                "object_count": 811,
             },
             {
                 "created__year": 2022,
@@ -4454,6 +4729,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=17, seconds=28453, microseconds=193329
                 ),
+                "object_count": 733,
             },
             {
                 "created__year": 2022,
@@ -4461,6 +4737,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=19, seconds=23204, microseconds=424114
                 ),
+                "object_count": 634,
             },
             {
                 "created__year": 2022,
@@ -4468,6 +4745,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=17, seconds=32713, microseconds=898836
                 ),
+                "object_count": 831,
             },
             {
                 "created__year": 2022,
@@ -4475,6 +4753,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=24, seconds=7818, microseconds=324048
                 ),
+                "object_count": 871,
             },
             {
                 "created__year": 2022,
@@ -4482,6 +4761,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=25, seconds=52587, microseconds=487901
                 ),
+                "object_count": 774,
             },
             {
                 "created__year": 2022,
@@ -4489,6 +4769,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=36, seconds=75746, microseconds=768441
                 ),
+                "object_count": 1058,
             },
             {
                 "created__year": 2022,
@@ -4496,6 +4777,7 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=27, seconds=17821, microseconds=316294
                 ),
+                "object_count": 754,
             },
             {
                 "created__year": 2023,
@@ -4503,20 +4785,17 @@ def _set_statistics_cache():
                 "duration_sum": timedelta(
                     days=22, seconds=8533, microseconds=294954
                 ),
+                "object_count": 618,
             },
             {
                 "created__year": 2023,
                 "created__month": 2,
                 "duration_sum": timedelta(
-                    days=31, seconds=39288, microseconds=331379
+                    days=31, seconds=81341, microseconds=216401
                 ),
+                "object_count": 1073,
             },
         ],
     }
-
-    for datum in stats["sessions"]:
-        datum["object_count"] = datum[
-            "duration_sum"
-        ].total_seconds() // randint(300, 3600)
 
     cache.set(settings.STATISTICS_SITE_CACHE_KEY, stats, timeout=None)

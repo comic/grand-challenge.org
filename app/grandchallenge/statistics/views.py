@@ -12,7 +12,6 @@ from django_countries import countries
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Evaluation as EvaluationJob
 from grandchallenge.evaluation.models import Phase
-from grandchallenge.reader_studies.models import Question
 from grandchallenge.statistics.tasks import update_site_statistics_cache
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
@@ -337,6 +336,26 @@ class StatisticsDetail(TemplateView):
                     lookup="Inference Jobs",
                     title="Inference Jobs per Month",
                 ),
+                "job_durations": self._bar_chart_spec(
+                    values=[
+                        {
+                            "Month": datetime(
+                                datum["created__year"],
+                                datum["created__month"],
+                                1,
+                            ).isoformat(),
+                            "Inference Hours": datum[
+                                "duration_sum"
+                            ].total_seconds()
+                            // (60 * 60)
+                            if datum["duration_sum"]
+                            else 0,
+                        }
+                        for datum in stats["jobs"]
+                    ],
+                    lookup="Inference Hours",
+                    title="Inference Hours per Month",
+                ),
                 "archives": self._stacked_bar_chart_spec(
                     values=[
                         {
@@ -421,9 +440,8 @@ class StatisticsDetail(TemplateView):
                     lookup="Total Hours",
                     title="Total Session Hours per Month",
                 ),
-                "sessions_duration_total": sum(
-                    datum["duration_sum"].total_seconds()
-                    for datum in stats["sessions"]
+                "sessions_total": sum(
+                    datum["object_count"] for datum in stats["sessions"]
                 ),
                 "challenge_registrations_period": self._horizontal_chart_spec(
                     values=self._challenge_qs_to_list_with_url(
@@ -492,7 +510,6 @@ class StatisticsDetail(TemplateView):
                     .order_by("-created")
                     .first()
                 ),
-                "questions": Question.objects.count(),
                 "workstations": {
                     str(o["public"]): o["object_count"]
                     for o in Workstation.objects.values("public").annotate(

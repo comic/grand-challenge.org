@@ -57,9 +57,13 @@ def update_site_statistics_cache():
             .order_by("created__year", "created__month", "public")
         ),
         "jobs": (
-            Job.objects.values("created__year", "created__month")
-            .annotate(object_count=Count("created__month"))
-            .order_by("created__year", "created__month")
+            Job.objects.with_duration()
+            .values("created__year", "created__month")
+            .annotate(
+                object_count=Count("created__month"),
+                duration_sum=Sum("duration"),
+            )
+            .order_by("created__year", "created__month", "duration_sum")
         ),
         "archives": (
             Archive.objects.values("public", "created__year", "created__month")
@@ -85,8 +89,10 @@ def update_site_statistics_cache():
         ),
         "sessions": (
             Session.objects.values("created__year", "created__month")
-            .annotate(duration_sum=Sum("maximum_duration"))
-            .annotate(object_count=Count("created__month"))
+            .annotate(
+                duration_sum=Sum("maximum_duration"),
+                object_count=Count("created__month"),
+            )
             .order_by("created__year", "created__month")
         ),
     }
