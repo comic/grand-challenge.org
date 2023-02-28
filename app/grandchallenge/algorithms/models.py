@@ -23,6 +23,7 @@ from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
+from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -427,11 +428,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         """What statuses should be included on the chart"""
         return [Job.SUCCESS, Job.CANCELLED, Job.FAILURE]
 
-    @property
-    def usage_chart_status_choices(self):
-        """A map of int to string for Job.choice"""
-        return dict(Job.status.field.choices)
-
     @cached_property
     def usage_statistics(self):
         """The number of jobs for this algorithm faceted by month and status"""
@@ -445,74 +441,30 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             .order_by("created__year", "created__month", "status")
         )
 
-    @property
-    def usage_totals(self):
-        """The number of jobs for this algorithm faceted by status"""
-        totals = {status: 0 for status in self.usage_chart_statuses}
-
-        for datum in self.usage_statistics:
-            totals[datum["status"]] += datum["job_count"]
-
-        return {
-            self.usage_chart_status_choices[k]: v for k, v in totals.items()
-        }
-
-    @property
+    @cached_property
     def usage_chart(self):
         """Vega lite chart of the usage of this algorithm"""
-        status_options = self.usage_chart_status_choices
-
-        return {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": "container",
-            "padding": 0,
-            "data": {
-                "values": [
-                    {
-                        "Status": status_options[datum["status"]],
-                        "Timestamp": datetime(
-                            datum["created__year"], datum["created__month"], 1
-                        ).isoformat(),
-                        "Jobs": datum["job_count"],
-                    }
-                    for datum in self.usage_statistics
-                ]
-            },
-            "mark": "bar",
-            "encoding": {
-                "x": {
-                    "timeUnit": "yearmonth",
-                    "field": "Timestamp",
-                    "type": "quantitative",
-                    "title": "Date",
-                },
-                "y": {
-                    "field": "Jobs",
-                    "type": "quantitative",
-                    "title": "Jobs Count",
-                    "stack": True,
-                },
-                "tooltip": [
-                    {
-                        "field": "Timestamp",
-                        "type": "quantitative",
-                        "timeUnit": "yearmonth",
-                    },
-                    {"field": "Status", "type": "nominal"},
-                    {"field": "Jobs", "type": "quantitative"},
-                ],
-                "color": {
-                    "field": "Status",
-                    "scale": {
-                        "domain": [
-                            status_options[status]
-                            for status in self.usage_chart_statuses
-                        ],
-                    },
-                    "type": "nominal",
-                },
-            },
+        choices = dict(Job.status.field.choices)
+        domain = {
+            choice: choices[choice] for choice in self.usage_chart_statuses
         }
+
+        return stacked_bar(
+            values=[
+                {
+                    "Status": datum["status"],
+                    "Month": datetime(
+                        datum["created__year"], datum["created__month"], 1
+                    ).isoformat(),
+                    "Jobs Count": datum["job_count"],
+                }
+                for datum in self.usage_statistics
+            ],
+            lookup="Jobs Count",
+            title="Algorithm Usage",
+            facet="Status",
+            domain=domain,
+        )
 
     @cached_property
     def public_test_case(self):

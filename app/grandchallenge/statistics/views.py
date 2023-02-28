@@ -10,6 +10,12 @@ from django.views.generic import TemplateView
 from django_countries import countries
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.charts.specs import (
+    bar,
+    horizontal_bar,
+    stacked_bar,
+    world_map,
+)
 from grandchallenge.evaluation.models import Evaluation as EvaluationJob
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.statistics.tasks import update_site_statistics_cache
@@ -33,195 +39,6 @@ class StatisticsDetail(TemplateView):
             for c in challenge_list
         ]
 
-    @staticmethod
-    def _bar_chart_spec(*, values, lookup, title):
-        chart = {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": "container",
-            "padding": 0,
-            "title": title,
-            "data": {"values": values},
-            "mark": "bar",
-            "encoding": {
-                "x": {
-                    "field": "Month",
-                    "type": "quantitative",
-                    "timeUnit": "yearmonth",
-                },
-                "y": {
-                    "field": lookup,
-                    "type": "quantitative",
-                },
-                "tooltip": [
-                    {
-                        "field": "Month",
-                        "type": "quantitative",
-                        "timeUnit": "yearmonth",
-                    },
-                    {"field": lookup, "type": "quantitative"},
-                ],
-            },
-        }
-
-        totals = sum(datum[lookup] for datum in values)
-
-        return {"chart": chart, "totals": totals}
-
-    @staticmethod
-    def _stacked_bar_chart_spec(*, values, lookup, title, facet, domain):
-        domain = dict(domain)
-
-        totals = {str(d): 0 for d in domain.values()}
-        for datum in values:
-            datum[facet] = domain[datum[facet]]
-            totals[str(datum[facet])] += datum[lookup]
-
-        chart = {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": "container",
-            "padding": 0,
-            "title": title,
-            "data": {"values": values},
-            "mark": "bar",
-            "encoding": {
-                "x": {
-                    "field": "Month",
-                    "type": "quantitative",
-                    "timeUnit": "yearmonth",
-                },
-                "y": {
-                    "field": lookup,
-                    "type": "quantitative",
-                    "stack": True,
-                },
-                "tooltip": [
-                    {
-                        "field": "Month",
-                        "type": "quantitative",
-                        "timeUnit": "yearmonth",
-                    },
-                    {"field": facet, "type": "nominal"},
-                    {"field": lookup, "type": "quantitative"},
-                ],
-                "color": {
-                    "field": facet,
-                    "scale": {
-                        "domain": list(domain.values()),
-                    },
-                    "type": "nominal",
-                },
-            },
-        }
-
-        return {"chart": chart, "totals": totals}
-
-    @staticmethod
-    def _horizontal_chart_spec(*, values, lookup, title):
-        url_lookup = "absolute_url"
-        challenge_name_lookup = "short_name"
-        return {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": "container",
-            "padding": 0,
-            "data": {"values": values},
-            "mark": "bar",
-            "encoding": {
-                "color": {
-                    "field": lookup,
-                    "type": "nominal",
-                    "legend": None,
-                    "scale": {"scheme": {"name": "viridis", "extent": [0, 1]}},
-                },
-                "tooltip": [
-                    {
-                        "field": challenge_name_lookup,
-                        "type": "nominal",
-                        "title": "Challenge",
-                    },
-                    {
-                        "field": lookup,
-                        "type": "quantitative",
-                        "title": title,
-                        "format": ".0f",
-                    },
-                ],
-                "y": {
-                    "field": challenge_name_lookup,
-                    "type": "nominal",
-                    "axis": {"labelAngle": 0},
-                    "title": None,
-                    "sort": "-x",
-                },
-                "x": {
-                    "field": lookup,
-                    "type": "quantitative",
-                    "title": title,
-                    "axis": {"tickMinStep": "1", "format": ".0f"},
-                },
-                "href": {"field": url_lookup, "type": "nominal"},
-            },
-        }
-
-    @staticmethod
-    def _world_map_chart_spec(*, values):
-        return {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": "container",
-            "height": "container",
-            "padding": 0,
-            "view": {"stroke": "transparent", "fill": "#c9eeff"},
-            "data": {
-                "url": "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
-                "format": {"type": "topojson", "feature": "countries"},
-            },
-            "transform": [
-                {
-                    "lookup": "id",
-                    "from": {
-                        "data": {"values": values},
-                        "key": "id",
-                        "fields": ["participants"],
-                    },
-                    "default": 0.01,
-                }
-            ],
-            "projection": {"type": "equalEarth"},
-            "mark": {
-                "type": "geoshape",
-                "stroke": "#757575",
-                "strokeWidth": 0.5,
-            },
-            "encoding": {
-                "color": {
-                    "field": "participants",
-                    "type": "quantitative",
-                    "scale": {
-                        "scheme": "viridis",
-                        "domainMin": 1,
-                        "type": "log",
-                    },
-                    "legend": None,
-                    "condition": {
-                        "test": "datum['participants'] === 0.01",
-                        "value": "#eee",
-                    },
-                },
-                "tooltip": [
-                    {
-                        "field": "properties.name",
-                        "type": "nominal",
-                        "title": "Country",
-                    },
-                    {
-                        "field": "participants",
-                        "type": "quantitative",
-                        "title": "Participants",
-                        "format": ".0f",
-                    },
-                ],
-            },
-        }
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -240,7 +57,7 @@ class StatisticsDetail(TemplateView):
 
         context.update(
             {
-                "users": self._bar_chart_spec(
+                "users": bar(
                     values=[
                         {
                             "Month": datetime(
@@ -255,7 +72,7 @@ class StatisticsDetail(TemplateView):
                     lookup="New Users",
                     title="New Users per Month",
                 ),
-                "countries": self._world_map_chart_spec(
+                "countries": world_map(
                     values=[
                         {
                             "id": countries.numeric(c[0], padded=True),
@@ -264,7 +81,7 @@ class StatisticsDetail(TemplateView):
                         for c in stats["countries"]
                     ]
                 ),
-                "challenges": self._stacked_bar_chart_spec(
+                "challenges": stacked_bar(
                     values=[
                         {
                             "Month": datetime(
@@ -282,7 +99,7 @@ class StatisticsDetail(TemplateView):
                     facet="Visibility",
                     domain=[(True, "Public"), (False, "Private")],
                 ),
-                "submissions": self._stacked_bar_chart_spec(
+                "submissions": stacked_bar(
                     values=[
                         {
                             "Month": datetime(
@@ -303,7 +120,7 @@ class StatisticsDetail(TemplateView):
                         (Phase.SubmissionKindChoices.ALGORITHM, "Algorithm"),
                     ],
                 ),
-                "algorithms": self._stacked_bar_chart_spec(
+                "algorithms": stacked_bar(
                     values=[
                         {
                             "Month": datetime(
@@ -321,7 +138,7 @@ class StatisticsDetail(TemplateView):
                     facet="Visibility",
                     domain=[(True, "Public"), (False, "Private")],
                 ),
-                "jobs": self._bar_chart_spec(
+                "jobs": bar(
                     values=[
                         {
                             "Month": datetime(
@@ -336,7 +153,7 @@ class StatisticsDetail(TemplateView):
                     lookup="Inference Jobs",
                     title="Inference Jobs per Month",
                 ),
-                "job_durations": self._bar_chart_spec(
+                "job_durations": bar(
                     values=[
                         {
                             "Month": datetime(
@@ -356,7 +173,7 @@ class StatisticsDetail(TemplateView):
                     lookup="Inference Hours",
                     title="Inference Hours per Month",
                 ),
-                "archives": self._stacked_bar_chart_spec(
+                "archives": stacked_bar(
                     values=[
                         {
                             "Month": datetime(
@@ -374,7 +191,7 @@ class StatisticsDetail(TemplateView):
                     facet="Visibility",
                     domain=[(True, "Public"), (False, "Private")],
                 ),
-                "images": self._bar_chart_spec(
+                "images": bar(
                     values=[
                         {
                             "Month": datetime(
@@ -389,7 +206,7 @@ class StatisticsDetail(TemplateView):
                     lookup="New Images",
                     title="New Images per Month",
                 ),
-                "reader_studies": self._stacked_bar_chart_spec(
+                "reader_studies": stacked_bar(
                     values=[
                         {
                             "Month": datetime(
@@ -407,7 +224,7 @@ class StatisticsDetail(TemplateView):
                     facet="Visibility",
                     domain=[(True, "Public"), (False, "Private")],
                 ),
-                "answers": self._bar_chart_spec(
+                "answers": bar(
                     values=[
                         {
                             "Month": datetime(
@@ -422,7 +239,7 @@ class StatisticsDetail(TemplateView):
                     lookup="New Answers",
                     title="New Answers per Month",
                 ),
-                "sessions": self._bar_chart_spec(
+                "sessions": bar(
                     values=[
                         {
                             "Month": datetime(
@@ -443,7 +260,7 @@ class StatisticsDetail(TemplateView):
                 "sessions_total": sum(
                     datum["object_count"] for datum in stats["sessions"]
                 ),
-                "challenge_registrations_period": self._horizontal_chart_spec(
+                "challenge_registrations_period": horizontal_bar(
                     values=self._challenge_qs_to_list_with_url(
                         public_challenges.filter(
                             registrationrequest__created__gt=time_period
@@ -461,7 +278,7 @@ class StatisticsDetail(TemplateView):
                     lookup="num_registrations_period",
                     title=f"Number of registrations last {days} days",
                 ),
-                "challenge_submissions_period": self._horizontal_chart_spec(
+                "challenge_submissions_period": horizontal_bar(
                     values=self._challenge_qs_to_list_with_url(
                         public_challenges.filter(
                             phase__submission__created__gt=time_period
