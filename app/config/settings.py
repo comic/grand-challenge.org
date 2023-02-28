@@ -1164,7 +1164,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
-        "schedule": crontab(minute=30, hour=5),
+        "schedule": crontab(minute="*/15"),
     },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",

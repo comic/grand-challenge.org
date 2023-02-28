@@ -13,7 +13,7 @@ from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.workstations.models import Session
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def update_site_statistics_cache():
     stats = {
         "users": (
