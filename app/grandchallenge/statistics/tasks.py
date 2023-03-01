@@ -1,6 +1,7 @@
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.db.models import Count, Sum
 
@@ -15,6 +16,8 @@ from grandchallenge.workstations.models import Session
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def update_site_statistics_cache():
+    public_challenges = Challenge.objects.filter(hidden=False)
+
     stats = {
         "users": (
             get_user_model()
@@ -94,6 +97,21 @@ def update_site_statistics_cache():
                 object_count=Count("created__month"),
             )
             .order_by("created__year", "created__month")
+        ),
+        "most_popular_challenge_group": (
+            Group.objects.filter(
+                participants_of_challenge__in=public_challenges
+            )
+            .annotate(num_users=Count("user"))
+            .order_by("-num_users")
+            .first()
+        ),
+        "most_popular_challenge_submissions": (
+            public_challenges.annotate(
+                num_submissions=Count("phase__submission")
+            )
+            .order_by("-num_submissions")
+            .first()
         ),
     }
 

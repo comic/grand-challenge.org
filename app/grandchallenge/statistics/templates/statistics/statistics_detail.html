@@ -44,7 +44,6 @@
     </div>
 
     <dl class="inline">
-
         <dt>Total public challenges</dt>
         <dd>{{ challenges.totals.Public|intcomma }}</dd>
 
@@ -53,13 +52,12 @@
 
         <dt>Public challenge with the most participants</dt>
         <dd>
-            <a href="{{ mp_group.participants_of_challenge.get_absolute_url }}">
-                {{ mp_group.participants_of_challenge }}
-                ({{ mp_group.num_users|intcomma }}
-                Participant{{ mp_group.num_users|pluralize }})
+            <a href="{{ most_popular_challenge_group.participants_of_challenge.get_absolute_url }}">
+                {{ most_popular_challenge_group.participants_of_challenge }}
+                ({{ most_popular_challenge_group.num_users|intcomma }}
+                Participant{{ most_popular_challenge_group.num_users|pluralize }})
             </a>
         </dd>
-
     </dl>
 
     <h4>Registrations to public challenges in the past {{ days }} days
@@ -86,19 +84,12 @@
 
         <dt>Public challenge with the most submissions</dt>
         <dd>
-            <a href="{{ mp_challenge_submissions.get_absolute_url }}">
-                {{ mp_challenge_submissions }}
-                ({{ mp_challenge_submissions.num_submissions|intcomma }}
-                Submission{{ mp_challenge_submissions.num_submissions|pluralize }})
+            <a href="{{ most_popular_challenge_submissions.get_absolute_url }}">
+                {{ most_popular_challenge_submissions }}
+                ({{ most_popular_challenge_submissions.num_submissions|intcomma }}
+                Submission{{ most_popular_challenge_submissions.num_submissions|pluralize }})
             </a>
         </dd>
-
-        <dt>Latest public result</dt>
-        <dd><a href="{{ latest_result.get_absolute_url }}">Result
-            for {{ latest_result.submission.phase.challenge }},
-            created {{ latest_result.created|naturaltime }},
-            {{ latest_result.rank|ordinal }} position on leaderboard.</a></dd>
-
     </dl>
 
     <h4>Submissions to public challenges in the past {{ days }} days
