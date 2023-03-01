@@ -85,14 +85,6 @@ class PageDetail(
         page = self.get_object()
         return page.can_be_viewed_by(user=user)
 
-    def get_context_object_name(self, obj):
-        return "currentpage"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(self.object.detail_context)
-        return context
-
 
 class ChallengeHome(PageDetail):
     def get_object(self, queryset=None):

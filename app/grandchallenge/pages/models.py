@@ -117,14 +117,6 @@ class Page(models.Model):
         else:
             return user.has_perm(f"view_{self._meta.model_name}", self)
 
-    @property
-    def detail_context(self):
-        context = {}
-
-        context["cleaned_html"] = clean(self.html)
-
-        return context
-
     def move(self, move):
         if move == self.UP:
             mm = Page.objects.get(
