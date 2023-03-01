@@ -317,11 +317,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if "widget" in self.changed_data:
             new_widget = self.cleaned_data["widget"]
             try:
-                old_widget = instance.widget
+                instance.widget.delete()
             except ObjectDoesNotExist:
-                old_widget = None
-            if old_widget:
-                old_widget.delete()
+                pass
             if new_widget:
                 new_widget.question = instance
                 new_widget.save()
@@ -362,29 +360,14 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if value == "":
             return None
         else:
-            widget_instance = QuestionWidget(kind=value)
-            if value == QuestionWidgetKindChoices.ACCEPT_REJECT:
-                if not self.cleaned_data.get("interface"):
-                    self.add_error(
-                        error=ValidationError(
-                            f"To use the {widget_instance.get_kind_display()} widget you must define a default answer."
-                        ),
-                        field=None,
-                    )
-                if self.cleaned_data.get("required"):
-                    self.add_error(
-                        error=ValidationError(
-                            f'To use the {widget_instance.get_kind_display()} widget you must uncheck "required".'
-                        ),
-                        field=None,
-                    )
-            if not self.errors:
-                return widget_instance
+            return QuestionWidget(kind=value)
 
     def clean(self):
         answer_type = self.cleaned_data.get("answer_type")
         interface = self.cleaned_data.get("interface")
         overlay_segments = self.cleaned_data.get("overlay_segments")
+        widget = self.cleaned_data.get("widget")
+        required = self.cleaned_data.get("required")
 
         if overlay_segments and answer_type != AnswerType.MASK:
             self.add_error(
@@ -402,6 +385,22 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 ),
                 field=None,
             )
+        if widget:
+            if widget.kind == QuestionWidgetKindChoices.ACCEPT_REJECT:
+                if not interface:
+                    self.add_error(
+                        error=ValidationError(
+                            f"To use the {widget.get_kind_display()} widget you must define a default answer."
+                        ),
+                        field=None,
+                    )
+                if required:
+                    self.add_error(
+                        error=ValidationError(
+                            f'To use the {widget.get_kind_display()} widget you must uncheck "required".'
+                        ),
+                        field=None,
+                    )
         return super().clean()
 
     class Meta:
