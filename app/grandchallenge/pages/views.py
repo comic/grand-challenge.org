@@ -1,10 +1,9 @@
+from datetime import datetime
+
 from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.cache import cache
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import Http404
 from django.views.generic import (
     CreateView,
@@ -14,9 +13,12 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
+from django_countries import countries
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.evaluation.models import Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -150,20 +152,70 @@ class PageDelete(
         return super().delete(request, *args, **kwargs)
 
 
-class ChallengeStatistics(
-    LoginRequiredMixin, PermissionRequiredMixin, TemplateView
-):
+class ChallengeStatistics(TemplateView):
     template_name = "pages/challenge_statistics.html"
-    permission_required = "challenges.view_challengerequest"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        phases = self.request.challenge.phase_set.filter(
-            submission_kind=SubmissionKindChoices.ALGORITHM
-        ).all()
+
+        participants = (
+            self.request.challenge.get_participants().select_related(
+                "user_profile", "verification"
+            )
+        )
+
+        participants_countries = (
+            participants.exclude(user_profile__country="")
+            .values("user_profile__country")
+            .annotate(country_count=Count("user_profile__country"))
+            .order_by("-country_count")
+            .values_list("user_profile__country", "country_count")
+        )
+
+        public_phases = self.request.challenge.phase_set.filter(public=True)
+
+        submissions = (
+            Submission.objects.filter(phase__in=public_phases)
+            .values("phase__pk", "created__year", "created__month")
+            .annotate(object_count=Count("phase__slug"))
+            .order_by("created__year", "created__month", "phase__pk")
+        )
+
         context.update(
             {
-                "phases": phases,
+                "participants": world_map(
+                    values=[
+                        {
+                            "id": countries.numeric(c[0], padded=True),
+                            "participants": c[1],
+                        }
+                        for c in participants_countries
+                    ]
+                ),
+                "participants_total": participants.count(),
+                "submissions": stacked_bar(
+                    values=[
+                        {
+                            "Month": datetime(
+                                datum["created__year"],
+                                datum["created__month"],
+                                1,
+                            ).isoformat(),
+                            "New Submissions": datum["object_count"],
+                            "Phase": datum["phase__pk"],
+                        }
+                        for datum in submissions
+                    ],
+                    lookup="New Submissions",
+                    title="New Submissions per Month",
+                    facet="Phase",
+                    domain=[
+                        (phase.pk, phase.title) for phase in public_phases
+                    ],
+                ),
+                "algorithm_phases": self.request.challenge.phase_set.filter(
+                    submission_kind=SubmissionKindChoices.ALGORITHM
+                ),
                 "statistics_for_phases": cache.get("statistics_for_phases"),
             }
         )

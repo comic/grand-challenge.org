@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 {% load url %}
-{% load naturaldelta %}
-{% load dict_lookup %}
+{% load humanize %}
+{% load static %}
 
 {% block title %}
-        Statistics
-    - {{ block.super }}
+    Statistics - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -15,12 +14,51 @@
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
             aria-current="page">
-            Challenge Statistics
+            Statistics
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h3 class="mb-3">Challenge statistics</h3>
-    {% include 'pages/phase_costs_partial.html' with phases=phases statistics_for_phases=statistics_for_phases %}
+    <h3 class="mb-3">Statistics</h3>
+
+    <h4>Participants</h4>
+
+    <div class="embed-responsive embed-responsive-21by9">
+        <div class="embed-responsive-item vega-lite-chart">
+            {{ participants|json_script:"participants" }}
+        </div>
+    </div>
+
+    <dl class="inline">
+        <dt>Total participants</dt>
+        <dd>{{ participants_total|intcomma }}</dd>
+    </dl>
+
+    <h4>Submissions</h4>
+
+    <div class="w-100 vega-lite-chart">
+        {{ submissions.chart|json_script:"submissions" }}
+    </div>
+
+    <dl class="inline">
+        {% for phase_title, submission_count in submissions.totals.items %}
+            <dt>Total submissions to the {{ phase_title }} phase</dt>
+            <dd>{{ submission_count|intcomma }}</dd>
+        {% endfor %}
+    </dl>
+
+    {% if perms.challenges.view_challengerequest %}
+        <h4>Estimated Costs</h4>
+        {% include 'pages/phase_costs_partial.html' with phases=algorithm_phases statistics_for_phases=statistics_for_phases %}
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+    <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
 {% endblock %}
