@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.db.models import Count
 from django.utils import timezone
@@ -16,7 +15,6 @@ from grandchallenge.charts.specs import (
     stacked_bar,
     world_map,
 )
-from grandchallenge.evaluation.models import Evaluation as EvaluationJob
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.statistics.tasks import update_site_statistics_cache
 from grandchallenge.subdomains.utils import reverse
@@ -260,6 +258,12 @@ class StatisticsDetail(TemplateView):
                 "sessions_total": sum(
                     datum["object_count"] for datum in stats["sessions"]
                 ),
+                "most_popular_challenge_group": stats.get(
+                    "most_popular_challenge_group"
+                ),
+                "most_popular_challenge_submissions": stats.get(
+                    "most_popular_challenge_submissions"
+                ),
                 "challenge_registrations_period": horizontal_bar(
                     values=self._challenge_qs_to_list_with_url(
                         public_challenges.filter(
@@ -301,37 +305,11 @@ class StatisticsDetail(TemplateView):
                     .objects.filter(last_login__gt=time_period)
                     .count()
                 ),
-                "mp_group": (
-                    Group.objects.filter(
-                        participants_of_challenge__in=public_challenges
-                    )
-                    .annotate(num_users=Count("user"))
-                    .order_by("-num_users")
-                    .first()
-                ),
-                "mp_challenge_submissions": (
-                    public_challenges.annotate(
-                        num_submissions=Count("phase__submission")
-                    )
-                    .order_by("-num_submissions")
-                    .first()
-                ),
-                "latest_result": (
-                    EvaluationJob.objects.filter(
-                        published=True,
-                        submission__phase__challenge__hidden=False,
-                        rank__gt=0,
-                        status=EvaluationJob.SUCCESS,
-                    )
-                    .select_related("submission__phase__challenge")
-                    .order_by("-created")
-                    .first()
-                ),
                 "workstations": {
                     str(o["public"]): o["object_count"]
-                    for o in Workstation.objects.values("public").annotate(
-                        object_count=Count("public")
-                    )
+                    for o in Workstation.objects.values("public")
+                    .annotate(object_count=Count("public"))
+                    .order_by("public")
                 },
             }
         )
