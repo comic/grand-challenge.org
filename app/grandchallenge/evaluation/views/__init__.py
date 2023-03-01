@@ -390,7 +390,6 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         files = []
         thumbnails = []
         charts = []
-        charts_data = []
         json = []
         for output in self.object.outputs.all():
             if (
@@ -398,7 +397,6 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
                 == InterfaceKind.InterfaceKindChoices.CHART
             ):
                 charts.append(output)
-                charts_data.append(output.value)
             elif output.interface.kind in [
                 InterfaceKind.InterfaceKindChoices.PDF,
                 InterfaceKind.InterfaceKindChoices.CSV,
@@ -423,7 +421,6 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
             {
                 "metrics": metrics,
                 "charts": charts,
-                "charts_data": charts_data,
                 "files": files,
                 "thumbnails": thumbnails,
                 "json": json,

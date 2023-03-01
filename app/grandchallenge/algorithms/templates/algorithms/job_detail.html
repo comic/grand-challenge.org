@@ -93,7 +93,9 @@
 
             {% for chart in charts %}
                 <h3 class="mt-3">{{ chart.interface.title }}</h3>
-                <div class="w-100" id="resultsChart_{{ forloop.counter0 }}"></div>
+                <div class="w-100 vega-lite-chart">
+                    {{ chart.value|json_script:chart.pk }}
+                </div>
             {% endfor %}
 
             {% for thumbnail in thumbnails %}
@@ -385,12 +387,6 @@
     <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
-
-    {{ charts_data|json_script:"allCharts" }}
-    <script type="module" src="{% static "algorithms/js/render_resultschart.js" %}"></script>
-
-    {% if object.runtime_metrics and "view_logs" in job_perms %}
-        <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
-    {% endif %}
+    <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
 
 {% endblock %}
