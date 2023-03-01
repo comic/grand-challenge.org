@@ -555,6 +555,7 @@ LOCAL_APPS = [
     "grandchallenge.flatpages",
     "grandchallenge.emails",
     "grandchallenge.hanging_protocols",
+    "grandchallenge.charts",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -1161,6 +1162,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_cost_statistics",
         "schedule": crontab(minute=0, hour=5),
     },
+    "update_site_statistics": {
+        "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
+        "schedule": crontab(minute=30, hour=5),
+    },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": crontab(minute="*/5"),
@@ -1263,6 +1268,9 @@ GITHUB_PRIVATE_KEY_BASE64 = os.environ.get("GITHUB_PRIVATE_KEY_BASE64", "")
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
+
+# Statistics App
+STATISTICS_SITE_CACHE_KEY = "statistics/site_statistics"
 
 # License keys from https://github.com/licensee/licensee/tree/v9.15.1/vendor/choosealicense.com/_licenses
 OPEN_SOURCE_LICENSES = frozenset(

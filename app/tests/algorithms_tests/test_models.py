@@ -348,66 +348,67 @@ def test_usage_statistics():
         job.status = status
         job.save()
 
-    assert algorithm_image.algorithm.usage_totals == {
-        "Cancelled": 1,
-        "Failed": 0,
-        "Succeeded": 4,
-    }
     assert algorithm_image.algorithm.usage_chart == {
-        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-        "width": "container",
-        "padding": 0,
-        "data": {
-            "values": [
-                {
-                    "Status": "Succeeded",
-                    "Timestamp": "2020-01-01T00:00:00",
-                    "Jobs": 1,
-                },
-                {
-                    "Status": "Cancelled",
-                    "Timestamp": "2020-01-01T00:00:00",
-                    "Jobs": 1,
-                },
-                {
-                    "Status": "Succeeded",
-                    "Timestamp": "2020-02-01T00:00:00",
-                    "Jobs": 1,
-                },
-                {
-                    "Status": "Succeeded",
-                    "Timestamp": "2022-01-01T00:00:00",
-                    "Jobs": 2,
-                },
-            ]
+        "totals": {
+            "Cancelled": 1,
+            "Failed": 0,
+            "Succeeded": 4,
         },
-        "mark": "bar",
-        "encoding": {
-            "x": {
-                "timeUnit": "yearmonth",
-                "field": "Timestamp",
-                "type": "quantitative",
-                "title": "Date",
+        "chart": {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": "container",
+            "padding": 0,
+            "title": "Algorithm Usage",
+            "data": {
+                "values": [
+                    {
+                        "Status": "Succeeded",
+                        "Month": "2020-01-01T00:00:00",
+                        "Jobs Count": 1,
+                    },
+                    {
+                        "Status": "Cancelled",
+                        "Month": "2020-01-01T00:00:00",
+                        "Jobs Count": 1,
+                    },
+                    {
+                        "Status": "Succeeded",
+                        "Month": "2020-02-01T00:00:00",
+                        "Jobs Count": 1,
+                    },
+                    {
+                        "Status": "Succeeded",
+                        "Month": "2022-01-01T00:00:00",
+                        "Jobs Count": 2,
+                    },
+                ]
             },
-            "y": {
-                "field": "Jobs",
-                "type": "quantitative",
-                "title": "Jobs Count",
-                "stack": True,
-            },
-            "tooltip": [
-                {
-                    "field": "Timestamp",
+            "mark": "bar",
+            "encoding": {
+                "x": {
+                    "field": "Month",
                     "type": "quantitative",
                     "timeUnit": "yearmonth",
                 },
-                {"field": "Status", "type": "nominal"},
-                {"field": "Jobs", "type": "quantitative"},
-            ],
-            "color": {
-                "field": "Status",
-                "scale": {"domain": ["Succeeded", "Cancelled", "Failed"]},
-                "type": "nominal",
+                "y": {
+                    "field": "Jobs Count",
+                    "type": "quantitative",
+                    "stack": True,
+                },
+                "tooltip": [
+                    {
+                        "field": "Month",
+                        "type": "quantitative",
+                        "timeUnit": "yearmonth",
+                    },
+                    {"field": "Status", "type": "nominal"},
+                    {"field": "Jobs Count", "type": "quantitative"},
+                ],
+                "color": {
+                    "field": "Status",
+                    "scale": {"domain": ["Succeeded", "Cancelled", "Failed"]},
+                    "type": "nominal",
+                },
             },
         },
     }
