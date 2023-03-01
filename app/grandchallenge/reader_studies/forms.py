@@ -324,7 +324,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 old_widget.delete()
             if new_widget:
                 new_widget.save()
-                instance.widget = new_widget
         return instance
 
     def interface_choices(self):
@@ -362,7 +361,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         if value == "":
             return None
         else:
-            widget_instance = QuestionWidget(kind=value)
+            widget_instance = QuestionWidget(
+                kind=value, question=self.instance
+            )
 
             if value == QuestionWidgetKindChoices.ACCEPT_REJECT:
                 if not self.cleaned_data.get("interface"):
@@ -380,11 +381,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                         field=None,
                     )
             if not self.errors:
-                try:
-                    return self.instance.widget
-                except ObjectDoesNotExist:
-                    widget_instance.question = self.instance
-                    return widget_instance
+                return widget_instance
 
     def clean(self):
         answer_type = self.cleaned_data.get("answer_type")
