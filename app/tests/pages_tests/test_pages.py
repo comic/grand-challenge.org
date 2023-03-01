@@ -325,9 +325,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
 @pytest.mark.django_db
 def test_challenge_statistics_page_permissions(client):
     challenge = ChallengeFactory()
-    admin, reviewer, user = UserFactory.create_batch(3)
-    challenge.add_admin(admin)
-    assign_perm("challenges.view_challengerequest", reviewer)
+    user = UserFactory()
 
     response = get_view_for_user(
         viewname="pages:statistics",
@@ -335,23 +333,19 @@ def test_challenge_statistics_page_permissions(client):
         user=user,
         challenge=challenge,
     )
-    response.status_code = 404
+    assert response.status_code == 200
+    assert "Estimated Costs" not in response.rendered_content
+
+    assign_perm("challenges.view_challengerequest", user)
 
     response = get_view_for_user(
         viewname="pages:statistics",
         client=client,
-        user=admin,
+        user=user,
         challenge=challenge,
     )
-    response.status_code = 404
-
-    response = get_view_for_user(
-        viewname="pages:statistics",
-        client=client,
-        user=reviewer,
-        challenge=challenge,
-    )
-    response.status_code = 200
+    assert response.status_code == 200
+    assert "Estimated Costs" in response.rendered_content
 
 
 @pytest.mark.django_db

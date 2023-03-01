@@ -591,7 +591,6 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
         files = []
         thumbnails = []
         charts = []
-        charts_data = []
         json = []
         for output in self.object.outputs.all():
             if (
@@ -599,7 +598,6 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
                 == InterfaceKind.InterfaceKindChoices.CHART
             ):
                 charts.append(output)
-                charts_data.append(output.value)
             elif output.interface.kind in [
                 InterfaceKind.InterfaceKindChoices.PDF,
                 InterfaceKind.InterfaceKindChoices.CSV,
@@ -625,7 +623,6 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
                 "viewers_form": viewers_form,
                 "job_perms": get_perms(self.request.user, self.object),
                 "charts": charts,
-                "charts_data": charts_data,
                 "files": files,
                 "thumbnails": thumbnails,
                 "json": json,

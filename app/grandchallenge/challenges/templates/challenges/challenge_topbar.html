@@ -90,15 +90,13 @@
                             </a>
                         </div>
                     {% endif %}
-                    {% if perms.challenges.view_challengerequest %}
-                        <div class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics'  %}active{% endif %}"
-                               href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-chart-bar fa-fw"></i>
-                                    Statistics
-                            </a>
-                        </div>
-                    {% endif %}
+                    <div class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics'  %}active{% endif %}"
+                           href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">
+                            <i class="fas fa-chart-bar fa-fw"></i>
+                                Statistics
+                        </a>
+                    </div>
                 </ul>
             </div>
         </div>

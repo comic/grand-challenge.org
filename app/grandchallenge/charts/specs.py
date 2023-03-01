@@ -185,3 +185,108 @@ def world_map(*, values):
             ],
         },
     }
+
+
+def components_line(*, values, title, cpu_limit, tooltip):
+    return {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "width": "container",
+        "padding": 0,
+        "title": title,
+        "data": {"values": values},
+        "layer": [
+            {
+                "transform": [
+                    {"calculate": "100*datum.Percent", "as": "Percent100"},
+                ],
+                "encoding": {
+                    "x": {
+                        "timeUnit": "hoursminutesseconds",
+                        "field": "Timestamp",
+                        "title": "Local Time / HH:MM:SS",
+                    },
+                    "y": {
+                        "field": "Percent100",
+                        "type": "quantitative",
+                        "title": "Utilization / %",
+                    },
+                    "color": {"field": "Metric", "type": "nominal"},
+                },
+                "layer": [
+                    {"mark": "line"},
+                    {
+                        "transform": [
+                            {"filter": {"param": "hover", "empty": False}}
+                        ],
+                        "mark": "point",
+                    },
+                ],
+            },
+            {
+                "transform": [
+                    {
+                        "pivot": "Metric",
+                        "value": "Percent",
+                        "groupby": ["Timestamp"],
+                    }
+                ],
+                "mark": "rule",
+                "encoding": {
+                    "opacity": {
+                        "condition": {
+                            "value": 0.3,
+                            "param": "hover",
+                            "empty": False,
+                        },
+                        "value": 0,
+                    },
+                    "tooltip": tooltip,
+                    "x": {
+                        "timeUnit": "hoursminutesseconds",
+                        "field": "Timestamp",
+                        "title": "Local Time / HH:MM:SS",
+                    },
+                },
+                "params": [
+                    {
+                        "name": "hover",
+                        "select": {
+                            "type": "point",
+                            "fields": ["Timestamp"],
+                            "nearest": True,
+                            "on": "mouseover",
+                            "clear": "mouseout",
+                        },
+                    }
+                ],
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "rule", "strokeDash": [8, 8]},
+                "encoding": {"y": {"datum": cpu_limit}},
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "text", "baseline": "line-bottom"},
+                "encoding": {
+                    "text": {"datum": "CPU Utilization Limit"},
+                    "y": {"datum": cpu_limit},
+                },
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "rule", "strokeDash": [8, 8]},
+                "encoding": {"y": {"datum": 100}},
+            },
+            {
+                "data": {"values": [{}]},
+                "mark": {"type": "text", "baseline": "line-bottom"},
+                "encoding": {
+                    "text": {
+                        "datum": "Memory / GPU / GPU Memory Utilization Limit"
+                    },
+                    "y": {"datum": 100},
+                },
+            },
+        ],
+    }

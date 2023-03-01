@@ -33,6 +33,7 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.cases.widgets import FlexibleImageField
+from grandchallenge.charts.specs import components_line
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
@@ -1466,127 +1467,29 @@ class ComponentJob(models.Model):
             gpu_str = "No"
         title = f"{instance_metrics['name']} / {instance_metrics['cpu']} CPU / {instance_metrics['memory']} GB Memory / {gpu_str} GPU"
 
-        return {
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": "container",
-            "padding": 0,
-            "title": title,
-            "data": {
-                "values": [
-                    {
-                        "Metric": metric["label"],
-                        "Timestamp": timestamp,
-                        "Percent": value / 100.0,
-                    }
-                    for metric in self.runtime_metrics["metrics"]
-                    for timestamp, value in zip(
-                        metric["timestamps"], metric["values"], strict=True
-                    )
-                ]
-            },
-            "layer": [
+        return components_line(
+            values=[
                 {
-                    "transform": [
-                        {"calculate": "100*datum.Percent", "as": "Percent100"},
-                    ],
-                    "encoding": {
-                        "x": {
-                            "timeUnit": "hoursminutesseconds",
-                            "field": "Timestamp",
-                            "title": "Local Time / HH:MM:SS",
-                        },
-                        "y": {
-                            "field": "Percent100",
-                            "type": "quantitative",
-                            "title": "Utilization / %",
-                        },
-                        "color": {"field": "Metric", "type": "nominal"},
-                    },
-                    "layer": [
-                        {"mark": "line"},
-                        {
-                            "transform": [
-                                {"filter": {"param": "hover", "empty": False}}
-                            ],
-                            "mark": "point",
-                        },
-                    ],
-                },
-                {
-                    "transform": [
-                        {
-                            "pivot": "Metric",
-                            "value": "Percent",
-                            "groupby": ["Timestamp"],
-                        }
-                    ],
-                    "mark": "rule",
-                    "encoding": {
-                        "opacity": {
-                            "condition": {
-                                "value": 0.3,
-                                "param": "hover",
-                                "empty": False,
-                            },
-                            "value": 0,
-                        },
-                        "tooltip": [
-                            {
-                                "field": metric["label"],
-                                "type": "quantitative",
-                                "format": ".2%",
-                            }
-                            for metric in self.runtime_metrics["metrics"]
-                        ],
-                        "x": {
-                            "timeUnit": "hoursminutesseconds",
-                            "field": "Timestamp",
-                            "title": "Local Time / HH:MM:SS",
-                        },
-                    },
-                    "params": [
-                        {
-                            "name": "hover",
-                            "select": {
-                                "type": "point",
-                                "fields": ["Timestamp"],
-                                "nearest": True,
-                                "on": "mouseover",
-                                "clear": "mouseout",
-                            },
-                        }
-                    ],
-                },
-                {
-                    "data": {"values": [{}]},
-                    "mark": {"type": "rule", "strokeDash": [8, 8]},
-                    "encoding": {"y": {"datum": cpu_limit}},
-                },
-                {
-                    "data": {"values": [{}]},
-                    "mark": {"type": "text", "baseline": "line-bottom"},
-                    "encoding": {
-                        "text": {"datum": "CPU Utilization Limit"},
-                        "y": {"datum": cpu_limit},
-                    },
-                },
-                {
-                    "data": {"values": [{}]},
-                    "mark": {"type": "rule", "strokeDash": [8, 8]},
-                    "encoding": {"y": {"datum": 100}},
-                },
-                {
-                    "data": {"values": [{}]},
-                    "mark": {"type": "text", "baseline": "line-bottom"},
-                    "encoding": {
-                        "text": {
-                            "datum": "Memory / GPU / GPU Memory Utilization Limit"
-                        },
-                        "y": {"datum": 100},
-                    },
-                },
+                    "Metric": metric["label"],
+                    "Timestamp": timestamp,
+                    "Percent": value / 100.0,
+                }
+                for metric in self.runtime_metrics["metrics"]
+                for timestamp, value in zip(
+                    metric["timestamps"], metric["values"], strict=True
+                )
             ],
-        }
+            title=title,
+            cpu_limit=cpu_limit,
+            tooltip=[
+                {
+                    "field": metric["label"],
+                    "type": "quantitative",
+                    "format": ".2%",
+                }
+                for metric in self.runtime_metrics["metrics"]
+            ],
+        )
 
     class Meta:
         abstract = True
