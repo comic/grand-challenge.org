@@ -56,6 +56,7 @@ from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
+    ANSWER_TYPE_TO_QUESTION_WIDGET,
     CASE_TEXT_SCHEMA,
     AnswerType,
     CategoricalOption,
@@ -341,11 +342,13 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         answer_type = self["answer_type"].value()
         choices = [("", "Default")]
         if answer_type:
-            choices.extend(
-                QuestionWidget.get_widget_choices_for_answer_type(
-                    answer_type=answer_type
+            try:
+                extra_options = ANSWER_TYPE_TO_QUESTION_WIDGET[answer_type]
+                choices.extend(
+                    (option.name, option.label) for option in extra_options
                 )
-            )
+            except KeyError:
+                pass
         return choices
 
     def initial_widget(self):

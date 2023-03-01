@@ -1521,6 +1521,21 @@ class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
 
 
+ANSWER_TYPE_TO_QUESTION_WIDGET = {
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
+    AnswerType.MULTIPLE_POINTS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_LINES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_ANGLES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_ELLIPSES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+}
+
+
 class QuestionWidget(models.Model):
 
     kind = models.CharField(
@@ -1535,23 +1550,8 @@ class QuestionWidget(models.Model):
         return f"{self.kind} widget"
 
     def supported_answer_types(self):
-        if self.kind == QuestionWidgetKindChoices.ACCEPT_REJECT:
-            return [
-                AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-                AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-                AnswerType.MULTIPLE_POINTS,
-                AnswerType.MULTIPLE_POLYGONS,
-                AnswerType.MULTIPLE_LINES,
-                AnswerType.MULTIPLE_ANGLES,
-                AnswerType.MULTIPLE_ELLIPSES,
-            ]
-
-    @classmethod
-    def get_widget_choices_for_answer_type(cls, answer_type):
-        widget_types = []
-        instance = cls()
-        for kind in QuestionWidgetKindChoices:
-            instance.kind = kind
-            if answer_type in instance.supported_answer_types():
-                widget_types.append((kind.name, kind.label))
-        return widget_types
+        return [
+            k
+            for k, v in ANSWER_TYPE_TO_QUESTION_WIDGET.items()
+            if self.kind in v
+        ]
