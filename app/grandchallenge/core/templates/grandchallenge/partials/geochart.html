@@ -1,9 +1,0 @@
-<div class="embed-responsive embed-responsive-21by9">
-    <div class="embed-responsive-item" id="participantsGeoChart"></div>
-</div>
-
-{{ country_data|json_script:"countryParticipants" }}
-
-{% if user_count %}
-    <p>Number of participants: {{ user_count }}</p>
-{% endif %}

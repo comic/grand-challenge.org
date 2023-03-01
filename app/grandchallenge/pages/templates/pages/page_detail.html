@@ -86,14 +86,5 @@
 {% block script %}
     {{ block.super }}
     {# make the tables sortable #}
-    <script type="module"
-            src="{% static "js/sort_tables.js" %}"></script>
-    {# geocharts #}
-    {% if includes_geochart %}
-        <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
-        <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
-        <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
-        <script type="module"
-                src="{% static "js/render_geocharts.js" %}"></script>
-    {% endif %}
+    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
 {% endblock %}

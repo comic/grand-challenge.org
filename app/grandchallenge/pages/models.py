@@ -1,8 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Count, Max
-from django.template.loader import render_to_string
-from django_countries import countries
+from django.db.models import Max
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -10,7 +8,6 @@ from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
-from grandchallenge.pages.substitutions import Substitution
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -124,46 +121,9 @@ class Page(models.Model):
     def detail_context(self):
         context = {}
 
-        cleaned_html = clean(self.html)
-
-        if "project_statistics" in cleaned_html:
-            cleaned_html = self._substitute_geochart(html=cleaned_html)
-            context["includes_geochart"] = True
-
-        context["cleaned_html"] = cleaned_html
+        context["cleaned_html"] = clean(self.html)
 
         return context
-
-    def _substitute_geochart(self, *, html):
-        users = self.challenge.get_participants().select_related(
-            "user_profile", "verification"
-        )
-        country_data = (
-            users.exclude(user_profile__country="")
-            .values("user_profile__country")
-            .annotate(country_count=Count("user_profile__country"))
-            .order_by("-country_count")
-            .values_list("user_profile__country", "country_count")
-        )
-        content = render_to_string(
-            "grandchallenge/partials/geochart.html",
-            {
-                "user_count": users.count(),
-                "country_data": [
-                    {
-                        "id": countries.numeric(c[0], padded=True),
-                        "participants": c[1],
-                    }
-                    for c in country_data
-                ],
-            },
-        )
-
-        s = Substitution(
-            tag_name="project_statistics",
-            replacement=content,
-        )
-        return s.sub(html)
 
     def move(self, move):
         if move == self.UP:
