@@ -344,9 +344,14 @@ class AlgorithmForm(
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
         if self.instance:
+            interface_slugs = (
+                (self.instance.inputs.all() | self.instance.outputs.all())
+                .distinct()
+                .values_list("slug", flat=True)
+            )
             self.fields["view_content"].help_text += (
                 " The following interfaces are used in your algorithm: "
-                f"{', '.join(self.instance.inputs.values_list('slug', flat=True).distinct())}."
+                f"{oxford_comma(interface_slugs)}."
             )
 
 
