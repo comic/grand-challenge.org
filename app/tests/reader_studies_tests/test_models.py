@@ -79,6 +79,7 @@ def test_read_only_fields():
         "image_port",
         "required",
         "overlay_segments",
+        "widget",
     ]
 
 
@@ -526,7 +527,7 @@ def test_workstation_url():
         (
             True,
             AnswerType.MULTIPLE_POINTS,
-            None,
+            "",
             False,
             nullcontext(),
         ),

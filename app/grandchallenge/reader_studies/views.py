@@ -1385,6 +1385,12 @@ class QuestionInterfacesView(View):
         return HttpResponse(form["interface"])
 
 
+class QuestionWidgetsView(View):
+    def get(self, request):
+        form = QuestionForm(request.GET)
+        return HttpResponse(form["widget"])
+
+
 class DisplaySetDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):

@@ -16,9 +16,11 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
     BooleanField,
     CharField,
+    ChoiceField,
     FileField,
     Form,
     IntegerField,
@@ -55,6 +57,7 @@ from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
+    ANSWER_TYPE_TO_QUESTION_WIDGET,
     CASE_TEXT_SCHEMA,
     AnswerType,
     CategoricalOption,
@@ -282,6 +285,15 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 Field("question_text"),
                 Field("help_text"),
                 Field("answer_type"),
+                Field("widget"),
+                HTML(
+                    f"<div "
+                    f"hx-get={reverse_lazy('reader-studies:question-widgets')!r} "
+                    f"hx-trigger='change from:#id_answer_type' "
+                    f"hx-target='#id_widget' "
+                    f"hx-include='[id=id_answer_type]''>"
+                    f"</div>"
+                ),
                 Fieldset(
                     "Add options",
                     Formset("options"),
@@ -309,6 +321,24 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def initial_interface(self):
         return self.interface_choices().first()
+
+    def widget_choices(self):
+        answer_type = self["answer_type"].value()
+        choices = []
+        if answer_type:
+            try:
+                choices = [
+                    (option.name, option.label)
+                    for option in ANSWER_TYPE_TO_QUESTION_WIDGET[answer_type]
+                ]
+            except KeyError:
+                raise Exception(
+                    f"{answer_type} is not defined in ANSWER_TYPE_TO_QUESTION_WIDGET."
+                )
+        return BLANK_CHOICE_DASH + choices
+
+    def initial_widget(self):
+        return self.instance.widget
 
     def clean(self):
         answer_type = self.cleaned_data.get("answer_type")
@@ -346,6 +376,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "interface",
             "overlay_segments",
             "look_up_table",
+            "widget",
         )
         help_texts = {
             "question_text": (
@@ -403,6 +434,13 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         ModelChoiceField,
         queryset=interface_choices,
         initial=initial_interface,
+        required=False,
+    )
+
+    widget = DynamicField(
+        ChoiceField,
+        initial=initial_widget,
+        choices=widget_choices,
         required=False,
     )
 
