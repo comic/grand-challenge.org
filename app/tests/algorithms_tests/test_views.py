@@ -788,9 +788,7 @@ def test_import_view(client, authenticated_staff_user, mocker):
     assert algorithm.logo.name.startswith(
         "logos/algorithm/0d11fc7b-c63f-4fd7-b80b-51d2e21492c0/square_logo"
     )
-    assert (
-        "Imported from [grand-challenge.org]" in algorithm.detail_page_markdown
-    )
+    assert "Imported from [grand-challenge.org]" in algorithm.summary
     assert {i.slug for i in algorithm.inputs.all()} == {
         "clinical-information-prostate-mri",
         "coronal-t2-prostate-mri",

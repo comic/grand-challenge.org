@@ -202,32 +202,59 @@
                 </div>
             </div>
 
-            {{ object.detail_page_markdown|md2html }}
+            <h3>Model Facts</h3>
 
+            <h4 class="mt-5 mb-3">Summary</h4>
             {% if object.summary %}
-                <h3 class="mt-5 mb-3">Summary</h3>
                 {{ object.summary|md2html }}
+            {% elif object.detail_page_markdown %}
+                {{ object.detail_page_markdown|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
+
+            <h4 class="mt-5 mb-3">Mechanism</h4>
             {% if object.mechanism %}
-                <h3 class="mt-5 mb-3">Mechanism</h3>
                 {{ object.mechanism|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
+
+            <h4 class="mt-5 mb-3">Validation and Performance</h4>
             {% if object.validation_and_performance %}
-                <h3 class="mt-5 mb-3">Validation and Performance</h3>
                 {{ object.validation_and_performance|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
+
+            <h4 class="mt-5 mb-3">Uses and Directions</h4>
             {% if object.uses_and_directions %}
-                <h3 class="mt-5 mb-3">Uses and Directions</h3>
                 {{ object.uses_and_directions|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
+
+            <h4 class="mt-5 mb-3">Warnings</h4>
             {% if object.warnings %}
-                <h3 class="mt-5 mb-3">Warnings</h3>
                 {{ object.warnings|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
+
+            <h4 class="mt-5 mb-3">Common Error Messages</h4>
             {% if object.common_error_messages %}
-                <h3 class="mt-5 mb-3">Common Error Messages</h3>
                 {{ object.common_error_messages|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
+
+            <p>
+                Information on this algorithm has been provided by the Algorithm Editors,
+                following the Model Facts labels guidelines from
+                Sendak, M.P., Gao, M., Brajer, N. et al.
+                Presenting machine learning model information to clinical end users with model facts labels.
+                npj Digit. Med. 3, 41 (2020). <a href="https://doi.org/10.1038/s41746-020-0253-3">10.1038/s41746-020-0253-3</a>
+            </p>
 
             {% if "change_algorithm" in algorithm_perms %}
                 <hr>
