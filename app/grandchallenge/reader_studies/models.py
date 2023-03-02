@@ -1256,16 +1256,20 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 not in ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type]
             ):
                 raise ValidationError(
-                    f"For questions with answer type {self.answer_type} you can only enable the following widgets: {', '.join(ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type])}."
+                    f"For questions with answer type {self.answer_type} you can only "
+                    f"enable the following widgets: "
+                    f"{', '.join(ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type])}."
                 )
             if self.widget == QuestionWidgetKindChoices.ACCEPT_REJECT:
                 if self.required:
                     raise ValidationError(
-                        "In order to use the AcceptRejectFindings widget, uncheck the 'required' box."
+                        f"In order to use the {self.get_widget_display()} widget, "
+                        f"uncheck the 'required' box."
                     )
                 if not self.interface:
                     raise ValidationError(
-                        "In order to use the AcceptRejectFindings widget, you need to provide a default answer."
+                        f"In order to use the {self.get_widget_display()} widget, "
+                        f"you need to provide a default answer."
                     )
 
     @property
