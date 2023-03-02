@@ -1,6 +1,6 @@
 function renderVegaLiteChart(element) {
     const spec = JSON.parse(element.children[0].textContent);
-    vegaEmbed(element, spec, {"actions": false});
+    vegaEmbed(element, spec);
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
