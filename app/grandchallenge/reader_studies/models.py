@@ -1003,6 +1003,41 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 }
 
 
+class QuestionWidgetKindChoices(models.TextChoices):
+    ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
+
+
+ANSWER_TYPE_TO_QUESTION_WIDGET = {
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
+    AnswerType.MULTIPLE_POINTS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_LINES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_ANGLES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.MULTIPLE_ELLIPSES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
+    AnswerType.SINGLE_LINE_TEXT: [],
+    AnswerType.MULTI_LINE_TEXT: [],
+    AnswerType.BOOL: [],
+    AnswerType.NUMBER: [],
+    AnswerType.HEADING: [],
+    AnswerType.BOUNDING_BOX_2D: [],
+    AnswerType.DISTANCE_MEASUREMENT: [],
+    AnswerType.POINT: [],
+    AnswerType.POLYGON: [],
+    AnswerType.CHOICE: [],
+    AnswerType.MULTIPLE_CHOICE: [],
+    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
+    AnswerType.MASK: [],
+    AnswerType.LINE: [],
+    AnswerType.ANGLE: [],
+    AnswerType.ELLIPSE: [],
+}
+
+
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
 
@@ -1074,6 +1109,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     order = models.PositiveSmallIntegerField(default=100)
     interface = models.ForeignKey(
         ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
+    )
+    widget = models.CharField(
+        choices=QuestionWidgetKindChoices.choices, max_length=13, blank=True
     )
 
     class Meta:
@@ -1179,6 +1217,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         super().clean()
         self._clean_answer_type()
         self._clean_interface()
+        self._clean_widget()
 
     def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
@@ -1208,6 +1247,25 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 f"The interface {self.interface} is not allowed for this "
                 f"question type ({self.answer_type})"
             )
+
+    def _clean_widget(self):
+        if self.widget:
+            if (
+                self.widget
+                not in ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type]
+            ):
+                raise ValidationError(
+                    f"For questions with answer type {self.answer_type} you can only enable the following widgets: {', '.join(ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type])}."
+                )
+            if self.widget == QuestionWidgetKindChoices.ACCEPT_REJECT:
+                if self.required:
+                    raise ValidationError(
+                        "In order to use the AcceptRejectFindings widget, uncheck the 'required' box."
+                    )
+                if not self.interface:
+                    raise ValidationError(
+                        "In order to use the AcceptRejectFindings widget, you need to provide a default answer."
+                    )
 
     @property
     def allow_null_types(self):
@@ -1514,33 +1572,3 @@ class ReaderStudyPermissionRequest(RequestBase):
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)
-
-
-class QuestionWidgetKindChoices(models.TextChoices):
-    ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
-
-
-class QuestionWidget(models.Model):
-
-    kind = models.CharField(
-        max_length=13,
-        choices=QuestionWidgetKindChoices.choices,
-    )
-    question = models.OneToOneField(
-        Question, on_delete=models.CASCADE, related_name="widget"
-    )
-
-    def __str__(self):
-        return f"{self.kind} widget"
-
-    def supported_answer_types(self):
-        if self.kind == QuestionWidgetKindChoices.ACCEPT_REJECT:
-            return [
-                AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-                AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-                AnswerType.MULTIPLE_POINTS,
-                AnswerType.MULTIPLE_POLYGONS,
-                AnswerType.MULTIPLE_LINES,
-                AnswerType.MULTIPLE_ANGLES,
-                AnswerType.MULTIPLE_ELLIPSES,
-            ]

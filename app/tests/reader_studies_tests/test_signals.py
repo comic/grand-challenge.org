@@ -4,7 +4,7 @@ from django.db import transaction
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.components.models import InterfaceKind
-from grandchallenge.reader_studies.models import Question, QuestionWidget
+from grandchallenge.reader_studies.models import Question
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -15,7 +15,6 @@ from tests.reader_studies_tests.factories import (
     AnswerFactory,
     DisplaySetFactory,
     QuestionFactory,
-    QuestionWidgetFactory,
     ReaderStudyFactory,
 )
 
@@ -216,11 +215,3 @@ def test_changing_reader_study_updates_permissions():
         rs.editors_group: {"view_image"},
         rs.readers_group: {"view_image"},
     }
-
-
-@pytest.mark.django_db
-def test_widget_deleted_on_question_delete():
-    widget = QuestionWidgetFactory(question=QuestionFactory())
-    question = widget.question
-    question.delete()
-    assert not QuestionWidget.objects.filter(pk=widget.pk).exists()
