@@ -229,7 +229,6 @@ class AlgorithmForm(
             "workstation_config",
             "hanging_protocol",
             "view_content",
-            "detail_page_markdown",
             "job_create_page_markdown",
             "additional_terms_markdown",
             "result_template",
@@ -242,7 +241,6 @@ class AlgorithmForm(
         )
         widgets = {
             "description": TextInput,
-            "detail_page_markdown": MarkdownEditorWidget,
             "job_create_page_markdown": MarkdownEditorWidget,
             "additional_terms_markdown": MarkdownEditorWidget,
             "result_template": MarkdownEditorWidget,
@@ -289,7 +287,6 @@ class AlgorithmForm(
                 reverse_lazy("publications:create"),
             ),
             "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
-            "detail_page_markdown": "<span class='text-danger'><i class='fa fa-exclamation-triangle'></i> This field will be deprecated. Please use the separate 'Algorithm description' form on the Information page to describe your algorithm instead.</span>",
             "hanging_protocol": format_lazy(
                 (
                     "The hanging protocol to use for this algorithm. "
@@ -332,7 +329,6 @@ class AlgorithmForm(
                 "outputs",
                 "image_requires_gpu",
                 "image_requires_memory_gb",
-                ModelFactsTextField("detail_page_markdown"),
                 "additional_terms_markdown",
                 "job_create_page_markdown",
                 "result_template",
@@ -936,7 +932,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
             )
 
         original_url = self.algorithm_serializer.initial_data["url"]
-        self.algorithm.detail_page_markdown += (
+        self.algorithm.summary += (
             f"\n\n#### Origin\n\nImported from "
             f"[{urlparse(original_url).netloc}]({original_url})."
         )
