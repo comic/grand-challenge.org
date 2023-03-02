@@ -111,6 +111,7 @@ def update_site_statistics_cache():
                 num_submissions=Count("phase__submission")
             )
             .order_by("-num_submissions")
+            .only("pk")
             .first()
         ),
     }
