@@ -1839,29 +1839,98 @@ def test_display_set_add_and_edit(client, settings):
 
 
 @pytest.mark.django_db
-def test_display_set_index(client):
-    rs = ReaderStudyFactory()
-    r = UserFactory()
-    rs.add_reader(r)
+def test_display_sets_shuffled_per_user(client):
+    n_display_sets = 10
+    reader_study = ReaderStudyFactory(shuffle_hanging_list=False)
+    user1, user2 = UserFactory.create_batch(2)
 
-    DisplaySetFactory.create_batch(5, reader_study=rs)
+    reader_study.add_reader(user1)
+    reader_study.add_reader(user2)
 
-    response = get_view_for_user(
+    DisplaySetFactory.create_batch(n_display_sets, reader_study=reader_study)
+
+    for user in [user1, user2]:
+        response = get_view_for_user(
+            viewname="api:reader-studies-display-set-list",
+            data={"reader_study": str(reader_study.pk)},
+            user=user,
+            client=client,
+            method=client.get,
+        )
+
+        assert [x["index"] for x in response.json()["results"]] == [
+            *range(n_display_sets)
+        ]
+        assert [x["order"] for x in response.json()["results"]] == [
+            *range(10, 10 * (n_display_sets + 1), 10)
+        ]
+
+    reader_study.shuffle_hanging_list = True
+    reader_study.save()
+
+    response1 = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs.pk)},
-        user=r,
+        data={"reader_study": str(reader_study.pk)},
+        user=user1,
+        client=client,
+        method=client.get,
+    )
+    response2 = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(reader_study.pk)},
+        user=user2,
         client=client,
         method=client.get,
     )
 
-    assert [x["index"] for x in response.json()["results"]] == list(range(5))
-    assert [x["order"] for x in response.json()["results"]] == list(
-        range(10, 60, 10)
+    # Different users must have the same index
+    assert [x["index"] for x in response1.json()["results"]] == [
+        x["index"] for x in response2.json()["results"]
+    ]
+    # Different users must receive a different order
+    assert [x["order"] for x in response1.json()["results"]] != [
+        x["order"] for x in response2.json()["results"]
+    ]
+    # The ordering must be consistent
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(reader_study.pk)},
+        user=user1,
+        client=client,
+        method=client.get,
     )
+    assert [x["order"] for x in response1.json()["results"]] == [
+        x["order"] for x in response.json()["results"]
+    ]
+
+
+@pytest.mark.django_db
+def test_display_set_index(client):
+    n_display_sets = 10
+    reader_study = ReaderStudyFactory()
+    user = UserFactory()
+    reader_study.add_reader(user)
+
+    DisplaySetFactory.create_batch(n_display_sets, reader_study=reader_study)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(reader_study.pk)},
+        user=user,
+        client=client,
+        method=client.get,
+    )
+
+    assert [x["index"] for x in response.json()["results"]] == [
+        *range(n_display_sets)
+    ]
+    assert [x["order"] for x in response.json()["results"]] == [
+        *range(10, 10 * (n_display_sets + 1), 10)
+    ]
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
-        user=r,
+        user=user,
         client=client,
         reverse_kwargs={"pk": str(DisplaySet.objects.first().pk)},
         method=client.get,
@@ -1869,13 +1938,13 @@ def test_display_set_index(client):
 
     assert response.json()["index"] == 0
 
-    rs.shuffle_hanging_list = True
-    rs.save()
+    reader_study.shuffle_hanging_list = True
+    reader_study.save()
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs.pk)},
-        user=r,
+        data={"reader_study": str(reader_study.pk)},
+        user=user,
         client=client,
         method=client.get,
     )
@@ -1885,58 +1954,68 @@ def test_display_set_index(client):
         for x in response.json()["results"]
         if x["pk"] == str(DisplaySet.objects.last().pk)
     ][0]
-    assert [x["index"] for x in response.json()["results"]] == list(range(5))
+    assert [x["index"] for x in response.json()["results"]] == [
+        *range(n_display_sets)
+    ]
     shuffled_order = [x["order"] for x in response.json()["results"]]
-    assert shuffled_order != list(range(10, 60, 10))
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
-        user=r,
+        user=user,
         client=client,
         reverse_kwargs={"pk": str(DisplaySet.objects.first().pk)},
         method=client.get,
     )
 
     # determine shuffled index of first Displayset
-    set_seed(1 / int(r.pk))
+    set_seed(1 / int(user.pk))
     queryset = list(DisplaySet.objects.all().order_by("?"))
     new_index = queryset.index(DisplaySet.objects.first())
 
-    assert response.json()["index"] is not None
     assert response.json()["index"] == new_index
 
-    rs.shuffle_hanging_list = False
-    rs.save()
+    reader_study.shuffle_hanging_list = False
+    reader_study.save()
 
-    q = QuestionFactory(reader_study=rs)
-    AnswerFactory(question=q, display_set=DisplaySet.objects.last(), creator=r)
+    q = QuestionFactory(reader_study=reader_study)
+    AnswerFactory(
+        question=q, display_set=DisplaySet.objects.last(), creator=user
+    )
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs.pk), "unanswered_by_user": "True"},
-        user=r,
+        data={
+            "reader_study": str(reader_study.pk),
+            "unanswered_by_user": "True",
+        },
+        user=user,
         client=client,
         method=client.get,
     )
 
-    assert [x["index"] for x in response.json()["results"]] == list(range(4))
-    assert [x["order"] for x in response.json()["results"]] == list(
-        range(10, 50, 10)
-    )
+    assert [x["index"] for x in response.json()["results"]] == [
+        *range(n_display_sets - 1)
+    ]
+    assert [x["order"] for x in response.json()["results"]] == [
+        *range(10, 10 * n_display_sets, 10)
+    ]
 
-    rs.shuffle_hanging_list = True
-    rs.save()
+    reader_study.shuffle_hanging_list = True
+    reader_study.save()
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
-        data={"reader_study": str(rs.pk), "unanswered_by_user": "True"},
-        user=r,
+        data={
+            "reader_study": str(reader_study.pk),
+            "unanswered_by_user": "True",
+        },
+        user=user,
         client=client,
         method=client.get,
     )
 
     assert [x["index"] for x in response.json()["results"]] == list(
-        set(range(5)) - {last["index"]}
+        x for x in range(n_display_sets) if x is not last["index"]
     )
     assert [x["order"] for x in response.json()["results"]] == [
         x for x in shuffled_order if x != last["order"]
