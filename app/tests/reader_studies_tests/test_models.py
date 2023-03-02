@@ -560,7 +560,9 @@ def test_workstation_url():
         ),
     ),
 )
-def test_clean_answer_widget(required, answer_type, widget, interface, error):
+def test_clean_question_widget(
+    required, answer_type, widget, interface, error
+):
     if interface:
         kind = [
             member
