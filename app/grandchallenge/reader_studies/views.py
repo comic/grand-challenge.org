@@ -693,6 +693,9 @@ class ReaderStudyCopy(
                     direction=question.direction,
                     scoring_function=question.scoring_function,
                     order=question.order,
+                    interface=question.interface,
+                    look_up_table=question.look_up_table,
+                    overlay_segments=question.overlay_segments,
                 )
                 for option in question.options.all():
                     CategoricalOption.objects.create(

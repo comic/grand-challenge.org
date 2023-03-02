@@ -33,11 +33,17 @@ from grandchallenge.reader_studies.models import (
 )
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadSingleWidget
+from grandchallenge.workstation_configs.models import LookUpTable
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import ImageFactory, UserFactory, WorkstationFactory
+from tests.factories import (
+    ImageFactory,
+    UserFactory,
+    WorkstationConfigFactory,
+    WorkstationFactory,
+)
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
@@ -521,15 +527,32 @@ def test_reader_study_copy(client, settings):
     rs.add_reader(reader)
     rs.add_editor(editor)
     rs.add_editor(editor2)
-    QuestionFactory(
+    lut = LookUpTable.objects.create(
+        title="foo",
+        color="[1 2 3 4, 5 6 7 8]",
+        alpha="[1 1, 1 1]",
+        color_invert="[1 2 3 4, 5 6 7 8]",
+        alpha_invert="[1 1, 1 1, 1 1]",
+    )
+    question = QuestionFactory(
         reader_study=rs,
+        question_text="question 1",
+        help_text="Some help text",
         answer_type=Question.AnswerType.BOOL,
-        question_text="q1",
-    ),
+        image_port=Question.ImagePort.MAIN,
+        required=False,
+        direction=Question.Direction.VERTICAL,
+        scoring_function=Question.ScoringFunction.ACCURACY,
+        order=324,
+        interface=ComponentInterfaceFactory(),
+        overlay_segments={"foo": "bar"},
+        look_up_table=lut,
+    )
     QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.BOOL,
         question_text="q2",
+        order=4664,
     )
 
     im1, im2 = ImageFactory(), ImageFactory()
@@ -542,6 +565,7 @@ def test_reader_study_copy(client, settings):
     rs.view_content = {"main": interfaces[0], "secondary": interfaces[1]}
     rs.hanging_protocol = HangingProtocolFactory()
     rs.case_text = {im1.name: "test", im2.name: "test2"}
+    rs.workstation_config = WorkstationConfigFactory()
     rs.save()
 
     assert ReaderStudy.objects.count() == 1
@@ -599,6 +623,7 @@ def test_reader_study_copy(client, settings):
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
     assert _rs.case_text == {}
+    assert _rs.workstation_config == rs.workstation_config
 
     response = get_view_for_user(
         viewname="reader-studies:copy",
@@ -622,6 +647,23 @@ def test_reader_study_copy(client, settings):
     assert _rs.case_text == {}
     assert _rs.readers_group.user_set.count() == 0
     assert _rs.editors_group.user_set.count() == 1
+
+    question.refresh_from_db()
+    copied_question = _rs.questions.first()
+
+    assert question.reader_study == rs
+    assert copied_question.pk != question.pk
+    assert copied_question.question_text == question.question_text
+    assert copied_question.help_text == question.help_text
+    assert copied_question.answer_type == question.answer_type
+    assert copied_question.image_port == question.image_port
+    assert copied_question.required == question.required
+    assert copied_question.direction == question.direction
+    assert copied_question.scoring_function == question.scoring_function
+    assert copied_question.order == question.order
+    assert copied_question.interface == question.interface
+    assert copied_question.look_up_table == question.look_up_table
+    assert copied_question.overlay_segments == question.overlay_segments
 
     with capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(

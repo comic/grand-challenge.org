@@ -297,7 +297,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
 
     copy_fields = (
         "workstation",
-        "workstation",
+        "workstation_config",
         "logo",
         "social_image",
         "help_text_markdown",
