@@ -291,7 +291,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                     f"hx-get={reverse_lazy('reader-studies:question-widgets')!r} "
                     f"hx-trigger='change from:#id_answer_type' "
                     f"hx-target='#id_widget' "
-                    f"hx-include='[id=id_answer_type]''>"
+                    f"hx-include='[id=id_answer_type]'>"
                     f"</div>"
                 ),
                 Fieldset(
@@ -327,10 +327,14 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         choices = []
         if answer_type:
             try:
-                choices = [
-                    (option.name, option.label)
-                    for option in ANSWER_TYPE_TO_QUESTION_WIDGET[answer_type]
-                ]
+                choices.extend(
+                    [
+                        (option.name, option.label)
+                        for option in ANSWER_TYPE_TO_QUESTION_WIDGET[
+                            answer_type
+                        ]
+                    ]
+                )
             except KeyError:
                 raise Exception(
                     f"{answer_type} is not defined in ANSWER_TYPE_TO_QUESTION_WIDGET."

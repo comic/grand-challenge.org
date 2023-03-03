@@ -1206,14 +1206,9 @@ def test_question_form_answer_widget_choices(answer_type, choices):
 @pytest.mark.django_db
 def test_question_form_initial_widget():
     qu = QuestionFactory()
-    form = QuestionForm(
-        initial={"answer_type": AnswerType.MULTIPLE_POINTS}, instance=qu
-    )
+    form = QuestionForm(instance=qu)
     assert not form.initial_widget()
 
     qu.widget = QuestionWidgetKindChoices.ACCEPT_REJECT
-    qu.save()
-    form2 = QuestionForm(
-        initial={"answer_type": AnswerType.MULTIPLE_POINTS}, instance=qu
-    )
+    form2 = QuestionForm(instance=qu)
     assert form2.initial_widget() == QuestionWidgetKindChoices.ACCEPT_REJECT
