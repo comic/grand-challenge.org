@@ -125,11 +125,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">QuestionUserObjectPermission.MultipleObjectsReturned</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionWidget"><code class="docutils literal notranslate"><span class="pre">QuestionWidget</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionWidget.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">QuestionWidget.DoesNotExist</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionWidget.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">QuestionWidget.MultipleObjectsReturned</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionWidgetKindChoices"><code class="docutils literal notranslate"><span class="pre">QuestionWidgetKindChoices</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy"><code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ReaderStudy.DoesNotExist</span></code></a></li>
@@ -601,7 +596,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">Question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay_segments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look_up_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">Question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay_segments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look_up_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widget</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -617,6 +612,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p><strong>direction</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Direction</p></li>
 <li><p><strong>scoring_function</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Scoring function</p></li>
 <li><p><strong>order</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v4.1)"><em>PositiveSmallIntegerField</em></a>) – Order</p></li>
+<li><p><strong>widget</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Widget</p></li>
 </ul>
 </dd>
 </dl>
@@ -638,7 +634,6 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p><strong>questiongroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionGroupObjectPermission" title="grandchallenge.reader_studies.models.QuestionGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuestionGroupObjectPermission</span></code></a>) – All question group object permissions of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
 <li><p><strong>options</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.CategoricalOption" title="grandchallenge.reader_studies.models.CategoricalOption"><code class="xref py py-class docutils literal notranslate"><span class="pre">CategoricalOption</span></code></a>) – All options of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">question</span></code>)</p></li>
 <li><p><strong>answer</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.Answer" title="grandchallenge.reader_studies.models.Answer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Answer</span></code></a>) – All answers of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">question</span></code>)</p></li>
-<li><p><strong>widget</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.QuestionWidget" title="grandchallenge.reader_studies.models.QuestionWidget"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuestionWidget</span></code></a>) – The widget of this question (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">question</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -785,35 +780,6 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionUserObjectPermission.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionWidget">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">QuestionWidget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#QuestionWidget"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionWidget" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v4.1)"><em>AutoField</em></a>) – Primary key: ID</p></li>
-<li><p><strong>kind</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v4.1)"><em>CharField</em></a>) – Kind</p></li>
-</ul>
-</dd>
-</dl>
-<p>Relationship fields:</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>question</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">widget</span></code>)</p>
-</dd>
-</dl>
-<dl class="py exception">
-<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionWidget.DoesNotExist">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionWidget.DoesNotExist" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.QuestionWidget.MultipleObjectsReturned">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.QuestionWidget.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
