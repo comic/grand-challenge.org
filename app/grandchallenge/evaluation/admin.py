@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
     cancel_jobs,
@@ -28,6 +29,7 @@ from grandchallenge.evaluation.models import (
     SubmissionUserObjectPermission,
 )
 from grandchallenge.evaluation.tasks import create_evaluation
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
 class PhaseAdminForm(ModelForm):
@@ -46,6 +48,28 @@ class PhaseAdminForm(ModelForm):
             raise ValidationError(
                 f"The sets of Algorithm Inputs and Algorithm Outputs must be unique: "
                 f"{oxford_comma(duplicate_interfaces)} present in both"
+            )
+
+        submission_kind = cleaned_data["submission_kind"]
+        number_of_submissions_limit = cleaned_data[
+            "number_of_submissions_limit"
+        ]
+
+        if (
+            submission_kind == SubmissionKindChoices.ALGORITHM
+            and not number_of_submissions_limit
+        ):
+            request = ChallengeRequest.objects.get(
+                short_name=self.instance.challenge.short_name
+            )
+            if request:
+                error_addition = f"The corresponding challenge request lists the following limits: Preliminary phase: {request.phase_1_number_of_submissions_per_team * request.expected_number_of_teams} Final test phase: {request.phase_2_number_of_submissions_per_team * request.expected_number_of_teams}. Set the limits according to the phase type. "
+            else:
+                error_addition = "There is no corresponding challenge request."
+            raise ValidationError(
+                "For phases that take an algorithm as submission input, "
+                "the number_of_submissions_limit needs to be set. "
+                + error_addition
             )
 
         return cleaned_data

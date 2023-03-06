@@ -499,11 +499,6 @@ class Phase(UUIDModel, ViewContentMixin):
                     "For phases that take an algorithm as submission input, "
                     "the creator_must_be_verified box needs to be checked."
                 )
-            if not self.number_of_submissions_limit:
-                raise ValidationError(
-                    "For phases that take an algorithm as submission input, "
-                    "the number_of_submissions_limit needs to be set."
-                )
             if self.submission_limit > 0 and (
                 not self.archive
                 or not self.algorithm_inputs
