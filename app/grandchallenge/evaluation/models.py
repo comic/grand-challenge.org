@@ -437,6 +437,10 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    number_of_submissions_limit = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
@@ -489,34 +493,32 @@ class Phase(UUIDModel, ViewContentMixin):
     def clean(self):
         super().clean()
 
-        if (
-            self.submission_kind == SubmissionKindChoices.ALGORITHM
-            and not self.creator_must_be_verified
-        ):
-            raise ValidationError(
-                "For phases that take an algorithm as submission input, "
-                "the creator_must_be_verified box needs to be checked."
-            )
+        if self.submission_kind == SubmissionKindChoices.ALGORITHM:
+            if not self.creator_must_be_verified:
+                raise ValidationError(
+                    "For phases that take an algorithm as submission input, "
+                    "the creator_must_be_verified box needs to be checked."
+                )
+            if not self.number_of_submissions_limit:
+                raise ValidationError(
+                    "For phases that take an algorithm as submission input, "
+                    "the number_of_submissions_limit needs to be set."
+                )
+            if self.submission_limit > 0 and (
+                not self.archive
+                or not self.algorithm_inputs
+                or not self.algorithm_outputs
+            ):
+                raise ValidationError(
+                    "To change the submission limit to above 0, you need to first link an archive containing the secret "
+                    "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
+                    "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
+                )
 
         if self.submission_limit > 0 and not self.latest_executable_image:
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "
                 "can change the submission limit to above 0."
-            )
-
-        if (
-            self.submission_limit > 0
-            and self.submission_kind == SubmissionKindChoices.ALGORITHM
-            and (
-                not self.archive
-                or not self.algorithm_inputs
-                or not self.algorithm_outputs
-            )
-        ):
-            raise ValidationError(
-                "To change the submission limit to above 0, you need to first link an archive containing the secret "
-                "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
-                "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
             )
 
         if (
