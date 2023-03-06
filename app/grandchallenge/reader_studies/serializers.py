@@ -31,7 +31,6 @@ from grandchallenge.reader_studies.models import (
     CategoricalOption,
     DisplaySet,
     Question,
-    QuestionWidget,
     ReaderStudy,
 )
 from grandchallenge.reader_studies.tasks import add_scores_for_display_set
@@ -46,15 +45,6 @@ class CategoricalOptionSerializer(ModelSerializer):
         fields = ("id", "title", "default")
 
 
-class QuestionWidgetSerializer(ModelSerializer):
-
-    kind = CharField(source="get_kind_display", read_only=True)
-
-    class Meta:
-        model = QuestionWidget
-        fields = ["kind"]
-
-
 class QuestionSerializer(HyperlinkedModelSerializer):
     answer_type = CharField(source="get_answer_type_display", read_only=True)
     reader_study = HyperlinkedRelatedField(
@@ -65,7 +55,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     options = CategoricalOptionSerializer(many=True, read_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
     look_up_table = LookUpTableSerializer(read_only=True)
-    widget = QuestionWidgetSerializer(read_only=True)
+    widget = CharField(source="get_widget_display", read_only=True)
 
     class Meta:
         model = Question

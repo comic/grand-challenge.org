@@ -5,6 +5,7 @@ import io
 import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
+from django.db.models import BLANK_CHOICE_DASH
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm
 
@@ -29,6 +30,7 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     Question,
+    QuestionWidgetKindChoices,
     ReaderStudy,
 )
 from grandchallenge.uploads.models import UserUpload
@@ -1166,3 +1168,89 @@ def test_display_set_add_interface_form():
     )
     assert sorted(form.fields.keys()) == [ci_image.slug, "interface"]
     assert isinstance(form.fields[ci_image.slug].widget, FlexibleImageWidget)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type, choices",
+    (
+        (AnswerType.SINGLE_LINE_TEXT, BLANK_CHOICE_DASH),
+        (AnswerType.MULTI_LINE_TEXT, BLANK_CHOICE_DASH),
+        (AnswerType.BOOL, BLANK_CHOICE_DASH),
+        (AnswerType.NUMBER, BLANK_CHOICE_DASH),
+        (AnswerType.POINT, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_POINTS,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("ACCEPT_REJECT", "Accept/Reject Findings"),
+            ],
+        ),
+        (AnswerType.BOUNDING_BOX_2D, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("ACCEPT_REJECT", "Accept/Reject Findings"),
+            ],
+        ),
+        (AnswerType.DISTANCE_MEASUREMENT, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("ACCEPT_REJECT", "Accept/Reject Findings"),
+            ],
+        ),
+        (AnswerType.POLYGON, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_POLYGONS,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("ACCEPT_REJECT", "Accept/Reject Findings"),
+            ],
+        ),
+        (AnswerType.LINE, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_LINES,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("ACCEPT_REJECT", "Accept/Reject Findings"),
+            ],
+        ),
+        (AnswerType.ANGLE, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_ANGLES,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("ACCEPT_REJECT", "Accept/Reject Findings"),
+            ],
+        ),
+        (AnswerType.ELLIPSE, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_ELLIPSES,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("ACCEPT_REJECT", "Accept/Reject Findings"),
+            ],
+        ),
+        (AnswerType.CHOICE, BLANK_CHOICE_DASH),
+        (AnswerType.MULTIPLE_CHOICE, BLANK_CHOICE_DASH),
+        (AnswerType.MULTIPLE_CHOICE_DROPDOWN, BLANK_CHOICE_DASH),
+        (AnswerType.MASK, BLANK_CHOICE_DASH),
+    ),
+)
+def test_question_form_answer_widget_choices(answer_type, choices):
+    form = QuestionForm(initial={"answer_type": answer_type})
+    assert form.widget_choices() == choices
+
+
+@pytest.mark.django_db
+def test_question_form_initial_widget():
+    qu = QuestionFactory()
+    form = QuestionForm(instance=qu)
+    assert not form.initial_widget()
+
+    qu.widget = QuestionWidgetKindChoices.ACCEPT_REJECT
+    form2 = QuestionForm(instance=qu)
+    assert form2.initial_widget() == QuestionWidgetKindChoices.ACCEPT_REJECT

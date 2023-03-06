@@ -1,3 +1,5 @@
+from contextlib import nullcontext
+
 import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
@@ -23,7 +25,6 @@ from tests.reader_studies_tests.factories import (
     AnswerFactory,
     DisplaySetFactory,
     QuestionFactory,
-    QuestionWidgetFactory,
     ReaderStudyFactory,
 )
 from tests.utils import get_view_for_user
@@ -78,6 +79,7 @@ def test_read_only_fields():
         "image_port",
         "required",
         "overlay_segments",
+        "widget",
     ]
 
 
@@ -519,17 +521,66 @@ def test_workstation_url():
 
 
 @pytest.mark.django_db
-def test_accept_reject_findings_widget():
-    widget = QuestionWidgetFactory(
-        kind=QuestionWidgetKindChoices.ACCEPT_REJECT,
-        question=QuestionFactory(),
+@pytest.mark.parametrize(
+    "required, answer_type, widget, interface, error",
+    (
+        (
+            True,
+            AnswerType.MULTIPLE_POINTS,
+            "",
+            False,
+            nullcontext(),
+        ),
+        (
+            True,
+            AnswerType.MULTIPLE_POINTS,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            True,
+            pytest.raises(ValidationError),
+        ),
+        (
+            False,
+            AnswerType.POINT,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            True,
+            pytest.raises(ValidationError),
+        ),
+        (
+            False,
+            AnswerType.MULTIPLE_POINTS,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            False,
+            pytest.raises(ValidationError),
+        ),
+        (
+            False,
+            AnswerType.MULTIPLE_POINTS,
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            True,
+            nullcontext(),
+        ),
+    ),
+)
+def test_clean_question_widget(
+    required, answer_type, widget, interface, error
+):
+    if interface:
+        kind = [
+            member
+            for name, member in ComponentInterface.Kind.__members__.items()
+            if name == answer_type.name
+        ]
+        ci = ComponentInterfaceFactory(kind=kind[0])
+    else:
+        ci = None
+
+    q = QuestionFactory(
+        question_text="foo",
+        required=required,
+        answer_type=answer_type,
+        widget=widget,
+        interface=ci,
     )
-    assert widget.supported_answer_types() == [
-        AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
-        AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
-        AnswerType.MULTIPLE_POINTS,
-        AnswerType.MULTIPLE_POLYGONS,
-        AnswerType.MULTIPLE_LINES,
-        AnswerType.MULTIPLE_ANGLES,
-        AnswerType.MULTIPLE_ELLIPSES,
-    ]
+
+    with error:
+        q._clean_widget()
