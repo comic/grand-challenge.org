@@ -34,6 +34,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
@@ -1008,33 +1009,33 @@ class QuestionWidgetKindChoices(models.TextChoices):
 
 
 ANSWER_TYPE_TO_QUESTION_WIDGET = {
-    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
-        QuestionWidgetKindChoices.ACCEPT_REJECT
-    ],
-    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: [
-        QuestionWidgetKindChoices.ACCEPT_REJECT
-    ],
-    AnswerType.MULTIPLE_POINTS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
-    AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
-    AnswerType.MULTIPLE_LINES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
-    AnswerType.MULTIPLE_ANGLES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
-    AnswerType.MULTIPLE_ELLIPSES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.SINGLE_LINE_TEXT: [],
     AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
     AnswerType.NUMBER: [],
     AnswerType.HEADING: [],
     AnswerType.BOUNDING_BOX_2D: [],
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
     AnswerType.DISTANCE_MEASUREMENT: [],
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: [
+        QuestionWidgetKindChoices.ACCEPT_REJECT
+    ],
     AnswerType.POINT: [],
+    AnswerType.MULTIPLE_POINTS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.POLYGON: [],
+    AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.CHOICE: [],
     AnswerType.MULTIPLE_CHOICE: [],
     AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.MASK: [],
     AnswerType.LINE: [],
+    AnswerType.MULTIPLE_LINES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.ANGLE: [],
+    AnswerType.MULTIPLE_ANGLES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.ELLIPSE: [],
+    AnswerType.MULTIPLE_ELLIPSES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
 }
 
 
@@ -1258,7 +1259,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 raise ValidationError(
                     f"For questions with answer type {self.answer_type} you can only "
                     f"enable the following widgets: "
-                    f"{', '.join(ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type])}."
+                    f"{oxford_comma(ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type])}."
                 )
             if self.widget == QuestionWidgetKindChoices.ACCEPT_REJECT:
                 if self.required:

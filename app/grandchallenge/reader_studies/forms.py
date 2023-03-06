@@ -324,7 +324,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     def widget_choices(self):
         answer_type = self["answer_type"].value()
-        choices = []
+        choices = [*BLANK_CHOICE_DASH]
         if answer_type:
             try:
                 choices.extend(
@@ -335,11 +335,11 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                         ]
                     ]
                 )
-            except KeyError:
-                raise Exception(
+            except KeyError as error:
+                raise RuntimeError(
                     f"{answer_type} is not defined in ANSWER_TYPE_TO_QUESTION_WIDGET."
-                )
-        return BLANK_CHOICE_DASH + choices
+                ) from error
+        return choices
 
     def initial_widget(self):
         return self.instance.widget
