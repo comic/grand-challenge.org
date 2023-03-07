@@ -15,6 +15,7 @@ from grandchallenge.cases.tasks import (
     import_images,
     post_process_image,
 )
+from grandchallenge.core.storage import protected_s3_storage
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory
 
@@ -133,6 +134,12 @@ def test_post_processing(source_dir, filename, tmpdir_factory, settings):
     all_image_files = ImageFile.objects.filter(image=new_image)
     if filename == "valid_tiff.tif":
         assert len(all_image_files) == 2
+
+        dzi = all_image_files.get(image_type=ImageType.DZI)
+        assert protected_s3_storage.exists(str(dzi.file))
+        assert protected_s3_storage.exists(
+            str(dzi.file).replace(".dzi", "_files/0/0_0.jpeg")
+        )
     else:
         assert len(all_image_files) == 1
 

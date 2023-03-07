@@ -274,6 +274,7 @@ def _convert_panimg_to_django(
         new_file = ImageFile(
             image_id=file.image_id,
             image_type=file.image_type,
+            directory=file.directory,
             file=File(open(file.file, "rb"), file.file.name),
         )
 
