@@ -5,12 +5,7 @@ from uuid import uuid4
 import pytest
 from celery import shared_task
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
-from panimg.models import (
-    ImageType,
-    PanImgFile,
-    PanImgFolder,
-    PostProcessorResult,
-)
+from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
 from grandchallenge.cases.models import ImageFile
@@ -55,7 +50,6 @@ def test_check_post_processor_result():
         _check_post_processor_result(
             post_processor_result=PostProcessorResult(
                 new_image_files=set(),
-                new_folders=set(),
             ),
             image_pk=pk,
         )
@@ -69,7 +63,6 @@ def test_check_post_processor_result():
                         image_id=pk, image_type=ImageType.MHD, file=Path("foo")
                     )
                 },
-                new_folders=set(),
             ),
             image_pk=pk,
         )
@@ -80,10 +73,12 @@ def test_check_post_processor_result():
             post_processor_result=PostProcessorResult(
                 new_image_files={
                     PanImgFile(
-                        image_id=pk, image_type=ImageType.MHD, file=Path("foo")
+                        image_id=pk,
+                        image_type=ImageType.MHD,
+                        file=Path("foo"),
+                        directory=Path("bar"),
                     )
                 },
-                new_folders={PanImgFolder(image_id=pk, folder=Path("bar"))},
             ),
             image_pk=pk,
         )
@@ -100,37 +95,6 @@ def test_check_post_processor_result():
                         file=Path("foo"),
                     )
                 },
-                new_folders={PanImgFolder(image_id=pk, folder=Path("bar"))},
-            ),
-            image_pk=pk,
-        )
-
-    with pytest.raises(RuntimeError):
-        _check_post_processor_result(
-            post_processor_result=PostProcessorResult(
-                new_image_files={
-                    PanImgFile(
-                        image_id=pk, image_type=ImageType.MHD, file=Path("foo")
-                    )
-                },
-                new_folders={
-                    PanImgFolder(image_id=uuid4(), folder=Path("bar"))
-                },
-            ),
-            image_pk=pk,
-        )
-
-    with pytest.raises(RuntimeError):
-        _check_post_processor_result(
-            post_processor_result=PostProcessorResult(
-                new_image_files={
-                    PanImgFile(
-                        image_id=uuid4(),
-                        image_type=ImageType.MHD,
-                        file=Path("foo"),
-                    )
-                },
-                new_folders=set(),
             ),
             image_pk=pk,
         )

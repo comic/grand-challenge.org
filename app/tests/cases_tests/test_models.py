@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
-from grandchallenge.cases.models import FolderUpload
 from grandchallenge.cases.utils import get_sitk_image
 from tests.cases_tests.factories import (
     ImageFactory,
@@ -133,9 +132,9 @@ def test_image_file_cleanup(uploaded_image):
 
 def test_folder_upload_filename():
     image = ImageFactory.build(pk="34d4df58-03eb-4bf8-a424-713e601e694e")
-    fu = FolderUpload(image_id=image.pk, folder=Path())
+    fu = ImageFileFactory.build(image=image)
 
     assert (
-        fu.destination_filename(file=Path(__file__))
+        fu._directory_file_destination(file=Path(__file__))
         == "images/34/d4/34d4df58-03eb-4bf8-a424-713e601e694e/tests/cases_tests/test_models.py"
     )

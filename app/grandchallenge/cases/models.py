@@ -528,6 +528,47 @@ class ImageFile(UUIDModel):
         upload_to=image_file_path, blank=False, storage=protected_s3_storage
     )
 
+    def __init__(self, *args, directory=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._directory = directory
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding and self._directory is not None:
+            self.save_directory()
+
+    def _directory_file_destination(self, *, file):
+        return (
+            f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
+            f"{str(self.image.pk)[0:2]}/"
+            f"{str(self.image.pk)[2:4]}/"
+            f"{self.image.pk}/"
+            f"{file.parent.parent.stem}/"
+            f"{file.parent.stem}/"
+            f"{file.name}"
+        )
+
+    def save_directory(self):
+        # Saves all the files in the folder, respecting the parents folder
+        # structure 2 directories deep
+        if self._directory is None:
+            raise ValueError("Directory is unset")
+
+        for file in self._directory.rglob("**/*"):
+            if not file.is_file():
+                continue
+
+            if file.is_symlink() or file.absolute() != file.resolve():
+                raise SuspiciousFileOperation
+
+            with open(file, "rb") as f:
+                protected_s3_storage.save(
+                    name=self._directory_file_destination(file=file), content=f
+                )
+
 
 @receiver(post_delete, sender=ImageFile)
 def delete_image_files(*_, instance: ImageFile, **__):
@@ -538,39 +579,3 @@ def delete_image_files(*_, instance: ImageFile, **__):
     bulk_delete.
     """
     instance.file.storage.delete(name=instance.file.name)
-
-
-class FolderUpload:
-    def __init__(self, *, image_id, folder):
-        self.image_id = image_id
-        self.folder = folder
-
-    def full_clean(self):
-        """Required as this is treated like a django model"""
-        pass
-
-    def destination_filename(self, *, file):
-        return (
-            f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
-            f"{str(self.image_id)[0:2]}/"
-            f"{str(self.image_id)[2:4]}/"
-            f"{self.image_id}/"
-            f"{file.parent.parent.stem}/"
-            f"{file.parent.stem}/"
-            f"{file.name}"
-        )
-
-    def save(self):
-        # Saves all the files in the folder, respecting the parents folder
-        # structure 2 directories deep
-        for file in self.folder.rglob("**/*"):
-            if not file.is_file():
-                continue
-
-            if file.is_symlink() or file.absolute() != file.resolve():
-                raise SuspiciousFileOperation
-
-            with open(file, "rb") as f:
-                protected_s3_storage.save(
-                    name=self.destination_filename(file=file), content=f
-                )
