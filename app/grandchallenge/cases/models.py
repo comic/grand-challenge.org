@@ -1,12 +1,10 @@
 import logging
-import os
-from pathlib import Path
 
 from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
 from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
@@ -543,7 +541,7 @@ def delete_image_files(*_, instance: ImageFile, **__):
 
 
 class FolderUpload:
-    def __init__(self, image_id, folder):
+    def __init__(self, *, image_id, folder):
         self.image_id = image_id
         self.folder = folder
 
@@ -551,25 +549,28 @@ class FolderUpload:
         """Required as this is treated like a django model"""
         pass
 
-    def destination_filename(self, file_path):
+    def destination_filename(self, *, file):
         return (
             f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
             f"{str(self.image_id)[0:2]}/"
             f"{str(self.image_id)[2:4]}/"
             f"{self.image_id}/"
-            f"{file_path.parent.parent.stem}/"
-            f"{file_path.parent.stem}/"
-            f"{file_path.name}"
+            f"{file.parent.parent.stem}/"
+            f"{file.parent.stem}/"
+            f"{file.name}"
         )
 
     def save(self):
-        # Saves all the files in the folder, respecting the parents folder structure
-        # 2 directories deep
-        for root, _, files in os.walk(self.folder):
-            for file in files:
-                source_filename = Path(root) / file
-                destination_filename = self.destination_filename(
-                    source_filename
+        # Saves all the files in the folder, respecting the parents folder
+        # structure 2 directories deep
+        for file in self.folder.rglob("**/*"):
+            if not file.is_file():
+                continue
+
+            if file.is_symlink() or file.absolute() != file.resolve():
+                raise SuspiciousFileOperation
+
+            with open(file, "rb") as f:
+                protected_s3_storage.save(
+                    name=self.destination_filename(file=file), content=f
                 )
-                with open(source_filename, "rb") as open_file:
-                    protected_s3_storage.save(destination_filename, open_file)
