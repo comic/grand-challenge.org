@@ -209,7 +209,7 @@ def import_images(
 
         _check_all_ids(panimg_result=panimg_result)
 
-        django_result = _convert_panimg_to_django(
+        django_result = _convert_panimg_to_internal(
             new_images=panimg_result.new_images,
             new_image_files=panimg_result.new_image_files,
         )
@@ -256,33 +256,32 @@ class ConversionResult:
     new_image_files: set[ImageFile]
 
 
-def _convert_panimg_to_django(
+def _convert_panimg_to_internal(
     *, new_images, new_image_files
 ) -> ConversionResult:
-    output_images = set()
-    output_image_files = set()
+    internal_images = set()
+    internal_image_files = set()
 
-    for im in new_images:
-        new_image = Image(**asdict(im))
+    for image in new_images:
+        image_internal = Image(**asdict(image))
 
-        if new_image.segments is not None:
-            new_image.segments = list(new_image.segments)
+        if image_internal.segments is not None:
+            image_internal.segments = list(image_internal.segments)
 
-        output_images.add(new_image)
+        internal_images.add(image_internal)
 
-    for file in new_image_files:
-        new_file = ImageFile(
-            image_id=file.image_id,
-            image_type=file.image_type,
-            directory=file.directory,
-            file=File(open(file.file, "rb"), file.file.name),
+    for image_file in new_image_files:
+        image_file_internal = ImageFile(**asdict(image_file))
+
+        image_file_internal.file = File(
+            open(image_file_internal.file, "rb"), image_file_internal.file.name
         )
 
-        output_image_files.add(new_file)
+        internal_image_files.add(image_file_internal)
 
     return ConversionResult(
-        new_images=output_images,
-        new_image_files=output_image_files,
+        new_images=internal_images,
+        new_image_files=internal_image_files,
     )
 
 
@@ -358,7 +357,7 @@ def post_process_image(*, image_pk):
             post_processor_result=post_processor_result, image_pk=image_pk
         )
 
-        django_result = _convert_panimg_to_django(
+        django_result = _convert_panimg_to_internal(
             new_images=[],
             new_image_files=post_processor_result.new_image_files,
         )
