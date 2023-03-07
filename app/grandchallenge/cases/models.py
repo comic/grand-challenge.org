@@ -185,6 +185,7 @@ def image_file_path(instance, filename):
         f"{str(instance.image.pk)[0:2]}/"
         f"{str(instance.image.pk)[2:4]}/"
         f"{instance.image.pk}/"
+        f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
 
@@ -525,7 +526,10 @@ class ImageFile(UUIDModel):
         max_length=4, blank=False, choices=IMAGE_TYPES, default=IMAGE_TYPE_MHD
     )
     file = models.FileField(
-        upload_to=image_file_path, blank=False, storage=protected_s3_storage
+        upload_to=image_file_path,
+        blank=False,
+        storage=protected_s3_storage,
+        max_length=200,
     )
 
     def __init__(self, *args, directory=None, **kwargs):

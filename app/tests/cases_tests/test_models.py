@@ -132,9 +132,11 @@ def test_image_file_cleanup(uploaded_image):
 
 def test_folder_upload_filename():
     image = ImageFactory.build(pk="34d4df58-03eb-4bf8-a424-713e601e694e")
-    fu = ImageFileFactory.build(image=image)
+    file = ImageFileFactory.build(
+        pk="4c572c72-1f76-44fa-b2a4-019e822eeb3f", image=image
+    )
 
     assert (
-        fu._directory_file_destination(file=Path(__file__))
-        == "images/34/d4/34d4df58-03eb-4bf8-a424-713e601e694e/tests/cases_tests/test_models.py"
+        file._directory_file_destination(file=Path(__file__))
+        == "images/34/d4/34d4df58-03eb-4bf8-a424-713e601e694e/4c572c72-1f76-44fa-b2a4-019e822eeb3f/tests/cases_tests/test_models.py"
     )
