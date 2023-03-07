@@ -541,15 +541,10 @@ class ImageFile(UUIDModel):
             self.save_directory()
 
     def _directory_file_destination(self, *, file):
-        return (
-            f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
-            f"{str(self.image.pk)[0:2]}/"
-            f"{str(self.image.pk)[2:4]}/"
-            f"{self.image.pk}/"
-            f"{file.parent.parent.stem}/"
-            f"{file.parent.stem}/"
-            f"{file.name}"
+        base = self.file.field.upload_to(
+            instance=self, filename=f"{file.parent.parent.stem}"
         )
+        return f"{base}/{file.parent.stem}/{file.name}"
 
     def save_directory(self):
         # Saves all the files in the folder, respecting the parents folder
