@@ -9,7 +9,7 @@ def bar(*, values, lookup, title):
         "encoding": {
             "x": {
                 "field": "Month",
-                "type": "quantitative",
+                "type": "temporal",
                 "timeUnit": "yearmonth",
             },
             "y": {
@@ -19,7 +19,7 @@ def bar(*, values, lookup, title):
             "tooltip": [
                 {
                     "field": "Month",
-                    "type": "quantitative",
+                    "type": "temporal",
                     "timeUnit": "yearmonth",
                 },
                 {"field": lookup, "type": "quantitative"},
@@ -50,7 +50,7 @@ def stacked_bar(*, values, lookup, title, facet, domain):
         "encoding": {
             "x": {
                 "field": "Month",
-                "type": "quantitative",
+                "type": "temporal",
                 "timeUnit": "yearmonth",
             },
             "y": {
@@ -61,7 +61,7 @@ def stacked_bar(*, values, lookup, title, facet, domain):
             "tooltip": [
                 {
                     "field": "Month",
-                    "type": "quantitative",
+                    "type": "temporal",
                     "timeUnit": "yearmonth",
                 },
                 {"field": facet, "type": "nominal"},
