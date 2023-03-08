@@ -111,7 +111,9 @@ def send_challenge_status_update_email(challengerequest, challenge=None):
         message = format_html(
             "Dear {},\n\n"
             "We are happy to inform you that your challenge request has been "
-            "accepted. For your convenience, we have already created the "
+            "accepted. The invoice for your challenge will be sent to the address"
+            "you indicated shortly, unless agreed otherwise. \n\n"
+            "For your convenience, we have already created the "
             "challenge page for you at {} "
             "Note that your challenge is currently hidden and is not yet "
             "listed on our challenge overview page. Once your challenge is "
