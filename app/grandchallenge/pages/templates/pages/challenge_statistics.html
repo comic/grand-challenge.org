@@ -48,6 +48,25 @@
         {% endfor %}
     </dl>
 
+    {% if perms.challenges.change_challenge %}
+        <h4>Submission limit monitoring</h4>
+        <p>Percentage of submissions made to each algorithm submission phase out of the maximum number of submissions defined for the respective phase.</p>
+        {% for phase in algorithm_phases %}
+            <div class="row mb-3">
+                <div class="col-3 font-weight-bold">{{ phase.title|title }}: </div>
+                {% if phase.number_of_submissions_limit %}
+                    <div class="col-3">
+                        <div class="progress">
+                            <div class="progress-bar {% if phase.percent_of_submission_limit == 100 %}bg-danger {% elif phase.percent_of_submission_limit > 70 %}bg-warning {% else %} bg-success {% endif %}" style="width: {{ phase.percent_of_submission_limit }}%" role="progressbar" aria-valuenow="{{ phase.percent_of_submission_limit }}" aria-valuemin="0" aria-valuemax="100">{{ phase.percent_of_submission_limit }}%</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div>No total submission limit set for this phase.</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+
     {% if perms.challenges.view_challengerequest %}
         <h4>Estimated Costs</h4>
         {% include 'pages/phase_costs_partial.html' with phases=algorithm_phases statistics_for_phases=statistics_for_phases %}

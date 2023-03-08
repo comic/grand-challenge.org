@@ -11,6 +11,17 @@
     <td class="text-right">{{ challenge.accumulated_compute_cost_in_cents|divide_by:100|intcomma }} €</td>
     <td class="text-right">{{ challenge.accumulated_docker_storage_cost_in_cents|divide_by:100|intcomma }} €</td>
     <td class="text-right">{{ total_cost|divide_by:100|intcomma }} €</td>
+    <td class="text-center">
+        {% if challenge.submission_limits_defined and challenge.submission_limit_reached %}
+            <span class="badge above-stretched-link text-wrap p-2 badge-danger">100% in at least 1 phase</span>
+        {% elif challenge.submission_limits_defined and challenge.submission_limit_warning %}
+            <span class="badge above-stretched-link text-wrap p-2 badge-warning">70% in at least 1 phase</span>
+        {% elif challenge.submission_limits_defined %}
+            <span class="badge above-stretched-link text-wrap p-2 badge-success"><70% in all phases</span>
+        {% else %}
+            <i class="fas fa-exclamation-triangle text-danger"></i> No submission limits defined!
+        {% endif %}
+    </td>
 </tr>
 
 <tr hx-swap-oob="true" id="child-{{ challenge.short_name }}" type="hidden" class="border-0"></tr>

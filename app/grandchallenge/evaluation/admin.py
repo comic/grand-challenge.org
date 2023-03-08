@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import ModelForm
 
 from grandchallenge.challenges.models import ChallengeRequest
@@ -59,12 +59,12 @@ class PhaseAdminForm(ModelForm):
             submission_kind == SubmissionKindChoices.ALGORITHM
             and not number_of_submissions_limit
         ):
-            request = ChallengeRequest.objects.get(
-                short_name=self.instance.challenge.short_name
-            )
-            if request:
+            try:
+                request = ChallengeRequest.objects.get(
+                    short_name=self.instance.challenge.short_name
+                )
                 error_addition = f"The corresponding challenge request lists the following limits: Preliminary phase: {request.phase_1_number_of_submissions_per_team * request.expected_number_of_teams} Final test phase: {request.phase_2_number_of_submissions_per_team * request.expected_number_of_teams}. Set the limits according to the phase type. "
-            else:
+            except ObjectDoesNotExist:
                 error_addition = "There is no corresponding challenge request."
             raise ValidationError(
                 "For phases that take an algorithm as submission input, "

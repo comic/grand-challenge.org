@@ -411,6 +411,7 @@ class ChallengeCostOverview(
                 phase__submission_kind=SubmissionKindChoices.ALGORITHM
             )
             .distinct()
+            .prefetch_related("phase_set__submission_set")
             .annotate(
                 total_cost=F("accumulated_compute_cost_in_cents")
                 + F("accumulated_docker_storage_cost_in_cents")
@@ -439,7 +440,12 @@ class ChallengeCostsPerPhaseView(
 
     @cached_property
     def challenge(self):
-        return get_object_or_404(Challenge, pk=self.kwargs["pk"])
+        return get_object_or_404(
+            Challenge.objects.prefetch_related(
+                "phase_set__submission_set"
+            ).all(),
+            pk=self.kwargs["pk"],
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -466,7 +472,12 @@ class ChallengeCostsRow(
 
     @cached_property
     def challenge(self):
-        return get_object_or_404(Challenge, pk=self.kwargs["pk"])
+        return get_object_or_404(
+            Challenge.objects.prefetch_related(
+                "phase_set__submission_set"
+            ).all(),
+            pk=self.kwargs["pk"],
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -637,18 +637,34 @@ class Phase(UUIDModel, ViewContentMixin):
 
     @property
     def open_for_submissions(self):
+        return (
+            self.submission_period_is_open_now
+            and self.submission_limit > 0
+            and not self.submission_limit_reached
+        )
+
+    @property
+    def submission_limit_reached(self):
+        return (
+            self.percent_of_submission_limit
+            and self.percent_of_submission_limit == 100
+        )
+
+    @property
+    def percent_of_submission_limit(self):
         if self.number_of_submissions_limit:
-            return (
-                self.submission_period_is_open_now
-                and self.submission_limit > 0
-                and self.submission_set.count()
-                < self.number_of_submissions_limit
+            return min(
+                round(
+                    (
+                        self.submission_set.count()
+                        / self.number_of_submissions_limit
+                    )
+                    * 100
+                ),
+                100,
             )
         else:
-            return (
-                self.submission_period_is_open_now
-                and self.submission_limit > 0
-            )
+            return None
 
     @property
     def status(self):
