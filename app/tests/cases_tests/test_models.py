@@ -130,12 +130,24 @@ def test_image_file_cleanup(uploaded_image):
     assert not storage.exists(name=filepath)
 
 
-def test_folder_upload_filename():
+def test_directory_file_destination():
     image = ImageFactory.build(pk="34d4df58-03eb-4bf8-a424-713e601e694e")
+
     file = ImageFileFactory.build(
-        pk="4c572c72-1f76-44fa-b2a4-019e822eeb3f", image=image
+        pk="4c572c72-1f76-44fa-b2a4-019e822eeb3f",
+        image=image,
+        directory=Path(__file__).parent,
+    )
+    assert (
+        file._directory_file_destination(file=Path(__file__))
+        == "images/34/d4/34d4df58-03eb-4bf8-a424-713e601e694e/4c572c72-1f76-44fa-b2a4-019e822eeb3f/cases_tests/test_models.py"
     )
 
+    file = ImageFileFactory.build(
+        pk="4c572c72-1f76-44fa-b2a4-019e822eeb3f",
+        image=image,
+        directory=Path(__file__).parent.parent,
+    )
     assert (
         file._directory_file_destination(file=Path(__file__))
         == "images/34/d4/34d4df58-03eb-4bf8-a424-713e601e694e/4c572c72-1f76-44fa-b2a4-019e822eeb3f/tests/cases_tests/test_models.py"

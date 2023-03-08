@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
@@ -536,6 +537,9 @@ class ImageFile(UUIDModel):
         super().__init__(*args, **kwargs)
         self._directory = directory
 
+        if self._directory is not None and not self._directory.is_dir():
+            raise ValueError(f"{self._directory} is not a directory")
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -546,13 +550,12 @@ class ImageFile(UUIDModel):
 
     def _directory_file_destination(self, *, file):
         base = self.file.field.upload_to(
-            instance=self, filename=f"{file.parent.parent.stem}"
+            instance=self, filename=f"{self._directory.stem}"
         )
-        return f"{base}/{file.parent.stem}/{file.name}"
+        return safe_join(f"/{base}", file.relative_to(self._directory))[1:]
 
     def save_directory(self):
-        # Saves all the files in the folder, respecting the parents folder
-        # structure 2 directories deep
+        # Saves all the files in the directory associated with this file
         if self._directory is None:
             raise ValueError("Directory is unset")
 
@@ -564,7 +567,7 @@ class ImageFile(UUIDModel):
                 raise SuspiciousFileOperation
 
             with open(file, "rb") as f:
-                protected_s3_storage.save(
+                self.file.field.storage.save(
                     name=self._directory_file_destination(file=file), content=f
                 )
 
