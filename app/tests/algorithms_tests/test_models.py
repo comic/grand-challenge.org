@@ -387,7 +387,7 @@ def test_usage_statistics():
             "encoding": {
                 "x": {
                     "field": "Month",
-                    "type": "quantitative",
+                    "type": "temporal",
                     "timeUnit": "yearmonth",
                 },
                 "y": {
@@ -398,7 +398,7 @@ def test_usage_statistics():
                 "tooltip": [
                     {
                         "field": "Month",
-                        "type": "quantitative",
+                        "type": "temporal",
                         "timeUnit": "yearmonth",
                     },
                     {"field": "Status", "type": "nominal"},
