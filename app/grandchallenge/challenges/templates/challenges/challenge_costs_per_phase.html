@@ -17,7 +17,7 @@
         {% elif challenge.submission_limits_defined and challenge.submission_limit_warning %}
             <span class="badge above-stretched-link text-wrap p-2 badge-warning">70% in at least 1 phase</span>
         {% elif challenge.submission_limits_defined %}
-            <span class="badge above-stretched-link text-wrap p-2 badge-success"><70% in all phases</span>
+            <span class="badge above-stretched-link text-wrap p-2 badge-success">&lt;70% in all phases</span>
         {% else %}
             <i class="fas fa-exclamation-triangle text-danger"></i> No submission limits defined!
         {% endif %}
