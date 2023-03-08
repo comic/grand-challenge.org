@@ -346,6 +346,9 @@ def post_process_image(*, image_pk):
                 image__pk=image_pk, post_processed=False
             ).select_for_update(nowait=True)
 
+            # Acquire the locks
+            image_files = list(image_files)
+
             panimg_files = _download_image_files(
                 image_files=image_files, dir=output_directory
             )
