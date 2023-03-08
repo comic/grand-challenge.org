@@ -723,7 +723,7 @@ BLEACH_ALLOWED_TAGS = [
 ]
 BLEACH_ALLOWED_ATTRIBUTES = {
     "*": ["class", "data-toggle", "id", "style", "role"],
-    "a": ["href", "title", "target", "rel"],
+    "a": ["href", "title", "target", "rel", "data-target"],
     "abbr": ["title"],
     "acronym": ["title"],
     "img": ["height", "src", "width"],
