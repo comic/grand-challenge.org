@@ -437,9 +437,10 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    number_of_submissions_limit = models.PositiveSmallIntegerField(
+    total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
         blank=True,
         null=True,
+        help_text="Total number of submissions allowed for this phase for all users together.",
     )
 
     class Meta:
@@ -646,22 +647,19 @@ class Phase(UUIDModel, ViewContentMixin):
     @property
     def submission_limit_reached(self):
         return (
-            self.percent_of_submission_limit
-            and self.percent_of_submission_limit == 100
+            self.percent_of_total_submission_limit
+            and self.percent_of_total_submission_limit >= 100
         )
 
     @property
-    def percent_of_submission_limit(self):
-        if self.number_of_submissions_limit:
-            return min(
-                round(
-                    (
-                        self.submission_set.count()
-                        / self.number_of_submissions_limit
-                    )
-                    * 100
-                ),
-                100,
+    def percent_of_total_submission_limit(self):
+        if self.total_number_of_submissions_allowed:
+            return round(
+                (
+                    self.submission_set.count()
+                    / self.total_number_of_submissions_allowed
+                )
+                * 100
             )
         else:
             return None

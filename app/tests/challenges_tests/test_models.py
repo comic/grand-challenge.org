@@ -96,16 +96,18 @@ def test_non_posters_notified(group):
 
 @pytest.mark.django_db
 def test_submission_limit_status():
-    p1, p2, p3 = PhaseFactory.create_batch(3, number_of_submissions_limit=10)
+    p1, p2, p3 = PhaseFactory.create_batch(
+        3, total_number_of_submissions_allowed=10
+    )
     p4 = PhaseFactory()
     SubmissionFactory.create_batch(10, phase=p1)
     SubmissionFactory.create_batch(4, phase=p2)
     SubmissionFactory.create_batch(8, phase=p3)
 
-    assert p1.percent_of_submission_limit == 100
-    assert p2.percent_of_submission_limit == 40
-    assert p3.percent_of_submission_limit == 80
-    assert not p4.percent_of_submission_limit
+    assert p1.percent_of_total_submission_limit == 100
+    assert p2.percent_of_total_submission_limit == 40
+    assert p3.percent_of_total_submission_limit == 80
+    assert not p4.percent_of_total_submission_limit
 
     assert p1.submission_limit_reached
     for phase in [p2, p3, p4]:

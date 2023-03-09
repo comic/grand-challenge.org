@@ -659,15 +659,16 @@ class Challenge(ChallengeBase):
     @property
     def submission_limit_warning(self):
         return any(
-            phase.percent_of_submission_limit > 70
+            phase.percent_of_total_submission_limit > 70
             for phase in self.phase_set.all()
-            if phase.percent_of_submission_limit
+            if phase.percent_of_total_submission_limit
         )
 
     @property
     def submission_limits_defined(self):
         return any(
-            phase.number_of_submissions_limit for phase in self.phase_set.all()
+            phase.total_number_of_submissions_allowed
+            for phase in self.phase_set.all()
         )
 
     class Meta(ChallengeBase.Meta):

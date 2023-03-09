@@ -51,13 +51,13 @@ class PhaseAdminForm(ModelForm):
             )
 
         submission_kind = cleaned_data["submission_kind"]
-        number_of_submissions_limit = cleaned_data[
-            "number_of_submissions_limit"
+        total_number_of_submissions_allowed = cleaned_data[
+            "total_number_of_submissions_allowed"
         ]
 
         if (
             submission_kind == SubmissionKindChoices.ALGORITHM
-            and not number_of_submissions_limit
+            and not total_number_of_submissions_allowed
         ):
             try:
                 request = ChallengeRequest.objects.get(
@@ -68,7 +68,7 @@ class PhaseAdminForm(ModelForm):
                 error_addition = "There is no corresponding challenge request."
             raise ValidationError(
                 "For phases that take an algorithm as submission input, "
-                "the number_of_submissions_limit needs to be set. "
+                "the total_number_of_submissions_allowed needs to be set. "
                 + error_addition
             )
 

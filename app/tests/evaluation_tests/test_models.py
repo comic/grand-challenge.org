@@ -280,7 +280,7 @@ def test_open_for_submission(
     phase.submission_limit = submission_limit
     phase.submissions_open_at = submissions_open
     phase.submissions_close_at = submissions_close
-    phase.number_of_submissions_limit = submissions_limit
+    phase.total_number_of_submissions_allowed = submissions_limit
     phase.save()
 
     SubmissionFactory.create_batch(5, phase=phase)
