@@ -651,21 +651,22 @@ class Challenge(ChallengeBase):
         return self.phase_set.filter(public=True)
 
     @property
-    def submission_limit_reached(self):
+    def exceeds_total_number_of_submissions_allowed(self):
         return any(
-            phase.submission_limit_reached for phase in self.phase_set.all()
-        )
-
-    @property
-    def submission_limit_warning(self):
-        return any(
-            phase.percent_of_total_submission_limit > 70
+            phase.exceeds_total_number_of_submissions_allowed
             for phase in self.phase_set.all()
-            if phase.percent_of_total_submission_limit
         )
 
     @property
-    def submission_limits_defined(self):
+    def exceeds_70_percent_of_submission_allowed(self):
+        return any(
+            phase.percent_of_total_submissions_allowed > 70
+            for phase in self.phase_set.all()
+            if phase.percent_of_total_submissions_allowed
+        )
+
+    @property
+    def total_number_of_submissions_defined(self):
         return any(
             phase.total_number_of_submissions_allowed
             for phase in self.phase_set.all()

@@ -105,27 +105,27 @@ def test_submission_limit_status():
     SubmissionFactory.create_batch(8, phase=p3)
     SubmissionFactory.create_batch(12, phase=p4)
 
-    assert p1.percent_of_total_submission_limit == 100
-    assert p2.percent_of_total_submission_limit == 40
-    assert p3.percent_of_total_submission_limit == 80
-    assert p4.percent_of_total_submission_limit == 120
-    assert not p5.percent_of_total_submission_limit
+    assert p1.percent_of_total_submissions_allowed == 100
+    assert p2.percent_of_total_submissions_allowed == 40
+    assert p3.percent_of_total_submissions_allowed == 80
+    assert p4.percent_of_total_submissions_allowed == 120
+    assert not p5.percent_of_total_submissions_allowed
 
-    assert p1.submission_limit_reached
-    assert p4.submission_limit_reached
+    assert p1.exceeds_total_number_of_submissions_allowed
+    assert p4.exceeds_total_number_of_submissions_allowed
     for phase in [p2, p3, p5]:
-        assert not phase.submission_limit_reached
+        assert not phase.exceeds_total_number_of_submissions_allowed
 
     for ch in [p1.challenge, p2.challenge, p3.challenge, p4.challenge]:
-        assert ch.submission_limits_defined
-    assert not p5.challenge.submission_limits_defined
+        assert ch.total_number_of_submissions_defined
+    assert not p5.challenge.total_number_of_submissions_defined
 
-    assert p1.challenge.submission_limit_reached
-    assert p4.challenge.submission_limit_reached
+    assert p1.challenge.exceeds_total_number_of_submissions_allowed
+    assert p4.challenge.exceeds_total_number_of_submissions_allowed
     for ch in [p2.challenge, p3.challenge, p5.challenge]:
-        assert not ch.submission_limit_reached
+        assert not ch.exceeds_total_number_of_submissions_allowed
 
     for ch in [p1.challenge, p3.challenge, p4.challenge]:
-        assert ch.submission_limit_warning
-    assert not p2.challenge.submission_limit_warning
-    assert not p5.challenge.submission_limit_warning
+        assert ch.exceeds_70_percent_of_submission_allowed
+    assert not p2.challenge.exceeds_70_percent_of_submission_allowed
+    assert not p5.challenge.exceeds_70_percent_of_submission_allowed

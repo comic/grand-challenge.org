@@ -57,7 +57,7 @@
                 {% if phase.total_number_of_submissions_allowed %}
                     <div class="col-3">
                         <div class="progress">
-                            <div class="progress-bar {% if phase.percent_of_total_submission_limit == 100 %}bg-danger {% elif phase.percent_of_total_submission_limit > 70 %}bg-warning {% else %} bg-success {% endif %}" style="width: {{ phase.percent_of_total_submission_limit }}%" role="progressbar" aria-valuenow="{{ phase.percent_of_total_submission_limit }}" aria-valuemin="0" aria-valuemax="100">{{ phase.percent_of_total_submission_limit }}%</div>
+                            <div class="progress-bar {% if phase.percent_of_total_submissions_allowed == 100 %}bg-danger {% elif phase.percent_of_total_submissions_allowed > 70 %}bg-warning {% else %} bg-success {% endif %}" style="width: {{ phase.percent_of_total_submissions_allowed }}%" role="progressbar" aria-valuenow="{{ phase.percent_of_total_submissions_allowed }}" aria-valuemin="0" aria-valuemax="100">{{ phase.percent_of_total_submissions_allowed }}%</div>
                         </div>
                     </div>
                 {% else %}
