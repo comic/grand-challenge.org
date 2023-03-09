@@ -96,32 +96,36 @@ def test_non_posters_notified(group):
 
 @pytest.mark.django_db
 def test_submission_limit_status():
-    p1, p2, p3 = PhaseFactory.create_batch(
-        3, total_number_of_submissions_allowed=10
+    p1, p2, p3, p4 = PhaseFactory.create_batch(
+        4, total_number_of_submissions_allowed=10
     )
-    p4 = PhaseFactory()
+    p5 = PhaseFactory()
     SubmissionFactory.create_batch(10, phase=p1)
     SubmissionFactory.create_batch(4, phase=p2)
     SubmissionFactory.create_batch(8, phase=p3)
+    SubmissionFactory.create_batch(12, phase=p4)
 
     assert p1.percent_of_total_submission_limit == 100
     assert p2.percent_of_total_submission_limit == 40
     assert p3.percent_of_total_submission_limit == 80
-    assert not p4.percent_of_total_submission_limit
+    assert p4.percent_of_total_submission_limit == 120
+    assert not p5.percent_of_total_submission_limit
 
     assert p1.submission_limit_reached
-    for phase in [p2, p3, p4]:
+    assert p4.submission_limit_reached
+    for phase in [p2, p3, p5]:
         assert not phase.submission_limit_reached
 
-    for ch in [p1.challenge, p2.challenge, p3.challenge]:
+    for ch in [p1.challenge, p2.challenge, p3.challenge, p4.challenge]:
         assert ch.submission_limits_defined
-    assert not p4.challenge.submission_limits_defined
+    assert not p5.challenge.submission_limits_defined
 
     assert p1.challenge.submission_limit_reached
-    for ch in [p2.challenge, p3.challenge, p4.challenge]:
+    assert p4.challenge.submission_limit_reached
+    for ch in [p2.challenge, p3.challenge, p5.challenge]:
         assert not ch.submission_limit_reached
 
-    assert p1.challenge.submission_limit_warning
-    assert p3.challenge.submission_limit_warning
+    for ch in [p1.challenge, p3.challenge, p4.challenge]:
+        assert ch.submission_limit_warning
     assert not p2.challenge.submission_limit_warning
-    assert not p4.challenge.submission_limit_warning
+    assert not p5.challenge.submission_limit_warning
