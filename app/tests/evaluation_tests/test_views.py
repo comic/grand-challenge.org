@@ -286,7 +286,7 @@ class TestViewFilters:
 @pytest.mark.django_db
 def test_submission_time_limit(client, two_challenge_sets):
     phase = two_challenge_sets.challenge_set_1.challenge.phase_set.get()
-    phase.submission_limit = 10
+    phase.submissions_limit_per_user_per_period = 10
     phase.save()
 
     SubmissionFactory(
@@ -548,7 +548,7 @@ def test_create_algorithm_for_phase_permission(client):
         response.content
     )
 
-    phase.submission_limit = 1
+    phase.submissions_limit_per_user_per_period = 1
     phase.save()
 
     response = get_view_for_user(

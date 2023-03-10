@@ -322,7 +322,7 @@ class Phase(UUIDModel, ViewContentMixin):
         default=False,
         help_text=("Show a link to the supplementary url on the results page"),
     )
-    submission_limit = models.PositiveIntegerField(
+    submissions_limit_per_user_per_period = models.PositiveIntegerField(
         default=0,
         help_text=(
             "The limit on the number of times that a user can make a "
@@ -500,7 +500,7 @@ class Phase(UUIDModel, ViewContentMixin):
                     "For phases that take an algorithm as submission input, "
                     "the creator_must_be_verified box needs to be checked."
                 )
-            if self.submission_limit > 0 and (
+            if self.submissions_limit_per_user_per_period > 0 and (
                 not self.archive
                 or not self.algorithm_inputs
                 or not self.algorithm_outputs
@@ -511,7 +511,10 @@ class Phase(UUIDModel, ViewContentMixin):
                     "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
                 )
 
-        if self.submission_limit > 0 and not self.latest_executable_image:
+        if (
+            self.submissions_limit_per_user_per_period > 0
+            and not self.latest_executable_image
+        ):
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "
                 "can change the submission limit to above 0."
@@ -531,7 +534,7 @@ class Phase(UUIDModel, ViewContentMixin):
             raise ValidationError(
                 "A phase can only be hidden if it is closed for submissions. "
                 "To close submissions for this phase, either set "
-                "submission_limit to 0, or set appropriate phase start / end dates."
+                "submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates."
             )
 
     def set_default_interfaces(self):
@@ -592,20 +595,24 @@ class Phase(UUIDModel, ViewContentMixin):
             )
 
             remaining_submissions = max(
-                0, self.submission_limit - evals_in_period.count()
+                0,
+                self.submissions_limit_per_user_per_period
+                - evals_in_period.count(),
             )
 
             if remaining_submissions:
                 next_sub_at = now
             elif (
-                self.submission_limit == 0
+                self.submissions_limit_per_user_per_period == 0
                 or self.submission_limit_period is None
             ):
                 # User is never going to be able to submit again
                 next_sub_at = None
             else:
                 next_sub_at = (
-                    evals_in_period[self.submission_limit - 1].created
+                    evals_in_period[
+                        self.submissions_limit_per_user_per_period - 1
+                    ].created
                     + self.submission_limit_period_timedelta
                 )
 
@@ -640,7 +647,7 @@ class Phase(UUIDModel, ViewContentMixin):
     def open_for_submissions(self):
         return (
             self.submission_period_is_open_now
-            and self.submission_limit > 0
+            and self.submissions_limit_per_user_per_period > 0
             and not self.exceeds_total_number_of_submissions_allowed
         )
 
@@ -703,7 +710,8 @@ class Phase(UUIDModel, ViewContentMixin):
     @property
     def inconsistent_submission_information(self):
         return (
-            self.submission_limit == 0 and self.submission_period_is_open_now
+            self.submissions_limit_per_user_per_period == 0
+            and self.submission_period_is_open_now
         )
 
     @property

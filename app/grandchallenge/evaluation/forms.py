@@ -40,7 +40,7 @@ submission_options = (
     "submissions_close_at",
     "submission_page_html",
     "creator_must_be_verified",
-    "submission_limit",
+    "submissions_limit_per_user_per_period",
     "submission_limit_period",
     "allow_submission_comments",
     "supplementary_file_choice",
