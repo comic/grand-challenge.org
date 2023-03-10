@@ -103,7 +103,7 @@ class TestSubmissionForm:
 
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
-            submission_limit=10,
+            submissions_limit_per_user_per_period=10,
         )
 
         form = SubmissionForm(
@@ -140,7 +140,8 @@ class TestSubmissionForm:
         form = SubmissionForm(
             user=user,
             phase=PhaseFactory(
-                creator_must_be_verified=True, submission_limit=10
+                creator_must_be_verified=True,
+                submissions_limit_per_user_per_period=10,
             ),
             data={"creator": user},
         )

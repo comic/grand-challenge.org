@@ -85,7 +85,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "open_for_submissions",
         "submissions_open_at",
         "submissions_close_at",
-        "submission_limit",
+        "submissions_limit_per_user_per_period",
     )
     search_fields = ("pk", "title", "slug", "challenge__short_name")
     list_filter = (

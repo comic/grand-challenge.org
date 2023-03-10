@@ -57,7 +57,7 @@ def test_challenge_list(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "phase1_submission_limit,phase1_submissions_open,phase1_submissions_close,phase2_submission_limit,phase2_submissions_open,phase2_submissions_close,expected_status,phase_in_status",
+    "phase1_submissions_limit_per_user_per_period,phase1_submissions_open,phase1_submissions_close,phase2_submissions_limit_per_user_per_period,phase2_submissions_open,phase2_submissions_close,expected_status,phase_in_status",
     [
         # both phases are closed (because submission limit 0)
         (
@@ -290,10 +290,10 @@ def test_challenge_list(client):
 )
 def test_challenge_card_status(
     client,
-    phase1_submission_limit,
+    phase1_submissions_limit_per_user_per_period,
     phase1_submissions_open,
     phase1_submissions_close,
-    phase2_submission_limit,
+    phase2_submissions_limit_per_user_per_period,
     phase2_submissions_open,
     phase2_submissions_close,
     expected_status,
@@ -304,10 +304,14 @@ def test_challenge_card_status(
     phase2 = PhaseFactory(challenge=ch)
     u = UserFactory()
 
-    phase1.submission_limit = phase1_submission_limit
+    phase1.submissions_limit_per_user_per_period = (
+        phase1_submissions_limit_per_user_per_period
+    )
     phase1.submissions_open_at = phase1_submissions_open
     phase1.submissions_close_at = phase1_submissions_close
-    phase2.submission_limit = phase2_submission_limit
+    phase2.submissions_limit_per_user_per_period = (
+        phase2_submissions_limit_per_user_per_period
+    )
     phase2.submissions_open_at = phase2_submissions_open
     phase2.submissions_close_at = phase2_submissions_close
     phase1.save()
