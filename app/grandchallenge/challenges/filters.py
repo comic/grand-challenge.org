@@ -14,7 +14,7 @@ STATUS_CHOICES = (
 )
 
 
-class InternalChallengeFilter(TitleDescriptionModalityStructureFilter):
+class ChallengeFilter(TitleDescriptionModalityStructureFilter):
     task_types = ModelMultipleChoiceFilter(
         queryset=TaskType.objects.all(),
         widget=Select2MultipleWidget,

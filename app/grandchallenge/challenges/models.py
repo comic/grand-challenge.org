@@ -111,7 +111,7 @@ class ChallengeSeries(models.Model):
         )
 
 
-class CommonChallengeFieldsMixin(models.Model):
+class ChallengeBase(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -157,11 +157,7 @@ class CommonChallengeFieldsMixin(models.Model):
         abstract = True
 
 
-class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
-    CHALLENGE_ACTIVE = "challenge_active"
-    CHALLENGE_INACTIVE = "challenge_inactive"
-    DATA_PUB = "data_pub"
-
+class Challenge(ChallengeBase):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     description = models.CharField(
@@ -230,7 +226,6 @@ class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
         help_text="The organizations associated with this challenge",
         related_name="%(class)ss",
     )
-
     number_of_training_cases = models.IntegerField(blank=True, null=True)
     number_of_test_cases = models.IntegerField(blank=True, null=True)
     filter_classes = ArrayField(
@@ -240,38 +235,6 @@ class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
         default=False,
         help_text="Should this challenge be advertised on the home page?",
     )
-
-    objects = ChallengeManager()
-
-    def __str__(self):
-        return self.short_name
-
-    @property
-    def public(self):
-        """Helper property for consistency with other objects"""
-        return not self.hidden
-
-    def get_absolute_url(self):
-        raise NotImplementedError
-
-    @property
-    def year(self):
-        if self.workshop_date:
-            return self.workshop_date.year
-        else:
-            return self.created.year
-
-    @property
-    def upcoming_workshop_date(self):
-        if self.workshop_date and self.workshop_date > datetime.date.today():
-            return self.workshop_date
-
-    class Meta:
-        abstract = True
-        ordering = ("pk",)
-
-
-class Challenge(ChallengeBase):
     banner = JPEGField(
         upload_to=get_banner_path,
         storage=public_s3_storage,
@@ -357,9 +320,36 @@ class Challenge(ChallengeBase):
         default=0, blank=True
     )
 
+    objects = ChallengeManager()
+
+    class Meta:
+        verbose_name = "challenge"
+        verbose_name_plural = "challenges"
+        ordering = ("pk",)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._hidden_orig = self.hidden
+
+    def __str__(self):
+        return self.short_name
+
+    @property
+    def public(self):
+        """Helper property for consistency with other objects"""
+        return not self.hidden
+
+    @property
+    def year(self):
+        if self.workshop_date:
+            return self.workshop_date.year
+        else:
+            return self.created.year
+
+    @property
+    def upcoming_workshop_date(self):
+        if self.workshop_date and self.workshop_date > datetime.date.today():
+            return self.workshop_date
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -656,10 +646,6 @@ class Challenge(ChallengeBase):
             for phase in self.phase_set.all()
         )
 
-    class Meta(ChallengeBase.Meta):
-        verbose_name = "challenge"
-        verbose_name_plural = "challenges"
-
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
@@ -705,7 +691,7 @@ def submission_pdf_path(instance, filename):
     )
 
 
-class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
+class ChallengeRequest(UUIDModel, ChallengeBase):
     class ChallengeRequestStatusChoices(models.TextChoices):
         ACCEPTED = "ACPT", _("Accepted")
         REJECTED = "RJCT", _("Rejected")

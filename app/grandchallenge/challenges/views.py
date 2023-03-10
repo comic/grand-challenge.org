@@ -17,7 +17,7 @@ from django.views.generic import (
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
-from grandchallenge.challenges.filters import InternalChallengeFilter
+from grandchallenge.challenges.filters import ChallengeFilter
 from grandchallenge.challenges.forms import (
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
@@ -40,7 +40,7 @@ from grandchallenge.verifications.views import VerificationRequiredMixin
 class ChallengeList(FilterMixin, ListView):
     model = Challenge
     ordering = ("-highlight", "-created")
-    filter_class = InternalChallengeFilter
+    filter_class = ChallengeFilter
     paginate_by = 40
     queryset = Challenge.objects.filter(hidden=False).prefetch_related(
         "phase_set", "publications"

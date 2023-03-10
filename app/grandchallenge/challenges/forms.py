@@ -18,7 +18,7 @@ from django_summernote.widgets import SummernoteInplaceWidget
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.subdomains.utils import reverse_lazy
 
-common_information_items = (
+information_items = (
     "title",
     "description",
     "task_types",
@@ -29,9 +29,12 @@ common_information_items = (
     "publications",
     "hidden",
     "educational",
+    "display_forum_link",
+    "disclaimer",
+    "contact_email",
 )
 
-common_images_items = ("logo", "social_image")
+images_items = ("banner", "logo", "social_image")
 
 event_items = ("event_url", "workshop_date")
 
@@ -50,12 +53,9 @@ class ChallengeUpdateForm(forms.ModelForm):
             TabHolder(
                 Tab(
                     "Information",
-                    *common_information_items,
-                    "display_forum_link",
-                    "disclaimer",
-                    "contact_email",
+                    *information_items,
                 ),
-                Tab("Images", "banner", *common_images_items),
+                Tab("Images", *images_items),
                 Tab("Event", *event_items),
                 Tab("Registration", *registration_items),
                 Tab("Teams", "use_teams"),
@@ -66,12 +66,8 @@ class ChallengeUpdateForm(forms.ModelForm):
     class Meta:
         model = Challenge
         fields = [
-            *common_information_items,
-            "display_forum_link",
-            "disclaimer",
-            "contact_email",
-            "banner",
-            *common_images_items,
+            *information_items,
+            *images_items,
             *event_items,
             *registration_items,
             "use_teams",
