@@ -399,7 +399,7 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Show a link to the supplementary url on the results page&quot;</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">submission_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+    <span class="n">submissions_limit_per_user_per_period</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;The limit on the number of times that a user can make a &quot;</span>
@@ -577,7 +577,7 @@
                     <span class="s2">&quot;For phases that take an algorithm as submission input, &quot;</span>
                     <span class="s2">&quot;the creator_must_be_verified box needs to be checked.&quot;</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span>
                 <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive</span>
                 <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_inputs</span>
                 <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_outputs</span>
@@ -588,7 +588,10 @@
                     <span class="s2">&quot;read/write. To configure these settings, please get in touch with support@grand-challenge.org.&quot;</span>
                 <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_executable_image</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_executable_image</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;You need to first add a valid method for this phase before you &quot;</span>
                 <span class="s2">&quot;can change the submission limit to above 0.&quot;</span>
@@ -608,7 +611,7 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;A phase can only be hidden if it is closed for submissions. &quot;</span>
                 <span class="s2">&quot;To close submissions for this phase, either set &quot;</span>
-                <span class="s2">&quot;submission_limit to 0, or set appropriate phase start / end dates.&quot;</span>
+                <span class="s2">&quot;submissions_limit_per_user_per_period to 0, or set appropriate phase start / end dates.&quot;</span>
             <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -669,20 +672,24 @@
             <span class="p">)</span>
 
             <span class="n">remaining_submissions</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
-                <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="n">evals_in_period</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="mi">0</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span>
+                <span class="o">-</span> <span class="n">evals_in_period</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="n">remaining_submissions</span><span class="p">:</span>
                 <span class="n">next_sub_at</span> <span class="o">=</span> <span class="n">now</span>
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">==</span> <span class="mi">0</span>
                 <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="p">):</span>
                 <span class="c1"># User is never going to be able to submit again</span>
                 <span class="n">next_sub_at</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">next_sub_at</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">evals_in_period</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created</span>
+                    <span class="n">evals_in_period</span><span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">created</span>
                     <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period_timedelta</span>
                 <span class="p">)</span>
 
@@ -717,7 +724,7 @@
     <span class="k">def</span> <span class="nf">open_for_submissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exceeds_total_number_of_submissions_allowed</span>
         <span class="p">)</span>
 
@@ -780,7 +787,8 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">inconsistent_submission_information</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">submission_limit</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
