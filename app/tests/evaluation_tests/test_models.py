@@ -171,13 +171,14 @@ class TestPhaseLimits:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "submission_limit,submissions_open,submissions_close,open_for_submissions,expected_status",
+    "submission_limit,submissions_open,submissions_close,submissions_limit,open_for_submissions,expected_status",
     [
-        (0, None, None, False, "Not accepting submissions"),
+        (0, None, None, 10, False, "Not accepting submissions"),
         (
             0,
             now() - timedelta(days=1),
             None,
+            10,
             False,
             "Not accepting submissions",
         ),
@@ -185,6 +186,7 @@ class TestPhaseLimits:
             0,
             now() - timedelta(days=10),
             now() - timedelta(days=1),
+            10,
             False,
             "completed",
         ),
@@ -192,57 +194,85 @@ class TestPhaseLimits:
             0,
             now() - timedelta(days=10),
             now() + timedelta(days=1),
+            10,
             False,
             "Not accepting submissions",
         ),
-        (0, now() + timedelta(days=10), None, False, "Opening submissions"),
+        (
+            0,
+            now() + timedelta(days=10),
+            None,
+            10,
+            False,
+            "Opening submissions",
+        ),
         (
             0,
             now() + timedelta(days=10),
             now() + timedelta(days=15),
+            10,
             False,
             "Opening submissions",
         ),
-        (0, None, now() - timedelta(days=15), False, "completed"),
+        (0, None, now() - timedelta(days=15), 10, False, "completed"),
         (
             0,
             None,
             now() + timedelta(days=15),
+            10,
             False,
             "Not accepting submissions",
         ),
-        (10, None, None, True, "Accepting submissions"),
-        (10, now() - timedelta(days=1), None, True, "Accepting submissions"),
+        (10, None, None, 10, True, "Accepting submissions"),
         (
             10,
-            now() - timedelta(days=10),
             now() - timedelta(days=1),
-            False,
-            "completed",
-        ),
-        (
+            None,
             10,
-            now() - timedelta(days=10),
-            now() + timedelta(days=1),
             True,
             "Accepting submissions",
         ),
-        (10, now() + timedelta(days=10), None, False, "Opening submissions"),
+        (
+            10,
+            now() - timedelta(days=10),
+            now() - timedelta(days=1),
+            10,
+            False,
+            "completed",
+        ),
+        (
+            10,
+            now() - timedelta(days=10),
+            now() + timedelta(days=1),
+            10,
+            True,
+            "Accepting submissions",
+        ),
+        (
+            10,
+            now() + timedelta(days=10),
+            None,
+            10,
+            False,
+            "Opening submissions",
+        ),
         (
             10,
             now() + timedelta(days=10),
             now() + timedelta(days=15),
+            10,
             False,
             "Opening submissions",
         ),
-        (10, None, now() - timedelta(days=15), False, "completed"),
-        (10, None, now() + timedelta(days=15), True, "Accepting submissions"),
+        (10, None, None, 1, False, "Not accepting submissions"),
+        (10, None, None, None, True, "Accepting submissions"),
     ],
 )
 def test_open_for_submission(
     submission_limit,
     submissions_open,
     submissions_close,
+    submissions_limit,
     open_for_submissions,
     expected_status,
 ):
@@ -250,7 +280,10 @@ def test_open_for_submission(
     phase.submission_limit = submission_limit
     phase.submissions_open_at = submissions_open
     phase.submissions_close_at = submissions_close
+    phase.total_number_of_submissions_allowed = submissions_limit
     phase.save()
+
+    SubmissionFactory.create_batch(5, phase=phase)
 
     assert phase.open_for_submissions == open_for_submissions
     assert expected_status in phase.submission_status_string

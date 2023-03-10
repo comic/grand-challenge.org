@@ -1,0 +1,11 @@
+<td class="text-center">
+    {% if challenge.total_number_of_submissions_defined and challenge.exceeds_total_number_of_submissions_allowed %}
+        <span class="badge above-stretched-link text-wrap p-2 badge-danger">100% in at least 1 phase</span>
+    {% elif challenge.total_number_of_submissions_defined and challenge.exceeds_70_percent_of_submission_allowed %}
+        <span class="badge above-stretched-link text-wrap p-2 badge-warning">&gt;70% in at least 1 phase</span>
+    {% elif challenge.total_number_of_submissions_defined %}
+        <span class="badge above-stretched-link text-wrap p-2 badge-success">&lt;70% in all phases</span>
+    {% else %}
+        <i class="fas fa-exclamation-triangle text-danger"></i> Total number of submissions not defined!
+    {% endif %}
+</td>

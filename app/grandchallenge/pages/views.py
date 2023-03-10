@@ -205,7 +205,9 @@ class ChallengeStatistics(TemplateView):
                         (phase.pk, phase.title) for phase in public_phases
                     ],
                 ),
-                "algorithm_phases": self.request.challenge.phase_set.filter(
+                "algorithm_phases": self.request.challenge.phase_set.prefetch_related(
+                    "submission_set"
+                ).filter(
                     submission_kind=SubmissionKindChoices.ALGORITHM
                 ),
                 "statistics_for_phases": cache.get("statistics_for_phases"),

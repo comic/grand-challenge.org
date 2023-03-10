@@ -19,6 +19,13 @@
                         <li>Total compute cost for this phase so far:
                             {% if phase_stats.total_phase_compute_cost %}{{ phase_stats.total_phase_compute_cost }}
                                 €{% else %} NA {% endif %}</li>
+                        {% if phase.total_number_of_submissions_allowed %}
+                            <li>Submissions up until now:
+                                <div class="progress">
+                                    <div class="progress-bar {% if phase.percent_of_total_submissions_allowed >= 100 %}bg-danger {% elif phase.percent_of_total_submissions_allowed > 70 %}bg-warning {% else %} bg-success {% endif %}" style="width: {{ phase.percent_of_total_submissions_allowed }}%" role="progressbar" aria-valuenow="{{ phase.percent_of_total_submissions_allowed }}" aria-valuemin="0" aria-valuemax="100">{{ phase.percent_of_total_submissions_allowed }}%</div>
+                                </div>
+                            </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>

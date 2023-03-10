@@ -437,6 +437,11 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    total_number_of_submissions_allowed = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        help_text="Total number of submissions allowed for this phase for all users together.",
+    )
 
     class Meta:
         unique_together = (("challenge", "title"), ("challenge", "slug"))
@@ -489,34 +494,27 @@ class Phase(UUIDModel, ViewContentMixin):
     def clean(self):
         super().clean()
 
-        if (
-            self.submission_kind == SubmissionKindChoices.ALGORITHM
-            and not self.creator_must_be_verified
-        ):
-            raise ValidationError(
-                "For phases that take an algorithm as submission input, "
-                "the creator_must_be_verified box needs to be checked."
-            )
+        if self.submission_kind == SubmissionKindChoices.ALGORITHM:
+            if not self.creator_must_be_verified:
+                raise ValidationError(
+                    "For phases that take an algorithm as submission input, "
+                    "the creator_must_be_verified box needs to be checked."
+                )
+            if self.submission_limit > 0 and (
+                not self.archive
+                or not self.algorithm_inputs
+                or not self.algorithm_outputs
+            ):
+                raise ValidationError(
+                    "To change the submission limit to above 0, you need to first link an archive containing the secret "
+                    "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
+                    "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
+                )
 
         if self.submission_limit > 0 and not self.latest_executable_image:
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "
                 "can change the submission limit to above 0."
-            )
-
-        if (
-            self.submission_limit > 0
-            and self.submission_kind == SubmissionKindChoices.ALGORITHM
-            and (
-                not self.archive
-                or not self.algorithm_inputs
-                or not self.algorithm_outputs
-            )
-        ):
-            raise ValidationError(
-                "To change the submission limit to above 0, you need to first link an archive containing the secret "
-                "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
-                "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
             )
 
         if (
@@ -640,7 +638,31 @@ class Phase(UUIDModel, ViewContentMixin):
 
     @property
     def open_for_submissions(self):
-        return self.submission_period_is_open_now and self.submission_limit > 0
+        return (
+            self.submission_period_is_open_now
+            and self.submission_limit > 0
+            and not self.exceeds_total_number_of_submissions_allowed
+        )
+
+    @property
+    def exceeds_total_number_of_submissions_allowed(self):
+        return (
+            self.percent_of_total_submissions_allowed
+            and self.percent_of_total_submissions_allowed >= 100
+        )
+
+    @property
+    def percent_of_total_submissions_allowed(self):
+        if self.total_number_of_submissions_allowed:
+            return round(
+                (
+                    self.submission_set.count()
+                    / self.total_number_of_submissions_allowed
+                )
+                * 100
+            )
+        else:
+            return None
 
     @property
     def status(self):

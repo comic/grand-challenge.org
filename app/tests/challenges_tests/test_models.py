@@ -7,6 +7,7 @@ from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.notifications.models import Notification
+from tests.evaluation_tests.factories import PhaseFactory, SubmissionFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import TopicFactory
 
@@ -91,3 +92,40 @@ def test_non_posters_notified(group):
 
     assert u.user_profile.has_unread_notifications is True
     assert p.user_profile.has_unread_notifications is False
+
+
+@pytest.mark.django_db
+def test_submission_limit_status():
+    p1, p2, p3, p4 = PhaseFactory.create_batch(
+        4, total_number_of_submissions_allowed=10
+    )
+    p5 = PhaseFactory()
+    SubmissionFactory.create_batch(10, phase=p1)
+    SubmissionFactory.create_batch(4, phase=p2)
+    SubmissionFactory.create_batch(8, phase=p3)
+    SubmissionFactory.create_batch(12, phase=p4)
+
+    assert p1.percent_of_total_submissions_allowed == 100
+    assert p2.percent_of_total_submissions_allowed == 40
+    assert p3.percent_of_total_submissions_allowed == 80
+    assert p4.percent_of_total_submissions_allowed == 120
+    assert not p5.percent_of_total_submissions_allowed
+
+    assert p1.exceeds_total_number_of_submissions_allowed
+    assert p4.exceeds_total_number_of_submissions_allowed
+    for phase in [p2, p3, p5]:
+        assert not phase.exceeds_total_number_of_submissions_allowed
+
+    for ch in [p1.challenge, p2.challenge, p3.challenge, p4.challenge]:
+        assert ch.total_number_of_submissions_defined
+    assert not p5.challenge.total_number_of_submissions_defined
+
+    assert p1.challenge.exceeds_total_number_of_submissions_allowed
+    assert p4.challenge.exceeds_total_number_of_submissions_allowed
+    for ch in [p2.challenge, p3.challenge, p5.challenge]:
+        assert not ch.exceeds_total_number_of_submissions_allowed
+
+    for ch in [p1.challenge, p3.challenge, p4.challenge]:
+        assert ch.exceeds_70_percent_of_submission_allowed
+    assert not p2.challenge.exceeds_70_percent_of_submission_allowed
+    assert not p5.challenge.exceeds_70_percent_of_submission_allowed
