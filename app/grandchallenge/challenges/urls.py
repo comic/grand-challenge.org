@@ -12,10 +12,6 @@ from grandchallenge.challenges.views import (
     ChallengeRequestDetail,
     ChallengeRequestList,
     ChallengeRequestStatusUpdate,
-    CombinedChallengeList,
-    ExternalChallengeCreate,
-    ExternalChallengeList,
-    ExternalChallengeUpdate,
     UsersChallengeList,
     YearCostsRow,
 )
@@ -24,23 +20,7 @@ app_name = "challenges"
 
 urlpatterns = [
     path("", ChallengeList.as_view(), name="list"),
-    path(
-        "all-challenges/",
-        CombinedChallengeList.as_view(),
-        name="combined-list",
-    ),
     path("my-challenges/", UsersChallengeList.as_view(), name="users-list"),
-    path("external/", ExternalChallengeList.as_view(), name="external-list"),
-    path(
-        "external/create/",
-        ExternalChallengeCreate.as_view(),
-        name="external-create",
-    ),
-    path(
-        "external/<slug:short_name>/update/",
-        ExternalChallengeUpdate.as_view(),
-        name="external-update",
-    ),
     path("requests/", ChallengeRequestList.as_view(), name="requests-list"),
     path(
         "requests/create/",

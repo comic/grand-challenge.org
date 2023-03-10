@@ -15,11 +15,7 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeRequest,
-    ExternalChallenge,
-)
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.subdomains.utils import reverse_lazy
 
 common_information_items = (
@@ -121,57 +117,6 @@ data_items = (
     "number_of_training_cases",
     "number_of_test_cases",
 )
-
-
-class ExternalChallengeUpdateForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout = Layout(
-            TabHolder(
-                Tab(
-                    "Information",
-                    "short_name",
-                    "homepage",
-                    *common_information_items,
-                ),
-                Tab("Images", *common_images_items),
-                Tab("Event", *event_items),
-                Tab("Data", *data_items),
-            ),
-            ButtonHolder(Submit("save", "Save")),
-        )
-
-    class Meta:
-        model = ExternalChallenge
-        fields = (
-            "short_name",
-            "homepage",
-            *common_information_items,
-            *common_images_items,
-            *event_items,
-            *data_items,
-        )
-        widgets = {
-            "workshop_date": forms.TextInput(attrs={"type": "date"}),
-            "description": forms.Textarea,
-            "task_types": Select2MultipleWidget,
-            "modalities": Select2MultipleWidget,
-            "structures": Select2MultipleWidget,
-            "organizations": Select2MultipleWidget,
-            "series": Select2MultipleWidget,
-            "publications": Select2MultipleWidget,
-        }
-        help_texts = {
-            "publications": format_lazy(
-                (
-                    "The publications associated with this archive. "
-                    'If your publication is missing click <a href="{}">here</a> to add it '
-                    "and then refresh this page."
-                ),
-                reverse_lazy("publications:create"),
-            )
-        }
 
 
 class ChallengeRequestBudgetFieldValidationMixin:

@@ -3,11 +3,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.factories import (
-    ChallengeFactory,
-    ExternalChallengeFactory,
-    UserFactory,
-)
+from tests.factories import ChallengeFactory, UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
@@ -81,7 +77,6 @@ class TestOrganizationFilterViews:
             ArchiveFactory,
             ReaderStudyFactory,
             ChallengeFactory,
-            ExternalChallengeFactory,
         ),
     )
     def test_organization_filter_views(self, client, factory):

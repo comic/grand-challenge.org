@@ -10,13 +10,11 @@ def get_associated_objects(*, publication, checker):
     algorithms = publication.algorithm_set.all()
     reader_studies = publication.readerstudy_set.all()
     challenges = publication.challenge_set.all()
-    external_challenges = publication.externalchallenge_set.all()
 
     object_list = [
         *archives,
         *reader_studies,
         *challenges,
-        *external_challenges,
         *algorithms,
     ]
     objects = {}

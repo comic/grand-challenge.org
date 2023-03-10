@@ -34,13 +34,11 @@ from machina.apps.forum_permission.models import (
     UserForumPermission,
 )
 from stdimage import JPEGField
-from tldextract import extract
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
-    send_external_challenge_created_email,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.core.models import UUIDModel
@@ -257,10 +255,6 @@ class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
         raise NotImplementedError
 
     @property
-    def is_self_hosted(self):
-        return True
-
-    @property
     def year(self):
         if self.workshop_date:
             return self.workshop_date.year
@@ -271,16 +265,6 @@ class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
     def upcoming_workshop_date(self):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
-
-    @property
-    def registered_domain(self):
-        """
-        Copied from grandchallenge_tags
-
-        Try to find out what framework this challenge is hosted on, return
-        a string which can also be an id or class in HTML
-        """
-        return extract(self.get_absolute_url()).registered_domain
 
     class Meta:
         abstract = True
@@ -704,33 +688,7 @@ def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
         pass
 
 
-class ExternalChallenge(ChallengeBase):
-    homepage = models.URLField(
-        blank=False, help_text=("What is the homepage for this challenge?")
-    )
-    data_stored = models.BooleanField(
-        default=False,
-        help_text=("Has the grand-challenge team stored the data?"),
-    )
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            send_external_challenge_created_email(self)
-
-    def get_absolute_url(self):
-        return self.homepage
-
-    @property
-    def is_self_hosted(self):
-        return False
-
-
 @receiver(pre_delete, sender=Challenge)
-@receiver(pre_delete, sender=ExternalChallenge)
 def delete_challenge_follows(*_, instance: Challenge, **__):
     ct = ContentType.objects.filter(
         app_label=instance._meta.app_label, model=instance._meta.model_name

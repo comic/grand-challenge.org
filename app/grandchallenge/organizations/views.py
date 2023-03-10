@@ -90,14 +90,6 @@ class OrganizationDetail(DetailView):
             .filter(organizations__in=[self.object])
             .distinct()
         )
-        external_challenges = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="challenges.view_externalchallenge",
-            )
-            .filter(organizations__in=[self.object])
-            .distinct()
-        )
         reader_studies = (
             get_objects_for_user(
                 user=self.request.user,
@@ -111,7 +103,6 @@ class OrganizationDetail(DetailView):
             *archives,
             *reader_studies,
             *challenges,
-            *external_challenges,
             *algorithms,
         ]
 

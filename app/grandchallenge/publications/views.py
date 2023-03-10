@@ -9,7 +9,7 @@ from guardian.core import ObjectPermissionChecker
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.archives.models import Archive
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.publications.filters import PublicationFilter
 from grandchallenge.publications.forms import PublicationForm
@@ -32,7 +32,6 @@ class PublicationList(FilterMixin, ListView):
                 "archive_set",
                 "readerstudy_set",
                 "challenge_set",
-                "externalchallenge_set",
             )
             .order_by("-created")
         )
@@ -46,7 +45,6 @@ class PublicationList(FilterMixin, ListView):
             ReaderStudy.objects.only("pk").all(),
             Challenge.objects.only("pk").all(),
             Algorithm.objects.only("pk").all(),
-            ExternalChallenge.objects.only("pk").all(),
         ]:
             # Perms can only be prefetched for sets of the same objects
             checker.prefetch_perms(objects=qs)

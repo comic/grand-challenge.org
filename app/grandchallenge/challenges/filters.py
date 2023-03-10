@@ -14,7 +14,7 @@ STATUS_CHOICES = (
 )
 
 
-class ChallengeFilter(TitleDescriptionModalityStructureFilter):
+class InternalChallengeFilter(TitleDescriptionModalityStructureFilter):
     task_types = ModelMultipleChoiceFilter(
         queryset=TaskType.objects.all(),
         widget=Select2MultipleWidget,
@@ -24,6 +24,11 @@ class ChallengeFilter(TitleDescriptionModalityStructureFilter):
         queryset=ChallengeSeries.objects.all(),
         widget=Select2MultipleWidget,
         label="Challenge Series",
+    )
+    status = ChoiceFilter(
+        choices=STATUS_CHOICES,
+        method="filter_by_status",
+        label="Challenge status",
     )
 
     class Meta(TitleDescriptionModalityStructureFilter.Meta):
@@ -39,14 +44,6 @@ class ChallengeFilter(TitleDescriptionModalityStructureFilter):
             "short_name",
             "event_name",
         )
-
-
-class InternalChallengeFilter(ChallengeFilter):
-    status = ChoiceFilter(
-        choices=STATUS_CHOICES,
-        method="filter_by_status",
-        label="Challenge status",
-    )
 
     def filter_by_status(self, queryset, name, value):
         ids = [
