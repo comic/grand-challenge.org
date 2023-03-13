@@ -174,7 +174,7 @@ def world_map(*, values):
                 {
                     "field": "properties.name",
                     "type": "nominal",
-                    "title": "Country",
+                    "title": "Location",
                 },
                 {
                     "field": "participants",
