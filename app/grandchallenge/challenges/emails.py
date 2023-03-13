@@ -1,40 +1,12 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.mail import mail_managers, send_mail
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 
 from grandchallenge.subdomains.utils import reverse
-
-
-def send_external_challenge_created_email(challenge):
-    site = Site.objects.get_current()
-    update_url = reverse(
-        "challenges:external-update",
-        kwargs={"short_name": challenge.short_name},
-    )
-
-    message = format_html(
-        "Dear manager,\n\n"
-        "User {user} has just created the challenge {challenge_short_name}. "
-        "You need to un-hide it "
-        "before it is visible on the all challenges page, you can do that "
-        "here: {update_url}\n\n"
-        "Regards,\n{site_name}\n\n"
-        "This is an automated service email from {site_domain}.",
-        user=challenge.creator,
-        challenge_short_name=challenge.short_name,
-        update_url=update_url,
-        site_name=site.name,
-        site_domain=site.domain,
-    )
-
-    mail_managers(
-        subject=f"[{site.domain.lower()}] New External Challenge",
-        message=message,
-    )
 
 
 def send_challenge_requested_email_to_reviewers(challengerequest):

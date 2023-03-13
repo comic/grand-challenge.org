@@ -6,42 +6,10 @@ from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
-
-
-@pytest.mark.django_db
-def test_external_challenge_buttons(client):
-    create_url = reverse("challenges:external-create")
-    list_url = reverse("challenges:external-list")
-
-    response = get_view_for_user(
-        client=client, viewname="challenges:combined-list"
-    )
-
-    assert create_url not in response.rendered_content
-    assert list_url not in response.rendered_content
-
-    user = UserFactory()
-
-    response = get_view_for_user(
-        client=client, viewname="challenges:combined-list", user=user
-    )
-
-    assert create_url not in response.rendered_content
-    assert list_url not in response.rendered_content
-
-    assign_perm("challenges.change_externalchallenge", user)
-
-    response = get_view_for_user(
-        client=client, viewname="challenges:combined-list", user=user
-    )
-
-    assert create_url in response.rendered_content
-    assert list_url in response.rendered_content
 
 
 @pytest.mark.django_db

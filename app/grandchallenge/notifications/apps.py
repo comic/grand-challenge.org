@@ -50,7 +50,6 @@ class NotificationsConfig(AppConfig):
             apps.get_model("reader_studies.ReaderStudyPermissionRequest")
         )
         registry.register(apps.get_model("challenges.Challenge"))
-        registry.register(apps.get_model("challenges.ExternalChallenge"))
         registry.register(apps.get_model("participants.RegistrationRequest"))
         registry.register(apps.get_model("evaluation.Submission"))
         registry.register(apps.get_model("evaluation.Evaluation"))

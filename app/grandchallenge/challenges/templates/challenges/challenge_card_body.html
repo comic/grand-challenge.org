@@ -9,9 +9,9 @@
             <i class="fa fa-sm fa-code mr-1"></i> Algorithm submission challenge
         </div>
     {% endif %}
-    {% if challenge.is_self_hosted %}
-        <span class="badge {% if challenge.status.name == 'OPEN' %}badge-success {% elif challenge.status.name == 'OPENING_SOON' %} badge-warning {% else %} badge-danger {% endif %}mt-1 above-stretched-link text-wrap w-100 p-2" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.status_badge_string }}</span><br>
-    {% endif %}
+
+    <span class="badge {% if challenge.status.name == 'OPEN' %}badge-success {% elif challenge.status.name == 'OPENING_SOON' %} badge-warning {% else %} badge-danger {% endif %}mt-1 above-stretched-link text-wrap w-100 p-2" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.status_badge_string }}</span><br>
+
     {% if challenge.description %}
         <a href="#InfoModal"
            class="badge badge-dark above-stretched-link p-1 mt-1"
@@ -50,6 +50,7 @@
             </a>
         {% endwith %}
     {% endif %}
+
     {% if challenge.event_name %}
         <a class="badge badge-dark above-stretched-link text-wrap p-1 mt-1"
            href="{% firstof challenge.event_url challenge.get_absolute_url %}"
@@ -67,15 +68,6 @@
         </a>
     {% endfor %}
 
-    {% if challenge.registered_domain and not challenge.is_self_hosted %}
-        <a class="badge badge-dark above-stretched-link text-wrap p-1 mt-1"
-           href="{{ challenge.get_absolute_url }}"
-           title="Hosted on {{ challenge.registered_domain }}">
-            <i class="fas fa-link fa-fw"></i>
-            {{ challenge.registered_domain }}
-        </a>
-    {% endif %}
-
     {% if challenge.upcoming_workshop_date %}
         <a class="badge badge-dark above-stretched-link p-1 mt-1"
            href="{% firstof challenge.event_url challenge.get_absolute_url %}"
@@ -91,11 +83,4 @@
                                             </span>
     {% endif %}
 
-    {% if not challenge.is_self_hosted and perms.challenges.change_externalchallenge %}
-        <a class="badge badge-primary above-stretched-link p-1 mt-1"
-           href="{% url 'challenges:external-update' challenge.short_name %}"
-           title="Edit Challenge">
-            <i class="fas fa-edit fa-fw"></i>
-        </a>
-    {% endif %}
 </div>

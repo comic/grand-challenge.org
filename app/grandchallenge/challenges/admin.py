@@ -9,7 +9,6 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     ChallengeSeries,
     ChallengeUserObjectPermission,
-    ExternalChallenge,
 )
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -23,11 +22,6 @@ class ChallengeAdmin(ModelAdmin):
     ordering = ("-created",)
     list_display = ("short_name", "created")
     search_fields = ("short_name",)
-
-
-class ExternalChallengeAdmin(ModelAdmin):
-    readonly_fields = ("creator",)
-    autocomplete_fields = ("publications",)
 
 
 class ChallengeRequestAdmin(ModelAdmin):
@@ -88,6 +82,5 @@ class ChallengeRequestAdmin(ModelAdmin):
 admin.site.register(Challenge, ChallengeAdmin)
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(ChallengeGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(ExternalChallenge, ExternalChallengeAdmin)
 admin.site.register(ChallengeSeries)
 admin.site.register(ChallengeRequest, ChallengeRequestAdmin)

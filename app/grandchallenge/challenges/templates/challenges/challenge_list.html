@@ -23,11 +23,6 @@
                    <i class="fas fa-question mr-1"></i>
                     Challenge Requests</a>
             {% endif %}
-            <a class="btn btn-primary"
-               href="{% url 'challenges:combined-list' %}"
-               title="All challenges">
-                <i class="fas fa-list mr-1"></i> View all challenges
-            </a>
         </div>
     </div>
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}

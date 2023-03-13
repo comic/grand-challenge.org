@@ -15,14 +15,10 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeRequest,
-    ExternalChallenge,
-)
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.subdomains.utils import reverse_lazy
 
-common_information_items = (
+information_items = (
     "title",
     "description",
     "task_types",
@@ -33,9 +29,12 @@ common_information_items = (
     "publications",
     "hidden",
     "educational",
+    "display_forum_link",
+    "disclaimer",
+    "contact_email",
 )
 
-common_images_items = ("logo", "social_image")
+images_items = ("banner", "logo", "social_image")
 
 event_items = ("event_url", "workshop_date")
 
@@ -54,12 +53,9 @@ class ChallengeUpdateForm(forms.ModelForm):
             TabHolder(
                 Tab(
                     "Information",
-                    *common_information_items,
-                    "display_forum_link",
-                    "disclaimer",
-                    "contact_email",
+                    *information_items,
                 ),
-                Tab("Images", "banner", *common_images_items),
+                Tab("Images", *images_items),
                 Tab("Event", *event_items),
                 Tab("Registration", *registration_items),
                 Tab("Teams", "use_teams"),
@@ -70,12 +66,8 @@ class ChallengeUpdateForm(forms.ModelForm):
     class Meta:
         model = Challenge
         fields = [
-            *common_information_items,
-            "display_forum_link",
-            "disclaimer",
-            "contact_email",
-            "banner",
-            *common_images_items,
+            *information_items,
+            *images_items,
             *event_items,
             *registration_items,
             "use_teams",
@@ -113,65 +105,6 @@ class ChallengeUpdateForm(forms.ModelForm):
             raise ValidationError("A contact email is required")
 
         return cleaned_data
-
-
-data_items = (
-    "data_license_agreement",
-    "data_stored",
-    "number_of_training_cases",
-    "number_of_test_cases",
-)
-
-
-class ExternalChallengeUpdateForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout = Layout(
-            TabHolder(
-                Tab(
-                    "Information",
-                    "short_name",
-                    "homepage",
-                    *common_information_items,
-                ),
-                Tab("Images", *common_images_items),
-                Tab("Event", *event_items),
-                Tab("Data", *data_items),
-            ),
-            ButtonHolder(Submit("save", "Save")),
-        )
-
-    class Meta:
-        model = ExternalChallenge
-        fields = (
-            "short_name",
-            "homepage",
-            *common_information_items,
-            *common_images_items,
-            *event_items,
-            *data_items,
-        )
-        widgets = {
-            "workshop_date": forms.TextInput(attrs={"type": "date"}),
-            "description": forms.Textarea,
-            "task_types": Select2MultipleWidget,
-            "modalities": Select2MultipleWidget,
-            "structures": Select2MultipleWidget,
-            "organizations": Select2MultipleWidget,
-            "series": Select2MultipleWidget,
-            "publications": Select2MultipleWidget,
-        }
-        help_texts = {
-            "publications": format_lazy(
-                (
-                    "The publications associated with this archive. "
-                    'If your publication is missing click <a href="{}">here</a> to add it '
-                    "and then refresh this page."
-                ),
-                reverse_lazy("publications:create"),
-            )
-        }
 
 
 class ChallengeRequestBudgetFieldValidationMixin:
