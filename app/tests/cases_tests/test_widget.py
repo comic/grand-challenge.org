@@ -24,6 +24,13 @@ def test_flexible_image_field_validation():
         image_queryset=get_objects_for_user(user, "cases.view_image"),
         upload_queryset=UserUpload.objects.filter(creator=user).all(),
     )
+    parsed_value_for_empty_data = field.widget.value_from_datadict(
+        data={}, name=ci.slug, files={}
+    )
+    decompressed_value_for_missing_value = field.widget.decompress(value=None)
+    assert not parsed_value_for_empty_data
+    assert decompressed_value_for_missing_value == [None, None]
+
     parsed_value_for_image_with_permission = field.widget.value_from_datadict(
         data={ci.slug: im1.pk}, name=ci.slug, files={}
     )

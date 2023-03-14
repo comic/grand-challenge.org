@@ -76,11 +76,11 @@ class FlexibleImageWidget(MultiWidget):
     def value_from_datadict(self, data, files, name):
         try:
             value = data[name]
-        except MultiValueDictKeyError:
+        except (MultiValueDictKeyError, KeyError):
+            # this happens if the data comes from the DS create / update form
             try:
-                # this happens if the data comes from the DS update form
                 value = data[f"WidgetChoice-{name}"]
-            except MultiValueDictKeyError:
+            except (MultiValueDictKeyError, KeyError):
                 value = None
         if value:
             if value in WidgetChoices.names:

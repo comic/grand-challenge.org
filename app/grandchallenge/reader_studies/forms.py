@@ -615,6 +615,7 @@ class DisplaySetUpdateForm(DisplaySetCreateForm):
             widget=FlexibleImageWidget(
                 user=self.user, current_value=current_value
             ),
+            required=False,
         )
 
     def _get_file_field(self, *, interface, values, current_value):
