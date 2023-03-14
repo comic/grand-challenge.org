@@ -5,7 +5,7 @@ from grandchallenge.workstations.models import Session
 
 
 @receiver(user_logged_out)
-def stop_users_sessions(*, signal, sender, request, user):
+def stop_users_sessions(*, user, **_):
     users_sessions = (
         Session.objects.all()
         .filter(creator=user)
