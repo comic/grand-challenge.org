@@ -40,7 +40,7 @@
             <div class="alert alert-info" role="alert">
                 <p>
                     Challenge participants will be allowed to create
-                    {{ phase.submission_limit }} submission{{ phase.submission_limit|pluralize }}
+                    {{ phase.submissions_limit_per_user_per_period }} submission{{ phase.submissions_limit_per_user_per_period|pluralize }}
                     {% if phase.submission_limit_period %}
                         per {% if phase.submission_limit_period > 1 %}{{ phase.submission_limit_period }}{% endif %}
                         day{{ phase.submission_limit_period|pluralize }}

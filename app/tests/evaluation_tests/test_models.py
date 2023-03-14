@@ -129,7 +129,7 @@ class TestPhaseLimits:
 
     @pytest.mark.parametrize("submission_limit_period", (None, 1, 3))
     def test_submissions_closed(self, submission_limit_period):
-        self.phase.submission_limit = 0
+        self.phase.submissions_limit_per_user_per_period = 0
         self.phase.submission_limit_period = submission_limit_period
 
         i = self.phase.get_next_submission(user=UserFactory())
@@ -143,7 +143,9 @@ class TestPhaseLimits:
     def test_submissions_period(
         self, submission_limit_period, expected_remaining
     ):
-        self.phase.submission_limit = 3  # successful jobs created in setUp
+        self.phase.submissions_limit_per_user_per_period = (
+            3  # successful jobs created in setUp
+        )
         self.phase.submission_limit_period = submission_limit_period
 
         i = self.phase.get_next_submission(user=self.user)
@@ -152,12 +154,15 @@ class TestPhaseLimits:
         assert i["next_submission_at"] is not None
 
     @pytest.mark.parametrize(
-        "submission_limit,expected_remaining", ((4, 1), (3, 0), (1, 0))
+        "submissions_limit_per_user_per_period,expected_remaining",
+        ((4, 1), (3, 0), (1, 0)),
     )
     def test_submissions_period_none(
-        self, submission_limit, expected_remaining
+        self, submissions_limit_per_user_per_period, expected_remaining
     ):
-        self.phase.submission_limit = submission_limit
+        self.phase.submissions_limit_per_user_per_period = (
+            submissions_limit_per_user_per_period
+        )
         self.phase.submission_limit_period = None
 
         i = self.phase.get_next_submission(user=self.user)
@@ -171,13 +176,14 @@ class TestPhaseLimits:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "submission_limit,submissions_open,submissions_close,open_for_submissions,expected_status",
+    "submissions_limit_per_user_per_period,submissions_open,submissions_close,submissions_limit,open_for_submissions,expected_status",
     [
-        (0, None, None, False, "Not accepting submissions"),
+        (0, None, None, 10, False, "Not accepting submissions"),
         (
             0,
             now() - timedelta(days=1),
             None,
+            10,
             False,
             "Not accepting submissions",
         ),
@@ -185,6 +191,7 @@ class TestPhaseLimits:
             0,
             now() - timedelta(days=10),
             now() - timedelta(days=1),
+            10,
             False,
             "completed",
         ),
@@ -192,65 +199,98 @@ class TestPhaseLimits:
             0,
             now() - timedelta(days=10),
             now() + timedelta(days=1),
+            10,
             False,
             "Not accepting submissions",
         ),
-        (0, now() + timedelta(days=10), None, False, "Opening submissions"),
+        (
+            0,
+            now() + timedelta(days=10),
+            None,
+            10,
+            False,
+            "Opening submissions",
+        ),
         (
             0,
             now() + timedelta(days=10),
             now() + timedelta(days=15),
+            10,
             False,
             "Opening submissions",
         ),
-        (0, None, now() - timedelta(days=15), False, "completed"),
+        (0, None, now() - timedelta(days=15), 10, False, "completed"),
         (
             0,
             None,
             now() + timedelta(days=15),
+            10,
             False,
             "Not accepting submissions",
         ),
-        (10, None, None, True, "Accepting submissions"),
-        (10, now() - timedelta(days=1), None, True, "Accepting submissions"),
+        (10, None, None, 10, True, "Accepting submissions"),
         (
             10,
-            now() - timedelta(days=10),
             now() - timedelta(days=1),
-            False,
-            "completed",
-        ),
-        (
+            None,
             10,
-            now() - timedelta(days=10),
-            now() + timedelta(days=1),
             True,
             "Accepting submissions",
         ),
-        (10, now() + timedelta(days=10), None, False, "Opening submissions"),
+        (
+            10,
+            now() - timedelta(days=10),
+            now() - timedelta(days=1),
+            10,
+            False,
+            "completed",
+        ),
+        (
+            10,
+            now() - timedelta(days=10),
+            now() + timedelta(days=1),
+            10,
+            True,
+            "Accepting submissions",
+        ),
+        (
+            10,
+            now() + timedelta(days=10),
+            None,
+            10,
+            False,
+            "Opening submissions",
+        ),
         (
             10,
             now() + timedelta(days=10),
             now() + timedelta(days=15),
+            10,
             False,
             "Opening submissions",
         ),
-        (10, None, now() - timedelta(days=15), False, "completed"),
-        (10, None, now() + timedelta(days=15), True, "Accepting submissions"),
+        (10, None, None, 1, False, "Not accepting submissions"),
+        (10, None, None, None, True, "Accepting submissions"),
     ],
 )
 def test_open_for_submission(
-    submission_limit,
+    submissions_limit_per_user_per_period,
     submissions_open,
     submissions_close,
+    submissions_limit,
     open_for_submissions,
     expected_status,
 ):
     phase = PhaseFactory()
-    phase.submission_limit = submission_limit
+    phase.submissions_limit_per_user_per_period = (
+        submissions_limit_per_user_per_period
+    )
     phase.submissions_open_at = submissions_open
     phase.submissions_close_at = submissions_close
+    phase.total_number_of_submissions_allowed = submissions_limit
     phase.save()
+
+    SubmissionFactory.create_batch(5, phase=phase)
 
     assert phase.open_for_submissions == open_for_submissions
     assert expected_status in phase.submission_status_string

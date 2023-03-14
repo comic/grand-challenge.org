@@ -6,11 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeRequest,
-    ExternalChallenge,
-)
+from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -67,14 +63,6 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
 
     creator = factory.SubFactory(UserFactory)
     short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
-
-
-class ExternalChallengeFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = ExternalChallenge
-
-    short_name = factory.Sequence(lambda n: f"test_external_challenge{n}")
-    homepage = factory.Faker("url")
 
 
 class PageFactory(factory.django.DjangoModelFactory):

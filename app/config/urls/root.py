@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.sitemaps.views import sitemap
 from django.template.response import TemplateResponse
 from django.urls import path, re_path
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView
 from machina import urls as machina_urls
 
 from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
@@ -58,7 +58,15 @@ urlpatterns = [
         {"sitemaps": sitemaps},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path(settings.ADMIN_URL, admin.site.urls),
+    path(
+        f"{settings.ADMIN_URL}/login/",
+        RedirectView.as_view(url=settings.LOGIN_URL),
+    ),
+    path(
+        f"{settings.ADMIN_URL}/logout/",
+        RedirectView.as_view(url=settings.LOGOUT_URL),
+    ),
+    path(f"{settings.ADMIN_URL}/", admin.site.urls),
     re_path(
         r"accounts/two_factor/setup/?$",
         TwoFactorSetup.as_view(),

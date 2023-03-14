@@ -25,6 +25,11 @@ class ChallengeFilter(TitleDescriptionModalityStructureFilter):
         widget=Select2MultipleWidget,
         label="Challenge Series",
     )
+    status = ChoiceFilter(
+        choices=STATUS_CHOICES,
+        method="filter_by_status",
+        label="Challenge status",
+    )
 
     class Meta(TitleDescriptionModalityStructureFilter.Meta):
         model = Challenge
@@ -39,14 +44,6 @@ class ChallengeFilter(TitleDescriptionModalityStructureFilter):
             "short_name",
             "event_name",
         )
-
-
-class InternalChallengeFilter(ChallengeFilter):
-    status = ChoiceFilter(
-        choices=STATUS_CHOICES,
-        method="filter_by_status",
-        label="Challenge status",
-    )
 
     def filter_by_status(self, queryset, name, value):
         ids = [

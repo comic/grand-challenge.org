@@ -25,11 +25,7 @@ from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeSeries,
-    ExternalChallenge,
-)
+from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -88,7 +84,7 @@ def run():
 
     _set_user_permissions(users)
     _create_demo_challenge(users)
-    _create_external_challenge(users)
+    _create_task_types_regions_modalities(users)
     _create_workstation(users)
     _create_algorithm_demo(users)
     _create_reader_studies(users)
@@ -256,18 +252,7 @@ def _create_demo_challenge(users):
         )
 
 
-def _create_external_challenge(users):
-    ex_challenge = ExternalChallenge.objects.create(
-        creator=users["demo"],
-        homepage="https://www.example.com",
-        short_name="EXAMPLE2018",
-        title="Example External Challenge 2018",
-        description="An example of an external challenge",
-        event_name="Example Event",
-        event_url="https://www.example.com/2018",
-        hidden=False,
-    )
-
+def _create_task_types_regions_modalities(users):
     TaskType.objects.create(type="Segmentation")
     TaskType.objects.create(type="Classification")
 
@@ -303,12 +288,7 @@ def _create_external_challenge(users):
     for modality in modalities:
         ImagingModality.objects.create(modality=modality)
 
-    s = ChallengeSeries.objects.create(name="MICCAI")
-
-    mr_modality = ImagingModality.objects.get(modality="MR")
-    ex_challenge.modalities.add(mr_modality)
-    ex_challenge.series.add(s)
-    ex_challenge.save()
+    ChallengeSeries.objects.create(name="MICCAI")
 
 
 def _create_github_user_token(user):

@@ -560,7 +560,7 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
-ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
+ADMIN_URL = os.environ.get("DJANGO_ADMIN_URL", "django-admin")
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -723,7 +723,7 @@ BLEACH_ALLOWED_TAGS = [
 ]
 BLEACH_ALLOWED_ATTRIBUTES = {
     "*": ["class", "data-toggle", "id", "style", "role"],
-    "a": ["href", "title", "target", "rel"],
+    "a": ["href", "title", "target", "rel", "data-target"],
     "abbr": ["title"],
     "acronym": ["title"],
     "img": ["height", "src", "width"],

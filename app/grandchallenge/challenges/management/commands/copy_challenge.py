@@ -45,7 +45,7 @@ class Command(BaseCommand):
         "supplementary_url_label",
         "supplementary_url_help_text",
         "show_supplementary_url",
-        "submission_limit",
+        "submissions_limit_per_user_per_period",
         "submission_limit_period",
         "submission_page_html",
         "auto_publish_new_results",

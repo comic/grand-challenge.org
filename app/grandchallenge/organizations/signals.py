@@ -4,14 +4,13 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.archives.models import Archive
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.reader_studies.models import ReaderStudy
 
 
 @receiver(m2m_changed, sender=Algorithm.organizations.through)
 @receiver(m2m_changed, sender=Archive.organizations.through)
 @receiver(m2m_changed, sender=Challenge.organizations.through)
-@receiver(m2m_changed, sender=ExternalChallenge.organizations.through)
 @receiver(m2m_changed, sender=ReaderStudy.organizations.through)
 def update_related_permissions(
     sender, instance, action, reverse, model, pk_set, **_
@@ -29,9 +28,6 @@ def update_related_permissions(
     elif sender == Challenge.organizations.through:
         related_model = Challenge
         related_name = "challenges"
-    elif sender == ExternalChallenge.organizations.through:
-        related_model = ExternalChallenge
-        related_name = "externalchallenges"
     elif sender == ReaderStudy.organizations.through:
         related_model = ReaderStudy
         related_name = "readerstudies"

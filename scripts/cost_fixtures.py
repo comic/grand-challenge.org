@@ -138,7 +138,7 @@ def _create_challenge(
     p.submission_kind = SubmissionKindChoices.ALGORITHM
     p.archive = archive
     p.score_jsonpath = "score"
-    p.submission_limit = 10
+    p.submissions_limit_per_user_per_period = 10
     p.save()
 
     m = Method(creator=creator, phase=p)

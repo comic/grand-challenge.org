@@ -34,13 +34,11 @@ from machina.apps.forum_permission.models import (
     UserForumPermission,
 )
 from stdimage import JPEGField
-from tldextract import extract
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
-    send_external_challenge_created_email,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.core.models import UUIDModel
@@ -113,7 +111,7 @@ class ChallengeSeries(models.Model):
         )
 
 
-class CommonChallengeFieldsMixin(models.Model):
+class ChallengeBase(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -159,11 +157,7 @@ class CommonChallengeFieldsMixin(models.Model):
         abstract = True
 
 
-class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
-    CHALLENGE_ACTIVE = "challenge_active"
-    CHALLENGE_INACTIVE = "challenge_inactive"
-    DATA_PUB = "data_pub"
-
+class Challenge(ChallengeBase):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     description = models.CharField(
@@ -232,7 +226,6 @@ class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
         help_text="The organizations associated with this challenge",
         related_name="%(class)ss",
     )
-
     number_of_training_cases = models.IntegerField(blank=True, null=True)
     number_of_test_cases = models.IntegerField(blank=True, null=True)
     filter_classes = ArrayField(
@@ -242,52 +235,6 @@ class ChallengeBase(CommonChallengeFieldsMixin, models.Model):
         default=False,
         help_text="Should this challenge be advertised on the home page?",
     )
-
-    objects = ChallengeManager()
-
-    def __str__(self):
-        return self.short_name
-
-    @property
-    def public(self):
-        """Helper property for consistency with other objects"""
-        return not self.hidden
-
-    def get_absolute_url(self):
-        raise NotImplementedError
-
-    @property
-    def is_self_hosted(self):
-        return True
-
-    @property
-    def year(self):
-        if self.workshop_date:
-            return self.workshop_date.year
-        else:
-            return self.created.year
-
-    @property
-    def upcoming_workshop_date(self):
-        if self.workshop_date and self.workshop_date > datetime.date.today():
-            return self.workshop_date
-
-    @property
-    def registered_domain(self):
-        """
-        Copied from grandchallenge_tags
-
-        Try to find out what framework this challenge is hosted on, return
-        a string which can also be an id or class in HTML
-        """
-        return extract(self.get_absolute_url()).registered_domain
-
-    class Meta:
-        abstract = True
-        ordering = ("pk",)
-
-
-class Challenge(ChallengeBase):
     banner = JPEGField(
         upload_to=get_banner_path,
         storage=public_s3_storage,
@@ -373,9 +320,36 @@ class Challenge(ChallengeBase):
         default=0, blank=True
     )
 
+    objects = ChallengeManager()
+
+    class Meta:
+        verbose_name = "challenge"
+        verbose_name_plural = "challenges"
+        ordering = ("pk",)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._hidden_orig = self.hidden
+
+    def __str__(self):
+        return self.short_name
+
+    @property
+    def public(self):
+        """Helper property for consistency with other objects"""
+        return not self.hidden
+
+    @property
+    def year(self):
+        if self.workshop_date:
+            return self.workshop_date.year
+        else:
+            return self.created.year
+
+    @property
+    def upcoming_workshop_date(self):
+        if self.workshop_date and self.workshop_date > datetime.date.today():
+            return self.workshop_date
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -650,9 +624,27 @@ class Challenge(ChallengeBase):
     def visible_phases(self):
         return self.phase_set.filter(public=True)
 
-    class Meta(ChallengeBase.Meta):
-        verbose_name = "challenge"
-        verbose_name_plural = "challenges"
+    @property
+    def exceeds_total_number_of_submissions_allowed(self):
+        return any(
+            phase.exceeds_total_number_of_submissions_allowed
+            for phase in self.phase_set.all()
+        )
+
+    @property
+    def exceeds_70_percent_of_submission_allowed(self):
+        return any(
+            phase.percent_of_total_submissions_allowed > 70
+            for phase in self.phase_set.all()
+            if phase.percent_of_total_submissions_allowed
+        )
+
+    @property
+    def total_number_of_submissions_defined(self):
+        return any(
+            phase.total_number_of_submissions_allowed
+            for phase in self.phase_set.all()
+        )
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
@@ -682,33 +674,7 @@ def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
         pass
 
 
-class ExternalChallenge(ChallengeBase):
-    homepage = models.URLField(
-        blank=False, help_text=("What is the homepage for this challenge?")
-    )
-    data_stored = models.BooleanField(
-        default=False,
-        help_text=("Has the grand-challenge team stored the data?"),
-    )
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            send_external_challenge_created_email(self)
-
-    def get_absolute_url(self):
-        return self.homepage
-
-    @property
-    def is_self_hosted(self):
-        return False
-
-
 @receiver(pre_delete, sender=Challenge)
-@receiver(pre_delete, sender=ExternalChallenge)
 def delete_challenge_follows(*_, instance: Challenge, **__):
     ct = ContentType.objects.filter(
         app_label=instance._meta.app_label, model=instance._meta.model_name
@@ -725,7 +691,7 @@ def submission_pdf_path(instance, filename):
     )
 
 
-class ChallengeRequest(UUIDModel, CommonChallengeFieldsMixin):
+class ChallengeRequest(UUIDModel, ChallengeBase):
     class ChallengeRequestStatusChoices(models.TextChoices):
         ACCEPTED = "ACPT", _("Accepted")
         REJECTED = "RJCT", _("Rejected")

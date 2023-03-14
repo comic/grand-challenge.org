@@ -3,7 +3,7 @@ import pytest
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
-from tests.factories import ChallengeFactory, ExternalChallengeFactory
+from tests.factories import ChallengeFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
@@ -16,11 +16,6 @@ from tests.reader_studies_tests.factories import ReaderStudyFactory
         (AlgorithmFactory, "algorithms", "view_algorithm"),
         (ArchiveFactory, "archives", "view_archive"),
         (ChallengeFactory, "challenges", "view_challenge"),
-        (
-            ExternalChallengeFactory,
-            "externalchallenges",
-            "view_externalchallenge",
-        ),
         (ReaderStudyFactory, "readerstudies", "view_readerstudy"),
     ),
 )
