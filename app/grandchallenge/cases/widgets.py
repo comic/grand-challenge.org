@@ -8,7 +8,6 @@ from django.forms import (
     MultiWidget,
 )
 from django.forms.widgets import ChoiceWidget
-from django.utils.datastructures import MultiValueDictKeyError
 
 from grandchallenge.cases.models import Image
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
@@ -76,11 +75,11 @@ class FlexibleImageWidget(MultiWidget):
     def value_from_datadict(self, data, files, name):
         try:
             value = data[name]
-        except (MultiValueDictKeyError, KeyError):
+        except KeyError:
             # this happens if the data comes from the DS create / update form
             try:
                 value = data[f"WidgetChoice-{name}"]
-            except (MultiValueDictKeyError, KeyError):
+            except KeyError:
                 value = None
         if value:
             if value in WidgetChoices.names:
