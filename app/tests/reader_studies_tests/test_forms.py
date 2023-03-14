@@ -1111,6 +1111,33 @@ def test_display_set_update_form(form_class, file_widget):
     ]
 
 
+@pytest.mark.parametrize(
+    "form_class",
+    (
+        DisplaySetCreateForm,
+        DisplaySetUpdateForm,
+    ),
+)
+@pytest.mark.django_db
+def test_display_set_form_interface_fields_not_required(form_class):
+    rs = ReaderStudyFactory()
+    user = UserFactory()
+    rs.add_editor(user)
+    ci_img = ComponentInterfaceFactory(kind="IMG")
+    ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_str = ComponentInterfaceFactory(kind="STR")
+    for ci in [ci_img, ci_file, ci_str]:
+        civ = ComponentInterfaceValueFactory(interface=ci)
+        ds = DisplaySetFactory(reader_study=rs)
+        ds.values.add(civ)
+
+    instance = None if form_class == DisplaySetCreateForm else ds
+    form = form_class(user=user, instance=instance, reader_study=rs)
+    for name, field in form.fields.items():
+        if not name == "order":
+            assert not field.required
+
+
 @pytest.mark.django_db
 def test_display_set_update_form_image_field_queryset_filters():
     rs = ReaderStudyFactory()
