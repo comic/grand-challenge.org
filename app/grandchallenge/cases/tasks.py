@@ -2,7 +2,6 @@ import logging
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
-from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
@@ -20,12 +19,7 @@ from django.utils.module_loading import import_string
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
-from grandchallenge.cases.models import (
-    FolderUpload,
-    Image,
-    ImageFile,
-    RawImageUploadSession,
-)
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.uploads.models import UserUpload
@@ -215,17 +209,15 @@ def import_images(
 
         _check_all_ids(panimg_result=panimg_result)
 
-        django_result = _convert_panimg_to_django(
+        django_result = _convert_panimg_to_internal(
             new_images=panimg_result.new_images,
             new_image_files=panimg_result.new_image_files,
-            new_folders=panimg_result.new_folders,
         )
 
         _store_images(
             origin=origin,
             images=django_result.new_images,
             image_files=django_result.new_image_files,
-            folders=django_result.new_folders,
         )
 
         for image in django_result.new_images:
@@ -247,55 +239,49 @@ def _check_all_ids(*, panimg_result: PanImgResult):
     Check the integrity of the conversion job.
 
     All new_ids must be new, this will be found when saving the Django objects.
-    Every new image must have at least one file associated with it, and
-    new folders can only belong to new images.
+    Every new image must have at least one file associated with it.
     """
     new_ids = {im.pk for im in panimg_result.new_images}
     new_file_ids = {f.image_id for f in panimg_result.new_image_files}
-    new_folder_ids = {f.image_id for f in panimg_result.new_folders}
 
     if new_ids != new_file_ids:
         raise ValidationError(
             "Each new image should have at least 1 file assigned"
         )
 
-    if new_folder_ids - new_ids:
-        raise ValidationError("New folder does not belong to a new image")
-
 
 @dataclass
 class ConversionResult:
     new_images: set[Image]
     new_image_files: set[ImageFile]
-    new_folders: set[FolderUpload]
 
 
-def _convert_panimg_to_django(
-    *, new_images, new_image_files, new_folders
+def _convert_panimg_to_internal(
+    *, new_images, new_image_files
 ) -> ConversionResult:
+    internal_images = set()
+    internal_image_files = set()
 
-    output_images = set()
-    for im in new_images:
-        new_image = Image(**asdict(im))
-        if new_image.segments is not None:
-            new_image.segments = list(new_image.segments)
-        output_images.add(new_image)
+    for image in new_images:
+        image_internal = Image(**asdict(image))
 
-    output_image_files = {
-        ImageFile(
-            image_id=f.image_id,
-            image_type=f.image_type,
-            file=File(open(f.file, "rb"), f.file.name),
+        if image_internal.segments is not None:
+            image_internal.segments = list(image_internal.segments)
+
+        internal_images.add(image_internal)
+
+    for image_file in new_image_files:
+        image_file_internal = ImageFile(**asdict(image_file))
+
+        image_file_internal.file = File(
+            open(image_file_internal.file, "rb"), image_file_internal.file.name
         )
-        for f in new_image_files
-    }
 
-    output_folders = {FolderUpload(**asdict(f)) for f in new_folders}
+        internal_image_files.add(image_file_internal)
 
     return ConversionResult(
-        new_images=output_images,
-        new_image_files=output_image_files,
-        new_folders=output_folders,
+        new_images=internal_images,
+        new_image_files=internal_image_files,
     )
 
 
@@ -304,14 +290,13 @@ def _store_images(
     origin: RawImageUploadSession | None,
     images: set[Image],
     image_files: set[ImageFile],
-    folders: set[FolderUpload],
 ):
     for image in images:
         image.origin = origin
         image.full_clean()
         image.save()
 
-    for obj in chain(image_files, folders):
+    for obj in image_files:
         obj.full_clean()
         obj.save()
 
@@ -355,34 +340,35 @@ def _delete_session_files(*, upload_session):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def post_process_image(*, image_pk):
-    with TemporaryDirectory() as output_directory:
-        image_files = ImageFile.objects.filter(
-            image__pk=image_pk, post_processed=False
-        ).select_related("image")
+    with transaction.atomic():
+        with TemporaryDirectory() as output_directory:
+            image_files = ImageFile.objects.filter(
+                image__pk=image_pk, post_processed=False
+            ).select_for_update(nowait=True)
 
-        panimg_files = _download_image_files(
-            image_files=image_files, dir=output_directory
-        )
+            # Acquire the locks
+            image_files = list(image_files)
 
-        post_processor_result = post_process(
-            image_files=panimg_files, post_processors=POST_PROCESSORS
-        )
+            panimg_files = _download_image_files(
+                image_files=image_files, dir=output_directory
+            )
 
-        _check_post_processor_result(
-            post_processor_result=post_processor_result, image_pk=image_pk
-        )
+            post_processor_result = post_process(
+                image_files=panimg_files, post_processors=POST_PROCESSORS
+            )
 
-        django_result = _convert_panimg_to_django(
-            new_images=[],
-            new_image_files=post_processor_result.new_image_files,
-            new_folders=post_processor_result.new_folders,
-        )
+            _check_post_processor_result(
+                post_processor_result=post_processor_result, image_pk=image_pk
+            )
 
-        with transaction.atomic():
+            django_result = _convert_panimg_to_internal(
+                new_images=[],
+                new_image_files=post_processor_result.new_image_files,
+            )
+
             _store_post_processed_images(
                 image_files=image_files,
                 new_image_files=django_result.new_image_files,
-                new_folders=django_result.new_folders,
             )
 
 
@@ -417,23 +403,19 @@ def _download_image_files(*, image_files, dir):
 def _check_post_processor_result(*, post_processor_result, image_pk):
     """Ensure all post processed results belong to the given image"""
     created_ids = {
-        str(f.image_id)
-        for f in chain(
-            post_processor_result.new_image_files,
-            post_processor_result.new_folders,
-        )
+        str(f.image_id) for f in post_processor_result.new_image_files
     }
 
     if created_ids not in [{str(image_pk)}, set()]:
         raise RuntimeError("Created image IDs do not match")
 
 
-def _store_post_processed_images(*, image_files, new_image_files, new_folders):
-    """Save the post processed files and folders"""
+def _store_post_processed_images(*, image_files, new_image_files):
+    """Save the post processed files"""
     for im_file in image_files:
         im_file.post_processed = True
         im_file.save(update_fields=["post_processed"])
 
-    for obj in chain(new_image_files, new_folders):
+    for obj in new_image_files:
         obj.full_clean()
         obj.save()

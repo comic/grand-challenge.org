@@ -1,16 +1,15 @@
 import logging
-import os
-from pathlib import Path
 
 from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
 from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
@@ -187,6 +186,7 @@ def image_file_path(instance, filename):
         f"{str(instance.image.pk)[0:2]}/"
         f"{str(instance.image.pk)[2:4]}/"
         f"{instance.image.pk}/"
+        f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
 
@@ -527,8 +527,49 @@ class ImageFile(UUIDModel):
         max_length=4, blank=False, choices=IMAGE_TYPES, default=IMAGE_TYPE_MHD
     )
     file = models.FileField(
-        upload_to=image_file_path, blank=False, storage=protected_s3_storage
+        upload_to=image_file_path,
+        blank=False,
+        storage=protected_s3_storage,
+        max_length=200,
     )
+
+    def __init__(self, *args, directory=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._directory = directory
+
+        if self._directory is not None and not self._directory.is_dir():
+            raise ValueError(f"{self._directory} is not a directory")
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding and self._directory is not None:
+            self.save_directory()
+
+    def _directory_file_destination(self, *, file):
+        base = self.file.field.upload_to(
+            instance=self, filename=f"{self._directory.stem}"
+        )
+        return safe_join(f"/{base}", file.relative_to(self._directory))[1:]
+
+    def save_directory(self):
+        # Saves all the files in the directory associated with this file
+        if self._directory is None:
+            raise ValueError("Directory is unset")
+
+        for file in self._directory.rglob("**/*"):
+            if not file.is_file():
+                continue
+
+            if file.is_symlink() or file.absolute() != file.resolve():
+                raise SuspiciousFileOperation
+
+            with open(file, "rb") as f:
+                self.file.field.storage.save(
+                    name=self._directory_file_destination(file=file), content=f
+                )
 
 
 @receiver(post_delete, sender=ImageFile)
@@ -540,36 +581,3 @@ def delete_image_files(*_, instance: ImageFile, **__):
     bulk_delete.
     """
     instance.file.storage.delete(name=instance.file.name)
-
-
-class FolderUpload:
-    def __init__(self, image_id, folder):
-        self.image_id = image_id
-        self.folder = folder
-
-    def full_clean(self):
-        """Required as this is treated like a django model"""
-        pass
-
-    def destination_filename(self, file_path):
-        return (
-            f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
-            f"{str(self.image_id)[0:2]}/"
-            f"{str(self.image_id)[2:4]}/"
-            f"{self.image_id}/"
-            f"{file_path.parent.parent.stem}/"
-            f"{file_path.parent.stem}/"
-            f"{file_path.name}"
-        )
-
-    def save(self):
-        # Saves all the files in the folder, respecting the parents folder structure
-        # 2 directories deep
-        for root, _, files in os.walk(self.folder):
-            for file in files:
-                source_filename = Path(root) / file
-                destination_filename = self.destination_filename(
-                    source_filename
-                )
-                with open(source_filename, "rb") as open_file:
-                    protected_s3_storage.save(destination_filename, open_file)

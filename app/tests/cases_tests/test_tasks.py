@@ -5,12 +5,7 @@ from uuid import uuid4
 import pytest
 from celery import shared_task
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
-from panimg.models import (
-    ImageType,
-    PanImgFile,
-    PanImgFolder,
-    PostProcessorResult,
-)
+from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
 from grandchallenge.cases.models import ImageFile
@@ -20,6 +15,7 @@ from grandchallenge.cases.tasks import (
     import_images,
     post_process_image,
 )
+from grandchallenge.core.storage import protected_s3_storage
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory
 
@@ -55,7 +51,6 @@ def test_check_post_processor_result():
         _check_post_processor_result(
             post_processor_result=PostProcessorResult(
                 new_image_files=set(),
-                new_folders=set(),
             ),
             image_pk=pk,
         )
@@ -69,7 +64,6 @@ def test_check_post_processor_result():
                         image_id=pk, image_type=ImageType.MHD, file=Path("foo")
                     )
                 },
-                new_folders=set(),
             ),
             image_pk=pk,
         )
@@ -80,10 +74,12 @@ def test_check_post_processor_result():
             post_processor_result=PostProcessorResult(
                 new_image_files={
                     PanImgFile(
-                        image_id=pk, image_type=ImageType.MHD, file=Path("foo")
+                        image_id=pk,
+                        image_type=ImageType.MHD,
+                        file=Path("foo"),
+                        directory=Path("bar"),
                     )
                 },
-                new_folders={PanImgFolder(image_id=pk, folder=Path("bar"))},
             ),
             image_pk=pk,
         )
@@ -100,37 +96,6 @@ def test_check_post_processor_result():
                         file=Path("foo"),
                     )
                 },
-                new_folders={PanImgFolder(image_id=pk, folder=Path("bar"))},
-            ),
-            image_pk=pk,
-        )
-
-    with pytest.raises(RuntimeError):
-        _check_post_processor_result(
-            post_processor_result=PostProcessorResult(
-                new_image_files={
-                    PanImgFile(
-                        image_id=pk, image_type=ImageType.MHD, file=Path("foo")
-                    )
-                },
-                new_folders={
-                    PanImgFolder(image_id=uuid4(), folder=Path("bar"))
-                },
-            ),
-            image_pk=pk,
-        )
-
-    with pytest.raises(RuntimeError):
-        _check_post_processor_result(
-            post_processor_result=PostProcessorResult(
-                new_image_files={
-                    PanImgFile(
-                        image_id=uuid4(),
-                        image_type=ImageType.MHD,
-                        file=Path("foo"),
-                    )
-                },
-                new_folders=set(),
             ),
             image_pk=pk,
         )
@@ -169,6 +134,12 @@ def test_post_processing(source_dir, filename, tmpdir_factory, settings):
     all_image_files = ImageFile.objects.filter(image=new_image)
     if filename == "valid_tiff.tif":
         assert len(all_image_files) == 2
+
+        dzi = all_image_files.get(image_type=ImageType.DZI)
+        assert protected_s3_storage.exists(str(dzi.file))
+        assert protected_s3_storage.exists(
+            str(dzi.file).replace(".dzi", "_files/0/0_0.jpeg")
+        )
     else:
         assert len(all_image_files) == 1
 
