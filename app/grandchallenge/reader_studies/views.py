@@ -1121,11 +1121,7 @@ class DisplaySetViewSet(
                 "This display set cannot be changed, "
                 "as answers for it already exist."
             )
-        assigned_civs = []
         values = request.data.pop("values", None)
-        civs = instance.reader_study.display_sets.values_list(
-            "values", flat=True
-        )
         assigned_civs = []
         if values:
             serialized_data = ComponentInterfaceValuePostSerializer(
@@ -1133,12 +1129,10 @@ class DisplaySetViewSet(
             )
             if serialized_data.is_valid():
                 civs = []
-                interfaces = []
                 for value in serialized_data.validated_data:
                     interface = value.get("interface", None)
                     user_upload = value.get("user_upload", None)
                     if interface.requires_file and user_upload:
-                        interfaces.append(interface)
                         transaction.on_commit(
                             add_file_to_display_set.signature(
                                 kwargs={
@@ -1156,6 +1150,8 @@ class DisplaySetViewSet(
                 )
                 instance.values.remove(*assigned_civs)
                 instance.values.add(*civs)
+            else:
+                raise DRFValidationError(serialized_data.errors)
 
         # Create a new display set for any civs that have been replaced by a
         # new value in this display set, to ensure it remains connected to
@@ -1168,7 +1164,6 @@ class DisplaySetViewSet(
                     reader_study=instance.reader_study
                 )
                 ds.values.add(assigned)
-            instance.values.remove(assigned)
         return super().partial_update(request, pk)
 
     def destroy(self, request, *args, **kwargs):
