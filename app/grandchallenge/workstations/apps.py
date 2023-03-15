@@ -60,6 +60,8 @@ class WorkstationsConfig(AppConfig):
     name = "grandchallenge.workstations"
 
     def ready(self):
+        from grandchallenge.workstations import signals  # noqa F401
+
         post_migrate.connect(init_default_workstation, sender=self)
         post_migrate.connect(init_workstation_creators_group, sender=self)
         post_migrate.connect(
