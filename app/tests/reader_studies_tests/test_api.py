@@ -1839,6 +1839,27 @@ def test_display_set_add_and_edit(client, settings):
 
 
 @pytest.mark.django_db
+def test_display_set_partial_update_errors_returned(client):
+    ds = DisplaySetFactory()
+    user = UserFactory()
+    ds.reader_study.add_editor(user)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-detail",
+        reverse_kwargs={"pk": ds.pk},
+        user=user,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={"values": [{"interface": ci.slug, "value": 11}]},
+    )
+    assert response.status_code == 400
+    assert "JSON does not fulfill schema" in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
 def test_display_sets_shuffled_per_user(client):
     n_display_sets = 10
     reader_study = ReaderStudyFactory(shuffle_hanging_list=False)
