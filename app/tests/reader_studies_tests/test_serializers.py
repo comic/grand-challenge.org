@@ -15,5 +15,5 @@ def test_widget_on_question_serializer(rf):
     serializer2 = QuestionSerializer(qu, context={"request": rf.get("/foo")})
     assert (
         serializer2.data["widget"]
-        == QuestionWidgetKindChoices.ACCEPT_REJECT.label
+        == QuestionWidgetKindChoices.ACCEPT_REJECT.value
     )

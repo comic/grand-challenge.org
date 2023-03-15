@@ -55,7 +55,6 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     options = CategoricalOptionSerializer(many=True, read_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
     look_up_table = LookUpTableSerializer(read_only=True)
-    widget = CharField(source="get_widget_display", read_only=True)
 
     class Meta:
         model = Question
