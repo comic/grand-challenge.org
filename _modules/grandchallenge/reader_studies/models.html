@@ -1339,11 +1339,6 @@
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oxford_comma</span><span class="p">(</span><span class="n">ANSWER_TYPE_TO_QUESTION_WIDGET</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="p">])</span><span class="si">}</span><span class="s2">.&quot;</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget</span> <span class="o">==</span> <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;In order to use the </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_widget_display</span><span class="p">()</span><span class="si">}</span><span class="s2"> widget, &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;uncheck the &#39;required&#39; box.&quot;</span>
-                    <span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;In order to use the </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_widget_display</span><span class="p">()</span><span class="si">}</span><span class="s2"> widget, &quot;</span>
