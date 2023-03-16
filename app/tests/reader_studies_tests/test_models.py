@@ -522,38 +522,27 @@ def test_workstation_url():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "required, answer_type, widget, interface, error",
+    "answer_type, widget, interface, error",
     (
         (
-            True,
             AnswerType.MULTIPLE_POINTS,
             "",
             False,
             nullcontext(),
         ),
         (
-            True,
-            AnswerType.MULTIPLE_POINTS,
-            QuestionWidgetKindChoices.ACCEPT_REJECT,
-            True,
-            pytest.raises(ValidationError),
-        ),
-        (
-            False,
             AnswerType.POINT,
             QuestionWidgetKindChoices.ACCEPT_REJECT,
             True,
             pytest.raises(ValidationError),
         ),
         (
-            False,
             AnswerType.MULTIPLE_POINTS,
             QuestionWidgetKindChoices.ACCEPT_REJECT,
             False,
             pytest.raises(ValidationError),
         ),
         (
-            False,
             AnswerType.MULTIPLE_POINTS,
             QuestionWidgetKindChoices.ACCEPT_REJECT,
             True,
@@ -561,9 +550,7 @@ def test_workstation_url():
         ),
     ),
 )
-def test_clean_question_widget(
-    required, answer_type, widget, interface, error
-):
+def test_clean_question_widget(answer_type, widget, interface, error):
     if interface:
         kind = [
             member
@@ -576,7 +563,6 @@ def test_clean_question_widget(
 
     q = QuestionFactory(
         question_text="foo",
-        required=required,
         answer_type=answer_type,
         widget=widget,
         interface=ci,
