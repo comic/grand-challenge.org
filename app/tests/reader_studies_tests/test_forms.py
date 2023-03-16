@@ -194,18 +194,6 @@ def test_reader_study_create(client, uploaded_image):
     assert roll_over_error not in response.rendered_content
     assert response.status_code == 200
 
-    case_navigation_error = (
-        "Case navigation is required when answer modification is allowed"
-    )
-    response = try_create_rs(allow_case_navigation=False)
-    assert "error_1_id_workstation" not in response.rendered_content
-    assert case_navigation_error in response.rendered_content
-
-    response = try_create_rs(allow_case_navigation=True)
-    assert "error_1_id_workstation" not in response.rendered_content
-    assert case_navigation_error not in response.rendered_content
-    assert response.status_code == 200
-
     rs = ReaderStudy.objects.get(title="foo bar")
 
     assert rs.slug == "foo-bar"

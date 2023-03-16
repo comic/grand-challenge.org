@@ -150,17 +150,7 @@ class ReaderStudyCreateForm(
 
     def clean(self):
         super().clean()
-        if (
-            self.cleaned_data["allow_answer_modification"]
-            and not self.cleaned_data["allow_case_navigation"]
-        ):
-            self.add_error(
-                error=ValidationError(
-                    "Case navigation is required when answer modification is allowed",
-                    code="invalid",
-                ),
-                field=None,
-            )
+
         if self.cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
             self.cleaned_data["allow_case_navigation"]
             or self.cleaned_data["shuffle_hanging_list"]
