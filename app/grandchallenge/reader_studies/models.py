@@ -1262,11 +1262,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                     f"{oxford_comma(ANSWER_TYPE_TO_QUESTION_WIDGET[self.answer_type])}."
                 )
             if self.widget == QuestionWidgetKindChoices.ACCEPT_REJECT:
-                if self.required:
-                    raise ValidationError(
-                        f"In order to use the {self.get_widget_display()} widget, "
-                        f"uncheck the 'required' box."
-                    )
                 if not self.interface:
                     raise ValidationError(
                         f"In order to use the {self.get_widget_display()} widget, "

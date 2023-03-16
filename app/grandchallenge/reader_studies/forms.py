@@ -401,8 +401,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 "Lower numbers put this question to the top."
             ),
             "required": (
-                "If true, the user must answer this question, otherwise the "
-                "user can skip it."
+                "If true, the user must provide an answer or at least one annotation for this question, "
+                "otherwise the user can skip it."
             ),
             "interface": (
                 "Select component interface to use as a default answer for this "
