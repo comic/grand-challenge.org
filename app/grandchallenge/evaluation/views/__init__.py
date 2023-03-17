@@ -51,7 +51,8 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
     """
     Mixin that checks if a user is either an admin of a challenge
     or a participant of the challenge and that the phase is configured for
-    algorithm submission. If the user is a participant, it also checks that the phase
+    algorithm submission and that the challenge has a logo.
+    If the user is a participant, it also checks that the phase
     is open for submissions.
     """
 
@@ -83,10 +84,23 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
                 )
                 return False
             elif (
+                self.phase.challenge.is_admin(self.request.user)
+                and not self.phase.challenge.logo
+            ):
+                error_message = (
+                    "You need to first upload a logo for your challenge "
+                    "before you can create algorithms for its phases."
+                )
+                messages.error(
+                    self.request,
+                    error_message,
+                )
+                return False
+            elif (
                 not self.phase.submission_kind
                 == SubmissionKindChoices.ALGORITHM
-                or not self.phase.inputs
-                or not self.phase.outputs
+                or not self.phase.algorithm_inputs
+                or not self.phase.algorithm_outputs
                 or not self.phase.archive
             ):
                 error_message = (
