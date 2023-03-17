@@ -460,7 +460,7 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
 
 
 @pytest.mark.django_db
-def test_create_algorithm_for_phase_permission(client):
+def test_create_algorithm_for_phase_permission(client, uploaded_image):
     phase = PhaseFactory()
     admin, participant, user = UserFactory.create_batch(3)
     phase.challenge.add_admin(admin)
@@ -484,6 +484,23 @@ def test_create_algorithm_for_phase_permission(client):
     )
 
     VerificationFactory(user=admin, is_verified=True)
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=admin,
+    )
+    assert response.status_code == 403
+    assert (
+        "You need to first upload a logo for your challenge before you can create algorithms for its phases."
+        in str(response.content)
+    )
+
+    phase.challenge.logo = uploaded_image()
+    phase.challenge.save()
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
         reverse_kwargs={
