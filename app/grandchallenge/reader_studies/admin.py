@@ -57,7 +57,7 @@ class AnswersAdmin(GuardedModelAdmin):
         "score",
         "display_set",
     )
-    search_fields = ("creator__username",)
+    search_fields = ("creator__username", "pk")
 
 
 class QuestionsAdmin(GuardedModelAdmin):
