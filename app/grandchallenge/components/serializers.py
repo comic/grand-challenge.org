@@ -163,7 +163,6 @@ class HyperlinkedComponentInterfaceValueSerializer(
 ):
     # Serializes images with hyperlinks for external usage
     image = serializers.HyperlinkedRelatedField(
-        queryset=Image.objects.all(),
         view_name="api:image-detail",
         read_only=True,
         allow_null=True,
