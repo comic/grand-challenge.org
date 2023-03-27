@@ -284,6 +284,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                     f"hx-include='[id=id_answer_type]'>"
                     f"</div>"
                 ),
+                Field("answer_min_value"),
+                Field("answer_max_value"),
+                Field("answer_step_size"),
                 Fieldset(
                     "Add options",
                     Formset("options"),
@@ -371,6 +374,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "overlay_segments",
             "look_up_table",
             "widget",
+            "answer_min_value",
+            "answer_max_value",
+            "answer_step_size",
         )
         help_texts = {
             "question_text": (

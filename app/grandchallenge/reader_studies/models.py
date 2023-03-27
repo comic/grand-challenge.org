@@ -1116,13 +1116,24 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         choices=QuestionWidgetKindChoices.choices, max_length=13, blank=True
     )
     answer_max_value = models.SmallIntegerField(
-        null=True, blank=True, default=None
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Maximum value for answers of type Number. Can only be set in combination with the 'Number input' widget.",
     )
     answer_min_value = models.SmallIntegerField(
-        null=True, blank=True, default=None
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Minimum value for answers of type Number. Can only be set in combination with the 'Number input' widget.",
     )
     answer_step_size = models.DecimalField(
-        null=True, blank=True, default=None, max_digits=6, decimal_places=3
+        null=True,
+        blank=True,
+        default=None,
+        max_digits=6,
+        decimal_places=3,
+        help_text="Step size for answer of type Number. Can only be set in combination with the 'Number input' widget.",
     )
 
     class Meta:
@@ -1165,6 +1176,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "required",
                 "overlay_segments",
                 "widget",
+                "answer_min_value",
+                "answer_max_value",
+                "answer_step_size",
             ]
         return []
 
@@ -1230,6 +1244,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         self._clean_answer_type()
         self._clean_interface()
         self._clean_widget()
+        self._clean_widget_options()
 
     def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
@@ -1277,6 +1292,23 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                         f"In order to use the {self.get_widget_display()} widget, "
                         f"you need to provide a default answer."
                     )
+
+    def _clean_widget_options(self):
+        if (
+            any(
+                [
+                    self.answer_step_size,
+                    self.answer_min_value,
+                    self.answer_max_value,
+                ]
+            )
+            and not self.widget == QuestionWidgetKindChoices.NUMBER_INPUT
+        ):
+            raise ValidationError(
+                "Min and max values and the step size for answers "
+                "can only be defined in combination with the "
+                "Number Input widget for answers of type Number."
+            )
 
     @property
     def allow_null_types(self):

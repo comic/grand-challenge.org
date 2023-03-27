@@ -80,6 +80,9 @@ def test_read_only_fields():
         "required",
         "overlay_segments",
         "widget",
+        "answer_min_value",
+        "answer_max_value",
+        "answer_step_size",
     ]
 
 
@@ -570,3 +573,42 @@ def test_clean_question_widget(answer_type, widget, interface, error):
 
     with error:
         q._clean_widget()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "widget, options, error",
+    (
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {},
+            nullcontext(),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_min_value": 1},
+            nullcontext(),
+        ),
+        (
+            QuestionWidgetKindChoices.ACCEPT_REJECT,
+            {"answer_min_value": 1},
+            pytest.raises(ValidationError),
+        ),
+        (
+            "",
+            {"answer_min_value": 1},
+            pytest.raises(ValidationError),
+        ),
+    ),
+)
+def test_clean_widget_options(widget, options, error):
+    qu = QuestionFactory(
+        question_text="foo",
+        widget=widget,
+    )
+    if options:
+        for option, value in options.items():
+            setattr(qu, option, value)
+
+    with error:
+        qu._clean_widget_options()
