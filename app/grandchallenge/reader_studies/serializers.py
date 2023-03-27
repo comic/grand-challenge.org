@@ -31,6 +31,7 @@ from grandchallenge.reader_studies.models import (
     CategoricalOption,
     DisplaySet,
     Question,
+    QuestionWidgetKindChoices,
     ReaderStudy,
 )
 from grandchallenge.reader_studies.tasks import add_scores_for_display_set
@@ -56,6 +57,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     interface = ComponentInterfaceSerializer(read_only=True)
     look_up_table = LookUpTableSerializer(read_only=True)
     widget = CharField(source="get_widget_display", read_only=True)
+    widget_options = SerializerMethodField()
 
     class Meta:
         model = Question
@@ -74,7 +76,18 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "overlay_segments",
             "look_up_table",
             "widget",
+            "widget_options",
         )
+
+    def get_widget_options(self, obj):
+        if obj.widget == QuestionWidgetKindChoices.NUMBER_INPUT:
+            return {
+                "answer_min_value": obj.answer_min_value,
+                "answer_max_value": obj.answer_max_value,
+                "answer_step_size": obj.answer_step_size,
+            }
+        else:
+            return {}
 
 
 class DisplaySetSerializer(HyperlinkedModelSerializer):
