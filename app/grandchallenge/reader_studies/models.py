@@ -1006,13 +1006,14 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
+    NUMBER_INPUT = "NUMBER_INPUT", "Number input"
 
 
 ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.SINGLE_LINE_TEXT: [],
     AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
-    AnswerType.NUMBER: [],
+    AnswerType.NUMBER: [QuestionWidgetKindChoices.NUMBER_INPUT],
     AnswerType.HEADING: [],
     AnswerType.BOUNDING_BOX_2D: [],
     AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
@@ -1113,6 +1114,15 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     )
     widget = models.CharField(
         choices=QuestionWidgetKindChoices.choices, max_length=13, blank=True
+    )
+    answer_max_value = models.SmallIntegerField(
+        null=True, blank=True, default=None
+    )
+    answer_min_value = models.SmallIntegerField(
+        null=True, blank=True, default=None
+    )
+    answer_step_size = models.DecimalField(
+        null=True, blank=True, default=None, max_digits=6, decimal_places=3
     )
 
     class Meta:
