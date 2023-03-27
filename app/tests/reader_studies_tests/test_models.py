@@ -420,6 +420,73 @@ def test_validate_answer():
     )
 
 
+@pytest.mark.parametrize(
+    "answer_type, answer, extra_parms, error",
+    (
+        (
+            AnswerType.NUMBER,
+            2,
+            {
+                "answer_min_value": 1,
+                "answer_max_value": 5,
+                "answer_step_size": 0.5,
+            },
+            nullcontext(),
+        ),
+        (
+            AnswerType.NUMBER,
+            6,
+            {
+                "answer_min_value": 1,
+                "answer_max_value": 5,
+                "answer_step_size": 0.5,
+            },
+            pytest.raises(ValidationError),
+        ),
+        (
+            AnswerType.NUMBER,
+            4.7,
+            {
+                "answer_min_value": 1,
+                "answer_max_value": 5,
+                "answer_step_size": 0.5,
+            },
+            pytest.raises(ValidationError),
+        ),
+        (
+            AnswerType.NUMBER,
+            0,
+            {
+                "answer_min_value": 1,
+                "answer_max_value": 5,
+                "answer_step_size": 0.5,
+            },
+            pytest.raises(ValidationError),
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_validate_answer_number_input_settings(
+    answer_type, answer, extra_parms, error
+):
+    u = UserFactory()
+    rs = ReaderStudyFactory()
+
+    rs.add_reader(u)
+    ds = DisplaySetFactory(reader_study=rs)
+    qu = QuestionFactory(
+        reader_study=rs,
+        answer_type=answer_type,
+        question_text="q1",
+    )
+    if extra_parms:
+        for param, value in extra_parms.items():
+            setattr(qu, param, value)
+
+    with error:
+        Answer.validate(creator=u, question=qu, answer=answer, display_set=ds)
+
+
 @pytest.mark.django_db
 def test_display_set_order():
     rs = ReaderStudyFactory()

@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
@@ -40,6 +41,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
+from grandchallenge.core.vendored.django.validators import StepValueValidator
 from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
@@ -1489,14 +1491,35 @@ class Answer(UUIDModel):
                     "Provided options are not valid for this question"
                 )
 
-        if (
-            question.answer_type == Question.AnswerType.NUMBER
-            and question.required
-            and answer is None
-        ):
-            raise ValidationError(
-                "Answer for required question cannot be None"
-            )
+        if question.answer_type == Question.AnswerType.NUMBER:
+            if question.required and answer is None:
+                raise ValidationError(
+                    "Answer for required question cannot be None"
+                )
+            if question.answer_min_value:
+                min_value_validator = MinValueValidator(
+                    question.answer_min_value
+                )
+                try:
+                    min_value_validator(answer)
+                except ValidationError as e:
+                    raise e
+            if question.answer_max_value:
+                max_value_validator = MaxValueValidator(
+                    question.answer_max_value
+                )
+                try:
+                    max_value_validator(answer)
+                except ValidationError as e:
+                    raise e
+            if question.answer_step_size:
+                step_size_validator = StepValueValidator(
+                    question.answer_step_size
+                )
+                try:
+                    step_size_validator(answer)
+                except ValidationError as e:
+                    raise e
 
     @property
     def answer_text(self):
