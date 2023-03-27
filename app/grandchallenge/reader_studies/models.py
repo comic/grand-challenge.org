@@ -1133,7 +1133,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         default=None,
         max_digits=6,
         decimal_places=3,
-        help_text="Step size for answer of type Number. Can only be set in combination with the 'Number input' widget.",
+        help_text="Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the 'Number input' widget.",
     )
 
     class Meta:
