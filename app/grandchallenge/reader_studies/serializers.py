@@ -79,8 +79,8 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "widget_options",
         )
 
-    def get_widget_options(self, obj):
-        if obj.widget == QuestionWidgetKindChoices.NUMBER_INPUT:
+    def get_widget_options(self, obj: Question) -> dict:
+        if obj.widget and obj.widget == QuestionWidgetKindChoices.NUMBER_INPUT:
             return {
                 "answer_min_value": obj.answer_min_value,
                 "answer_max_value": obj.answer_max_value,
