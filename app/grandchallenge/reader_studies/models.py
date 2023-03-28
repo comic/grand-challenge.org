@@ -1135,6 +1135,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         default=None,
         max_digits=6,
         decimal_places=3,
+        validators=[MinValueValidator(limit_value=0.001)],
         help_text="Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the 'Number input' widget.",
     )
 
@@ -1299,9 +1300,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         if (
             any(
                 [
-                    self.answer_step_size,
-                    self.answer_min_value,
-                    self.answer_max_value,
+                    self.answer_step_size is not None,
+                    self.answer_min_value is not None,
+                    self.answer_max_value is not None,
                 ]
             )
             and not self.widget == QuestionWidgetKindChoices.NUMBER_INPUT
@@ -1496,30 +1497,21 @@ class Answer(UUIDModel):
                 raise ValidationError(
                     "Answer for required question cannot be None"
                 )
-            if question.answer_min_value:
+            if question.answer_min_value is not None:
                 min_value_validator = MinValueValidator(
                     question.answer_min_value
                 )
-                try:
-                    min_value_validator(answer)
-                except ValidationError as e:
-                    raise e
-            if question.answer_max_value:
+                min_value_validator(answer)
+            if question.answer_max_value is not None:
                 max_value_validator = MaxValueValidator(
                     question.answer_max_value
                 )
-                try:
-                    max_value_validator(answer)
-                except ValidationError as e:
-                    raise e
-            if question.answer_step_size:
+                max_value_validator(answer)
+            if question.answer_step_size is not None:
                 step_size_validator = StepValueValidator(
                     question.answer_step_size
                 )
-                try:
-                    step_size_validator(answer)
-                except ValidationError as e:
-                    raise e
+                step_size_validator(answer)
 
     @property
     def answer_text(self):
