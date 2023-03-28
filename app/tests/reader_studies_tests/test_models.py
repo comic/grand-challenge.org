@@ -421,13 +421,13 @@ def test_validate_answer():
 
 
 @pytest.mark.parametrize(
-    "answer_type, answer, extra_parms, error",
+    "answer_type, answer, extra_params, error",
     (
         (
             AnswerType.NUMBER,
             2,
             {
-                "answer_min_value": 1,
+                "answer_min_value": 0,
                 "answer_max_value": 5,
                 "answer_step_size": 0.5,
             },
@@ -437,7 +437,7 @@ def test_validate_answer():
             AnswerType.NUMBER,
             6,
             {
-                "answer_min_value": 1,
+                "answer_min_value": 0,
                 "answer_max_value": 5,
                 "answer_step_size": 0.5,
             },
@@ -447,7 +447,17 @@ def test_validate_answer():
             AnswerType.NUMBER,
             4.7,
             {
-                "answer_min_value": 1,
+                "answer_min_value": 0,
+                "answer_max_value": 5,
+                "answer_step_size": 0.5,
+            },
+            pytest.raises(ValidationError),
+        ),
+        (
+            AnswerType.NUMBER,
+            -1,
+            {
+                "answer_min_value": 0,
                 "answer_max_value": 5,
                 "answer_step_size": 0.5,
             },
@@ -457,17 +467,17 @@ def test_validate_answer():
             AnswerType.NUMBER,
             0,
             {
-                "answer_min_value": 1,
+                "answer_min_value": 0,
                 "answer_max_value": 5,
                 "answer_step_size": 0.5,
             },
-            pytest.raises(ValidationError),
+            nullcontext(),
         ),
     ),
 )
 @pytest.mark.django_db
 def test_validate_answer_number_input_settings(
-    answer_type, answer, extra_parms, error
+    answer_type, answer, extra_params, error
 ):
     u = UserFactory()
     rs = ReaderStudyFactory()
@@ -479,8 +489,8 @@ def test_validate_answer_number_input_settings(
         answer_type=answer_type,
         question_text="q1",
     )
-    if extra_parms:
-        for param, value in extra_parms.items():
+    if extra_params:
+        for param, value in extra_params.items():
             setattr(qu, param, value)
 
     with error:
@@ -657,6 +667,16 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             nullcontext(),
         ),
         (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_min_value": -1},
+            nullcontext(),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_min_value": 0},
+            nullcontext(),
+        ),
+        (
             QuestionWidgetKindChoices.ACCEPT_REJECT,
             {"answer_min_value": 1},
             pytest.raises(ValidationError),
@@ -665,6 +685,44 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             "",
             {"answer_min_value": 1},
             pytest.raises(ValidationError),
+        ),
+        (
+            "",
+            {"answer_min_value": 0},
+            pytest.raises(ValidationError),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_step_size": 0},
+            pytest.raises(ValidationError),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_step_size": 0.5},
+            pytest.raises(ValidationError),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_step_size": 0.5, "answer_min_value": 0},
+            nullcontext(),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {
+                "answer_step_size": 0.3,
+                "answer_min_value": 0,
+                "answer_max_value": 4,
+            },
+            pytest.raises(ValidationError),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {
+                "answer_step_size": 0.5,
+                "answer_min_value": 0,
+                "answer_max_value": 4,
+            },
+            nullcontext(),
         ),
     ),
 )

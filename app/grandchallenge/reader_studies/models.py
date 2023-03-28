@@ -1,4 +1,5 @@
 import json
+import math
 
 from actstream.models import Follow
 from django.conf import settings
@@ -1311,6 +1312,34 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "Min and max values and the step size for answers "
                 "can only be defined in combination with the "
                 "Number Input widget for answers of type Number."
+            )
+        if self.answer_step_size is not None and not (
+            self.answer_min_value is not None
+            or self.answer_max_value is not None
+        ):
+            raise ValidationError(
+                "When defining the answer step size, you need to also define "
+                "the min or max value for the answer."
+            )
+        if (
+            all(
+                [
+                    self.answer_step_size is not None,
+                    self.answer_min_value is not None,
+                    self.answer_max_value is not None,
+                ]
+            )
+        ) and not math.isclose(
+            math.remainder(
+                self.answer_max_value - self.answer_min_value,
+                self.answer_step_size,
+            ),
+            0,
+            abs_tol=1e-9,
+        ):
+            raise ValidationError(
+                "The difference between min and max answer value is not "
+                "a multiple of the step size."
             )
 
     @property
