@@ -654,76 +654,67 @@ def test_clean_question_widget(answer_type, widget, interface, error):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "widget, options, error",
+    "widget, options, error, error_message",
     (
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {},
             nullcontext(),
+            None,
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_min_value": 1},
             nullcontext(),
+            None,
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_max_value": 5},
             nullcontext(),
+            None,
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_min_value": -1},
             nullcontext(),
+            None,
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_min_value": 0},
             nullcontext(),
+            None,
         ),
         (
             QuestionWidgetKindChoices.ACCEPT_REJECT,
             {"answer_min_value": 1},
             pytest.raises(ValidationError),
+            "Min and max values and the step size for answers "
+            "can only be defined in combination with the "
+            "Number Input widget for answers of type Number.",
         ),
         (
             "",
             {"answer_min_value": 1},
             pytest.raises(ValidationError),
+            "Min and max values and the step size for answers "
+            "can only be defined in combination with the "
+            "Number Input widget for answers of type Number.",
         ),
         (
             "",
             {"answer_min_value": 0},
             pytest.raises(ValidationError),
+            "Min and max values and the step size for answers "
+            "can only be defined in combination with the "
+            "Number Input widget for answers of type Number.",
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
-            {"answer_step_size": 1},
-            pytest.raises(ValidationError),
-        ),
-        (
-            QuestionWidgetKindChoices.NUMBER_INPUT,
-            {"answer_step_size": 0.5, "answer_min_value": 0},
+            {"answer_step_size": 0.5},
             nullcontext(),
-        ),
-        (
-            QuestionWidgetKindChoices.NUMBER_INPUT,
-            {"answer_step_size": -1, "answer_min_value": 0},
-            pytest.raises(ValidationError),
-        ),
-        (
-            QuestionWidgetKindChoices.NUMBER_INPUT,
-            {"answer_step_size": 0, "answer_min_value": 0},
-            pytest.raises(ValidationError),
-        ),
-        (
-            QuestionWidgetKindChoices.NUMBER_INPUT,
-            {
-                "answer_step_size": 0.3,
-                "answer_min_value": 0,
-                "answer_max_value": 4,
-            },
-            pytest.raises(ValidationError),
+            None,
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
@@ -733,6 +724,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
                 "answer_max_value": 4,
             },
             nullcontext(),
+            None,
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
@@ -741,6 +733,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
                 "answer_max_value": 0,
             },
             pytest.raises(ValidationError),
+            "Answer max value needs to be bigger than answer min value.",
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
@@ -749,10 +742,11 @@ def test_clean_question_widget(answer_type, widget, interface, error):
                 "answer_max_value": 0,
             },
             pytest.raises(ValidationError),
+            "Answer max value needs to be bigger than answer min value.",
         ),
     ),
 )
-def test_clean_widget_options(widget, options, error):
+def test_clean_widget_options(widget, options, error, error_message):
     qu = QuestionFactory(
         question_text="foo",
         widget=widget,
@@ -761,5 +755,8 @@ def test_clean_widget_options(widget, options, error):
         for option, value in options.items():
             setattr(qu, option, value)
 
-    with error:
+    with error as e:
         qu._clean_widget_options()
+
+    if error_message:
+        assert e.value.message == error_message

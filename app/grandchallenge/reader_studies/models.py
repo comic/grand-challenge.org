@@ -1320,27 +1320,10 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "Number Input widget for answers of type Number."
             )
 
-        if is_step_size_set:
-            if not (is_min_value_set or is_max_value_set):
-                raise ValidationError(
-                    "When defining the answer step size, you need to also define "
-                    "the min or max value for the answer."
-                )
-
-            if is_min_value_set and is_max_value_set:
-                try:
-                    range = self.answer_max_value - self.answer_min_value
-                    StepValueValidator(self.answer_step_size)(range)
-                except ValidationError:
-                    raise ValidationError(
-                        "The difference between min and max answer value is not "
-                        "a multiple of the step size."
-                    )
-
         if (
             is_min_value_set
             and is_max_value_set
-            and self.answer_max_value < self.answer_min_value
+            and self.answer_max_value <= self.answer_min_value
         ):
             raise ValidationError(
                 "Answer max value needs to be bigger than answer min value."
