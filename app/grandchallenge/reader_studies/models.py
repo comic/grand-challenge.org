@@ -1529,26 +1529,23 @@ class Answer(UUIDModel):
                     "Provided options are not valid for this question"
                 )
 
-        if question.answer_type == Question.AnswerType.NUMBER:
-            if question.required and answer is None:
-                raise ValidationError(
-                    "Answer for required question cannot be None"
-                )
-            if question.answer_min_value is not None:
-                min_value_validator = MinValueValidator(
-                    question.answer_min_value
-                )
-                min_value_validator(answer)
-            if question.answer_max_value is not None:
-                max_value_validator = MaxValueValidator(
-                    question.answer_max_value
-                )
-                max_value_validator(answer)
-            if question.answer_step_size is not None:
-                step_size_validator = StepValueValidator(
-                    question.answer_step_size
-                )
-                step_size_validator(answer)
+        if (
+            question.answer_type == Question.AnswerType.NUMBER
+            and question.required
+            and answer is None
+        ):
+            raise ValidationError(
+                "Answer for required question cannot be None"
+            )
+
+        if question.answer_min_value is not None:
+            MinValueValidator(question.answer_min_value)(answer)
+
+        if question.answer_max_value is not None:
+            MaxValueValidator(question.answer_max_value)(answer)
+
+        if question.answer_step_size is not None:
+            StepValueValidator(question.answer_step_size)(answer)
 
     @property
     def answer_text(self):
