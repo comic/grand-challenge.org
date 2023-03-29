@@ -1,5 +1,4 @@
 import json
-import math
 
 from actstream.models import Follow
 from django.conf import settings
@@ -1298,53 +1297,50 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                     )
 
     def _clean_widget_options(self):
+        is_step_size_set = self.answer_step_size is not None
+        is_min_value_set = self.answer_min_value is not None
+        is_max_value_set = self.answer_max_value is not None
+        is_number_validation_set = any(
+            [is_step_size_set, is_min_value_set, is_max_value_set]
+        )
+
         if (
-            any(
-                [
-                    self.answer_step_size is not None,
-                    self.answer_min_value is not None,
-                    self.answer_max_value is not None,
-                ]
-            )
+            is_number_validation_set
+            and not self.answer_type == AnswerType.NUMBER
             and not self.widget == QuestionWidgetKindChoices.NUMBER_INPUT
         ):
+            # Server side number validation can only be done with AnswerType.NUMBER.
+            # Currently, client side number validation is only done with
+            # QuestionWidgetKindChoices.NUMBER_INPUT. If we allowed number
+            # validation with other widgets here the readers may not get
+            # feedback from the viewer about why their answers are rejected
             raise ValidationError(
                 "Min and max values and the step size for answers "
                 "can only be defined in combination with the "
                 "Number Input widget for answers of type Number."
             )
-        if self.answer_step_size is not None and not (
-            self.answer_min_value is not None
-            or self.answer_max_value is not None
-        ):
-            raise ValidationError(
-                "When defining the answer step size, you need to also define "
-                "the min or max value for the answer."
-            )
+
+        if is_step_size_set:
+            if not (is_min_value_set or is_max_value_set):
+                raise ValidationError(
+                    "When defining the answer step size, you need to also define "
+                    "the min or max value for the answer."
+                )
+
+            if is_min_value_set and is_max_value_set:
+                try:
+                    range = self.answer_max_value - self.answer_min_value
+                    StepValueValidator(self.answer_step_size)(range)
+                except ValidationError:
+                    raise ValidationError(
+                        "The difference between min and max answer value is not "
+                        "a multiple of the step size."
+                    )
+
         if (
-            all(
-                [
-                    self.answer_step_size is not None,
-                    self.answer_min_value is not None,
-                    self.answer_max_value is not None,
-                ]
-            )
-        ) and not math.isclose(
-            math.remainder(
-                self.answer_max_value - self.answer_min_value,
-                self.answer_step_size,
-            ),
-            0,
-            abs_tol=1e-9,
-        ):
-            raise ValidationError(
-                "The difference between min and max answer value is not "
-                "a multiple of the step size."
-            )
-        if (
-            self.answer_min_value is not None
-            and self.answer_max_value is not None
-            and not self.answer_max_value > self.answer_min_value
+            is_min_value_set
+            and is_max_value_set
+            and self.answer_max_value < self.answer_min_value
         ):
             raise ValidationError(
                 "Answer max value needs to be bigger than answer min value."
