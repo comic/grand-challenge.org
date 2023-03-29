@@ -74,6 +74,9 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "overlay_segments",
             "look_up_table",
             "widget",
+            "answer_min_value",
+            "answer_max_value",
+            "answer_step_size",
         )
 
 

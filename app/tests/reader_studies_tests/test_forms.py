@@ -1192,7 +1192,10 @@ def test_display_set_add_interface_form():
         (AnswerType.SINGLE_LINE_TEXT, BLANK_CHOICE_DASH),
         (AnswerType.MULTI_LINE_TEXT, BLANK_CHOICE_DASH),
         (AnswerType.BOOL, BLANK_CHOICE_DASH),
-        (AnswerType.NUMBER, BLANK_CHOICE_DASH),
+        (
+            AnswerType.NUMBER,
+            [BLANK_CHOICE_DASH[0], ("NUMBER_INPUT", "Number input")],
+        ),
         (AnswerType.POINT, BLANK_CHOICE_DASH),
         (
             AnswerType.MULTIPLE_POINTS,

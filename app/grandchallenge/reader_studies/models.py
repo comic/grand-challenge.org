@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
@@ -40,6 +41,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
+from grandchallenge.core.vendored.django.validators import StepValueValidator
 from grandchallenge.hanging_protocols.models import ViewContentMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
@@ -1006,13 +1008,14 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
+    NUMBER_INPUT = "NUMBER_INPUT", "Number input"
 
 
 ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.SINGLE_LINE_TEXT: [],
     AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
-    AnswerType.NUMBER: [],
+    AnswerType.NUMBER: [QuestionWidgetKindChoices.NUMBER_INPUT],
     AnswerType.HEADING: [],
     AnswerType.BOUNDING_BOX_2D: [],
     AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
@@ -1114,6 +1117,27 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     widget = models.CharField(
         choices=QuestionWidgetKindChoices.choices, max_length=13, blank=True
     )
+    answer_max_value = models.SmallIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Maximum value for answers of type Number. Can only be set in combination with the 'Number input' widget.",
+    )
+    answer_min_value = models.SmallIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Minimum value for answers of type Number. Can only be set in combination with the 'Number input' widget.",
+    )
+    answer_step_size = models.DecimalField(
+        null=True,
+        blank=True,
+        default=None,
+        max_digits=6,
+        decimal_places=3,
+        validators=[MinValueValidator(limit_value=0.001)],
+        help_text="Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the 'Number input' widget.",
+    )
 
     class Meta:
         ordering = ("order", "created")
@@ -1155,6 +1179,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "required",
                 "overlay_segments",
                 "widget",
+                "answer_min_value",
+                "answer_max_value",
+                "answer_step_size",
             ]
         return []
 
@@ -1220,6 +1247,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         self._clean_answer_type()
         self._clean_interface()
         self._clean_widget()
+        self._clean_widget_options()
 
     def _clean_answer_type(self):
         # Make sure that the image port is only set when using drawn
@@ -1267,6 +1295,39 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                         f"In order to use the {self.get_widget_display()} widget, "
                         f"you need to provide a default answer."
                     )
+
+    def _clean_widget_options(self):
+        is_step_size_set = self.answer_step_size is not None
+        is_min_value_set = self.answer_min_value is not None
+        is_max_value_set = self.answer_max_value is not None
+        is_number_validation_set = any(
+            [is_step_size_set, is_min_value_set, is_max_value_set]
+        )
+
+        if (
+            is_number_validation_set
+            and not self.answer_type == AnswerType.NUMBER
+            and not self.widget == QuestionWidgetKindChoices.NUMBER_INPUT
+        ):
+            # Server side number validation can only be done with AnswerType.NUMBER.
+            # Currently, client side number validation is only done with
+            # QuestionWidgetKindChoices.NUMBER_INPUT. If we allowed number
+            # validation with other widgets here the readers may not get
+            # feedback from the viewer about why their answers are rejected
+            raise ValidationError(
+                "Min and max values and the step size for answers "
+                "can only be defined in combination with the "
+                "Number Input widget for answers of type Number."
+            )
+
+        if (
+            is_min_value_set
+            and is_max_value_set
+            and self.answer_max_value <= self.answer_min_value
+        ):
+            raise ValidationError(
+                "Answer max value needs to be bigger than answer min value."
+            )
 
     @property
     def allow_null_types(self):
@@ -1455,6 +1516,15 @@ class Answer(UUIDModel):
             raise ValidationError(
                 "Answer for required question cannot be None"
             )
+
+        if question.answer_min_value is not None:
+            MinValueValidator(question.answer_min_value)(answer)
+
+        if question.answer_max_value is not None:
+            MaxValueValidator(question.answer_max_value)(answer)
+
+        if question.answer_step_size is not None:
+            StepValueValidator(question.answer_step_size)(answer)
 
     @property
     def answer_text(self):
