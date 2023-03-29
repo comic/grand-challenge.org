@@ -84,6 +84,7 @@
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
 <span class="kn">from</span> <span class="nn">django.contrib.contenttypes.models</span> <span class="kn">import</span> <span class="n">ContentType</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Sum</span>
 <span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="kn">import</span> <span class="n">post_delete</span>
@@ -118,6 +119,7 @@
     <span class="n">process_access_request</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="n">JSONValidator</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.vendored.django.validators</span> <span class="kn">import</span> <span class="n">StepValueValidator</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.hanging_protocols.models</span> <span class="kn">import</span> <span class="n">ViewContentMixin</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.modalities.models</span> <span class="kn">import</span> <span class="n">ImagingModality</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.organizations.models</span> <span class="kn">import</span> <span class="n">Organization</span>
@@ -1083,14 +1085,15 @@
 
 
 <div class="viewcode-block" id="QuestionWidgetKindChoices"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionWidgetKindChoices">[docs]</a><span class="k">class</span> <span class="nc">QuestionWidgetKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
-    <span class="n">ACCEPT_REJECT</span> <span class="o">=</span> <span class="s2">&quot;ACCEPT_REJECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept/Reject Findings&quot;</span></div>
+    <span class="n">ACCEPT_REJECT</span> <span class="o">=</span> <span class="s2">&quot;ACCEPT_REJECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept/Reject Findings&quot;</span>
+    <span class="n">NUMBER_INPUT</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Number input&quot;</span></div>
 
 
 <span class="n">ANSWER_TYPE_TO_QUESTION_WIDGET</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_INPUT</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">:</span> <span class="p">[</span>
@@ -1192,6 +1195,27 @@
     <span class="n">widget</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
+    <span class="n">answer_max_value</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SmallIntegerField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Maximum value for answers of type Number. Can only be set in combination with the &#39;Number input&#39; widget.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">answer_min_value</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SmallIntegerField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Minimum value for answers of type Number. Can only be set in combination with the &#39;Number input&#39; widget.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">answer_step_size</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_digits</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+        <span class="n">decimal_places</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MinValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)],</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the &#39;Number input&#39; widget.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
@@ -1233,6 +1257,9 @@
                 <span class="s2">&quot;required&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;overlay_segments&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;widget&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;answer_min_value&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;answer_max_value&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;answer_step_size&quot;</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="k">return</span> <span class="p">[]</span>
 
@@ -1297,7 +1324,8 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_answer_type</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_interface</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_widget_options</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_clean_answer_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Make sure that the image port is only set when using drawn</span>
@@ -1345,6 +1373,39 @@
                         <span class="sa">f</span><span class="s2">&quot;In order to use the </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_widget_display</span><span class="p">()</span><span class="si">}</span><span class="s2"> widget, &quot;</span>
                         <span class="sa">f</span><span class="s2">&quot;you need to provide a default answer.&quot;</span>
                     <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_clean_widget_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">is_step_size_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_step_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">is_min_value_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">is_max_value_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_max_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">is_number_validation_set</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">is_step_size_set</span><span class="p">,</span> <span class="n">is_min_value_set</span><span class="p">,</span> <span class="n">is_max_value_set</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">is_number_validation_set</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget</span> <span class="o">==</span> <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_INPUT</span>
+        <span class="p">):</span>
+            <span class="c1"># Server side number validation can only be done with AnswerType.NUMBER.</span>
+            <span class="c1"># Currently, client side number validation is only done with</span>
+            <span class="c1"># QuestionWidgetKindChoices.NUMBER_INPUT. If we allowed number</span>
+            <span class="c1"># validation with other widgets here the readers may not get</span>
+            <span class="c1"># feedback from the viewer about why their answers are rejected</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Min and max values and the step size for answers &quot;</span>
+                <span class="s2">&quot;can only be defined in combination with the &quot;</span>
+                <span class="s2">&quot;Number Input widget for answers of type Number.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">is_min_value_set</span>
+            <span class="ow">and</span> <span class="n">is_max_value_set</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_max_value</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_min_value</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Answer max value needs to be bigger than answer min value.&quot;</span>
+            <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">allow_null_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1532,7 +1593,16 @@
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Answer for required question cannot be None&quot;</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">MinValueValidator</span><span class="p">(</span><span class="n">question</span><span class="o">.</span><span class="n">answer_min_value</span><span class="p">)(</span><span class="n">answer</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_max_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">MaxValueValidator</span><span class="p">(</span><span class="n">question</span><span class="o">.</span><span class="n">answer_max_value</span><span class="p">)(</span><span class="n">answer</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_step_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">StepValueValidator</span><span class="p">(</span><span class="n">question</span><span class="o">.</span><span class="n">answer_step_size</span><span class="p">)(</span><span class="n">answer</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">answer_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
