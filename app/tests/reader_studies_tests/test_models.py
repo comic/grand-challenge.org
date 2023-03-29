@@ -668,6 +668,11 @@ def test_clean_question_widget(answer_type, widget, interface, error):
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_max_value": 5},
+            nullcontext(),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_min_value": -1},
             nullcontext(),
         ),
@@ -693,18 +698,23 @@ def test_clean_question_widget(answer_type, widget, interface, error):
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
-            {"answer_step_size": 0},
-            pytest.raises(ValidationError),
-        ),
-        (
-            QuestionWidgetKindChoices.NUMBER_INPUT,
-            {"answer_step_size": 0.5},
+            {"answer_step_size": 1},
             pytest.raises(ValidationError),
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_step_size": 0.5, "answer_min_value": 0},
             nullcontext(),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_step_size": -1, "answer_min_value": 0},
+            pytest.raises(ValidationError),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {"answer_step_size": 0, "answer_min_value": 0},
+            pytest.raises(ValidationError),
         ),
         (
             QuestionWidgetKindChoices.NUMBER_INPUT,
@@ -723,6 +733,22 @@ def test_clean_question_widget(answer_type, widget, interface, error):
                 "answer_max_value": 4,
             },
             nullcontext(),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {
+                "answer_min_value": 4,
+                "answer_max_value": 0,
+            },
+            pytest.raises(ValidationError),
+        ),
+        (
+            QuestionWidgetKindChoices.NUMBER_INPUT,
+            {
+                "answer_min_value": 0,
+                "answer_max_value": 0,
+            },
+            pytest.raises(ValidationError),
         ),
     ),
 )

@@ -1341,6 +1341,14 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "The difference between min and max answer value is not "
                 "a multiple of the step size."
             )
+        if (
+            self.answer_min_value is not None
+            and self.answer_max_value is not None
+            and not self.answer_max_value > self.answer_min_value
+        ):
+            raise ValidationError(
+                "Answer max value needs to be bigger than answer min value."
+            )
 
     @property
     def allow_null_types(self):
