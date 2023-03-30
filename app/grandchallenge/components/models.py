@@ -1630,6 +1630,10 @@ class ComponentImage(models.Model):
                 self.import_status = ImportStatusChoices.QUEUED
                 validate_image_now = True
 
+        elif self.image and image_needs_validation:
+            self.import_status = ImportStatusChoices.QUEUED
+            validate_image_now = True
+
         super().save(*args, **kwargs)
         if validate_image_now:
             on_commit(
