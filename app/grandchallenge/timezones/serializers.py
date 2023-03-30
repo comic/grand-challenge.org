@@ -1,7 +1,10 @@
-from pytz import all_timezones
+import zoneinfo
+
 from rest_framework.fields import ChoiceField
 from rest_framework.serializers import Serializer
 
 
 class TimezoneSerializer(Serializer):
-    timezone = ChoiceField(choices=all_timezones, required=True)
+    timezone = ChoiceField(
+        choices=zoneinfo.available_timezones(), required=True
+    )

@@ -45,7 +45,6 @@ crispy-bootstrap4 = "*"
 djangorestframework = "*"
 drf-spectacular = "*"
 python-magic = "*"
-pytz = "*"
 gunicorn = "*"
 uvicorn = {version = "*", extras = ["standard"]}
 django-celery-email = "*"
