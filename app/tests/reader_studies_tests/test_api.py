@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 from django.urls import reverse
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKind
@@ -1294,7 +1293,13 @@ def test_ground_truth(client):
         ),
     ),
 )
-def test_assign_answer_image(client, settings, overlay_segments, error):
+def test_assign_answer_image(
+    client,
+    settings,
+    overlay_segments,
+    error,
+    django_capture_on_commit_callbacks,
+):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
     rs = ReaderStudyFactory()
@@ -1332,7 +1337,7 @@ def test_assign_answer_image(client, settings, overlay_segments, error):
         / "mask.mha",
         creator=reader,
     )
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=reader,
@@ -1674,7 +1679,9 @@ def test_display_set_shuffling(client, settings):
 
 
 @pytest.mark.django_db
-def test_display_set_add_and_edit(client, settings):
+def test_display_set_add_and_edit(
+    client, settings, django_capture_on_commit_callbacks
+):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -1711,7 +1718,7 @@ def test_display_set_add_and_edit(client, settings):
     )
 
     ds = DisplaySet.objects.get(pk=response.json()["pk"])
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=r1,
@@ -1740,7 +1747,7 @@ def test_display_set_add_and_edit(client, settings):
     assert initial_value.interface.slug == "generic-medical-image"
     assert initial_value.image.name == "test_grayscale.jpg"
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=r1,
@@ -1794,7 +1801,7 @@ def test_display_set_add_and_edit(client, settings):
         creator=r1,
     )
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:reader-studies-display-set-detail",
             reverse_kwargs={"pk": ds.pk},

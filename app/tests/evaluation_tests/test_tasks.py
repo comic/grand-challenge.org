@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.test import TestCase
 from django.utils.html import format_html
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
@@ -36,7 +35,11 @@ from tests.utils import recurse_callbacks
 
 @pytest.mark.django_db
 def test_submission_evaluation(
-    client, evaluation_image, submission_file, settings
+    client,
+    evaluation_image,
+    submission_file,
+    settings,
+    django_capture_on_commit_callbacks,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -44,21 +47,27 @@ def test_submission_evaluation(
 
     # Upload a submission and create an evaluation
     eval_container, sha256 = evaluation_image
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         method = MethodFactory(image__from_path=eval_container)
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     # We should not be able to download methods
     with pytest.raises(NotImplementedError):
         _ = method.image.url
 
     # This will create an evaluation, and we'll wait for it to be executed
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         submission = SubmissionFactory(
             predictions_file__from_path=submission_file, phase=method.phase
         )
 
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
@@ -77,7 +86,7 @@ def test_submission_evaluation(
     )
 
     # Try with a csv file
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         submission = SubmissionFactory(
             predictions_file__from_path=Path(__file__).parent
             / "resources"
@@ -85,7 +94,10 @@ def test_submission_evaluation(
             phase=method.phase,
         )
 
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     evaluation = submission.evaluation_set.first()
     assert len(submission.evaluation_set.all()) == 1
@@ -250,7 +262,11 @@ class TestSetEvaluationInputs(TestCase):
 
 @pytest.mark.django_db
 def test_non_zip_submission_failure(
-    client, evaluation_image, submission_file, settings
+    client,
+    evaluation_image,
+    submission_file,
+    settings,
+    django_capture_on_commit_callbacks,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -266,7 +282,7 @@ def test_non_zip_submission_failure(
     )
 
     # Try with a 7z file
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         submission = SubmissionFactory(
             predictions_file__from_path=Path(__file__).parent
             / "resources"
@@ -285,14 +301,18 @@ def test_non_zip_submission_failure(
 
 @pytest.mark.django_db
 def test_evaluation_notifications(
-    client, evaluation_image, submission_file, settings
+    client,
+    evaluation_image,
+    submission_file,
+    settings,
+    django_capture_on_commit_callbacks,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     # Try to upload a submission without a method in place
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         submission = SubmissionFactory(
             predictions_file__from_path=submission_file
         )
@@ -310,18 +330,24 @@ def test_evaluation_notifications(
 
     # Add method and upload a submission
     eval_container, sha256 = evaluation_image
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         method = MethodFactory(image__from_path=eval_container)
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     # clear notifications for easier testing later
     Notification.objects.all().delete()
     # create submission and wait for it to be evaluated
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         submission = SubmissionFactory(
             predictions_file__from_path=submission_file, phase=method.phase
         )
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
     # creator of submission and admins of challenge should get notification
     # about successful submission
     recipients = list(submission.phase.challenge.get_admins())

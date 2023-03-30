@@ -1,11 +1,10 @@
+from collections import namedtuple
 from datetime import timedelta
 from itertools import chain
 
 import pytest
-from django.test import TestCase, override_settings
 from django.utils import timezone
 from django.utils.timezone import now
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.evaluation.models import Evaluation
@@ -25,64 +24,84 @@ from tests.evaluation_tests.factories import (
 from tests.factories import ImageFactory, UserFactory
 
 
-class TestSubmission(TestCase):
-    def setUp(self) -> None:
-        self.method = MethodFactory(
-            is_manifest_valid=True,
-            is_in_registry=True,
-            phase__archive=ArchiveFactory(),
-        )
-        self.algorithm_image = AlgorithmImageFactory()
+@pytest.fixture
+def algorithm_submission():
+    algorithm_submission = namedtuple(
+        "algorithm_submission", ["method", "algorithm_image", "images"]
+    )
 
-        interface = ComponentInterfaceFactory()
-        self.algorithm_image.algorithm.inputs.set([interface])
+    method = MethodFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        phase__archive=ArchiveFactory(),
+    )
+    algorithm_image = AlgorithmImageFactory()
 
-        self.images = ImageFactory.create_batch(3)
+    interface = ComponentInterfaceFactory()
+    algorithm_image.algorithm.inputs.set([interface])
 
-        for image in self.images[:2]:
-            civ = ComponentInterfaceValueFactory(
-                image=image, interface=interface
-            )
-            ai = ArchiveItemFactory(archive=self.method.phase.archive)
-            ai.values.add(civ)
+    images = ImageFactory.create_batch(3)
 
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    @override_settings(CELERY_TASK_EAGER_PROPAGATES=True)
-    def test_algorithm_submission_creates_one_job_per_test_set_image(self):
-        s = SubmissionFactory(
-            phase=self.method.phase, algorithm_image=self.algorithm_image
-        )
+    for image in images[:2]:
+        civ = ComponentInterfaceValueFactory(image=image, interface=interface)
+        ai = ArchiveItemFactory(archive=method.phase.archive)
+        ai.values.add(civ)
 
-        with capture_on_commit_callbacks() as callbacks:
-            create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+    return algorithm_submission(
+        method=method, algorithm_image=algorithm_image, images=images
+    )
 
-        # Execute the callbacks non-recursively
-        for c in callbacks:
-            c()
 
-        assert Job.objects.count() == 2
-        assert [
-            inpt.image for ae in Job.objects.all() for inpt in ae.inputs.all()
-        ] == self.images[:2]
+@pytest.mark.django_db
+def test_algorithm_submission_creates_one_job_per_test_set_image(
+    django_capture_on_commit_callbacks, settings, algorithm_submission
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
 
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    @override_settings(CELERY_TASK_EAGER_PROPAGATES=True)
-    def test_create_evaluation_is_idempotent(self):
-        s = SubmissionFactory(
-            phase=self.method.phase, algorithm_image=self.algorithm_image
-        )
+    s = SubmissionFactory(
+        phase=algorithm_submission.method.phase,
+        algorithm_image=algorithm_submission.algorithm_image,
+    )
 
-        with capture_on_commit_callbacks(execute=False) as callbacks1:
-            create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+    with django_capture_on_commit_callbacks() as callbacks:
+        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
 
-        with capture_on_commit_callbacks(execute=False) as callbacks2:
-            create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+    # Execute the callbacks non-recursively
+    for c in callbacks:
+        c()
 
-        # Execute the callbacks non-recursively
-        for c in chain(callbacks1, callbacks2):
-            c()
+    assert Job.objects.count() == 2
+    assert [
+        inpt.image for ae in Job.objects.all() for inpt in ae.inputs.all()
+    ] == algorithm_submission.images[:2]
 
-        assert Job.objects.count() == 2
+
+@pytest.mark.django_db
+def test_create_evaluation_is_idempotent(
+    django_capture_on_commit_callbacks, settings, algorithm_submission
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    s = SubmissionFactory(
+        phase=algorithm_submission.method.phase,
+        algorithm_image=algorithm_submission.algorithm_image,
+    )
+
+    with django_capture_on_commit_callbacks(execute=False) as callbacks1:
+        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+
+    with django_capture_on_commit_callbacks(execute=False) as callbacks2:
+        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+
+    # Execute the callbacks non-recursively
+    for c in chain(callbacks1, callbacks2):
+        c()
+
+    assert Job.objects.count() == 2
 
 
 @pytest.mark.django_db

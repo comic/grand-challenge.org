@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import RawImageUploadSession
@@ -213,7 +212,9 @@ def test_filter_origin_images_api_view(client):
 
 
 @pytest.mark.django_db
-def test_filter_reader_study_images_api_view(client):
+def test_filter_reader_study_images_api_view(
+    client, django_capture_on_commit_callbacks
+):
     rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
     user = UserFactory()
     rs1.add_editor(user)
@@ -224,11 +225,11 @@ def test_filter_reader_study_images_api_view(client):
 
     im1, im2 = ImageFactory(), ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im1)
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         ds1.values.add(civ)
 
     civ = ComponentInterfaceValueFactory(image=im2)
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         ds2.values.add(civ)
 
     response = get_view_for_user(
@@ -298,7 +299,9 @@ def test_archive_upload_session_create(client, obj, factory):
 
 
 @pytest.mark.django_db
-def test_session_with_user_upload_to_archive(client, settings):
+def test_session_with_user_upload_to_archive(
+    client, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -312,7 +315,7 @@ def test_session_with_user_upload_to_archive(client, settings):
         creator=user,
     )
     # with interface
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=user,
@@ -339,7 +342,7 @@ def test_session_with_user_upload_to_archive(client, settings):
         creator=user,
     )
     # without interface
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=user,
@@ -387,7 +390,9 @@ def test_session_with_user_duplicate_upload(client):
 
 
 @pytest.mark.django_db
-def test_user_upload_to_archive_item_with_new_interface(client, settings):
+def test_user_upload_to_archive_item_with_new_interface(
+    client, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -408,7 +413,7 @@ def test_user_upload_to_archive_item_with_new_interface(client, settings):
         creator=user,
     )
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=user,
@@ -434,7 +439,9 @@ def test_user_upload_to_archive_item_with_new_interface(client, settings):
 
 
 @pytest.mark.django_db
-def test_user_upload_to_archive_item_with_existing_interface(client, settings):
+def test_user_upload_to_archive_item_with_existing_interface(
+    client, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -453,7 +460,7 @@ def test_user_upload_to_archive_item_with_existing_interface(client, settings):
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=user,
@@ -476,7 +483,9 @@ def test_user_upload_to_archive_item_with_existing_interface(client, settings):
 
 
 @pytest.mark.django_db
-def test_user_upload_to_archive_item_without_interface(client, settings):
+def test_user_upload_to_archive_item_without_interface(
+    client, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -494,7 +503,7 @@ def test_user_upload_to_archive_item_without_interface(client, settings):
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=user,
@@ -513,7 +522,9 @@ def test_user_upload_to_archive_item_without_interface(client, settings):
 
 
 @pytest.mark.django_db
-def test_user_upload_to_display_set_without_interface(client, settings):
+def test_user_upload_to_display_set_without_interface(
+    client, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -531,7 +542,7 @@ def test_user_upload_to_display_set_without_interface(client, settings):
         file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
         creator=user,
     )
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:upload-session-list",
             user=user,
