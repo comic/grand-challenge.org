@@ -114,6 +114,7 @@ def test_method_validation(evaluation_image):
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
+        mark_as_desired=False,
     )
 
     method = Method.objects.get(pk=method.pk)
@@ -155,6 +156,7 @@ def test_method_validation_invalid_dockerfile(alpine_images):
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
+        mark_as_desired=False,
     )
 
     method = Method.objects.get(pk=method.pk)
@@ -172,6 +174,7 @@ def test_method_validation_root_dockerfile(root_image):
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
+        mark_as_desired=False,
     )
 
     method = Method.objects.get(pk=method.pk)
@@ -189,6 +192,7 @@ def test_method_validation_not_a_docker_tar(submission_file):
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
+        mark_as_desired=False,
     )
 
     method = Method.objects.get(pk=method.pk)
