@@ -75,21 +75,31 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     )
     status = CharField(source="get_status_display", read_only=True)
     archive = SlugRelatedField(
-        slug_field="slug", queryset=Archive.objects.none(), required=False
+        slug_field="slug",
+        queryset=Archive.objects.none(),
+        required=False,
+        write_only=True,
     )
     answer = PrimaryKeyRelatedField(
-        queryset=Answer.objects.none(), required=False
+        queryset=Answer.objects.none(),
+        required=False,
+        write_only=True,
     )
     interface = SlugRelatedField(
         slug_field="slug",
         queryset=ComponentInterface.objects.all(),
         required=False,
+        write_only=True,
     )
     archive_item = PrimaryKeyRelatedField(
-        queryset=ArchiveItem.objects.none(), required=False
+        queryset=ArchiveItem.objects.none(),
+        required=False,
+        write_only=True,
     )
     display_set = PrimaryKeyRelatedField(
-        queryset=DisplaySet.objects.none(), required=False
+        queryset=DisplaySet.objects.none(),
+        required=False,
+        write_only=True,
     )
 
     class Meta:

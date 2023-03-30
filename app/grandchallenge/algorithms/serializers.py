@@ -92,7 +92,9 @@ class JobSerializer(serializers.ModelSerializer):
         source="algorithm_image.algorithm.title", read_only=True
     )
     hanging_protocol = HangingProtocolSerializer(
-        source="algorithm_image.algorithm.hanging_protocol", read_only=True
+        source="algorithm_image.algorithm.hanging_protocol",
+        read_only=True,
+        allow_null=True,
     )
     view_content = JSONField(
         source="algorithm_image.algorithm.view_content", read_only=True

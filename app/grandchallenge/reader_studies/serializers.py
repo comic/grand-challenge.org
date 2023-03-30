@@ -53,8 +53,8 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     form_direction = CharField(source="get_direction_display", read_only=True)
     image_port = CharField(source="get_image_port_display", read_only=True)
     options = CategoricalOptionSerializer(many=True, read_only=True)
-    interface = ComponentInterfaceSerializer(read_only=True)
-    look_up_table = LookUpTableSerializer(read_only=True)
+    interface = ComponentInterfaceSerializer(read_only=True, allow_null=True)
+    look_up_table = LookUpTableSerializer(read_only=True, allow_null=True)
     widget = CharField(source="get_widget_display", read_only=True)
 
     class Meta:
@@ -86,7 +86,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     )
     values = HyperlinkedComponentInterfaceValueSerializer(many=True)
     hanging_protocol = HangingProtocolSerializer(
-        source="reader_study.hanging_protocol", read_only=True
+        source="reader_study.hanging_protocol", read_only=True, allow_null=True
     )
     view_content = JSONField(
         source="reader_study.view_content", read_only=True

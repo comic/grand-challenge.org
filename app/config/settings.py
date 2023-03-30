@@ -872,6 +872,7 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "ColorInterpolationEnum": "grandchallenge.workstation_configs.models.LookUpTable.COLOR_INTERPOLATION_CHOICES",
     },
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}

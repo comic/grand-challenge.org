@@ -17,7 +17,7 @@ from grandchallenge.workstation_configs.serializers import (
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
     kind = serializers.CharField(source="get_kind_display", read_only=True)
     super_kind = SerializerMethodField()
-    look_up_table = LookUpTableSerializer(read_only=True)
+    look_up_table = LookUpTableSerializer(read_only=True, allow_null=True)
 
     class Meta:
         model = ComponentInterface
@@ -163,5 +163,7 @@ class HyperlinkedComponentInterfaceValueSerializer(
 ):
     # Serializes images with hyperlinks for external usage
     image = serializers.HyperlinkedRelatedField(
-        queryset=Image.objects.all(), view_name="api:image-detail"
+        view_name="api:image-detail",
+        read_only=True,
+        allow_null=True,
     )
