@@ -330,7 +330,10 @@ class ReaderStudyUpdate(
 
 
 class ReaderStudyDelete(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
 ):
     model = ReaderStudy
     permission_required = (
@@ -341,10 +344,6 @@ class ReaderStudyDelete(
 
     def get_success_url(self):
         return reverse("reader-studies:list")
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -847,7 +846,7 @@ class UsersProgress(
         return context
 
 
-class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
+class AnswerBatchDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     permission_required = (
         f"{Answer._meta.app_label}.delete_{Answer._meta.model_name}"
     )
@@ -872,7 +871,6 @@ class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         objects = self.check_permissions(request)
         objects.delete()
-        messages.add_message(request, messages.SUCCESS, self.success_message)
         return HttpResponse(
             self.get_success_url(),
             headers={
@@ -1343,15 +1341,16 @@ class AnswerViewSet(
 
 
 class QuestionDelete(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
 ):
     model = Question
-
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
-
     success_message = "Question was successfully deleted"
 
     def get_permission_object(self):
@@ -1370,7 +1369,6 @@ class QuestionDelete(
     def delete(self, request, *args, **kwargs):
         question = self.get_object()
         if question.is_fully_editable:
-            messages.success(self.request, self.success_message)
             return super().delete(request, *args, **kwargs)
         return HttpResponseForbidden(
             reason="This question already has answers associated with it"
