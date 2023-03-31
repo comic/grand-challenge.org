@@ -42,6 +42,7 @@ from grandchallenge.core.admin import (
 )
 
 
+@admin.register(BooleanClassificationAnnotation)
 class BooleanClassificationAnnotationAdmin(admin.ModelAdmin):
     search_fields = ("grader__username", "name", "created")
     list_filter = ("created", "value", "name")
@@ -53,6 +54,7 @@ class SinglePolygonAnnotationInline(admin.StackedInline):
     readonly_fields = ("annotation_set", "value", "z", "interpolated")
 
 
+@admin.register(PolygonAnnotationSet)
 class PolygonAnnotationSetAdmin(admin.ModelAdmin):
     search_fields = (
         "grader__username",
@@ -72,6 +74,7 @@ class SingleLandmarkAnnotationInline(admin.StackedInline):
     readonly_fields = ("image", "landmarks")
 
 
+@admin.register(LandmarkAnnotationSet)
 class LandmarkAnnotationSetAdmin(admin.ModelAdmin):
     search_fields = ("grader__username", "created")
     list_filter = ("created",)
@@ -79,17 +82,18 @@ class LandmarkAnnotationSetAdmin(admin.ModelAdmin):
     readonly_fields = ("grader", "created")
 
 
+@admin.register(
+    ETDRSGridAnnotation,
+    ImageTextAnnotation,
+    OctRetinaImagePathologyAnnotation,
+    RetinaImagePathologyAnnotation,
+)
 class AbstractImageAnnotationAdmin(admin.ModelAdmin):
     search_fields = ("grader__username", "image__name")
     readonly_fields = ("grader", "image")
 
 
-admin.site.register(ETDRSGridAnnotation, AbstractImageAnnotationAdmin)
 admin.site.register(MeasurementAnnotation)
-admin.site.register(
-    BooleanClassificationAnnotation, BooleanClassificationAnnotationAdmin
-)
-admin.site.register(PolygonAnnotationSet, PolygonAnnotationSetAdmin)
 admin.site.register(SinglePolygonAnnotation)
 admin.site.register(
     SinglePolygonAnnotationUserObjectPermission, UserObjectPermissionAdmin
@@ -97,15 +101,7 @@ admin.site.register(
 admin.site.register(
     SinglePolygonAnnotationGroupObjectPermission, GroupObjectPermissionAdmin
 )
-admin.site.register(LandmarkAnnotationSet, LandmarkAnnotationSetAdmin)
 admin.site.register(SingleLandmarkAnnotation)
-admin.site.register(
-    RetinaImagePathologyAnnotation, AbstractImageAnnotationAdmin
-)
-admin.site.register(
-    OctRetinaImagePathologyAnnotation, AbstractImageAnnotationAdmin
-)
-admin.site.register(ImageTextAnnotation, AbstractImageAnnotationAdmin)
 admin.site.register(
     ImagePathologyAnnotationUserObjectPermission, UserObjectPermissionAdmin
 )

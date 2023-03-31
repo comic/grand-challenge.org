@@ -15,12 +15,14 @@ from grandchallenge.core.admin import (
 )
 
 
+@admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug")
     list_display = ("pk", "title", "slug", "public", "workstation")
     list_filter = ("public", "workstation__slug")
 
 
+@admin.register(ArchiveItem)
 class ArchiveItemAdmin(admin.ModelAdmin):
     search_fields = ("archive__slug", "archive__title", "values__image__name")
     list_filter = ("archive__slug",)
@@ -29,16 +31,14 @@ class ArchiveItemAdmin(admin.ModelAdmin):
     readonly_fields = ("values",)
 
 
+@admin.register(ArchivePermissionRequest)
 class ArchivePermissionRequestAdmin(admin.ModelAdmin):
     readonly_fields = ("user", "archive")
 
 
-admin.site.register(Archive, ArchiveAdmin)
 admin.site.register(ArchiveUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(ArchiveGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(ArchiveItem, ArchiveItemAdmin)
 admin.site.register(ArchiveItemUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     ArchiveItemGroupObjectPermission, GroupObjectPermissionAdmin
 )
-admin.site.register(ArchivePermissionRequest, ArchivePermissionRequestAdmin)

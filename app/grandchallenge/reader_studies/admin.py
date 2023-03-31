@@ -22,6 +22,7 @@ from grandchallenge.reader_studies.models import (
 )
 
 
+@admin.register(ReaderStudy)
 class ReaderStudyAdmin(GuardedModelAdmin):
     exclude = ("images",)
     list_display = (
@@ -44,6 +45,7 @@ class ReaderStudyAdmin(GuardedModelAdmin):
     search_fields = ("title", "slug", "pk")
 
 
+@admin.register(Answer)
 class AnswersAdmin(GuardedModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "question", "creator", "is_ground_truth")
@@ -60,6 +62,7 @@ class AnswersAdmin(GuardedModelAdmin):
     search_fields = ("creator__username", "pk")
 
 
+@admin.register(Question)
 class QuestionsAdmin(GuardedModelAdmin):
     list_filter = ("answer_type", "required", "reader_study__slug")
     readonly_fields = ("reader_study",)
@@ -74,10 +77,12 @@ class QuestionsAdmin(GuardedModelAdmin):
     list_select_related = ("reader_study",)
 
 
+@admin.register(ReaderStudyPermissionRequest)
 class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
     readonly_fields = ("user", "reader_study")
 
 
+@admin.register(DisplaySet)
 class DisplaySetAdmin(GuardedModelAdmin):
     list_filter = ("reader_study__slug",)
     readonly_fields = ("reader_study", "values")
@@ -85,21 +90,14 @@ class DisplaySetAdmin(GuardedModelAdmin):
     list_select_related = ("reader_study",)
 
 
-admin.site.register(ReaderStudy, ReaderStudyAdmin)
 admin.site.register(ReaderStudyUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     ReaderStudyGroupObjectPermission, GroupObjectPermissionAdmin
 )
-admin.site.register(Question, QuestionsAdmin)
 admin.site.register(QuestionUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(QuestionGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(Answer, AnswersAdmin)
 admin.site.register(AnswerUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AnswerGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(
-    ReaderStudyPermissionRequest, ReaderStudyPermissionRequestAdmin
-)
-admin.site.register(DisplaySet, DisplaySetAdmin)
 admin.site.register(DisplaySetUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     DisplaySetGroupObjectPermission, GroupObjectPermissionAdmin

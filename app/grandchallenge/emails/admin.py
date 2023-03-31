@@ -32,6 +32,7 @@ class EmailAdminForm(ModelForm):
         exclude = ()
 
 
+@admin.register(Email)
 class EmailAdmin(MarkdownxModelAdmin):
     list_display = ("subject", "sent", "sent_at")
     actions = [*SendActionChoices]
@@ -87,6 +88,3 @@ class EmailAdmin(MarkdownxModelAdmin):
             request=request,
             action=SendActionChoices.ALGORITHM_EDITORS,
         )
-
-
-admin.site.register(Email, EmailAdmin)

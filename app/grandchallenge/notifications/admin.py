@@ -29,6 +29,7 @@ class FollowAdmin(GuardedModelAdmin):
     list_select_related = ("user", "content_type")
 
 
+@admin.register(Notification)
 class NotificationAdmin(GuardedModelAdmin):
     readonly_fields = ("user",)
     ordering = ("-created",)
@@ -60,7 +61,6 @@ admin.site.unregister(Follow)
 admin.site.register(Follow, FollowAdmin)
 admin.site.register(FollowUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(FollowGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(Notification, NotificationAdmin)
 admin.site.register(
     NotificationUserObjectPermission, UserObjectPermissionAdmin
 )

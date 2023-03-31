@@ -12,11 +12,11 @@ from grandchallenge.hanging_protocols.models import (
 )
 
 
+@admin.register(HangingProtocol)
 class HangingProtocolAdmin(ModelAdmin):
     readonly_fields = ("creator",)
 
 
-admin.site.register(HangingProtocol, HangingProtocolAdmin)
 admin.site.register(
     HangingProtocolUserObjectPermission, UserObjectPermissionAdmin
 )

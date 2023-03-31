@@ -12,6 +12,7 @@ from grandchallenge.pages.models import (
 )
 
 
+@admin.register(Page)
 class PageAdmin(SimpleHistoryAdmin):
     list_filter = ("challenge", "permission_level", "hidden")
     list_display = (
@@ -28,6 +29,5 @@ class PageAdmin(SimpleHistoryAdmin):
     )
 
 
-admin.site.register(Page, PageAdmin)
 admin.site.register(PageUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(PageGroupObjectPermission, GroupObjectPermissionAdmin)

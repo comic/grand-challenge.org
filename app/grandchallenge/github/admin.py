@@ -3,6 +3,7 @@ from django.contrib import admin
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 
 
+@admin.register(GitHubUserToken)
 class GitHubUserTokenAdmin(admin.ModelAdmin):
     readonly_fields = (
         "user",
@@ -15,6 +16,7 @@ class GitHubUserTokenAdmin(admin.ModelAdmin):
     search_fields = ("user__username",)
 
 
+@admin.register(GitHubWebhookMessage)
 class GitHubWebhookMessageAdmin(admin.ModelAdmin):
     list_display = (
         "created",
@@ -29,7 +31,3 @@ class GitHubWebhookMessageAdmin(admin.ModelAdmin):
     search_fields = ("payload", "license_check_result")
     exclude = ("zipfile",)
     readonly_fields = ("payload", "clone_status")
-
-
-admin.site.register(GitHubUserToken, GitHubUserTokenAdmin)
-admin.site.register(GitHubWebhookMessage, GitHubWebhookMessageAdmin)
