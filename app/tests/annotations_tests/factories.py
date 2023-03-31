@@ -1,7 +1,6 @@
 import datetime
 
 import factory.fuzzy
-import pytz
 
 from grandchallenge.annotations.models import (
     AbstractImageAnnotationModel,
@@ -33,7 +32,7 @@ class DefaultImageAnnotationModelFactory(factory.django.DjangoModelFactory):
     image = factory.SubFactory(ImageFactory)
     grader = factory.SubFactory(UserFactory)
     created = factory.fuzzy.FuzzyDateTime(
-        datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
+        datetime.datetime(1950, 1, 1, 0, 0, 0, 0, datetime.timezone.utc)
     )
 
 
@@ -108,7 +107,7 @@ class LandmarkAnnotationSetFactory(factory.django.DjangoModelFactory):
 
     grader = factory.SubFactory(UserFactory)
     created = factory.fuzzy.FuzzyDateTime(
-        datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
+        datetime.datetime(1950, 1, 1, 0, 0, 0, 0, datetime.timezone.utc)
     )
 
 
