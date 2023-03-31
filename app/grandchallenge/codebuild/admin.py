@@ -3,6 +3,7 @@ from django.contrib import admin
 from grandchallenge.codebuild.models import Build
 
 
+@admin.register(Build)
 class BuildAdmin(admin.ModelAdmin):
     readonly_fields = (
         "status",
@@ -16,6 +17,3 @@ class BuildAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_filter = ("status", "algorithm_image__algorithm__slug")
     list_select_related = ("algorithm_image__algorithm",)
-
-
-admin.site.register(Build, BuildAdmin)

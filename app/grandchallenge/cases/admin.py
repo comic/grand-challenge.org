@@ -21,6 +21,7 @@ class ImageFileInline(admin.StackedInline):
     extra = 0
 
 
+@admin.register(Image)
 class ImageAdmin(GuardedModelAdmin):
     search_fields = (
         "pk",
@@ -58,12 +59,14 @@ class MhdOrRawFilter(admin.SimpleListFilter):
             return queryset.filter(file__endswith="raw")
 
 
+@admin.register(ImageFile)
 class ImageFileAdmin(GuardedModelAdmin):
     search_fields = ("pk", "file", "image__name")
     list_filter = (MhdOrRawFilter,)
     readonly_fields = ("image",)
 
 
+@admin.register(RawImageUploadSession)
 class RawImageUploadSessionAdmin(GuardedModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "creator", "status", "error_message")
@@ -72,11 +75,8 @@ class RawImageUploadSessionAdmin(GuardedModelAdmin):
     search_fields = ("creator__username", "pk", "error_message")
 
 
-admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(ImageGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(ImageFile, ImageFileAdmin)
-admin.site.register(RawImageUploadSession, RawImageUploadSessionAdmin)
 admin.site.register(
     RawImageUploadSessionUserObjectPermission, UserObjectPermissionAdmin
 )

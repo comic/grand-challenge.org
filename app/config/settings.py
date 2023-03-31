@@ -56,7 +56,7 @@ SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("POSTGRES_DB", "grandchallenge"),
         "USER": os.environ.get("POSTGRES_USER", "grandchallenge"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),

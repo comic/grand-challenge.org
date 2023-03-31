@@ -27,6 +27,7 @@ from grandchallenge.workstations.models import (
 )
 
 
+@admin.register(Session)
 class SessionHistoryAdmin(SimpleHistoryAdmin):
     ordering = ("-created",)
     list_display = [
@@ -56,6 +57,7 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
     ]
 
 
+@admin.register(Feedback)
 class FeedbackAdmin(ModelAdmin):
     readonly_fields = (
         "user_comment",
@@ -108,9 +110,7 @@ admin.site.register(
 admin.site.register(
     WorkstationImageGroupObjectPermission, GroupObjectPermissionAdmin
 )
-admin.site.register(Session, SessionHistoryAdmin)
 admin.site.register(SessionUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(SessionGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(Feedback, FeedbackAdmin)
 admin.site.register(FeedbackUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(FeedbackGroupObjectPermission, GroupObjectPermissionAdmin)

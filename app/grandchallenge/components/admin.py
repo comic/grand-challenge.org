@@ -37,6 +37,7 @@ class ComponentImageAdmin(GuardedModelAdmin):
     search_fields = ("pk", "creator__username", "image_sha256")
 
 
+@admin.register(ComponentInterface)
 class ComponentInterfaceAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
@@ -58,16 +59,17 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
             return self.readonly_fields
 
 
+@admin.register(ComponentInterfaceValue)
 class ComponentInterfaceValueAdmin(admin.ModelAdmin):
     list_display = ("pk", "interface", "value", "file", "image")
     readonly_fields = ("interface", "value", "file", "image")
     list_filter = ("interface",)
 
 
-admin.site.register(ComponentInterface, ComponentInterfaceAdmin)
-admin.site.register(ComponentInterfaceValue, ComponentInterfaceValueAdmin)
-
-
+@admin.action(
+    description="Requeue selected Failed/Cancelled jobs",
+    permissions=("change",),
+)
 def requeue_jobs(modeladmin, request, queryset):
     queryset = queryset.filter(
         status__in=[
@@ -88,10 +90,10 @@ def requeue_jobs(modeladmin, request, queryset):
     queryset.model.objects.bulk_update(jobs, fields=["status", "attempt"])
 
 
-requeue_jobs.short_description = "Requeue selected Failed/Cancelled jobs"
-requeue_jobs.allowed_permissions = ("change",)
-
-
+@admin.action(
+    description="Cancel selected jobs",
+    permissions=("change",),
+)
 def cancel_jobs(modeladmin, request, queryset):
     queryset.filter(
         status__in=[
@@ -105,14 +107,10 @@ def cancel_jobs(modeladmin, request, queryset):
     ).update(status=ComponentJob.CANCELLED)
 
 
-cancel_jobs.short_description = "Cancel selected jobs"
-cancel_jobs.allowed_permissions = ("change",)
-
-
+@admin.action(
+    description="Deprovision jobs",
+    permissions=("change",),
+)
 def deprovision_jobs(modeladmin, request, queryset):
     for job in queryset:
         deprovision_job.signature(**job.signature_kwargs).apply_async()
-
-
-deprovision_jobs.short_description = "Deprovision jobs"
-deprovision_jobs.allowed_permissions = ("change",)

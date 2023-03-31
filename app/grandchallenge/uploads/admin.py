@@ -12,6 +12,7 @@ from grandchallenge.uploads.models import (
 )
 
 
+@admin.register(UserUpload)
 class UserUploadAdmin(GuardedModelAdmin):
     list_display = ("pk", "created", "creator", "filename", "status")
     list_filter = ("status",)
@@ -20,7 +21,6 @@ class UserUploadAdmin(GuardedModelAdmin):
     readonly_fields = ("creator", "status", "s3_upload_id")
 
 
-admin.site.register(UserUpload, UserUploadAdmin)
 admin.site.register(UserUploadUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     UserUploadGroupObjectPermission, GroupObjectPermissionAdmin

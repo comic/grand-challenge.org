@@ -21,13 +21,13 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
 
 
+@admin.action(
+    description="Deactivate users",
+    permissions=("change",),
+)
 def deactivate_users(modeladmin, request, queryset):
     for user in queryset:
         deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async()
-
-
-deactivate_users.short_description = "Deactivate users"
-deactivate_users.allowed_permissions = ("change",)
 
 
 class UserProfileAdmin(UserAdmin):
@@ -62,11 +62,9 @@ class UserProfileAdmin(UserAdmin):
             )
         )
 
-    @admin.display(description="User has 2FA enabled")
+    @admin.display(boolean=True, description="User has 2FA enabled")
     def has_2fa_enabled(self, obj):
         return obj.totp_device_count > 0
-
-    has_2fa_enabled.boolean = True
 
 
 User = get_user_model()

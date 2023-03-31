@@ -4,6 +4,7 @@ from grandchallenge.publications.forms import PublicationForm
 from grandchallenge.publications.models import Publication
 
 
+@admin.register(Publication)
 class PublicationAdmin(admin.ModelAdmin):
     list_display = [
         "identifier",
@@ -28,6 +29,3 @@ class PublicationAdmin(admin.ModelAdmin):
             return self.readonly_fields + ["identifier"]
         else:
             return self.readonly_fields
-
-
-admin.site.register(Publication, PublicationAdmin)

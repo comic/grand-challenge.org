@@ -1,4 +1,9 @@
 repos:
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.13.0
+    hooks:
+    -   id: django-upgrade
+        args: [--target-version, "3.2"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
     hooks:

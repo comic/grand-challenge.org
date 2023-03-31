@@ -75,6 +75,7 @@ class PhaseAdminForm(ModelForm):
         return cleaned_data
 
 
+@admin.register(Phase)
 class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
     list_display = (
@@ -99,6 +100,10 @@ class PhaseAdmin(admin.ModelAdmin):
         return instance.open_for_submissions
 
 
+@admin.action(
+    description="Reevaluate selected submissions",
+    permissions=("change",),
+)
 def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
@@ -107,10 +112,7 @@ def reevaluate_submissions(modeladmin, request, queryset):
         )
 
 
-reevaluate_submissions.short_description = "Reevaluate selected submissions"
-reevaluate_submissions.allowed_permissions = ("change",)
-
-
+@admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "phase", "creator")
@@ -125,6 +127,7 @@ class SubmissionAdmin(admin.ModelAdmin):
     actions = (reevaluate_submissions,)
 
 
+@admin.register(Evaluation)
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "submission", "status", "error_message")
@@ -157,18 +160,15 @@ class EvaluationAdmin(admin.ModelAdmin):
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
 
 
-admin.site.register(Phase, PhaseAdmin)
 admin.site.register(PhaseUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(PhaseGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(Method, ComponentImageAdmin)
 admin.site.register(MethodUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(MethodGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(Submission, SubmissionAdmin)
 admin.site.register(SubmissionUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     SubmissionGroupObjectPermission, GroupObjectPermissionAdmin
 )
-admin.site.register(Evaluation, EvaluationAdmin)
 admin.site.register(EvaluationUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     EvaluationGroupObjectPermission, GroupObjectPermissionAdmin

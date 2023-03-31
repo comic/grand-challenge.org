@@ -34,6 +34,7 @@ class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
         fields = "__all__"
 
 
+@admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
     list_display = (
         "title",
@@ -60,6 +61,7 @@ class AlgorithmAdmin(GuardedModelAdmin):
         return queryset
 
 
+@admin.register(Job)
 class JobAdmin(GuardedModelAdmin):
     autocomplete_fields = ("viewer_groups",)
     ordering = ("-created",)
@@ -102,11 +104,11 @@ class JobAdmin(GuardedModelAdmin):
         return obj.algorithm_image.algorithm
 
 
+@admin.register(AlgorithmPermissionRequest)
 class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
     readonly_fields = ("user", "algorithm")
 
 
-admin.site.register(Algorithm, AlgorithmAdmin)
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(AlgorithmImage, ComponentImageAdmin)
@@ -116,9 +118,5 @@ admin.site.register(
 admin.site.register(
     AlgorithmImageGroupObjectPermission, GroupObjectPermissionAdmin
 )
-admin.site.register(Job, JobAdmin)
 admin.site.register(JobUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(JobGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(
-    AlgorithmPermissionRequest, AlgorithmPermissionRequestAdmin
-)

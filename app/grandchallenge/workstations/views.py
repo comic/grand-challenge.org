@@ -215,9 +215,7 @@ class WorkstationImageUpdate(
 
 class UnsupportedBrowserWarningMixin:
     def _get_unsupported_browser_message(self):
-        user_agent = ParseUserAgent(
-            self.request.META.get("HTTP_USER_AGENT", "")
-        )
+        user_agent = ParseUserAgent(self.request.headers.get("user-agent", ""))
 
         unsupported_browser = user_agent["family"].lower() not in [
             "firefox",
