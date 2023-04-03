@@ -1,11 +1,12 @@
 import pytest
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from tests.factories import SessionFactory, UserFactory
 
 
 @pytest.mark.django_db
-def test_session_stopped_on_user_logout(client, settings):
+def test_session_stopped_on_user_logout(
+    client, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -22,7 +23,7 @@ def test_session_stopped_on_user_logout(client, settings):
 
     client.force_login(u1)
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         client.post("/accounts/logout/", data={"next": "/"})
 
     s1.refresh_from_db()

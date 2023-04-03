@@ -1,7 +1,6 @@
 import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
@@ -28,7 +27,7 @@ from tests.components_tests.factories import (
 )
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.utils import get_view_for_user
+from tests.utils import get_view_for_user, recurse_callbacks
 
 
 @pytest.mark.django_db
@@ -203,7 +202,9 @@ def test_social_image_meta_tag(client, uploaded_image):
 
 
 @pytest.mark.django_db
-def test_archive_item_form(client, settings):
+def test_archive_item_form(
+    client, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -279,52 +280,58 @@ def test_archive_item_form(client, settings):
         algorithm=alg, is_manifest_valid=True, is_in_registry=True
     )
     alg.inputs.set([ci])
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         archive.algorithms.add(alg)
 
     assert Job.objects.count() == 1
 
     civ_count = ComponentInterfaceValue.objects.count()
 
-    with capture_on_commit_callbacks(execute=True):
-        with capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="archives:item-edit",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "archive_slug": archive.slug,
-                    "pk": ai.pk,
-                    "interface_slug": ci.slug,
-                },
-                data={ci.slug: False},
-                follow=True,
-                user=editor,
-            )
+    with django_capture_on_commit_callbacks() as callbacks:
+        get_view_for_user(
+            viewname="archives:item-edit",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "archive_slug": archive.slug,
+                "pk": ai.pk,
+                "interface_slug": ci.slug,
+            },
+            data={ci.slug: False},
+            follow=True,
+            user=editor,
+        )
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     assert ai.values.filter(pk=civ.pk).count() == 0
-    # This should created a new CIV as they are immutable
+    # This should create a new CIV as they are immutable
     assert ComponentInterfaceValue.objects.count() == civ_count + 1
 
     # A new job should have been created, because the value for 'bool'
     # has changed
     assert Job.objects.count() == 2
 
-    with capture_on_commit_callbacks(execute=True):
-        with capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="archives:item-edit",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "archive_slug": archive.slug,
-                    "pk": ai.pk,
-                    "interface_slug": ci.slug,
-                },
-                data={ci.slug: True},
-                follow=True,
-                user=editor,
-            )
+    with django_capture_on_commit_callbacks() as callbacks:
+        get_view_for_user(
+            viewname="archives:item-edit",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "archive_slug": archive.slug,
+                "pk": ai.pk,
+                "interface_slug": ci.slug,
+            },
+            data={ci.slug: True},
+            follow=True,
+            user=editor,
+        )
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     # New jobs should be created as there is a new CIV
     assert Job.objects.count() == 3

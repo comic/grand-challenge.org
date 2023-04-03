@@ -1,7 +1,6 @@
 import io
 
 import pytest
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import assign_perm
 from requests import put
 
@@ -457,7 +456,9 @@ def test_display_set_update(client):
 
 
 @pytest.mark.django_db
-def test_add_display_set_to_reader_study(client, settings):
+def test_add_display_set_to_reader_study(
+    client, settings, django_capture_on_commit_callbacks
+):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -515,7 +516,7 @@ def test_add_display_set_to_reader_study(client, settings):
     )
     upload.save()
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-create",
             client=client,
@@ -556,7 +557,9 @@ def test_add_display_set_to_reader_study(client, settings):
 
 
 @pytest.mark.django_db
-def test_add_files_to_display_set(client, settings):
+def test_add_files_to_display_set(
+    client, settings, django_capture_on_commit_callbacks
+):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -605,7 +608,7 @@ def test_add_files_to_display_set(client, settings):
 
     assert response.status_code == 200
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-files-update",
             client=client,
@@ -637,7 +640,7 @@ def test_add_files_to_display_set(client, settings):
     )
     upload2.save()
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-files-update",
             client=client,
@@ -668,7 +671,7 @@ def test_add_files_to_display_set(client, settings):
         parts=[{"ETag": response3.headers["ETag"], "PartNumber": 1}]
     )
     upload3.save()
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-files-update",
             client=client,
@@ -694,7 +697,7 @@ def test_add_files_to_display_set(client, settings):
         parts=[{"ETag": response4.headers["ETag"], "PartNumber": 1}]
     )
     upload4.save()
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-files-update",
             client=client,
@@ -715,7 +718,9 @@ def test_add_files_to_display_set(client, settings):
 
 
 @pytest.mark.django_db
-def test_display_set_interfaces_create(client, settings):
+def test_display_set_interfaces_create(
+    client, settings, django_capture_on_commit_callbacks
+):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -769,7 +774,7 @@ def test_display_set_interfaces_create(client, settings):
         parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
     )
     upload.save()
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-interfaces-create",
             client=client,
@@ -788,7 +793,7 @@ def test_display_set_interfaces_create(client, settings):
         file_path=RESOURCE_PATH / "test_grayscale.jpg",
         creator=u1,
     )
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-interfaces-create",
             client=client,
@@ -810,7 +815,7 @@ def test_display_set_interfaces_create(client, settings):
     assign_perm("cases.view_image", u1, image)
     civ2 = ComponentInterfaceValueFactory(image=image, interface=ci_image_2)
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="reader-studies:display-set-interfaces-create",
             client=client,

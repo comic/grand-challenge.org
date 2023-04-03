@@ -1,7 +1,6 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import get_perms
 
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -142,7 +141,9 @@ def test_change_job_image():
 @pytest.mark.parametrize("in_job", (True, False))
 @pytest.mark.parametrize("in_rs", (True, False))
 @pytest.mark.parametrize("in_archive", (True, False))
-def test_view_permission_when_reused(in_archive, in_rs, in_job):
+def test_view_permission_when_reused(
+    in_archive, in_rs, in_job, django_capture_on_commit_callbacks
+):
     """When an image is reused it should have view_image set correctly"""
     im = ImageFactory()
 
@@ -152,11 +153,11 @@ def test_view_permission_when_reused(in_archive, in_rs, in_job):
     civ = ComponentInterfaceValueFactory(image=im)
     if in_archive:
         ai = ArchiveItemFactory(archive=archive)
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             ai.values.add(civ)
     if in_rs:
         ds = DisplaySetFactory(reader_study=rs)
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             ds.values.add(civ)
     if in_job:
         job.inputs.add(civ)

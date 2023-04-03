@@ -7,7 +7,6 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils import timezone
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
@@ -1169,8 +1168,8 @@ def test_can_execute_with_sagemaker(settings):
 
 
 @pytest.mark.django_db
-def test_no_job_without_image():
-    with capture_on_commit_callbacks() as callbacks:
+def test_no_job_without_image(django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image=None)
 
     assert len(callbacks) == 0
@@ -1178,8 +1177,10 @@ def test_no_job_without_image():
 
 
 @pytest.mark.django_db
-def test_one_job_with_image(algorithm_image):
-    with capture_on_commit_callbacks() as callbacks:
+def test_one_job_with_image(
+    algorithm_image, django_capture_on_commit_callbacks
+):
+    with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image__from_path=algorithm_image)
 
     assert len(callbacks) == 1
@@ -1190,10 +1191,10 @@ def test_one_job_with_image(algorithm_image):
 
 
 @pytest.mark.django_db
-def test_can_change_from_empty():
+def test_can_change_from_empty(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory(image=None)
 
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         ai.image = "blah"
         ai.save()
 
@@ -1214,12 +1215,14 @@ def test_cannot_change_image(algorithm_image):
 
 
 @pytest.mark.django_db
-def test_remove_container_image_from_registry(algorithm_image, settings):
+def test_remove_container_image_from_registry(
+    algorithm_image, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         ai = AlgorithmImageFactory(image__from_path=algorithm_image)
 
     ai.refresh_from_db()
@@ -1231,7 +1234,7 @@ def test_remove_container_image_from_registry(algorithm_image, settings):
     )
     assert ai.is_in_registry is True
 
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         remove_container_image_from_registry(
             pk=ai.pk,
             app_label=ai._meta.app_label,
