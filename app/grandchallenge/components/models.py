@@ -1668,7 +1668,7 @@ class ComponentImage(models.Model):
 
             for image in images:
                 if image == self:
-                    image.is_desired_version = False
+                    image.is_desired_version = True
                 else:
                     image.is_desired_version = False
 

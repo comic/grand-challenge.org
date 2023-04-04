@@ -166,11 +166,11 @@ def validate_docker_image(  # noqa C901
         instance.is_on_sagemaker = True
         instance.save()
 
-    if mark_as_desired:
-        instance.mark_desired_version()
-
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
+
+    if mark_as_desired:
+        instance.mark_desired_version()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
