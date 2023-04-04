@@ -1256,7 +1256,9 @@ def test_remove_container_image_from_registry(
 
 
 @pytest.mark.django_db
-def test_mark_desired_version(algorithm_io_image, settings):
+def test_mark_desired_version(
+    algorithm_io_image, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -1267,7 +1269,7 @@ def test_mark_desired_version(algorithm_io_image, settings):
     )
 
     for image in [i1, i2]:
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             validate_docker_image(
                 pk=image.pk,
                 app_label=image._meta.app_label,
@@ -1275,7 +1277,7 @@ def test_mark_desired_version(algorithm_io_image, settings):
                 mark_as_desired=False,
             )
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         validate_docker_image(
             pk=i3.pk,
             app_label=i3._meta.app_label,

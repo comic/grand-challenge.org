@@ -135,7 +135,9 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
-def test_validate_docker_image(algorithm_io_image, settings):
+def test_validate_docker_image(
+    algorithm_io_image, settings, django_capture_on_commit_callbacks
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -146,7 +148,7 @@ def test_validate_docker_image(algorithm_io_image, settings):
     )
     assert image.is_manifest_valid is None
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         validate_docker_image(
             pk=image.pk,
             app_label=image._meta.app_label,
@@ -161,7 +163,7 @@ def test_validate_docker_image(algorithm_io_image, settings):
     image.is_manifest_valid = None
     image.save()
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         validate_docker_image(
             pk=image.pk,
             app_label=image._meta.app_label,
