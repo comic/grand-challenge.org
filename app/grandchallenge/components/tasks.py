@@ -121,8 +121,6 @@ def validate_docker_image(  # noqa C901
                 instance=instance
             )
             instance.is_manifest_valid = True
-            if mark_as_desired:
-                instance.mark_desired_version()
             instance.save()
         except ValidationError as error:
             instance.image_sha256 = ""
@@ -167,6 +165,9 @@ def validate_docker_image(  # noqa C901
         create_sagemaker_model(repo_tag=instance.shimmed_repo_tag)
         instance.is_on_sagemaker = True
         instance.save()
+
+    if mark_as_desired:
+        instance.mark_desired_version()
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()

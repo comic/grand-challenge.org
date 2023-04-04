@@ -543,6 +543,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             self,
         )
 
+    def get_peer_images(self):
+        return AlgorithmImage.objects.filter(algorithm=self.algorithm)
+
 
 class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(

@@ -1599,7 +1599,7 @@ class ComponentImage(models.Model):
 
     comment = models.TextField(
         blank=True,
-        null=True,
+        default="",
         help_text="Add any information (e.g. version ID) about this image here.",
     )
     is_desired_version = models.BooleanField(default=False, editable=False)
@@ -1658,33 +1658,21 @@ class ComponentImage(models.Model):
             ).apply_async
         )
 
+    def get_peer_images(self):
+        raise NotImplementedError
+
     @transaction.atomic
     def mark_desired_version(self):
-        from grandchallenge.algorithms.models import AlgorithmImage
-        from grandchallenge.evaluation.models import Method
-        from grandchallenge.workstations.models import WorkstationImage
-
         if self.is_manifest_valid:
-            if hasattr(self, "algorithm"):
-                images = (
-                    self.algorithm.algorithm_container_images.executable_images()
-                )
-                obj = AlgorithmImage
-            elif hasattr(self, "phase"):
-                images = self.phase.method_set.executable_images()
-                obj = Method
-            elif hasattr(self, "workstation"):
-                images = (
-                    self.workstation.workstationimage_set.executable_images()
-                )
-                obj = WorkstationImage
+            images = self.get_peer_images()
 
             for image in images:
-                image.is_desired_version = False
+                if image == self:
+                    image.is_desired_version = False
+                else:
+                    image.is_desired_version = False
 
-            obj.objects.bulk_update(images, ["is_desired_version"])
-            self.is_desired_version = True
-            self.save()
+            self.__class__.objects.bulk_update(images, ["is_desired_version"])
 
     @property
     def original_repo_tag(self):
