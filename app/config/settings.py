@@ -56,7 +56,7 @@ SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("POSTGRES_DB", "grandchallenge"),
         "USER": os.environ.get("POSTGRES_USER", "grandchallenge"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
@@ -872,6 +872,7 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "ColorInterpolationEnum": "grandchallenge.workstation_configs.models.LookUpTable.COLOR_INTERPOLATION_CHOICES",
     },
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}

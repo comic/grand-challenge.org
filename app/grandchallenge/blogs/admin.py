@@ -28,6 +28,7 @@ class AdminPostForm(ModelForm):
         exclude = ()
 
 
+@admin.register(Post)
 class PostAdmin(MarkdownxModelAdmin):
     form = AdminPostForm
     list_display = ("pk", "slug", "title", "published", "highlight")
@@ -35,11 +36,10 @@ class PostAdmin(MarkdownxModelAdmin):
     autocomplete_fields = ("authors",)
 
 
+@admin.register(Tag)
 class TagAdmin(ModelAdmin):
     list_display = ("__str__", "slug")
 
 
-admin.site.register(Post, PostAdmin)
 admin.site.register(PostUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(PostGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(Tag, TagAdmin)

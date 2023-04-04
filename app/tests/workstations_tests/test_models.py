@@ -5,7 +5,6 @@ from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from knox.models import AuthToken
 
 from grandchallenge.components.backends.docker_client import (
@@ -76,16 +75,21 @@ def test_session_auth_token():
 
 
 @pytest.mark.django_db
-def test_session_start(http_image, settings):
+def test_session_start(
+    http_image, settings, django_capture_on_commit_callbacks
+):
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         s = SessionFactory(workstation_image=wsi)
 
     try:
@@ -116,7 +120,7 @@ def test_session_start(http_image, settings):
         assert len(networks) == 1
         assert settings.WORKSTATIONS_NETWORK_NAME in networks
 
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             s.user_finished = True
             s.save()
 
@@ -128,17 +132,22 @@ def test_session_start(http_image, settings):
 
 
 @pytest.mark.django_db
-def test_correct_session_stopped(http_image, settings):
+def test_correct_session_stopped(
+    http_image, settings, django_capture_on_commit_callbacks
+):
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     try:
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             s1, s2 = (
                 SessionFactory(workstation_image=wsi),
                 SessionFactory(workstation_image=wsi),
@@ -150,7 +159,7 @@ def test_correct_session_stopped(http_image, settings):
         s2.refresh_from_db()
         auth_token_pk = s2.auth_token.pk
 
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             s2.user_finished = True
             s2.save()
 
@@ -168,19 +177,24 @@ def test_correct_session_stopped(http_image, settings):
 
 
 @pytest.mark.django_db
-def test_session_cleanup(http_image, settings):
+def test_session_cleanup(
+    http_image, settings, django_capture_on_commit_callbacks
+):
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     default_region = "eu-nl-1"
 
     try:
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             s1, s2, s3 = (
                 SessionFactory(workstation_image=wsi, region=default_region),
                 SessionFactory(
@@ -218,7 +232,9 @@ def test_session_cleanup(http_image, settings):
 
 
 @pytest.mark.django_db
-def test_workstation_ready(http_image, settings):
+def test_workstation_ready(
+    http_image, settings, django_capture_on_commit_callbacks
+):
     # Execute celery tasks in place
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -228,7 +244,7 @@ def test_workstation_ready(http_image, settings):
     assert wsi.is_manifest_valid is None
     assert wsi.can_execute is False
 
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         s = SessionFactory(workstation_image=wsi)
 
     s.refresh_from_db()
@@ -236,30 +252,35 @@ def test_workstation_ready(http_image, settings):
 
 
 @pytest.mark.django_db
-def test_session_limit(http_image, settings):
+def test_session_limit(
+    http_image, settings, django_capture_on_commit_callbacks
+):
     # Execute celery tasks in place
     settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(callbacks=callbacks)
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
 
     try:
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             s1 = SessionFactory(workstation_image=wsi)
         s1.refresh_from_db()
         assert s1.status == s1.STARTED
 
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             s2 = SessionFactory(workstation_image=wsi)
         s2.refresh_from_db()
         assert s2.status == s2.FAILED
 
         s1.stop()
 
-        with capture_on_commit_callbacks(execute=True):
+        with django_capture_on_commit_callbacks(execute=True):
             s3 = SessionFactory(workstation_image=wsi)
         s3.refresh_from_db()
         assert s3.status == s3.STARTED

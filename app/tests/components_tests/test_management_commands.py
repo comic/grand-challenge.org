@@ -1,7 +1,6 @@
 import pytest
 from celery.result import AsyncResult
 from django.core.management import CommandError, call_command
-from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.components.models import InterfaceKind
 from tests.cases_tests.factories import ImageFactoryWithImageFile16Bit
@@ -12,7 +11,7 @@ from tests.components_tests.factories import (
 
 
 @pytest.mark.django_db
-def test_add_overlay_segments(settings):
+def test_add_overlay_segments(settings, django_capture_on_commit_callbacks):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -32,7 +31,7 @@ def test_add_overlay_segments(settings):
 
     # This raises a ValidationError, but unfortunetaly that gest swallowed in
     # the context manager.
-    with capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks() as callbacks:
         call_command("add_overlay_segments", "foo", '{"255": "seg"}')
 
     error = (
@@ -52,7 +51,7 @@ def test_add_overlay_segments(settings):
 
     im.segments = None
     im.save()
-    with capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=True):
         call_command("add_overlay_segments", "foo", '{"255": "seg"}')
     im.refresh_from_db()
     assert im.segments == [0]

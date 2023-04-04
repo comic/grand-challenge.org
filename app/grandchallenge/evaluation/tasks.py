@@ -571,7 +571,7 @@ def get_phase_statistics(phase):
         .annotate(month=Extract("started_at", "month"))
         .annotate(duration=F("completed_at") - F("started_at"))
         .exclude(duration=None)
-        .exclude(started_at__lte=start_date)
+        .exclude(started_at__year__lte=start_date.year)
     )
 
     monthly_costs = {}

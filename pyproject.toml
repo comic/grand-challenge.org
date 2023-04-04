@@ -45,7 +45,6 @@ crispy-bootstrap4 = "*"
 djangorestframework = "*"
 drf-spectacular = "*"
 python-magic = "*"
-pytz = "*"
 gunicorn = "*"
 uvicorn = {version = "*", extras = ["standard"]}
 django-celery-email = "*"
@@ -112,7 +111,6 @@ sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
 sphinxcontrib-django = "*"
-django-capture-on-commit-callbacks = "*"  # Backport from Django 4.0, can be removed
 amass = "*"
 aiohttp = "^3.8" # Fix for amass dependency
 watchfiles = "*"

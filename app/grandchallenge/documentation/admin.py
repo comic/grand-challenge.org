@@ -14,9 +14,7 @@ class AdminDocPageForm(ModelForm):
         widgets = {"content": MarkdownEditorAdminWidget}
 
 
+@admin.register(DocPage)
 class DocPageAdmin(MarkdownxModelAdmin):
     form = AdminDocPageForm
     list_display = ("pk", "title", "order")
-
-
-admin.site.register(DocPage, DocPageAdmin)

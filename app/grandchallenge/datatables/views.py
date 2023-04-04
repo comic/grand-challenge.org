@@ -42,7 +42,7 @@ class PaginatedTableListView(ListView):
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
-        if request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
             start = int(request.GET.get("start", 0))
             page_size = int(request.GET.get("length"))
             search = request.GET.get("search[value]")

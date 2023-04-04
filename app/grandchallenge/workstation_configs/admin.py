@@ -13,11 +13,11 @@ from grandchallenge.workstation_configs.models import (
 )
 
 
+@admin.register(WorkstationConfig)
 class WorkstationConfigAdmin(admin.ModelAdmin):
     readonly_fields = ("creator",)
 
 
-admin.site.register(WorkstationConfig, WorkstationConfigAdmin)
 admin.site.register(
     WorkstationConfigUserObjectPermission, UserObjectPermissionAdmin
 )

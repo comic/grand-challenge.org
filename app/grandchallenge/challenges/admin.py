@@ -16,6 +16,7 @@ from grandchallenge.core.admin import (
 )
 
 
+@admin.register(Challenge)
 class ChallengeAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     autocomplete_fields = ("publications",)
@@ -24,6 +25,7 @@ class ChallengeAdmin(ModelAdmin):
     search_fields = ("short_name",)
 
 
+@admin.register(ChallengeRequest)
 class ChallengeRequestAdmin(ModelAdmin):
     readonly_fields = ("creator",)
     ordering = ("-created",)
@@ -79,8 +81,6 @@ class ChallengeRequestAdmin(ModelAdmin):
             )
 
 
-admin.site.register(Challenge, ChallengeAdmin)
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(ChallengeGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(ChallengeSeries)
-admin.site.register(ChallengeRequest, ChallengeRequestAdmin)

@@ -13,8 +13,6 @@ class PolicyAdminForm(ModelForm):
         fields = "__all__"
 
 
+@admin.register(Policy)
 class PolicyAdmin(ModelAdmin):
     form = PolicyAdminForm
-
-
-admin.site.register(Policy, PolicyAdmin)
