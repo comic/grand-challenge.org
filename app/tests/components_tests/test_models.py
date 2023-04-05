@@ -21,9 +21,11 @@ from grandchallenge.components.models import (
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
+    validate_docker_image,
 )
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
@@ -1251,3 +1253,44 @@ def test_remove_container_image_from_registry(
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
     assert ai.is_on_sagemaker is False
+
+
+@pytest.mark.django_db
+def test_mark_desired_version(
+    algorithm_io_image, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    alg = AlgorithmFactory()
+    i1, i2, i3 = AlgorithmImageFactory.create_batch(
+        3, algorithm=alg, image__from_path=algorithm_io_image
+    )
+
+    for image in [i1, i2]:
+        with django_capture_on_commit_callbacks(execute=True):
+            validate_docker_image(
+                pk=image.pk,
+                app_label=image._meta.app_label,
+                model_name=image._meta.model_name,
+                mark_as_desired=False,
+            )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        validate_docker_image(
+            pk=i3.pk,
+            app_label=i3._meta.app_label,
+            model_name=i3._meta.model_name,
+            mark_as_desired=True,
+        )
+    for image in [i1, i2, i3]:
+        image.refresh_from_db()
+    assert i3.is_desired_version
+    assert not any([i1.is_desired_version, i2.is_desired_version])
+
+    i2.mark_desired_version()
+    for image in [i1, i2, i3]:
+        image.refresh_from_db()
+    assert i2.is_desired_version
+    assert not any([i1.is_desired_version, i3.is_desired_version])

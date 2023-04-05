@@ -3,12 +3,14 @@ import json
 import pytest
 from celery.exceptions import MaxRetriesExceededError
 
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.components.tasks import (
     _retry,
     civ_value_to_file,
     encode_b64j,
     execute_job,
     remove_inactive_container_images,
+    validate_docker_image,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -130,3 +132,44 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
         f"(pk={ai1.pk!r}, "
         "app_label='algorithms', model_name='algorithmimage')>"
     )
+
+
+@pytest.mark.django_db
+def test_validate_docker_image(
+    algorithm_io_image, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    alg = AlgorithmFactory()
+    image = AlgorithmImageFactory(
+        algorithm=alg, image__from_path=algorithm_io_image
+    )
+    assert image.is_manifest_valid is None
+
+    with django_capture_on_commit_callbacks(execute=True):
+        validate_docker_image(
+            pk=image.pk,
+            app_label=image._meta.app_label,
+            model_name=image._meta.model_name,
+            mark_as_desired=False,
+        )
+
+    image = AlgorithmImage.objects.get(pk=image.pk)
+    assert image.is_manifest_valid is True
+    assert not image.is_desired_version
+
+    image.is_manifest_valid = None
+    image.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        validate_docker_image(
+            pk=image.pk,
+            app_label=image._meta.app_label,
+            model_name=image._meta.model_name,
+            mark_as_desired=True,
+        )
+    image = AlgorithmImage.objects.get(pk=image.pk)
+    assert image.is_manifest_valid is True
+    assert image.is_desired_version

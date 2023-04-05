@@ -26,6 +26,7 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "requires_memory_gb",
         "status",
         "latest_shimmed_version",
+        "is_desired_version",
     )
     list_filter = (
         "requires_gpu",
@@ -33,6 +34,7 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "is_in_registry",
         "is_on_sagemaker",
         "import_status",
+        "is_desired_version",
     )
     search_fields = ("pk", "creator__username", "image_sha256")
 

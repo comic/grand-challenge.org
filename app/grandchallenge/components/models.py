@@ -17,7 +17,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
@@ -1597,6 +1597,13 @@ class ComponentImage(models.Model):
     requires_gpu = models.BooleanField(default=False)
     requires_memory_gb = models.PositiveIntegerField(default=4)
 
+    comment = models.TextField(
+        blank=True,
+        default="",
+        help_text="Add any information (e.g. version ID) about this image here.",
+    )
+    is_desired_version = models.BooleanField(default=False, editable=False)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._image_orig = self.image
@@ -1619,7 +1626,6 @@ class ComponentImage(models.Model):
         if self._image_orig:
             if self.image != self._image_orig:
                 raise RuntimeError("The image cannot be changed")
-
             if image_needs_validation:
                 self.import_status = ImportStatusChoices.QUEUED
                 validate_image_now = True
@@ -1629,7 +1635,6 @@ class ComponentImage(models.Model):
             validate_image_now = True
 
         super().save(*args, **kwargs)
-
         if validate_image_now:
             on_commit(
                 validate_docker_image.signature(
@@ -1637,6 +1642,7 @@ class ComponentImage(models.Model):
                         "app_label": self._meta.app_label,
                         "model_name": self._meta.model_name,
                         "pk": self.pk,
+                        "mark_as_desired": True,
                     }
                 ).apply_async
             )
@@ -1651,6 +1657,22 @@ class ComponentImage(models.Model):
                 }
             ).apply_async
         )
+
+    def get_peer_images(self):
+        raise NotImplementedError
+
+    @transaction.atomic
+    def mark_desired_version(self):
+        if self.is_manifest_valid:
+            images = self.get_peer_images()
+
+            for image in images:
+                if image == self:
+                    image.is_desired_version = True
+                else:
+                    image.is_desired_version = False
+
+            self.__class__.objects.bulk_update(images, ["is_desired_version"])
 
     @property
     def original_repo_tag(self):

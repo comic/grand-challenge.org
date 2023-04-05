@@ -107,10 +107,11 @@ def assign_docker_image_from_upload(
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+def validate_docker_image(  # noqa C901
+    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
-
     instance.import_status = instance.ImportStatusChoices.STARTED
     instance.save()
 
@@ -167,6 +168,9 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
+
+    if mark_as_desired:
+        instance.mark_desired_version()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

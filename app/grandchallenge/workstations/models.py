@@ -259,6 +259,9 @@ class WorkstationImage(UUIDModel, ComponentImage):
         if adding:
             self.assign_permissions()
 
+    def get_peer_images(self):
+        return WorkstationImage.objects.filter(workstation=self.workstation)
+
 
 class WorkstationImageUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(
