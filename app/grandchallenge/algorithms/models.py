@@ -341,7 +341,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                     perm=perm, user_or_group=group, obj=self.workstation
                 )
 
-    @cached_property
+    @property
     def active_image(self):
         """
         Returns

@@ -10,7 +10,6 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
-from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -86,7 +85,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created", "title")
 
-    @cached_property
+    @property
     def active_image(self):
         """
         Returns

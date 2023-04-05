@@ -714,7 +714,7 @@ class Phase(UUIDModel, ViewContentMixin):
             and self.submission_period_is_open_now
         )
 
-    @cached_property
+    @property
     def active_image(self):
         """
         Returns
