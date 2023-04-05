@@ -121,7 +121,7 @@ def test_answer_remove_for_user(client):
     response = get_view_for_user(
         viewname="reader-studies:answers-remove",
         client=client,
-        method=client.delete,
+        method=client.post,
         reverse_kwargs={"slug": rs1.slug, "username": r1.username},
         follow=True,
         user=r1,
@@ -132,7 +132,7 @@ def test_answer_remove_for_user(client):
     response = get_view_for_user(
         viewname="reader-studies:answers-remove",
         client=client,
-        method=client.delete,
+        method=client.post,
         reverse_kwargs={"slug": rs1.slug, "username": r1.username},
         follow=True,
         user=editor,
@@ -185,7 +185,7 @@ def test_answer_remove_ground_truth(client):
         reverse_kwargs={"slug": rs1.slug},
         user=reader,
         client=client,
-        method=client.delete,
+        method=client.post,
         content_type="application/json",
     )
     assert response.status_code == 403
@@ -199,10 +199,10 @@ def test_answer_remove_ground_truth(client):
         reverse_kwargs={"slug": rs1.slug},
         user=editor,
         client=client,
-        method=client.delete,
+        method=client.post,
         content_type="application/json",
     )
-    assert response.status_code == 200
+    assert response.status_code == 302
     assert Answer.objects.filter(answer=f"a-{rs1.title}").exists()
     assert not Answer.objects.filter(answer=f"gt-{rs1.title}").exists()
     assert Answer.objects.filter(answer=f"a-{rs2.title}").exists()
@@ -278,7 +278,7 @@ def test_question_delete_disabled_for_questions_with_answers(client):
     get_view_for_user(
         viewname="reader-studies:answers-remove",
         client=client,
-        method=client.delete,
+        method=client.post,
         reverse_kwargs={"slug": rs.slug, "username": r1.username},
         follow=True,
         user=editor,

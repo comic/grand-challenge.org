@@ -17,7 +17,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.query import QuerySet
 from django.db.transaction import on_commit
-from django.forms import Media
+from django.forms import Form, Media
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -846,12 +846,13 @@ class UsersProgress(
         return context
 
 
-class AnswerBatchDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+class AnswerBatchDelete(LoginRequiredMixin, SuccessMessageMixin, FormView):
     permission_required = (
         f"{Answer._meta.app_label}.delete_{Answer._meta.model_name}"
     )
     raise_exception = True
     success_message = "Answers removed"
+    form_class = Form
 
     def check_permissions(self, request):
         permission_objects = self.get_queryset()
@@ -868,16 +869,16 @@ class AnswerBatchDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     def get_queryset(self):
         raise NotImplementedError
 
-    def delete(self, request, *args, **kwargs):
-        objects = self.check_permissions(request)
+    def form_valid(self, *args, **kwargs):
+        objects = self.check_permissions(self.request)
         objects.delete()
-        return HttpResponse(
-            self.get_success_url(),
-            headers={
-                "HX-Redirect": self.get_success_url(),
-                "HX-Refresh": True,
-            },
-        )
+
+        response = super().form_valid(*args, **kwargs)
+
+        response["HX-Redirect"] = self.get_success_url()
+        response["HX-Refresh"] = True
+
+        return response
 
     @property
     def reader_study(self):
@@ -1366,13 +1367,14 @@ class QuestionDelete(
         )
         return f"{url}#questions"
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, *args, **kwargs):
         question = self.get_object()
         if question.is_fully_editable:
-            return super().delete(request, *args, **kwargs)
-        return HttpResponseForbidden(
-            reason="This question already has answers associated with it"
-        )
+            return super().form_valid(*args, **kwargs)
+        else:
+            return HttpResponseForbidden(
+                reason="This question already has answers associated with it"
+            )
 
 
 class QuestionInterfacesView(View):
