@@ -350,6 +350,9 @@ class AlgorithmImageMarkDesired(
     def algorithm_image(self) -> Algorithm:
         return get_object_or_404(AlgorithmImage, pk=self.kwargs["pk"])
 
+    def get_permission_object(self):
+        return self.algorithm_image
+
     def get(self, *args, **kwargs):
         self.algorithm_image.mark_desired_version()
         return HttpResponse(

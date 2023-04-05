@@ -972,3 +972,40 @@ def test_algorithm_job_create_with_image_input(
     assert response.status_code == 200
     assert Job.objects.last().inputs.first().image.name == "image10x10x10.mha"
     assert Job.objects.last().inputs.first() != civ
+
+
+@pytest.mark.django_db
+def test_algorithm_image_mark_as_desired(client):
+    alg = AlgorithmFactory()
+    i1, i2 = AlgorithmImageFactory.create_batch(
+        2, algorithm=alg, is_manifest_valid=True, is_in_registry=True
+    )
+    i2.is_desired_version = True
+    i2.save()
+
+    editor, user = UserFactory.create_batch(2)
+    alg.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="algorithms:image-mark-desired",
+        client=client,
+        reverse_kwargs={"slug": alg.slug, "pk": i1.pk},
+        user=user,
+        follow=True,
+    )
+    assert response.status_code == 403
+
+    response2 = get_view_for_user(
+        viewname="algorithms:image-mark-desired",
+        client=client,
+        reverse_kwargs={"slug": alg.slug, "pk": i1.pk},
+        user=editor,
+        follow=True,
+    )
+
+    assert response2.status_code == 200
+    i1.refresh_from_db()
+    i2.refresh_from_db()
+    assert i1.is_desired_version
+    assert not i2.is_desired_version
+    assert alg.active_image == i1
