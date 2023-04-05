@@ -111,14 +111,21 @@ def test_encode_b64j(val, expected):
 
 @pytest.mark.django_db
 def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
-    MethodFactory(is_in_registry=True, is_manifest_valid=True)
-    WorkstationImageFactory(is_in_registry=True, is_manifest_valid=True)
+    MethodFactory(
+        is_in_registry=True, is_manifest_valid=True, is_desired_version=True
+    )
+    WorkstationImageFactory(
+        is_in_registry=True, is_manifest_valid=True, is_desired_version=True
+    )
     alg = AlgorithmFactory()
     ai1 = AlgorithmImageFactory(
         is_in_registry=True, is_manifest_valid=True, algorithm=alg
     )
     AlgorithmImageFactory(
-        is_in_registry=True, is_manifest_valid=True, algorithm=alg
+        is_in_registry=True,
+        is_manifest_valid=True,
+        algorithm=alg,
+        is_desired_version=True,
     )
 
     with django_capture_on_commit_callbacks() as callbacks:

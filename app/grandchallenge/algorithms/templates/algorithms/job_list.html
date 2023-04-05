@@ -20,7 +20,7 @@
 
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
 
-    {% if "execute_algorithm" in algorithm_perms and algorithm.latest_executable_image %}
+    {% if "execute_algorithm" in algorithm_perms and algorithm.active_image %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'algorithms:job-create' slug=algorithm.slug %}">

@@ -108,7 +108,9 @@ def test_algorithm_job_post_serializer_validations(
         ),
     }
     algorithm_image = AlgorithmImageFactory(
-        is_manifest_valid=image_ready, is_in_registry=image_ready
+        is_manifest_valid=image_ready,
+        is_in_registry=image_ready,
+        is_desired_version=image_ready,
     )
     algorithm_image.algorithm.title = title
     algorithm_image.algorithm.inputs.set(
@@ -158,7 +160,7 @@ def test_algorithm_job_post_serializer_create(rf):
     assign_perm("view_image", user, image)
     assert user.has_perm("view_image", image)
     algorithm_image = AlgorithmImageFactory(
-        is_manifest_valid=True, is_in_registry=True
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
     )
     interfaces = {
         ComponentInterfaceFactory(
@@ -206,6 +208,7 @@ class TestJobCreateLimits:
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
+            is_desired_version=True,
             algorithm__credits_per_job=100,
         )
         algorithm_image.algorithm.inputs.clear()
@@ -240,6 +243,7 @@ class TestJobCreateLimits:
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
+            is_desired_version=True,
             algorithm__credits_per_job=100,
         )
         algorithm_image.algorithm.inputs.clear()
@@ -266,6 +270,7 @@ class TestJobCreateLimits:
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,
             is_in_registry=True,
+            is_desired_version=True,
             algorithm__credits_per_job=1,
         )
         algorithm_image.algorithm.inputs.clear()

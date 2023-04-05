@@ -184,7 +184,7 @@ def remove_inactive_container_images():
         model = apps.get_model(app_label=app_label, model_name=model_name)
 
         for instance in model.objects.all():
-            latest = instance.latest_executable_image
+            latest = instance.active_image
 
             if latest is not None:
                 for image in (

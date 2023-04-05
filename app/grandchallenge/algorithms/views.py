@@ -419,7 +419,7 @@ class JobCreate(
 
         job = Job.objects.create(
             creator=self.request.user,
-            algorithm_image=self.algorithm.latest_executable_image,
+            algorithm_image=self.algorithm.active_image,
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             input_civ_set=component_interface_values,
         )

@@ -87,17 +87,20 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         ordering = ("created", "title")
 
     @cached_property
-    def latest_executable_image(self):
+    def active_image(self):
         """
         Returns
         -------
-            The most recent container image for this workstation
+            The desired image version for this workstation or None
         """
-        return (
-            self.workstationimage_set.executable_images()
-            .order_by("-created")
-            .first()
-        )
+        try:
+            return (
+                self.workstationimage_set.executable_images()
+                .filter(is_desired_version=True)
+                .get()
+            )
+        except ObjectDoesNotExist:
+            return None
 
     def __str__(self):
         public = " (Public)" if self.public else ""

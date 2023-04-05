@@ -97,7 +97,10 @@ class TestSubmissionForm:
         alg.outputs.clear()
 
         ai = AlgorithmImageFactory(
-            is_manifest_valid=True, is_in_registry=True, algorithm=alg
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
         )
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 

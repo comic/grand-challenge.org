@@ -265,7 +265,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             # Algorithm submission
             form.instance.algorithm_image = form.cleaned_data[
                 "algorithm"
-            ].latest_executable_image
+            ].active_image
 
         return super().form_valid(form)
 

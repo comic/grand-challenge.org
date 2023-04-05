@@ -4,7 +4,7 @@ from datetime import timedelta
 from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.transaction import on_commit
@@ -513,7 +513,7 @@ class Phase(UUIDModel, ViewContentMixin):
 
         if (
             self.submissions_limit_per_user_per_period > 0
-            and not self.latest_executable_image
+            and not self.active_image
         ):
             raise ValidationError(
                 "You need to first add a valid method for this phase before you "
@@ -714,15 +714,20 @@ class Phase(UUIDModel, ViewContentMixin):
             and self.submission_period_is_open_now
         )
 
-    @property
-    def latest_executable_image(self):
-        if self.method_set.all():
+    @cached_property
+    def active_image(self):
+        """
+        Returns
+        -------
+            The desired image version for this phase or None
+        """
+        try:
             return (
                 self.method_set.executable_images()
-                .order_by("-created")
-                .first()
+                .filter(is_desired_version=True)
+                .get()
             )
-        else:
+        except ObjectDoesNotExist:
             return None
 
 
