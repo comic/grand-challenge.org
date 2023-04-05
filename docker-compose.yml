@@ -1,11 +1,20 @@
+x-postgres-env: &postgres-env
+  POSTGRES_PASSWORD: secretpassword
+  POSTGRES_USER: grandchallenge
+  POSTGRES_DB: grandchallenge
+
+x-minio-env: &minio-env
+  AWS_ACCESS_KEY_ID: minioadmin
+  AWS_SECRET_ACCESS_KEY: minioadmin
+  AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
+
+
 services:
 
   postgres:
     image: postgres:14
-    environment: &postgresenv
-      POSTGRES_PASSWORD: secretpassword
-      POSTGRES_USER: grandchallenge
-      POSTGRES_DB: grandchallenge
+    environment:
+      <<: [*postgres-env]
     tmpfs:
       - /var/lib/postgresql/data/
     healthcheck:
@@ -33,11 +42,7 @@ services:
   web:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
-      <<: *postgresenv
-      <<: &minio_development_env
-        AWS_ACCESS_KEY_ID: minioadmin
-        AWS_SECRET_ACCESS_KEY: minioadmin
-        AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
+      <<: [*postgres-env, *minio-env]
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
@@ -95,8 +100,7 @@ services:
   celery_worker:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
-      <<: *postgresenv
-      <<: *minio_development_env
+      <<: [*postgres-env, *minio-env]
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
@@ -125,8 +129,7 @@ services:
   celery_worker_evaluation:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
-      <<: *postgresenv
-      <<: *minio_development_env
+      <<: [*postgres-env, *minio-env]
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
@@ -166,7 +169,7 @@ services:
   celery_beat:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
-      <<: *postgresenv
+      <<: [*postgres-env]
       DEBUG: 'true'
     restart: always
     command: >-
