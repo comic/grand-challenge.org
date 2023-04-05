@@ -27,6 +27,7 @@ from django.views.generic import (
     FormView,
     ListView,
     UpdateView,
+    View,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -333,6 +334,36 @@ class AlgorithmImageUpdate(
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.object.algorithm})
         return context
+
+
+class AlgorithmImageMarkDesired(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, View
+):
+    permission_required = "algorithms.change_algorithmimage"
+    raise_exception = True
+
+    @cached_property
+    def algorithm(self) -> Algorithm:
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    @cached_property
+    def algorithm_image(self) -> Algorithm:
+        return get_object_or_404(AlgorithmImage, pk=self.kwargs["pk"])
+
+    def get(self, *args, **kwargs):
+        self.algorithm_image.mark_desired_version()
+        return HttpResponse(
+            self.get_success_url(),
+            headers={
+                "HX-Redirect": self.get_success_url(),
+            },
+        )
+
+    def get_success_url(self):
+        return (
+            reverse("algorithms:detail", kwargs={"slug": self.algorithm.slug})
+            + "#containers"
+        )
 
 
 class JobCreate(

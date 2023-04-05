@@ -555,7 +555,7 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = AlgorithmImage
-        fields = ("requires_gpu", "requires_memory_gb")
+        fields = ("requires_gpu", "requires_memory_gb", "comment")
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {
             "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"

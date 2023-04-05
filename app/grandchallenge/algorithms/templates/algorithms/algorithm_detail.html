@@ -422,6 +422,8 @@
                     </a>
                 </p>
 
+                <p>To re-activate a previously uploaded container image, click on the info button next to it and then on "Make active image for algorithm". </p>
+
                 <ul class="list-unstyled">
                     {% for image in object.algorithm_container_images.all %}
                         <li>
@@ -442,7 +444,7 @@
                                 Container image from
                                 <a href="{{ image.build.webhook_message.tag_url }}">{{ image.build.webhook_message.repo_name }}:{{ image.build.webhook_message.tag }}</a>
                             {% else %}
-                                Container image uploaded by {{ image.creator }} {{ image.created|naturaltime }}
+                                Container image uploaded by {{ image.creator }} {{ image.created|naturaltime }} {% if image.comment %}({{ image.comment }}) {% endif %}
                             {% endif %}
 
                             <span class="badge badge-{{ image.import_status_context }}">

@@ -37,8 +37,18 @@
                href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
                 <i class="fa fa-edit"></i> Edit this algorithm image
             </a>
+            {% if not object.is_desired_version %}
+                <a class="btn btn-success"
+                    hx-get="{% url 'algorithms:image-mark-desired' slug=object.algorithm.slug pk=object.pk %}"
+                    hx-target="body"
+                >
+                    <i class="fa fa-check-circle mr-1"></i> Make active image for algorithm
+                </a>
+            {% endif %}
         </p>
     {% endif %}
+
+    <span class="badge p-2 mb-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
 
     <dl class="inline">
         <dt>ID</dt>
@@ -111,6 +121,9 @@
 
         <dt>Requires Memory</dt>
         <dd>{{ object.requires_memory_gb }} GB</dd>
+
+        <dt>Comment</dt>
+        <dd>{{ object.comment }}</dd>
     </dl>
 
     {% if object.build %}
