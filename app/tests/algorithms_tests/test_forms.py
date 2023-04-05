@@ -432,7 +432,6 @@ def test_publish_algorithm():
     _ = AlgorithmJobFactory(
         algorithm_image=ai, status=Job.SUCCESS, public=True
     )
-    del algorithm.active_image
     del algorithm.public_test_case
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid()
