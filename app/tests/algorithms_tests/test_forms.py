@@ -327,19 +327,17 @@ def test_create_job_json_input_field_validation(
 ):
     alg, creator = create_algorithm_with_input(slug)
 
-    with pytest.raises(TypeError) as e:
-        get_view_for_user(
-            viewname="algorithms:job-create",
-            client=client,
-            reverse_kwargs={"slug": alg.slug},
-            method=client.post,
-            follow=True,
-            user=creator,
-        )
-    assert (
-        "the JSON object must be str, bytes or bytearray, not NoneType"
-        in str(e)
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        method=client.post,
+        follow=True,
+        user=creator,
     )
+    assert response.context["form"].errors == {
+        slug: ["This field is required."]
+    }
 
 
 @pytest.mark.django_db
