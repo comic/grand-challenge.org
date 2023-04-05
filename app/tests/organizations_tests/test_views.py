@@ -86,7 +86,7 @@ class TestOrganizationFilterViews:
 
         try:
             obj = factory(public=True)
-        except TypeError:
+        except AttributeError:
             # TODO For challenges, hidden needs to be refactored to public
             obj = factory(hidden=False)
 

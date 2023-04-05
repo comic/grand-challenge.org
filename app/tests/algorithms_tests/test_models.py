@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django.test import TestCase
-from django.utils import timezone
+from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import (
@@ -105,14 +105,14 @@ def test_rendered_result_text():
 @pytest.mark.django_db
 def test_average_duration():
     alg = AlgorithmFactory()
-    now = timezone.now()
+    start = now()
 
     assert alg.average_duration is None
 
     j = AlgorithmJobFactory(algorithm_image__algorithm=alg)
 
-    j.started_at = now - timedelta(minutes=5)
-    j.completed_at = now
+    j.started_at = start - timedelta(minutes=5)
+    j.completed_at = start
     j.status = j.SUCCESS
     j.save()
 
@@ -120,8 +120,8 @@ def test_average_duration():
 
     # Unsuccessful jobs should not count
     j = AlgorithmJobFactory(algorithm_image__algorithm=alg)
-    j.started_at = now - timedelta(minutes=10)
-    j.completed_at = now
+    j.started_at = start - timedelta(minutes=10)
+    j.completed_at = start
     j.status = j.FAILURE
     j.save()
 
@@ -129,8 +129,8 @@ def test_average_duration():
 
     # Nor should jobs for other algorithms
     j = AlgorithmJobFactory()
-    j.started_at = now - timedelta(minutes=15)
-    j.completed_at = now
+    j.started_at = start - timedelta(minutes=15)
+    j.completed_at = start
     j.status = j.SUCCESS
     j.save()
 

@@ -116,6 +116,7 @@ def test_window_presets_db_integrity(config, expected_valid):
             preset.save()
 
 
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "config, expected_valid", window_presets_tests, ids=ids
 )
