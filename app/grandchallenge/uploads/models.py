@@ -6,7 +6,6 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.utils.datetime_safe import strftime
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_summernote.models import AbstractAttachment
@@ -33,7 +32,7 @@ def public_media_filepath(instance, filename):
 
 def summernote_upload_filepath(instance, filename):
     return os.path.join(
-        strftime(now(), "i/%Y/%m/%d"), get_valid_filename(filename)
+        now().strftime("i/%Y/%m/%d"), get_valid_filename(filename)
     )
 
 

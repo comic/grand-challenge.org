@@ -38,7 +38,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 celery = {version = "!=5.0.6", extras = ["redis", "sqs"]}
-django = "<3.3"
+django = "<4.1"
 django-countries = "*"
 django-crispy-forms = "*"
 crispy-bootstrap4 = "*"
