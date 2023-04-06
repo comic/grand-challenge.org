@@ -601,7 +601,7 @@ def test_workstation_url():
 
     assert (
         display_set.workstation_url
-        == f"https://testserver/viewers/{workstation.slug}/sessions/create/?displaySet={display_set.pk}"
+        == f"https://testserver/viewers/{workstation.slug}/sessions/create/display-set/{display_set.pk}?"
     )
 
 

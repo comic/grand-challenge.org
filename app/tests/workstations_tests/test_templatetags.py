@@ -178,9 +178,7 @@ def test_workstation_query_for_images(settings):
     assert f"{settings.WORKSTATIONS_BASE_IMAGE_PATH_PARAM}/{image.pk}" in path
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    path, qs = get_workstation_path_and_query_string(
-        image=image, overlay=overlay
-    )
+    path, qs = get_workstation_path_and_query_string(image=image)
     assert "&" not in qs
     assert f"{settings.WORKSTATIONS_BASE_IMAGE_PATH_PARAM}/{image.pk}" in path
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
