@@ -48,6 +48,9 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.workstations.templatetags.workstations import (
+    get_workstation_path_and_query_string,
+)
 
 __doc__ = """
 A reader study enables you to have a set of readers answer a set of questions
@@ -148,10 +151,6 @@ The scores can then be compared on the ``leaderboard``. Statistics are also avai
 based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
-
-from grandchallenge.workstations.templatetags.workstations import (
-    get_workstation_query_string,
-)
 
 CASE_TEXT_SCHEMA = {
     "type": "object",
@@ -865,8 +864,8 @@ class DisplaySet(UUIDModel):
             "workstations:workstation-session-create",
             kwargs={"slug": self.reader_study.workstation.slug},
         )
-        query = get_workstation_query_string(display_set=self)
-        return f"{url}?{query}"
+        path, query = get_workstation_path_and_query_string(display_set=self)
+        return f"{url}/{path}?{query}"
 
     @property
     def description(self) -> str:

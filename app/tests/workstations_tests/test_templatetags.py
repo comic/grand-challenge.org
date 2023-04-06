@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.templatetags.workstations import (
-    get_workstation_query_string,
+    get_workstation_path_and_query_string,
     workstation_session_control_data,
 )
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -27,11 +27,13 @@ def test_workstation_query_for_reader_studies(settings):
     config = WorkstationConfigFactory.build()
     user = UserFactory.build()
 
-    qs = get_workstation_query_string(reader_study=reader_study, user=user)
+    path, qs = get_workstation_path_and_query_string(
+        reader_study=reader_study, user=user
+    )
     assert "&" in qs
     assert (
-        f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/{reader_study.pk}"
+        in path
     )
     assert f"{settings.WORKSTATIONS_USER_QUERY_PARAM}={user.username}" in qs
     assert (
@@ -39,11 +41,11 @@ def test_workstation_query_for_reader_studies(settings):
         in qs
     )
 
-    qs = get_workstation_query_string(reader_study=reader_study)
-    assert "&" in qs
+    path, qs = get_workstation_path_and_query_string(reader_study=reader_study)
+    assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/{reader_study.pk}"
+        in path
     )
     assert (
         f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={reader_study.workstation_config.pk}"
@@ -51,11 +53,13 @@ def test_workstation_query_for_reader_studies(settings):
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = get_workstation_query_string(reader_study=reader_study, config=config)
-    assert "&" in qs
+    path, qs = get_workstation_path_and_query_string(
+        reader_study=reader_study, config=config
+    )
+    assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/{reader_study.pk}"
+        in path
     )
     assert (
         f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={reader_study.workstation_config.pk}"
@@ -65,11 +69,11 @@ def test_workstation_query_for_reader_studies(settings):
 
     reader_study.workstation_config = None
 
-    qs = get_workstation_query_string(reader_study=reader_study)
+    path, qs = get_workstation_path_and_query_string(reader_study=reader_study)
     assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM}={reader_study.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/{reader_study.pk}"
+        in path
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}" not in qs
 
@@ -81,11 +85,11 @@ def test_workstation_query_for_display_sets(settings):
     config = WorkstationConfigFactory.build()
     display_set = DisplaySetFactory.build(reader_study=reader_study)
 
-    qs = get_workstation_query_string(display_set=display_set)
-    assert "&" in qs
+    path, qs = get_workstation_path_and_query_string(display_set=display_set)
+    assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_DISPLAY_SET_QUERY_PARAM}={display_set.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/{display_set.pk}"
+        in path
     )
     assert (
         f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={reader_study.workstation_config.pk}"
@@ -93,11 +97,13 @@ def test_workstation_query_for_display_sets(settings):
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = get_workstation_query_string(display_set=display_set, config=config)
-    assert "&" in qs
+    path, qs = get_workstation_path_and_query_string(
+        display_set=display_set, config=config
+    )
+    assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_DISPLAY_SET_QUERY_PARAM}={display_set.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/{display_set.pk}"
+        in path
     )
     assert (
         f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={reader_study.workstation_config.pk}"
@@ -107,11 +113,11 @@ def test_workstation_query_for_display_sets(settings):
 
     reader_study.workstation_config = None
 
-    qs = get_workstation_query_string(display_set=display_set)
+    path, qs = get_workstation_path_and_query_string(display_set=display_set)
     assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_DISPLAY_SET_QUERY_PARAM}={display_set.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/{display_set.pk}"
+        in path
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}" not in qs
 
@@ -120,19 +126,21 @@ def test_workstation_query_for_archive_items(settings):
     config = WorkstationConfigFactory.build()
     archive_item = ArchiveItemFactory.build()
 
-    qs = get_workstation_query_string(archive_item=archive_item, config=config)
-    assert "&" in qs
+    path, qs = get_workstation_path_and_query_string(
+        archive_item=archive_item, config=config
+    )
+    assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM}={archive_item.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_ARCHIVE_ITEM_PATH_PARAM}/{archive_item.pk}"
+        in path
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
 
-    qs = get_workstation_query_string(archive_item=archive_item)
+    path, qs = get_workstation_path_and_query_string(archive_item=archive_item)
     assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM}={archive_item.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_ARCHIVE_ITEM_PATH_PARAM}/{archive_item.pk}"
+        in path
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}" not in qs
 
@@ -141,20 +149,22 @@ def test_workstation_query_for_algorithms(settings):
     algorithm_job = AlgorithmJobFactory.build()
     config = WorkstationConfigFactory.build()
 
-    qs = get_workstation_query_string(algorithm_job=algorithm_job)
+    path, qs = get_workstation_path_and_query_string(
+        algorithm_job=algorithm_job
+    )
     assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM}={algorithm_job.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_ALGORITHM_JOB_PATH_PARAM}/{algorithm_job.pk}"
+        in path
     )
 
-    qs = get_workstation_query_string(
+    path, qs = get_workstation_path_and_query_string(
         algorithm_job=algorithm_job, config=config
     )
-    assert "&" in qs
+    assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM}={algorithm_job.pk}"
-        in qs
+        f"{settings.WORKSTATIONS_ALGORITHM_JOB_PATH_PARAM}/{algorithm_job.pk}"
+        in path
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
 
@@ -163,26 +173,23 @@ def test_workstation_query_for_images(settings):
     image, overlay = ImageFactory.build_batch(2)
     config = WorkstationConfigFactory.build()
 
-    qs = get_workstation_query_string(image=image)
+    path, qs = get_workstation_path_and_query_string(image=image)
     assert "&" not in qs
-    assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
-    assert (
-        f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" not in qs
-    )
+    assert f"{settings.WORKSTATIONS_BASE_IMAGE_PATH_PARAM}/{image.pk}" in path
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = get_workstation_query_string(image=image, overlay=overlay)
-    assert "&" in qs
-    assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
-    assert f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" in qs
+    path, qs = get_workstation_path_and_query_string(
+        image=image, overlay=overlay
+    )
+    assert "&" not in qs
+    assert f"{settings.WORKSTATIONS_BASE_IMAGE_PATH_PARAM}/{image.pk}" in path
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" not in qs
 
-    qs = get_workstation_query_string(image=image, config=config)
-    assert "&" in qs
-    assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
-    assert (
-        f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" not in qs
+    path, qs = get_workstation_path_and_query_string(
+        image=image, config=config
     )
+    assert "&" not in qs
+    assert f"{settings.WORKSTATIONS_BASE_IMAGE_PATH_PARAM}/{image.pk}" in path
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
 
 
@@ -204,7 +211,7 @@ def test_workstation_session_control_data():
     )
     assert (
         data
-        == f' data-session-control data-create-session-url="{url}" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}"'  # noqa B907
+        == f' data-session-control data-create-session-url="{url}" data-workstation-path="" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}"'  # noqa B907
     )
     assert "timeout" not in data
 
@@ -213,7 +220,7 @@ def test_workstation_session_control_data():
     )
     assert (
         data2
-        == f' data-session-control data-create-session-url="{url}" data-workstation-query="readerStudy={obj.pk}" data-workstation-window-identifier="workstation-{obj._meta.app_label}" data-timeout="200"'  # noqa B907
+        == f' data-session-control data-create-session-url="{url}" data-workstation-path="reader-study/{obj.pk}" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}" data-timeout="200"'  # noqa B907
     )
 
 

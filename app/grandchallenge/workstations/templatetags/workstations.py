@@ -8,9 +8,8 @@ from grandchallenge.subdomains.utils import reverse
 register = template.Library()
 
 
-def get_workstation_query_string(  # noqa: C901
+def get_workstation_path_and_query_string(  # noqa: C901
     image=None,
-    overlay=None,
     reader_study=None,
     algorithm_job=None,
     archive_item=None,
@@ -24,39 +23,23 @@ def get_workstation_query_string(  # noqa: C901
     Supports setting the image with overlay or a reader_study.
     """
     if image:
-        query = {
-            settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM: getattr(
-                image, "pk", image
-            )
-        }
-        if overlay:
-            query.update(
-                {
-                    settings.WORKSTATIONS_OVERLAY_QUERY_PARAM: getattr(
-                        overlay, "pk", overlay
-                    )
-                }
-            )
+        path = f"{settings.WORKSTATIONS_BASE_IMAGE_PATH_PARAM}/{getattr(image, 'pk', image)}"
     elif display_set:
-        query = {settings.WORKSTATIONS_DISPLAY_SET_QUERY_PARAM: display_set.pk}
+        path = (
+            f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/{display_set.pk}"
+        )
     elif reader_study:
-        query = {
-            settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM: reader_study.pk
-        }
-        if user:
-            query.update(
-                {settings.WORKSTATIONS_USER_QUERY_PARAM: user.username}
-            )
+        path = (
+            f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/{reader_study.pk}"
+        )
     elif algorithm_job:
-        query = {
-            settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM: algorithm_job.pk
-        }
+        path = f"{settings.WORKSTATIONS_ALGORITHM_JOB_PATH_PARAM}/{algorithm_job.pk}"
     elif archive_item:
-        query = {
-            settings.WORKSTATIONS_ARCHIVE_ITEM_QUERY_PARAM: archive_item.pk
-        }
+        path = f"{settings.WORKSTATIONS_ARCHIVE_ITEM_PATH_PARAM}/{archive_item.pk}"
     else:
-        query = {}
+        path = ""
+
+    query = {}
 
     if config:
         # Explicit configs have precedence
@@ -79,8 +62,10 @@ def get_workstation_query_string(  # noqa: C901
                 settings.WORKSTATIONS_CONFIG_QUERY_PARAM: display_set.reader_study.workstation_config.pk
             }
         )
+    if reader_study and user:
+        query.update({settings.WORKSTATIONS_USER_QUERY_PARAM: user.username})
 
-    return urlencode(query)
+    return path, urlencode(query)
 
 
 @register.simple_tag()
@@ -91,11 +76,15 @@ def workstation_session_control_data(
         "workstations:workstation-session-create",
         kwargs={"slug": workstation.slug},
     )
-    workstation_query_string = get_workstation_query_string(**kwargs)
+    (
+        workstation_path,
+        workstation_query_string,
+    ) = get_workstation_path_and_query_string(**kwargs)
     window_identifier = f"workstation-{context_object._meta.app_label}"
     data_attrs = {
         "data-session-control": True,
         "data-create-session-url": create_session_url,
+        "data-workstation-path": workstation_path,
         "data-workstation-query": workstation_query_string,
         "data-workstation-window-identifier": window_identifier,
         "data-timeout": timeout,
