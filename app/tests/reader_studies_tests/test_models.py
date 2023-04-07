@@ -494,7 +494,7 @@ def test_validate_answer():
                 "answer_max_value": 2.1,
                 "answer_step_size": 1,
             },
-            nullcontext(),
+            pytest.raises(ValidationError),
         ),
     ),
 )

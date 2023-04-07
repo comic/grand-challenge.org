@@ -1523,24 +1523,13 @@ class Answer(UUIDModel):
         if question.answer_max_value is not None:
             MaxValueValidator(question.answer_max_value)(answer)
 
-        if (
-            question.answer_step_size is not None
-            and not question.answer_min_value
-            and not question.answer_max_value
-        ):
-            StepValueValidator(question.answer_step_size)(answer)
-
-        if question.answer_step_size and (
-            question.answer_max_value or question.answer_min_value
-        ):
+        if question.answer_step_size:
             if question.answer_min_value:
                 StepValueValidator(question.answer_step_size)(
                     answer - question.answer_min_value
                 )
             else:
-                StepValueValidator(question.answer_step_size)(
-                    answer - question.answer_max_value
-                )
+                StepValueValidator(question.answer_step_size)(answer)
 
     @property
     def answer_text(self):
