@@ -865,7 +865,7 @@ class DisplaySet(UUIDModel):
             kwargs={"slug": self.reader_study.workstation.slug},
         )
         path, query = get_workstation_path_and_query_string(display_set=self)
-        return f"{url}/{path}?{query}"
+        return f"{url}{path}?{query}"
 
     @property
     def description(self) -> str:
