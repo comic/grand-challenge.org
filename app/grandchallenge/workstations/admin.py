@@ -52,7 +52,6 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
         "extra_env_vars",
     ]
     search_fields = [
-        "logs",
         "creator__username",
     ]
 
