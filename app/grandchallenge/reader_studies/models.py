@@ -1524,12 +1524,10 @@ class Answer(UUIDModel):
             MaxValueValidator(question.answer_max_value)(answer)
 
         if question.answer_step_size:
-            if question.answer_min_value:
-                StepValueValidator(question.answer_step_size)(
-                    answer - question.answer_min_value
-                )
-            else:
-                StepValueValidator(question.answer_step_size)(answer)
+            StepValueValidator(
+                limit_value=question.answer_step_size,
+                offset=question.answer_min_value,
+            )(answer)
 
     @property
     def answer_text(self):
