@@ -496,6 +496,15 @@ def test_validate_answer():
             },
             pytest.raises(ValidationError),
         ),
+        (
+            AnswerType.NUMBER,
+            1.9,
+            {
+                "answer_min_value": -0.1,
+                "answer_step_size": 2.0,
+            },
+            nullcontext(),
+        ),
     ),
 )
 @pytest.mark.django_db

@@ -24,5 +24,5 @@ class StepValueValidator(BaseValidator):
 
     def compare(self, a, b):
         return not math.isclose(
-            math.remainder(a + self.offset, b), 0, abs_tol=1e-9
+            math.remainder(a - self.offset, b), 0, abs_tol=1e-9
         )
