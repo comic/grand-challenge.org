@@ -1601,8 +1601,11 @@
         <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_max_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">MaxValueValidator</span><span class="p">(</span><span class="n">question</span><span class="o">.</span><span class="n">answer_max_value</span><span class="p">)(</span><span class="n">answer</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_step_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">StepValueValidator</span><span class="p">(</span><span class="n">question</span><span class="o">.</span><span class="n">answer_step_size</span><span class="p">)(</span><span class="n">answer</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_step_size</span><span class="p">:</span>
+            <span class="n">StepValueValidator</span><span class="p">(</span>
+                <span class="n">limit_value</span><span class="o">=</span><span class="n">question</span><span class="o">.</span><span class="n">answer_step_size</span><span class="p">,</span>
+                <span class="n">offset</span><span class="o">=</span><span class="n">question</span><span class="o">.</span><span class="n">answer_min_value</span><span class="p">,</span>
+            <span class="p">)(</span><span class="n">answer</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">answer_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
