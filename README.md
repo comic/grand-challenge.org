@@ -1,7 +1,6 @@
 # grand-challenge.org
 
 [![Build Status](https://github.com/comic/grand-challenge.org/workflows/CI/badge.svg)](https://github.com/comic/grand-challenge.org/actions?query=workflow%3ACI+branch%3Amain)
-[![Code Coverage Status](https://codecov.io/gh/comic/grand-challenge.org/branch/main/graph/badge.svg)](https://codecov.io/gh/comic/grand-challenge.org)
 [![Documentation](https://img.shields.io/badge/docs-published-success)](https://comic.github.io/grand-challenge.org/)
 [![Black Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Cite Us with Zenodo](https://zenodo.org/badge/4557968.svg)](https://zenodo.org/badge/latestdoi/4557968)
