@@ -202,7 +202,7 @@ def test_answer_remove_ground_truth(client):
         method=client.post,
         content_type="application/json",
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert Answer.objects.filter(answer=f"a-{rs1.title}").exists()
     assert not Answer.objects.filter(answer=f"gt-{rs1.title}").exists()
     assert Answer.objects.filter(answer=f"a-{rs2.title}").exists()

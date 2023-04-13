@@ -846,7 +846,7 @@ class UsersProgress(
         return context
 
 
-class AnswerBatchDelete(LoginRequiredMixin, SuccessMessageMixin, FormView):
+class AnswerBatchDelete(LoginRequiredMixin, FormView):
     permission_required = (
         f"{Answer._meta.app_label}.delete_{Answer._meta.model_name}"
     )
@@ -873,12 +873,15 @@ class AnswerBatchDelete(LoginRequiredMixin, SuccessMessageMixin, FormView):
         objects = self.check_permissions(self.request)
         objects.delete()
 
-        response = super().form_valid(*args, **kwargs)
+        messages.success(self.request, self.success_message)
 
-        response["HX-Redirect"] = self.get_success_url()
-        response["HX-Refresh"] = True
-
-        return response
+        return HttpResponse(
+            self.get_success_url(),
+            headers={
+                "HX-Redirect": self.get_success_url(),
+                "HX-Refresh": True,
+            },
+        )
 
     @property
     def reader_study(self):
