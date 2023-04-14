@@ -1522,8 +1522,11 @@ class Answer(UUIDModel):
         if question.answer_max_value is not None:
             MaxValueValidator(question.answer_max_value)(answer)
 
-        if question.answer_step_size is not None:
-            StepValueValidator(question.answer_step_size)(answer)
+        if question.answer_step_size:
+            StepValueValidator(
+                limit_value=question.answer_step_size,
+                offset=question.answer_min_value,
+            )(answer)
 
     @property
     def answer_text(self):

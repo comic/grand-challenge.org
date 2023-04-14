@@ -34,11 +34,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install codecov dependencies
-        run: |
-          python -m pip install codecov pytest-cov
-          mkdir -p /tmp/coverage
-          chmod a+w /tmp/coverage
       - uses: actions/checkout@v3
       - name: Build the test container
         run: |
@@ -51,13 +46,7 @@ jobs:
       - name: Run the django tests
         run: |
           make minio
-          docker compose run --rm -v /tmp/coverage:/tmp/coverage celery_worker_evaluation bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=. --durations 10"
-      - name: Upload coverage report to codecov
-        run: |
-          coverage combine /tmp/coverage/
-          codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          docker compose run --rm celery_worker_evaluation pytest --durations 10
 
   docs:
     runs-on: ubuntu-latest
