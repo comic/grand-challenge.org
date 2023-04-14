@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 from django import template
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -6,6 +8,11 @@ from django.utils.http import urlencode
 from grandchallenge.subdomains.utils import reverse
 
 register = template.Library()
+
+
+class PathAndQueryString(NamedTuple):
+    path: str
+    query_string: str
 
 
 def get_workstation_path_and_query_string(  # noqa: C901
@@ -65,7 +72,7 @@ def get_workstation_path_and_query_string(  # noqa: C901
     if reader_study and user:
         query.update({settings.WORKSTATIONS_USER_QUERY_PARAM: user.username})
 
-    return path, urlencode(query)
+    return PathAndQueryString(path, urlencode(query))
 
 
 @register.simple_tag()
@@ -76,16 +83,13 @@ def workstation_session_control_data(
         "workstations:workstation-session-create",
         kwargs={"slug": workstation.slug},
     )
-    (
-        workstation_path,
-        workstation_query_string,
-    ) = get_workstation_path_and_query_string(**kwargs)
+    pqs = get_workstation_path_and_query_string(**kwargs)
     window_identifier = f"workstation-{context_object._meta.app_label}"
     data_attrs = {
         "data-session-control": True,
         "data-create-session-url": create_session_url,
-        "data-workstation-path": workstation_path,
-        "data-workstation-query": workstation_query_string,
+        "data-workstation-path": pqs.path,
+        "data-workstation-query": pqs.query_string,
         "data-workstation-window-identifier": window_identifier,
         "data-timeout": timeout,
     }
