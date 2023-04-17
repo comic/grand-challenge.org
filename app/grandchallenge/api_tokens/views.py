@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from django.views.generic import DeleteView, FormView, ListView
@@ -45,7 +46,7 @@ class APITokenCreate(LoginRequiredMixin, FormView):
         return reverse("api-tokens:list")
 
 
-class APITokenDelete(LoginRequiredMixin, DeleteView):
+class APITokenDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = AuthToken
     success_message = "Token successfully deleted"
 
@@ -55,10 +56,6 @@ class APITokenDelete(LoginRequiredMixin, DeleteView):
             token_key=self.kwargs["token_key"],
             user=self.request.user,
         )
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse("api-tokens:list")

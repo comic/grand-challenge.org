@@ -8,6 +8,7 @@ import sentry_sdk
 from celery.schedules import crontab
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -106,10 +107,6 @@ SITE_ID = int(os.environ.get("SITE_ID", "1"))
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = True
-
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale.
-USE_L10N = True
 
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
@@ -275,6 +272,9 @@ ABSOLUTE_URL_OVERRIDES = {
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
+if not SESSION_COOKIE_DOMAIN.startswith("."):
+    raise ImproperlyConfigured("SESSION_COOKIE_DOMAIN should start with a '.'")
+
 # We're always running behind a proxy so set these to true
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -282,7 +282,7 @@ CSRF_COOKIE_SECURE = True
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
-CSRF_TRUSTED_ORIGINS = [SESSION_COOKIE_DOMAIN]
+CSRF_TRUSTED_ORIGINS = [f"https://*{SESSION_COOKIE_DOMAIN}"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
 

@@ -17,7 +17,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.query import QuerySet
 from django.db.transaction import on_commit
-from django.forms import Media
+from django.forms import Form, Media
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -330,7 +330,10 @@ class ReaderStudyUpdate(
 
 
 class ReaderStudyDelete(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
 ):
     model = ReaderStudy
     permission_required = (
@@ -341,10 +344,6 @@ class ReaderStudyDelete(
 
     def get_success_url(self):
         return reverse("reader-studies:list")
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -847,12 +846,13 @@ class UsersProgress(
         return context
 
 
-class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
+class AnswerBatchDelete(LoginRequiredMixin, FormView):
     permission_required = (
         f"{Answer._meta.app_label}.delete_{Answer._meta.model_name}"
     )
     raise_exception = True
     success_message = "Answers removed"
+    form_class = Form
 
     def check_permissions(self, request):
         permission_objects = self.get_queryset()
@@ -869,10 +869,12 @@ class AnswerBatchDelete(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         raise NotImplementedError
 
-    def delete(self, request, *args, **kwargs):
-        objects = self.check_permissions(request)
+    def form_valid(self, *args, **kwargs):
+        objects = self.check_permissions(self.request)
         objects.delete()
-        messages.add_message(request, messages.SUCCESS, self.success_message)
+
+        messages.success(self.request, self.success_message)
+
         return HttpResponse(
             self.get_success_url(),
             headers={
@@ -1343,15 +1345,16 @@ class AnswerViewSet(
 
 
 class QuestionDelete(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
 ):
     model = Question
-
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
-
     success_message = "Question was successfully deleted"
 
     def get_permission_object(self):
@@ -1367,14 +1370,14 @@ class QuestionDelete(
         )
         return f"{url}#questions"
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, *args, **kwargs):
         question = self.get_object()
         if question.is_fully_editable:
-            messages.success(self.request, self.success_message)
-            return super().delete(request, *args, **kwargs)
-        return HttpResponseForbidden(
-            reason="This question already has answers associated with it"
-        )
+            return super().form_valid(*args, **kwargs)
+        else:
+            return HttpResponseForbidden(
+                reason="This question already has answers associated with it"
+            )
 
 
 class QuestionInterfacesView(View):

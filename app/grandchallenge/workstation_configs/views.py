@@ -1,5 +1,5 @@
-from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -58,7 +58,10 @@ class WorkstationConfigUpdate(
 
 
 class WorkstationConfigDelete(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
 ):
     model = WorkstationConfig
     permission_required = f"{WorkstationConfig._meta.app_label}.change_{WorkstationConfig._meta.model_name}"
@@ -67,7 +70,3 @@ class WorkstationConfigDelete(
 
     def get_success_url(self):
         return reverse("workstation-configs:list")
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)

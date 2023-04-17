@@ -1,4 +1,4 @@
-from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
@@ -86,16 +86,15 @@ class TeamUpdate(
 
 
 class TeamDelete(
-    LoginRequiredMixin, UserIsTeamOwnerOrChallengeAdminMixin, DeleteView
+    LoginRequiredMixin,
+    UserIsTeamOwnerOrChallengeAdminMixin,
+    SuccessMessageMixin,
+    DeleteView,
 ):
     model = Team
     success_message = "Team successfully deleted"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse(
@@ -129,16 +128,13 @@ class TeamMemberCreate(
 class TeamMemberDelete(
     LoginRequiredMixin,
     UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
+    SuccessMessageMixin,
     DeleteView,
 ):
     model = TeamMember
     success_message = "User successfully removed from team"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse(

@@ -883,12 +883,12 @@ class AlgorithmPermissionRequest(RequestBase):
         if adding:
             process_access_request(request_object=self)
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
             app_label=self._meta.app_label, model=self._meta.model_name
         ).get()
         Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete()
+        super().delete(*args, **kwargs)
 
     class Meta(RequestBase.Meta):
         unique_together = (("algorithm", "user"),)

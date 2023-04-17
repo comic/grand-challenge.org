@@ -12,7 +12,7 @@ $(document).ready(() => {
     $('#proceed').on('click', (e) => {
         const target = $(e.currentTarget);
         htmx.ajax(
-            "DELETE",
+            "POST",
             `${target.data("baseurl")}remove-answers/${user}/`,
             {
                 values: {csrfmiddlewaretoken: target.data("csrf")},
