@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:ce38d629296949d2840ecae1406eab9bdabd7671f5ca1b6d7a04a04fd14f2b12",
+  "content_hash": "sha256:5efd4c7cbc59eeeb873edbead4876f1386bb930afbdc0e9359e5af2fea1e51e0",
   "dependencies": [
     {
       "name": "hammer.js",
@@ -13,6 +13,10 @@
         {
           "name": "hammer.js/2.0.8/hammer.min.js",
           "sri": "sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g=="
+        },
+        {
+          "name": "hammer.js/2.0.8/hammer.min.js.map",
+          "sri": null
         }
       ]
     },
@@ -253,8 +257,16 @@
           "sri": "sha512-wLveiqffVDS+4JWoWKHUFKCw2zUjqsG8dHN8Q72zgGWTed/fLP4NePfxQ3nw1Ewe3hd7mvUIjO3owmLWvZyf2Q=="
         },
         {
+          "name": "openseadragon/2.4.1/openseadragon.js.map",
+          "sri": null
+        },
+        {
           "name": "openseadragon/2.4.1/openseadragon.min.js",
           "sri": "sha512-ydnIgG69uS1sVDFa1ki6qvOVkc47BmyW3RGoMwn9jATwDIFdIZ8Yuoy/w3IQEv8xzUwqFPs/yNoD2bSaQTGXYg=="
+        },
+        {
+          "name": "openseadragon/2.4.1/openseadragon.min.js.map",
+          "sri": null
         }
       ]
     },
@@ -285,12 +297,20 @@
           "sri": "sha512-KbZ6k6pqdpS1TyYdfB9iJAwBv20Hktdz/6BTVd/eEHgKraMflq9F8/tOUlAyf1gAFBon6d6nC8L+pP27zeLZOw=="
         },
         {
+          "name": "uppy/2.2.0/uppy.js.map",
+          "sri": null
+        },
+        {
           "name": "uppy/2.2.0/uppy.min.css",
           "sri": "sha512-gD1Tjv/Dd8ZppRVxEh9BEgWgh6tUyXzcKb69dBn+JD5Ci5XYEj41jXBMacn3BmAbFFt/Wb1thylExLdwHR2kDA=="
         },
         {
           "name": "uppy/2.2.0/uppy.min.js",
           "sri": "sha512-NqPGg/p+/2QB/u22DwP2WutK3gpmglXIWLLuj2m67Kn6o+DU4qXopBHsQzJ7vSZMDx8wJ3fXbo526oSFLhCwkA=="
+        },
+        {
+          "name": "uppy/2.2.0/uppy.min.js.map",
+          "sri": null
         }
       ]
     },
@@ -317,8 +337,16 @@
           "sri": "sha512-on9nfuMR+qroRvIZgDlfWK09LLuVIIzazSQHves4boFFtHulHUM7XnDg6e0xdFAXgiwtZHfBRR5xT3xu0gkhZg=="
         },
         {
+          "name": "vega-embed/6.17.0/vega-embed.js.map",
+          "sri": null
+        },
+        {
           "name": "vega-embed/6.17.0/vega-embed.min.js",
           "sri": "sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
+        },
+        {
+          "name": "vega-embed/6.17.0/vega-embed.min.js.map",
+          "sri": null
         }
       ]
     },
@@ -331,8 +359,16 @@
           "sri": "sha512-Z5O5U8QvBmxsHZiQfvqu2+UERgL7K7tVJ8XwAlnP5Q+U4oG6bLeMn53GMBB9M2aBm0GKeXFcWPOW0mjm2kPTFg=="
         },
         {
+          "name": "vega-lite/5.1.0/vega-lite.js.map",
+          "sri": null
+        },
+        {
           "name": "vega-lite/5.1.0/vega-lite.min.js",
           "sri": "sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
+        },
+        {
+          "name": "vega-lite/5.1.0/vega-lite.min.js.map",
+          "sri": null
         }
       ]
     }
