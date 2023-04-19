@@ -11,7 +11,11 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.cases.widgets import WidgetChoices
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ImportStatusChoices,
+    InterfaceKind,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -975,7 +979,7 @@ def test_algorithm_job_create_with_image_input(
 
 
 @pytest.mark.django_db
-def test_algorithm_image_mark_as_desired(client, algorithm_io_image):
+def test_algorithm_image_mark_as_desired(settings, client, algorithm_io_image):
     alg = AlgorithmFactory()
     i1, i2 = AlgorithmImageFactory.create_batch(
         2,
@@ -1044,6 +1048,34 @@ def test_algorithm_image_mark_as_desired(client, algorithm_io_image):
         follow=True,
     )
     assert response4.status_code == 200
+    assert "Image validation and upload to registry in progress." in str(
+        response4.content
+    )
+
+    response5 = get_view_for_user(
+        viewname="algorithms:image-mark-desired",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
+        user=editor,
+        follow=True,
+    )
+    assert response5.status_code == 200
+    assert "Image updating already in progress." in str(response5.content)
+
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    i2.import_status = ImportStatusChoices.INITIALIZED
+    i2.save()
+    response6 = get_view_for_user(
+        viewname="algorithms:image-mark-desired",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
+        user=editor,
+        follow=True,
+    )
+    assert response6.status_code == 200
     i1.refresh_from_db()
     i2.refresh_from_db()
     del alg.active_image

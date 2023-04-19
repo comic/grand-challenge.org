@@ -44,10 +44,8 @@
                hx-post="{% url 'algorithms:image-mark-desired' slug=object.algorithm.slug pk=object.pk %}"
                hx-target="body"
                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-               hx-indicator="#spinner"
             >
                 <i class="fa fa-check-circle mr-1"></i> Make active image for algorithm
-                <span  id="spinner" class="htmx-indicator"><span class="spinner-border spinner-border-sm" role="status"></span></span>
             </a>
         {% endif %}
     </p>

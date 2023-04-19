@@ -108,12 +108,10 @@ def assign_docker_image_from_upload(
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def validate_docker_image(  # noqa C901
-    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+    *, pk: uuid.UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
-    instance.import_status = instance.ImportStatusChoices.STARTED
-    instance.save()
 
     if instance.is_manifest_valid is None:
         try:
@@ -134,25 +132,29 @@ def validate_docker_image(  # noqa C901
         # Nothing to do
         return
 
-    try:
-        upload_to_registry_and_sagemaker(instance)
-    except ValidationError as error:
-        instance.is_in_registry = False
-        instance.status = oxford_comma(error)
-        instance.import_status = instance.ImportStatusChoices.FAILED
-        instance.save()
-        send_invalid_dockerfile_email(container_image=instance)
-        return
 
-    if mark_as_desired:
-        instance.mark_desired_version()
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def upload_to_registry_and_sagemaker(
+    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
 
+    instance.import_status = instance.ImportStatusChoices.STARTED
+    instance.save()
 
-def upload_to_registry_and_sagemaker(instance):
     if not instance.is_in_registry:
-        push_container_image(instance=instance)
-        instance.is_in_registry = True
-        instance.save()
+        try:
+            push_container_image(instance=instance)
+            instance.is_in_registry = True
+            instance.save()
+        except ValidationError as error:
+            instance.is_in_registry = False
+            instance.status = oxford_comma(error)
+            instance.import_status = instance.ImportStatusChoices.FAILED
+            instance.save()
+            send_invalid_dockerfile_email(container_image=instance)
+            return
 
     if instance.SHIM_IMAGE and (
         instance.latest_shimmed_version
@@ -175,6 +177,9 @@ def upload_to_registry_and_sagemaker(instance):
 
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
+
+    if mark_as_desired:
+        instance.mark_desired_version()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

@@ -5,7 +5,7 @@ from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
 
-from celery import signature
+from celery import chain, signature
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -39,6 +39,7 @@ from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
+    upload_to_registry_and_sagemaker,
     validate_docker_image,
 )
 from grandchallenge.components.validators import (
@@ -1637,13 +1638,24 @@ class ComponentImage(models.Model):
         super().save(*args, **kwargs)
         if validate_image_now:
             on_commit(
-                validate_docker_image.signature(
-                    kwargs={
-                        "app_label": self._meta.app_label,
-                        "model_name": self._meta.model_name,
-                        "pk": self.pk,
-                        "mark_as_desired": True,
-                    }
+                chain(
+                    validate_docker_image.signature(
+                        kwargs={
+                            "app_label": self._meta.app_label,
+                            "model_name": self._meta.model_name,
+                            "pk": self.pk,
+                        },
+                        immutable=True,
+                    ),
+                    upload_to_registry_and_sagemaker.signature(
+                        kwargs={
+                            "app_label": self._meta.app_label,
+                            "model_name": self._meta.model_name,
+                            "pk": self.pk,
+                            "mark_as_desired": True,
+                        },
+                        immutable=True,
+                    ),
                 ).apply_async
             )
 

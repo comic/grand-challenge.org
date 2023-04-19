@@ -74,6 +74,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
+    ImportStatusChoices,
     InterfaceKind,
 )
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
@@ -85,7 +86,6 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
@@ -363,31 +363,49 @@ class AlgorithmImageMarkDesired(
             return HttpResponseRedirect(
                 self.algorithm_image.get_absolute_url()
             )
+
         if not self.algorithm_image.can_execute:
-            try:
-                upload_to_registry_and_sagemaker(self.algorithm_image)
-            except ValidationError as error:
-                self.algorithm_image.status = oxford_comma(error)
+            image_upload_in_progress = (
+                self.algorithm_image.import_status
+                == ImportStatusChoices.STARTED
+            )
+            if not image_upload_in_progress:
                 self.algorithm_image.import_status = (
-                    self.algorithm_image.ImportStatusChoices.FAILED
+                    ImportStatusChoices.STARTED
                 )
                 self.algorithm_image.save()
-                messages.error(
+                upload_to_registry_and_sagemaker.signature(
+                    kwargs={
+                        "app_label": self.algorithm_image._meta.app_label,
+                        "model_name": self.algorithm_image._meta.model_name,
+                        "pk": self.algorithm_image.pk,
+                        "mark_as_desired": True,
+                    }
+                ).apply_async()
+                messages.success(
                     request,
-                    f"Image upload to registry failed with error: {error}",
+                    "Image validation and upload to registry in progress. "
+                    "It can take a while for this image to become active, please be patient.",
                 )
-                return HttpResponseRedirect(
-                    self.algorithm_image.get_absolute_url()
+            else:
+                messages.warning(
+                    request, "Image updating already in progress."
                 )
+            return HttpResponseRedirect(
+                self.algorithm_image.get_absolute_url()
+            )
 
-        self.algorithm_image.mark_desired_version()
-
-        return HttpResponse(
-            self.get_success_url(),
-            headers={
-                "HX-Redirect": self.get_success_url(),
-            },
-        )
+        if (
+            self.algorithm_image.is_manifest_valid
+            and self.algorithm_image.can_execute
+        ):
+            self.algorithm_image.mark_desired_version()
+            return HttpResponse(
+                self.get_success_url(),
+                headers={
+                    "HX-Redirect": self.get_success_url(),
+                },
+            )
 
     def get_success_url(self):
         return (
