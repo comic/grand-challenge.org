@@ -1663,7 +1663,12 @@ class ComponentImage(models.Model):
 
     @transaction.atomic
     def mark_desired_version(self):
-        if self.is_manifest_valid:
+        try:
+            del self.can_execute
+        except AttributeError:
+            pass
+
+        if self.is_manifest_valid and self.can_execute:
             images = self.get_peer_images()
 
             for image in images:

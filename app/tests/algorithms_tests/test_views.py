@@ -975,10 +975,14 @@ def test_algorithm_job_create_with_image_input(
 
 
 @pytest.mark.django_db
-def test_algorithm_image_mark_as_desired(client):
+def test_algorithm_image_mark_as_desired(client, algorithm_io_image):
     alg = AlgorithmFactory()
     i1, i2 = AlgorithmImageFactory.create_batch(
-        2, algorithm=alg, is_manifest_valid=True, is_in_registry=True
+        2,
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        image__from_path=algorithm_io_image,
     )
     i2.is_desired_version = True
     i2.save()
@@ -989,6 +993,7 @@ def test_algorithm_image_mark_as_desired(client):
     response = get_view_for_user(
         viewname="algorithms:image-mark-desired",
         client=client,
+        method=client.post,
         reverse_kwargs={"slug": alg.slug, "pk": i1.pk},
         user=user,
         follow=True,
@@ -998,6 +1003,7 @@ def test_algorithm_image_mark_as_desired(client):
     response2 = get_view_for_user(
         viewname="algorithms:image-mark-desired",
         client=client,
+        method=client.post,
         reverse_kwargs={"slug": alg.slug, "pk": i1.pk},
         user=editor,
         follow=True,
@@ -1009,3 +1015,39 @@ def test_algorithm_image_mark_as_desired(client):
     assert i1.is_desired_version
     assert not i2.is_desired_version
     assert alg.active_image == i1
+
+    i2.is_manifest_valid = False
+    i2.save()
+
+    response3 = get_view_for_user(
+        viewname="algorithms:image-mark-desired",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
+        user=editor,
+        follow=True,
+    )
+    assert "Cannot mark an invalid image as active image." in str(
+        response3.content
+    )
+
+    i2.is_manifest_valid = True
+    i2.is_in_registry = False
+    i2.save()
+
+    response4 = get_view_for_user(
+        viewname="algorithms:image-mark-desired",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
+        user=editor,
+        follow=True,
+    )
+    assert response4.status_code == 200
+    i1.refresh_from_db()
+    i2.refresh_from_db()
+    del alg.active_image
+    assert not i1.is_desired_version
+    assert i2.is_desired_version
+    assert alg.active_image == i2
+    assert i2.is_in_registry

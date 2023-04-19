@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from functools import cached_property
 from urllib.parse import unquote, urljoin
 
 from django.conf import settings
@@ -85,7 +86,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created", "title")
 
-    @property
+    @cached_property
     def active_image(self):
         """
         Returns

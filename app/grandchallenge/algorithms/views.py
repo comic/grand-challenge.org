@@ -76,6 +76,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
+from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -84,6 +85,7 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
@@ -339,22 +341,47 @@ class AlgorithmImageUpdate(
 class AlgorithmImageMarkDesired(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, View
 ):
-    permission_required = "algorithms.change_algorithmimage"
+    permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
     @cached_property
     def algorithm(self) -> Algorithm:
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+        return self.algorithm_image.algorithm
 
     @cached_property
-    def algorithm_image(self) -> Algorithm:
+    def algorithm_image(self) -> AlgorithmImage:
         return get_object_or_404(AlgorithmImage, pk=self.kwargs["pk"])
 
     def get_permission_object(self):
-        return self.algorithm_image
+        return self.algorithm
 
-    def get(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        if not self.algorithm_image.is_manifest_valid:
+            messages.error(
+                request, "Cannot mark an invalid image as active image."
+            )
+            return HttpResponseRedirect(
+                self.algorithm_image.get_absolute_url()
+            )
+        if not self.algorithm_image.can_execute:
+            try:
+                upload_to_registry_and_sagemaker(self.algorithm_image)
+            except ValidationError as error:
+                self.algorithm_image.status = oxford_comma(error)
+                self.algorithm_image.import_status = (
+                    self.algorithm_image.ImportStatusChoices.FAILED
+                )
+                self.algorithm_image.save()
+                messages.error(
+                    request,
+                    f"Image upload to registry failed with error: {error}",
+                )
+                return HttpResponseRedirect(
+                    self.algorithm_image.get_absolute_url()
+                )
+
         self.algorithm_image.mark_desired_version()
+
         return HttpResponse(
             self.get_success_url(),
             headers={
