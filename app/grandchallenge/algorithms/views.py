@@ -365,14 +365,8 @@ class AlgorithmImageMarkDesired(
             )
 
         if not self.algorithm_image.can_execute:
-            image_upload_in_progress = (
-                self.algorithm_image.import_status
-                == ImportStatusChoices.STARTED
-            )
-            if not image_upload_in_progress:
-                self.algorithm_image.import_status = (
-                    ImportStatusChoices.STARTED
-                )
+            if not self.algorithm.image_upload_in_progress:
+                self.algorithm_image.import_status = ImportStatusChoices.QUEUED
                 self.algorithm_image.save()
                 upload_to_registry_and_sagemaker.signature(
                     kwargs={
@@ -395,17 +389,13 @@ class AlgorithmImageMarkDesired(
                 self.algorithm_image.get_absolute_url()
             )
 
-        if (
-            self.algorithm_image.is_manifest_valid
-            and self.algorithm_image.can_execute
-        ):
-            self.algorithm_image.mark_desired_version()
-            return HttpResponse(
-                self.get_success_url(),
-                headers={
-                    "HX-Redirect": self.get_success_url(),
-                },
-            )
+        self.algorithm_image.mark_desired_version()
+        return HttpResponse(
+            self.get_success_url(),
+            headers={
+                "HX-Redirect": self.get_success_url(),
+            },
+        )
 
     def get_success_url(self):
         return (

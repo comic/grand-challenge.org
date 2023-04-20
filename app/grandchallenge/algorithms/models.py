@@ -29,6 +29,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
     ComponentJobManager,
+    ImportStatusChoices,
 )
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -356,6 +357,15 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
             )
         except ObjectDoesNotExist:
             return None
+
+    @property
+    def image_upload_in_progress(self):
+        return self.algorithm_container_images.filter(
+            import_status__in=(
+                ImportStatusChoices.STARTED,
+                ImportStatusChoices.QUEUED,
+            )
+        ).exists()
 
     @cached_property
     def default_workstation(self):

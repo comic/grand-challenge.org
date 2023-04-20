@@ -112,6 +112,8 @@ def validate_docker_image(  # noqa C901
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
+    instance.import_status = instance.ImportStatusChoices.STARTED
+    instance.save()
 
     if instance.is_manifest_valid is None:
         try:
