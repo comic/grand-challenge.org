@@ -161,10 +161,12 @@ def test_validate_docker_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
+            mark_as_desired=False,
         )
 
     image = AlgorithmImage.objects.get(pk=image.pk)
     assert image.is_manifest_valid is True
+    assert not image.is_desired_version
 
     image.is_manifest_valid = None
     image.save()
@@ -174,9 +176,11 @@ def test_validate_docker_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
+            mark_as_desired=True,
         )
     image = AlgorithmImage.objects.get(pk=image.pk)
     assert image.is_manifest_valid is True
+    assert image.is_desired_version
 
 
 @pytest.mark.django_db

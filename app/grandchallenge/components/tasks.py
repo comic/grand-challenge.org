@@ -108,7 +108,7 @@ def assign_docker_image_from_upload(
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def validate_docker_image(  # noqa C901
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -131,6 +131,13 @@ def validate_docker_image(  # noqa C901
     elif instance.is_manifest_valid is False:
         # Nothing to do
         return
+
+    upload_to_registry_and_sagemaker(
+        app_label=app_label,
+        model_name=model_name,
+        pk=pk,
+        mark_as_desired=mark_as_desired,
+    )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

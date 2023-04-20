@@ -5,7 +5,7 @@ from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
 
-from celery import chain, signature
+from celery import signature
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -39,7 +39,6 @@ from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
-    upload_to_registry_and_sagemaker,
     validate_docker_image,
 )
 from grandchallenge.components.validators import (
@@ -1617,6 +1616,12 @@ class ComponentImage(models.Model):
             .exists()
         )
 
+    def clear_can_execute_cache(self):
+        try:
+            del self.can_execute
+        except AttributeError:
+            pass
+
     def save(self, *args, **kwargs):
         image_needs_validation = (
             self.import_status == ImportStatusChoices.INITIALIZED
@@ -1638,24 +1643,14 @@ class ComponentImage(models.Model):
         super().save(*args, **kwargs)
         if validate_image_now:
             on_commit(
-                chain(
-                    validate_docker_image.signature(
-                        kwargs={
-                            "app_label": self._meta.app_label,
-                            "model_name": self._meta.model_name,
-                            "pk": self.pk,
-                        },
-                        immutable=True,
-                    ),
-                    upload_to_registry_and_sagemaker.signature(
-                        kwargs={
-                            "app_label": self._meta.app_label,
-                            "model_name": self._meta.model_name,
-                            "pk": self.pk,
-                            "mark_as_desired": True,
-                        },
-                        immutable=True,
-                    ),
+                validate_docker_image.signature(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "pk": self.pk,
+                        "mark_as_desired": True,
+                    },
+                    immutable=True,
                 ).apply_async
             )
 
@@ -1675,11 +1670,7 @@ class ComponentImage(models.Model):
 
     @transaction.atomic
     def mark_desired_version(self):
-        try:
-            del self.can_execute
-        except AttributeError:
-            pass
-
+        self.clear_can_execute_cache()
         if self.is_manifest_valid and self.can_execute:
             images = self.get_peer_images()
 

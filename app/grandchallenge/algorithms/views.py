@@ -345,11 +345,11 @@ class AlgorithmImageMarkDesired(
     raise_exception = True
 
     @cached_property
-    def algorithm(self) -> Algorithm:
+    def algorithm(self):
         return self.algorithm_image.algorithm
 
     @cached_property
-    def algorithm_image(self) -> AlgorithmImage:
+    def algorithm_image(self):
         return get_object_or_404(AlgorithmImage, pk=self.kwargs["pk"])
 
     def get_permission_object(self):
