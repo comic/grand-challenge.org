@@ -48,7 +48,6 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
 )
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
-from grandchallenge.algorithms.views import NOT_IN_REGISTRY_ERROR
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -564,24 +563,27 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
 
 
 class ImageMarkDesiredForm(Form):
-    def __init__(self, *args, image, **kwargs):
+    algorithm_image = ModelChoiceField(queryset=AlgorithmImage.objects.none())
+
+    def __init__(self, *args, user, algorithm, **kwargs):
         super().__init__(*args, **kwargs)
-        self.instance = image
 
-    def clean(self):
-        if not self.instance.is_manifest_valid:
-            raise ValidationError(
-                "Cannot mark an invalid image as active image."
-            )
+        self.fields["algorithm_image"].queryset = get_objects_for_user(
+            user,
+            "algorithms.change_algorithmimage",
+        ).filter(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_desired_version=False,
+        )
 
-        if not self.instance.can_execute:
-            if self.instance.algorithm.image_upload_in_progress:
-                raise ValidationError("Image updating already in progress.")
-            else:
-                raise ValidationError(
-                    "Image needs to be uploaded to registry first.",
-                    code=NOT_IN_REGISTRY_ERROR,
-                )
+    def clean_algorithm_image(self):
+        algorithm_image = self.cleaned_data["algorithm_image"]
+
+        if algorithm_image.algorithm.image_upload_in_progress:
+            raise ValidationError("Image updating already in progress.")
+
+        return algorithm_image
 
 
 class UsersForm(UserGroupForm):

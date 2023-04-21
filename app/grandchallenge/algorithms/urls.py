@@ -53,7 +53,7 @@ urlpatterns = [
         name="image-detail",
     ),
     path(
-        "<slug>/images/<uuid:pk>/mark-desired/",
+        "<slug>/images/mark-desired/",
         AlgorithmImageMarkDesired.as_view(),
         name="image-mark-desired",
     ),

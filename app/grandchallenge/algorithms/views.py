@@ -323,6 +323,21 @@ class AlgorithmImageDetail(
         "build__webhook_message"
     )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context.update(
+            {
+                "image_mark_desired_form": ImageMarkDesiredForm(
+                    initial={"algorithm_image": self.object.pk},
+                    user=self.request.user,
+                    algorithm=self.object.algorithm,
+                )
+            }
+        )
+
+        return context
+
 
 class AlgorithmImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
@@ -336,9 +351,6 @@ class AlgorithmImageUpdate(
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.object.algorithm})
         return context
-
-
-NOT_IN_REGISTRY_ERROR = "NOT_IN_REGISTRY"
 
 
 class AlgorithmImageMarkDesired(
@@ -355,48 +367,49 @@ class AlgorithmImageMarkDesired(
 
     @cached_property
     def algorithm(self):
-        return self.algorithm_image.algorithm
-
-    @cached_property
-    def algorithm_image(self):
-        return get_object_or_404(AlgorithmImage, pk=self.kwargs["pk"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_permission_object(self):
         return self.algorithm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"image": self.algorithm_image})
+        kwargs.update({"user": self.request.user, "algorithm": self.algorithm})
         return kwargs
 
     def form_valid(self, form):
         response = super().form_valid(form=form)
-        self.algorithm_image.mark_desired_version()
-        return response
 
-    def form_invalid(self, form):
-        super().form_invalid(form=form)
-        if form.has_error(NON_FIELD_ERRORS, code=NOT_IN_REGISTRY_ERROR):
-            self.algorithm_image.import_status = ImportStatusChoices.QUEUED
-            self.algorithm_image.save()
+        algorithm_image = form.cleaned_data["algorithm_image"]
+
+        if algorithm_image.can_execute:
+            algorithm_image.mark_desired_version()
+        else:
+            algorithm_image.import_status = ImportStatusChoices.QUEUED
+            algorithm_image.save()
+
             upload_to_registry_and_sagemaker.signature(
                 kwargs={
-                    "app_label": self.algorithm_image._meta.app_label,
-                    "model_name": self.algorithm_image._meta.model_name,
-                    "pk": self.algorithm_image.pk,
+                    "app_label": algorithm_image._meta.app_label,
+                    "model_name": algorithm_image._meta.model_name,
+                    "pk": algorithm_image.pk,
                     "mark_as_desired": True,
                 }
             ).apply_async()
+
             messages.success(
                 self.request,
-                "Image validation and upload to registry in progress. It can take a while for this image to become active, please be patient.",
+                (
+                    "Image validation and upload to registry in progress. "
+                    "It can take a while for this image to become active, "
+                    "please be patient."
+                ),
             )
-        else:
-            messages.error(self.request, form.non_field_errors())
-        return HttpResponseRedirect(self.get_success_url())
+
+        return response
 
     def get_success_url(self):
-        return self.algorithm_image.get_absolute_url()
+        return self.algorithm.get_absolute_url()
 
 
 class JobCreate(
