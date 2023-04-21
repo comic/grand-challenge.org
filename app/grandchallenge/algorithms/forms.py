@@ -565,7 +565,14 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
 class ImageMarkDesiredForm(Form):
     algorithm_image = ModelChoiceField(queryset=AlgorithmImage.objects.none())
 
-    def __init__(self, *args, user, algorithm, **kwargs):
+    def __init__(
+        self,
+        *args,
+        user,
+        algorithm,
+        hide_algorithm_image_input=False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.fields["algorithm_image"].queryset = get_objects_for_user(
@@ -575,6 +582,15 @@ class ImageMarkDesiredForm(Form):
             algorithm=algorithm,
             is_manifest_valid=True,
             is_desired_version=False,
+        )
+
+        if hide_algorithm_image_input:
+            self.fields["algorithm_image"].widget = HiddenInput()
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Activate algorithm image"))
+        self.helper.form_action = reverse(
+            "algorithms:image-mark-desired", kwargs={"slug": algorithm.slug}
         )
 
     def clean_algorithm_image(self):

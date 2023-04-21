@@ -39,12 +39,8 @@
         </a>
     {% endif %}
 
-    {% if not object.is_desired_version and "change_algorithm" in algorithm_perms %}
-        <form action="{% url 'algorithms:image-mark-desired' slug=object.algorithm.slug %}" method="post">
-            {% csrf_token %}
-            {{ image_mark_desired_form }}
-            <input type="submit" value="Make active image for algorithm">
-        </form>
+    {% if object.is_manifest_valid not object.is_desired_version and "change_algorithm" in algorithm_perms %}
+        {% crispy image_mark_desired_form %}
     {% endif %}
 
     <span class="badge p-2 mb-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>

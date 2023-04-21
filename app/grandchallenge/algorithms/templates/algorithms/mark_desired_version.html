@@ -1,4 +1,27 @@
+{% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% if form %}
-    {{ form|crispy }}
-{% endif %}
+
+{% block title %}
+    Activate Algorithm Image - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.get_absolute_url }}">{{ object.title }}
+        </a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Activate Algorithm Image
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Activate Algorithm Image</h2>
+
+    {% crispy form %}
+{% endblock %}
