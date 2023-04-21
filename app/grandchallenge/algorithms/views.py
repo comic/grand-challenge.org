@@ -27,7 +27,6 @@ from django.views.generic import (
     FormView,
     ListView,
     UpdateView,
-    View,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -53,6 +52,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmRepoForm,
     AlgorithmUpdateForm,
     DisplaySetFromJobForm,
+    ImageMarkDesiredForm,
     JobCreateForm,
     JobForm,
     UsersForm,
@@ -338,11 +338,20 @@ class AlgorithmImageUpdate(
         return context
 
 
+NOT_IN_REGISTRY_ERROR = "NOT_IN_REGISTRY"
+
+
 class AlgorithmImageMarkDesired(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, View
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
 ):
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
+    form_class = ImageMarkDesiredForm
+    success_message = "Image successfully updated."
+    template_name = "algorithms/mark_desired_version.html"
 
     @cached_property
     def algorithm(self):
@@ -355,53 +364,39 @@ class AlgorithmImageMarkDesired(
     def get_permission_object(self):
         return self.algorithm
 
-    def post(self, request, *args, **kwargs):
-        if not self.algorithm_image.is_manifest_valid:
-            messages.error(
-                request, "Cannot mark an invalid image as active image."
-            )
-            return HttpResponseRedirect(
-                self.algorithm_image.get_absolute_url()
-            )
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"image": self.algorithm_image})
+        return kwargs
 
-        if not self.algorithm_image.can_execute:
-            if not self.algorithm.image_upload_in_progress:
-                self.algorithm_image.import_status = ImportStatusChoices.QUEUED
-                self.algorithm_image.save()
-                upload_to_registry_and_sagemaker.signature(
-                    kwargs={
-                        "app_label": self.algorithm_image._meta.app_label,
-                        "model_name": self.algorithm_image._meta.model_name,
-                        "pk": self.algorithm_image.pk,
-                        "mark_as_desired": True,
-                    }
-                ).apply_async()
-                messages.success(
-                    request,
-                    "Image validation and upload to registry in progress. "
-                    "It can take a while for this image to become active, please be patient.",
-                )
-            else:
-                messages.warning(
-                    request, "Image updating already in progress."
-                )
-            return HttpResponseRedirect(
-                self.algorithm_image.get_absolute_url()
-            )
-
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
         self.algorithm_image.mark_desired_version()
-        return HttpResponse(
-            self.get_success_url(),
-            headers={
-                "HX-Redirect": self.get_success_url(),
-            },
-        )
+        return response
+
+    def form_invalid(self, form):
+        super().form_invalid(form=form)
+        if form.has_error(NON_FIELD_ERRORS, code=NOT_IN_REGISTRY_ERROR):
+            self.algorithm_image.import_status = ImportStatusChoices.QUEUED
+            self.algorithm_image.save()
+            upload_to_registry_and_sagemaker.signature(
+                kwargs={
+                    "app_label": self.algorithm_image._meta.app_label,
+                    "model_name": self.algorithm_image._meta.model_name,
+                    "pk": self.algorithm_image.pk,
+                    "mark_as_desired": True,
+                }
+            ).apply_async()
+            messages.success(
+                self.request,
+                "Image validation and upload to registry in progress. It can take a while for this image to become active, please be patient.",
+            )
+        else:
+            messages.error(self.request, form.non_field_errors())
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return (
-            reverse("algorithms:detail", kwargs={"slug": self.algorithm.slug})
-            + "#containers"
-        )
+        return self.algorithm_image.get_absolute_url()
 
 
 class JobCreate(

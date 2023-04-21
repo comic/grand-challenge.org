@@ -48,6 +48,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
 )
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
+from grandchallenge.algorithms.views import NOT_IN_REGISTRY_ERROR
 from grandchallenge.components.form_fields import InterfaceFormField
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -560,6 +561,27 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
         help_texts = {
             "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"
         }
+
+
+class ImageMarkDesiredForm(Form):
+    def __init__(self, *args, image, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance = image
+
+    def clean(self):
+        if not self.instance.is_manifest_valid:
+            raise ValidationError(
+                "Cannot mark an invalid image as active image."
+            )
+
+        if not self.instance.can_execute:
+            if self.instance.algorithm.image_upload_in_progress:
+                raise ValidationError("Image updating already in progress.")
+            else:
+                raise ValidationError(
+                    "Image needs to be uploaded to registry first.",
+                    code=NOT_IN_REGISTRY_ERROR,
+                )
 
 
 class UsersForm(UserGroupForm):
