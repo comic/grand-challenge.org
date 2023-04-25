@@ -1694,6 +1694,12 @@
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">clear_can_execute_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_execute</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">image_needs_validation</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">import_status</span> <span class="o">==</span> <span class="n">ImportStatusChoices</span><span class="o">.</span><span class="n">INITIALIZED</span>
@@ -1721,7 +1727,8 @@
                         <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
                         <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
                         <span class="s2">&quot;mark_as_desired&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                    <span class="p">}</span>
+                    <span class="p">},</span>
+                    <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
             <span class="p">)</span>
 
@@ -1741,7 +1748,8 @@
 
     <span class="nd">@transaction</span><span class="o">.</span><span class="n">atomic</span>
     <span class="k">def</span> <span class="nf">mark_desired_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_manifest_valid</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_can_execute_cache</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_manifest_valid</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_execute</span><span class="p">:</span>
             <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_peer_images</span><span class="p">()</span>
 
             <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
@@ -1751,6 +1759,11 @@
                     <span class="n">image</span><span class="o">.</span><span class="n">is_desired_version</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_update</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;is_desired_version&quot;</span><span class="p">])</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Tried to mark invalid image as desired version.&quot;</span>
+            <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">original_repo_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

@@ -96,7 +96,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation"><code class="docutils literal notranslate"><span class="pre">Workstation</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Workstation.DoesNotExist</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Workstation.MultipleObjectsReturned</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.latest_executable_image"><code class="docutils literal notranslate"><span class="pre">Workstation.latest_executable_image</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.active_image"><code class="docutils literal notranslate"><span class="pre">Workstation.active_image</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.workstations.models.Workstation.save"><code class="docutils literal notranslate"><span class="pre">Workstation.save()</span></code></a></li>
 </ul>
 </li>
@@ -576,10 +576,15 @@ to access the launched service.</p></li>
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.MultipleObjectsReturned" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.Workstation.latest_executable_image">
-<span class="sig-name descname"><span class="pre">latest_executable_image</span></span><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.latest_executable_image" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="grandchallenge.workstations.models.Workstation.active_image">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">active_image</span></span><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.active_image" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>The desired image version for this workstation or None</em></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.Workstation.save">
