@@ -5,9 +5,9 @@ from grandchallenge.algorithms.views import (
     AlgorithmCreate,
     AlgorithmDescriptionUpdate,
     AlgorithmDetail,
+    AlgorithmImageActivate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
-    AlgorithmImageMarkDesired,
     AlgorithmImageUpdate,
     AlgorithmImportView,
     AlgorithmList,
@@ -54,8 +54,8 @@ urlpatterns = [
     ),
     path(
         "<slug>/images/activate/",
-        AlgorithmImageMarkDesired.as_view(),
-        name="image-mark-desired",
+        AlgorithmImageActivate.as_view(),
+        name="image-activate",
     ),
     path(
         "<slug>/images/<uuid:pk>/update/",

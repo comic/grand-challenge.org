@@ -562,7 +562,7 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
         }
 
 
-class ImageMarkDesiredForm(Form):
+class ImageActivateForm(Form):
     algorithm_image = ModelChoiceField(queryset=AlgorithmImage.objects.none())
 
     def __init__(
@@ -574,7 +574,6 @@ class ImageMarkDesiredForm(Form):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-
         self.fields["algorithm_image"].queryset = get_objects_for_user(
             user,
             "algorithms.change_algorithmimage",
@@ -590,7 +589,7 @@ class ImageMarkDesiredForm(Form):
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Activate algorithm image"))
         self.helper.form_action = reverse(
-            "algorithms:image-mark-desired", kwargs={"slug": algorithm.slug}
+            "algorithms:image-activate", kwargs={"slug": algorithm.slug}
         )
 
     def clean_algorithm_image(self):

@@ -52,7 +52,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmRepoForm,
     AlgorithmUpdateForm,
     DisplaySetFromJobForm,
-    ImageMarkDesiredForm,
+    ImageActivateForm,
     JobCreateForm,
     JobForm,
     UsersForm,
@@ -288,12 +288,14 @@ class AlgorithmImageCreate(
     VerificationRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
     CreateView,
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
+    success_message = "Image validation and upload in progress."
 
     @property
     def algorithm(self):
@@ -328,7 +330,7 @@ class AlgorithmImageDetail(
 
         context.update(
             {
-                "image_mark_desired_form": ImageMarkDesiredForm(
+                "image_activate_form": ImageActivateForm(
                     initial={"algorithm_image": self.object.pk},
                     user=self.request.user,
                     algorithm=self.object.algorithm,
@@ -354,7 +356,7 @@ class AlgorithmImageUpdate(
         return context
 
 
-class AlgorithmImageMarkDesired(
+class AlgorithmImageActivate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -362,9 +364,8 @@ class AlgorithmImageMarkDesired(
 ):
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
-    form_class = ImageMarkDesiredForm
-    success_message = "Image successfully updated."
-    template_name = "algorithms/mark_desired_version.html"
+    form_class = ImageActivateForm
+    template_name = "algorithms/image_activate.html"
 
     @cached_property
     def algorithm(self):
@@ -382,6 +383,16 @@ class AlgorithmImageMarkDesired(
         kwargs = super().get_form_kwargs()
         kwargs.update({"user": self.request.user, "algorithm": self.algorithm})
         return kwargs
+
+    def get_success_message(self, cleaned_data):
+        if cleaned_data["algorithm_image"].can_execute:
+            return "Image successfully activated."
+        else:
+            return (
+                "Image validation and upload to registry in progress. "
+                "It can take a while for this image to become active, "
+                "please be patient."
+            )
 
     def form_valid(self, form):
         response = super().form_valid(form=form)
@@ -402,15 +413,6 @@ class AlgorithmImageMarkDesired(
                     "mark_as_desired": True,
                 }
             ).apply_async()
-
-            messages.success(
-                self.request,
-                (
-                    "Image validation and upload to registry in progress. "
-                    "It can take a while for this image to become active, "
-                    "please be patient."
-                ),
-            )
 
         return response
 

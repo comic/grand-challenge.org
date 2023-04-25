@@ -36,14 +36,15 @@
         <a class="btn btn-primary"
            href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
             <i class="fa fa-edit"></i> Edit this algorithm image
-        </a>
+        </a><br>
     {% endif %}
 
-    {% if object.is_manifest_valid not object.is_desired_version and "change_algorithm" in algorithm_perms %}
-        {% crispy image_mark_desired_form %}
+    {% if object.is_manifest_valid and not object.is_desired_version and "change_algorithm" in algorithm_perms %}
+        <div class="my-2">Activating an image will result in this image being used for future algorithm runs:</div>
+        <div class="mb-2">{% crispy image_activate_form %}</div>
     {% endif %}
 
-    <span class="badge p-2 mb-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+    <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
 
     <dl class="inline">
         <dt>ID</dt>

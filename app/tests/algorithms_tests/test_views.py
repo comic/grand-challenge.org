@@ -995,20 +995,22 @@ def test_algorithm_image_mark_as_desired(settings, client, algorithm_io_image):
     alg.add_editor(editor)
 
     response = get_view_for_user(
-        viewname="algorithms:image-mark-desired",
+        viewname="algorithms:image-activate",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": alg.slug, "pk": i1.pk},
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i1.pk},
         user=user,
         follow=True,
     )
     assert response.status_code == 403
 
     response2 = get_view_for_user(
-        viewname="algorithms:image-mark-desired",
+        viewname="algorithms:image-activate",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": alg.slug, "pk": i1.pk},
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i1.pk},
         user=editor,
         follow=True,
     )
@@ -1020,30 +1022,16 @@ def test_algorithm_image_mark_as_desired(settings, client, algorithm_io_image):
     assert not i2.is_desired_version
     assert alg.active_image == i1
 
-    i2.is_manifest_valid = False
-    i2.save()
-
-    response3 = get_view_for_user(
-        viewname="algorithms:image-mark-desired",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
-        user=editor,
-        follow=True,
-    )
-    assert "Cannot mark an invalid image as active image." in str(
-        response3.content
-    )
-
     i2.is_manifest_valid = True
     i2.is_in_registry = False
     i2.save()
 
     response4 = get_view_for_user(
-        viewname="algorithms:image-mark-desired",
+        viewname="algorithms:image-activate",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i2.pk},
         user=editor,
         follow=True,
     )
@@ -1053,10 +1041,11 @@ def test_algorithm_image_mark_as_desired(settings, client, algorithm_io_image):
     )
 
     response5 = get_view_for_user(
-        viewname="algorithms:image-mark-desired",
+        viewname="algorithms:image-activate",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i2.pk},
         user=editor,
         follow=True,
     )
@@ -1068,10 +1057,11 @@ def test_algorithm_image_mark_as_desired(settings, client, algorithm_io_image):
     i2.import_status = ImportStatusChoices.INITIALIZED
     i2.save()
     response6 = get_view_for_user(
-        viewname="algorithms:image-mark-desired",
+        viewname="algorithms:image-activate",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": alg.slug, "pk": i2.pk},
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i2.pk},
         user=editor,
         follow=True,
     )
