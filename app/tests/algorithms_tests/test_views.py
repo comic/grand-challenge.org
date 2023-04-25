@@ -979,7 +979,7 @@ def test_algorithm_job_create_with_image_input(
 
 
 @pytest.mark.django_db
-def test_algorithm_image_mark_as_desired(settings, client, algorithm_io_image):
+def test_algorithm_image_activate(settings, client, algorithm_io_image):
     alg = AlgorithmFactory()
     i1, i2 = AlgorithmImageFactory.create_batch(
         2,
