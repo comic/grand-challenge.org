@@ -13,7 +13,11 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.components.models import ComponentInterface, ComponentJob
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentJob,
+    ImportStatusChoices,
+)
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -519,3 +523,17 @@ def test_image_activate_form():
     )
     assert not form.is_valid()
     assert "Select a valid choice" in str(form.errors["algorithm_image"])
+
+    i4 = AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.STARTED,
+    )
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": i4}
+    )
+    assert not form.is_valid()
+    assert "Image updating already in progress." in str(
+        form.errors["algorithm_image"]
+    )

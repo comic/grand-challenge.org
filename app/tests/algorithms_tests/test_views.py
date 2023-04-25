@@ -980,6 +980,9 @@ def test_algorithm_job_create_with_image_input(
 
 @pytest.mark.django_db
 def test_algorithm_image_activate(settings, client, algorithm_io_image):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     alg = AlgorithmFactory()
     i1, i2 = AlgorithmImageFactory.create_batch(
         2,
@@ -1040,21 +1043,8 @@ def test_algorithm_image_activate(settings, client, algorithm_io_image):
         response4.content
     )
 
-    response5 = get_view_for_user(
-        viewname="algorithms:image-activate",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": alg.slug},
-        data={"algorithm_image": i2.pk},
-        user=editor,
-        follow=True,
-    )
-    assert response5.status_code == 200
-    assert "Image updating already in progress." in str(response5.content)
-
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
     i2.import_status = ImportStatusChoices.INITIALIZED
+    i2.is_desired_version = False
     i2.save()
     response6 = get_view_for_user(
         viewname="algorithms:image-activate",
