@@ -132,6 +132,15 @@
                 </div>
             {% endif %}
 
+            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                    Please do not create a
+                    new algorithm for each submission! You can instead upload new images or re-activate old container
+                    versions for an existing algorithm (see the "Containers" tab on your algorithm page).
+                </div>
+            {% endif %}
+
             {% crispy form %}
 
         {% endif %}

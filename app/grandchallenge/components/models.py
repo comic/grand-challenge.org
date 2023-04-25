@@ -1682,6 +1682,11 @@ class ComponentImage(models.Model):
 
             self.__class__.objects.bulk_update(images, ["is_desired_version"])
 
+        else:
+            raise RuntimeError(
+                "Tried to mark invalid image as desired version."
+            )
+
     @property
     def original_repo_tag(self):
         """The tag of this image in the container repository"""
