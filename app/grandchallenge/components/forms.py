@@ -78,4 +78,4 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         return instance
 
     class Meta:
-        fields = ("user_upload", "creator")
+        fields = ("user_upload", "creator", "comment")

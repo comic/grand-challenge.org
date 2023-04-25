@@ -52,6 +52,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmRepoForm,
     AlgorithmUpdateForm,
     DisplaySetFromJobForm,
+    ImageActivateForm,
     JobCreateForm,
     JobForm,
     UsersForm,
@@ -73,8 +74,10 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.widgets import WidgetChoices
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
+    ImportStatusChoices,
     InterfaceKind,
 )
+from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -285,12 +288,14 @@ class AlgorithmImageCreate(
     VerificationRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
     CreateView,
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
+    success_message = "Image validation and upload in progress."
 
     @property
     def algorithm(self):
@@ -320,6 +325,22 @@ class AlgorithmImageDetail(
         "build__webhook_message"
     )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context.update(
+            {
+                "image_activate_form": ImageActivateForm(
+                    initial={"algorithm_image": self.object.pk},
+                    user=self.request.user,
+                    algorithm=self.object.algorithm,
+                    hide_algorithm_image_input=True,
+                )
+            }
+        )
+
+        return context
+
 
 class AlgorithmImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
@@ -333,6 +354,70 @@ class AlgorithmImageUpdate(
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.object.algorithm})
         return context
+
+
+class AlgorithmImageActivate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    permission_required = "algorithms.change_algorithm"
+    raise_exception = True
+    form_class = ImageActivateForm
+    template_name = "algorithms/image_activate.html"
+
+    @cached_property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.algorithm})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user, "algorithm": self.algorithm})
+        return kwargs
+
+    def get_success_message(self, cleaned_data):
+        if cleaned_data["algorithm_image"].can_execute:
+            return "Image successfully activated."
+        else:
+            return (
+                "Image validation and upload to registry in progress. "
+                "It can take a while for this image to become active, "
+                "please be patient."
+            )
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+
+        algorithm_image = form.cleaned_data["algorithm_image"]
+
+        if algorithm_image.can_execute:
+            algorithm_image.mark_desired_version()
+        else:
+            algorithm_image.import_status = ImportStatusChoices.QUEUED
+            algorithm_image.save()
+
+            upload_to_registry_and_sagemaker.signature(
+                kwargs={
+                    "app_label": algorithm_image._meta.app_label,
+                    "model_name": algorithm_image._meta.model_name,
+                    "pk": algorithm_image.pk,
+                    "mark_as_desired": True,
+                }
+            ).apply_async()
+
+        return response
+
+    def get_success_url(self):
+        return self.algorithm.get_absolute_url()
 
 
 class JobCreate(
@@ -419,7 +504,7 @@ class JobCreate(
 
         job = Job.objects.create(
             creator=self.request.user,
-            algorithm_image=self.algorithm.latest_executable_image,
+            algorithm_image=self.algorithm.active_image,
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             input_civ_set=component_interface_values,
         )

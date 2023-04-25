@@ -61,6 +61,7 @@ def test_workstation_editor_permissions(
 
     two_workstation_sets.ws1.image.is_manifest_valid = True
     two_workstation_sets.ws1.image.is_in_registry = True
+    two_workstation_sets.ws1.image.is_desired_version = True
     two_workstation_sets.ws1.image.save()
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
@@ -102,6 +103,7 @@ def test_workstation_user_permissions(
 
     two_workstation_sets.ws1.image.is_manifest_valid = True
     two_workstation_sets.ws1.image.is_in_registry = True
+    two_workstation_sets.ws1.image.is_desired_version = True
     two_workstation_sets.ws1.image.save()
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
@@ -145,6 +147,7 @@ def test_workstation_redirect_permissions(
 
     two_workstation_sets.ws1.image.is_manifest_valid = True
     two_workstation_sets.ws1.image.is_in_registry = True
+    two_workstation_sets.ws1.image.is_desired_version = True
     two_workstation_sets.ws1.image.save()
 
     tests = (

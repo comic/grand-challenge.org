@@ -1616,6 +1616,12 @@ class ComponentImage(models.Model):
             .exists()
         )
 
+    def clear_can_execute_cache(self):
+        try:
+            del self.can_execute
+        except AttributeError:
+            pass
+
     def save(self, *args, **kwargs):
         image_needs_validation = (
             self.import_status == ImportStatusChoices.INITIALIZED
@@ -1643,7 +1649,8 @@ class ComponentImage(models.Model):
                         "model_name": self._meta.model_name,
                         "pk": self.pk,
                         "mark_as_desired": True,
-                    }
+                    },
+                    immutable=True,
                 ).apply_async
             )
 
@@ -1663,7 +1670,8 @@ class ComponentImage(models.Model):
 
     @transaction.atomic
     def mark_desired_version(self):
-        if self.is_manifest_valid:
+        self.clear_can_execute_cache()
+        if self.is_manifest_valid and self.can_execute:
             images = self.get_peer_images()
 
             for image in images:
@@ -1673,6 +1681,11 @@ class ComponentImage(models.Model):
                     image.is_desired_version = False
 
             self.__class__.objects.bulk_update(images, ["is_desired_version"])
+
+        else:
+            raise RuntimeError(
+                "Tried to mark invalid image as desired version."
+            )
 
     @property
     def original_repo_tag(self):

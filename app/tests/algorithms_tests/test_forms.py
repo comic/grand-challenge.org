@@ -4,6 +4,7 @@ from actstream.actions import is_following
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmPublishForm,
+    ImageActivateForm,
     JobCreateForm,
     JobForm,
 )
@@ -12,7 +13,11 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.components.models import ComponentInterface, ComponentJob
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentJob,
+    ImportStatusChoices,
+)
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -425,12 +430,13 @@ def test_publish_algorithm():
         is_manifest_valid=True,
         is_in_registry=True,
         is_on_sagemaker=True,
+        is_desired_version=True,
     )
     _ = AlgorithmJobFactory(
         algorithm_image=ai, status=Job.SUCCESS, public=True
     )
-    del algorithm.latest_executable_image
     del algorithm.public_test_case
+    del algorithm.active_image
     form = AlgorithmPublishForm(instance=algorithm, data={"public": True})
     assert form.is_valid()
 
@@ -485,3 +491,47 @@ class TestJobCreateLimits:
         form = JobCreateForm(algorithm=algorithm, user=user, data={})
 
         assert form.is_valid()
+
+
+@pytest.mark.django_db
+def test_image_activate_form():
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+    i1 = AlgorithmImageFactory(
+        algorithm=alg, is_manifest_valid=True, is_desired_version=False
+    )
+    i2 = AlgorithmImageFactory(
+        algorithm=alg, is_manifest_valid=False, is_desired_version=False
+    )
+    i3 = AlgorithmImageFactory(
+        algorithm=alg, is_manifest_valid=True, is_desired_version=True
+    )
+
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": i1}
+    )
+    assert i1 in form.fields["algorithm_image"].queryset
+    assert i2 not in form.fields["algorithm_image"].queryset
+    assert i3 not in form.fields["algorithm_image"].queryset
+    assert form.is_valid()
+
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": i2}
+    )
+    assert not form.is_valid()
+    assert "Select a valid choice" in str(form.errors["algorithm_image"])
+
+    i4 = AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_desired_version=False,
+        import_status=ImportStatusChoices.STARTED,
+    )
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": i4}
+    )
+    assert not form.is_valid()
+    assert "Image updating already in progress." in str(
+        form.errors["algorithm_image"]
+    )

@@ -201,7 +201,7 @@ def create_algorithm_jobs_for_archive(
                     blocking_timeout=10,
                 ):
                     create_algorithm_jobs(
-                        algorithm_image=algorithm.latest_executable_image,
+                        algorithm_image=algorithm.active_image,
                         civ_sets=[
                             {*ai.values.all()}
                             for ai in archive_items.prefetch_related(
@@ -452,9 +452,9 @@ def set_credits_per_job():
     )
 
     for algorithm in Algorithm.objects.all().iterator():
-        if algorithm.average_duration and algorithm.latest_executable_image:
+        if algorithm.average_duration and algorithm.active_image:
             executor = Job(
-                algorithm_image=algorithm.latest_executable_image
+                algorithm_image=algorithm.active_image
             ).get_executor(backend=settings.COMPONENTS_DEFAULT_BACKEND)
 
             cents_per_job = (

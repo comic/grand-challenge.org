@@ -10,6 +10,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     execute_job,
     remove_inactive_container_images,
+    upload_to_registry_and_sagemaker,
     validate_docker_image,
 )
 from tests.algorithms_tests.factories import (
@@ -111,14 +112,21 @@ def test_encode_b64j(val, expected):
 
 @pytest.mark.django_db
 def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
-    MethodFactory(is_in_registry=True, is_manifest_valid=True)
-    WorkstationImageFactory(is_in_registry=True, is_manifest_valid=True)
+    MethodFactory(
+        is_in_registry=True, is_manifest_valid=True, is_desired_version=True
+    )
+    WorkstationImageFactory(
+        is_in_registry=True, is_manifest_valid=True, is_desired_version=True
+    )
     alg = AlgorithmFactory()
     ai1 = AlgorithmImageFactory(
         is_in_registry=True, is_manifest_valid=True, algorithm=alg
     )
     AlgorithmImageFactory(
-        is_in_registry=True, is_manifest_valid=True, algorithm=alg
+        is_in_registry=True,
+        is_manifest_valid=True,
+        algorithm=alg,
+        is_desired_version=True,
     )
 
     with django_capture_on_commit_callbacks() as callbacks:
@@ -172,4 +180,45 @@ def test_validate_docker_image(
         )
     image = AlgorithmImage.objects.get(pk=image.pk)
     assert image.is_manifest_valid is True
+    assert image.is_desired_version
+
+
+@pytest.mark.django_db
+def test_upload_to_registry_and_sagemaker(
+    algorithm_io_image, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    alg = AlgorithmFactory()
+    image = AlgorithmImageFactory(
+        algorithm=alg,
+        is_manifest_valid=True,
+        image__from_path=algorithm_io_image,
+    )
+    assert not image.is_in_registry
+
+    with django_capture_on_commit_callbacks(execute=True):
+        upload_to_registry_and_sagemaker(
+            pk=image.pk,
+            app_label=image._meta.app_label,
+            model_name=image._meta.model_name,
+            mark_as_desired=False,
+        )
+
+    image = AlgorithmImage.objects.get(pk=image.pk)
+    assert image.is_in_registry
+    assert not image.is_desired_version
+
+    with django_capture_on_commit_callbacks(execute=True):
+        upload_to_registry_and_sagemaker(
+            pk=image.pk,
+            app_label=image._meta.app_label,
+            model_name=image._meta.model_name,
+            mark_as_desired=True,
+        )
+
+    image = AlgorithmImage.objects.get(pk=image.pk)
+    assert image.is_in_registry
     assert image.is_desired_version

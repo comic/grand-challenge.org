@@ -33,6 +33,7 @@ def algorithm_submission():
     method = MethodFactory(
         is_manifest_valid=True,
         is_in_registry=True,
+        is_desired_version=True,
         phase__archive=ArchiveFactory(),
     )
     algorithm_image = AlgorithmImageFactory()

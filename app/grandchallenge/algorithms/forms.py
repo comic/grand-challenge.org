@@ -555,11 +555,50 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = AlgorithmImage
-        fields = ("requires_gpu", "requires_memory_gb")
+        fields = ("requires_gpu", "requires_memory_gb", "comment")
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {
             "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"
         }
+
+
+class ImageActivateForm(Form):
+    algorithm_image = ModelChoiceField(queryset=AlgorithmImage.objects.none())
+
+    def __init__(
+        self,
+        *args,
+        user,
+        algorithm,
+        hide_algorithm_image_input=False,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.fields["algorithm_image"].queryset = get_objects_for_user(
+            user,
+            "algorithms.change_algorithmimage",
+        ).filter(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_desired_version=False,
+        )
+
+        if hide_algorithm_image_input:
+            self.fields["algorithm_image"].widget = HiddenInput()
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Activate algorithm image"))
+        self.helper.form_action = reverse(
+            "algorithms:image-activate", kwargs={"slug": algorithm.slug}
+        )
+
+    def clean_algorithm_image(self):
+        algorithm_image = self.cleaned_data["algorithm_image"]
+
+        if algorithm_image.algorithm.image_upload_in_progress:
+            raise ValidationError("Image updating already in progress.")
+
+        return algorithm_image
 
 
 class UsersForm(UserGroupForm):

@@ -72,7 +72,7 @@
                         <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> The submission limit for this phase is 0, but the start and end dates indicate that this phase should be open to submissions now. The submission limit needs to be above 0 for participants to submit to this phase.</p>
                 </div>
             {% endif %}
-            {% if not phase.latest_executable_image %}
+            {% if not phase.active_image %}
                 <div class="alert alert-danger pb-1" role="alert">
                     <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> There is no valid evaluation method for this phase. Please upload a method container <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name %}">here</a>. </p>
                 </div>
@@ -129,6 +129,15 @@
             {% if phase.submissions_close_at %}
                 <div class="alert alert-warning">
                     Submissions to this phase will automatically close at {{ phase.submissions_close_at }} ({{ TIME_ZONE }}).
+                </div>
+            {% endif %}
+
+            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                    Please do not create a
+                    new algorithm for each submission! You can instead upload new images or re-activate old container
+                    versions for an existing algorithm (see the "Containers" tab on your algorithm page).
                 </div>
             {% endif %}
 
