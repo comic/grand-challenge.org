@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -26,6 +27,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     filter_by_permission,
+    get_objects_for_user,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
@@ -665,7 +667,49 @@ class PhaseAlgorithmCreate(
                 "modalities": self.phase.challenge.modalities.all(),
                 "structures": self.phase.challenge.structures.all(),
                 "logo": self.phase.challenge.logo,
+                "hide_form": self.hide_form,
             }
         )
 
         return kwargs
+
+    @cached_property
+    def get_user_algorithms_for_phase(self):
+        return get_objects_for_user(
+            self.request.user, "algorithms.change_algorithm"
+        ).filter(
+            inputs__in=self.phase.algorithm_inputs.all(),
+            outputs__in=self.phase.algorithm_outputs.all(),
+        )
+
+    @cached_property
+    def user_algorithm_count(self):
+        return self.get_user_algorithms_for_phase.count()
+
+    @cached_property
+    def hide_form(self):
+        show_form = self.request.GET.get("show_form", None)
+        if (
+            self.user_algorithm_count
+            < settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE
+            and (
+                show_form
+                or self.request.method == "POST"
+                or self.user_algorithm_count == 0
+            )
+        ):
+            return False
+        else:
+            return True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "user_algorithm_count": self.user_algorithm_count,
+                "user_algorithms": self.get_user_algorithms_for_phase,
+                "max_num_algorithms": settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE,
+                "hide_form": self.hide_form,
+            }
+        )
+        return context

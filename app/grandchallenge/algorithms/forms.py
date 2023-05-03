@@ -1,3 +1,4 @@
+import logging
 import re
 from itertools import chain
 from urllib.parse import urlparse
@@ -351,7 +352,10 @@ class AlgorithmForm(
             )
 
 
-class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
+logger = logging.getLogger(__name__)
+
+
+class AlgorithmForPhaseForm(ModelForm):
     class Meta:
         model = Algorithm
         fields = (
@@ -402,38 +406,46 @@ class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
         structures,
         modalities,
         logo,
+        hide_form,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.fields["workstation_config"].initial = workstation_config
-        self.fields["workstation_config"].disabled = True
-        self.fields["hanging_protocol"].initial = hanging_protocol
-        self.fields["hanging_protocol"].disabled = True
-        self.fields["view_content"].initial = view_content
-        self.fields["view_content"].disabled = True
-        self.fields["display_editors"].initial = display_editors
-        self.fields["display_editors"].disabled = True
-        self.fields["contact_email"].initial = contact_email
-        self.fields["contact_email"].disabled = True
-        self.fields["workstation"].initial = (
-            workstation
-            if workstation
-            else Workstation.objects.get(
-                slug=settings.DEFAULT_WORKSTATION_SLUG
+        if hide_form:
+            for field in self.fields:
+                self.fields[field].disabled = True
+                self.fields[field].widget = HiddenInput()
+        else:
+            self.fields["workstation_config"].initial = workstation_config
+            self.fields["workstation_config"].disabled = True
+            self.fields["hanging_protocol"].initial = hanging_protocol
+            self.fields["hanging_protocol"].disabled = True
+            self.fields["view_content"].initial = view_content
+            self.fields["view_content"].disabled = True
+            self.fields["display_editors"].initial = display_editors
+            self.fields["display_editors"].disabled = True
+            self.fields["contact_email"].initial = contact_email
+            self.fields["contact_email"].disabled = True
+            self.fields["workstation"].initial = (
+                workstation
+                if workstation
+                else Workstation.objects.get(
+                    slug=settings.DEFAULT_WORKSTATION_SLUG
+                )
             )
-        )
-        self.fields["workstation"].disabled = True
-        self.fields["inputs"].initial = inputs
-        self.fields["inputs"].disabled = True
-        self.fields["outputs"].initial = outputs
-        self.fields["outputs"].disabled = True
-        self.fields["modalities"].initial = modalities
-        self.fields["modalities"].disabled = True
-        self.fields["structures"].initial = structures
-        self.fields["structures"].disabled = True
-        self.fields["logo"].initial = logo
-        self.fields["logo"].disabled = True
+            self.fields["workstation"].disabled = True
+            self.fields["inputs"].initial = inputs
+            self.fields["inputs"].disabled = True
+            self.fields["outputs"].initial = outputs
+            self.fields["outputs"].disabled = True
+            self.fields["modalities"].initial = modalities
+            self.fields["modalities"].disabled = True
+            self.fields["structures"].initial = structures
+            self.fields["structures"].disabled = True
+            self.fields["logo"].initial = logo
+            self.fields["logo"].disabled = True
+            self.helper = FormHelper(self)
+            self.helper.layout.append(Submit("save", "Save"))
 
 
 class AlgorithmDescriptionForm(ModelForm):
