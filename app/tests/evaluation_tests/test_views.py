@@ -13,6 +13,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.workstations.models import Workstation
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
@@ -745,3 +746,135 @@ def test_create_algorithm_for_phase_presets(client):
     assert alg2.view_content != "{}"
     assert alg2.workstation.slug != ws
     assert alg2.logo == phase.challenge.logo
+
+
+@pytest.mark.django_db
+def test_create_algorithm_for_phase_limits(client):
+    phase = PhaseFactory(challenge__logo=ImageField(filename="test.jpeg"))
+    phase.submission_kind = SubmissionKindChoices.ALGORITHM
+    phase.creator_must_be_verified = True
+    phase.archive = ArchiveFactory()
+    ci1 = ComponentInterfaceFactory()
+    ci2 = ComponentInterfaceFactory()
+    phase.algorithm_inputs.set([ci1])
+    phase.algorithm_outputs.set([ci2])
+    phase.submissions_limit_per_user_per_period = 10
+    phase.save()
+
+    u1, u2, u3 = UserFactory.create_batch(3)
+    for user in [u1, u2, u3]:
+        VerificationFactory(user=user, is_verified=True)
+        phase.challenge.add_participant(user)
+
+    alg1, alg2, alg3, alg4 = AlgorithmFactory.create_batch(4)
+    alg1.add_editor(u1)
+    alg1.add_editor(u2)
+    alg2.add_editor(u1)
+    alg3.add_editor(u1)
+    alg4.add_editor(u2)
+    for alg in [alg1, alg2, alg3, alg4]:
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u3,
+    )
+    # u3 has not created any algorithms for the phase yet,
+    # so will immediately see the form
+    assert '<form  method="post" >' in str(response.content)
+
+    # u2 has created 2 algos, so will see a confirmation button and links
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u2,
+    )
+    assert "You have created 2 out of 3 possible algorithms" in str(
+        response.content
+    )
+    for alg in [alg1, alg4]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
+            response.content
+        )
+    for alg in [alg2, alg3]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
+            response.content
+        )
+
+    # to his existing algorithms instead of the form
+    # clicking on confirm will show the form
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u2,
+        data={"show_form": "True"},
+    )
+    assert '<form  method="post" >' in str(response.content)
+
+    # u1 has reached the limit of algorithms,
+    # will see links to existing algorithms
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u1,
+    )
+    assert (
+        "You have created the maximum number of allowed algorithms for this phase!"
+        in str(response.content)
+    )
+    for alg in [alg1, alg2, alg3]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
+            response.content
+        )
+    assert f'<a href="{alg4.get_absolute_url()}#containers"' not in str(
+        response.content
+    )
+
+    # force submitting a form with data for a user that has reached the limit,
+    # will not work, they will just get redirected to the page telling them that they
+    # have reached the limit
+
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u1,
+        data={
+            "title": "Foo",
+            "image_requires_memory_gb": 1,
+        },
+    )
+    assert (
+        "You have created the maximum number of allowed algorithms for this phase!"
+        in str(response.content)
+    )
+    for alg in [alg1, alg2, alg3]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
+            response.content
+        )
+    assert f'<a href="{alg4.get_absolute_url()}#containers"' not in str(
+        response.content
+    )
+    assert not Algorithm.objects.filter(title="foo").exists()

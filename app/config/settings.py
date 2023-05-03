@@ -1216,7 +1216,7 @@ ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH = int(
     os.environ.get("ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH", "50")
 )
 ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE = int(
-    os.environ.get("ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE", "4")
+    os.environ.get("ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE", "3")
 )
 
 # Disallow some challenge names due to subdomain or media folder clashes
@@ -1319,7 +1319,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
-ENABLE_DEBUG_TOOLBAR = True
+ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
     # Allow localhost in development

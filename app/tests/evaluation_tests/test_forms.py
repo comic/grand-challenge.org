@@ -213,6 +213,7 @@ def test_algorithm_for_phase_form():
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
+        hide_form=False,
     )
 
     assert form.fields["inputs"].disabled
@@ -251,3 +252,21 @@ def test_algorithm_for_phase_form():
         form.fields["image_requires_gpu"],
         form.fields["image_requires_memory_gb"],
     } == {field.field for field in form.visible_fields()}
+
+    form = AlgorithmForPhaseForm(
+        workstation_config=WorkstationConfigFactory.build(),
+        hanging_protocol=HangingProtocolFactory.build(),
+        view_content="{}",
+        display_editors=True,
+        contact_email="test@test.com",
+        workstation=WorkstationFactory.build(),
+        inputs=[ComponentInterfaceFactory.build()],
+        outputs=[ComponentInterfaceFactory.build()],
+        structures=[],
+        modalities=[],
+        logo=ImageField(filename="test.jpeg"),
+        hide_form=True,
+    )
+    assert {
+        field.name: field.field for field in form.hidden_fields()
+    } == form.fields
