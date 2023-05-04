@@ -348,7 +348,8 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         help_text=(
             "If set, participants will not be able to make submissions to "
-            "this phase before this time."
+            "this phase before this time. Enter the date and time in your local "
+            "timezone."
         ),
     )
     submissions_close_at = models.DateTimeField(
@@ -356,7 +357,8 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         help_text=(
             "If set, participants will not be able to make submissions to "
-            "this phase after this time."
+            "this phase after this time. Enter the date and time in your local "
+            "timezone."
         ),
     )
     submission_page_html = models.TextField(

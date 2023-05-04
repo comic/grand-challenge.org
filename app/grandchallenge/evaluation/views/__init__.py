@@ -174,7 +174,7 @@ class PhaseUpdate(
 
     def get_success_url(self):
         return reverse(
-            "evaluation:leaderboard",
+            "evaluation:phase-update",
             kwargs={
                 "challenge_short_name": self.request.challenge.short_name,
                 "slug": self.kwargs["slug"],
