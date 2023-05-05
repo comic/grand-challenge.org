@@ -200,7 +200,9 @@ class MethodCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"challenge": self.request.challenge})
+        phase_slug = self.request.GET.get("phase", None)
+        phase = Phase.objects.get(slug=phase_slug) if phase_slug else None
+        kwargs.update({"challenge": self.request.challenge, "phase": phase})
         return kwargs
 
 
@@ -208,6 +210,7 @@ class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Method
     permission_required = "view_method"
     login_url = reverse_lazy("account_login")
+    ordering = ("-is_desired_version", "-created")
 
     def get_queryset(self):
         queryset = super().get_queryset()

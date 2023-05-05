@@ -130,6 +130,22 @@ class PhaseUpdateForm(
                 Tab("Scoring", *scoring_options),
                 Tab("Leaderboard", *leaderboard_options),
                 Tab("Result Detail", *result_detail_options),
+                Tab(
+                    "Evaluation Methods",
+                    HTML(
+                        "<p>{% if not object.active_image %}"
+                        '<i class="fa fa-exclamation-triangle text-danger mr-2"></i>'
+                        "There is no active evaluation method for this phase. "
+                        'Upload a new one <a href="{% url "evaluation:method-create" %}?phase={{object.slug}}">here</a>.'
+                        "{% else %} "
+                        '<i class="fa fa-check text-success mr-2"></i>'
+                        "The currently active evaluation method for this phase is: "
+                        '<a href="{{ object.active_image.get_absolute_url }}">{{ object.active_image }}</a></p>'
+                        "<p> Upload a new evaluation container "
+                        '<a href="{% url "evaluation:method-create" %}?phase={{object.slug}}">here</a>.'
+                        "{% endif %}</p>"
+                    ),
+                ),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -211,10 +227,13 @@ class MethodForm(ContainerImageForm):
         help_text="Which phase is this evaluation container for?",
     )
 
-    def __init__(self, *args, challenge, **kwargs):
+    def __init__(self, *args, challenge, phase, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["phase"].queryset = challenge.phase_set.all()
+
+        if phase:
+            self.fields["phase"].initial = phase
 
     class Meta:
         model = Method

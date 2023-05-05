@@ -28,28 +28,26 @@
         <table class="table table-hover table-borderless table-sm" id="methodsTable">
             <thead class="thead-light">
             <tr>
-                <th>ID</th>
+                <th class="nonSortable"></th>
+                <th class="nonSortable">Active</th>
                 <th>Created</th>
                 <th>Phase</th>
-                <th>User</th>
-                <th>SHA</th>
-                <th>Ready</th>
-                <th>Status</th>
+                <th>Uploaded by</th>
+                <th class="nonSortable">Status</th>
             </tr>
             </thead>
             <tbody>
             {% for method in object_list %}
                 <tr>
                     <td>
-                        <a href="{{ method.get_absolute_url }}">{{ method.id }}</a>
+                        <a href="{{ method.get_absolute_url }}"><i class="fa fa-eye"></i></a>
                     </td>
+                    <td class="d-flex justify-content-center">{% if method.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</td>
                     <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
                     <td>{{ method.phase.title }}</td>
                     <td><a
                             href="{% url 'profile-detail' method.creator.username %}">{{ method.creator }}</a>
                     </td>
-                    <td>{{ method.image_sha256 }}</td>
-                    <td>{{ method.can_execute }}</td>
                     <td>{{ method.status }}</td>
                 </tr>
             {% endfor %}
@@ -62,7 +60,15 @@
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#methodsTable').DataTable();
+            $('#methodsTable').DataTable({
+                columnDefs: [
+                    {
+                        targets: 'nonSortable',
+                        searchable: false,
+                        orderable: false,
+                    },
+                ],
+            });
         });
     </script>
 {% endblock %}
