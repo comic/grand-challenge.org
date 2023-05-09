@@ -47,6 +47,14 @@ from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
 
+class CachedPhaseMixin:
+    @cached_property
+    def phase(self):
+        phase_slug = self.request.GET.get("phase", None)
+        phase = Phase.objects.get(slug=phase_slug) if phase_slug else None
+        return phase
+
+
 class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
     """
     Mixin that checks if a user is either an admin of a challenge
@@ -187,6 +195,7 @@ class MethodCreate(
     VerificationRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
     CreateView,
 ):
     model = Method
@@ -197,12 +206,6 @@ class MethodCreate(
 
     def get_permission_object(self):
         return self.request.challenge
-
-    @cached_property
-    def phase(self):
-        phase_slug = self.request.GET.get("phase", None)
-        phase = Phase.objects.get(slug=phase_slug) if phase_slug else None
-        return phase
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -217,17 +220,13 @@ class MethodCreate(
         return context
 
 
-class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
+class MethodList(
+    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+):
     model = Method
     permission_required = "view_method"
     login_url = reverse_lazy("account_login")
     ordering = ("-is_desired_version", "-created")
-
-    @cached_property
-    def phase(self):
-        phase_slug = self.request.GET.get("phase", None)
-        phase = Phase.objects.get(slug=phase_slug) if phase_slug else None
-        return phase
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -381,7 +380,11 @@ class TeamContextMixin:
 
 
 class EvaluationList(
-    LoginRequiredMixin, PermissionListMixin, TeamContextMixin, ListView
+    LoginRequiredMixin,
+    PermissionListMixin,
+    TeamContextMixin,
+    CachedPhaseMixin,
+    ListView,
 ):
     model = Evaluation
     permission_required = "view_evaluation"
@@ -397,6 +400,8 @@ class EvaluationList(
             "submission__phase__challenge",
             "submission__algorithm_image__algorithm",
         )
+        if self.phase:
+            queryset = queryset.filter(submission__phase=self.phase)
 
         if self.request.challenge.is_admin(self.request.user):
             return queryset
@@ -404,6 +409,18 @@ class EvaluationList(
             return queryset.filter(
                 Q(submission__creator__pk=self.request.user.pk)
             )
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "phase": self.phase,
+                "base_template": "pages/challenge_settings_base.html"
+                if self.request.challenge.is_admin(self.request.user)
+                else "base.html",
+            }
+        )
+        return context
 
 
 class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
