@@ -9,17 +9,17 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Evaluation Methods</li>
+            aria-current="page">Evaluation Methods for {{ phase.title }}</li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Evaluation Methods</h2>
+    <h2>Evaluation Methods for {{ phase.title }}</h2>
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name %}">
+           href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name %}{% if phase %}?phase={{ phase.slug }}{% endif %}">
             <i class="fas fa-plus"></i> Add a new method
         </a>
     </p>

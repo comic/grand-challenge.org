@@ -198,12 +198,23 @@ class MethodCreate(
     def get_permission_object(self):
         return self.request.challenge
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
+    @cached_property
+    def phase(self):
         phase_slug = self.request.GET.get("phase", None)
         phase = Phase.objects.get(slug=phase_slug) if phase_slug else None
-        kwargs.update({"challenge": self.request.challenge, "phase": phase})
+        return phase
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {"challenge": self.request.challenge, "phase": self.phase}
+        )
         return kwargs
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+        context.update({"phase": self.phase})
+        return context
 
 
 class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
@@ -212,9 +223,22 @@ class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
     login_url = reverse_lazy("account_login")
     ordering = ("-is_desired_version", "-created")
 
+    @cached_property
+    def phase(self):
+        phase_slug = self.request.GET.get("phase", None)
+        phase = Phase.objects.get(slug=phase_slug) if phase_slug else None
+        return phase
+
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(phase__challenge=self.request.challenge)
+        return queryset.filter(
+            phase__challenge=self.request.challenge, phase=self.phase
+        )
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+        context.update({"phase": self.phase})
+        return context
 
 
 class MethodDetail(

@@ -6,7 +6,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
-from django.forms import CheckboxInput, ModelChoiceField
+from django.forms import CheckboxInput, HiddenInput, ModelChoiceField
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2Widget
@@ -218,6 +218,7 @@ class MethodForm(ContainerImageForm):
 
         if phase:
             self.fields["phase"].initial = phase
+            self.fields["phase"].widget = HiddenInput()
 
     class Meta:
         model = Method

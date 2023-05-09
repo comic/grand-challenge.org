@@ -62,11 +62,7 @@
               </li>
               <li class="navbar-header rounded bg-light pl-3 py-1 mt-2 mb-1"><a>Phases</a></li>
                   {% for phase in challenge.phase_set.all %}
-                      <li class="nav-item">
-                        <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:phase-update' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
-                            href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                            <i class="fas fa-cog fa-fw"></i> {{ phase.title }} Settings</a>
-                      </li>
+                      {% include 'pages/phase_menu_sidebar.html' with phase=phase %}
                   {% endfor %}
                   <li class="nav-item">
                     <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:phase-create' %}active{% endif %}"
@@ -74,11 +70,6 @@
                         <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase</a>
                   </li>
                 {% if challenge.phase_set.all %}
-                      <li class="nav-item">
-                          <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:method-list' or request.resolver_match.view_name == 'evaluation:method-create' %}active{% endif %}"
-                            href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
-                              Evaluation methods</a>
-                      </li>
                       <li class="nav-item">
                         <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
                             href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
