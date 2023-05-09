@@ -1,4 +1,3 @@
-import logging
 import re
 from itertools import chain
 from urllib.parse import urlparse
@@ -350,9 +349,6 @@ class AlgorithmForm(
                 " The following interfaces are used in your algorithm: "
                 f"{oxford_comma(interface_slugs)}."
             )
-
-
-logger = logging.getLogger(__name__)
 
 
 class AlgorithmForPhaseForm(ModelForm):

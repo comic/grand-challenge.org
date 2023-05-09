@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -675,11 +675,21 @@ class PhaseAlgorithmCreate(
 
     @cached_property
     def get_user_algorithms_for_phase(self):
-        return get_objects_for_user(
-            self.request.user, "algorithms.change_algorithm"
-        ).filter(
-            inputs__in=self.phase.algorithm_inputs.all(),
-            outputs__in=self.phase.algorithm_outputs.all(),
+        inputs = self.phase.algorithm_inputs.all()
+        outputs = self.phase.algorithm_outputs.all()
+        return (
+            get_objects_for_user(
+                self.request.user, "algorithms.change_algorithm"
+            )
+            .annotate(
+                input_count=Count("inputs"), output_count=Count("outputs")
+            )
+            .filter(
+                inputs__in=inputs,
+                outputs__in=outputs,
+                input_count=len(inputs),
+                output_count=len(outputs),
+            )
         )
 
     @cached_property

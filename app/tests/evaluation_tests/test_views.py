@@ -766,15 +766,21 @@ def test_create_algorithm_for_phase_limits(client):
         VerificationFactory(user=user, is_verified=True)
         phase.challenge.add_participant(user)
 
-    alg1, alg2, alg3, alg4 = AlgorithmFactory.create_batch(4)
+    alg1, alg2, alg3, alg4, alg5, alg6 = AlgorithmFactory.create_batch(6)
     alg1.add_editor(u1)
     alg1.add_editor(u2)
     alg2.add_editor(u1)
     alg3.add_editor(u1)
     alg4.add_editor(u2)
-    for alg in [alg1, alg2, alg3, alg4]:
+    alg5.add_editor(u1)
+    alg6.add_editor(u1)
+    for alg in [alg1, alg2, alg3, alg4, alg5]:
         alg.inputs.set([ci1])
         alg.outputs.set([ci2])
+    ci3 = ComponentInterfaceFactory()
+    alg5.inputs.add(ci3)
+    alg6.inputs.set([ci3])
+    alg6.outputs.set([ci2])
 
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
@@ -789,7 +795,8 @@ def test_create_algorithm_for_phase_limits(client):
     # so will immediately see the form
     assert '<form  method="post" >' in str(response.content)
 
-    # u2 has created 2 algos, so will see a confirmation button and links
+    # u2 has created 2 algos, so will see a confirmation button and links to
+    # existing algorithms with the same inputs and outputs
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
         reverse_kwargs={
@@ -806,12 +813,11 @@ def test_create_algorithm_for_phase_limits(client):
         assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
             response.content
         )
-    for alg in [alg2, alg3]:
+    for alg in [alg2, alg3, alg5, alg6]:
         assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
             response.content
         )
 
-    # to his existing algorithms instead of the form
     # clicking on confirm will show the form
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
@@ -844,9 +850,10 @@ def test_create_algorithm_for_phase_limits(client):
         assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
             response.content
         )
-    assert f'<a href="{alg4.get_absolute_url()}#containers"' not in str(
-        response.content
-    )
+    for alg in [alg4, alg5, alg6]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
+            response.content
+        )
 
     # force submitting a form with data for a user that has reached the limit,
     # will not work, they will just get redirected to the page telling them that they
@@ -874,7 +881,8 @@ def test_create_algorithm_for_phase_limits(client):
         assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
             response.content
         )
-    assert f'<a href="{alg4.get_absolute_url()}#containers"' not in str(
-        response.content
-    )
+    for alg in [alg4, alg5, alg6]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
+            response.content
+        )
     assert not Algorithm.objects.filter(title="foo").exists()
