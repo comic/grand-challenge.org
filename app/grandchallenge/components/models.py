@@ -662,32 +662,68 @@ class OverlaySegmentsMixin(models.Model):
 
     @property
     def voxel_values(self):
-        allowed_values = {x["voxel_value"] for x in self.overlay_segments}
+        return {x["voxel_value"] for x in self.overlay_segments}
 
+    @property
+    def allowed_values(self):
+        allowed_values = self.voxel_values
         # An implicit background value of 0 is always allowed, this saves the
         # user having to declare it and the annotator mark it
         allowed_values.add(0)
 
         return allowed_values
 
+    @property
+    def is_contiguous(self):
+        values = sorted(list(self.voxel_values))
+        return not any(
+            values[i] - values[i - 1] > 1 for i in range(1, len(values))
+        )
+
     def _validate_voxel_values(self, image):
         if not self.overlay_segments:
             return
 
         if image.segments is None:
-            raise ValidationError(
-                "Image segments could not be determined, ensure the file is "
-                "not a tiff file, its voxel values are integers and that it "
-                f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
-            )
-
-        invalid_values = set(image.segments) - self.voxel_values
-        if invalid_values:
-            raise ValidationError(
-                f"The valid voxel values for this segmentation are: "
-                f"{self.voxel_values}. This segmentation is invalid as "
-                f"it contains the voxel values: {invalid_values}."
-            )
+            if image.files.filter(
+                image_type=ImageFile.IMAGE_TYPE_TIFF
+            ).exists():
+                if not self.is_contiguous:
+                    raise ValidationError(
+                        "Voxel values in for the overlay segments must be contiguous "
+                        "for segmentations with TIFF file type."
+                    )
+                if None in (image.min_voxel_value, image.max_voxel_value):
+                    raise ValidationError(
+                        "Minimum and maximum voxel value tag is required for "
+                        "segmentations with TIFF file type."
+                    )
+                if image.min_voxel_value < min(self.voxel_values):
+                    raise ValidationError(
+                        f"Minimum voxel value in image ({image.min_voxel_value}) "
+                        "should be larger than or equal to the minimum voxel value "
+                        f"in the segmentation ({min(self.voxel_values)})."
+                    )
+                if image.max_voxel_value > max(self.voxel_values):
+                    raise ValidationError(
+                        f"Maximum voxel value in image ({image.max_voxel_value}) "
+                        "should be smaller than or equal to the maximum voxel value "
+                        f"in the segmentation ({max(self.voxel_values)})."
+                    )
+            else:
+                raise ValidationError(
+                    "Image segments could not be determined, ensure the voxel values "
+                    "are integers and that it contains no more than "
+                    f"{MAXIMUM_SEGMENTS_LENGTH} segments."
+                )
+        else:
+            invalid_values = set(image.segments) - self.allowed_values
+            if invalid_values:
+                raise ValidationError(
+                    f"The valid voxel values for this segmentation are: "
+                    f"{self.allowed_values}. This segmentation is invalid as "
+                    f"it contains the voxel values: {invalid_values}."
+                )
 
     class Meta:
         abstract = True
