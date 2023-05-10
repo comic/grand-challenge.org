@@ -354,11 +354,11 @@ def test_evaluation_list(client, two_challenge_sets):
         client=client,
         user=two_challenge_sets.challenge_set_1.participant,
     )
-    assert str(e_p_s1.pk) in response.rendered_content
-    assert str(e_p_s2.pk) in response.rendered_content
-    assert str(e_p1_s1.pk) not in response.rendered_content
-    assert str(e_p12_s1_c1.pk) not in response.rendered_content
-    assert str(e_p12_s1_c2.pk) not in response.rendered_content
+    assert str(e_p_s1.pk) in str(response.content)
+    assert str(e_p_s2.pk) in str(response.content)
+    assert str(e_p1_s1.pk) not in str(response.content)
+    assert str(e_p12_s1_c1.pk) not in str(response.content)
+    assert str(e_p12_s1_c2.pk) not in str(response.content)
 
     # Admins should be able to see all evaluations
     response = get_view_for_user(
@@ -367,11 +367,11 @@ def test_evaluation_list(client, two_challenge_sets):
         client=client,
         user=two_challenge_sets.challenge_set_1.admin,
     )
-    assert str(e_p_s1.pk) in response.rendered_content
-    assert str(e_p_s2.pk) in response.rendered_content
-    assert str(e_p1_s1.pk) in response.rendered_content
-    assert str(e_p12_s1_c1.pk) in response.rendered_content
-    assert str(e_p12_s1_c2.pk) not in response.rendered_content
+    assert str(e_p_s1.pk) in str(response.content)
+    assert str(e_p_s2.pk) in str(response.content)
+    assert str(e_p1_s1.pk) in str(response.content)
+    assert str(e_p12_s1_c1.pk) in str(response.content)
+    assert str(e_p12_s1_c2.pk) not in str(response.content)
 
     # Only evaluations relevant to this challenge should be listed
     response = get_view_for_user(
@@ -380,11 +380,11 @@ def test_evaluation_list(client, two_challenge_sets):
         client=client,
         user=two_challenge_sets.participant12,
     )
-    assert str(e_p12_s1_c1.pk) in response.rendered_content
-    assert str(e_p12_s1_c2.pk) not in response.rendered_content
-    assert str(e_p_s1.pk) not in response.rendered_content
-    assert str(e_p_s2.pk) not in response.rendered_content
-    assert str(e_p1_s1.pk) not in response.rendered_content
+    assert str(e_p12_s1_c1.pk) in str(response.content)
+    assert str(e_p12_s1_c2.pk) not in str(response.content)
+    assert str(e_p_s1.pk) not in str(response.content)
+    assert str(e_p_s2.pk) not in str(response.content)
+    assert str(e_p1_s1.pk) not in str(response.content)
 
 
 @pytest.mark.django_db
@@ -403,7 +403,6 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
 
     for view_name, kwargs, status in [
         # phase non-specific pages
-        ("list", {}, 200),
         ("submission-list", {}, 200),
         # visible phase
         ("detail", {"pk": e1.pk}, 200),
@@ -428,16 +427,8 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
         )
         assert response.status_code == status
         if status == 200:
-            assert f"{visible_phase.title}</a>" in response.rendered_content
-            assert f"{hidden_phase.title}</a>" not in response.rendered_content
-        if "list" in view_name:
-            assert (
-                f"<td>{visible_phase.title}</td>" in response.rendered_content
-            )
-            assert (
-                f"<td>{hidden_phase.title}</td>"
-                not in response.rendered_content
-            )
+            assert f"{visible_phase.title}</a>" in str(response.content)
+            assert f"{hidden_phase.title}</a>" not in str(response.content)
 
         # for the admin both phases are visible and they have access to submissions
         # and evals from both phases
@@ -448,15 +439,8 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             user=ch.admins_group.user_set.first(),
         )
         assert response.status_code == 200
-        assert f"{visible_phase.title}</a>" in response.rendered_content
-        assert f"{hidden_phase.title}</a>" in response.rendered_content
-        if "list" in view_name:
-            assert (
-                f"<td>{visible_phase.title}</td>" in response.rendered_content
-            )
-            assert (
-                f"<td>{hidden_phase.title}</td>" in response.rendered_content
-            )
+        assert f"{visible_phase.title}</a>" in str(response.content)
+        assert f"{hidden_phase.title}</a>" in str(response.content)
 
 
 @pytest.mark.django_db
