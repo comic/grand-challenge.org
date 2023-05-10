@@ -47,5 +47,5 @@ def test_registration_list_is_filtered(client, two_challenge_sets):
         client=client,
         user=two_challenge_sets.admin12,
     )
-    assert r1.user.username in response.rendered_content
-    assert r2.user.username not in response.rendered_content
+    assert r1.user.username in str(response.content)
+    assert r2.user.username not in str(response.content)
