@@ -690,7 +690,7 @@ class OverlaySegmentsMixin(models.Model):
             ).exists():
                 if not self.is_contiguous:
                     raise ValidationError(
-                        "Voxel values in for the overlay segments must be contiguous "
+                        "Voxel values in the overlay segments must be contiguous "
                         "for segmentations with TIFF file type."
                     )
                 if None in (image.min_voxel_value, image.max_voxel_value):
