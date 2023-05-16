@@ -1139,14 +1139,14 @@ def test_validate_voxel_values():
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "The valid voxel values for this segmentation are: {1, 2}. "
+        "The valid voxel values for this segmentation are: {0, 1, 2}. "
         "This segmentation is invalid as it contains the voxel values: {3}."
     )
     im = ImageFactoryWithImageFileTiff(segments=[0, 1, 2])
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "The valid voxel values for this segmentation are: {1, 2}. "
+        "The valid voxel values for this segmentation are: {0, 1, 2}. "
         "This segmentation is invalid as it contains the voxel values: {0}."
     )
     im = ImageFactoryWithImageFileTiff(segments=[1, 2])
