@@ -411,6 +411,11 @@ class EvaluationList(
                 Q(submission__creator__pk=self.request.user.pk)
             )
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        context.update({"base_template": "base.html"})
+        return context
+
 
 class EvaluationAdminList(
     LoginRequiredMixin,
@@ -422,7 +427,6 @@ class EvaluationAdminList(
     model = Evaluation
     permission_required = "change_challenge"
     login_url = reverse_lazy("account_login")
-    template_name = "evaluation/evaluation_admin_list.html"
     raise_exception = True
 
     def get_permission_object(self):
@@ -439,6 +443,11 @@ class EvaluationAdminList(
             "submission__phase__challenge",
             "submission__algorithm_image__algorithm",
         )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        context.update({"base_template": "pages/challenge_settings_base.html"})
+        return context
 
 
 class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):

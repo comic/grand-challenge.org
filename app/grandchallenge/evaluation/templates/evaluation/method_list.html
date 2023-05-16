@@ -1,5 +1,6 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load url %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -58,17 +59,5 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#methodsTable').DataTable({
-                columnDefs: [
-                    {
-                        targets: 'nonSortable',
-                        searchable: false,
-                        orderable: false,
-                    },
-                ],
-            });
-        });
-    </script>
+    <script type="text/javascript" src="{% static 'js/evaluation/methods_table.js' %}"></script>
 {% endblock %}
