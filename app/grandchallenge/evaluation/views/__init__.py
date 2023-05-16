@@ -50,7 +50,9 @@ from grandchallenge.verifications.views import VerificationRequiredMixin
 class CachedPhaseMixin:
     @cached_property
     def phase(self):
-        return get_object_or_404(Phase, slug=self.kwargs["slug"])
+        return get_object_or_404(
+            Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
+        )
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data()
@@ -421,6 +423,7 @@ class EvaluationAdminList(
     permission_required = "change_challenge"
     login_url = reverse_lazy("account_login")
     template_name = "evaluation/evaluation_admin_list.html"
+    raise_exception = True
 
     def get_permission_object(self):
         return self.request.challenge

@@ -40,14 +40,14 @@ class TestLoginViews:
         for view_name, kwargs in [
             ("phase-create", {}),
             ("phase-update", {"slug": e.submission.phase.slug}),
-            ("method-create", {}),
-            ("method-list", {}),
+            ("method-create", {"slug": e.submission.phase.slug}),
+            ("method-list", {"slug": e.submission.phase.slug}),
             ("method-detail", {"pk": e.method.pk}),
             ("submission-create", {"slug": e.submission.phase.slug}),
             ("submission-create-legacy", {"slug": e.submission.phase.slug}),
             ("submission-list", {}),
             ("submission-detail", {"pk": e.submission.pk}),
-            ("list", {}),
+            ("list", {"slug": e.submission.phase.slug}),
             ("update", {"pk": e.pk}),
         ]:
             response = get_view_for_user(
@@ -108,7 +108,7 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "method-create",
-                {},
+                {"slug": e.submission.phase.slug},
                 "change_challenge",
                 e.submission.phase.challenge,
             ),
@@ -172,9 +172,20 @@ class TestObjectPermissionRequiredViews:
         )
 
         for view_name, kwargs, permission, obj in [
-            ("method-list", {}, "view_method", m),
+            (
+                "method-list",
+                {"slug": e.submission.phase.slug},
+                "view_method",
+                m,
+            ),
             ("submission-list", {}, "view_submission", s),
-            ("list", {}, "view_evaluation", e),
+            ("list", {"slug": e.submission.phase.slug}, "view_evaluation", e),
+            (
+                "admin-list",
+                {"slug": e.submission.phase.slug},
+                "change_challenge",
+                e,
+            ),
             (
                 "leaderboard",
                 {"slug": e.submission.phase.slug},
@@ -182,7 +193,10 @@ class TestObjectPermissionRequiredViews:
                 e,
             ),
         ]:
-            assign_perm(permission, u, obj)
+            if "challenge" in permission:
+                assign_perm(permission, u, e.submission.phase.challenge)
+            else:
+                assign_perm(permission, u, obj)
 
             response = get_view_for_user(
                 client=client,
@@ -197,7 +211,10 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
             assert obj in response.context[-1]["object_list"]
 
-            remove_perm(permission, u, obj)
+            if "challenge" in permission:
+                remove_perm(permission, u, e.submission.phase.challenge)
+            else:
+                remove_perm(permission, u, obj)
 
             response = get_view_for_user(
                 client=client,
@@ -209,8 +226,11 @@ class TestObjectPermissionRequiredViews:
                 user=u,
             )
 
-            assert response.status_code == 200
-            assert obj not in response.context[-1]["object_list"]
+            if "challenge" in permission:
+                assert response.status_code == 403
+            else:
+                assert response.status_code == 200
+                assert obj not in response.context[-1]["object_list"]
 
 
 @pytest.mark.django_db
@@ -220,29 +240,30 @@ class TestViewFilters:
 
         u = UserFactory()
         e1 = EvaluationFactory(
-            method__phase__challenge=c1,
-            submission__phase__challenge=c1,
+            method__phase=c1.phase_set.first(),
+            submission__phase=c1.phase_set.first(),
             submission__creator=u,
         )
         e2 = EvaluationFactory(
-            method__phase__challenge=c2,
-            submission__phase__challenge=c2,
+            method__phase=c2.phase_set.first(),
+            submission__phase=c2.phase_set.first(),
             submission__creator=u,
         )
 
         assign_perm("view_method", u, e1.method)
         assign_perm("view_method", u, e2.method)
 
-        for view_name, obj in [
-            ("method-list", e1.method),
-            ("submission-list", e1.submission),
-            ("list", e1),
+        for view_name, obj, extra_kwargs in [
+            ("method-list", e1.method, {"slug": e1.submission.phase.slug}),
+            ("submission-list", e1.submission, {}),
+            ("list", e1, {"slug": e1.submission.phase.slug}),
         ]:
             response = get_view_for_user(
                 client=client,
                 viewname=f"evaluation:{view_name}",
                 reverse_kwargs={
-                    "challenge_short_name": e1.submission.phase.challenge.short_name
+                    "challenge_short_name": e1.submission.phase.challenge.short_name,
+                    **extra_kwargs,
                 },
                 user=u,
             )
@@ -346,10 +367,19 @@ def test_evaluation_list(client, two_challenge_sets):
         submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
     )
+    e_p_s3_p2 = EvaluationFactory(
+        submission__phase=PhaseFactory(
+            challenge=two_challenge_sets.challenge_set_2.challenge
+        ),
+        submission__creator=two_challenge_sets.challenge_set_1.participant,
+    )
 
-    # Participants should only be able to see their own evaluations
+    # Participants should only be able to see their own evaluations from a phase
     response = get_view_for_user(
         viewname="evaluation:list",
+        reverse_kwargs={
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
+        },
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.participant,
@@ -359,10 +389,14 @@ def test_evaluation_list(client, two_challenge_sets):
     assert str(e_p1_s1.pk) not in str(response.content)
     assert str(e_p12_s1_c1.pk) not in str(response.content)
     assert str(e_p12_s1_c2.pk) not in str(response.content)
+    assert str(e_p_s3_p2.pk) not in str(response.content)
 
-    # Admins should be able to see all evaluations
+    # Admins should be able to see all evaluations from a phase
     response = get_view_for_user(
         viewname="evaluation:list",
+        reverse_kwargs={
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
+        },
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.admin,
@@ -372,19 +406,7 @@ def test_evaluation_list(client, two_challenge_sets):
     assert str(e_p1_s1.pk) in str(response.content)
     assert str(e_p12_s1_c1.pk) in str(response.content)
     assert str(e_p12_s1_c2.pk) not in str(response.content)
-
-    # Only evaluations relevant to this challenge should be listed
-    response = get_view_for_user(
-        viewname="evaluation:list",
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        client=client,
-        user=two_challenge_sets.participant12,
-    )
-    assert str(e_p12_s1_c1.pk) in str(response.content)
-    assert str(e_p12_s1_c2.pk) not in str(response.content)
-    assert str(e_p_s1.pk) not in str(response.content)
-    assert str(e_p_s2.pk) not in str(response.content)
-    assert str(e_p1_s1.pk) not in str(response.content)
+    assert str(e_p_s3_p2.pk) not in str(response.content)
 
 
 @pytest.mark.django_db
