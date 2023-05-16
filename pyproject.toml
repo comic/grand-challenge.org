@@ -95,6 +95,7 @@ django-ses = "*"
 Pygments = "*"
 django-forms-dynamic = "*"
 django-allauth-2fa = "*"
+urllib3 = "<2"  # Pinned due to lack of support in sentry (https://github.com/getsentry/sentry-python/issues/2070) and botocore (https://github.com/boto/botocore/issues/2926)
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"
