@@ -763,6 +763,7 @@ class Method(UUIDModel, ComponentImage):
             kwargs={
                 "pk": self.pk,
                 "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
             },
         )
 
@@ -878,6 +879,7 @@ class Submission(UUIDModel):
             kwargs={
                 "pk": self.pk,
                 "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
             },
         )
 

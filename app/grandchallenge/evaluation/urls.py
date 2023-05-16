@@ -26,21 +26,13 @@ urlpatterns = [
     # UUID should be matched before slugs
     path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
     path("phase/create/", PhaseCreate.as_view(), name="phase-create"),
-    path("methods/<uuid:pk>/", MethodDetail.as_view(), name="method-detail"),
-    path("methods/<slug>/", MethodList.as_view(), name="method-list"),
-    path(
-        "methods/<slug>/create/", MethodCreate.as_view(), name="method-create"
-    ),
     path("submissions/", SubmissionList.as_view(), name="submission-list"),
-    path(
-        "submissions/<uuid:pk>/",
-        SubmissionDetail.as_view(),
-        name="submission-detail",
-    ),
-    path("results/", LeaderboardRedirect.as_view()),
-    path("leaderboard/", LeaderboardRedirect.as_view()),
     path("<slug>/", EvaluationList.as_view(), name="list"),
-    path("<slug>/admin", EvaluationAdminList.as_view(), name="admin-list"),
+    path(
+        "<slug>/admin/",
+        EvaluationAdminList.as_view(),
+        name="evaluation-admin-list",
+    ),
     path(
         "<slug>/algorithms/create/",
         PhaseAlgorithmCreate.as_view(),
@@ -49,7 +41,15 @@ urlpatterns = [
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
     ),
-    path("<slug>/update/", PhaseUpdate.as_view(), name="phase-update"),
+    path("<slug>/methods/", MethodList.as_view(), name="method-list"),
+    path(
+        "<slug>/methods/create/", MethodCreate.as_view(), name="method-create"
+    ),
+    path(
+        "<slug>/methods/<uuid:pk>/",
+        MethodDetail.as_view(),
+        name="method-detail",
+    ),
     path(
         "<slug>/submissions/create/",
         SubmissionCreate.as_view(),
@@ -60,4 +60,12 @@ urlpatterns = [
         LegacySubmissionCreate.as_view(),
         name="submission-create-legacy",
     ),
+    path(
+        "<slug>/submissions/<uuid:pk>/",
+        SubmissionDetail.as_view(),
+        name="submission-detail",
+    ),
+    path("<slug>/update/", PhaseUpdate.as_view(), name="phase-update"),
+    path("results/", LeaderboardRedirect.as_view()),
+    path("leaderboard/", LeaderboardRedirect.as_view()),
 ]

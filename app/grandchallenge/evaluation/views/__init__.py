@@ -243,7 +243,10 @@ class MethodList(
 
 
 class MethodDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
+    DetailView,
 ):
     model = Method
     permission_required = "view_method"
@@ -349,7 +352,10 @@ class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
 
 
 class SubmissionDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
+    DetailView,
 ):
     model = Submission
     permission_required = "view_submission"

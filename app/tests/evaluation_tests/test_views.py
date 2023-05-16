@@ -42,11 +42,17 @@ class TestLoginViews:
             ("phase-update", {"slug": e.submission.phase.slug}),
             ("method-create", {"slug": e.submission.phase.slug}),
             ("method-list", {"slug": e.submission.phase.slug}),
-            ("method-detail", {"pk": e.method.pk}),
+            (
+                "method-detail",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+            ),
             ("submission-create", {"slug": e.submission.phase.slug}),
             ("submission-create-legacy", {"slug": e.submission.phase.slug}),
             ("submission-list", {}),
-            ("submission-detail", {"pk": e.submission.pk}),
+            (
+                "submission-detail",
+                {"pk": e.submission.pk, "slug": e.submission.phase.slug},
+            ),
             ("list", {"slug": e.submission.phase.slug}),
             ("update", {"pk": e.pk}),
         ]:
@@ -112,7 +118,12 @@ class TestObjectPermissionRequiredViews:
                 "change_challenge",
                 e.submission.phase.challenge,
             ),
-            ("method-detail", {"pk": e.method.pk}, "view_method", e.method),
+            (
+                "method-detail",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+                "view_method",
+                e.method,
+            ),
             (
                 "submission-create",
                 {"slug": e.submission.phase.slug},
@@ -127,7 +138,7 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "submission-detail",
-                {"pk": e.submission.pk},
+                {"pk": e.submission.pk, "slug": e.submission.phase.slug},
                 "view_submission",
                 e.submission,
             ),
@@ -181,22 +192,14 @@ class TestObjectPermissionRequiredViews:
             ("submission-list", {}, "view_submission", s),
             ("list", {"slug": e.submission.phase.slug}, "view_evaluation", e),
             (
-                "admin-list",
-                {"slug": e.submission.phase.slug},
-                "change_challenge",
-                e,
-            ),
-            (
                 "leaderboard",
                 {"slug": e.submission.phase.slug},
                 "view_evaluation",
                 e,
             ),
         ]:
-            if "challenge" in permission:
-                assign_perm(permission, u, e.submission.phase.challenge)
-            else:
-                assign_perm(permission, u, obj)
+
+            assign_perm(permission, u, obj)
 
             response = get_view_for_user(
                 client=client,
@@ -211,10 +214,7 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
             assert obj in response.context[-1]["object_list"]
 
-            if "challenge" in permission:
-                remove_perm(permission, u, e.submission.phase.challenge)
-            else:
-                remove_perm(permission, u, obj)
+            remove_perm(permission, u, obj)
 
             response = get_view_for_user(
                 client=client,
@@ -226,11 +226,8 @@ class TestObjectPermissionRequiredViews:
                 user=u,
             )
 
-            if "challenge" in permission:
-                assert response.status_code == 403
-            else:
-                assert response.status_code == 200
-                assert obj not in response.context[-1]["object_list"]
+            assert response.status_code == 200
+            assert obj not in response.context[-1]["object_list"]
 
 
 @pytest.mark.django_db
@@ -429,12 +426,20 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
         # visible phase
         ("detail", {"pk": e1.pk}, 200),
         ("submission-create", {"slug": visible_phase.slug}, 200),
-        ("submission-detail", {"pk": e1.submission.pk}, 200),
+        (
+            "submission-detail",
+            {"pk": e1.submission.pk, "slug": e1.submission.phase.slug},
+            200,
+        ),
         ("leaderboard", {"slug": visible_phase.slug}, 200),
         # hidden phase
         ("detail", {"pk": e2.pk}, 403),
         ("submission-create", {"slug": hidden_phase.slug}, 200),
-        ("submission-detail", {"pk": e2.submission.pk}, 403),
+        (
+            "submission-detail",
+            {"pk": e2.submission.pk, "slug": e2.submission.phase.slug},
+            403,
+        ),
         ("leaderboard", {"slug": hidden_phase.slug}, 200),
     ]:
         # for participants only the visible phase tab is visible
@@ -751,3 +756,39 @@ def test_create_algorithm_for_phase_presets(client):
     assert alg2.view_content != "{}"
     assert alg2.workstation.slug != ws
     assert alg2.logo == phase.challenge.logo
+
+
+@pytest.mark.django_db
+def test_evaluation_admin_list(client):
+    u, admin = UserFactory.create_batch(2)
+    ch = ChallengeFactory()
+    ch.add_admin(admin)
+    m = MethodFactory(phase=ch.phase_set.get())
+    s = SubmissionFactory(phase=ch.phase_set.get(), creator=u)
+    e = EvaluationFactory(
+        method=m, submission=s, rank=1, status=Evaluation.SUCCESS
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:evaluation-admin-list",
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+            "slug": ch.phase_set.get().slug,
+        },
+        user=u,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:evaluation-admin-list",
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+            "slug": ch.phase_set.get().slug,
+        },
+        user=admin,
+    )
+    assert response.status_code == 200
+    assert e in response.context[-1]["object_list"]
