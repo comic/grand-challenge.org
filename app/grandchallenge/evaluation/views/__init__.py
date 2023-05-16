@@ -409,16 +409,33 @@ class EvaluationList(
                 Q(submission__creator__pk=self.request.user.pk)
             )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-        context.update(
-            {
-                "base_template": "pages/challenge_settings_base.html"
-                if self.request.challenge.is_admin(self.request.user)
-                else "base.html",
-            }
+
+class EvaluationAdminList(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    TeamContextMixin,
+    CachedPhaseMixin,
+    ListView,
+):
+    model = Evaluation
+    permission_required = "change_challenge"
+    login_url = reverse_lazy("account_login")
+    template_name = "evaluation/evaluation_admin_list.html"
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(
+            submission__phase__challenge=self.request.challenge,
+            submission__phase=self.phase,
+        ).select_related(
+            "submission__creator__user_profile",
+            "submission__creator__verification",
+            "submission__phase__challenge",
+            "submission__algorithm_image__algorithm",
         )
-        return context
 
 
 class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):

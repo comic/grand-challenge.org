@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "pages/challenge_settings_base.html" %}
 {% load evaluation_extras %}
 {% load user_profile_link from profiles %}
 {% load guardian_tags %}
@@ -19,7 +19,7 @@
 
 {% block content %}
 
-    <h2>Submissions and Evaluations for {{ phase.title }}</h2>
+    <h2>Submissions and Evaluations for {{ phase.title }} {{ request.resolver_match.view_name }}</h2>
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="evaluationsTable">
