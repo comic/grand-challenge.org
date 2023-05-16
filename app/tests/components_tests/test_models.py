@@ -1129,7 +1129,7 @@ def test_validate_voxel_values():
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "Voxel values for the overlay segments must be contiguous "
+        "Voxel values in the overlay segments must be contiguous "
         "for segmentations with TIFF file type."
     )
     ci.overlay_segments = [
