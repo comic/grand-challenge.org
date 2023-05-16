@@ -491,11 +491,11 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     def _set_duration(self, *, event):
         try:
-            started = ms_timestamp_to_datetime(event["TransformStartTime"])
-            stopped = ms_timestamp_to_datetime(event["TransformEndTime"])
+            started = ms_timestamp_to_datetime(event.get("TransformStartTime"))
+            stopped = ms_timestamp_to_datetime(event.get("TransformEndTime"))
             self.__duration = stopped - started
-        except Exception as e:
-            logger.warning(f"Could not determine duration: {e}")
+        except TypeError:
+            logger.warning("Invalid start or end time, duration undetermined")
             self.__duration = None
 
     def _get_log_stream_name(self, *, data_log=False):
@@ -567,9 +567,9 @@ class AmazonSageMakerBatchExecutor(Executor):
 
     def _set_runtime_metrics(self, *, event):
         try:
-            start_time = ms_timestamp_to_datetime(event["TransformStartTime"])
-            end_time = ms_timestamp_to_datetime(event["TransformEndTime"])
-        except KeyError:
+            started = ms_timestamp_to_datetime(event.get("TransformStartTime"))
+            stopped = ms_timestamp_to_datetime(event.get("TransformEndTime"))
+        except TypeError:
             logger.warning("Invalid start or end time, metrics undetermined")
             return
 
@@ -587,8 +587,8 @@ class AmazonSageMakerBatchExecutor(Executor):
         response = self._cloudwatch_client.get_metric_data(
             MetricDataQueries=[{"Id": query_id, "Expression": query}],
             # Add buffer time to allow metrics to be delivered
-            StartTime=start_time - timedelta(minutes=1),
-            EndTime=end_time + timedelta(minutes=5),
+            StartTime=started - timedelta(minutes=1),
+            EndTime=stopped + timedelta(minutes=5),
         )
 
         if "NextToken" in response:
