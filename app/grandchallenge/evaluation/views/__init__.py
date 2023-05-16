@@ -50,9 +50,17 @@ from grandchallenge.verifications.views import VerificationRequiredMixin
 class CachedPhaseMixin:
     @cached_property
     def phase(self):
-        phase_slug = self.request.GET.get("phase", None)
-        phase = Phase.objects.get(slug=phase_slug) if phase_slug else None
-        return phase
+        return get_object_or_404(Phase, slug=self.kwargs["slug"])
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+        context.update({"phase": self.phase})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"phase": self.phase})
+        return kwargs
 
 
 class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
@@ -155,6 +163,15 @@ class PhaseCreate(
         form.instance.challenge = self.request.challenge
         return super().form_valid(form)
 
+    def get_success_url(self):
+        return reverse(
+            "evaluation:phase-update",
+            kwargs={
+                "challenge_short_name": self.request.challenge.short_name,
+                "slug": self.object.slug,
+            },
+        )
+
 
 class PhaseUpdate(
     LoginRequiredMixin,
@@ -207,18 +224,6 @@ class MethodCreate(
     def get_permission_object(self):
         return self.request.challenge
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {"challenge": self.request.challenge, "phase": self.phase}
-        )
-        return kwargs
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data()
-        context.update({"phase": self.phase})
-        return context
-
 
 class MethodList(
     LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
@@ -230,16 +235,9 @@ class MethodList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        qs = queryset.filter(phase__challenge=self.request.challenge)
-        if self.phase:
-            return qs.filter(phase=self.phase)
-        else:
-            return qs
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data()
-        context.update({"phase": self.phase})
-        return context
+        return queryset.filter(
+            phase__challenge=self.request.challenge, phase=self.phase
+        )
 
 
 class MethodDetail(
@@ -395,15 +393,14 @@ class EvaluationList(
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(
-            submission__phase__challenge=self.request.challenge
+            submission__phase__challenge=self.request.challenge,
+            submission__phase=self.phase,
         ).select_related(
             "submission__creator__user_profile",
             "submission__creator__verification",
             "submission__phase__challenge",
             "submission__algorithm_image__algorithm",
         )
-        if self.phase:
-            queryset = queryset.filter(submission__phase=self.phase)
 
         if self.request.challenge.is_admin(self.request.user):
             return queryset
@@ -412,11 +409,10 @@ class EvaluationList(
                 Q(submission__creator__pk=self.request.user.pk)
             )
 
-    def get_context_data(self, *, object_list=None, **kwargs):
+    def get_context_data(self, **kwargs):
         context = super().get_context_data()
         context.update(
             {
-                "phase": self.phase,
                 "base_template": "pages/challenge_settings_base.html"
                 if self.request.challenge.is_admin(self.request.user)
                 else "base.html",

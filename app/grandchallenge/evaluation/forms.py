@@ -211,14 +211,11 @@ class MethodForm(ContainerImageForm):
         help_text="Which phase is this evaluation container for?",
     )
 
-    def __init__(self, *args, challenge, phase, **kwargs):
+    def __init__(self, *args, phase, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.fields["phase"].queryset = challenge.phase_set.all()
-
-        if phase:
-            self.fields["phase"].initial = phase
-            self.fields["phase"].widget = HiddenInput()
+        self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk).all()
+        self.fields["phase"].initial = phase
+        self.fields["phase"].widget = HiddenInput()
 
     class Meta:
         model = Method

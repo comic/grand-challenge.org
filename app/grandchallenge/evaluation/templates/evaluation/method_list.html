@@ -19,7 +19,7 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name %}{% if phase %}?phase={{ phase.slug }}{% endif %}">
+           href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
             <i class="fas fa-plus"></i> Add a new method
         </a>
     </p>
