@@ -685,45 +685,28 @@ class OverlaySegmentsMixin(models.Model):
             return
 
         if image.segments is None:
-            if image.files.filter(
-                image_type=ImageFile.IMAGE_TYPE_TIFF
-            ).exists():
-                if not self.is_contiguous:
-                    raise ValidationError(
-                        "Voxel values in the overlay segments must be contiguous "
-                        "for segmentations with TIFF file type."
-                    )
-                if None in (image.min_voxel_value, image.max_voxel_value):
-                    raise ValidationError(
-                        "Minimum and maximum voxel value tag is required for "
-                        "segmentations with TIFF file type."
-                    )
-                if image.min_voxel_value < min(self.voxel_values):
-                    raise ValidationError(
-                        f"Minimum voxel value in image ({image.min_voxel_value}) "
-                        "should be larger than or equal to the minimum voxel value "
-                        f"in the segmentation ({min(self.voxel_values)})."
-                    )
-                if image.max_voxel_value > max(self.voxel_values):
-                    raise ValidationError(
-                        f"Maximum voxel value in image ({image.max_voxel_value}) "
-                        "should be smaller than or equal to the maximum voxel value "
-                        f"in the segmentation ({max(self.voxel_values)})."
-                    )
-            else:
+            raise ValidationError(
+                "Image segments could not be determined, ensure the voxel values "
+                "are integers and that it contains no more than "
+                f"{MAXIMUM_SEGMENTS_LENGTH} segments. Ensure the image has the "
+                "minimum and maximum voxel values set as tags if the image is a TIFF "
+                "file."
+            )
+
+        if image.files.filter(image_type=ImageFile.IMAGE_TYPE_TIFF).exists():
+            if not self.is_contiguous:
                 raise ValidationError(
-                    "Image segments could not be determined, ensure the voxel values "
-                    "are integers and that it contains no more than "
-                    f"{MAXIMUM_SEGMENTS_LENGTH} segments."
+                    "Voxel values in the overlay segments must be contiguous "
+                    "for segmentations with TIFF file type."
                 )
-        else:
-            invalid_values = set(image.segments) - self.allowed_values
-            if invalid_values:
-                raise ValidationError(
-                    f"The valid voxel values for this segmentation are: "
-                    f"{self.allowed_values}. This segmentation is invalid as "
-                    f"it contains the voxel values: {invalid_values}."
-                )
+
+        invalid_values = set(image.segments) - self.allowed_values
+        if invalid_values:
+            raise ValidationError(
+                f"The valid voxel values for this segmentation are: "
+                f"{self.allowed_values}. This segmentation is invalid as "
+                f"it contains the voxel values: {invalid_values}."
+            )
 
     class Meta:
         abstract = True

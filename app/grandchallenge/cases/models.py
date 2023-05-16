@@ -287,8 +287,6 @@ class Image(UUIDModel):
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
     )
-    min_voxel_value = models.IntegerField(null=True, blank=True)
-    max_voxel_value = models.IntegerField(null=True, blank=True)
     patient_id = models.CharField(max_length=64, default="", blank=True)
     # Max length for patient_name is 5 * 64 + 4 = 324, as described for value
     # representation PN in the DICOM standard. See table at:

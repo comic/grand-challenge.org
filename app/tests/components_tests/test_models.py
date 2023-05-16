@@ -1088,7 +1088,9 @@ def test_validate_voxel_values():
     error_msg = (
         "Image segments could not be determined, ensure the voxel values "
         "are integers and that it contains no more than "
-        f"{MAXIMUM_SEGMENTS_LENGTH} segments."
+        f"{MAXIMUM_SEGMENTS_LENGTH} segments. Ensure the image has the "
+        "minimum and maximum voxel values set as tags if the image is a TIFF "
+        "file."
     )
     im = ImageFactory(segments=None)
     with pytest.raises(ValidationError) as e:
@@ -1114,6 +1116,14 @@ def test_validate_voxel_values():
     im = ImageFactoryWithImageFileTiff()
     ci.overlay_segments = [
         {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._validate_voxel_values(im)
+    assert e.value.message == error_msg
+    im = ImageFactoryWithImageFileTiff(segments=[1, 2, 3])
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
         {"name": "s2", "visible": True, "voxel_value": 3},
     ]
     with pytest.raises(ValidationError) as e:
@@ -1129,26 +1139,17 @@ def test_validate_voxel_values():
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "Minimum and maximum voxel value tag is required for "
-        "segmentations with TIFF file type."
+        "The valid voxel values for this segmentation are: {1, 2}. "
+        "This segmentation is invalid as it contains the voxel values: {3}."
     )
-    im = ImageFactoryWithImageFileTiff(min_voxel_value=1, max_voxel_value=3)
+    im = ImageFactoryWithImageFileTiff(segments=[0, 1, 2])
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "Maximum voxel value in image (3) "
-        "should be smaller than or equal to the maximum voxel value "
-        "in the segmentation (2)."
+        "The valid voxel values for this segmentation are: {1, 2}. "
+        "This segmentation is invalid as it contains the voxel values: {0}."
     )
-    im = ImageFactoryWithImageFileTiff(min_voxel_value=0, max_voxel_value=2)
-    with pytest.raises(ValidationError) as e:
-        ci._validate_voxel_values(im)
-    assert e.value.message == (
-        "Minimum voxel value in image (0) "
-        "should be larger than or equal to the minimum voxel value "
-        "in the segmentation (1)."
-    )
-    im = ImageFactoryWithImageFileTiff(min_voxel_value=1, max_voxel_value=2)
+    im = ImageFactoryWithImageFileTiff(segments=[1, 2])
     assert ci._validate_voxel_values(im) is None
 
 
