@@ -1,6 +1,6 @@
 <li class="nav-item">
-    <a class="nav-link px-4 py-1 mb-1" data-toggle="collapse" data-target="#{{ phase.slug }}-collapse" aria-expanded="false">
-          {{ phase.title }}
+    <a class="nav-link px-4 py-1 mb-1" data-toggle="collapse" data-target="#{{ phase.slug }}-collapse" aria-expanded={% if request.resolver_match.view_name == 'evaluation:phase-update' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:method-list' and request.GET.phase == phase.slug or request.resolver_match.view_name == 'evaluation:method-create' and request.GET.phase == phase.slug or request.resolver_match.view_name == 'evaluation:list' and request.GET.phase == phase.slug %}"true"{% else %}"false"{% endif %}>
+         <i class="fas fa-chevron-right mr-1"></i> <i class="fas fa-chevron-down mr-1"></i> {{ phase.title }}
     </a>
     <div class="collapse {% if request.resolver_match.view_name == 'evaluation:phase-update' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:method-list' and request.GET.phase == phase.slug or request.resolver_match.view_name == 'evaluation:method-create' and request.GET.phase == phase.slug or request.resolver_match.view_name == 'evaluation:list' and request.GET.phase == phase.slug %}show{% endif %}" id="{{ phase.slug }}-collapse" style="">
         <ul class="nav nav-pills flex-column">
