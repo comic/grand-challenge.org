@@ -84,7 +84,7 @@ openpyxl = "*"
 requests = "*"
 django_rest_knox = "*"
 Pillow = "*"
-panimg = ">=0.11.0"
+panimg = { git = "https://github.com/DIAGNijmegen/rse-panimg.git", rev = "d629a5c569dc8653f5bae72cdfc418a4934b4eee"} # Pinned due to https://github.com/DIAGNijmegen/rse-panimg/issues/97
 django-activity-stream = "*"
 django-stdimage = "*"
 django-permissions-policy = "*"
