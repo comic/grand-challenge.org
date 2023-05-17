@@ -232,6 +232,22 @@ def test_algorithm_for_phase_form():
     assert not form.fields["image_requires_gpu"].disabled
     assert not form.fields["image_requires_memory_gb"].disabled
 
+    assert form.fields["inputs"].initial
+    assert form.fields["outputs"].initial
+    assert form.fields["workstation_config"].initial
+    assert form.fields["hanging_protocol"].initial
+    assert form.fields["view_content"].initial
+    assert form.fields["display_editors"].initial
+    assert form.fields["workstation"].initial
+    assert not form.fields["structures"].initial
+    assert not form.fields["modalities"].initial
+    assert form.fields["contact_email"].initial
+    assert form.fields["logo"].initial
+    assert form.fields["image_requires_gpu"].initial
+    assert form.fields["image_requires_memory_gb"].initial
+    assert not form.fields["title"].initial
+    assert not form.fields["description"].initial
+
     assert {
         form.fields["inputs"],
         form.fields["outputs"],
@@ -267,6 +283,16 @@ def test_algorithm_for_phase_form():
         logo=ImageField(filename="test.jpeg"),
         hide_form=True,
     )
-    assert {
-        field.name: field.field for field in form.hidden_fields()
-    } == form.fields
+
+    assert not form.fields["inputs"].initial
+    assert not form.fields["outputs"].initial
+    assert not form.fields["workstation_config"].initial
+    assert not form.fields["hanging_protocol"].initial
+    assert not form.fields["display_editors"].initial
+    assert not form.fields["workstation"].initial
+    assert not form.fields["structures"].initial
+    assert not form.fields["modalities"].initial
+    assert not form.fields["contact_email"].initial
+    assert not form.fields["logo"].initial
+    assert not form.fields["title"].initial
+    assert not form.fields["description"].initial
