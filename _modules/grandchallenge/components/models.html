@@ -739,14 +739,20 @@
     <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">voxel_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">overlay_segments_allowed_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">allowed_values</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;voxel_value&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span><span class="p">}</span>
-
         <span class="c1"># An implicit background value of 0 is always allowed, this saves the</span>
         <span class="c1"># user having to declare it and the annotator mark it</span>
         <span class="n">allowed_values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">allowed_values</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">overlay_segments_is_contiguous</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments_allowed_values</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">values</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_voxel_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span><span class="p">:</span>
@@ -754,17 +760,21 @@
 
         <span class="k">if</span> <span class="n">image</span><span class="o">.</span><span class="n">segments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;Image segments could not be determined, ensure the file is &quot;</span>
-                <span class="s2">&quot;not a tiff file, its voxel values are integers and that it &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;contains no more than </span><span class="si">{</span><span class="n">MAXIMUM_SEGMENTS_LENGTH</span><span class="si">}</span><span class="s2"> segments.&quot;</span>
+                <span class="s2">&quot;Image segments could not be determined, ensure the voxel values &quot;</span>
+                <span class="s2">&quot;are integers and that it contains no more than &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">MAXIMUM_SEGMENTS_LENGTH</span><span class="si">}</span><span class="s2"> segments. Ensure the image has the &quot;</span>
+                <span class="s2">&quot;minimum and maximum voxel values set as tags if the image is a TIFF &quot;</span>
+                <span class="s2">&quot;file.&quot;</span>
             <span class="p">)</span>
 
-        <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">voxel_values</span>
+        <span class="n">invalid_values</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments_allowed_values</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">invalid_values</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The valid voxel values for this segmentation are: &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">voxel_values</span><span class="si">}</span><span class="s2">. This segmentation is invalid as &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;it contains the voxel values: </span><span class="si">{</span><span class="n">invalid_values</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments_allowed_values</span><span class="si">}</span><span class="s2">. This segmentation is &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;invalid as it contains the voxel values: </span><span class="si">{</span><span class="n">invalid_values</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
@@ -978,6 +988,11 @@
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Overlay segments should only be set for segmentations&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments_is_contiguous</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Voxel values for overlay segments must be contiguous.&quot;</span>
             <span class="p">)</span>
 
         <span class="n">Question</span> <span class="o">=</span> <span class="n">apps</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;question&quot;</span><span class="p">)</span>  <span class="c1"># noqa: N806</span>
