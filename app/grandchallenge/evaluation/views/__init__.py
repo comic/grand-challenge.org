@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -742,7 +743,32 @@ class PhaseAlgorithmCreate(
                 "modalities": self.phase.challenge.modalities.all(),
                 "structures": self.phase.challenge.structures.all(),
                 "logo": self.phase.challenge.logo,
+                "user": self.request.user,
+                "phase": self.phase,
             }
         )
 
         return kwargs
+
+    def hide_form(self, form):
+        show_form = self.request.GET.get("show_form", None)
+        alg_count = form.user_algorithm_count
+        if alg_count < settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE and (
+            show_form or self.request.method == "POST" or alg_count == 0
+        ):
+            return False
+        else:
+            return True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        form = context["form"]
+        context.update(
+            {
+                "user_algorithm_count": form.user_algorithm_count,
+                "user_algorithms": form.get_user_algorithms_for_phase,
+                "max_num_algorithms": settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE,
+                "hide_form": self.hide_form(form=form),
+            }
+        )
+        return context

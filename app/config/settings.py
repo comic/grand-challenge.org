@@ -1218,6 +1218,9 @@ ALGORITHMS_USER_CENTS_PER_MONTH = int(
 ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH = int(
     os.environ.get("ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH", "50")
 )
+ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE = int(
+    os.environ.get("ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE", "3")
+)
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = {
