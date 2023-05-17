@@ -146,6 +146,7 @@ def test_challenge_request_budget_calculation(challenge_request):
         == challenge_request.budget["Total phase 1"]
         + challenge_request.budget["Total phase 2"]
         + challenge_request.budget["Docker storage cost"]
+        + challenge_request.budget["Base cost"]
     )
 
 

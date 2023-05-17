@@ -1,8 +1,9 @@
-{% extends "base.html" %}
+{% extends base_template %}
 {% load evaluation_extras %}
 {% load user_profile_link from profiles %}
 {% load guardian_tags %}
 {% load url %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -17,22 +18,18 @@
     </ol>
 {% endblock %}
 
-{% block topbar2 %}
-    {% include "evaluation/partials/phase_navbar.html" %}
-{% endblock %}
-
 {% block content %}
 
-    <h2>Evaluations</h2>
+    <h2>Submissions and Evaluations for {{ phase.title }}</h2>
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="evaluationsTable">
             <thead class="thead-light">
             <tr>
-                <th>ID</th>
-                <th>Created</th>
-                <th>Updated</th>
-                <th>Phase</th>
+                <th>Submission ID</th>
+                <th>Evaluation ID</th>
+                <th>Submission Created</th>
+                <th>Evaluation Updated</th>
                 {% if "change_challenge" in challenge_perms %}
                     <th>User</th>
                 {% endif %}
@@ -49,10 +46,10 @@
             <tbody>
             {% for evaluation in object_list %}
                 <tr>
+                    <td><a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id }}</a></td>
                     <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id }}</a></td>
-                    <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
+                    <td data-order="{{ evaluation.submission.created|date:"U" }}">{{ evaluation.submission.created }}</td>
                     <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
-                    <td>{{ evaluation.submission.phase.title }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
                             {{ evaluation.submission.creator|user_profile_link }}
@@ -141,12 +138,5 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#evaluationsTable').DataTable({
-                    order: [[1, "desc"]]
-                }
-            );
-        });
-    </script>
+    <script type="text/javascript" src="{% static 'js/evaluation/evaluations_table.js' %}"></script>
 {% endblock %}

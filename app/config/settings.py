@@ -137,6 +137,9 @@ CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
 CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = int(
     os.environ.get("CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 100)
 )
+CHALLENGE_BASE_COST_IN_EURO = int(
+    os.environ.get("CHALLENGE_BASE_COST_IN_EURO", 5000)
+)
 
 ##############################################################################
 #

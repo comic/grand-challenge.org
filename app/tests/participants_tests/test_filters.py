@@ -29,8 +29,8 @@ def test_participants_list_is_filtered(client, two_challenge_sets):
         (False, two_challenge_sets.admin1participant2),
     ]
     for test in tests:
-        assert (test[1].username in response.rendered_content) == test[0]
-    assert "Participants for " in response.rendered_content
+        assert (test[1].username in str(response.content)) == test[0]
+    assert "Participants for " in str(response.content)
 
 
 @pytest.mark.django_db
@@ -47,5 +47,5 @@ def test_registration_list_is_filtered(client, two_challenge_sets):
         client=client,
         user=two_challenge_sets.admin12,
     )
-    assert r1.user.username in response.rendered_content
-    assert r2.user.username not in response.rendered_content
+    assert r1.user.username in str(response.content)
+    assert r2.user.username not in str(response.content)
