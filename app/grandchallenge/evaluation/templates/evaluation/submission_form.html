@@ -74,7 +74,7 @@
             {% endif %}
             {% if not phase.active_image %}
                 <div class="alert alert-danger pb-1" role="alert">
-                    <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> There is no valid evaluation method for this phase. Please upload a method container <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name %}">here</a>. </p>
+                    <p><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> There is no valid evaluation method for this phase. Please upload a method container <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">here</a>. </p>
                 </div>
             {% endif %}
 
