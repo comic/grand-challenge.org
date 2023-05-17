@@ -213,7 +213,8 @@ def test_algorithm_for_phase_form():
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
-        hide_form=False,
+        phase=PhaseFactory.build(),
+        user=UserFactory.build(),
     )
 
     assert form.fields["inputs"].disabled
@@ -231,22 +232,6 @@ def test_algorithm_for_phase_form():
     assert not form.fields["description"].disabled
     assert not form.fields["image_requires_gpu"].disabled
     assert not form.fields["image_requires_memory_gb"].disabled
-
-    assert form.fields["inputs"].initial
-    assert form.fields["outputs"].initial
-    assert form.fields["workstation_config"].initial
-    assert form.fields["hanging_protocol"].initial
-    assert form.fields["view_content"].initial
-    assert form.fields["display_editors"].initial
-    assert form.fields["workstation"].initial
-    assert not form.fields["structures"].initial
-    assert not form.fields["modalities"].initial
-    assert form.fields["contact_email"].initial
-    assert form.fields["logo"].initial
-    assert form.fields["image_requires_gpu"].initial
-    assert form.fields["image_requires_memory_gb"].initial
-    assert not form.fields["title"].initial
-    assert not form.fields["description"].initial
 
     assert {
         form.fields["inputs"],
@@ -269,30 +254,43 @@ def test_algorithm_for_phase_form():
         form.fields["image_requires_memory_gb"],
     } == {field.field for field in form.visible_fields()}
 
+
+@pytest.mark.django_db
+def test_algorithm_for_phase_form_validation():
+    user = UserFactory()
+    phase = PhaseFactory()
+    alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+    input = ComponentInterfaceFactory()
+    output = ComponentInterfaceFactory()
+    phase.algorithm_inputs.set([input])
+    phase.algorithm_outputs.set([output])
+    for alg in [alg1, alg2, alg3]:
+        alg.add_editor(user)
+        alg.inputs.set([input])
+        alg.outputs.set([output])
+
     form = AlgorithmForPhaseForm(
-        workstation_config=WorkstationConfigFactory.build(),
-        hanging_protocol=HangingProtocolFactory.build(),
-        view_content="{}",
+        workstation_config=WorkstationConfigFactory(),
+        hanging_protocol=HangingProtocolFactory(),
+        view_content=None,
         display_editors=True,
         contact_email="test@test.com",
-        workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        workstation=WorkstationFactory(),
+        inputs=[input],
+        outputs=[output],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
-        hide_form=True,
+        phase=phase,
+        user=user,
+        data={
+            "title": "foo",
+            "image_requires_memory_gb": 10,
+        },
     )
 
-    assert not form.fields["inputs"].initial
-    assert not form.fields["outputs"].initial
-    assert not form.fields["workstation_config"].initial
-    assert not form.fields["hanging_protocol"].initial
-    assert not form.fields["display_editors"].initial
-    assert not form.fields["workstation"].initial
-    assert not form.fields["structures"].initial
-    assert not form.fields["modalities"].initial
-    assert not form.fields["contact_email"].initial
-    assert not form.fields["logo"].initial
-    assert not form.fields["title"].initial
-    assert not form.fields["description"].initial
+    assert not form.is_valid()
+    assert (
+        "You have already created the maximum number of algorithms for this phase."
+        in str(form.errors)
+    )

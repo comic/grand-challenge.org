@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -27,7 +27,6 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     filter_by_permission,
-    get_objects_for_user,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
@@ -667,46 +666,18 @@ class PhaseAlgorithmCreate(
                 "modalities": self.phase.challenge.modalities.all(),
                 "structures": self.phase.challenge.structures.all(),
                 "logo": self.phase.challenge.logo,
-                "hide_form": self.hide_form,
+                "user": self.request.user,
+                "phase": self.phase,
             }
         )
 
         return kwargs
 
-    @cached_property
-    def get_user_algorithms_for_phase(self):
-        inputs = self.phase.algorithm_inputs.all()
-        outputs = self.phase.algorithm_outputs.all()
-        return (
-            get_objects_for_user(
-                self.request.user, "algorithms.change_algorithm"
-            )
-            .annotate(
-                input_count=Count("inputs"), output_count=Count("outputs")
-            )
-            .filter(
-                inputs__in=inputs,
-                outputs__in=outputs,
-                input_count=len(inputs),
-                output_count=len(outputs),
-            )
-        )
-
-    @cached_property
-    def user_algorithm_count(self):
-        return self.get_user_algorithms_for_phase.count()
-
-    @cached_property
-    def hide_form(self):
+    def hide_form(self, form):
         show_form = self.request.GET.get("show_form", None)
-        if (
-            self.user_algorithm_count
-            < settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE
-            and (
-                show_form
-                or self.request.method == "POST"
-                or self.user_algorithm_count == 0
-            )
+        alg_count = form.user_algorithm_count
+        if alg_count < settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE and (
+            show_form or self.request.method == "POST" or alg_count == 0
         ):
             return False
         else:
@@ -714,12 +685,13 @@ class PhaseAlgorithmCreate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
+        form = context["form"]
         context.update(
             {
-                "user_algorithm_count": self.user_algorithm_count,
-                "user_algorithms": self.get_user_algorithms_for_phase,
+                "user_algorithm_count": form.user_algorithm_count,
+                "user_algorithms": form.get_user_algorithms_for_phase,
                 "max_num_algorithms": settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE,
-                "hide_form": self.hide_form,
+                "hide_form": self.hide_form(form=form),
             }
         )
         return context

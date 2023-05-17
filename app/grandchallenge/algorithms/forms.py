@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
+from django.db.models import Count
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -391,6 +392,7 @@ class AlgorithmForPhaseForm(ModelForm):
 
     def __init__(
         self,
+        *args,
         workstation_config,
         hanging_protocol,
         view_content,
@@ -402,42 +404,75 @@ class AlgorithmForPhaseForm(ModelForm):
         structures,
         modalities,
         logo,
-        hide_form,
-        *args,
+        user,
+        phase,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        if not hide_form:
-            self.fields["workstation_config"].initial = workstation_config
-            self.fields["workstation_config"].disabled = True
-            self.fields["hanging_protocol"].initial = hanging_protocol
-            self.fields["hanging_protocol"].disabled = True
-            self.fields["view_content"].initial = view_content
-            self.fields["view_content"].disabled = True
-            self.fields["display_editors"].initial = display_editors
-            self.fields["display_editors"].disabled = True
-            self.fields["contact_email"].initial = contact_email
-            self.fields["contact_email"].disabled = True
-            self.fields["workstation"].initial = (
-                workstation
-                if workstation
-                else Workstation.objects.get(
-                    slug=settings.DEFAULT_WORKSTATION_SLUG
-                )
+        self._user = user
+        self._phase = phase
+        self.fields["workstation_config"].initial = workstation_config
+        self.fields["workstation_config"].disabled = True
+        self.fields["hanging_protocol"].initial = hanging_protocol
+        self.fields["hanging_protocol"].disabled = True
+        self.fields["view_content"].initial = view_content
+        self.fields["view_content"].disabled = True
+        self.fields["display_editors"].initial = display_editors
+        self.fields["display_editors"].disabled = True
+        self.fields["contact_email"].initial = contact_email
+        self.fields["contact_email"].disabled = True
+        self.fields["workstation"].initial = (
+            workstation
+            if workstation
+            else Workstation.objects.get(
+                slug=settings.DEFAULT_WORKSTATION_SLUG
             )
-            self.fields["workstation"].disabled = True
-            self.fields["inputs"].initial = inputs
-            self.fields["inputs"].disabled = True
-            self.fields["outputs"].initial = outputs
-            self.fields["outputs"].disabled = True
-            self.fields["modalities"].initial = modalities
-            self.fields["modalities"].disabled = True
-            self.fields["structures"].initial = structures
-            self.fields["structures"].disabled = True
-            self.fields["logo"].initial = logo
-            self.fields["logo"].disabled = True
-            self.helper = FormHelper(self)
-            self.helper.layout.append(Submit("save", "Save"))
+        )
+        self.fields["workstation"].disabled = True
+        self.fields["inputs"].initial = inputs
+        self.fields["inputs"].disabled = True
+        self.fields["outputs"].initial = outputs
+        self.fields["outputs"].disabled = True
+        self.fields["modalities"].initial = modalities
+        self.fields["modalities"].disabled = True
+        self.fields["structures"].initial = structures
+        self.fields["structures"].disabled = True
+        self.fields["logo"].initial = logo
+        self.fields["logo"].disabled = True
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            self.user_algorithm_count
+            >= settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE
+        ):
+            raise ValidationError(
+                "You have already created the maximum number of algorithms for this phase."
+            )
+        return cleaned_data
+
+    @cached_property
+    def get_user_algorithms_for_phase(self):
+        inputs = self._phase.algorithm_inputs.all()
+        outputs = self._phase.algorithm_outputs.all()
+        return (
+            get_objects_for_user(self._user, "algorithms.change_algorithm")
+            .annotate(
+                input_count=Count("inputs"), output_count=Count("outputs")
+            )
+            .filter(
+                inputs__in=inputs,
+                outputs__in=outputs,
+                input_count=len(inputs),
+                output_count=len(outputs),
+            )
+        )
+
+    @cached_property
+    def user_algorithm_count(self):
+        return self.get_user_algorithms_for_phase.count()
 
 
 class AlgorithmDescriptionForm(ModelForm):
