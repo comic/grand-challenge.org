@@ -661,12 +661,8 @@ class OverlaySegmentsMixin(models.Model):
     )
 
     @property
-    def voxel_values(self):
-        return {x["voxel_value"] for x in self.overlay_segments}
-
-    @property
-    def allowed_values(self):
-        allowed_values = self.voxel_values
+    def overlay_segments_allowed_values(self):
+        allowed_values = {x["voxel_value"] for x in self.overlay_segments}
         # An implicit background value of 0 is always allowed, this saves the
         # user having to declare it and the annotator mark it
         allowed_values.add(0)
@@ -675,7 +671,7 @@ class OverlaySegmentsMixin(models.Model):
 
     @property
     def overlay_segments_is_contiguous(self):
-        values = sorted(list(self.allowed_values))
+        values = sorted(list(self.overlay_segments_allowed_values))
         return all(
             values[i] - values[i - 1] == 1 for i in range(1, len(values))
         )
@@ -693,12 +689,14 @@ class OverlaySegmentsMixin(models.Model):
                 "file."
             )
 
-        invalid_values = set(image.segments) - self.allowed_values
+        invalid_values = (
+            set(image.segments) - self.overlay_segments_allowed_values
+        )
         if invalid_values:
             raise ValidationError(
                 f"The valid voxel values for this segmentation are: "
-                f"{self.allowed_values}. This segmentation is invalid as "
-                f"it contains the voxel values: {invalid_values}."
+                f"{self.overlay_segments_allowed_values}. This segmentation is "
+                f"invalid as it contains the voxel values: {invalid_values}."
             )
 
     class Meta:
