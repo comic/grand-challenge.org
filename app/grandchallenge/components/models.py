@@ -674,10 +674,10 @@ class OverlaySegmentsMixin(models.Model):
         return allowed_values
 
     @property
-    def is_contiguous(self):
-        values = sorted(list(self.voxel_values))
-        return not any(
-            values[i] - values[i - 1] > 1 for i in range(1, len(values))
+    def overlay_segments_is_contiguous(self):
+        values = sorted(list(self.allowed_values))
+        return all(
+            values[i] - values[i - 1] == 1 for i in range(1, len(values))
         )
 
     def _validate_voxel_values(self, image):
@@ -692,13 +692,6 @@ class OverlaySegmentsMixin(models.Model):
                 "minimum and maximum voxel values set as tags if the image is a TIFF "
                 "file."
             )
-
-        if image.files.filter(image_type=ImageFile.IMAGE_TYPE_TIFF).exists():
-            if not self.is_contiguous:
-                raise ValidationError(
-                    "Voxel values in the overlay segments must be contiguous "
-                    "for segmentations with TIFF file type."
-                )
 
         invalid_values = set(image.segments) - self.allowed_values
         if invalid_values:
@@ -919,6 +912,11 @@ class ComponentInterface(OverlaySegmentsMixin):
         ):
             raise ValidationError(
                 "Overlay segments should only be set for segmentations"
+            )
+
+        if not self.overlay_segments_is_contiguous:
+            raise ValidationError(
+                "Voxel values for overlay segments must be contiguous."
             )
 
         Question = apps.get_model("reader_studies", "question")  # noqa: N806

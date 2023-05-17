@@ -1077,6 +1077,40 @@ def test_clean_overlay_segments_with_questions(reader_study_with_gt):
 
 
 @pytest.mark.django_db
+def test_clean_overlay_segments():
+    ci = ComponentInterface(kind=InterfaceKindChoices.STRING)
+    ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert (
+        e.value.message
+        == "Overlay segments should only be set for segmentations"
+    )
+
+    ci = ComponentInterface(kind=InterfaceKindChoices.SEGMENTATION)
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert e.value.message == "Overlay segments must be set for this interface"
+
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 3},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert (
+        e.value.message
+        == "Voxel values for overlay segments must be contiguous."
+    )
+
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
+    ]
+    ci._clean_overlay_segments()
+
+
+@pytest.mark.django_db
 def test_validate_voxel_values():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
     im = ImageFactory(segments=None)
@@ -1129,8 +1163,8 @@ def test_validate_voxel_values():
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
     assert e.value.message == (
-        "Voxel values in the overlay segments must be contiguous "
-        "for segmentations with TIFF file type."
+        "The valid voxel values for this segmentation are: {0, 1, 3}. "
+        "This segmentation is invalid as it contains the voxel values: {2}."
     )
     ci.overlay_segments = [
         {"name": "s1", "visible": True, "voxel_value": 1},
