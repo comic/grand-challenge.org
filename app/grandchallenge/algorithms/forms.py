@@ -407,11 +407,7 @@ class AlgorithmForPhaseForm(ModelForm):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        if hide_form:
-            for field in self.fields:
-                self.fields[field].disabled = True
-                self.fields[field].widget = HiddenInput()
-        else:
+        if not hide_form:
             self.fields["workstation_config"].initial = workstation_config
             self.fields["workstation_config"].disabled = True
             self.fields["hanging_protocol"].initial = hanging_protocol
