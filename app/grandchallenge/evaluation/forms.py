@@ -12,6 +12,7 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 
+from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
@@ -232,7 +233,9 @@ submission_fields = (
 )
 
 
-class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
+class SubmissionForm(
+    SaveFormInitMixin, UserAlgorithmsForPhaseMixin, forms.ModelForm
+):
     user_upload = ModelChoiceField(
         widget=UserUploadSingleWidget(
             allowed_file_types=[
@@ -253,7 +256,7 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
         super().__init__(*args, **kwargs)
-
+        self._user = user
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=user.pk
         )
@@ -314,10 +317,9 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             del self.fields["user_upload"]
 
-            self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                "algorithms.change_algorithm",
-            ).order_by("title")
+            self.fields[
+                "algorithm"
+            ].queryset = self.get_user_algorithms_for_phase.order_by("title")
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
             self._algorithm_outputs = self._phase.algorithm_outputs.all()

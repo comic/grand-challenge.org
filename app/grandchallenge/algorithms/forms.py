@@ -352,7 +352,30 @@ class AlgorithmForm(
             )
 
 
-class AlgorithmForPhaseForm(ModelForm):
+class UserAlgorithmsForPhaseMixin:
+    @cached_property
+    def get_user_algorithms_for_phase(self):
+        inputs = self._phase.algorithm_inputs.all()
+        outputs = self._phase.algorithm_outputs.all()
+        return (
+            get_objects_for_user(self._user, "algorithms.change_algorithm")
+            .annotate(
+                input_count=Count("inputs"), output_count=Count("outputs")
+            )
+            .filter(
+                inputs__in=inputs,
+                outputs__in=outputs,
+                input_count=len(inputs),
+                output_count=len(outputs),
+            )
+        )
+
+    @cached_property
+    def user_algorithm_count(self):
+        return self.get_user_algorithms_for_phase.count()
+
+
+class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
     class Meta:
         model = Algorithm
         fields = (
@@ -452,27 +475,6 @@ class AlgorithmForPhaseForm(ModelForm):
                 "You have already created the maximum number of algorithms for this phase."
             )
         return cleaned_data
-
-    @cached_property
-    def get_user_algorithms_for_phase(self):
-        inputs = self._phase.algorithm_inputs.all()
-        outputs = self._phase.algorithm_outputs.all()
-        return (
-            get_objects_for_user(self._user, "algorithms.change_algorithm")
-            .annotate(
-                input_count=Count("inputs"), output_count=Count("outputs")
-            )
-            .filter(
-                inputs__in=inputs,
-                outputs__in=outputs,
-                input_count=len(inputs),
-                output_count=len(outputs),
-            )
-        )
-
-    @cached_property
-    def user_algorithm_count(self):
-        return self.get_user_algorithms_for_phase.count()
 
 
 class AlgorithmDescriptionForm(ModelForm):

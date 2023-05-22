@@ -43,6 +43,28 @@ class TestSubmissionForm:
         assert "algorithm" in form.fields
         assert "user_upload" not in form.fields
 
+    def test_algorithm_queryset(self):
+        editor = UserFactory()
+        alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+        alg1.add_editor(editor)
+        alg2.add_editor(editor)
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+        alg1.inputs.set([ci1])
+        alg1.outputs.set([ci2])
+        alg3.inputs.set([ci1])
+        alg3.outputs.set([ci2])
+        p = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
+        form = SubmissionForm(
+            user=editor,
+            phase=p,
+        )
+
+        assert alg1 in form.fields["algorithm"].queryset
+        assert alg2 not in form.fields["algorithm"].queryset
+        assert alg3 not in form.fields["algorithm"].queryset
+
     def test_no_algorithm_selection(self):
         form = SubmissionForm(
             user=UserFactory(),
@@ -73,14 +95,17 @@ class TestSubmissionForm:
         user = UserFactory()
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
-        alg.inputs.clear()
-        alg.outputs.clear()
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+        phase.algorithm_inputs.set([ci1])
+        phase.algorithm_outputs.set([ci2])
 
         form = SubmissionForm(
             user=user,
-            phase=PhaseFactory(
-                submission_kind=SubmissionKindChoices.ALGORITHM
-            ),
+            phase=phase,
             data={"algorithm": alg.pk},
         )
 
@@ -93,8 +118,16 @@ class TestSubmissionForm:
         user = UserFactory()
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
-        alg.inputs.clear()
-        alg.outputs.clear()
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+        )
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
 
         ai = AlgorithmImageFactory(
             is_manifest_valid=True,
@@ -103,11 +136,6 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(algorithm_image=ai, status=4)
-
-        p = PhaseFactory(
-            submission_kind=SubmissionKindChoices.ALGORITHM,
-            submissions_limit_per_user_per_period=10,
-        )
 
         form = SubmissionForm(
             user=user,
