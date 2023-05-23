@@ -213,6 +213,8 @@ def test_algorithm_for_phase_form():
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
+        phase=PhaseFactory.build(),
+        user=UserFactory.build(),
     )
 
     assert form.fields["inputs"].disabled
@@ -251,3 +253,44 @@ def test_algorithm_for_phase_form():
         form.fields["image_requires_gpu"],
         form.fields["image_requires_memory_gb"],
     } == {field.field for field in form.visible_fields()}
+
+
+@pytest.mark.django_db
+def test_algorithm_for_phase_form_validation():
+    user = UserFactory()
+    phase = PhaseFactory()
+    alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+    input = ComponentInterfaceFactory()
+    output = ComponentInterfaceFactory()
+    phase.algorithm_inputs.set([input])
+    phase.algorithm_outputs.set([output])
+    for alg in [alg1, alg2, alg3]:
+        alg.add_editor(user)
+        alg.inputs.set([input])
+        alg.outputs.set([output])
+
+    form = AlgorithmForPhaseForm(
+        workstation_config=WorkstationConfigFactory(),
+        hanging_protocol=HangingProtocolFactory(),
+        view_content=None,
+        display_editors=True,
+        contact_email="test@test.com",
+        workstation=WorkstationFactory(),
+        inputs=[input],
+        outputs=[output],
+        structures=[],
+        modalities=[],
+        logo=ImageField(filename="test.jpeg"),
+        phase=phase,
+        user=user,
+        data={
+            "title": "foo",
+            "image_requires_memory_gb": 10,
+        },
+    )
+
+    assert not form.is_valid()
+    assert (
+        "You have already created the maximum number of algorithms for this phase."
+        in str(form.errors)
+    )

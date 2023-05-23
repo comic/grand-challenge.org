@@ -83,10 +83,10 @@ def run():
         raise RuntimeError("Fixtures already initialized") from e
 
     _set_user_permissions(users)
-    _create_demo_challenge(users)
     _create_task_types_regions_modalities(users)
     _create_workstation(users)
-    _create_algorithm_demo(users)
+    algorithm = _create_algorithm_demo(users)
+    _create_demo_challenge(users=users, algorithm=algorithm)
     _create_reader_studies(users)
     _create_archive(users)
     _create_user_tokens(users)
@@ -172,7 +172,7 @@ def _create_help_forum():
     Forum.objects.create(name="General", type=Forum.FORUM_POST)
 
 
-def _create_demo_challenge(users):
+def _create_demo_challenge(users, algorithm):
     demo = Challenge.objects.create(
         short_name="demo",
         description="demo project",
@@ -219,9 +219,16 @@ def _create_demo_challenge(users):
         method.image.save("test.tar", container)
         method.save()
 
-        submission = Submission(phase=phase, creator=users["demop"])
-        content = ContentFile(base64.b64decode(b""))
-        submission.predictions_file.save("test.csv", content)
+        if phase_num == 1:
+            submission = Submission(phase=phase, creator=users["demop"])
+            content = ContentFile(base64.b64decode(b""))
+            submission.predictions_file.save("test.csv", content)
+        else:
+            submission = Submission(
+                phase=phase,
+                creator=users["demop"],
+                algorithm_image=algorithm.algorithm_container_images.first(),
+            )
         submission.save()
 
         e = Evaluation.objects.create(
@@ -448,6 +455,8 @@ def _create_algorithm_demo(users):
     ]
     for res, det in zip(results, detections, strict=True):
         _create_job_result(users, algorithm_image, cases_image, res, det)
+
+    return algorithm
 
 
 def _create_job_result(users, algorithm_image, cases_image, result, detection):

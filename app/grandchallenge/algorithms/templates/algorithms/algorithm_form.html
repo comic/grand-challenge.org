@@ -22,6 +22,43 @@
 
     <h2>{{ object|yesno:"Update,Create" }} Algorithm{% if request.resolver_match.view_name == 'algorithms:update' %} Settings {% elif request.resolver_match.view_name == 'algorithms:description-update' %} Description {% elif request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %} for Challenge {% endif %}</h2>
 
-    {% crispy form %}
+    {% if request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}
+        {% if hide_form %}
+            {% if user_algorithm_count < max_num_algorithms %}
+                <p class="mt-3"><b>Are you sure you want to create a new algorithm?</b></p>
+                <p>You have created {{ user_algorithm_count }} out of {{ max_num_algorithms }} possible algorithms for this
+                    phase.</p>
+            {% else %}
+                <p>You have created the maximum number of allowed algorithms for this phase!</p>
+            {% endif %}
+
+            <p>Instead of creating a new algorithm, you can upload a new container or reactivate an old container version
+                for one of your existing algorithm(s) here:
+                <ul class="list-unstyled">
+                    {% for alg in user_algorithms %}
+                        <li class="m-1"><a href="{% url 'algorithms:detail' slug=alg.slug %}#containers"
+                                           class="btn btn-primary">Manage container images for {{ alg.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </p>
+
+            {% if user_algorithm_count < max_num_algorithms %}
+                <p>If you are sure that you want to create a new algorithm, confirm by clicking the below button: </p>
+                <a hx-get hx-vals='{"show_form": "True"}' hx-target="body" class="btn btn-danger">Yes, I want to create an
+                    entirely new algorithm.</a>
+            {% endif %}
+        {% else %}
+            <p>You have created {{ user_algorithm_count }} out of {{ max_num_algorithms }} possible algorithms for this
+                    phase. Use the below form to create a new algorithm.</p>
+            <p>Since you can only create a limited number of algorithms, please make the <b>title of your algorithm
+                meaningful</b> and avoid titles that include the words "test", "debug" etc. In principle you will only
+                need to create 1 algorithm for this phase. Once created, you can upload new container images for it as
+                you improve your code and even switch back to older container images as you see fit.
+            </p>
+            {% crispy form %}
+        {% endif %}
+    {% else %}
+        {% crispy form %}
+    {% endif %}
 
 {% endblock %}

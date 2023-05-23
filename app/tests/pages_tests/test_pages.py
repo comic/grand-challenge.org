@@ -75,16 +75,16 @@ def test_page_list_filter(client, two_challenge_sets):
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
     )
-    assert p1.display_title in response.rendered_content
-    assert p2.display_title not in response.rendered_content
+    assert p1.display_title in str(response.content)
+    assert p2.display_title not in str(response.content)
     response = get_view_for_user(
         viewname="pages:list",
         client=client,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=two_challenge_sets.admin12,
     )
-    assert p1.display_title not in response.rendered_content
-    assert p2.display_title in response.rendered_content
+    assert p1.display_title not in str(response.content)
+    assert p2.display_title in str(response.content)
 
 
 @pytest.mark.django_db
@@ -145,7 +145,7 @@ def test_page_update(client, two_challenge_sets):
         reverse_kwargs={"slug": p1.slug},
     )
     assert response.status_code == 200
-    assert 'value="page1updatetest"' in response.rendered_content
+    assert 'value="page1updatetest"' in str(response.content)
     response = get_view_for_user(
         viewname="pages:update",
         client=client,

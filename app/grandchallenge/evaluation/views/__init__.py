@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -45,6 +46,24 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
+
+
+class CachedPhaseMixin:
+    @cached_property
+    def phase(self):
+        return get_object_or_404(
+            Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
+        )
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+        context.update({"phase": self.phase})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"phase": self.phase})
+        return kwargs
 
 
 class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
@@ -147,6 +166,15 @@ class PhaseCreate(
         form.instance.challenge = self.request.challenge
         return super().form_valid(form)
 
+    def get_success_url(self):
+        return reverse(
+            "evaluation:phase-update",
+            kwargs={
+                "challenge_short_name": self.request.challenge.short_name,
+                "slug": self.object.slug,
+            },
+        )
+
 
 class PhaseUpdate(
     LoginRequiredMixin,
@@ -187,6 +215,7 @@ class MethodCreate(
     VerificationRequiredMixin,
     UserFormKwargsMixin,
     ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
     CreateView,
 ):
     model = Method
@@ -198,24 +227,27 @@ class MethodCreate(
     def get_permission_object(self):
         return self.request.challenge
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"challenge": self.request.challenge})
-        return kwargs
 
-
-class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
+class MethodList(
+    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+):
     model = Method
     permission_required = "view_method"
     login_url = reverse_lazy("account_login")
+    ordering = ("-is_desired_version", "-created")
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(phase__challenge=self.request.challenge)
+        return queryset.filter(
+            phase__challenge=self.request.challenge, phase=self.phase
+        )
 
 
 class MethodDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
+    DetailView,
 ):
     model = Method
     permission_required = "view_method"
@@ -321,7 +353,10 @@ class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
 
 
 class SubmissionDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CachedPhaseMixin,
+    DetailView,
 ):
     model = Submission
     permission_required = "view_submission"
@@ -354,7 +389,11 @@ class TeamContextMixin:
 
 
 class EvaluationList(
-    LoginRequiredMixin, PermissionListMixin, TeamContextMixin, ListView
+    LoginRequiredMixin,
+    PermissionListMixin,
+    TeamContextMixin,
+    CachedPhaseMixin,
+    ListView,
 ):
     model = Evaluation
     permission_required = "view_evaluation"
@@ -363,7 +402,8 @@ class EvaluationList(
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(
-            submission__phase__challenge=self.request.challenge
+            submission__phase__challenge=self.request.challenge,
+            submission__phase=self.phase,
         ).select_related(
             "submission__creator__user_profile",
             "submission__creator__verification",
@@ -377,6 +417,44 @@ class EvaluationList(
             return queryset.filter(
                 Q(submission__creator__pk=self.request.user.pk)
             )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        context.update({"base_template": "base.html"})
+        return context
+
+
+class EvaluationAdminList(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    TeamContextMixin,
+    CachedPhaseMixin,
+    ListView,
+):
+    model = Evaluation
+    permission_required = "change_challenge"
+    login_url = reverse_lazy("account_login")
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(
+            submission__phase__challenge=self.request.challenge,
+            submission__phase=self.phase,
+        ).select_related(
+            "submission__creator__user_profile",
+            "submission__creator__verification",
+            "submission__phase__challenge",
+            "submission__algorithm_image__algorithm",
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        context.update({"base_template": "pages/challenge_settings_base.html"})
+        return context
 
 
 class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
@@ -665,7 +743,32 @@ class PhaseAlgorithmCreate(
                 "modalities": self.phase.challenge.modalities.all(),
                 "structures": self.phase.challenge.structures.all(),
                 "logo": self.phase.challenge.logo,
+                "user": self.request.user,
+                "phase": self.phase,
             }
         )
 
         return kwargs
+
+    def hide_form(self, form):
+        show_form = self.request.GET.get("show_form", None)
+        alg_count = form.user_algorithm_count
+        if alg_count < settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE and (
+            show_form or self.request.method == "POST" or alg_count == 0
+        ):
+            return False
+        else:
+            return True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        form = context["form"]
+        context.update(
+            {
+                "user_algorithm_count": form.user_algorithm_count,
+                "user_algorithms": form.get_user_algorithms_for_phase,
+                "max_num_algorithms": settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE,
+                "hide_form": self.hide_form(form=form),
+            }
+        )
+        return context

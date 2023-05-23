@@ -9,7 +9,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
-            <a href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">Evaluation
+            <a href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name slug=object.phase.slug %}">Evaluation
                 Methods</a>
         </li>
         <li class="breadcrumb-item active"
@@ -47,6 +47,9 @@
 
         <dt>Ready</dt>
         <dd>{{ object.can_execute }}</dd>
+
+        <dt>Active method for {{ object.phase }}</dt>
+        <dd>{{ object.is_desired_version }}</dd>
 
         <dt>Status</dt>
         <dd>{{ object.status }}</dd>

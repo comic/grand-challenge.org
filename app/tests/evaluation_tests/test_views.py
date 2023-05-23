@@ -13,6 +13,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.workstations.models import Workstation
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
@@ -40,14 +41,20 @@ class TestLoginViews:
         for view_name, kwargs in [
             ("phase-create", {}),
             ("phase-update", {"slug": e.submission.phase.slug}),
-            ("method-create", {}),
-            ("method-list", {}),
-            ("method-detail", {"pk": e.method.pk}),
+            ("method-create", {"slug": e.submission.phase.slug}),
+            ("method-list", {"slug": e.submission.phase.slug}),
+            (
+                "method-detail",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+            ),
             ("submission-create", {"slug": e.submission.phase.slug}),
             ("submission-create-legacy", {"slug": e.submission.phase.slug}),
             ("submission-list", {}),
-            ("submission-detail", {"pk": e.submission.pk}),
-            ("list", {}),
+            (
+                "submission-detail",
+                {"pk": e.submission.pk, "slug": e.submission.phase.slug},
+            ),
+            ("list", {"slug": e.submission.phase.slug}),
             ("update", {"pk": e.pk}),
         ]:
             response = get_view_for_user(
@@ -108,11 +115,16 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "method-create",
-                {},
+                {"slug": e.submission.phase.slug},
                 "change_challenge",
                 e.submission.phase.challenge,
             ),
-            ("method-detail", {"pk": e.method.pk}, "view_method", e.method),
+            (
+                "method-detail",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+                "view_method",
+                e.method,
+            ),
             (
                 "submission-create",
                 {"slug": e.submission.phase.slug},
@@ -127,7 +139,7 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "submission-detail",
-                {"pk": e.submission.pk},
+                {"pk": e.submission.pk, "slug": e.submission.phase.slug},
                 "view_submission",
                 e.submission,
             ),
@@ -172,9 +184,14 @@ class TestObjectPermissionRequiredViews:
         )
 
         for view_name, kwargs, permission, obj in [
-            ("method-list", {}, "view_method", m),
+            (
+                "method-list",
+                {"slug": e.submission.phase.slug},
+                "view_method",
+                m,
+            ),
             ("submission-list", {}, "view_submission", s),
-            ("list", {}, "view_evaluation", e),
+            ("list", {"slug": e.submission.phase.slug}, "view_evaluation", e),
             (
                 "leaderboard",
                 {"slug": e.submission.phase.slug},
@@ -182,6 +199,7 @@ class TestObjectPermissionRequiredViews:
                 e,
             ),
         ]:
+
             assign_perm(permission, u, obj)
 
             response = get_view_for_user(
@@ -220,29 +238,30 @@ class TestViewFilters:
 
         u = UserFactory()
         e1 = EvaluationFactory(
-            method__phase__challenge=c1,
-            submission__phase__challenge=c1,
+            method__phase=c1.phase_set.first(),
+            submission__phase=c1.phase_set.first(),
             submission__creator=u,
         )
         e2 = EvaluationFactory(
-            method__phase__challenge=c2,
-            submission__phase__challenge=c2,
+            method__phase=c2.phase_set.first(),
+            submission__phase=c2.phase_set.first(),
             submission__creator=u,
         )
 
         assign_perm("view_method", u, e1.method)
         assign_perm("view_method", u, e2.method)
 
-        for view_name, obj in [
-            ("method-list", e1.method),
-            ("submission-list", e1.submission),
-            ("list", e1),
+        for view_name, obj, extra_kwargs in [
+            ("method-list", e1.method, {"slug": e1.submission.phase.slug}),
+            ("submission-list", e1.submission, {}),
+            ("list", e1, {"slug": e1.submission.phase.slug}),
         ]:
             response = get_view_for_user(
                 client=client,
                 viewname=f"evaluation:{view_name}",
                 reverse_kwargs={
-                    "challenge_short_name": e1.submission.phase.challenge.short_name
+                    "challenge_short_name": e1.submission.phase.challenge.short_name,
+                    **extra_kwargs,
                 },
                 user=u,
             )
@@ -346,45 +365,46 @@ def test_evaluation_list(client, two_challenge_sets):
         submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         submission__creator=two_challenge_sets.participant12,
     )
+    e_p_s3_p2 = EvaluationFactory(
+        submission__phase=PhaseFactory(
+            challenge=two_challenge_sets.challenge_set_2.challenge
+        ),
+        submission__creator=two_challenge_sets.challenge_set_1.participant,
+    )
 
-    # Participants should only be able to see their own evaluations
+    # Participants should only be able to see their own evaluations from a phase
     response = get_view_for_user(
         viewname="evaluation:list",
+        reverse_kwargs={
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
+        },
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.participant,
     )
-    assert str(e_p_s1.pk) in response.rendered_content
-    assert str(e_p_s2.pk) in response.rendered_content
-    assert str(e_p1_s1.pk) not in response.rendered_content
-    assert str(e_p12_s1_c1.pk) not in response.rendered_content
-    assert str(e_p12_s1_c2.pk) not in response.rendered_content
+    assert str(e_p_s1.pk) in str(response.content)
+    assert str(e_p_s2.pk) in str(response.content)
+    assert str(e_p1_s1.pk) not in str(response.content)
+    assert str(e_p12_s1_c1.pk) not in str(response.content)
+    assert str(e_p12_s1_c2.pk) not in str(response.content)
+    assert str(e_p_s3_p2.pk) not in str(response.content)
 
-    # Admins should be able to see all evaluations
+    # Admins should be able to see all evaluations from a phase
     response = get_view_for_user(
         viewname="evaluation:list",
+        reverse_kwargs={
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
+        },
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.admin,
     )
-    assert str(e_p_s1.pk) in response.rendered_content
-    assert str(e_p_s2.pk) in response.rendered_content
-    assert str(e_p1_s1.pk) in response.rendered_content
-    assert str(e_p12_s1_c1.pk) in response.rendered_content
-    assert str(e_p12_s1_c2.pk) not in response.rendered_content
-
-    # Only evaluations relevant to this challenge should be listed
-    response = get_view_for_user(
-        viewname="evaluation:list",
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        client=client,
-        user=two_challenge_sets.participant12,
-    )
-    assert str(e_p12_s1_c1.pk) in response.rendered_content
-    assert str(e_p12_s1_c2.pk) not in response.rendered_content
-    assert str(e_p_s1.pk) not in response.rendered_content
-    assert str(e_p_s2.pk) not in response.rendered_content
-    assert str(e_p1_s1.pk) not in response.rendered_content
+    assert str(e_p_s1.pk) in str(response.content)
+    assert str(e_p_s2.pk) in str(response.content)
+    assert str(e_p1_s1.pk) in str(response.content)
+    assert str(e_p12_s1_c1.pk) in str(response.content)
+    assert str(e_p12_s1_c2.pk) not in str(response.content)
+    assert str(e_p_s3_p2.pk) not in str(response.content)
 
 
 @pytest.mark.django_db
@@ -403,17 +423,24 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
 
     for view_name, kwargs, status in [
         # phase non-specific pages
-        ("list", {}, 200),
         ("submission-list", {}, 200),
         # visible phase
         ("detail", {"pk": e1.pk}, 200),
         ("submission-create", {"slug": visible_phase.slug}, 200),
-        ("submission-detail", {"pk": e1.submission.pk}, 200),
+        (
+            "submission-detail",
+            {"pk": e1.submission.pk, "slug": e1.submission.phase.slug},
+            200,
+        ),
         ("leaderboard", {"slug": visible_phase.slug}, 200),
         # hidden phase
         ("detail", {"pk": e2.pk}, 403),
         ("submission-create", {"slug": hidden_phase.slug}, 200),
-        ("submission-detail", {"pk": e2.submission.pk}, 403),
+        (
+            "submission-detail",
+            {"pk": e2.submission.pk, "slug": e2.submission.phase.slug},
+            403,
+        ),
         ("leaderboard", {"slug": hidden_phase.slug}, 200),
     ]:
         # for participants only the visible phase tab is visible
@@ -428,16 +455,8 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
         )
         assert response.status_code == status
         if status == 200:
-            assert f"{visible_phase.title}</a>" in response.rendered_content
-            assert f"{hidden_phase.title}</a>" not in response.rendered_content
-        if "list" in view_name:
-            assert (
-                f"<td>{visible_phase.title}</td>" in response.rendered_content
-            )
-            assert (
-                f"<td>{hidden_phase.title}</td>"
-                not in response.rendered_content
-            )
+            assert f"{visible_phase.title}</a>" in str(response.content)
+            assert f"{hidden_phase.title}</a>" not in str(response.content)
 
         # for the admin both phases are visible and they have access to submissions
         # and evals from both phases
@@ -448,15 +467,8 @@ def test_hidden_phase_visible_for_admins_but_not_participants(client):
             user=ch.admins_group.user_set.first(),
         )
         assert response.status_code == 200
-        assert f"{visible_phase.title}</a>" in response.rendered_content
-        assert f"{hidden_phase.title}</a>" in response.rendered_content
-        if "list" in view_name:
-            assert (
-                f"<td>{visible_phase.title}</td>" in response.rendered_content
-            )
-            assert (
-                f"<td>{hidden_phase.title}</td>" in response.rendered_content
-            )
+        assert f"{visible_phase.title}</a>" in str(response.content)
+        assert f"{hidden_phase.title}</a>" in str(response.content)
 
 
 @pytest.mark.django_db
@@ -745,3 +757,179 @@ def test_create_algorithm_for_phase_presets(client):
     assert alg2.view_content != "{}"
     assert alg2.workstation.slug != ws
     assert alg2.logo == phase.challenge.logo
+
+
+@pytest.mark.django_db
+def test_create_algorithm_for_phase_limits(client):
+    phase = PhaseFactory(challenge__logo=ImageField(filename="test.jpeg"))
+    phase.submission_kind = SubmissionKindChoices.ALGORITHM
+    phase.creator_must_be_verified = True
+    phase.archive = ArchiveFactory()
+    ci1 = ComponentInterfaceFactory()
+    ci2 = ComponentInterfaceFactory()
+    phase.algorithm_inputs.set([ci1])
+    phase.algorithm_outputs.set([ci2])
+    phase.submissions_limit_per_user_per_period = 10
+    phase.save()
+
+    u1, u2, u3 = UserFactory.create_batch(3)
+    for user in [u1, u2, u3]:
+        VerificationFactory(user=user, is_verified=True)
+        phase.challenge.add_participant(user)
+
+    alg1, alg2, alg3, alg4, alg5, alg6 = AlgorithmFactory.create_batch(6)
+    alg1.add_editor(u1)
+    alg1.add_editor(u2)
+    alg2.add_editor(u1)
+    alg3.add_editor(u1)
+    alg4.add_editor(u2)
+    alg5.add_editor(u1)
+    alg6.add_editor(u1)
+    for alg in [alg1, alg2, alg3, alg4, alg5]:
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+    ci3 = ComponentInterfaceFactory()
+    alg5.inputs.add(ci3)
+    alg6.inputs.set([ci3])
+    alg6.outputs.set([ci2])
+
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u3,
+    )
+    # u3 has not created any algorithms for the phase yet,
+    # so will immediately see the form
+    assert '<form  method="post" >' in str(response.content)
+
+    # u2 has created 2 algos, so will see a confirmation button and links to
+    # existing algorithms with the same inputs and outputs
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u2,
+    )
+    assert "You have created 2 out of 3 possible algorithms" in str(
+        response.content
+    )
+    for alg in [alg1, alg4]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
+            response.content
+        )
+    for alg in [alg2, alg3, alg5, alg6]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
+            response.content
+        )
+
+    # clicking on confirm will show the form
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u2,
+        data={"show_form": "True"},
+    )
+    assert '<form  method="post" >' in str(response.content)
+
+    # u1 has reached the limit of algorithms,
+    # will see links to existing algorithms
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u1,
+    )
+    assert (
+        "You have created the maximum number of allowed algorithms for this phase!"
+        in str(response.content)
+    )
+    for alg in [alg1, alg2, alg3]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
+            response.content
+        )
+    for alg in [alg4, alg5, alg6]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
+            response.content
+        )
+
+    # force submitting a form with data for a user that has reached the limit,
+    # will not work, they will just get redirected to the page telling them that they
+    # have reached the limit
+
+    response = get_view_for_user(
+        viewname="evaluation:phase-algorithm-create",
+        method=client.post,
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=u1,
+        data={
+            "title": "Foo",
+            "image_requires_memory_gb": 1,
+        },
+    )
+    assert (
+        "You have created the maximum number of allowed algorithms for this phase!"
+        in str(response.content)
+    )
+    for alg in [alg1, alg2, alg3]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
+            response.content
+        )
+    for alg in [alg4, alg5, alg6]:
+        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
+            response.content
+        )
+    assert not Algorithm.objects.filter(title="foo").exists()
+
+
+@pytest.mark.django_db
+def test_evaluation_admin_list(client):
+    u, admin = UserFactory.create_batch(2)
+    ch = ChallengeFactory()
+    ch.add_admin(admin)
+    m = MethodFactory(phase=ch.phase_set.get())
+    s = SubmissionFactory(phase=ch.phase_set.get(), creator=u)
+    e = EvaluationFactory(
+        method=m, submission=s, rank=1, status=Evaluation.SUCCESS
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:evaluation-admin-list",
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+            "slug": ch.phase_set.get().slug,
+        },
+        user=u,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:evaluation-admin-list",
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+            "slug": ch.phase_set.get().slug,
+        },
+        user=admin,
+    )
+    assert response.status_code == 200
+    assert e in response.context[-1]["object_list"]

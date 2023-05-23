@@ -1,5 +1,6 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load url %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -9,17 +10,17 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Evaluation Methods</li>
+            aria-current="page">Evaluation Methods for {{ phase.title }}</li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Evaluation Methods</h2>
+    <h2>Evaluation Methods for {{ phase.title }}</h2>
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name %}">
+           href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
             <i class="fas fa-plus"></i> Add a new method
         </a>
     </p>
@@ -28,28 +29,26 @@
         <table class="table table-hover table-borderless table-sm" id="methodsTable">
             <thead class="thead-light">
             <tr>
-                <th>ID</th>
+                <th class="nonSortable"></th>
+                <th class="nonSortable">Active</th>
                 <th>Created</th>
                 <th>Phase</th>
-                <th>User</th>
-                <th>SHA</th>
-                <th>Ready</th>
-                <th>Status</th>
+                <th>Uploaded by</th>
+                <th class="nonSortable">Status</th>
             </tr>
             </thead>
             <tbody>
             {% for method in object_list %}
                 <tr>
                     <td>
-                        <a href="{{ method.get_absolute_url }}">{{ method.id }}</a>
+                        <a href="{{ method.get_absolute_url }}"><i class="fa fa-eye"></i></a>
                     </td>
+                    <td class="d-flex justify-content-center">{% if method.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</td>
                     <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
                     <td>{{ method.phase.title }}</td>
                     <td><a
                             href="{% url 'profile-detail' method.creator.username %}">{{ method.creator }}</a>
                     </td>
-                    <td>{{ method.image_sha256 }}</td>
-                    <td>{{ method.can_execute }}</td>
                     <td>{{ method.status }}</td>
                 </tr>
             {% endfor %}
@@ -60,9 +59,5 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#methodsTable').DataTable();
-        });
-    </script>
+    <script type="text/javascript" src="{% static 'js/evaluation/methods_table.js' %}"></script>
 {% endblock %}
