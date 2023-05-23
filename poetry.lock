@@ -298,18 +298,18 @@ css = ["tinycss2 (>=1.1.0,<1.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.26.134"
+version = "1.26.138"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "boto3-1.26.134-py3-none-any.whl", hash = "sha256:a49b47621c71adfa952127222809ae50867ae4fd249bb932eb1a98519baefa40"},
-    {file = "boto3-1.26.134.tar.gz", hash = "sha256:2da4a4caa789312ae73d29be9d3e79ce3328e3aaf7e9de0da6f243455ad3aae6"},
+    {file = "boto3-1.26.138-py3-none-any.whl", hash = "sha256:d47a68a0ca6599e8711c7da670fbac24085d9d50cfb4f761204f154d2b6fae26"},
+    {file = "boto3-1.26.138.tar.gz", hash = "sha256:f0a78f94a7140b60960898fd86677e4e73cc96bd7f3e5c64fc5cc1818d04c7b8"},
 ]
 
 [package.dependencies]
-botocore = ">=1.29.134,<1.30.0"
+botocore = ">=1.29.138,<1.30.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -318,14 +318,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.134"
+version = "1.29.138"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "botocore-1.29.134-py3-none-any.whl", hash = "sha256:8a070ee14a430bd3c9cd16fd142e5c2900749060490698b2b981d6d9dadf5f1f"},
-    {file = "botocore-1.29.134.tar.gz", hash = "sha256:0e907b0cab771ab7c9e25efd6b6bc0041ec1b17eb0bab316fd012ef2f8fd99ba"},
+    {file = "botocore-1.29.138-py3-none-any.whl", hash = "sha256:3d145f30d10a9c712acee48e7ce906c9456bb25fe50d477c9312c702ccfa50d1"},
+    {file = "botocore-1.29.138.tar.gz", hash = "sha256:31edc237088c104f7a05887646bbec31d7459dd2e108fd90cbffa315902817e2"},
 ]
 
 [package.dependencies]
@@ -832,13 +832,13 @@ django-crispy-forms = ">=1.14.0"
 
 [[package]]
 name = "cron-descriptor"
-version = "1.3.0"
+version = "1.4.0"
 description = "A Python library that converts cron expressions into human readable strings."
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "cron_descriptor-1.3.0.tar.gz", hash = "sha256:9280a8d4431826e6958f99a9433b04a24758455cc51893adafc31bc7e7a6e4dc"},
+    {file = "cron_descriptor-1.4.0.tar.gz", hash = "sha256:b6ff4e3a988d7ca04a4ab150248e9f166fb7a5c828a85090e75bcc25aa93b4dd"},
 ]
 
 [package.extras]
@@ -899,15 +899,37 @@ files = [
 ]
 
 [[package]]
+name = "dicomweb-client"
+version = "0.59.1"
+description = "Client for DICOMweb RESTful services."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "dicomweb-client-0.59.1.tar.gz", hash = "sha256:4c166b5c989b28092f6486b8a1b01e2fd9d4abde2522cc8f8855ad27077d0c8a"},
+    {file = "dicomweb_client-0.59.1-py3-none-any.whl", hash = "sha256:ad4af95e1bdeb3691841cf8b28894fc6d9ba7ac5b7892bff70a506eedbd20d79"},
+]
+
+[package.dependencies]
+numpy = ">=1.19"
+Pillow = ">=8.3"
+pydicom = ">=2.2"
+requests = ">=2.18"
+retrying = ">=1.3.3"
+
+[package.extras]
+gcp = ["dataclasses (>=0.8)", "google-auth (>=1.6)", "google-oauth (>=1.0)"]
+
+[[package]]
 name = "disposable-email-domains"
-version = "0.0.87"
+version = "0.0.89"
 description = "A set of disposable email domains"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "disposable-email-domains-0.0.87.tar.gz", hash = "sha256:5756e7e844255526d31eb3d68972ceb32253716f8bb91fea2d285da291aaeb7f"},
-    {file = "disposable_email_domains-0.0.87-py2.py3-none-any.whl", hash = "sha256:90cb62df4f36b009c336356ca5a11f29b526111eb19f5f211962987c68f3732f"},
+    {file = "disposable-email-domains-0.0.89.tar.gz", hash = "sha256:500d53da7d69e319171be89635a19653784d48f2939642a9a55d7b81ab3cafe6"},
+    {file = "disposable_email_domains-0.0.89-py2.py3-none-any.whl", hash = "sha256:ea925a5ee565885aeca28a8832ac5fcdb2565f6d6b1e2ed78b3ac2e8bae38e7f"},
 ]
 
 [package.extras]
@@ -1401,14 +1423,14 @@ djangorestframework = "*"
 
 [[package]]
 name = "django-select2"
-version = "8.1.1"
+version = "8.1.2"
 description = "This is a Django_ integration of Select2_."
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "django-select2-8.1.1.tar.gz", hash = "sha256:72b282393a1d0b2211d386826c5af34be0031cd7a6b57c1aacd829f49c293d84"},
-    {file = "django_select2-8.1.1-py3-none-any.whl", hash = "sha256:8a3862e4fc82ca2fb8419da1212b5f3637943bc8a54d8d023fa2582453f6d37f"},
+    {file = "django_select2-8.1.2-py3-none-any.whl", hash = "sha256:dc09e09299988dd7cc1f31c27582976377f0e1479101be1f3bb0d1f24216477f"},
+    {file = "django_select2-8.1.2.tar.gz", hash = "sha256:f44685ee1c39090aade01e3ebc256702f05620f3c78a3c268440ad9a66070876"},
 ]
 
 [package.dependencies]
@@ -1422,14 +1444,14 @@ test = ["pytest", "pytest-cov", "pytest-django", "selenium"]
 
 [[package]]
 name = "django-ses"
-version = "3.4.1"
+version = "3.5.0"
 description = "A Django email backend for Amazon's Simple Email Service"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "django_ses-3.4.1-py3-none-any.whl", hash = "sha256:3e798fbb4507664c6160b3c5ed6daafb94781cecd965601a3e002eccdd224f7f"},
-    {file = "django_ses-3.4.1.tar.gz", hash = "sha256:900b4c27a8fdebf93f2f583b8ed1171d6cfd67c5aa796a5dd39358780652c257"},
+    {file = "django_ses-3.5.0-py3-none-any.whl", hash = "sha256:3522fe531155eb06bb015b3b36324c059194450633b33f9bd5bc9d1328822fe2"},
+    {file = "django_ses-3.5.0.tar.gz", hash = "sha256:dc1644f50608fbf3a64f085a371c61d56d68eba3c5efa69651f13dc3ba05049d"},
 ]
 
 [package.dependencies]
@@ -1689,14 +1711,14 @@ doc = ["Sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [[package]]
 name = "faker"
-version = "18.7.0"
+version = "18.9.0"
 description = "Faker is a Python package that generates fake data for you."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "Faker-18.7.0-py3-none-any.whl", hash = "sha256:38dbc3b80e655d7301e190426ab30f04b6b7f6ca4764c5dd02772ffde0fa6dcd"},
-    {file = "Faker-18.7.0.tar.gz", hash = "sha256:f02c6d3fdb5bc781f80b440cf2bdec336ed47ecfb8d620b20c3d4188ed051831"},
+    {file = "Faker-18.9.0-py3-none-any.whl", hash = "sha256:defe9ed618a67ebf0f3eb1895e198c2355a7128a09087a6dce342ef2253263ea"},
+    {file = "Faker-18.9.0.tar.gz", hash = "sha256:80a5ea1464556c06b98bf47ea3adc7f33811a1182518d847860b1874080bd3c9"},
 ]
 
 [package.dependencies]
@@ -1973,6 +1995,46 @@ files = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
     {file = "idna-3.4.tar.gz", hash = "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4"},
 ]
+
+[[package]]
+name = "imagecodecs"
+version = "2023.3.16"
+description = "Image transformation, compression, and decompression codecs"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "imagecodecs-2023.3.16-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:0c0b67874d766baebb5da9b5f0a33ac5d8dacfbf05f976727b046f48edd943cb"},
+    {file = "imagecodecs-2023.3.16-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:bc99d390650234a6f74d4b90c32de01ca4e582d6d3b9c8e33986c7780264f08a"},
+    {file = "imagecodecs-2023.3.16-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dc874c3975f17fc6150b5609e877fa13cb7d90ce70e5d04faab765368164888e"},
+    {file = "imagecodecs-2023.3.16-cp310-cp310-win32.whl", hash = "sha256:ede44d9645f38d6bdef8a46b0dcbd7307655e994dcba4213f2ec60366cc06270"},
+    {file = "imagecodecs-2023.3.16-cp310-cp310-win_amd64.whl", hash = "sha256:623d294a3f053aa009bcdf1eb1e08db1fbc28e265b7039f730ab2de3419cb690"},
+    {file = "imagecodecs-2023.3.16-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:cf40e814d256efec9472536e89529b56cd21137ff8932c74196d4be2ac6c4616"},
+    {file = "imagecodecs-2023.3.16-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:380a5a2e6ea400aee2d26e4683ba5d440aa359dd0262f0f97f7c7b101f218c59"},
+    {file = "imagecodecs-2023.3.16-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:82f21a16f240e4ede51fab967c9cecd262b368e756663f897de3603e3ccc043b"},
+    {file = "imagecodecs-2023.3.16-cp311-cp311-win32.whl", hash = "sha256:a2ddddfab0d144f03285c15015617b65c3d21cde90e75e8af724e191243c16d3"},
+    {file = "imagecodecs-2023.3.16-cp311-cp311-win_amd64.whl", hash = "sha256:229e6f6fffcb7f5394f208f6d04af999748cdea65481f368ec6b4166ad93e1bf"},
+    {file = "imagecodecs-2023.3.16-cp311-cp311-win_arm64.whl", hash = "sha256:7af50a9c873b0791b00184a5f29bc18341a3d0b39d39594da5973c9fff18294e"},
+    {file = "imagecodecs-2023.3.16-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:c17d9c6164f42e6f04d0f50f8e996d32986006d9a103dc5e3d55800e6bd832f7"},
+    {file = "imagecodecs-2023.3.16-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0e8b6d6649f18a83991e45847a1491d81042c132a896a826a8be171b7fa96886"},
+    {file = "imagecodecs-2023.3.16-cp38-cp38-win32.whl", hash = "sha256:563d84977fd689d96b1121f098cdbdf92bdd45cd01caa3a841a251131aff1e49"},
+    {file = "imagecodecs-2023.3.16-cp38-cp38-win_amd64.whl", hash = "sha256:f04fac421b3cdc37c6e8fa7a109b34e82988e5532874b7558002e6b0f1677ac0"},
+    {file = "imagecodecs-2023.3.16-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:f20d6a04f039262df6f309be631ddba473bc950942ca5166077d39082a9ad1f6"},
+    {file = "imagecodecs-2023.3.16-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:a97dca69c2113a65acbe034487ddf7cae54804a56b0707d61beddeca8cd62bd0"},
+    {file = "imagecodecs-2023.3.16-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c5687a264fb66929a406512d384a1b082fa2256f556860ddbfb13b0ac268c942"},
+    {file = "imagecodecs-2023.3.16-cp39-cp39-win32.whl", hash = "sha256:50540c3ac53e8091ee38f1d5ca9f831b43d4eaa4844af40a7efdf660e031b041"},
+    {file = "imagecodecs-2023.3.16-cp39-cp39-win_amd64.whl", hash = "sha256:1f89030182d3028975b651686bc67bb37a3105ceeb2d031cb9e24ec2df40e13e"},
+    {file = "imagecodecs-2023.3.16-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ae167ff5f89fb5e2edaddb5f939557320ff4f8e5121d6c98452134957b71b44f"},
+    {file = "imagecodecs-2023.3.16-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:052a39f8159afd2ed7b632bd5e3a203ccb5c29e5b388d697c7cae7985c768672"},
+    {file = "imagecodecs-2023.3.16-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:d390f2400103178329b27a88990bf390e0e6a371904dd87d15b86a50d8a39ece"},
+    {file = "imagecodecs-2023.3.16.tar.gz", hash = "sha256:e39c2a63f7f5b9bee0ba4961db8c1e7f2518ce07d2fd10a56624d17f1407efc1"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+all = ["matplotlib", "numcodecs", "tifffile"]
 
 [[package]]
 name = "imagesize"
@@ -2484,19 +2546,18 @@ files = [
 
 [[package]]
 name = "panimg"
-version = "0.11.0"
+version = "0.12.0"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
-python-versions = ">=3.8,<4.0"
-files = [
-    {file = "panimg-0.11.0-py3-none-any.whl", hash = "sha256:f496dc92aa7ee6e9e83541afacdd51eecdf9dac869aff059b1102ec1cf776f62"},
-    {file = "panimg-0.11.0.tar.gz", hash = "sha256:5ee5e988a94a944f0297e61330057b066bc70e128553da28971802f08cec95b7"},
-]
+python-versions = "^3.8"
+files = []
+develop = false
 
 [package.dependencies]
 click = "*"
 construct = "*"
+imagecodecs = ">=2023.3.16"
 numpy = ">=1.22"
 openslide-python = "*"
 Pillow = "*"
@@ -2506,8 +2567,15 @@ pylibjpeg = "*"
 pylibjpeg-libjpeg = "*"
 pylibjpeg-openjpeg = "*"
 pyvips = "*"
-SimpleITK = ">=2.0,<2.1.1.1 || >2.1.1.1"
+SimpleITK = ">=2.0,!=2.1.1.1"
 tifffile = "*"
+wsidicom = {git = "https://github.com/imi-bigpicture/wsidicom.git", rev = "6901d307f3f26e5490685124315fe84338b92f1f"}
+
+[package.source]
+type = "git"
+url = "https://github.com/DIAGNijmegen/rse-panimg.git"
+reference = "d629a5c569dc8653f5bae72cdfc418a4934b4eee"
+resolved_reference = "d629a5c569dc8653f5bae72cdfc418a4934b4eee"
 
 [[package]]
 name = "pillow"
@@ -3134,14 +3202,14 @@ pytest = "*"
 
 [[package]]
 name = "pytest-xdist"
-version = "3.3.0"
+version = "3.3.1"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-xdist-3.3.0.tar.gz", hash = "sha256:d42c9efb388da35480878ef4b2993704c6cea800c8bafbe85a8cdc461baf0748"},
-    {file = "pytest_xdist-3.3.0-py3-none-any.whl", hash = "sha256:76f7683d4f993eaff91c9cb0882de0465c4af9c6dd3debc903833484041edc1a"},
+    {file = "pytest-xdist-3.3.1.tar.gz", hash = "sha256:d5ee0520eb1b7bcca50a60a518ab7a7707992812c578198f8b44fdfac78e8c93"},
+    {file = "pytest_xdist-3.3.1-py3-none-any.whl", hash = "sha256:ff9daa7793569e6a68544850fd3927cd257cc03a7ef76c95e86915355e82b5f2"},
 ]
 
 [package.dependencies]
@@ -3370,14 +3438,14 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==20.0.1)", "requests (>=2.26.0)"
 
 [[package]]
 name = "requests"
-version = "2.30.0"
+version = "2.31.0"
 description = "Python HTTP for Humans."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "requests-2.30.0-py3-none-any.whl", hash = "sha256:10e94cc4f3121ee6da529d358cdaeaff2f1c409cd377dbc72b825852f2f7e294"},
-    {file = "requests-2.30.0.tar.gz", hash = "sha256:239d7d4458afcb28a692cdd298d87542235f4ca8d36d03a15bfc128a6559a2f4"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 
 [package.dependencies]
@@ -3410,6 +3478,21 @@ requests = ">=2.0.0"
 rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [[package]]
+name = "retrying"
+version = "1.3.4"
+description = "Retrying"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "retrying-1.3.4-py3-none-any.whl", hash = "sha256:8cc4d43cb8e1125e0ff3344e9de678fefd85db3b750b81b2240dc0183af37b35"},
+    {file = "retrying-1.3.4.tar.gz", hash = "sha256:345da8c5765bd982b1d1915deb9102fd3d1f7ad16bd84a9700b85f64d24e8f3e"},
+]
+
+[package.dependencies]
+six = ">=1.7.0"
+
+[[package]]
 name = "s3transfer"
 version = "0.6.1"
 description = "An Amazon S3 Transfer Manager"
@@ -3429,14 +3512,14 @@ crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "1.23.0"
+version = "1.24.0"
 description = "Python client for Sentry (https://sentry.io)"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sentry-sdk-1.23.0.tar.gz", hash = "sha256:58f4ff9e76c21bc7172eeec9f1bccb3ff2247c74c71d5590438ce36c803f46ea"},
-    {file = "sentry_sdk-1.23.0-py2.py3-none-any.whl", hash = "sha256:01b56a276642d31cf9b4aaf0b55938677265d7006be4785a10ef6330d0f5bba9"},
+    {file = "sentry-sdk-1.24.0.tar.gz", hash = "sha256:0bbcecda9f51936904c1030e7fef0fe693e633888f02a14d1cb68646a50e83b3"},
+    {file = "sentry_sdk-1.24.0-py2.py3-none-any.whl", hash = "sha256:56d6d9d194c898d853a7c1dd99bed92ce82334ee1282292c15bcc967ff1a49b5"},
 ]
 
 [package.dependencies]
@@ -3472,19 +3555,19 @@ tornado = ["tornado (>=5)"]
 
 [[package]]
 name = "setuptools"
-version = "67.7.2"
+version = "67.8.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.7.2-py3-none-any.whl", hash = "sha256:23aaf86b85ca52ceb801d32703f12d77517b2556af839621c641fca11287952b"},
-    {file = "setuptools-67.7.2.tar.gz", hash = "sha256:f104fa03692a2602fa0fec6c6a9e63b6c8a968de13e17c026957dd1f53d80990"},
+    {file = "setuptools-67.8.0-py3-none-any.whl", hash = "sha256:5df61bf30bb10c6f756eb19e7c9f3b473051f48db77fddbe06ff2ca307df9a6f"},
+    {file = "setuptools-67.8.0.tar.gz", hash = "sha256:62642358adc77ffa87233bc4d2354c4b2682d214048f500964dbe760ccedf102"},
 ]
 
 [package.extras]
 docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-hoverxref (<2)", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (==0.8.3)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
-testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8 (<5)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pip-run (>=8.8)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
+testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pip-run (>=8.8)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-ruff", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
 testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
@@ -3631,14 +3714,14 @@ type-comment = ["typed-ast (>=1.5.4)"]
 
 [[package]]
 name = "sphinx-rtd-theme"
-version = "1.2.0"
+version = "1.2.1"
 description = "Read the Docs theme for Sphinx"
 category = "dev"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 files = [
-    {file = "sphinx_rtd_theme-1.2.0-py2.py3-none-any.whl", hash = "sha256:f823f7e71890abe0ac6aaa6013361ea2696fc8d3e1fa798f463e82bdb77eeff2"},
-    {file = "sphinx_rtd_theme-1.2.0.tar.gz", hash = "sha256:a0d8bd1a2ed52e0b338cbe19c4b2eef3c5e7a048769753dac6a9f059c7b641b8"},
+    {file = "sphinx_rtd_theme-1.2.1-py2.py3-none-any.whl", hash = "sha256:2cc9351176cbf91944ce44cefd4fab6c3b76ac53aa9e15d6db45a3229ad7f866"},
+    {file = "sphinx_rtd_theme-1.2.1.tar.gz", hash = "sha256:cf9a7dc0352cf179c538891cb28d6fad6391117d4e21c891776ab41dd6c8ff70"},
 ]
 
 [package.dependencies]
@@ -3912,14 +3995,14 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.5.0"
+version = "4.6.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typing_extensions-4.5.0-py3-none-any.whl", hash = "sha256:fb33085c39dd998ac16d1431ebc293a8b3eedd00fd4a32de0ff79002c19511b4"},
-    {file = "typing_extensions-4.5.0.tar.gz", hash = "sha256:5cb5f4a79139d699607b3ef622a1dedafa84e115ab0024e0d9c044a9479ca7cb"},
+    {file = "typing_extensions-4.6.0-py3-none-any.whl", hash = "sha256:6ad00b63f849b7dcc313b70b6b304ed67b2b2963b3098a33efe18056b1a9a223"},
+    {file = "typing_extensions-4.6.0.tar.gz", hash = "sha256:ff6b238610c747e44c268aa4bb23c8c735d665a63726df3f9431ce707f2aa768"},
 ]
 
 [[package]]
@@ -3971,14 +4054,14 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "1.26.15"
+version = "1.26.16"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 files = [
-    {file = "urllib3-1.26.15-py2.py3-none-any.whl", hash = "sha256:aa751d169e23c7479ce47a0cb0da579e3ede798f994f5816a74e4f4500dcea42"},
-    {file = "urllib3-1.26.15.tar.gz", hash = "sha256:8a388717b9476f934a21484e8c8e61875ab60644d29b9b39e11e4b9dc1c6b305"},
+    {file = "urllib3-1.26.16-py2.py3-none-any.whl", hash = "sha256:8d36afa7616d8ab714608411b4a3b13e58f463aee519024578e062e141dce20f"},
+    {file = "urllib3-1.26.16.tar.gz", hash = "sha256:8f135f6502756bde6b2a9b28989df5fbe87c9970cecaa69041edcce7f0589b14"},
 ]
 
 [package.extras]
@@ -4327,6 +4410,28 @@ files = [
 ]
 
 [[package]]
+name = "wsidicom"
+version = "0.9.0"
+description = "Tools for handling DICOM based whole scan images"
+category = "main"
+optional = false
+python-versions = "^3.8"
+files = []
+develop = false
+
+[package.dependencies]
+dicomweb-client = "^0.59.1"
+numpy = "^1.22.0"
+Pillow = "^9.1.1"
+pydicom = "^2.1.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/imi-bigpicture/wsidicom.git"
+reference = "6901d307f3f26e5490685124315fe84338b92f1f"
+resolved_reference = "6901d307f3f26e5490685124315fe84338b92f1f"
+
+[[package]]
 name = "yarl"
 version = "1.9.2"
 description = "Yet another URL library"
@@ -4417,4 +4522,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "b7de4920130a2c16a955c0da18d77eca34c86d66fb24b369ce44d899ed721b1d"
+content-hash = "76500d2159003ea98ab9e8cf2abf8964b3136588341cbe5e47e115a998291099"
