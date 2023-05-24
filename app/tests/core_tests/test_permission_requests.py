@@ -265,9 +265,7 @@ def test_permission_request_notifications_flow_for_manual_review(
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user == editor
     base_obj_str = format_html(
-        '<a href="{}">{}</a>',
-        base_object.get_absolute_url(),
-        base_object,
+        '<a href="{}">{}</a>', base_object.get_absolute_url(), base_object
     )
     assert (
         f"{user_profile_link(user)} requested access to {base_obj_str}"
