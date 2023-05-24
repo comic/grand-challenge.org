@@ -353,10 +353,20 @@ class AlgorithmForm(
 
 
 class UserAlgorithmsForPhaseMixin:
+    def __init__(self, *args, user, phase, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._user = user
+        self._phase = phase
+
+    def get_phase_algorithm_inputs_outputs(self):
+        return (
+            self._phase.algorithm_inputs.all(),
+            self._phase.algorithm_outputs.all(),
+        )
+
     @cached_property
     def get_user_algorithms_for_phase(self):
-        inputs = self._phase.algorithm_inputs.all()
-        outputs = self._phase.algorithm_outputs.all()
+        inputs, outputs = self.get_phase_algorithm_inputs_outputs()
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
@@ -365,6 +375,28 @@ class UserAlgorithmsForPhaseMixin:
             .filter(
                 inputs__in=inputs,
                 outputs__in=outputs,
+                input_count=len(inputs),
+                output_count=len(outputs),
+            )
+        )
+
+    @cached_property
+    def get_user_active_images_for_phase(self):
+        inputs, outputs = self.get_phase_algorithm_inputs_outputs()
+        return (
+            get_objects_for_user(
+                user=self._user,
+                perms="algorithms.change_algorithmimage",
+                klass=AlgorithmImage.objects.active_images(),
+            )
+            .select_related("algorithm")
+            .annotate(
+                input_count=Count("algorithm__inputs"),
+                output_count=Count("algorithm__outputs"),
+            )
+            .filter(
+                algorithm__inputs__in=inputs,
+                algorithm__outputs__in=outputs,
                 input_count=len(inputs),
                 output_count=len(outputs),
             )
@@ -431,9 +463,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         phase,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
-        self._user = user
-        self._phase = phase
+        super().__init__(*args, user=user, phase=phase, **kwargs)
         self.fields["workstation_config"].initial = workstation_config
         self.fields["workstation_config"].disabled = True
         self.fields["hanging_protocol"].initial = hanging_protocol
@@ -615,13 +645,17 @@ class ImageActivateForm(Form):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.fields["algorithm_image"].queryset = get_objects_for_user(
-            user,
-            "algorithms.change_algorithmimage",
-        ).filter(
-            algorithm=algorithm,
-            is_manifest_valid=True,
-            is_desired_version=False,
+        self.fields["algorithm_image"].queryset = (
+            get_objects_for_user(
+                user,
+                "algorithms.change_algorithmimage",
+            )
+            .filter(
+                algorithm=algorithm,
+                is_manifest_valid=True,
+                is_desired_version=False,
+            )
+            .select_related("algorithm")
         )
 
         if hide_algorithm_image_input:

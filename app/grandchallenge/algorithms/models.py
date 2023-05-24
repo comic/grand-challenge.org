@@ -526,6 +526,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
 
+    def __str__(self):
+        return f"Algorithm image {self.pk} for {self.algorithm.title}"
+
     def get_absolute_url(self):
         return reverse(
             "algorithms:image-detail",
