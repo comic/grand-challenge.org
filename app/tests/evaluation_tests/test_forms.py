@@ -30,10 +30,10 @@ class TestSubmissionForm:
             phase=PhaseFactory(submission_kind=SubmissionKindChoices.CSV),
         )
 
-        assert "algorithm" not in form.fields
+        assert "algorithm_image" not in form.fields
         assert "user_upload" in form.fields
 
-    def test_setting_algorithm(self):
+    def test_setting_algorithm_image(self):
         form = SubmissionForm(
             user=UserFactory(),
             phase=PhaseFactory(
@@ -41,7 +41,7 @@ class TestSubmissionForm:
             ),
         )
 
-        assert "algorithm" in form.fields
+        assert "algorithm_image" in form.fields
         assert "user_upload" not in form.fields
 
     def test_algorithm_image_queryset(self):
@@ -82,16 +82,16 @@ class TestSubmissionForm:
         ).all():
             assert im not in form.fields["algorithm_image"].queryset
 
-    def test_no_algorithm_selection(self):
+    def test_no_algorithm_image_selection(self):
         form = SubmissionForm(
             user=UserFactory(),
             phase=PhaseFactory(
                 submission_kind=SubmissionKindChoices.ALGORITHM
             ),
-            data={"algorithm": ""},
+            data={"algorithm_image": ""},
         )
 
-        assert form.errors["algorithm"] == ["This field is required."]
+        assert form.errors["algorithm_image"] == ["This field is required."]
 
     def test_algorithm_no_permission(self):
         form = SubmissionForm(
