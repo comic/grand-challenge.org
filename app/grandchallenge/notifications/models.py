@@ -269,10 +269,8 @@ class Notification(UUIDModel):
                         },
                     ),
                 )
-                target_name = self.target.short_name
             else:
                 notification_addition = ""
-                target_name = self.target.title
             return format_html(
                 "{} {} {} {}. {}",
                 user_profile_link(self.actor),
@@ -280,7 +278,7 @@ class Notification(UUIDModel):
                 format_html(
                     '<a href="{}">{}</a>',
                     self.target.get_absolute_url(),
-                    target_name,
+                    self.target,
                 ),
                 naturaltime(self.created),
                 notification_addition,

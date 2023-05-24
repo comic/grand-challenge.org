@@ -229,7 +229,6 @@ def test_permission_request_notifications_flow_for_manual_review(
         access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
     )
     if namespace == "participants":
-        base_object_title = base_object.short_name
         permission_create_url = reverse(
             f"{namespace}:registration-create",
             kwargs={"challenge_short_name": base_object.short_name},
@@ -239,7 +238,6 @@ def test_permission_request_notifications_flow_for_manual_review(
         # challenge creation results in a notification, delete this notification
         Notification.objects.all().delete()
     else:
-        base_object_title = base_object.title
         editor = UserFactory()
         base_object.add_editor(editor)
         permission_create_url = reverse(
@@ -269,7 +267,7 @@ def test_permission_request_notifications_flow_for_manual_review(
     base_obj_str = format_html(
         '<a href="{}">{}</a>',
         base_object.get_absolute_url(),
-        base_object_title,
+        base_object,
     )
     assert (
         f"{user_profile_link(user)} requested access to {base_obj_str}"
