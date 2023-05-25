@@ -1623,6 +1623,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">queryset</span>
 
+    <span class="k">def</span> <span class="nf">active_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">executable_images</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_desired_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
 
 <span class="k">class</span> <span class="nc">ComponentImage</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="n">SHIM_IMAGE</span> <span class="o">=</span> <span class="kc">True</span>
