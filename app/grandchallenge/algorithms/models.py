@@ -13,6 +13,7 @@ from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.template.defaultfilters import truncatewords
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
@@ -527,7 +528,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         ordering = ("created", "creator")
 
     def __str__(self):
-        return f"Algorithm image {self.pk} for {self.algorithm.title}"
+        return f"Algorithm image {self.pk} for {self.algorithm} ({truncatewords(self.comment, 4)})"
 
     def get_absolute_url(self):
         return reverse(

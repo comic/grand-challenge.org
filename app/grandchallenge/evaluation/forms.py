@@ -19,6 +19,7 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
@@ -257,18 +258,6 @@ class SubmissionForm(
             pk=user.pk
         )
         self.fields["creator"].initial = user
-        self.fields["algorithm_image"].help_text = format_lazy(
-            "Select one of your algorithms' active images to submit as a solution to this "
-            "challenge. If you have not created your algorithm yet you can "
-            "do so <a href={}>on this page</a>.",
-            reverse(
-                "evaluation:phase-algorithm-create",
-                kwargs={
-                    "slug": phase.slug,
-                    "challenge_short_name": phase.challenge.short_name,
-                },
-            ),
-        )
 
         # Note that the validation of creator and algorithm require
         # access to the phase properties, so those validations
@@ -314,10 +303,28 @@ class SubmissionForm(
 
             self.fields[
                 "algorithm_image"
-            ].queryset = self.get_user_active_images_for_phase
+            ].queryset = self.get_user_active_images_for_phase.order_by(
+                "algorithm__title"
+            )
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
             self._algorithm_outputs = self._phase.algorithm_outputs.all()
+            self.fields["algorithm_image"].help_text = format_lazy(
+                "Select one of your algorithms' active images to submit as a solution to this "
+                "challenge. The algorithms need to work with the following inputs: {} "
+                "and the following outputs: {}. If you have not created your "
+                "algorithm yet you can "
+                "do so <a href={}>on this page</a>.",
+                oxford_comma(self._algorithm_inputs),
+                oxford_comma(self._algorithm_outputs),
+                reverse(
+                    "evaluation:phase-algorithm-create",
+                    kwargs={
+                        "slug": phase.slug,
+                        "challenge_short_name": phase.challenge.short_name,
+                    },
+                ),
+            )
         else:
             del self.fields["algorithm_image"]
 
