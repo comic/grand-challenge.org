@@ -2,6 +2,7 @@ import pytest
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.evaluation.forms import SubmissionForm
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -29,10 +30,10 @@ class TestSubmissionForm:
             phase=PhaseFactory(submission_kind=SubmissionKindChoices.CSV),
         )
 
-        assert "algorithm" not in form.fields
+        assert "algorithm_image" not in form.fields
         assert "user_upload" in form.fields
 
-    def test_setting_algorithm(self):
+    def test_setting_algorithm_image(self):
         form = SubmissionForm(
             user=UserFactory(),
             phase=PhaseFactory(
@@ -40,61 +41,85 @@ class TestSubmissionForm:
             ),
         )
 
-        assert "algorithm" in form.fields
+        assert "algorithm_image" in form.fields
         assert "user_upload" not in form.fields
 
-    def test_no_algorithm_selection(self):
+    def test_algorithm_image_queryset(self):
+        editor = UserFactory()
+        alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
+        alg1.add_editor(editor)
+        alg2.add_editor(editor)
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+        alg1.inputs.set([ci1])
+        alg1.outputs.set([ci2])
+        alg3.inputs.set([ci1])
+        alg3.outputs.set([ci2])
+        for alg in [alg1, alg2, alg3]:
+            AlgorithmImageFactory(algorithm=alg)
+            AlgorithmImageFactory(
+                algorithm=alg,
+                is_in_registry=True,
+                is_desired_version=True,
+                is_manifest_valid=True,
+            )
+        p = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
+        form = SubmissionForm(
+            user=editor,
+            phase=p,
+        )
+
+        assert alg1.active_image in form.fields["algorithm_image"].queryset
+        assert alg2.active_image not in form.fields["algorithm_image"].queryset
+        assert alg3.active_image not in form.fields["algorithm_image"].queryset
+        for im in AlgorithmImage.objects.exclude(
+            pk__in=[
+                alg1.active_image.pk,
+                alg2.active_image.pk,
+                alg3.active_image.pk,
+            ]
+        ).all():
+            assert im not in form.fields["algorithm_image"].queryset
+
+    def test_no_algorithm_image_selection(self):
         form = SubmissionForm(
             user=UserFactory(),
             phase=PhaseFactory(
                 submission_kind=SubmissionKindChoices.ALGORITHM
             ),
-            data={"algorithm": ""},
+            data={"algorithm_image": ""},
         )
 
-        assert form.errors["algorithm"] == ["This field is required."]
+        assert form.errors["algorithm_image"] == ["This field is required."]
 
     def test_algorithm_no_permission(self):
-        alg = AlgorithmFactory()
-
         form = SubmissionForm(
             user=UserFactory(),
             phase=PhaseFactory(
                 submission_kind=SubmissionKindChoices.ALGORITHM
             ),
-            data={"algorithm": alg.pk},
+            data={"algorithm_image": AlgorithmImageFactory()},
         )
 
-        assert form.errors["algorithm"] == [
+        assert form.errors["algorithm_image"] == [
             "Select a valid choice. That choice is not one of the available choices."
-        ]
-
-    def test_algorithm_with_permission_not_ready(self):
-        user = UserFactory()
-        alg = AlgorithmFactory()
-        alg.add_editor(user=user)
-        alg.inputs.clear()
-        alg.outputs.clear()
-
-        form = SubmissionForm(
-            user=user,
-            phase=PhaseFactory(
-                submission_kind=SubmissionKindChoices.ALGORITHM
-            ),
-            data={"algorithm": alg.pk},
-        )
-
-        assert form.errors["algorithm"] == [
-            "This algorithm does not have a usable container image. "
-            "Please add one and try again."
         ]
 
     def test_algorithm_with_permission(self):
         user = UserFactory()
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
-        alg.inputs.clear()
-        alg.outputs.clear()
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        alg.inputs.set([ci1])
+        alg.outputs.set([ci2])
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+        )
+        p.algorithm_inputs.set([ci1])
+        p.algorithm_outputs.set([ci2])
 
         ai = AlgorithmImageFactory(
             is_manifest_valid=True,
@@ -104,19 +129,14 @@ class TestSubmissionForm:
         )
         AlgorithmJobFactory(algorithm_image=ai, status=4)
 
-        p = PhaseFactory(
-            submission_kind=SubmissionKindChoices.ALGORITHM,
-            submissions_limit_per_user_per_period=10,
-        )
-
         form = SubmissionForm(
             user=user,
             phase=p,
-            data={"algorithm": alg.pk, "creator": user, "phase": p},
+            data={"algorithm_image": ai.pk, "creator": user, "phase": p},
         )
 
         assert form.errors == {}
-        assert "algorithm" not in form.errors
+        assert "algorithm_image" not in form.errors
         assert form.is_valid()
 
     def test_user_no_verification(self):
