@@ -1545,6 +1545,9 @@ class ComponentImageManager(models.Manager):
         else:
             return queryset
 
+    def active_images(self):
+        return self.executable_images().filter(is_desired_version=True)
+
 
 class ComponentImage(models.Model):
     SHIM_IMAGE = True

@@ -292,15 +292,6 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         )
         return context
 
-    def form_valid(self, form):
-        if "algorithm" in form.cleaned_data:
-            # Algorithm submission
-            form.instance.algorithm_image = form.cleaned_data[
-                "algorithm"
-            ].active_image
-
-        return super().form_valid(form)
-
     def get_success_url(self):
         return reverse(
             "evaluation:submission-list",

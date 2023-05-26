@@ -197,7 +197,11 @@ def test_tiff_image_entry_creation(
     gc_file = GrandChallengeTiffFile(resource)
     try:
         tiff_file = tifffile.TiffFile(str(gc_file.path.absolute()))
-        gc_file = _extract_tags(gc_file=gc_file, pages=tiff_file.pages)
+        gc_file = _extract_tags(
+            gc_file=gc_file,
+            pages=tiff_file.pages,
+            byteorder=tiff_file.byteorder,
+        )
     except ValidationError as e:
         error_message = str(e)
 
