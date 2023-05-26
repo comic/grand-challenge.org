@@ -370,7 +370,8 @@ class UserAlgorithmsForPhaseMixin:
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
-                input_count=Count("inputs"), output_count=Count("outputs")
+                input_count=Count("inputs", distinct=True),
+                output_count=Count("outputs", distinct=True),
             )
             .filter(
                 inputs__in=inputs,
@@ -391,8 +392,8 @@ class UserAlgorithmsForPhaseMixin:
             )
             .select_related("algorithm")
             .annotate(
-                input_count=Count("algorithm__inputs"),
-                output_count=Count("algorithm__outputs"),
+                input_count=Count("algorithm__inputs", distinct=True),
+                output_count=Count("algorithm__outputs", distinct=True),
             )
             .filter(
                 algorithm__inputs__in=inputs,

@@ -49,11 +49,11 @@ class TestSubmissionForm:
         alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
         alg1.add_editor(editor)
         alg2.add_editor(editor)
-        ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
-        alg1.inputs.set([ci1])
-        alg1.outputs.set([ci2])
-        alg3.inputs.set([ci1])
-        alg3.outputs.set([ci2])
+        ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+        alg1.inputs.set([ci1, ci2])
+        alg1.outputs.set([ci3, ci4])
+        alg3.inputs.set([ci1, ci2])
+        alg3.outputs.set([ci3, ci4])
         for alg in [alg1, alg2, alg3]:
             AlgorithmImageFactory(algorithm=alg)
             AlgorithmImageFactory(
@@ -63,8 +63,8 @@ class TestSubmissionForm:
                 is_manifest_valid=True,
             )
         p = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_inputs.set([ci1, ci2])
+        p.algorithm_outputs.set([ci3, ci4])
         form = SubmissionForm(
             user=editor,
             phase=p,
@@ -280,14 +280,13 @@ def test_algorithm_for_phase_form_validation():
     user = UserFactory()
     phase = PhaseFactory()
     alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
-    input = ComponentInterfaceFactory()
-    output = ComponentInterfaceFactory()
-    phase.algorithm_inputs.set([input])
-    phase.algorithm_outputs.set([output])
-    for alg in [alg1, alg2, alg3]:
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    phase.algorithm_inputs.set([ci1, ci2])
+    phase.algorithm_outputs.set([ci3, ci4])
+    for alg in [alg1, alg2]:
         alg.add_editor(user)
-        alg.inputs.set([input])
-        alg.outputs.set([output])
+        alg.inputs.set([ci1, ci2])
+        alg.outputs.set([ci3, ci4])
 
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
@@ -296,8 +295,8 @@ def test_algorithm_for_phase_form_validation():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory(),
-        inputs=[input],
-        outputs=[output],
+        inputs=[ci1, ci2],
+        outputs=[ci3, ci4],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -309,7 +308,35 @@ def test_algorithm_for_phase_form_validation():
         },
     )
 
-    assert not form.is_valid()
+    assert not (
+        "You have already created the maximum number of algorithms for this phase."
+        in str(form.errors)
+    )
+
+    alg3.add_editor(user)
+    alg3.inputs.set([ci1, ci2])
+    alg3.outputs.set([ci3, ci4])
+
+    form = AlgorithmForPhaseForm(
+        workstation_config=WorkstationConfigFactory(),
+        hanging_protocol=HangingProtocolFactory(),
+        view_content=None,
+        display_editors=True,
+        contact_email="test@test.com",
+        workstation=WorkstationFactory(),
+        inputs=[ci1, ci2],
+        outputs=[ci3, ci4],
+        structures=[],
+        modalities=[],
+        logo=ImageField(filename="test.jpeg"),
+        phase=phase,
+        user=user,
+        data={
+            "title": "foo",
+            "image_requires_memory_gb": 10,
+        },
+    )
+
     assert (
         "You have already created the maximum number of algorithms for this phase."
         in str(form.errors)
