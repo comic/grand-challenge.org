@@ -126,6 +126,9 @@
 <span class="kn">from</span> <span class="nn">grandchallenge.publications.models</span> <span class="kn">import</span> <span class="n">Publication</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.reader_studies.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.workstations.templatetags.workstations</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_workstation_path_and_query_string</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">A reader study enables you to have a set of readers answer a set of questions</span>
@@ -226,10 +229,6 @@
 <span class="s2">based on these scores: the average and total scores for each question as well</span>
 <span class="s2">as for each case are displayed in the ``statistics`` view.</span>
 <span class="s2">&quot;&quot;&quot;</span>
-
-<span class="kn">from</span> <span class="nn">grandchallenge.workstations.templatetags.workstations</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">get_workstation_query_string</span><span class="p">,</span>
-<span class="p">)</span>
 
 <span class="n">CASE_TEXT_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
@@ -943,8 +942,8 @@
             <span class="s2">&quot;workstations:workstation-session-create&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">slug</span><span class="p">},</span>
         <span class="p">)</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="n">get_workstation_query_string</span><span class="p">(</span><span class="n">display_set</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">?</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">pqs</span> <span class="o">=</span> <span class="n">get_workstation_path_and_query_string</span><span class="p">(</span><span class="n">display_set</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">url</span><span class="si">}{</span><span class="n">pqs</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">?</span><span class="si">{</span><span class="n">pqs</span><span class="o">.</span><span class="n">query_string</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
