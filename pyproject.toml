@@ -36,7 +36,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,<3.12"
 celery = {version = "!=5.0.6", extras = ["redis", "sqs"]}
 django = "<4.2"
 django-countries = "*"
@@ -84,7 +84,7 @@ openpyxl = "*"
 requests = "*"
 django_rest_knox = "*"
 Pillow = "*"
-panimg = { git = "https://github.com/DIAGNijmegen/rse-panimg.git", rev = "d629a5c569dc8653f5bae72cdfc418a4934b4eee"} # Pinned due to https://github.com/DIAGNijmegen/rse-panimg/issues/97
+panimg = { git = "https://github.com/DIAGNijmegen/rse-panimg.git", rev = "ad251cfa7f0639d9092547655c9f848c9e782802"} # Pinned due to https://github.com/DIAGNijmegen/rse-panimg/issues/97
 django-activity-stream = "*"
 django-stdimage = "*"
 django-permissions-policy = "*"
