@@ -3,7 +3,8 @@ function openWorkstationSession(element) {
         const windowIdentifier = element.dataset.workstationWindowIdentifier;
         const url = element.dataset.createSessionUrl;
         const query = element.dataset.workstationQuery;
-        const creationURI = `${url}?${query}`;
+        const path = element.dataset.workstationPath;
+        const creationURI = `${url}${path}?${query}`;
         const timeout = element.dataset.timeout || 1000;
 
         if (event.ctrlKey) {
@@ -12,7 +13,7 @@ function openWorkstationSession(element) {
         }
 
         if (event.altKey) {
-            copyTextToClipboard(query);
+            copyTextToClipboard(`${path}?${query}`);
             return;
         }
 
@@ -55,10 +56,10 @@ function openWorkstationSession(element) {
                     // the open() already focuses the window
                     workstationWindow.focus();
                     removeSpinner(element);
-                };
+                }
 
                 potentialSessionOrigins.forEach((origin) => {
-                    sendSessionControlMessage(workstationWindow, origin, {loadQuery: query}, onMessageIsSuccess);
+                    sendSessionControlMessage(workstationWindow, origin, {loadPath: path, loadQuery: query}, onMessageIsSuccess);
                 });
             }
         } catch(err) {
