@@ -182,10 +182,10 @@ class Challenge(ChallengeBase):
     )
     hidden = models.BooleanField(
         default=True,
-        help_text="Do not display this Project in any public overview",
+        help_text="Do not display this Challenge in any public overview",
     )
     educational = models.BooleanField(
-        default=False, help_text="It is an educational challange"
+        default=False, help_text="It is an educational challenge"
     )
     workshop_date = models.DateField(
         null=True,
@@ -921,6 +921,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 settings.CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR
             )
             budget = {
+                "Base cost": settings.CHALLENGE_BASE_COST_IN_EURO,
                 "Data storage cost for phase 1": None,
                 "Compute costs for phase 1": None,
                 "Total phase 1": None,
@@ -1023,6 +1024,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                         budget["Total phase 1"],
                         budget["Total phase 2"],
                         budget["Docker storage cost"],
+                        budget["Base cost"],
                     ],
                 )
             )

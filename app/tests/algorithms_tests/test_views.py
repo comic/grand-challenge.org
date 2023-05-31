@@ -11,7 +11,11 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.cases.widgets import WidgetChoices
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ImportStatusChoices,
+    InterfaceKind,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -972,3 +976,90 @@ def test_algorithm_job_create_with_image_input(
     assert response.status_code == 200
     assert Job.objects.last().inputs.first().image.name == "image10x10x10.mha"
     assert Job.objects.last().inputs.first() != civ
+
+
+@pytest.mark.django_db
+def test_algorithm_image_activate(settings, client, algorithm_io_image):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    alg = AlgorithmFactory()
+    i1, i2 = AlgorithmImageFactory.create_batch(
+        2,
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        image__from_path=algorithm_io_image,
+    )
+    i2.is_desired_version = True
+    i2.save()
+
+    editor, user = UserFactory.create_batch(2)
+    alg.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="algorithms:image-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i1.pk},
+        user=user,
+        follow=True,
+    )
+    assert response.status_code == 403
+
+    response2 = get_view_for_user(
+        viewname="algorithms:image-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i1.pk},
+        user=editor,
+        follow=True,
+    )
+
+    assert response2.status_code == 200
+    i1.refresh_from_db()
+    i2.refresh_from_db()
+    assert i1.is_desired_version
+    assert not i2.is_desired_version
+    assert alg.active_image == i1
+
+    i2.is_manifest_valid = True
+    i2.is_in_registry = False
+    i2.save()
+
+    response4 = get_view_for_user(
+        viewname="algorithms:image-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i2.pk},
+        user=editor,
+        follow=True,
+    )
+    assert response4.status_code == 200
+    assert "Image validation and upload to registry in progress." in str(
+        response4.content
+    )
+
+    i2.import_status = ImportStatusChoices.INITIALIZED
+    i2.is_desired_version = False
+    i2.save()
+    response6 = get_view_for_user(
+        viewname="algorithms:image-activate",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={"algorithm_image": i2.pk},
+        user=editor,
+        follow=True,
+    )
+    assert response6.status_code == 200
+    i1.refresh_from_db()
+    i2.refresh_from_db()
+    del alg.active_image
+    assert not i1.is_desired_version
+    assert i2.is_desired_version
+    assert alg.active_image == i2
+    assert i2.is_in_registry

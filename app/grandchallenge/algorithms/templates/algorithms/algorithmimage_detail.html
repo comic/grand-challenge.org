@@ -30,15 +30,21 @@
     <h2>Algorithm Container Image</h2>
 
     {% get_obj_perms request.user for object as "algorithm_image_perms" %}
+    {% get_obj_perms request.user for object.algorithm as "algorithm_perms" %}
 
     {% if object.can_execute and "change_algorithmimage" in algorithm_image_perms %}
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
-                <i class="fa fa-edit"></i> Edit this algorithm image
-            </a>
-        </p>
+        <a class="btn btn-primary"
+           href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
+            <i class="fa fa-edit"></i> Edit this algorithm image
+        </a><br>
     {% endif %}
+
+    {% if object.is_manifest_valid and not object.is_desired_version and "change_algorithm" in algorithm_perms %}
+        <div class="my-2">Activating an image will result in this image being used for future algorithm runs:</div>
+        <div class="mb-2">{% crispy image_activate_form %}</div>
+    {% endif %}
+
+    <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
 
     <dl class="inline">
         <dt>ID</dt>
@@ -111,6 +117,9 @@
 
         <dt>Requires Memory</dt>
         <dd>{{ object.requires_memory_gb }} GB</dd>
+
+        <dt>Comment</dt>
+        <dd>{{ object.comment }}</dd>
     </dl>
 
     {% if object.build %}

@@ -36,9 +36,9 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,<3.12"
 celery = {version = "!=5.0.6", extras = ["redis", "sqs"]}
-django = "<3.3"
+django = "<4.2"
 django-countries = "*"
 django-crispy-forms = "*"
 crispy-bootstrap4 = "*"
@@ -84,7 +84,7 @@ openpyxl = "*"
 requests = "*"
 django_rest_knox = "*"
 Pillow = "*"
-panimg = ">=0.11.0"
+panimg = { git = "https://github.com/DIAGNijmegen/rse-panimg.git", rev = "ad251cfa7f0639d9092547655c9f848c9e782802"} # Pinned due to https://github.com/DIAGNijmegen/rse-panimg/issues/97
 django-activity-stream = "*"
 django-stdimage = "*"
 django-permissions-policy = "*"
@@ -95,6 +95,7 @@ django-ses = "*"
 Pygments = "*"
 django-forms-dynamic = "*"
 django-allauth-2fa = "*"
+urllib3 = "<2"  # Pinned due to lack of support in sentry (https://github.com/getsentry/sentry-python/issues/2070) and botocore (https://github.com/boto/botocore/issues/2926)
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"
@@ -121,14 +122,14 @@ pytest-playwright = "*"
 output = "app/grandchallenge/core/static/vendored"
 
 [tool.amass.dependencies]
-htmx = { version = "==1.7.0", include = ["htmx(.min)?.js"] }
-"moment.js" = { version = "==2.24.0", include = ["moment(.min)?.js"] }
-vega = { version = "==5.20.2", include = ["vega(.min)?.js"] }
-vega-lite = { version = "==5.1.0", include = ["vega-lite(.min)?.js$"] }
-vega-embed = { version = "==6.17.0", include = ["vega-embed(.min)?.js$"] }
-openseadragon = { version = "==2.4.1", include = ["openseadragon(.min)?.js$", "images/*"] }
-jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js", "jsoneditor(.min)?.css", "img/*"] }
-"sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js"] }
-"hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js$"] }
-uppy = { version = "==2.2.0", include = ["uppy(.min)?.css$", "uppy(.min)?.js$"] }
-jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js$"] }
+htmx = { version = "==1.7.0", include = ["htmx(.min)?.js(.map)?"] }
+"moment.js" = { version = "==2.24.0", include = ["moment(.min)?.js(.map)?"] }
+vega = { version = "==5.20.2", include = ["vega(.min)?.js(.map)?"] }
+vega-lite = { version = "==5.1.0", include = ["vega-lite(.min)?.js(.map)?"] }
+vega-embed = { version = "==6.17.0", include = ["vega-embed(.min)?.js(.map)?"] }
+openseadragon = { version = "==2.4.1", include = ["openseadragon(.min)?.js(.map)?", "images/*"] }
+jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js(.map)?", "jsoneditor(.min)?.css(.map)?", "img/*"] }
+"sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js(.map)?"] }
+"hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js(.map)?"] }
+uppy = { version = "==2.2.0", include = ["uppy(.min)?.css(.map)?", "uppy(.min)?.js(.map)?"] }
+jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js(.map)?"] }

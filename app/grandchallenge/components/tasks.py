@@ -134,6 +134,24 @@ def validate_docker_image(  # noqa C901
         # Nothing to do
         return
 
+    upload_to_registry_and_sagemaker(
+        app_label=app_label,
+        model_name=model_name,
+        pk=pk,
+        mark_as_desired=mark_as_desired,
+    )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def upload_to_registry_and_sagemaker(
+    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    instance.import_status = instance.ImportStatusChoices.STARTED
+    instance.save()
+
     if not instance.is_in_registry:
         try:
             push_container_image(instance=instance)
@@ -184,7 +202,7 @@ def remove_inactive_container_images():
         model = apps.get_model(app_label=app_label, model_name=model_name)
 
         for instance in model.objects.all():
-            latest = instance.latest_executable_image
+            latest = instance.active_image
 
             if latest is not None:
                 for image in (

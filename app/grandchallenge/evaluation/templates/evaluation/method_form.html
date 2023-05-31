@@ -10,7 +10,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
-            <a href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">Evaluation Methods</a>
+            <a href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name slug=phase.slug %}">Evaluation Methods</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">Create</li>
@@ -18,6 +18,6 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Upload a New Evaluation Container Image</h2>
+    <h2>Upload a new evaluation container image for {{ phase.title }}</h2>
     {% crispy form %}
 {% endblock %}

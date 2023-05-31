@@ -8,6 +8,7 @@ import sentry_sdk
 from celery.schedules import crontab
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -107,10 +108,6 @@ SITE_ID = int(os.environ.get("SITE_ID", "1"))
 # to load the internationalization machinery.
 USE_I18N = True
 
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale.
-USE_L10N = True
-
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
@@ -139,6 +136,9 @@ CHALLENGES_ECR_STORAGE_COST_CENTS_PER_TB_PER_YEAR = int(
 )
 CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR = int(
     os.environ.get("CHALLENGES_COMPUTE_COST_CENTS_PER_HOUR", 100)
+)
+CHALLENGE_BASE_COST_IN_EURO = int(
+    os.environ.get("CHALLENGE_BASE_COST_IN_EURO", 5000)
 )
 
 ##############################################################################
@@ -275,6 +275,9 @@ ABSOLUTE_URL_OVERRIDES = {
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
+if not SESSION_COOKIE_DOMAIN.startswith("."):
+    raise ImproperlyConfigured("SESSION_COOKIE_DOMAIN should start with a '.'")
+
 # We're always running behind a proxy so set these to true
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -282,10 +285,13 @@ CSRF_COOKIE_SECURE = True
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
-CSRF_TRUSTED_ORIGINS = [SESSION_COOKIE_DOMAIN]
+CSRF_TRUSTED_ORIGINS = [f"https://*{SESSION_COOKIE_DOMAIN}"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
 
+SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
+    "SECURE_CROSS_ORIGIN_OPENER_POLICY", "same-origin"
+)
 # Set the allowed hosts to the cookie domain
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
 
@@ -1213,6 +1219,9 @@ ALGORITHMS_USER_CENTS_PER_MONTH = int(
 )
 ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH = int(
     os.environ.get("ALGORITHMS_MAX_DEFAULT_JOBS_PER_MONTH", "50")
+)
+ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE = int(
+    os.environ.get("ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE", "3")
 )
 
 # Disallow some challenge names due to subdomain or media folder clashes

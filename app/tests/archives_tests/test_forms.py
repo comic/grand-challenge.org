@@ -277,7 +277,10 @@ def test_archive_item_form(
 
     alg = AlgorithmFactory()
     AlgorithmImageFactory(
-        algorithm=alg, is_manifest_valid=True, is_in_registry=True
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
     alg.inputs.set([ci])
     with django_capture_on_commit_callbacks(execute=True):

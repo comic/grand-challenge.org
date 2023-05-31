@@ -283,6 +283,7 @@ def test_non_zip_submission_failure(
         image_sha256=sha256,
         is_manifest_valid=True,
         is_in_registry=True,
+        is_desired_version=True,
     )
 
     # Try with a 7z file

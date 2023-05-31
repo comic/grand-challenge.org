@@ -11,6 +11,7 @@ from crispy_forms.layout import (
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
@@ -261,9 +262,10 @@ class ChallengeRequestForm(
             "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
             "structured_challenge_submission_doi": "DOI",
             "structured_challenge_submission_form": "PDF",
-            "challenge_fee_agreement": "I confirm that I have read and understood the "
-            "<a href='https://grand-challenge.org/challenge-policy-and-pricing/'>pricing "
-            "policy</a> for running a challenge.",
+            "challenge_fee_agreement": format_html(
+                "I confirm that I have read and understood the <a href='{}'>pricing policy</a> for running a challenge.",
+                "https://grand-challenge.org/challenge-policy-and-pricing/",
+            ),
         }
         help_texts = {
             "title": "The name of the planned challenge.",

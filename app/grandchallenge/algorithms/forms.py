@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
+from django.db.models import Count
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -351,7 +352,63 @@ class AlgorithmForm(
             )
 
 
-class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
+class UserAlgorithmsForPhaseMixin:
+    def __init__(self, *args, user, phase, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._user = user
+        self._phase = phase
+
+    def get_phase_algorithm_inputs_outputs(self):
+        return (
+            self._phase.algorithm_inputs.all(),
+            self._phase.algorithm_outputs.all(),
+        )
+
+    @cached_property
+    def get_user_algorithms_for_phase(self):
+        inputs, outputs = self.get_phase_algorithm_inputs_outputs()
+        return (
+            get_objects_for_user(self._user, "algorithms.change_algorithm")
+            .annotate(
+                input_count=Count("inputs", distinct=True),
+                output_count=Count("outputs", distinct=True),
+            )
+            .filter(
+                inputs__in=inputs,
+                outputs__in=outputs,
+                input_count=len(inputs),
+                output_count=len(outputs),
+            )
+        )
+
+    @cached_property
+    def get_user_active_images_for_phase(self):
+        inputs, outputs = self.get_phase_algorithm_inputs_outputs()
+        return (
+            get_objects_for_user(
+                user=self._user,
+                perms="algorithms.change_algorithmimage",
+                klass=AlgorithmImage.objects.active_images(),
+            )
+            .select_related("algorithm")
+            .annotate(
+                input_count=Count("algorithm__inputs", distinct=True),
+                output_count=Count("algorithm__outputs", distinct=True),
+            )
+            .filter(
+                algorithm__inputs__in=inputs,
+                algorithm__outputs__in=outputs,
+                input_count=len(inputs),
+                output_count=len(outputs),
+            )
+        )
+
+    @cached_property
+    def user_algorithm_count(self):
+        return self.get_user_algorithms_for_phase.count()
+
+
+class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
     class Meta:
         model = Algorithm
         fields = (
@@ -391,6 +448,7 @@ class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
 
     def __init__(
         self,
+        *args,
         workstation_config,
         hanging_protocol,
         view_content,
@@ -402,10 +460,11 @@ class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
         structures,
         modalities,
         logo,
-        *args,
+        user,
+        phase,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, user=user, phase=phase, **kwargs)
         self.fields["workstation_config"].initial = workstation_config
         self.fields["workstation_config"].disabled = True
         self.fields["hanging_protocol"].initial = hanging_protocol
@@ -434,6 +493,19 @@ class AlgorithmForPhaseForm(SaveFormInitMixin, ModelForm):
         self.fields["structures"].disabled = True
         self.fields["logo"].initial = logo
         self.fields["logo"].disabled = True
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            self.user_algorithm_count
+            >= settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE
+        ):
+            raise ValidationError(
+                "You have already created the maximum number of algorithms for this phase."
+            )
+        return cleaned_data
 
 
 class AlgorithmDescriptionForm(ModelForm):
@@ -555,11 +627,54 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = AlgorithmImage
-        fields = ("requires_gpu", "requires_memory_gb")
+        fields = ("requires_gpu", "requires_memory_gb", "comment")
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {
             "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"
         }
+
+
+class ImageActivateForm(Form):
+    algorithm_image = ModelChoiceField(queryset=AlgorithmImage.objects.none())
+
+    def __init__(
+        self,
+        *args,
+        user,
+        algorithm,
+        hide_algorithm_image_input=False,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.fields["algorithm_image"].queryset = (
+            get_objects_for_user(
+                user,
+                "algorithms.change_algorithmimage",
+            )
+            .filter(
+                algorithm=algorithm,
+                is_manifest_valid=True,
+                is_desired_version=False,
+            )
+            .select_related("algorithm")
+        )
+
+        if hide_algorithm_image_input:
+            self.fields["algorithm_image"].widget = HiddenInput()
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Activate algorithm image"))
+        self.helper.form_action = reverse(
+            "algorithms:image-activate", kwargs={"slug": algorithm.slug}
+        )
+
+    def clean_algorithm_image(self):
+        algorithm_image = self.cleaned_data["algorithm_image"]
+
+        if algorithm_image.algorithm.image_upload_in_progress:
+            raise ValidationError("Image updating already in progress.")
+
+        return algorithm_image
 
 
 class UsersForm(UserGroupForm):

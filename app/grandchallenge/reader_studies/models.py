@@ -435,12 +435,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         self.assign_permissions()
         self.assign_workstation_permissions()
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
             app_label=self._meta.app_label, model=self._meta.model_name
         ).get()
         Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete()
+        super().delete(*args, **kwargs)
 
     def is_editor(self, user):
         """Checks if ``user`` is an editor for this ``ReaderStudy``."""
@@ -1636,12 +1636,12 @@ class ReaderStudyPermissionRequest(RequestBase):
         if adding:
             process_access_request(request_object=self)
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
             app_label=self._meta.app_label, model=self._meta.model_name
         ).get()
         Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete()
+        super().delete(*args, **kwargs)
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)

@@ -13,6 +13,7 @@ from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
+from django.template.defaultfilters import truncatewords
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
@@ -29,6 +30,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
     ComponentJobManager,
+    ImportStatusChoices,
 )
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -342,17 +344,29 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
                 )
 
     @cached_property
-    def latest_executable_image(self):
+    def active_image(self):
         """
         Returns
         -------
-            The most recent container image for this algorithm
+            The desired version for this algorithm or None
         """
-        return (
-            self.algorithm_container_images.executable_images()
-            .order_by("-created")
-            .first()
-        )
+        try:
+            return (
+                self.algorithm_container_images.executable_images()
+                .filter(is_desired_version=True)
+                .get()
+            )
+        except ObjectDoesNotExist:
+            return None
+
+    @property
+    def image_upload_in_progress(self):
+        return self.algorithm_container_images.filter(
+            import_status__in=(
+                ImportStatusChoices.STARTED,
+                ImportStatusChoices.QUEUED,
+            )
+        ).exists()
 
     @cached_property
     def default_workstation(self):
@@ -469,7 +483,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     @cached_property
     def public_test_case(self):
         try:
-            return self.latest_executable_image.job_set.filter(
+            return self.active_image.job_set.filter(
                 status=Job.SUCCESS, public=True
             ).exists()
         except AttributeError:
@@ -512,6 +526,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
+
+    def __str__(self):
+        return f"Algorithm image {self.pk} for {self.algorithm} ({truncatewords(self.comment, 4)})"
 
     def get_absolute_url(self):
         return reverse(
@@ -883,12 +900,12 @@ class AlgorithmPermissionRequest(RequestBase):
         if adding:
             process_access_request(request_object=self)
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
             app_label=self._meta.app_label, model=self._meta.model_name
         ).get()
         Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete()
+        super().delete(*args, **kwargs)
 
     class Meta(RequestBase.Meta):
         unique_together = (("algorithm", "user"),)

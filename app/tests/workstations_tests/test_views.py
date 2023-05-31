@@ -237,12 +237,23 @@ def test_session_create(client):
     ws.add_user(user=user)
 
     # Create some workstations and pretend that they're ready
-    # TODO test if not in registry
     WorkstationImageFactory(
-        workstation=ws, is_manifest_valid=True, is_in_registry=True
-    )  # Old WSI
-    wsi_new = WorkstationImageFactory(
-        workstation=ws, is_manifest_valid=True, is_in_registry=True
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=False,
+        is_desired_version=True,
+    )  # not in registry
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=False,
+        is_in_registry=True,
+        is_desired_version=True,
+    )  # invalid manifest
+    wsi_new_ready = WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
     WorkstationImageFactory(workstation=ws)  # WSI not ready
     WorkstationImageFactory(
@@ -267,7 +278,7 @@ def test_session_create(client):
     assert len(sessions) == 1
 
     # Should select the most recent workstation
-    assert sessions[0].workstation_image == wsi_new
+    assert sessions[0].workstation_image == wsi_new_ready
     assert sessions[0].extra_env_vars == []
     assert sessions[0].creator == user
 
@@ -281,7 +292,10 @@ def test_debug_session_create(client):
     ws.add_editor(user=user)
 
     wsi = WorkstationImageFactory(
-        workstation=ws, is_manifest_valid=True, is_in_registry=True
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
 
     assert Session.objects.count() == 0
@@ -318,6 +332,7 @@ def test_session_redirect(client):
         workstation=default_workstation,
         is_manifest_valid=True,
         is_in_registry=True,
+        is_desired_version=True,
     )
 
     wsi.workstation.add_user(user=user)
@@ -451,8 +466,11 @@ def test_workstation_image(rf):
         workstation=default_workstation,
         is_manifest_valid=True,
         is_in_registry=True,
+        is_desired_version=True,
     )
-    wsi = WorkstationImageFactory(is_manifest_valid=True, is_in_registry=True)
+    wsi = WorkstationImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
 
     assert view.workstation_image == default_wsi
 

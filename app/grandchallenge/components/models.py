@@ -661,14 +661,20 @@ class OverlaySegmentsMixin(models.Model):
     )
 
     @property
-    def voxel_values(self):
+    def overlay_segments_allowed_values(self):
         allowed_values = {x["voxel_value"] for x in self.overlay_segments}
-
         # An implicit background value of 0 is always allowed, this saves the
         # user having to declare it and the annotator mark it
         allowed_values.add(0)
 
         return allowed_values
+
+    @property
+    def overlay_segments_is_contiguous(self):
+        values = sorted(list(self.overlay_segments_allowed_values))
+        return all(
+            values[i] - values[i - 1] == 1 for i in range(1, len(values))
+        )
 
     def _validate_voxel_values(self, image):
         if not self.overlay_segments:
@@ -676,17 +682,21 @@ class OverlaySegmentsMixin(models.Model):
 
         if image.segments is None:
             raise ValidationError(
-                "Image segments could not be determined, ensure the file is "
-                "not a tiff file, its voxel values are integers and that it "
-                f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
+                "Image segments could not be determined, ensure the voxel values "
+                "are integers and that it contains no more than "
+                f"{MAXIMUM_SEGMENTS_LENGTH} segments. Ensure the image has the "
+                "minimum and maximum voxel values set as tags if the image is a TIFF "
+                "file."
             )
 
-        invalid_values = set(image.segments) - self.voxel_values
+        invalid_values = (
+            set(image.segments) - self.overlay_segments_allowed_values
+        )
         if invalid_values:
             raise ValidationError(
                 f"The valid voxel values for this segmentation are: "
-                f"{self.voxel_values}. This segmentation is invalid as "
-                f"it contains the voxel values: {invalid_values}."
+                f"{self.overlay_segments_allowed_values}. This segmentation is "
+                f"invalid as it contains the voxel values: {invalid_values}."
             )
 
     class Meta:
@@ -900,6 +910,11 @@ class ComponentInterface(OverlaySegmentsMixin):
         ):
             raise ValidationError(
                 "Overlay segments should only be set for segmentations"
+            )
+
+        if not self.overlay_segments_is_contiguous:
+            raise ValidationError(
+                "Voxel values for overlay segments must be contiguous."
             )
 
         Question = apps.get_model("reader_studies", "question")  # noqa: N806
@@ -1530,6 +1545,9 @@ class ComponentImageManager(models.Manager):
         else:
             return queryset
 
+    def active_images(self):
+        return self.executable_images().filter(is_desired_version=True)
+
 
 class ComponentImage(models.Model):
     SHIM_IMAGE = True
@@ -1616,6 +1634,12 @@ class ComponentImage(models.Model):
             .exists()
         )
 
+    def clear_can_execute_cache(self):
+        try:
+            del self.can_execute
+        except AttributeError:
+            pass
+
     def save(self, *args, **kwargs):
         image_needs_validation = (
             self.import_status == ImportStatusChoices.INITIALIZED
@@ -1643,7 +1667,8 @@ class ComponentImage(models.Model):
                         "model_name": self._meta.model_name,
                         "pk": self.pk,
                         "mark_as_desired": True,
-                    }
+                    },
+                    immutable=True,
                 ).apply_async
             )
 
@@ -1663,7 +1688,8 @@ class ComponentImage(models.Model):
 
     @transaction.atomic
     def mark_desired_version(self):
-        if self.is_manifest_valid:
+        self.clear_can_execute_cache()
+        if self.is_manifest_valid and self.can_execute:
             images = self.get_peer_images()
 
             for image in images:
@@ -1673,6 +1699,11 @@ class ComponentImage(models.Model):
                     image.is_desired_version = False
 
             self.__class__.objects.bulk_update(images, ["is_desired_version"])
+
+        else:
+            raise RuntimeError(
+                "Tried to mark invalid image as desired version."
+            )
 
     @property
     def original_repo_tag(self):

@@ -292,7 +292,9 @@ class TestJobPermissions:
 
     def test_job_permissions_from_template(self, client):
         algorithm_image = AlgorithmImageFactory(
-            is_manifest_valid=True, is_in_registry=True
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
         )
 
         user = UserFactory()
@@ -329,7 +331,9 @@ class TestJobPermissions:
         # setup
         user = UserFactory()
         algorithm_image = AlgorithmImageFactory(
-            is_manifest_valid=True, is_in_registry=True
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
         )
         interfaces = {
             ComponentInterfaceFactory(
@@ -363,7 +367,11 @@ class TestJobPermissions:
     def test_job_permissions_for_archive(
         self, django_capture_on_commit_callbacks
     ):
-        ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
         archive = ArchiveFactory()
 
         # Fake an image upload via a session

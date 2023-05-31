@@ -21,7 +21,6 @@ from grandchallenge.components.models import (
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
-    validate_docker_image,
 )
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
@@ -29,6 +28,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
+from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1077,6 +1077,40 @@ def test_clean_overlay_segments_with_questions(reader_study_with_gt):
 
 
 @pytest.mark.django_db
+def test_clean_overlay_segments():
+    ci = ComponentInterface(kind=InterfaceKindChoices.STRING)
+    ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert (
+        e.value.message
+        == "Overlay segments should only be set for segmentations"
+    )
+
+    ci = ComponentInterface(kind=InterfaceKindChoices.SEGMENTATION)
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert e.value.message == "Overlay segments must be set for this interface"
+
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 3},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._clean_overlay_segments()
+    assert (
+        e.value.message
+        == "Voxel values for overlay segments must be contiguous."
+    )
+
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
+    ]
+    ci._clean_overlay_segments()
+
+
+@pytest.mark.django_db
 def test_validate_voxel_values():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
     im = ImageFactory(segments=None)
@@ -1086,9 +1120,11 @@ def test_validate_voxel_values():
     ci.save()
 
     error_msg = (
-        "Image segments could not be determined, ensure the file is "
-        "not a tiff file, its voxel values are integers and that it "
-        f"contains no more than {MAXIMUM_SEGMENTS_LENGTH} segments."
+        "Image segments could not be determined, ensure the voxel values "
+        "are integers and that it contains no more than "
+        f"{MAXIMUM_SEGMENTS_LENGTH} segments. Ensure the image has the "
+        "minimum and maximum voxel values set as tags if the image is a TIFF "
+        "file."
     )
     im = ImageFactory(segments=None)
     with pytest.raises(ValidationError) as e:
@@ -1109,6 +1145,38 @@ def test_validate_voxel_values():
     ]
     ci.save()
     im = ImageFactory(segments=[0, 1, 2])
+    assert ci._validate_voxel_values(im) is None
+
+    im = ImageFactoryWithImageFileTiff()
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._validate_voxel_values(im)
+    assert e.value.message == error_msg
+    im = ImageFactoryWithImageFileTiff(segments=[1, 2, 3])
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 3},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._validate_voxel_values(im)
+    assert e.value.message == (
+        "The valid voxel values for this segmentation are: {0, 1, 3}. "
+        "This segmentation is invalid as it contains the voxel values: {2}."
+    )
+    ci.overlay_segments = [
+        {"name": "s1", "visible": True, "voxel_value": 1},
+        {"name": "s2", "visible": True, "voxel_value": 2},
+    ]
+    with pytest.raises(ValidationError) as e:
+        ci._validate_voxel_values(im)
+    assert e.value.message == (
+        "The valid voxel values for this segmentation are: {0, 1, 2}. "
+        "This segmentation is invalid as it contains the voxel values: {3}."
+    )
+    im = ImageFactoryWithImageFileTiff(segments=[1, 2])
     assert ci._validate_voxel_values(im) is None
 
 
@@ -1256,37 +1324,16 @@ def test_remove_container_image_from_registry(
 
 
 @pytest.mark.django_db
-def test_mark_desired_version(
-    algorithm_io_image, settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_mark_desired_version():
     alg = AlgorithmFactory()
     i1, i2, i3 = AlgorithmImageFactory.create_batch(
-        3, algorithm=alg, image__from_path=algorithm_io_image
+        3,
+        algorithm=alg,
+        is_manifest_valid=True,
+        is_in_registry=True,
     )
-
-    for image in [i1, i2]:
-        with django_capture_on_commit_callbacks(execute=True):
-            validate_docker_image(
-                pk=image.pk,
-                app_label=image._meta.app_label,
-                model_name=image._meta.model_name,
-                mark_as_desired=False,
-            )
-
-    with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
-            pk=i3.pk,
-            app_label=i3._meta.app_label,
-            model_name=i3._meta.model_name,
-            mark_as_desired=True,
-        )
-    for image in [i1, i2, i3]:
-        image.refresh_from_db()
-    assert i3.is_desired_version
+    i3.is_desired_version = True
+    i3.save()
     assert not any([i1.is_desired_version, i2.is_desired_version])
 
     i2.mark_desired_version()

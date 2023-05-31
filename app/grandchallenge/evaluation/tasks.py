@@ -65,7 +65,7 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):
         submission.user_upload.delete()
 
     # TODO - move this to the form and make it an input here
-    method = submission.phase.latest_executable_image
+    method = submission.phase.active_image
     if not method:
         logger.info("No method ready for this submission")
         Notification.send(

@@ -6,12 +6,13 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
-from django.forms import ModelChoiceField
+from django.forms import CheckboxInput, HiddenInput, ModelChoiceField
 from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 
+from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
@@ -149,6 +150,9 @@ class PhaseUpdateForm(
                     *algorithm_setting_options,
                 )
             )
+            self.fields["creator_must_be_verified"].widget = CheckboxInput(
+                attrs={"checked": True}
+            )
 
     class Meta:
         model = Phase
@@ -208,10 +212,11 @@ class MethodForm(ContainerImageForm):
         help_text="Which phase is this evaluation container for?",
     )
 
-    def __init__(self, *args, challenge, **kwargs):
+    def __init__(self, *args, phase, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.fields["phase"].queryset = challenge.phase_set.all()
+        self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk).all()
+        self.fields["phase"].initial = phase
+        self.fields["phase"].widget = HiddenInput()
 
     class Meta:
         model = Method
@@ -225,10 +230,13 @@ submission_fields = (
     "supplementary_file",
     "supplementary_url",
     "user_upload",
+    "algorithm_image",
 )
 
 
-class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
+class SubmissionForm(
+    UserAlgorithmsForPhaseMixin, SaveFormInitMixin, forms.ModelForm
+):
     user_upload = ModelChoiceField(
         widget=UserUploadSingleWidget(
             allowed_file_types=[
@@ -243,34 +251,17 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
         label="Predictions File",
         queryset=None,
     )
-    algorithm = ModelChoiceField(
-        queryset=None,
-    )
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
-        super().__init__(*args, **kwargs)
-
+        super().__init__(*args, user=user, phase=phase, **kwargs)
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=user.pk
         )
         self.fields["creator"].initial = user
-        self.fields["algorithm"].help_text = format_lazy(
-            "Select one of your algorithms to submit as a solution to this "
-            "challenge. If you have not created your algorithm yet you can "
-            "do so <a href={}>on this page</a>.",
-            reverse(
-                "evaluation:phase-algorithm-create",
-                kwargs={
-                    "slug": phase.slug,
-                    "challenge_short_name": phase.challenge.short_name,
-                },
-            ),
-        )
 
         # Note that the validation of creator and algorithm require
         # access to the phase properties, so those validations
         # would need to be updated if phase selections are allowed.
-        self._phase = phase
         self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
         self.fields["phase"].initial = phase
 
@@ -310,48 +301,43 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
         if self._phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             del self.fields["user_upload"]
 
-            self.fields["algorithm"].queryset = get_objects_for_user(
-                user,
-                "algorithms.change_algorithm",
-            ).order_by("title")
+            self.fields[
+                "algorithm_image"
+            ].queryset = self.get_user_active_images_for_phase.order_by(
+                "algorithm__title"
+            )
 
             self._algorithm_inputs = self._phase.algorithm_inputs.all()
             self._algorithm_outputs = self._phase.algorithm_outputs.all()
+            self.fields["algorithm_image"].help_text = format_lazy(
+                "Select one of your algorithms' active images to submit as a solution to this "
+                "challenge. The algorithms need to work with the following inputs: {} "
+                "and the following outputs: {}. If you have not created your "
+                "algorithm yet you can "
+                "do so <a href={}>on this page</a>.",
+                oxford_comma(self._algorithm_inputs),
+                oxford_comma(self._algorithm_outputs),
+                reverse(
+                    "evaluation:phase-algorithm-create",
+                    kwargs={
+                        "slug": phase.slug,
+                        "challenge_short_name": phase.challenge.short_name,
+                    },
+                ),
+            )
         else:
-            del self.fields["algorithm"]
+            del self.fields["algorithm_image"]
 
             self.fields["user_upload"].queryset = get_objects_for_user(
                 user,
                 "uploads.change_userupload",
             ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
-    def clean_algorithm(self):
-        algorithm = self.cleaned_data["algorithm"]
-
-        if set(self._algorithm_inputs) != set(algorithm.inputs.all()):
-            raise ValidationError(
-                "The inputs for your algorithm do not match the ones "
-                "required by this phase, please update your algorithm "
-                "to work with: "
-                f"{oxford_comma(self._algorithm_inputs)}. "
-            )
-
-        if set(self._algorithm_outputs) != set(algorithm.outputs.all()):
-            raise ValidationError(
-                "The outputs from your algorithm do not match the ones "
-                "required by this phase, please update your algorithm "
-                "to produce: "
-                f"{oxford_comma(self._algorithm_outputs)}. "
-            )
-
-        if algorithm.latest_executable_image is None:
-            raise ValidationError(
-                "This algorithm does not have a usable container image. "
-                "Please add one and try again."
-            )
+    def clean_algorithm_image(self):
+        algorithm_image = self.cleaned_data["algorithm_image"]
 
         if Submission.objects.filter(
-            algorithm_image__image_sha256=algorithm.latest_executable_image.image_sha256,
+            algorithm_image__image_sha256=algorithm_image.image_sha256,
             phase=self._phase,
         ).exists():
             raise ValidationError(
@@ -361,7 +347,7 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
 
         if (
             Evaluation.objects.filter(
-                submission__algorithm_image__image_sha256=algorithm.latest_executable_image.image_sha256
+                submission__algorithm_image__image_sha256=algorithm_image.image_sha256
             )
             .exclude(
                 status__in=[
@@ -381,7 +367,7 @@ class SubmissionForm(SaveFormInitMixin, forms.ModelForm):
                 "complete."
             )
 
-        return algorithm
+        return algorithm_image
 
     def clean_creator(self):
         creator = self.cleaned_data["creator"]

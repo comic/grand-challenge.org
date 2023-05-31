@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from functools import cached_property
 from urllib.parse import unquote, urljoin
 
 from django.conf import settings
@@ -10,7 +11,6 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
-from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -87,17 +87,20 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         ordering = ("created", "title")
 
     @cached_property
-    def latest_executable_image(self):
+    def active_image(self):
         """
         Returns
         -------
-            The most recent container image for this workstation
+            The desired image version for this workstation or None
         """
-        return (
-            self.workstationimage_set.executable_images()
-            .order_by("-created")
-            .first()
-        )
+        try:
+            return (
+                self.workstationimage_set.executable_images()
+                .filter(is_desired_version=True)
+                .get()
+            )
+        except ObjectDoesNotExist:
+            return None
 
     def __str__(self):
         public = " (Public)" if self.public else ""

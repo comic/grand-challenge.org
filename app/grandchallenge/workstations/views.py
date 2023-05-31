@@ -271,7 +271,7 @@ class SessionCreate(
         slug = self.kwargs.get("slug", settings.DEFAULT_WORKSTATION_SLUG)
 
         workstation = get_object_or_404(Workstation, slug=slug)
-        workstation_image = workstation.latest_executable_image
+        workstation_image = workstation.active_image
 
         if workstation_image is None:
             raise Http404("No container images found for this workstation")

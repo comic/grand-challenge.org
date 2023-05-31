@@ -247,3 +247,10 @@ ul.socialaccount_providers > li {
     min-width: 0.9375rem;
     min-height: 0.9375rem;
 }
+
+a[aria-expanded=true] .fa-chevron-right {
+   display: none;
+}
+a[aria-expanded=false] .fa-chevron-down {
+   display: none;
+}

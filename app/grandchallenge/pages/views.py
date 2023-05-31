@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.db.models import Count, Q
 from django.http import Http404
@@ -122,6 +122,7 @@ class PageDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     ChallengeFilteredQuerysetMixin,
+    SuccessMessageMixin,
     DeleteView,
 ):
     model = Page
@@ -138,10 +139,6 @@ class PageDelete(
             "pages:list",
             kwargs={"challenge_short_name": self.request.challenge.short_name},
         )
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
 
 
 class ChallengeStatistics(TemplateView):

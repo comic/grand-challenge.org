@@ -162,14 +162,14 @@ class JobPostSerializer(JobSerializer):
         alg = data.pop("algorithm")
         user = self.context["request"].user
 
-        if not alg.latest_executable_image:
+        if not alg.active_image:
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"
             )
         data["creator"] = user
-        data["algorithm_image"] = alg.latest_executable_image
+        data["algorithm_image"] = alg.active_image
 
-        jobs_limit = alg.latest_executable_image.algorithm.get_jobs_limit(
+        jobs_limit = alg.active_image.algorithm.get_jobs_limit(
             user=data["creator"]
         )
         if jobs_limit is not None and jobs_limit < 1:
