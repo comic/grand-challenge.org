@@ -72,7 +72,7 @@
             getSessionStatus(
                 "{% url 'api:session-detail' pk=object.pk %}",
                 document.getElementById("sessionState"),
-                `{{ object.workstation_url }}${window.location.search}`,
+                `{{ object.workstation_url }}/{{ workstation_path }}${window.location.search}`,
             );
         })();
     </script>

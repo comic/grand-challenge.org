@@ -287,6 +287,7 @@ class SessionCreate(
             {
                 "object": self.workstation_image,
                 "ping_endpoint": f"{self.request.site.domain.lower()}/ping",
+                "workstation_path": self.kwargs.get("workstation_path", ""),
             }
         )
         return context
