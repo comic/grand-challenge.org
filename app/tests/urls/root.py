@@ -16,6 +16,11 @@ urlpatterns = [
     path(
         "new-session/", SessionCreationView.as_view(), name="new-session-test"
     ),
+    path(
+        "new-session/path-param/12345/",
+        SessionCreationView.as_view(),
+        name="new-session-test-with-path-param",
+    ),
     path("workstation/", WorkstationView.as_view(), name="workstation-mock"),
     *root_urlpatterns,
 ]
