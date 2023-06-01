@@ -301,7 +301,7 @@ class SessionCreate(
             extra_env_vars=form.cleaned_data.get("extra_env_vars"),
         )
 
-        url = session.get_absolute_url()
+        url = f"{session.get_absolute_url()}{self.kwargs.get('workstation_path', '')}"
 
         qs = self.request.META.get("QUERY_STRING", "")
         if qs:
