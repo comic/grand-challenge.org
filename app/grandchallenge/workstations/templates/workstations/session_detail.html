@@ -68,11 +68,14 @@
     <script type="text/javascript">
         (function () {
             $('#sessionModal').modal({show: true});
-
+            const params = new URLSearchParams(window.location.search);
+            const path = decodeURIComponent(params.has("path") ? params.get("path") : "");
+            const qs = decodeURIComponent(params.has("qs") ? params.get("qs") : "");
+            const workstationUrl = `{{ object.workstation_url }}/${path}?${qs}`;
             getSessionStatus(
                 "{% url 'api:session-detail' pk=object.pk %}",
                 document.getElementById("sessionState"),
-                `{{ object.workstation_url }}/{{ workstation_path }}${window.location.search}`,
+                workstationUrl,
             );
         })();
     </script>
