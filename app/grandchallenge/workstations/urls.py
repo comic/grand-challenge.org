@@ -30,7 +30,7 @@ urlpatterns = [
         name="workstation-session-create",
     ),
     path(
-        "<slug>/sessions/create/<path:workstation_path>",
+        "<slug>/sessions/create/<path:workstation_path>/",
         SessionCreate.as_view(),
         name="workstation-session-create-nested",
     ),
@@ -40,7 +40,7 @@ urlpatterns = [
         name="workstation-debug-session-create",
     ),
     path(
-        "<slug>/sessions/debug/create/<path:workstation_path>",
+        "<slug>/sessions/debug/create/<path:workstation_path>/",
         DebugSessionCreate.as_view(),
         name="workstation-debug-session-create-nested",
     ),

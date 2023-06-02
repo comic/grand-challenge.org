@@ -1,4 +1,5 @@
 from datetime import timedelta
+from urllib.parse import quote_plus
 
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -301,10 +302,10 @@ class SessionCreate(
         )
 
         url = session.get_absolute_url()
-
+        url += f"?path={quote_plus(self.kwargs.get('workstation_path', ''))}"
         qs = self.request.META.get("QUERY_STRING", "")
         if qs:
-            url = f"{url}?{qs}"
+            url = f"{url}&qs={quote_plus(qs)}"
 
         return HttpResponseRedirect(url)
 
