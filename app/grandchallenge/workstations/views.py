@@ -1,4 +1,5 @@
 from datetime import timedelta
+from urllib.parse import quote_plus
 
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -287,7 +288,6 @@ class SessionCreate(
             {
                 "object": self.workstation_image,
                 "ping_endpoint": f"{self.request.site.domain.lower()}/ping",
-                "workstation_path": self.kwargs.get("workstation_path", ""),
             }
         )
         return context
@@ -301,11 +301,11 @@ class SessionCreate(
             extra_env_vars=form.cleaned_data.get("extra_env_vars"),
         )
 
-        url = f"{session.workstation_url}/{self.kwargs.get('workstation_path', '')}"
-
+        url = session.get_absolute_url()
+        url += f"?path={quote_plus(self.kwargs.get('workstation_path', ''))}"
         qs = self.request.META.get("QUERY_STRING", "")
         if qs:
-            url = f"{url}?{qs}"
+            url = f"{url}&qs={quote_plus(qs)}"
 
         return HttpResponseRedirect(url)
 
