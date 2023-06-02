@@ -66,6 +66,8 @@ def get_http_host(*, url, kwargs):
     if urlparts[1]:
         kwargs.update({"HTTP_HOST": urlparts[1]})
         url = urlparts[2]
+        if urlparts.query:
+            url += "?" + urlparts.query
     return url, kwargs
 
 
