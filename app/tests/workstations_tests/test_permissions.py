@@ -178,7 +178,7 @@ def test_workstation_redirect_permissions(
 
         if test[1] == 302 and test[0] is not None:
             session = Session.objects.get(creator=test[0])
-            assert response.url == session.get_absolute_url()
+            assert response.url == session.get_absolute_url() + "?path="
 
 
 @pytest.mark.django_db

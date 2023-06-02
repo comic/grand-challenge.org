@@ -1,4 +1,5 @@
 import json
+from urllib.parse import quote_plus
 
 import pytest
 from django.conf import settings
@@ -281,6 +282,76 @@ def test_session_create(client):
     assert sessions[0].workstation_image == wsi_new_ready
     assert sessions[0].extra_env_vars == []
     assert sessions[0].creator == user
+    assert response.url == sessions[0].get_absolute_url() + "?path="
+
+
+@pytest.mark.django_db
+def test_session_create_redirect_url(client):
+    user = UserFactory()
+    ws = WorkstationFactory()
+
+    ws.add_user(user=user)
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    assert Session.objects.count() == 0
+
+    test_path = "path/with/special_characters$?="
+    test_qs = "query=string&test"
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        url=reverse(
+            "workstations:workstation-session-create", kwargs={"slug": ws.slug}
+        ),
+        user=user,
+        data={"region": "eu-central-1"},
+    )
+
+    assert response.status_code == 302
+    sessions = Session.objects.all()
+    assert response.url == sessions[0].get_absolute_url() + "?path="
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        url=reverse(
+            "workstations:workstation-session-create-nested",
+            kwargs={"slug": ws.slug, "workstation_path": test_path},
+        ),
+        user=user,
+        data={"region": "eu-central-1"},
+    )
+
+    assert response.status_code == 302
+    assert (
+        response.url
+        == sessions[0].get_absolute_url() + f"?path={quote_plus(test_path)}"
+    )
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        url=reverse(
+            "workstations:workstation-session-create-nested",
+            kwargs={"slug": ws.slug, "workstation_path": test_path},
+        )
+        + "?"
+        + test_qs,
+        user=user,
+        data={"region": "eu-central-1"},
+    )
+
+    assert response.status_code == 302
+    assert (
+        response.url
+        == sessions[0].get_absolute_url()
+        + f"?path={quote_plus(test_path)}&qs={quote_plus(test_qs)}"
+    )
 
 
 @pytest.mark.django_db
@@ -319,7 +390,7 @@ def test_debug_session_create(client):
     assert session.workstation_image == wsi
     assert session.creator == user
     assert session.extra_env_vars == env_vars
-    assert response.url == session.get_absolute_url()
+    assert response.url == session.get_absolute_url() + "?path="
 
 
 @pytest.mark.django_db
