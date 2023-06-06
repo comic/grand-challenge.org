@@ -66,6 +66,7 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "series_description",
             "window_center",
             "window_width",
+            "segments",
         )
 
 
