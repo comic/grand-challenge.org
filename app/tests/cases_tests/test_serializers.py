@@ -92,6 +92,7 @@ class TestRetinaImageSerializers:
                     "series_description",
                     "window_center",
                     "window_width",
+                    "segments",
                 ),
                 "no_valid_check": True,
                 # This check is done manually because of the need to skip the image in the check
