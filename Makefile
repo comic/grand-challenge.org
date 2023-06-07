@@ -86,6 +86,9 @@ migrations:
 runserver: build_web_test build_http development_fixtures
 	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
+rundb:
+	bash -c "trap 'docker compose down' EXIT; docker compose up postgres minio.localhost redis registry"
+
 minio:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
