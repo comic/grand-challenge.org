@@ -912,6 +912,7 @@ class DisplaySetGroupObjectPermission(GroupObjectPermissionBase):
 
 class AnswerType(models.TextChoices):
     # WARNING: Do not change the display text, these are used in the front end
+    TEXT = "TEXT", "Text"
     SINGLE_LINE_TEXT = "STXT", "Single line text"
     MULTI_LINE_TEXT = "MTXT", "Multi line text"
     BOOL = "BOOL", "Bool"
@@ -964,8 +965,15 @@ class AnswerType(models.TextChoices):
             AnswerType.MULTIPLE_ELLIPSES,
         ]
 
+    @staticmethod
+    def get_widget_required_types():
+        return [
+            AnswerType.TEXT,
+        ]
+
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
+    AnswerType.TEXT: [InterfaceKindChoices.STRING],
     AnswerType.SINGLE_LINE_TEXT: [InterfaceKindChoices.STRING],
     AnswerType.MULTI_LINE_TEXT: [InterfaceKindChoices.STRING],
     AnswerType.BOOL: [InterfaceKindChoices.BOOL],
@@ -1008,9 +1016,15 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
     NUMBER_INPUT = "NUMBER_INPUT", "Number input"
+    TEXT_INPUT = "TEXT_INPUT", "Text Input"
+    TEXT_AREA = "TEXT_AREA", "Text Area"
 
 
 ANSWER_TYPE_TO_QUESTION_WIDGET = {
+    AnswerType.TEXT: [
+        QuestionWidgetKindChoices.TEXT_INPUT,
+        QuestionWidgetKindChoices.TEXT_AREA,
+    ],
     AnswerType.SINGLE_LINE_TEXT: [],
     AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
@@ -1094,7 +1108,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     answer_type = models.CharField(
         max_length=4,
         choices=AnswerType.choices,
-        default=AnswerType.SINGLE_LINE_TEXT,
+        default=AnswerType.TEXT,
     )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
@@ -1265,6 +1279,14 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             raise ValidationError(
                 "Bool or Heading answer types cannot not be Required "
                 "(otherwise the user will need to tick a box for each image!)"
+            )
+
+        if (
+            self.answer_type in self.AnswerType.get_widget_required_types()
+            and not self.widget
+        ):
+            raise ValidationError(
+                f"The question type {self.get_answer_type_display()} requires a widget."
             )
 
     def _clean_interface(self):

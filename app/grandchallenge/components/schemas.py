@@ -2,6 +2,7 @@ ANSWER_TYPE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
         "null": {"type": "null"},
+        "TEXT": {"type": "string"},
         "STXT": {"type": "string"},
         "MTXT": {"type": "string"},
         "BOOL": {"type": "boolean"},

@@ -261,6 +261,8 @@ class ReaderStudyCopyForm(Form):
 
 
 class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
+    crispy_field_template = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -318,6 +320,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def widget_choices(self):
         answer_type = self["answer_type"].value()
         choices = [*BLANK_CHOICE_DASH]
+        if answer_type in AnswerType.get_widget_required_types():
+            choices = []
         if answer_type:
             try:
                 choices.extend(
