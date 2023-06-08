@@ -135,3 +135,4 @@ uppy = { version = "==2.2.0", include = ["uppy(.min)?.css(.map)?", "uppy(.min)?.
 jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js(.map)?"] }
 jquery = { version = "==3.7.0", include = ["jquery(.min)?(.js|.map)?$"] }
 font-awesome = { version = "==5.15.4", include = ["css/all(.min)?.css", "webfonts/*"] }
+bootstrap = { version = "==4.6.2", include = ["js/bootstrap.bundle(.min)?.js(.map)?"] }

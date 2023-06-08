@@ -1,7 +1,29 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:2405ebf402d0402ad969f9d60ce4968cb341166f713fba03eda136c7176806e8",
+  "content_hash": "sha256:cf24355d8809d1518834fb816b64b4e85de2a2bc903f50d098f5179608b8c3f5",
   "dependencies": [
+    {
+      "name": "bootstrap",
+      "version": "4.6.2",
+      "assets": [
+        {
+          "name": "bootstrap/4.6.2/js/bootstrap.bundle.js",
+          "sri": "sha512-ezTd7an5ZLpG3KYgo7fNMDMkBBHzv7D7P2372kGGEIrYSA0ZQiRYtFUdVdWVUCY9Xggwi3iGXSjwIv8eY2MNbg=="
+        },
+        {
+          "name": "bootstrap/4.6.2/js/bootstrap.bundle.js.map",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/js/bootstrap.bundle.min.js",
+          "sri": "sha512-igl8WEUuas9k5dtnhKqyyld6TzzRjvMqLC79jkgT3z02FvJyHAuUtyemm/P/jYSne1xwFI06ezQxEwweaiV7VA=="
+        },
+        {
+          "name": "bootstrap/4.6.2/js/bootstrap.bundle.min.js.map",
+          "sri": null
+        }
+      ]
+    },
     {
       "name": "font-awesome",
       "version": "5.15.4",
