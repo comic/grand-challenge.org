@@ -127,7 +127,7 @@ def _setup_components_storage():
                 "mc",
                 "admin",
                 "policy",
-                "add",
+                "create",
                 host_alias,
                 policy_name,
                 str(policy_file),
@@ -150,9 +150,10 @@ def _setup_components_storage():
             "mc",
             "admin",
             "policy",
-            "set",
+            "attach",
             host_alias,
             policy_name,
-            f"user={settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID}",
+            "--user",
+            settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
         ]
     )

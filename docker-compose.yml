@@ -52,7 +52,7 @@ services:
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
     command: >-
-      python manage.py runserver_plus 0.0.0.0:8000 --nopin
+      python manage.py runserver_plus 0.0.0.0:8000
     restart: always
     depends_on:
       postgres:
