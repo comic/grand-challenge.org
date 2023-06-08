@@ -82,7 +82,7 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
                 "all": [
                     *AdminMarkdownxWidget.Media.css["all"],
                     "vendor/css/base.min.css",
-                    "vendor/fa/css/all.css",
+                    "vendored/font-awesome/css/all.min.css",
                     "css/markdown.css",
                 ]
             },

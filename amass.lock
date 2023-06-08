@@ -1,7 +1,81 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:ccb8346466409cb5f1e529aa8089558660554d734310fb24f130fc5a63e711cd",
+  "content_hash": "sha256:2405ebf402d0402ad969f9d60ce4968cb341166f713fba03eda136c7176806e8",
   "dependencies": [
+    {
+      "name": "font-awesome",
+      "version": "5.15.4",
+      "assets": [
+        {
+          "name": "font-awesome/5.15.4/css/all.css",
+          "sri": "sha512-4wfcoXlib1Aq0mUtsLLM74SZtmB73VHTafZAvxIp/Wk9u1PpIsrfmTvK0+yKetghCL8SHlZbMyEcV8Z21v42UQ=="
+        },
+        {
+          "name": "font-awesome/5.15.4/css/all.min.css",
+          "sri": "sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-brands-400.eot",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-brands-400.svg",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-brands-400.ttf",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-brands-400.woff",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-brands-400.woff2",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-regular-400.eot",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-regular-400.svg",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-regular-400.ttf",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-regular-400.woff",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-regular-400.woff2",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-solid-900.eot",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-solid-900.svg",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-solid-900.ttf",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-solid-900.woff",
+          "sri": null
+        },
+        {
+          "name": "font-awesome/5.15.4/webfonts/fa-solid-900.woff2",
+          "sri": null
+        }
+      ]
+    },
     {
       "name": "hammer.js",
       "version": "2.0.8",
