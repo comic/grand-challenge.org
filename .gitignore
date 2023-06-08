@@ -96,7 +96,7 @@ postgres_data/
 
 .static/
 node_modules/
-dist/
+/dist/
 
 # Processor container images
 app/algorithm.tar.gz
