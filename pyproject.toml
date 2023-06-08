@@ -37,7 +37,9 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-celery = {version = "!=5.0.6", extras = ["redis", "sqs"]}
+# Disallow 5.3.0 due to https://github.com/celery/kombu/issues/1744
+celery = {version = "!=5.0.6,!=5.3.0", extras = ["redis", "sqs"]}
+kombu = {version ="!=5.3.0"}
 django = "<4.2"
 django-countries = "*"
 django-crispy-forms = "*"
@@ -96,6 +98,8 @@ Pygments = "*"
 django-forms-dynamic = "*"
 django-allauth-2fa = "*"
 urllib3 = "<2"  # Pinned due to lack of support in botocore (https://github.com/boto/botocore/issues/2926)
+django-compressor = "*"
+django-libsass = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest-django = "*"
@@ -135,4 +139,4 @@ uppy = { version = "==2.2.0", include = ["uppy(.min)?.css(.map)?", "uppy(.min)?.
 jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js(.map)?"] }
 jquery = { version = "==3.7.0", include = ["jquery(.min)?(.js|.map)?$"] }
 font-awesome = { version = "==5.15.4", include = ["css/all(.min)?.css", "webfonts/*"] }
-bootstrap = { version = "==4.6.2", include = ["js/bootstrap.bundle(.min)?.js(.map)?"] }
+bootstrap = { version = "==4.6.2", include = ["js/bootstrap.bundle(.min)?.js(.map)?", "css/bootstrap(.min)?.css(.map)?", "scss/*"] }

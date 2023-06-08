@@ -1,11 +1,27 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:cf24355d8809d1518834fb816b64b4e85de2a2bc903f50d098f5179608b8c3f5",
+  "content_hash": "sha256:703f5736deebf9a72b1cfffa7c68b48540d79645ded3bced25038c3c7e5ca12b",
   "dependencies": [
     {
       "name": "bootstrap",
       "version": "4.6.2",
       "assets": [
+        {
+          "name": "bootstrap/4.6.2/css/bootstrap.css",
+          "sri": "sha512-nC+a1/agL6/Btk2NLY0uRsdrXxibJlYKsBhbIPKFMnVqPRtOyw1M0wd1VNPeUYjHT8YTwTNihxo/DzP++k16xQ=="
+        },
+        {
+          "name": "bootstrap/4.6.2/css/bootstrap.css.map",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/css/bootstrap.min.css",
+          "sri": "sha512-rt/SrQ4UNIaGfDyEXZtNcyWvQeOq0QLygHluFQcSjaGB04IxWhal71tKuzP6K8eYXYB6vJV4pHkXcmFGGQ1/0w=="
+        },
+        {
+          "name": "bootstrap/4.6.2/css/bootstrap.min.css.map",
+          "sri": null
+        },
         {
           "name": "bootstrap/4.6.2/js/bootstrap.bundle.js",
           "sri": "sha512-ezTd7an5ZLpG3KYgo7fNMDMkBBHzv7D7P2372kGGEIrYSA0ZQiRYtFUdVdWVUCY9Xggwi3iGXSjwIv8eY2MNbg=="
@@ -20,6 +36,366 @@
         },
         {
           "name": "bootstrap/4.6.2/js/bootstrap.bundle.min.js.map",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_alert.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_badge.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_breadcrumb.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_button-group.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_buttons.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_card.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_carousel.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_close.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_code.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_custom-forms.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_dropdown.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_forms.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_functions.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_grid.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_images.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_input-group.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_jumbotron.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_list-group.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_media.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_mixins.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_modal.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_nav.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_navbar.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_pagination.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_popover.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_print.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_progress.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_reboot.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_root.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_spinners.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_tables.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_toasts.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_tooltip.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_transitions.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_type.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_utilities.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/_variables.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/bootstrap-grid.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/bootstrap-reboot.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/bootstrap.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_alert.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_background-variant.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_badge.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_border-radius.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_box-shadow.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_breakpoints.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_buttons.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_caret.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_clearfix.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_deprecate.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_float.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_forms.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_gradients.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_grid-framework.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_grid.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_hover.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_image.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_list-group.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_lists.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_nav-divider.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_pagination.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_reset-text.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_resize.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_screen-reader.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_size.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_table-row.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_text-emphasis.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_text-hide.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_text-truncate.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_transition.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/mixins/_visibility.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_align.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_background.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_borders.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_clearfix.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_display.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_embed.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_flex.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_float.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_interactions.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_overflow.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_position.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_screenreaders.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_shadows.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_sizing.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_spacing.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_stretched-link.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_text.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/utilities/_visibility.scss",
+          "sri": null
+        },
+        {
+          "name": "bootstrap/4.6.2/scss/vendor/_rfs.scss",
           "sri": null
         }
       ]

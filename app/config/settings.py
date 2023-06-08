@@ -342,7 +342,7 @@ IPWARE_META_PRECEDENCE_ORDER = (
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = "/static/"
+STATIC_ROOT = os.environ.get("STATIC_ROOT", "/static/")
 
 STATIC_HOST = os.environ.get("DJANGO_STATIC_HOST", "")
 STATIC_URL = f"{STATIC_HOST}/static/"
@@ -352,12 +352,16 @@ STATIC_URL = f"{STATIC_HOST}/static/"
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",  # for css compression
 )
 
 # Vendored static files will be put here
 STATICFILES_DIRS = ["/opt/static/", MACHINA_MAIN_STATIC_DIR]
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# CSS Compressioon settings
+COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get(
@@ -480,6 +484,7 @@ THIRD_PARTY_APPS = [
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
+    "compressor",  # for compressing css
     "stdimage",
     "django_filters",
     "drf_spectacular",

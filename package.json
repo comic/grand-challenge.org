@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "mkdir -p dist/js/markdown-toolbar-element dist/css && npm run copy:bootstrap && npm run copy:markdown && npm run sass:build",
-    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/css/*.css ./dist/css/ && cp ./node_modules/bootstrap/dist/css/*.map ./dist/css/ && cp ./node_modules/bootstrap/dist/js/*.js ./dist/js/ && cp ./node_modules/bootstrap/dist/js/*.map ./dist/js/",
+    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/css/*.css ./dist/css/ && cp ./node_modules/bootstrap/dist/css/*.map ./dist/css/",
     "copy:markdown": "cp ./node_modules/@github/markdown-toolbar-element/dist/index.umd.js ./dist/js/markdown-toolbar-element/",
     "sass:build": "sass /src/base.scss ./dist/css/base.min.css -s compressed"
   },
