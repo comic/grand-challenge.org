@@ -89,7 +89,7 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
             js=[
                 "js/markdownx.js",
                 "vendor/js/markdown-toolbar-element/index.umd.js",
-                "vendor/js/jquery.min.js",
+                "vendored/jquery/jquery.min.js",
                 "vendor/js/bootstrap.bundle.min.js",
             ],
         )

@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:5efd4c7cbc59eeeb873edbead4876f1386bb930afbdc0e9359e5af2fea1e51e0",
+  "content_hash": "sha256:ccb8346466409cb5f1e529aa8089558660554d734310fb24f130fc5a63e711cd",
   "dependencies": [
     {
       "name": "hammer.js",
@@ -31,6 +31,24 @@
         {
           "name": "htmx/1.7.0/htmx.min.js",
           "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
+        }
+      ]
+    },
+    {
+      "name": "jquery",
+      "version": "3.7.0",
+      "assets": [
+        {
+          "name": "jquery/3.7.0/jquery.js",
+          "sri": "sha512-8Z5++K1rB3U+USaLKG6oO8uWWBhdYsM3hmdirnOEWp8h2B1aOikj5zBzlXs8QOrvY9OxEnD2QDkbSKKpfqcIWw=="
+        },
+        {
+          "name": "jquery/3.7.0/jquery.min.js",
+          "sri": "sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw=="
+        },
+        {
+          "name": "jquery/3.7.0/jquery.min.map",
+          "sri": null
         }
       ]
     },

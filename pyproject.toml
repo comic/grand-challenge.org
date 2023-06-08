@@ -133,3 +133,4 @@ jsoneditor = { version = "==9.5.2", include = ["jsoneditor(.min)?.js(.map)?", "j
 "hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js(.map)?"] }
 uppy = { version = "==2.2.0", include = ["uppy(.min)?.css(.map)?", "uppy(.min)?.js(.map)?"] }
 jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js(.map)?"] }
+jquery = { version = "==3.7.0", include = ["jquery(.min)?(.js|.map)?$"] }
