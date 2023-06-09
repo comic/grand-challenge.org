@@ -1115,7 +1115,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     answer_type = models.CharField(
         max_length=4,
         choices=AnswerType.choices,
-        default=AnswerType.TEXT,
+        default=AnswerType.SINGLE_LINE_TEXT,
     )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
