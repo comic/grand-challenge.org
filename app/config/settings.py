@@ -356,13 +356,15 @@ STATICFILES_FINDERS = (
 )
 
 # Vendored static files will be put here
-STATICFILES_DIRS = ["/opt/static/", MACHINA_MAIN_STATIC_DIR]
+STATICFILES_DIRS = [MACHINA_MAIN_STATIC_DIR]
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# CSS Compressioon settings
+# CSS Compression settings
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 LIBSASS_OUTPUT_STYLE = "compressed"
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = strtobool(os.environ.get("COMPRESS_OFFLINE", "True"))
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get(
