@@ -261,8 +261,6 @@ class ReaderStudyCopyForm(Form):
 
 
 class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
-    crispy_field_template = None
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
