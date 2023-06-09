@@ -1506,4 +1506,32 @@ class Migration(migrations.Migration):
                 max_length=13,
             ),
         ),
+        migrations.AddField(
+            model_name="question",
+            name="answer_match_pattern",
+            field=grandchallenge.core.fields.RegexField(
+                blank=True,
+                help_text="Regular expression to match a pattern for answers of type Text. Can only be set in combination with the 'Text Input' or 'Text Area' widgets.",
+            ),
+        ),
+        migrations.AddField(
+            model_name="question",
+            name="answer_max_length",
+            field=models.PositiveSmallIntegerField(
+                blank=True,
+                default=None,
+                help_text="Maximum length for answers of type Text. Can only be set in combination with the 'Text Input' or 'Text Area' widgets.",
+                null=True,
+            ),
+        ),
+        migrations.AddField(
+            model_name="question",
+            name="answer_min_length",
+            field=models.PositiveSmallIntegerField(
+                blank=True,
+                default=None,
+                help_text="Minimum length for answers of type Text. Can only be set in combination with the 'Text Input' or 'Text Area' widgets.",
+                null=True,
+            ),
+        ),
     ]
