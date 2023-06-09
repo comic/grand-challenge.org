@@ -363,13 +363,19 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # CSS Compression settings
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 LIBSASS_OUTPUT_STYLE = "compressed"
-COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = strtobool(os.environ.get("COMPRESS_OFFLINE", "True"))
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "d=%^l=xa02an9jn-$!*hy1)5yox$a-$2(ejt-2smimh=j4%8*b"
 )
+
+default_loaders = [
+    "django.template.loaders.filesystem.Loader",
+    "django.template.loaders.app_directories.Loader",
+]
+
+cached_loaders = [("django.template.loaders.cached.Loader", default_loaders)]
 
 TEMPLATES = [
     {
@@ -402,10 +408,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.workstation_domains",
                 "machina.core.context_processors.metadata",
             ],
-            "loaders": [
-                "django.template.loaders.filesystem.Loader",
-                "django.template.loaders.app_directories.Loader",
-            ],
+            "loaders": default_loaders if DEBUG else cached_loaders,
         },
     }
 ]
