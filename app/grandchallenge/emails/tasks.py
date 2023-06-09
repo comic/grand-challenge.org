@@ -103,7 +103,7 @@ def send_bulk_email(action, email_pk):
                 "profile-update", kwargs={"username": user.username}
             )
             html_content = render_to_string(
-                "vendor/mailgun_transactional_emails/action.html",
+                "vendored/mailgun_transactional_emails/action.html",
                 {
                     "title": subject,
                     "username": user.username,
