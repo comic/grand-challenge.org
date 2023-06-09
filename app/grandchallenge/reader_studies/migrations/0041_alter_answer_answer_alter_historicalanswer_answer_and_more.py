@@ -1488,7 +1488,7 @@ class Migration(migrations.Migration):
                     ("ELLI", "Ellipse"),
                     ("MELL", "Multiple ellipses"),
                 ],
-                default="TEXT",
+                default="STXT",
                 max_length=4,
             ),
         ),

@@ -512,7 +512,7 @@ def _create_reader_studies(users):
     question = Question.objects.create(
         reader_study=reader_study,
         question_text="foo",
-        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.TEXT,
     )
 
     display_set = DisplaySet.objects.create(reader_study=reader_study)
