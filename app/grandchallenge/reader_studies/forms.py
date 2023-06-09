@@ -286,9 +286,16 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                     f"hx-include='[id=id_answer_type]'>"
                     f"</div>"
                 ),
-                Field("answer_min_value"),
-                Field("answer_max_value"),
-                Field("answer_step_size"),
+                Fieldset(
+                    "Answer validation and widget options",
+                    "answer_min_value",
+                    "answer_max_value",
+                    "answer_step_size",
+                    "answer_min_length",
+                    "answer_max_length",
+                    "answer_match_pattern",
+                    css_class="border rounded px-2 my-4",
+                ),
                 Fieldset(
                     "Add options",
                     Formset("options"),
@@ -381,6 +388,9 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
             "answer_min_value",
             "answer_max_value",
             "answer_step_size",
+            "answer_min_length",
+            "answer_max_length",
+            "answer_match_pattern",
         )
         help_texts = {
             "question_text": (
@@ -414,13 +424,10 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                 "If true, the user must provide an answer or at least one annotation for this question, "
                 "otherwise the user can skip it."
             ),
-            "interface": (
-                "Select component interface to use as a default answer for this "
-                "question."
-            ),
         }
         widgets = {
             "question_text": TextInput,
+            "answer_match_pattern": TextInput,
             "overlay_segments": JSONEditorWidget(
                 schema=OVERLAY_SEGMENTS_SCHEMA
             ),
@@ -439,6 +446,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         queryset=interface_choices,
         initial=initial_interface,
         required=False,
+        help_text="Select component interface to use as a default answer for this "
+        "question.",
     )
 
     widget = DynamicField(
@@ -446,6 +455,8 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         initial=initial_widget,
         choices=widget_choices,
         required=False,
+        help_text="Select the input method that will be presented to the user. "
+        "Which widgets are available depends on the answer type selected.",
     )
 
 

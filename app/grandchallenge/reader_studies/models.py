@@ -6,7 +6,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (
+    MaxLengthValidator,
+    MaxValueValidator,
+    MinLengthValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
@@ -27,6 +33,7 @@ from grandchallenge.components.models import (
     OverlaySegmentsMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
+from grandchallenge.core.fields import RegexField
 from grandchallenge.core.guardian import get_objects_for_group
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -1151,6 +1158,22 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         validators=[MinValueValidator(limit_value=0.001)],
         help_text="Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the 'Number input' widget.",
     )
+    answer_min_length = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Minimum length for answers of type Text. Can only be set in combination with the 'Text Input' or 'Text Area' widgets.",
+    )
+    answer_max_length = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Maximum length for answers of type Text. Can only be set in combination with the 'Text Input' or 'Text Area' widgets.",
+    )
+    answer_match_pattern = RegexField(
+        blank=True,
+        help_text="Regular expression to match a pattern for answers of type Text. Can only be set in combination with the 'Text Input' or 'Text Area' widgets.",
+    )
 
     class Meta:
         ordering = ("order", "created")
@@ -1180,10 +1203,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     @property
     def read_only_fields(self):
-        """
-        ``question_text``, ``answer_type``, ``image_port``, ``required`` if
-        this ``Question`` is fully editable, an empty list otherwise.
-        """
         if not self.is_fully_editable:
             return [
                 "question_text",
@@ -1195,6 +1214,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "answer_min_value",
                 "answer_max_value",
                 "answer_step_size",
+                "answer_min_length",
+                "answer_max_length",
+                "answer_match_pattern",
             ]
         return []
 
@@ -1281,14 +1303,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "(otherwise the user will need to tick a box for each image!)"
             )
 
-        if (
-            self.answer_type in self.AnswerType.get_widget_required_types()
-            and not self.widget
-        ):
-            raise ValidationError(
-                f"The question type {self.get_answer_type_display()} requires a widget."
-            )
-
     def _clean_interface(self):
         if (
             self.interface
@@ -1316,6 +1330,10 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                         f"In order to use the {self.get_widget_display()} widget, "
                         f"you need to provide a default answer."
                     )
+        elif self.answer_type in self.AnswerType.get_widget_required_types():
+            raise ValidationError(
+                f"The question type {self.get_answer_type_display()} requires a widget."
+            )
 
     def _clean_widget_options(self):
         is_step_size_set = self.answer_step_size is not None
@@ -1325,11 +1343,11 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             [is_step_size_set, is_min_value_set, is_max_value_set]
         )
 
-        if (
-            is_number_validation_set
-            and not self.answer_type == AnswerType.NUMBER
-            and not self.widget == QuestionWidgetKindChoices.NUMBER_INPUT
-        ):
+        perform_number_validation = (
+            self.answer_type == AnswerType.NUMBER
+            and self.widget == QuestionWidgetKindChoices.NUMBER_INPUT
+        )
+        if is_number_validation_set and not perform_number_validation:
             # Server side number validation can only be done with AnswerType.NUMBER.
             # Currently, client side number validation is only done with
             # QuestionWidgetKindChoices.NUMBER_INPUT. If we allowed number
@@ -1348,6 +1366,28 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ):
             raise ValidationError(
                 "Answer max value needs to be bigger than answer min value."
+            )
+
+        is_min_length_set = self.answer_min_length is not None
+        is_max_length_set = self.answer_max_length is not None
+        is_pattern_match_set = len(self.answer_match_pattern) > 0
+
+        is_text_validation_set = any(
+            [is_min_length_set, is_max_length_set, is_pattern_match_set]
+        )
+        if is_text_validation_set and not self.answer_type == AnswerType.TEXT:
+            raise ValidationError(
+                "Minimum length, maximum length, and/or pattern match for answers "
+                "can only be defined for the answers of type Text.",
+            )
+
+        if (
+            is_min_length_set
+            and is_max_length_set
+            and self.answer_max_length < self.answer_min_length
+        ):
+            raise ValidationError(
+                "Answer max length needs to be bigger than answer min length."
             )
 
     @property
@@ -1530,7 +1570,8 @@ class Answer(UUIDModel):
                 )
 
         if (
-            question.answer_type == Question.AnswerType.NUMBER
+            question.answer_type
+            in (Question.AnswerType.NUMBER, Question.AnswerType.TEXT)
             and question.required
             and answer is None
         ):
@@ -1548,6 +1589,18 @@ class Answer(UUIDModel):
             StepValueValidator(
                 limit_value=question.answer_step_size,
                 offset=question.answer_min_value,
+            )(answer)
+
+        if question.answer_min_length is not None:
+            MinLengthValidator(question.answer_min_length)(answer)
+
+        if question.answer_max_length is not None:
+            MaxLengthValidator(question.answer_max_length)(answer)
+
+        if question.answer_match_pattern is not None:
+            RegexValidator(
+                regex=question.answer_match_pattern,
+                message="Enter a valid answer that matches with the pattern",
             )(answer)
 
     @property

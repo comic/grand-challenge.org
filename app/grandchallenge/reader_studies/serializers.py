@@ -77,6 +77,9 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_min_value",
             "answer_max_value",
             "answer_step_size",
+            "answer_min_length",
+            "answer_max_length",
+            "answer_match_pattern",
         )
 
 
