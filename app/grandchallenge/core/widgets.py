@@ -69,7 +69,7 @@ class MarkdownEditorWidget(MarkdownxWidget):
         return forms.Media(
             js=(
                 "js/markdownx.js",
-                "vendor/js/markdown-toolbar-element/index.umd.js",
+                "vendored/@github/markdown-toolbar-element/dist/index.umd.js",
             )
         )
 
@@ -82,14 +82,14 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
                 "all": [
                     *AdminMarkdownxWidget.Media.css["all"],
                     "vendor/css/base.min.css",
-                    "vendor/fa/css/all.css",
+                    "vendored/font-awesome/css/all.min.css",
                     "css/markdown.css",
                 ]
             },
             js=[
                 "js/markdownx.js",
-                "vendor/js/markdown-toolbar-element/index.umd.js",
-                "vendor/js/jquery.min.js",
-                "vendor/js/bootstrap.bundle.min.js",
+                "vendored/@github/markdown-toolbar-element/dist/index.umd.js",
+                "vendored/jquery/jquery.min.js",
+                "vendored/bootstrap/js/bootstrap.bundle.min.js",
             ],
         )

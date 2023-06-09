@@ -94,8 +94,9 @@ postgres_data/
 # Poetry virtualenv path
 .venv
 
+.static/
 node_modules/
-dist/
+/dist/
 
 # Processor container images
 app/algorithm.tar.gz

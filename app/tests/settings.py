@@ -44,6 +44,8 @@ STDIMAGE_BANNER_VARIATIONS = {}
 DEBUG = False
 TEMPLATE_DEBUG = False
 DEBUG_LOGGING = False
+COMPRESS_OFFLINE = False
+COMPRESS_ENABLED = False
 
 # Disable non-critical logging in tests
 logging.disable(logging.CRITICAL)

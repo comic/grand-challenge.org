@@ -1,4 +1,5 @@
 {% load static %}
+{% load compress %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,9 +7,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cornerstone3D Image Viewer</title>
-    <link type="text/css" href="{% static 'vendor/css/base.min.css' %}" rel="stylesheet" media="screen">
-    <link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
-    <script type="text/javascript" src="{% static 'vendor/js/jquery.min.js' %}"></script>
+    {% compress css %}
+        <link type="text/x-scss" href="{% static 'css/base.scss' %}" rel="stylesheet" media="screen">
+    {% endcompress %}
+    <link href="{% static 'vendored/font-awesome/css/all.min.css' %}" rel="stylesheet">
+    <script type="text/javascript" src="{% static 'vendored/jquery/jquery.min.js' %}"></script>
     <style>
       html, body {
         margin: 0;
@@ -105,7 +108,7 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
-    <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
     {{ object.pk|json_script:"imagePk" }}
     <script>

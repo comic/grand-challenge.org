@@ -1,4 +1,5 @@
 {% load static %}
+{% load compress %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,9 +7,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cornerstone Image Viewer</title>
-    <link type="text/css" href="{% static 'vendor/css/base.min.css' %}" rel="stylesheet" media="screen">
-    <link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
-    <script type="text/javascript" src="{% static 'vendor/js/jquery.min.js' %}"></script>
+    {% compress css %}
+        <link type="text/x-scss" href="{% static 'css/base.scss' %}" rel="stylesheet" media="screen">
+    {% endcompress %}
+    <link href="{% static 'vendored/font-awesome/css/all.min.css' %}" rel="stylesheet">
+    <script type="text/javascript" src="{% static 'vendored/jquery/jquery.min.js' %}"></script>
     <style>
         body {
             margin: 0;
@@ -90,7 +93,7 @@
         </div>
     </div>
 
-    <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'vendored/hammer.js/hammer.min.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.6/dist/cornerstoneMath.js" integrity="sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.2.4/dist/cornerstone.js" integrity="sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8" crossorigin="anonymous"></script>

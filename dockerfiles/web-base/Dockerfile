@@ -57,8 +57,8 @@ RUN mkdir -p /opt/git-lfs \
 
 # Get the minio client for development
 RUN mkdir -p /opt/mc \
-    && wget https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2022-06-11T21-10-36Z -O /opt/mc/mc \
-    && echo "77a784948c3bce2c169bf3f4d998ae1485c060193689268627ff896ddcf9f617  /opt/mc/mc" | shasum -c - || exit 1 \
+    && wget https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-05-18T16-59-00Z -O /opt/mc/mc \
+    && echo "82ccc575197c9369b21e99d9551418866c1e6606  /opt/mc/mc" | shasum -c - || exit 1 \
     && chmod a+x /opt/mc/mc \
     && mv /opt/mc/mc /usr/local/bin/ \
     && rm -r /opt/mc
@@ -77,9 +77,9 @@ ENV PYTHONUNBUFFERED=1\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.1.1\
     PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
 
-RUN mkdir -p /opt/poetry /app /static /opt/static /opt/sagemaker-shim \
+RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim \
     && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/poetry /app /static /opt/static /opt/sagemaker-shim
+    && chown django:django /opt/poetry /app /static /opt/sagemaker-shim
 
 USER django:django
 

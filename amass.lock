@@ -1,376 +1,943 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:5efd4c7cbc59eeeb873edbead4876f1386bb930afbdc0e9359e5af2fea1e51e0",
+  "content_hash": "sha256:6f7595463814091631048a7c892a36ee34ee90db07484b64e9b82a13b5bcae43",
   "dependencies": [
+    {
+      "name": "@github/markdown-toolbar-element",
+      "version": "1.2.0",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/index.umd.js",
+          "sri": "sha384-Ax3sxzgMtcdi9LFvXcq24Eb67ECTmlxgV0+3psXKVymsmK8XzCtqC2YQDcBn3mS/"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "bootstrap",
+      "version": "4.6.2",
+      "provider": "cdnjs",
+      "assets": [
+        {
+          "name": "css/bootstrap.css",
+          "sri": "sha512-nC+a1/agL6/Btk2NLY0uRsdrXxibJlYKsBhbIPKFMnVqPRtOyw1M0wd1VNPeUYjHT8YTwTNihxo/DzP++k16xQ=="
+        },
+        {
+          "name": "css/bootstrap.css.map",
+          "sri": null
+        },
+        {
+          "name": "css/bootstrap.min.css",
+          "sri": "sha512-rt/SrQ4UNIaGfDyEXZtNcyWvQeOq0QLygHluFQcSjaGB04IxWhal71tKuzP6K8eYXYB6vJV4pHkXcmFGGQ1/0w=="
+        },
+        {
+          "name": "css/bootstrap.min.css.map",
+          "sri": null
+        },
+        {
+          "name": "js/bootstrap.bundle.js",
+          "sri": "sha512-ezTd7an5ZLpG3KYgo7fNMDMkBBHzv7D7P2372kGGEIrYSA0ZQiRYtFUdVdWVUCY9Xggwi3iGXSjwIv8eY2MNbg=="
+        },
+        {
+          "name": "js/bootstrap.bundle.js.map",
+          "sri": null
+        },
+        {
+          "name": "js/bootstrap.bundle.min.js",
+          "sri": "sha512-igl8WEUuas9k5dtnhKqyyld6TzzRjvMqLC79jkgT3z02FvJyHAuUtyemm/P/jYSne1xwFI06ezQxEwweaiV7VA=="
+        },
+        {
+          "name": "js/bootstrap.bundle.min.js.map",
+          "sri": null
+        },
+        {
+          "name": "scss/_alert.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_badge.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_breadcrumb.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_button-group.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_buttons.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_card.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_carousel.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_close.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_code.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_custom-forms.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_dropdown.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_forms.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_functions.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_grid.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_images.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_input-group.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_jumbotron.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_list-group.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_media.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_mixins.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_modal.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_nav.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_navbar.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_pagination.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_popover.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_print.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_progress.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_reboot.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_root.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_spinners.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_tables.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_toasts.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_tooltip.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_transitions.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_type.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_utilities.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/_variables.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/bootstrap-grid.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/bootstrap-reboot.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/bootstrap.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_alert.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_background-variant.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_badge.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_border-radius.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_box-shadow.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_breakpoints.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_buttons.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_caret.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_clearfix.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_deprecate.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_float.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_forms.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_gradients.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_grid-framework.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_grid.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_hover.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_image.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_list-group.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_lists.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_nav-divider.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_pagination.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_reset-text.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_resize.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_screen-reader.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_size.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_table-row.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_text-emphasis.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_text-hide.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_text-truncate.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_transition.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_visibility.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_align.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_background.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_borders.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_clearfix.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_display.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_embed.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_flex.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_float.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_interactions.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_overflow.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_position.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_screenreaders.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_shadows.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_sizing.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_spacing.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_stretched-link.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_text.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/utilities/_visibility.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/vendor/_rfs.scss",
+          "sri": null
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "bootswatch",
+      "version": "4.4.1",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/flatly/_bootswatch.scss",
+          "sri": "sha384-rLXzrClzaypFQtQwmw1DZKgiKt7lMlGB+uK7bm68ONTfnXSZYUxnT2FwL2vyXoYC"
+        },
+        {
+          "name": "dist/flatly/_variables.scss",
+          "sri": "sha384-WW7IwLcBPSDvJrA6CjhnOp2Bkt5qweHY97/QookMfeuWG0PAwTxI5izWn21wO1zw"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "font-awesome",
+      "version": "5.15.4",
+      "provider": "cdnjs",
+      "assets": [
+        {
+          "name": "css/all.css",
+          "sri": "sha512-4wfcoXlib1Aq0mUtsLLM74SZtmB73VHTafZAvxIp/Wk9u1PpIsrfmTvK0+yKetghCL8SHlZbMyEcV8Z21v42UQ=="
+        },
+        {
+          "name": "css/all.min.css",
+          "sri": "sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+        },
+        {
+          "name": "webfonts/fa-brands-400.eot",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-brands-400.svg",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-brands-400.ttf",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-brands-400.woff",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-brands-400.woff2",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-regular-400.eot",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-regular-400.svg",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-regular-400.ttf",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-regular-400.woff",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-regular-400.woff2",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-solid-900.eot",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-solid-900.svg",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-solid-900.ttf",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-solid-900.woff",
+          "sri": null
+        },
+        {
+          "name": "webfonts/fa-solid-900.woff2",
+          "sri": null
+        }
+      ],
+      "maps": []
+    },
     {
       "name": "hammer.js",
       "version": "2.0.8",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "hammer.js/2.0.8/hammer.js",
+          "name": "hammer.js",
           "sri": "sha512-qRj8N7fxOHxPkKjnQ9EJgLJ8Ng1OK7seBn1uk8wkqaXpa7OA13LO6txQ7+ajZonyc9Ts4K/ugXljevkFTUGBcw=="
         },
         {
-          "name": "hammer.js/2.0.8/hammer.min.js",
+          "name": "hammer.min.js",
           "sri": "sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g=="
         },
         {
-          "name": "hammer.js/2.0.8/hammer.min.js.map",
+          "name": "hammer.min.js.map",
           "sri": null
         }
-      ]
+      ],
+      "maps": []
     },
     {
       "name": "htmx",
       "version": "1.7.0",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "htmx/1.7.0/htmx.js",
+          "name": "htmx.js",
           "sri": "sha512-wJXYT7RzKp/dxju83CCCATupp32GQvko0KrJVK3zTgTMkVWiLiHnupKKgOUt+87t+oe/Rm2Q2p+pOpiD+IR0lQ=="
         },
         {
-          "name": "htmx/1.7.0/htmx.min.js",
+          "name": "htmx.min.js",
           "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
         }
-      ]
+      ],
+      "maps": []
+    },
+    {
+      "name": "itk-vtk-viewer",
+      "version": "11.11.2",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/itkVtkViewerCDN.js",
+          "sri": "sha384-LTeflmm51FBGPPQClZZuYQKlisKD6AINeDUXFQxyoY0UsU/acHZnhG99cV4bjIvX"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "jquery",
+      "version": "3.7.0",
+      "provider": "cdnjs",
+      "assets": [
+        {
+          "name": "jquery.js",
+          "sri": "sha512-8Z5++K1rB3U+USaLKG6oO8uWWBhdYsM3hmdirnOEWp8h2B1aOikj5zBzlXs8QOrvY9OxEnD2QDkbSKKpfqcIWw=="
+        },
+        {
+          "name": "jquery.min.js",
+          "sri": "sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw=="
+        },
+        {
+          "name": "jquery.min.map",
+          "sri": null
+        }
+      ],
+      "maps": []
     },
     {
       "name": "jscolor",
       "version": "2.5.1",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "jscolor/2.5.1/jscolor.js",
+          "name": "jscolor.js",
           "sri": "sha512-UP6tOIJfUgQv7uNUL4IXb8HDO1PlEUVSOuPGUcX11obi7Eh24geCoL2X+8JxB4tA9BfdppntOzqrmVQUblSYYQ=="
         },
         {
-          "name": "jscolor/2.5.1/jscolor.min.js",
+          "name": "jscolor.min.js",
           "sri": "sha512-/e+XGe8oSD9M1t0NKNCrUlRsiyeFTiZw4+pmf0g8wTbc8IfiLwJsjTODc/pq3hKhKAdsehJs7STPvX7SkFSpOQ=="
         }
-      ]
+      ],
+      "maps": []
     },
     {
       "name": "jsoneditor",
       "version": "9.5.2",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "jsoneditor/9.5.2/img/jsoneditor-icons.svg",
+          "name": "img/jsoneditor-icons.svg",
           "sri": null
         },
         {
-          "name": "jsoneditor/9.5.2/jsoneditor.css",
+          "name": "jsoneditor.css",
           "sri": "sha512-7BNBvfwEnG/+oK7PTxRr4I5f7SQQjYdnGjLe1F4kjNU9m4sXSOxcld4x2NRtgYiYkO+ltKQ1foU5Eau7kSnkVA=="
         },
         {
-          "name": "jsoneditor/9.5.2/jsoneditor.js",
+          "name": "jsoneditor.js",
           "sri": "sha512-L0Ev5uNLTNswQjWgk65iN2z2q5TvDwe3qf5YYLROgs/SrVNfhqs6nwpfo+RXJ/+QM9bh/Acd7x03XvogdX5XFQ=="
         },
         {
-          "name": "jsoneditor/9.5.2/jsoneditor.min.css",
+          "name": "jsoneditor.min.css",
           "sri": "sha512-oEH5lcAN+ZIIBvRXjo3cI689oL9c7HGoLxEkPnzRskQ8lSkKh2aZ/wd6rx//5+dI1eY20mPQPQTEx69UuHBu3Q=="
         },
         {
-          "name": "jsoneditor/9.5.2/jsoneditor.min.js",
+          "name": "jsoneditor.min.js",
           "sri": "sha512-sWWNHrucAGzw6+kdky+SP1jIqkzY+bYzZRFn6H0aRw/jyaBKvj4A8hvze0bhSplOtAzY1YZyar8KrK8lDRtUdQ=="
         }
+      ],
+      "maps": [
+        "jsoneditor.map"
       ]
     },
     {
       "name": "moment.js",
       "version": "2.24.0",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "moment.js/2.24.0/moment.js",
+          "name": "moment.js",
           "sri": "sha512-Wv3kTSwLkL+/MpK3lOgKtsTn5lO1nmdesv7k9kWcIu0joAJo4KxIsB4/rQPUX/1M/MNeMCbRb7/2S/f2FIhBLQ=="
         },
         {
-          "name": "moment.js/2.24.0/moment.min.js",
+          "name": "moment.min.js",
           "sri": "sha512-i2CVnAiguN6SnJ3d2ChOOddMWQyvgQTzm0qSgiKhOqBMGCx4fGU5BtzXEybnKatWPDkXPFyCI0lbG42BnVjr/Q=="
         }
-      ]
+      ],
+      "maps": []
     },
     {
       "name": "openseadragon",
       "version": "2.4.1",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "openseadragon/2.4.1/images/button_grouphover.png",
+          "name": "images/button_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/button_hover.png",
+          "name": "images/button_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/button_pressed.png",
+          "name": "images/button_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/button_rest.png",
+          "name": "images/button_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/flip_grouphover.png",
+          "name": "images/flip_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/flip_hover.png",
+          "name": "images/flip_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/flip_pressed.png",
+          "name": "images/flip_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/flip_rest.png",
+          "name": "images/flip_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/fullpage_grouphover.png",
+          "name": "images/fullpage_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/fullpage_hover.png",
+          "name": "images/fullpage_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/fullpage_pressed.png",
+          "name": "images/fullpage_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/fullpage_rest.png",
+          "name": "images/fullpage_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/home_grouphover.png",
+          "name": "images/home_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/home_hover.png",
+          "name": "images/home_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/home_pressed.png",
+          "name": "images/home_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/home_rest.png",
+          "name": "images/home_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/next_grouphover.png",
+          "name": "images/next_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/next_hover.png",
+          "name": "images/next_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/next_pressed.png",
+          "name": "images/next_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/next_rest.png",
+          "name": "images/next_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/previous_grouphover.png",
+          "name": "images/previous_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/previous_hover.png",
+          "name": "images/previous_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/previous_pressed.png",
+          "name": "images/previous_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/previous_rest.png",
+          "name": "images/previous_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateleft_grouphover.png",
+          "name": "images/rotateleft_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateleft_hover.png",
+          "name": "images/rotateleft_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateleft_pressed.png",
+          "name": "images/rotateleft_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateleft_rest.png",
+          "name": "images/rotateleft_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateright_grouphover.png",
+          "name": "images/rotateright_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateright_hover.png",
+          "name": "images/rotateright_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateright_pressed.png",
+          "name": "images/rotateright_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/rotateright_rest.png",
+          "name": "images/rotateright_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomin_grouphover.png",
+          "name": "images/zoomin_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomin_hover.png",
+          "name": "images/zoomin_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomin_pressed.png",
+          "name": "images/zoomin_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomin_rest.png",
+          "name": "images/zoomin_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomout_grouphover.png",
+          "name": "images/zoomout_grouphover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomout_hover.png",
+          "name": "images/zoomout_hover.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomout_pressed.png",
+          "name": "images/zoomout_pressed.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/images/zoomout_rest.png",
+          "name": "images/zoomout_rest.png",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/openseadragon.js",
+          "name": "openseadragon.js",
           "sri": "sha512-wLveiqffVDS+4JWoWKHUFKCw2zUjqsG8dHN8Q72zgGWTed/fLP4NePfxQ3nw1Ewe3hd7mvUIjO3owmLWvZyf2Q=="
         },
         {
-          "name": "openseadragon/2.4.1/openseadragon.js.map",
+          "name": "openseadragon.js.map",
           "sri": null
         },
         {
-          "name": "openseadragon/2.4.1/openseadragon.min.js",
+          "name": "openseadragon.min.js",
           "sri": "sha512-ydnIgG69uS1sVDFa1ki6qvOVkc47BmyW3RGoMwn9jATwDIFdIZ8Yuoy/w3IQEv8xzUwqFPs/yNoD2bSaQTGXYg=="
         },
         {
-          "name": "openseadragon/2.4.1/openseadragon.min.js.map",
+          "name": "openseadragon.min.js.map",
           "sri": null
         }
-      ]
+      ],
+      "maps": []
     },
     {
       "name": "sentry-browser",
       "version": "6.19.7",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "sentry-browser/6.19.7/bundle.js",
+          "name": "bundle.js",
           "sri": "sha512-YFAdK/3y/z0eEiGVH4jEbdHQM9CDBO6XV5oX5NkhlC4UlZLV9we7Sqog57K2FDBDbGQUWfkEilpByTPJwQ8Atg=="
         },
         {
-          "name": "sentry-browser/6.19.7/bundle.min.js",
+          "name": "bundle.min.js",
           "sri": "sha512-bfZoCIl6netdQQ4kWQ5HZaKOS24IohehpiEjuOu2sVpY3XaheFE/n0+bqJCwt4CDEP+nN+90sQwIOl1II1pLjA=="
         }
+      ],
+      "maps": [
+        "bundle.min.js.map",
+        "bundle.js.map"
       ]
     },
     {
       "name": "uppy",
       "version": "2.2.0",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "uppy/2.2.0/uppy.css",
+          "name": "uppy.css",
           "sri": "sha512-Ku+niwTGeWDTIMq36s+0/Z5/J2+Dzv+oPX+VK6IdKD3Zgd08xmNR4l7UWeMc3pXNMMvqX3N0SBUytoL75/WMCw=="
         },
         {
-          "name": "uppy/2.2.0/uppy.js",
+          "name": "uppy.js",
           "sri": "sha512-KbZ6k6pqdpS1TyYdfB9iJAwBv20Hktdz/6BTVd/eEHgKraMflq9F8/tOUlAyf1gAFBon6d6nC8L+pP27zeLZOw=="
         },
         {
-          "name": "uppy/2.2.0/uppy.js.map",
+          "name": "uppy.js.map",
           "sri": null
         },
         {
-          "name": "uppy/2.2.0/uppy.min.css",
+          "name": "uppy.min.css",
           "sri": "sha512-gD1Tjv/Dd8ZppRVxEh9BEgWgh6tUyXzcKb69dBn+JD5Ci5XYEj41jXBMacn3BmAbFFt/Wb1thylExLdwHR2kDA=="
         },
         {
-          "name": "uppy/2.2.0/uppy.min.js",
+          "name": "uppy.min.js",
           "sri": "sha512-NqPGg/p+/2QB/u22DwP2WutK3gpmglXIWLLuj2m67Kn6o+DU4qXopBHsQzJ7vSZMDx8wJ3fXbo526oSFLhCwkA=="
         },
         {
-          "name": "uppy/2.2.0/uppy.min.js.map",
+          "name": "uppy.min.js.map",
           "sri": null
         }
+      ],
+      "maps": [
+        "packages/uppy/dist/uppy.min.js.map"
       ]
     },
     {
       "name": "vega",
       "version": "5.20.2",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "vega/5.20.2/vega.js",
+          "name": "vega.js",
           "sri": "sha512-NUL0H+1cUkPGBvLAmsK0WmDwgXYINObyyw/Jj8fBwu6sIl+12iSZr0+/TAQ8wCaj2XzAaFX5XQRjx8Z/1E8qTA=="
         },
         {
-          "name": "vega/5.20.2/vega.min.js",
+          "name": "vega.min.js",
           "sri": "sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
         }
+      ],
+      "maps": [
+        "vega.min.js.map"
       ]
     },
     {
       "name": "vega-embed",
       "version": "6.17.0",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "vega-embed/6.17.0/vega-embed.js",
+          "name": "vega-embed.js",
           "sri": "sha512-on9nfuMR+qroRvIZgDlfWK09LLuVIIzazSQHves4boFFtHulHUM7XnDg6e0xdFAXgiwtZHfBRR5xT3xu0gkhZg=="
         },
         {
-          "name": "vega-embed/6.17.0/vega-embed.js.map",
+          "name": "vega-embed.js.map",
           "sri": null
         },
         {
-          "name": "vega-embed/6.17.0/vega-embed.min.js",
+          "name": "vega-embed.min.js",
           "sri": "sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
         },
         {
-          "name": "vega-embed/6.17.0/vega-embed.min.js.map",
+          "name": "vega-embed.min.js.map",
           "sri": null
         }
-      ]
+      ],
+      "maps": []
     },
     {
       "name": "vega-lite",
       "version": "5.1.0",
+      "provider": "cdnjs",
       "assets": [
         {
-          "name": "vega-lite/5.1.0/vega-lite.js",
+          "name": "vega-lite.js",
           "sri": "sha512-Z5O5U8QvBmxsHZiQfvqu2+UERgL7K7tVJ8XwAlnP5Q+U4oG6bLeMn53GMBB9M2aBm0GKeXFcWPOW0mjm2kPTFg=="
         },
         {
-          "name": "vega-lite/5.1.0/vega-lite.js.map",
+          "name": "vega-lite.js.map",
           "sri": null
         },
         {
-          "name": "vega-lite/5.1.0/vega-lite.min.js",
+          "name": "vega-lite.min.js",
           "sri": "sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
         },
         {
-          "name": "vega-lite/5.1.0/vega-lite.min.js.map",
+          "name": "vega-lite.min.js.map",
           "sri": null
         }
-      ]
+      ],
+      "maps": []
     }
   ]
 }

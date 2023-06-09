@@ -13,6 +13,8 @@ services:
 
   postgres:
     image: postgres:14
+    ports:
+      - "127.0.0.1:5432:5432"
     environment:
       <<: [*postgres-env]
     tmpfs:
@@ -27,7 +29,7 @@ services:
   minio.localhost:
     image: minio/minio:RELEASE.2023-05-18T00-05-36Z
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
     entrypoint: "/bin/sh"
     command: >-
       -c "
@@ -46,11 +48,12 @@ services:
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
+      COMPRESS_OFFLINE: 'false'
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
     command: >-
-      python manage.py runserver_plus 0.0.0.0:8000 --nopin
+      python manage.py runserver_plus 0.0.0.0:8000
     restart: always
     depends_on:
       postgres:
@@ -84,8 +87,8 @@ services:
         && nginx -g 'daemon off;'"
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
     depends_on:
       web:
         condition: service_started
@@ -94,6 +97,8 @@ services:
 
   redis:
     image: redis:5.0
+    ports:
+      - "127.0.0.1:6379:6379"
     command: redis-server --appendonly yes
     restart: always
 
@@ -188,8 +193,8 @@ services:
   workstation-proxy:
     image: traefik:2.1
     ports:
-      - "8081:8081"
-      - "9101:9101"
+      - "127.0.0.1:8081:8081"
+      - "127.0.0.1:9101:9101"
     command:
       - "--entrypoints.traefik.address=:8081"
       - "--entrypoints.metrics.address=:9101"
@@ -215,6 +220,8 @@ services:
 
   registry:
     image: registry:2.7
+    ports:
+      - "127.0.0.1:5000:5000"
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: 'true'
 
@@ -223,7 +230,7 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/1
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     depends_on:
       redis:
         condition: service_started
