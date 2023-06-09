@@ -142,3 +142,4 @@ font-awesome = { version = "==5.15.4", include = ["css/all(.min)?.css", "webfont
 bootstrap = { version = "==4.6.2", include = ["js/bootstrap.bundle(.min)?.js(.map)?", "css/bootstrap(.min)?.css(.map)?", "scss/*"] }
 bootswatch = { version = "==4.4.1", provider = "unpkg", include = ["dist/flatly/.*.scss"] }
 "@github/markdown-toolbar-element" = { version = "==1.2.0", provider = "unpkg", include = ["dist/index.umd.js$"] }
+itk-vtk-viewer = { version = "==11.11.2", provider = "unpkg", include = ["dist/itkVtkViewerCDN(.min)?.js$"] }

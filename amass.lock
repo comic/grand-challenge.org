@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:e9d11f49ea6ba6445520637a5e302fdb8f827ca5a2ceecbf0197365bd6500622",
+  "content_hash": "sha256:6f7595463814091631048a7c892a36ee34ee90db07484b64e9b82a13b5bcae43",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -538,6 +538,18 @@
         {
           "name": "htmx.min.js",
           "sri": "sha512-etqA0KankuxrlSeZDYycQBY/D/KWZn0YZjlsjAo7kCEBTy1gg+DwmR6icxtOpqDBOzm2P00/lSIXEu7K+zvNsg=="
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "itk-vtk-viewer",
+      "version": "11.11.2",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/itkVtkViewerCDN.js",
+          "sri": "sha384-LTeflmm51FBGPPQClZZuYQKlisKD6AINeDUXFQxyoY0UsU/acHZnhG99cV4bjIvX"
         }
       ],
       "maps": []
