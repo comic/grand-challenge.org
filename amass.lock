@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:55daaa673ff306f88fca86a2e0351ac3a1ae7fe1ac1164b5604fa9ea2f58e56e",
+  "content_hash": "sha256:47785b109266eda7ad14f469b0570f52e5fd6840a9a0ef17a1ef3adb0b998f54",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -409,6 +409,21 @@
         {
           "name": "scss/vendor/_rfs.scss",
           "sri": null
+        }
+      ]
+    },
+    {
+      "name": "bootswatch",
+      "version": "4.4.1",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/flatly/_bootswatch.scss",
+          "sri": "sha384-rLXzrClzaypFQtQwmw1DZKgiKt7lMlGB+uK7bm68ONTfnXSZYUxnT2FwL2vyXoYC"
+        },
+        {
+          "name": "dist/flatly/_variables.scss",
+          "sri": "sha384-WW7IwLcBPSDvJrA6CjhnOp2Bkt5qweHY97/QookMfeuWG0PAwTxI5izWn21wO1zw"
         }
       ]
     },

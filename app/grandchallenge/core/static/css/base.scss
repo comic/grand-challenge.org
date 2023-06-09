@@ -15,9 +15,9 @@ $pagination-bg: $blue !default;
 $pagination-hover-bg: darken($blue, 15%) !default;
 $pagination-disabled-bg: lighten($blue, 15%) !default;
 
-// @import "../bootswatch/dist/flatly/variables";
+@import "../vendored/bootswatch/dist/flatly/variables";
 @import "../vendored/bootstrap/scss/bootstrap";
-// @import "../bootswatch/dist/flatly/bootswatch";
+@import "../vendored/bootswatch/dist/flatly/bootswatch";
 
 // Fix https://github.com/comic/grand-challenge.org/issues/1201
 .custom-select {

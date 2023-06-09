@@ -362,6 +362,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # CSS Compressioon settings
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
+LIBSASS_OUTPUT_STYLE = "compressed"
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get(
