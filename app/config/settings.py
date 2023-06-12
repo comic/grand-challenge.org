@@ -1052,6 +1052,9 @@ COMPONENTS_DOCKER_RUNTIME = os.environ.get("COMPONENTS_DOCKER_RUNTIME", None)
 COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
+COMPONENTS_CONTAINER_ARCH = os.environ.get(
+    "COMPONENTS_CONTAINER_ARCH", "amd64"
+)
 
 # Set which template pack to use for forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"

@@ -12,6 +12,7 @@ from config.settings import *  # noqa: F401, F403, E402, I251
 SESSION_COOKIE_DOMAIN = ".testserver"
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 SECURE_SSL_REDIRECT = False
+DEFAULT_SCHEME = "https"
 
 TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
 
