@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:6f7595463814091631048a7c892a36ee34ee90db07484b64e9b82a13b5bcae43",
+  "content_hash": "sha256:7c4fbcda536ad91dd0ff8c1183120b738d3c9147f40b23553993fa788ad8814e",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -416,16 +416,16 @@
     },
     {
       "name": "bootswatch",
-      "version": "4.4.1",
+      "version": "5.3.0",
       "provider": "unpkg",
       "assets": [
         {
           "name": "dist/flatly/_bootswatch.scss",
-          "sri": "sha384-rLXzrClzaypFQtQwmw1DZKgiKt7lMlGB+uK7bm68ONTfnXSZYUxnT2FwL2vyXoYC"
+          "sri": "sha384-Hzmz1s2Rz4naafNaqlI84mIG2I38fTwckv0p34b3axboXKKF1JwOd6lTWhds127J"
         },
         {
           "name": "dist/flatly/_variables.scss",
-          "sri": "sha384-WW7IwLcBPSDvJrA6CjhnOp2Bkt5qweHY97/QookMfeuWG0PAwTxI5izWn21wO1zw"
+          "sri": "sha384-dYnUzGrVtPtkinIMHgIMUPs59/LXTyUzD38LVA2JqAUVLCWvVSVPsr1gajK3z0jF"
         }
       ],
       "maps": []
