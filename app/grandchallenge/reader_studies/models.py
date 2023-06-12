@@ -1597,10 +1597,10 @@ class Answer(UUIDModel):
         if question.answer_max_length is not None:
             MaxLengthValidator(question.answer_max_length)(answer)
 
-        if question.answer_match_pattern is not None:
+        if question.answer_match_pattern:
             RegexValidator(
                 regex=question.answer_match_pattern,
-                message="Enter a valid answer that matches with the pattern",
+                message="Enter a valid answer that matches with the requested format",
             )(answer)
 
     @property
