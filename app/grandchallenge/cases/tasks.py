@@ -125,7 +125,7 @@ def build_images(*, upload_session_pk):
             upload_session = session_queryset.get()
 
             with TemporaryDirectory() as tmp_dir:
-                tmp_dir = Path(tmp_dir)
+                tmp_dir = Path(tmp_dir).resolve()
                 _populate_tmp_dir(tmp_dir, upload_session)
                 _handle_raw_image_files(tmp_dir, upload_session)
 

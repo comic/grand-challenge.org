@@ -67,7 +67,7 @@ def _setup_public_storage():
         subprocess.check_call(
             [
                 "mc",
-                "policy",
+                "anonymous",
                 "set-json",
                 str(policy_file),
                 f"{host_alias}/{public_s3_storage.bucket_name}",
