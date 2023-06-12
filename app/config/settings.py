@@ -161,6 +161,7 @@ AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+AWS_S3_URL_PROTOCOL = os.environ.get("AWS_S3_URL_PROTOCOL", "https:")
 AWS_S3_OBJECT_PARAMETERS = {
     # Note that these do not affect the Uploads bucket, which is configured separately.
     # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
@@ -254,7 +255,7 @@ CACHES = {
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
 RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
-DEFAULT_SCHEME = "https"  # use https in dev and prod
+DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
 # Workaround for https://github.com/ellmetha/django-machina/issues/219
 ABSOLUTE_URL_OVERRIDES = {
@@ -278,14 +279,15 @@ SESSION_COOKIE_DOMAIN = os.environ.get(
 if not SESSION_COOKIE_DOMAIN.startswith("."):
     raise ImproperlyConfigured("SESSION_COOKIE_DOMAIN should start with a '.'")
 
-# We're always running behind a proxy so set these to true
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = strtobool(
+    os.environ.get("SESSION_COOKIE_SECURE", "True")
+)
+CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "True"))
 # Trust all subdomains for CSRF, used for user uploads. Changed the name
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
-CSRF_TRUSTED_ORIGINS = [f"https://*{SESSION_COOKIE_DOMAIN}"]
+CSRF_TRUSTED_ORIGINS = [f"{DEFAULT_SCHEME}://*{SESSION_COOKIE_DOMAIN}"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = strtobool(os.environ.get("SECURE_SSL_REDIRECT", "True"))
 
@@ -294,6 +296,7 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
 )
 # Set the allowed hosts to the cookie domain
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+SITE_SERVER_PORT = os.environ.get("SITE_SERVER_PORT")
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -1048,6 +1051,9 @@ COMPONENTS_CPUSET_CPUS = str(os.environ.get("COMPONENTS_CPUSET_CPUS", ""))
 COMPONENTS_DOCKER_RUNTIME = os.environ.get("COMPONENTS_DOCKER_RUNTIME", None)
 COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
+)
+COMPONENTS_CONTAINER_ARCH = os.environ.get(
+    "COMPONENTS_CONTAINER_ARCH", "amd64"
 )
 
 # Set which template pack to use for forms

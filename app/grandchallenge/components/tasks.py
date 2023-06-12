@@ -471,10 +471,11 @@ def _validate_docker_image_manifest(*, instance) -> str:
         )
 
     architecture = config.get("architecture")
-    if architecture != "amd64":
+    if architecture != settings.COMPONENTS_CONTAINER_ARCH:
         raise ValidationError(
             f"Architecture type {architecture!r} is not supported. "
-            "Please provide a container image built for amd64."
+            "Please provide a container image built for "
+            f"{settings.COMPONENTS_CONTAINER_ARCH!r}."
         )
 
     return f"sha256:{image_sha256}"
