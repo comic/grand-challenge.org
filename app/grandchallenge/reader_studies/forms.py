@@ -57,7 +57,7 @@ from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentMixin
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
-    ANSWER_TYPE_TO_QUESTION_WIDGET,
+    ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES,
     CASE_TEXT_SCHEMA,
     AnswerType,
     CategoricalOption,
@@ -325,22 +325,19 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
     def widget_choices(self):
         answer_type = self["answer_type"].value()
         choices = [*BLANK_CHOICE_DASH]
+
+        if not answer_type:
+            return choices
+
         if answer_type in AnswerType.get_widget_required_types():
-            choices = []
-        if answer_type:
-            try:
-                choices.extend(
-                    [
-                        (option.name, option.label)
-                        for option in ANSWER_TYPE_TO_QUESTION_WIDGET[
-                            answer_type
-                        ]
-                    ]
-                )
-            except KeyError as error:
-                raise RuntimeError(
-                    f"{answer_type} is not defined in ANSWER_TYPE_TO_QUESTION_WIDGET."
-                ) from error
+            choices = []  # No blank choice
+
+        try:
+            choices += ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES[answer_type]
+        except KeyError as error:
+            raise RuntimeError(
+                f"{answer_type} is not defined in ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES."
+            ) from error
         return choices
 
     def initial_widget(self):

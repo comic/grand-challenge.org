@@ -1061,6 +1061,11 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.MULTIPLE_ELLIPSES: [QuestionWidgetKindChoices.ACCEPT_REJECT],
 }
 
+ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
+    answer_type: [(option.name, option.label) for option in options]
+    for answer_type, options in ANSWER_TYPE_TO_QUESTION_WIDGET.items()
+}
+
 
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
