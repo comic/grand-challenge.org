@@ -1336,6 +1336,10 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
 
     def _clean_widget_options(self):
+        self._clean_number_options()
+        self._clean_text_options()
+
+    def _clean_number_options(self):
         is_step_size_set = self.answer_step_size is not None
         is_min_value_set = self.answer_min_value is not None
         is_max_value_set = self.answer_max_value is not None
@@ -1368,6 +1372,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "Answer max value needs to be bigger than answer min value."
             )
 
+    def _clean_text_options(self):
         is_min_length_set = self.answer_min_length is not None
         is_max_length_set = self.answer_max_length is not None
         is_pattern_match_set = len(self.answer_match_pattern) > 0
