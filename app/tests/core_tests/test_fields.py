@@ -2,8 +2,13 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import models
 
 from grandchallenge.core.fields import RegexField
+
+
+class ModelWithRegex(models.Model):
+    regex = RegexField()
 
 
 @pytest.mark.parametrize(
@@ -20,5 +25,6 @@ from grandchallenge.core.fields import RegexField
     ),
 )
 def test_regex_field_validation(value, error):
+    model = ModelWithRegex(regex=value)
     with error:
-        RegexField._validate_regex(value)
+        model.full_clean()
