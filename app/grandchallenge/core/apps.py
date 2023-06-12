@@ -31,6 +31,9 @@ def rename_site(sender, **kwargs):
 
     desired_domain = settings.SESSION_COOKIE_DOMAIN.lstrip(".")
 
+    if settings.SITE_SERVER_PORT is not None:
+        desired_domain += f":{settings.SITE_SERVER_PORT}"
+
     if not Site.objects.filter(domain=desired_domain).exists():
         # Set the domain of the main site id if one doesn't already exist
         s = Site.objects.get(pk=settings.SITE_ID)

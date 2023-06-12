@@ -254,7 +254,7 @@ CACHES = {
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
 RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
-DEFAULT_SCHEME = "https"  # use https in dev and prod
+DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
 # Workaround for https://github.com/ellmetha/django-machina/issues/219
 ABSOLUTE_URL_OVERRIDES = {
@@ -278,14 +278,15 @@ SESSION_COOKIE_DOMAIN = os.environ.get(
 if not SESSION_COOKIE_DOMAIN.startswith("."):
     raise ImproperlyConfigured("SESSION_COOKIE_DOMAIN should start with a '.'")
 
-# We're always running behind a proxy so set these to true
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = strtobool(
+    os.environ.get("SESSION_COOKIE_SECURE", "True")
+)
+CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "True"))
 # Trust all subdomains for CSRF, used for user uploads. Changed the name
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
-CSRF_TRUSTED_ORIGINS = [f"https://*{SESSION_COOKIE_DOMAIN}"]
+CSRF_TRUSTED_ORIGINS = [f"{DEFAULT_SCHEME}://*{SESSION_COOKIE_DOMAIN}"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = strtobool(os.environ.get("SECURE_SSL_REDIRECT", "True"))
 
@@ -294,6 +295,7 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
 )
 # Set the allowed hosts to the cookie domain
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+SITE_SERVER_PORT = os.environ.get("SITE_SERVER_PORT")
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
