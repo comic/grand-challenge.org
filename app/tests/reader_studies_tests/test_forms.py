@@ -392,6 +392,7 @@ def test_question_update(client):
 @pytest.mark.parametrize(
     "answer_type,interface_kind",
     (
+        (AnswerType.TEXT, InterfaceKindChoices.STRING),
         (AnswerType.SINGLE_LINE_TEXT, InterfaceKindChoices.STRING),
         (AnswerType.MULTI_LINE_TEXT, InterfaceKindChoices.STRING),
         (AnswerType.BOOL, InterfaceKindChoices.BOOL),
@@ -1191,6 +1192,10 @@ def test_display_set_add_interface_form():
     "answer_type, choices",
     (
         (AnswerType.SINGLE_LINE_TEXT, BLANK_CHOICE_DASH),
+        (
+            AnswerType.TEXT,
+            [("TEXT_INPUT", "Text Input"), ("TEXT_AREA", "Text Area")],
+        ),
         (AnswerType.MULTI_LINE_TEXT, BLANK_CHOICE_DASH),
         (AnswerType.BOOL, BLANK_CHOICE_DASH),
         (

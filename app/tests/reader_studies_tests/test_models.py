@@ -82,6 +82,9 @@ def test_read_only_fields():
         "answer_min_value",
         "answer_max_value",
         "answer_step_size",
+        "answer_min_length",
+        "answer_max_length",
+        "answer_match_pattern",
     ]
 
 
@@ -425,90 +428,159 @@ def test_validate_answer():
     )
 
 
-@pytest.mark.parametrize(
-    "answer_type, answer, extra_params, error",
+NUMBER_ANSWER_VALIDATION_INPUT = (
     (
-        (
-            AnswerType.NUMBER,
-            2,
-            {
-                "answer_min_value": 0,
-                "answer_max_value": 5,
-                "answer_step_size": 0.5,
-            },
-            nullcontext(),
-        ),
-        (
-            AnswerType.NUMBER,
-            6,
-            {
-                "answer_min_value": 0,
-                "answer_max_value": 5,
-                "answer_step_size": 0.5,
-            },
-            pytest.raises(ValidationError),
-        ),
-        (
-            AnswerType.NUMBER,
-            4.7,
-            {
-                "answer_min_value": 0,
-                "answer_max_value": 5,
-                "answer_step_size": 0.5,
-            },
-            pytest.raises(ValidationError),
-        ),
-        (
-            AnswerType.NUMBER,
-            -1,
-            {
-                "answer_min_value": 0,
-                "answer_max_value": 5,
-                "answer_step_size": 0.5,
-            },
-            pytest.raises(ValidationError),
-        ),
-        (
-            AnswerType.NUMBER,
-            0,
-            {
-                "answer_min_value": 0,
-                "answer_max_value": 5,
-                "answer_step_size": 0.5,
-            },
-            nullcontext(),
-        ),
-        (
-            AnswerType.NUMBER,
-            1.1,
-            {
-                "answer_min_value": 0.1,
-                "answer_step_size": 1,
-            },
-            nullcontext(),
-        ),
-        (
-            AnswerType.NUMBER,
-            1.1,
-            {
-                "answer_max_value": 2.1,
-                "answer_step_size": 1,
-            },
-            pytest.raises(ValidationError),
-        ),
-        (
-            AnswerType.NUMBER,
-            1.9,
-            {
-                "answer_min_value": -0.1,
-                "answer_step_size": 2.0,
-            },
-            nullcontext(),
-        ),
+        AnswerType.NUMBER,
+        2,
+        {
+            "answer_min_value": 0,
+            "answer_max_value": 5,
+            "answer_step_size": 0.5,
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.NUMBER,
+        6,
+        {
+            "answer_min_value": 0,
+            "answer_max_value": 5,
+            "answer_step_size": 0.5,
+        },
+        pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.NUMBER,
+        4.7,
+        {
+            "answer_min_value": 0,
+            "answer_max_value": 5,
+            "answer_step_size": 0.5,
+        },
+        pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.NUMBER,
+        -1,
+        {
+            "answer_min_value": 0,
+            "answer_max_value": 5,
+            "answer_step_size": 0.5,
+        },
+        pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.NUMBER,
+        0,
+        {
+            "answer_min_value": 0,
+            "answer_max_value": 5,
+            "answer_step_size": 0.5,
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.NUMBER,
+        1.1,
+        {
+            "answer_min_value": 0.1,
+            "answer_step_size": 1,
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.NUMBER,
+        1.1,
+        {
+            "answer_max_value": 2.1,
+            "answer_step_size": 1,
+        },
+        pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.NUMBER,
+        1.9,
+        {
+            "answer_min_value": -0.1,
+            "answer_step_size": 2.0,
+        },
+        nullcontext(),
     ),
 )
+
+TEXT_ANSWER_VALIDATION_INPUT = (
+    (
+        AnswerType.TEXT,
+        "",
+        {},
+        nullcontext(),
+    ),
+    (
+        AnswerType.TEXT,
+        "",
+        {
+            "answer_min_length": 1,
+        },
+        pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.TEXT,
+        "1234",
+        {
+            "answer_min_length": 4,
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.TEXT,
+        "12",
+        {
+            "answer_max_length": 2,
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.TEXT,
+        "1234",
+        {
+            "answer_max_length": 2,
+        },
+        pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.TEXT,
+        "123",
+        {
+            "answer_min_length": 3,
+            "answer_max_length": 3,
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.TEXT,
+        "hello world",
+        {
+            "answer_match_pattern": r"^hello world$",
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.TEXT,
+        "",
+        {
+            "answer_match_pattern": r"^hello world$",
+        },
+        pytest.raises(ValidationError),
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    "answer_type, answer, extra_params, error",
+    (*NUMBER_ANSWER_VALIDATION_INPUT, *TEXT_ANSWER_VALIDATION_INPUT),
+)
 @pytest.mark.django_db
-def test_validate_answer_number_input_settings(
+def test_validate_answer_input_settings(
     answer_type, answer, extra_params, error
 ):
     u = UserFactory()
@@ -660,6 +732,12 @@ def test_workstation_url():
             True,
             nullcontext(),
         ),
+        (
+            AnswerType.TEXT,  # Requires a widget choice
+            "",
+            False,
+            pytest.raises(ValidationError),
+        ),
     ),
 )
 def test_clean_question_widget(answer_type, widget, interface, error):
@@ -686,39 +764,45 @@ def test_clean_question_widget(answer_type, widget, interface, error):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "widget, options, error, error_message",
+    "answer_type, widget, options, error, error_message",
     (
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {},
             nullcontext(),
             None,
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_min_value": 1},
             nullcontext(),
             None,
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_max_value": 5},
             nullcontext(),
             None,
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_min_value": -1},
             nullcontext(),
             None,
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_min_value": 0},
             nullcontext(),
             None,
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.ACCEPT_REJECT,
             {"answer_min_value": 1},
             pytest.raises(ValidationError),
@@ -727,6 +811,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             "Number Input widget for answers of type Number.",
         ),
         (
+            AnswerType.NUMBER,
             "",
             {"answer_min_value": 1},
             pytest.raises(ValidationError),
@@ -735,20 +820,23 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             "Number Input widget for answers of type Number.",
         ),
         (
+            AnswerType.NUMBER,
             "",
-            {"answer_min_value": 0},
+            {"answer_step_size": 0},
             pytest.raises(ValidationError),
             "Min and max values and the step size for answers "
             "can only be defined in combination with the "
             "Number Input widget for answers of type Number.",
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {"answer_step_size": 0.5},
             nullcontext(),
             None,
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {
                 "answer_step_size": 0.5,
@@ -759,6 +847,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             None,
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {
                 "answer_min_value": 4,
@@ -768,6 +857,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             "Answer max value needs to be bigger than answer min value.",
         ),
         (
+            AnswerType.NUMBER,
             QuestionWidgetKindChoices.NUMBER_INPUT,
             {
                 "answer_min_value": 0,
@@ -776,11 +866,29 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             pytest.raises(ValidationError),
             "Answer max value needs to be bigger than answer min value.",
         ),
+        *(
+            (
+                AnswerType.BOOL,
+                widget,
+                {"answer_min_length": 1},
+                pytest.raises(ValidationError),
+                "Minimum length, maximum length, and/or pattern match for answers "
+                "can only be defined for the answers of type Text.",
+            )
+            for widget in (
+                "",
+                QuestionWidgetKindChoices.TEXT_INPUT,
+                QuestionWidgetKindChoices.TEXT_AREA,
+            )
+        ),
     ),
 )
-def test_clean_widget_options(widget, options, error, error_message):
+def test_clean_widget_options(
+    answer_type, widget, options, error, error_message
+):
     qu = QuestionFactory(
         question_text="foo",
+        answer_type=answer_type,
         widget=widget,
     )
     if options:

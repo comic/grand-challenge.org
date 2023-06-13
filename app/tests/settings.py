@@ -50,3 +50,8 @@ COMPRESS_ENABLED = False
 
 # Disable non-critical logging in tests
 logging.disable(logging.CRITICAL)
+
+# Ensure custom models for testing are found
+INSTALLED_APPS += [  # noqa F405
+    "tests.core_tests",
+]
