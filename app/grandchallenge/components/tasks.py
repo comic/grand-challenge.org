@@ -394,7 +394,10 @@ def _mutate_container_image(
                 return tarinfo
 
             f.add(
-                name=f"/opt/sagemaker-shim/sagemaker-shim-{version}-Linux-x86_64",
+                name=(
+                    f"{settings.COMPONENTS_SAGEMAKER_SHIM_LOCATION}/"
+                    f"sagemaker-shim-{version}-Linux-{settings.COMPONENTS_SAGEMAKER_SHIM_ARCH}"
+                ),
                 arcname="/sagemaker-shim",
                 filter=_set_root_555_perms,
             )
