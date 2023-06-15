@@ -82,6 +82,7 @@ class Migration(migrations.Migration):
                             "application/zip",
                             "text/plain",
                             "application/csv",
+                            "text/csv",
                             "application/pdf",
                             "image/png",
                             "image/jpeg",

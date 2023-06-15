@@ -535,10 +535,13 @@ class ImageFile(UUIDModel):
 
     def __init__(self, *args, directory=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self._directory = directory
 
-        if self._directory is not None and not self._directory.is_dir():
-            raise ValueError(f"{self._directory} is not a directory")
+        if directory is not None:
+            directory = directory.resolve()
+            if not directory.is_dir():
+                raise ValueError(f"{directory} is not a directory")
+
+        self._directory = directory
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

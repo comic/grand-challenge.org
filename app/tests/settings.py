@@ -13,6 +13,7 @@ SESSION_COOKIE_DOMAIN = ".testserver"
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 SECURE_SSL_REDIRECT = False
 DEFAULT_SCHEME = "https"
+COMPONENTS_REGISTRY_PREFIX = "localhost"
 
 TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
 

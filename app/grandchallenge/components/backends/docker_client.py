@@ -61,7 +61,7 @@ def inspect_image(*, repo_tag):
         )
         return json.loads(result.stdout)
     except CalledProcessError as error:
-        if "Error: No such image" in error.stderr:
+        if ": No such image" in error.stderr:
             raise ObjectDoesNotExist from error
         else:
             raise
@@ -128,7 +128,7 @@ def get_logs(*, name, tail=None):
     return result.stdout.splitlines() + result.stderr.splitlines()
 
 
-def run_container(
+def run_container(  # noqa: C901
     *,
     repo_tag,
     name,
@@ -140,8 +140,9 @@ def run_container(
     extra_hosts=None,
     command=None,
     remove=False,
+    detach=True,
 ):
-    args = [
+    docker_args = [
         "run",
         "--name",
         name,
@@ -170,30 +171,32 @@ def run_container(
         "--log-opt",
         "max-size=1g",
         "--init",
-        "--detach",
     ]
 
+    if detach:
+        docker_args.append("--detach")
+
     if remove:
-        args.append("--rm")
+        docker_args.append("--rm")
 
     if settings.COMPONENTS_DOCKER_RUNTIME is not None:
-        args.extend(["--runtime", settings.COMPONENTS_DOCKER_RUNTIME])
+        docker_args.extend(["--runtime", settings.COMPONENTS_DOCKER_RUNTIME])
 
     for k, v in labels.items():
-        args.extend(["--label", f"{k}={v}"])
+        docker_args.extend(["--label", f"{k}={v}"])
 
     for k, v in environment.items():
-        args.extend(["--env", f"{k}={v}"])
+        docker_args.extend(["--env", f"{k}={v}"])
 
     if extra_hosts is not None:
         for k, v in extra_hosts.items():
-            args.extend(["--add-host", f"{k}:{v}"])
+            docker_args.extend(["--add-host", f"{k}:{v}"])
 
     if ports is not None:
         for container_port, v in ports.items():
             bind_address, host_port = v
             host_port = "" if host_port is None else host_port
-            args.extend(
+            docker_args.extend(
                 [
                     "--publish",
                     f"{bind_address}:{host_port}:{container_port}",
@@ -201,11 +204,11 @@ def run_container(
             )
 
     # Last two args must be the repo tag and optional command
-    args.append(repo_tag)
+    docker_args.append(repo_tag)
     if command is not None:
-        args.extend(command)
+        docker_args.extend(command)
 
-    return _run_docker_command(*args)
+    return _run_docker_command(*docker_args)
 
 
 def _get_cpuset_cpus():

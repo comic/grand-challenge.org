@@ -225,23 +225,21 @@ def test_get_log_stream_name(settings, data_log):
             method="describe_log_streams",
             service_response={
                 "logStreams": [
-                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
-                    {
-                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
-                    },
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
                 ]
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+                "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
         log_stream_name = executor._get_log_stream_name(data_log=data_log)
 
     if data_log:
-        assert log_stream_name == f"gc.localhost-A-{pk}/i-whatever/data-log"
+        assert log_stream_name == f"localhost-A-{pk}/i-whatever/data-log"
     else:
-        assert log_stream_name == f"gc.localhost-A-{pk}/i-whatever"
+        assert log_stream_name == f"localhost-A-{pk}/i-whatever"
 
 
 def test_set_task_logs(settings):
@@ -264,15 +262,13 @@ def test_set_task_logs(settings):
             method="describe_log_streams",
             service_response={
                 "logStreams": [
-                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
-                    {
-                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
-                    },
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
                 ]
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+                "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
         logs.add_response(
@@ -341,7 +337,7 @@ def test_set_task_logs(settings):
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamName": f"gc.localhost-A-{pk}/i-whatever",
+                "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
             },
@@ -369,15 +365,13 @@ def test_get_job_data_log(settings):
             method="describe_log_streams",
             service_response={
                 "logStreams": [
-                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
-                    {
-                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
-                    },
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
                 ]
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+                "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
         logs.add_response(
@@ -392,7 +386,7 @@ def test_get_job_data_log(settings):
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log",
+                "logStreamName": f"localhost-A-{pk}/i-whatever/data-log",
                 "limit": LOGLINES,
                 "startFromHead": False,
             },
@@ -448,7 +442,7 @@ def test_set_runtime_metrics(settings):
                 "EndTime": datetime(2022, 6, 9, 9, 43, 1, tzinfo=timezone.utc),
                 "MetricDataQueries": [
                     {
-                        "Expression": f"SEARCH('{{/aws/sagemaker/TransformJobs,Host}} Host=gc.localhost-A-{pk}/i-', 'Average', 60)",
+                        "Expression": f"SEARCH('{{/aws/sagemaker/TransformJobs,Host}} Host=localhost-A-{pk}/i-', 'Average', 60)",
                         "Id": "q",
                     }
                 ],
@@ -541,15 +535,13 @@ def test_handle_failed_job(settings):
             method="describe_log_streams",
             service_response={
                 "logStreams": [
-                    {"logStreamName": f"gc.localhost-A-{pk}/i-whatever"},
-                    {
-                        "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log"
-                    },
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever/data-log"},
                 ]
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamNamePrefix": f"gc.localhost-A-{pk}",
+                "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
         logs.add_response(
@@ -568,7 +560,7 @@ def test_handle_failed_job(settings):
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TransformJobs",
-                "logStreamName": f"gc.localhost-A-{pk}/i-whatever/data-log",
+                "logStreamName": f"localhost-A-{pk}/i-whatever/data-log",
                 "limit": LOGLINES,
                 "startFromHead": False,
             },
@@ -635,7 +627,7 @@ def test_deprovision(settings):
         s.add_response(
             method="stop_transform_job",
             service_response={},
-            expected_params={"TransformJobName": f"gc.localhost-A-{pk}"},
+            expected_params={"TransformJobName": f"localhost-A-{pk}"},
         )
         executor.deprovision()
 
