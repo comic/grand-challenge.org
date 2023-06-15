@@ -1,11 +1,12 @@
+import json
 import logging
 from ipaddress import ip_address
 from json import JSONDecodeError
 from pathlib import Path
 from socket import getaddrinfo
+from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 
-import requests
 from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -107,7 +108,7 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 {
                     "AWS_ACCESS_KEY_ID": settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
                     "AWS_SECRET_ACCESS_KEY": settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
-                    "AWS_S3_ENDPOINT_URL": settings.AWS_S3_ENDPOINT_URL,
+                    "AWS_S3_ENDPOINT_URL": settings.COMPONENTS_S3_ENDPOINT_URL,
                 }
             )
 
@@ -122,21 +123,13 @@ class DockerExecutor(DockerConnectionMixin, Executor):
                 mem_limit=self._memory_limit,
             )
             self._await_container_ready()
-            try:
-                response = requests.post(
-                    f"http://{self.container_name}:8080/invocations",
-                    json=self._get_invocation_json(
-                        input_civs=input_civs, input_prefixes=input_prefixes
-                    ),
-                    timeout=self._time_limit,
-                )
-            except requests.exceptions.Timeout:
-                raise ComponentException("Time limit exceeded")
+            response = self._invoke_inference(
+                input_civs=input_civs, input_prefixes=input_prefixes
+            )
         finally:
             docker_client.stop_container(name=self.container_name)
             self._set_task_logs()
 
-        response = response.json()
         exit_code = int(response["return_code"])
 
         if exit_code == 137:
@@ -152,20 +145,91 @@ class DockerExecutor(DockerConnectionMixin, Executor):
         while True:
             attempts += 1
 
-            try:
-                # Timeout is from the SageMaker API definitions
-                # https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-batch-code.html#your-algorithms-batch-algo-ping-requests
-                response = requests.get(
-                    f"http://{self.container_name}:8080/ping",
-                    timeout=2,
-                )
-            except requests.exceptions.RequestException:
-                continue
-
-            if response.status_code == 200:
-                break
-            elif attempts > 10:
+            if attempts > 10:
                 raise ComponentException("Container did not start in time")
+
+            try:
+                response = self._curl_container(
+                    url=f"http://{self.container_name}:8080/ping",
+                    timeout=2,
+                    extra_args=[
+                        "--silent",
+                        "--head",
+                        "--output",
+                        "/dev/null",
+                        "--write-out",
+                        "%{http_code}",
+                    ],
+                )
+            except CalledProcessError as err:
+                if err.returncode == 7:
+                    # Container is not ready, try again
+                    continue
+                else:
+                    raise
+
+            if response[-1].split()[1] == "200":
+                return
+
+    def _invoke_inference(self, *, input_civs, input_prefixes):
+        try:
+            response = self._curl_container(
+                url=f"http://{self.container_name}:8080/invocations",
+                timeout=self._time_limit,
+                request="POST",
+                extra_args=[
+                    "--silent",
+                    "--json",
+                    json.dumps(
+                        self._get_invocation_json(
+                            input_civs=input_civs,
+                            input_prefixes=input_prefixes,
+                        )
+                    ),
+                ],
+            )
+        except CalledProcessError as err:
+            if err.returncode == 28:
+                raise ComponentException("Time limit exceeded")
+            else:
+                raise
+
+        return json.loads(response[-1].split()[1])
+
+    def _curl_container(self, *, url, timeout, request="GET", extra_args=None):
+        """
+        Make a CURL request to a container on an internal network
+
+        We cannot make the request directly as the container is running on
+        another network, and potentially on another machine. So here we run a
+        container that can directly make a curl request to the other one.
+        """
+        container_name = f"{self.container_name}-curl"
+
+        command = ["--request", request, "--max-time", str(timeout)]
+
+        if extra_args is not None:
+            command.extend(extra_args)
+
+        command.append(url)
+
+        try:
+            docker_client.run_container(
+                repo_tag="quay.io/curl/curl",
+                name=container_name,
+                command=command,
+                labels=self._labels,
+                network=settings.COMPONENTS_DOCKER_NETWORK_NAME,
+                environment={},
+                mem_limit=1,
+                detach=False,
+            )
+            loglines = docker_client.get_logs(name=container_name)
+        finally:
+            docker_client.stop_container(name=container_name)
+            docker_client.remove_container(name=container_name)
+
+        return loglines
 
     def _set_task_logs(self):
         try:

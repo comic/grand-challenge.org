@@ -128,7 +128,7 @@ def get_logs(*, name, tail=None):
     return result.stdout.splitlines() + result.stderr.splitlines()
 
 
-def run_container(
+def run_container(  # noqa: C901
     *,
     repo_tag,
     name,
@@ -140,6 +140,7 @@ def run_container(
     extra_hosts=None,
     command=None,
     remove=False,
+    detach=True,
 ):
     docker_args = [
         "run",
@@ -170,8 +171,10 @@ def run_container(
         "--log-opt",
         "max-size=1g",
         "--init",
-        "--detach",
     ]
+
+    if detach:
+        docker_args.append("--detach")
 
     if remove:
         docker_args.append("--rm")
