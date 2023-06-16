@@ -1,3 +1,6 @@
+from django.templatetags.static import static
+
+
 def bar(*, values, lookup, title):
     chart = {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
@@ -135,7 +138,7 @@ def world_map(*, values):
         "padding": 0,
         "view": {"stroke": "transparent", "fill": "#c9eeff"},
         "data": {
-            "url": "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+            "url": static("vendored/world-atlas/countries-110m.json"),
             "format": {"type": "topojson", "feature": "countries"},
         },
         "transform": [

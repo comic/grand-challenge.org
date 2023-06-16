@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:7c4fbcda536ad91dd0ff8c1183120b738d3c9147f40b23553993fa788ad8814e",
+  "content_hash": "sha256:58a79b5d34878fa13907d42dc67426adaa4526683344b035de248a16135b4c7c",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -431,6 +431,166 @@
       "maps": []
     },
     {
+      "name": "cornerstone-core",
+      "version": "2.2.4",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/cornerstone.js",
+          "sri": "sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8"
+        },
+        {
+          "name": "dist/cornerstone.min.js",
+          "sri": "sha384-axIAanIpsk+TbLbn7RXaEMJEsc0w/DJg4nIxSU87gwHTbYiGiAqm0UEkXMfO3+xV"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "cornerstone-math",
+      "version": "0.1.6",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/cornerstoneMath.js",
+          "sri": "sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7"
+        },
+        {
+          "name": "dist/cornerstoneMath.min.js",
+          "sri": "sha384-b8DtrZnVyBc7YpJXY9bYyIw5wSFgxX2VlFYmGX9z0laMaBQRRWVH6BCxKhV8ETfz"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "datatables.net",
+      "version": "1.11.3",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "js/jquery.dataTables.js",
+          "sri": "sha384-ffdocMECdI5Mr/PiXXjgHO0Yj4n6iCzP4ivRh4iF3pxOS4iLTGyYImqTNMjcvgCQ"
+        },
+        {
+          "name": "js/jquery.dataTables.min.js",
+          "sri": "sha384-Ys7dhgZ13dNQE2uo7PY+FIKiwwu0WNSnKCAOPPNoC9KT+fW+OAh+Ym0z3eiREmpZ"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "datatables.net-bs4",
+      "version": "1.11.3",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "css/dataTables.bootstrap4.css",
+          "sri": "sha384-EvIr2PlbcGMb0zxwU9/FJBagUw3KateXm545CaPe5guMZKVKKaK2VRpFVSbcL+ym"
+        },
+        {
+          "name": "css/dataTables.bootstrap4.min.css",
+          "sri": "sha384-d9W9+gJYgHf3dPgkLbdt0l6ohsATXXYEBZNKxeJj6aybLr8PFOCHFXFWtVMXeXP3"
+        },
+        {
+          "name": "js/dataTables.bootstrap4.js",
+          "sri": "sha384-yh2DKHGQ1YQGa6VRaEQmJkz4wJnrPoPlF+qWvcav0Af/ynTt2JMP8/0P2T0Y/67u"
+        },
+        {
+          "name": "js/dataTables.bootstrap4.min.js",
+          "sri": "sha384-bX64nQ/u/Jovgh0rdhdtHy2BMWv9TOOds6b4reiVcJ0KcA76JdIxmwar1pN2NsUj"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "datatables.net-buttons",
+      "version": "2.0.1",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "js/buttons.colVis.js",
+          "sri": "sha384-AbV5HVbLCLmZJidGbIdYIXa+jUM76ualbJ9VxjEk1XApV0QD4kBJ03Okikmvcps0"
+        },
+        {
+          "name": "js/buttons.colVis.min.js",
+          "sri": "sha384-enGTgEZOvC7C8P91Jt/27n1V3xD5SIzGi1e+DzYJvAts546YTsj3CNmnL0G/zlVn"
+        },
+        {
+          "name": "js/dataTables.buttons.js",
+          "sri": "sha384-8LM8BoZwX5XkG/uPMRUUlo5btOd9W42awa7ky9qUj7B7r7IXLYoxnZnDNMfypbrX"
+        },
+        {
+          "name": "js/dataTables.buttons.min.js",
+          "sri": "sha384-MGimb05YiSGNcXiLlj03UNahXBECHmFTe5iVBqh6sf2G7ccabI3/EOqzBnNw97/T"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "datatables.net-buttons-bs4",
+      "version": "2.0.1",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "css/buttons.bootstrap4.css",
+          "sri": "sha384-q4EZq/gM8ljWYtB8R40hnwfyZj3WIvbcEzgREtSQVdAsOtwP9LvOtwsUVjgY/U8S"
+        },
+        {
+          "name": "css/buttons.bootstrap4.min.css",
+          "sri": "sha384-edc+aE6Ik81hVXxTAc5hJy5+51r8isS15Bg5ABuEQvzK/WJKD4OGi6rHI49qr3y8"
+        },
+        {
+          "name": "js/buttons.bootstrap4.js",
+          "sri": "sha384-IMnD0fgb6WzFOenYYLbPmzMvsBZupbK31cTb1Jx9J5WJ0jIG+wfLvHIH75coZEYp"
+        },
+        {
+          "name": "js/buttons.bootstrap4.min.js",
+          "sri": "sha384-39HSGlFa/ZBzWGrpbpXEnLn7D25fRe7nSgMuD9OovM0Hmm/73enw1iF3zgQfJ9OZ"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "datatables.net-responsive",
+      "version": "2.2.9",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "js/dataTables.responsive.js",
+          "sri": "sha384-eY9M0GbvpniuOcFCVB7On6oTCecP/MaxuJZhhsKhE/hESC989j4Tnk2FaA8NZ8qc"
+        },
+        {
+          "name": "js/dataTables.responsive.min.js",
+          "sri": "sha384-ziUH70yXeghwn7LIJvtjobzpllxs+w4FJL4/ssbFYWoYof46CveVyQ+GCaR1eTXj"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "datatables.net-responsive-bs4",
+      "version": "2.2.9",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "css/responsive.bootstrap4.css",
+          "sri": "sha384-FG1U1mmuc4wFohqjCo1SISm217nX0ImWshs+Wu6nFbi/Me23QK9QnZM9ffbOi0N7"
+        },
+        {
+          "name": "css/responsive.bootstrap4.min.css",
+          "sri": "sha384-lePQI47qegn3yPIKwMvp5YLKtqliO3UWhA8XdAuPyDLLD41HBbdLmNHXco/IMAok"
+        },
+        {
+          "name": "js/responsive.bootstrap4.js",
+          "sri": "sha384-+u4gb6q8N/RnCi1rp9KpC+RNKEySqC0ASHSScqmY/C7vZnrJYM7hKPnl+Og6AKCK"
+        },
+        {
+          "name": "js/responsive.bootstrap4.min.js",
+          "sri": "sha384-iqV3x/YAPev0L8Y35rZF1e8LuilKG+h0gtjkpS6dr6HFEZ139n6Q8YcFQ3kZfKu/"
+        }
+      ],
+      "maps": []
+    },
+    {
       "name": "font-awesome",
       "version": "5.15.4",
       "provider": "cdnjs",
@@ -550,6 +710,22 @@
         {
           "name": "dist/itkVtkViewerCDN.js",
           "sri": "sha384-LTeflmm51FBGPPQClZZuYQKlisKD6AINeDUXFQxyoY0UsU/acHZnhG99cV4bjIvX"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "itk-wasm",
+      "version": "1.0.0-a.10",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/umd/itk-wasm.js",
+          "sri": "sha384-f2/1X/J50zy+SOILsk/35q8j6EJMHjfhJSyEevmMi1vMz7bKr9EOJh8cKTKV2Oqn"
+        },
+        {
+          "name": "dist/umd/itk-wasm.min.js",
+          "sri": "sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3"
         }
       ],
       "maps": []
@@ -935,6 +1111,18 @@
         {
           "name": "vega-lite.min.js.map",
           "sri": null
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "world-atlas",
+      "version": "2.0.2",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "countries-110m.json",
+          "sri": "sha384-yOCJ+8ShBm8UDqtAVtAvxTDDf4gXo5edxl/YG0FmVC5OTmqVLl7utuVGBDEeZWHf"
         }
       ],
       "maps": []
