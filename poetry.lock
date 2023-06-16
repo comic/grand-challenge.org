@@ -135,13 +135,13 @@ files = [
 
 [[package]]
 name = "amass"
-version = "0.3.2"
+version = "0.3.3"
 description = "Vendor libraries from cdnjs"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "amass-0.3.2-py3-none-any.whl", hash = "sha256:8bf2fc7d82ee263035602e438fc0b2545e5171fda26a7d9ae58a9bafdc99a0be"},
-    {file = "amass-0.3.2.tar.gz", hash = "sha256:a7c58d6d6dbdd4b066a939344300883288c308b2e298b5797c61f19c3fd0c230"},
+    {file = "amass-0.3.3-py3-none-any.whl", hash = "sha256:4e02d903f8df72827ba3c61a48ca27468b57f19e6535c04e64607554a84dd570"},
+    {file = "amass-0.3.3.tar.gz", hash = "sha256:28026dae1b04dc18fbb6642b51beeb2d51ac4de635c3f1803f2ffc17768c3d17"},
 ]
 
 [package.dependencies]
