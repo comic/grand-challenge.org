@@ -1025,6 +1025,11 @@ class QuestionWidgetKindChoices(models.TextChoices):
     NUMBER_INPUT = "NUMBER_INPUT", "Number input"
     TEXT_INPUT = "TEXT_INPUT", "Text Input"
     TEXT_AREA = "TEXT_AREA", "Text Area"
+    SELECT_MULTIPLE = "SLCT_M", "Select Multiple"
+    CHECKBOX_SELECT_MULTIPLE = (
+        "CHCKB_SLCT_M",
+        "Checkbox Select Multiple",
+    )
 
 
 ANSWER_TYPE_TO_QUESTION_WIDGET = {
@@ -1050,7 +1055,10 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.POLYGON: [],
     AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.CHOICE: [],
-    AnswerType.MULTIPLE_CHOICE: [],
+    AnswerType.MULTIPLE_CHOICE: [
+        QuestionWidgetKindChoices.SELECT_MULTIPLE,
+        QuestionWidgetKindChoices.CHECKBOX_SELECT_MULTIPLE,
+    ],
     AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
     AnswerType.MASK: [],
     AnswerType.LINE: [],
