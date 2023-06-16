@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:58a79b5d34878fa13907d42dc67426adaa4526683344b035de248a16135b4c7c",
+  "content_hash": "sha256:05362dd42a39941270e366ce0673eda17e4848e72943e01d624bd6a84be87497",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -440,8 +440,16 @@
           "sri": "sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8"
         },
         {
+          "name": "dist/cornerstone.js.map",
+          "sri": "sha384-1vkwCAGusYzE592znPE8lVIZQAPV/7DF6JckMwbfg6pXgMDch/7EKUj4Vz6BT699"
+        },
+        {
           "name": "dist/cornerstone.min.js",
           "sri": "sha384-axIAanIpsk+TbLbn7RXaEMJEsc0w/DJg4nIxSU87gwHTbYiGiAqm0UEkXMfO3+xV"
+        },
+        {
+          "name": "dist/cornerstone.min.js.map",
+          "sri": "sha384-7j+1ToNLmDfbvDDhe8Xj6QrLI7jx/RISJuwhPaYebm4tk8b99+3pDprBADX+KkYe"
         }
       ],
       "maps": []
@@ -456,8 +464,16 @@
           "sri": "sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7"
         },
         {
+          "name": "dist/cornerstoneMath.js.map",
+          "sri": "sha384-1hXv23Bk4Wof0LUgtFqI/ae3HZE66aoLAVXgSM9ou3jp78g+v+7J9VkKyiPF3ODv"
+        },
+        {
           "name": "dist/cornerstoneMath.min.js",
           "sri": "sha384-b8DtrZnVyBc7YpJXY9bYyIw5wSFgxX2VlFYmGX9z0laMaBQRRWVH6BCxKhV8ETfz"
+        },
+        {
+          "name": "dist/cornerstoneMath.min.js.map",
+          "sri": "sha384-lFVUKZBwft7C7BClSfHzU//h02ySP98vJTy/KlcEgieEx8IE3AD53GO1GLoRl+7g"
         }
       ],
       "maps": []
