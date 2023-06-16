@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:7c4fbcda536ad91dd0ff8c1183120b738d3c9147f40b23553993fa788ad8814e",
+  "content_hash": "sha256:2c2cc4d15a9bbd6c3d8e701903de9d5aa8cbc9a4b019a08abca98b484907bda7",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -426,6 +426,38 @@
         {
           "name": "dist/flatly/_variables.scss",
           "sri": "sha384-dYnUzGrVtPtkinIMHgIMUPs59/LXTyUzD38LVA2JqAUVLCWvVSVPsr1gajK3z0jF"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "cornerstone-core",
+      "version": "2.2.4",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/cornerstone.js",
+          "sri": "sha384-V9P/aL0q9pHtJ5T6nu+lMhECpty2o5AHEDsqq5ByENSdmSVczBubXTeqWusnVfQ8"
+        },
+        {
+          "name": "dist/cornerstone.min.js",
+          "sri": "sha384-axIAanIpsk+TbLbn7RXaEMJEsc0w/DJg4nIxSU87gwHTbYiGiAqm0UEkXMfO3+xV"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "cornerstone-math",
+      "version": "0.1.6",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/cornerstoneMath.js",
+          "sri": "sha384-t6p6Opmh59HFuC9TXYcExw8Y9+ktPG19qZbANsHnyykXOEwQBDcocYRU3xv85e+7"
+        },
+        {
+          "name": "dist/cornerstoneMath.min.js",
+          "sri": "sha384-b8DtrZnVyBc7YpJXY9bYyIw5wSFgxX2VlFYmGX9z0laMaBQRRWVH6BCxKhV8ETfz"
         }
       ],
       "maps": []
@@ -935,6 +967,18 @@
         {
           "name": "vega-lite.min.js.map",
           "sri": null
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "world-atlas",
+      "version": "2.0.2",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "countries-110m.json",
+          "sri": "sha384-yOCJ+8ShBm8UDqtAVtAvxTDDf4gXo5edxl/YG0FmVC5OTmqVLl7utuVGBDEeZWHf"
         }
       ],
       "maps": []
