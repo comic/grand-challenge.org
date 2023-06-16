@@ -79,7 +79,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build the distributable containers
+        # The cache is required for compressing the files
         run: |
+          docker compose up -d redis
           make build
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
