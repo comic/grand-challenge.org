@@ -1,5 +1,4 @@
 {% load static %}
-{% load compress %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -7,10 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cornerstone Image Viewer</title>
-    {% compress css %}
-        <link type="text/x-scss" href="{% static 'css/base.scss' %}" rel="stylesheet" media="screen">
-    {% endcompress %}
-    <link href="{% static 'vendored/font-awesome/css/all.min.css' %}" rel="stylesheet">
+    {% include "grandchallenge/partials/style.html" %}
     <script type="text/javascript" src="{% static 'vendored/jquery/jquery.min.js' %}"></script>
     <style>
         body {

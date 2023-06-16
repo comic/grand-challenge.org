@@ -75,15 +75,14 @@ class MarkdownEditorWidget(MarkdownxWidget):
 
 
 class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
+    template_name = "markdownx/admin_widget.html"
+
     @property
     def media(self):
         return forms.Media(
             css={
                 "all": [
                     *AdminMarkdownxWidget.Media.css["all"],
-                    "vendor/css/base.min.css",
-                    "vendored/font-awesome/css/all.min.css",
-                    "css/markdown.css",
                 ]
             },
             js=[
