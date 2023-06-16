@@ -146,4 +146,4 @@ itk-vtk-viewer = { version = "==11.11.2", provider = "unpkg", include = ["dist/i
 world-atlas = { version = "==2.0.2", provider = "unpkg", include = ["countries-110m.json"] }
 cornerstone-math = { version = "==0.1.6", provider = "unpkg", include = ["dist/cornerstoneMath(.min)?.js$"] }
 cornerstone-core = { version = "==2.2.4", provider = "unpkg", include = ["dist/cornerstone(.min)?.js$"] }
-# itk-wasm = { version = "==1.0.0-a.10", provider = "unpkg", include = ["dist/umd/itk-wasm(.min)?.js$"] }
+itk-wasm = { version = "==1.0.0-a.10", provider = "unpkg", include = ["dist/umd/itk-wasm(.min)?.js$"] }

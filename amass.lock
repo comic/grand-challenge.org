@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:2c2cc4d15a9bbd6c3d8e701903de9d5aa8cbc9a4b019a08abca98b484907bda7",
+  "content_hash": "sha256:4ff7ef5eb2777b591b0b32610797442eb0b03a7c3a77c6371b7d1d3b7dacc83f",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -582,6 +582,22 @@
         {
           "name": "dist/itkVtkViewerCDN.js",
           "sri": "sha384-LTeflmm51FBGPPQClZZuYQKlisKD6AINeDUXFQxyoY0UsU/acHZnhG99cV4bjIvX"
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "itk-wasm",
+      "version": "1.0.0-a.10",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/umd/itk-wasm.js",
+          "sri": "sha384-f2/1X/J50zy+SOILsk/35q8j6EJMHjfhJSyEevmMi1vMz7bKr9EOJh8cKTKV2Oqn"
+        },
+        {
+          "name": "dist/umd/itk-wasm.min.js",
+          "sri": "sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3"
         }
       ],
       "maps": []

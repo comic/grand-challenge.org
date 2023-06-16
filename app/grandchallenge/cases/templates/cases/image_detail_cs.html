@@ -93,7 +93,7 @@
     <script src="{% static 'vendored/hammer.js/hammer.min.js' %}"></script>
     <script src="{% static 'vendored/cornerstone-math/dist/cornerstoneMath.min.js' %}"></script>
     <script src="{% static 'vendored/cornerstone-core/dist/cornerstone.min.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/itk-wasm@1.0.0-a.10/dist/umd/itk-wasm.min.js" integrity="sha384-g5R6BnQF/3Ypnj8/lpb91MkaPdBIBbl/lZJzTWFPKVuUmPofyszDh4X8rk8XcPi3" crossorigin="anonymous"></script>
+    <script src="{% static 'vendored/itk-wasm/dist/umd/itk-wasm.min.js' %}"></script>
     {{ object.pk|json_script:"imagePk" }}
     <script>
         const SITK_PIXEL_TYPE_TO_BIT_DEPTH = new Map([
