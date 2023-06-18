@@ -81,6 +81,7 @@ jobs:
       - name: Build the distributable containers
         # The cache is required for compressing the files
         run: |
+          echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
           docker compose up -d redis
           make build
       - name: Configure AWS credentials
