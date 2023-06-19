@@ -816,8 +816,20 @@ class Submission(UUIDModel):
     predictions_file = models.FileField(
         upload_to=submission_file_path,
         validators=[
-            MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
-            ExtensionValidator(allowed_extensions=(".zip", ".csv")),
+            MimeTypeValidator(
+                allowed_types=(
+                    "application/zip",
+                    "text/plain",
+                    "application/json",
+                )
+            ),
+            ExtensionValidator(
+                allowed_extensions=(
+                    ".zip",
+                    ".csv",
+                    ".json",
+                )
+            ),
         ],
         storage=protected_s3_storage,
         blank=True,
