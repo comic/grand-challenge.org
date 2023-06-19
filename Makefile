@@ -40,7 +40,7 @@ build_web_dist:
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
-	docker buildx build \
+	docker build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg POETRY_HASH=$(POETRY_HASH) \
