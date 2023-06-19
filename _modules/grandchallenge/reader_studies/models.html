@@ -1102,7 +1102,12 @@
     <span class="n">ACCEPT_REJECT</span> <span class="o">=</span> <span class="s2">&quot;ACCEPT_REJECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept/Reject Findings&quot;</span>
     <span class="n">NUMBER_INPUT</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Number input&quot;</span>
     <span class="n">TEXT_INPUT</span> <span class="o">=</span> <span class="s2">&quot;TEXT_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Text Input&quot;</span>
-    <span class="n">TEXT_AREA</span> <span class="o">=</span> <span class="s2">&quot;TEXT_AREA&quot;</span><span class="p">,</span> <span class="s2">&quot;Text Area&quot;</span></div>
+    <span class="n">TEXT_AREA</span> <span class="o">=</span> <span class="s2">&quot;TEXT_AREA&quot;</span><span class="p">,</span> <span class="s2">&quot;Text Area&quot;</span>
+    <span class="n">SELECT_MULTIPLE</span> <span class="o">=</span> <span class="s2">&quot;SELECT_MULTIPLE&quot;</span><span class="p">,</span> <span class="s2">&quot;Select Multiple&quot;</span>
+    <span class="n">CHECKBOX_SELECT_MULTIPLE</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;CHECKBOX_SELECT_MULTIPLE&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Checkbox Select Multiple&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 <span class="n">ANSWER_TYPE_TO_QUESTION_WIDGET</span> <span class="o">=</span> <span class="p">{</span>
@@ -1128,7 +1133,10 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT_MULTIPLE</span><span class="p">,</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">CHECKBOX_SELECT_MULTIPLE</span><span class="p">,</span>
+    <span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">:</span> <span class="p">[],</span>
@@ -1218,7 +1226,7 @@
         <span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
     <span class="n">widget</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
     <span class="n">answer_max_value</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SmallIntegerField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
