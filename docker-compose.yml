@@ -45,7 +45,6 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: [*postgres-env, *minio-env]
-      REDIS_ENDPOINT: 'redis://redis:6379'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
@@ -107,7 +106,6 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: [*postgres-env, *minio-env]
-      REDIS_ENDPOINT: 'redis://redis:6379'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
       DEBUG: 'true'
@@ -137,7 +135,6 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: [*postgres-env, *minio-env]
-      REDIS_ENDPOINT: 'redis://redis:6379'
       REMAP_SIGTERM: 'SIGQUIT'
       COMPONENTS_REGISTRY_INSECURE: 'true'
       COMPONENTS_DEFAULT_BACKEND: 'grandchallenge.components.backends.docker.DockerExecutor'
@@ -178,7 +175,6 @@ services:
     image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
     environment:
       <<: [*postgres-env]
-      REDIS_ENDPOINT: 'redis://redis:6379'
       DEBUG: 'true'
     restart: always
     command: >-
