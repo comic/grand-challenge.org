@@ -75,7 +75,7 @@
 
 {% block js %}
 <script src="{% static 'js/machina.min.js' %}" type="text/javascript" charset="utf-8"></script>
-<script type="text/javascript">
+<script nonce="{{request.csp_nonce}}" type="text/javascript">
   $(function() {
     machina.init();
     {% block onbodyload %}{% endblock onbodyload %}

@@ -65,7 +65,7 @@
 
 
 {% block extra_body %}
-    <script type="text/javascript">
+    <script nonce="{{request.csp_nonce}}" type="text/javascript">
         (function () {
             var message = "{% trans 'Do you really want to remove the selected e-mail address?' %}";
             var actions = document.getElementsByName('action_remove');

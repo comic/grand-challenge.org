@@ -78,7 +78,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script nonce="{{request.csp_nonce}}" type="text/javascript">
         $(document).ready(function () {
             $('.table').each(function() {
                 $(this).DataTable({

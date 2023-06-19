@@ -95,7 +95,7 @@
     <script src="{% static 'vendored/cornerstone-core/dist/cornerstone.min.js' %}"></script>
     <script src="{% static 'vendored/itk-wasm/dist/umd/itk-wasm.min.js' %}"></script>
     {{ object.pk|json_script:"imagePk" }}
-    <script>
+    <script nonce="{{request.csp_nonce}}">
         const SITK_PIXEL_TYPE_TO_BIT_DEPTH = new Map([
             [itk.IntTypes.UInt8, 8],
             [itk.IntTypes.Int8, 8],

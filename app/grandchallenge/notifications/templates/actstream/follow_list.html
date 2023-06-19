@@ -63,7 +63,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script nonce="{{request.csp_nonce}}" type="text/javascript">
         window.drf = {
             csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
             csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"

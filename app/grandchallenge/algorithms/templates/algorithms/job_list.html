@@ -58,7 +58,7 @@
 {% block script %}
     {{ block.super }}
     {% include 'workstations/partials/session-control.html' %}
-    <script type="text/javascript">
+    <script nonce="{{request.csp_nonce}}" type="text/javascript">
         $('#resultInfoModal').on('show.bs.modal', function (event) {
             let button = $(event.relatedTarget);
             let modal = $(this);

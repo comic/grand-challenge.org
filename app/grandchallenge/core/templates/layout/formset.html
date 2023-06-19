@@ -24,7 +24,7 @@
 </table>
 <script src="{% static 'js/jquery.formset.js' %}">
 </script>
-<script type="text/javascript">
+<script nonce="{{request.csp_nonce}}" type="text/javascript">
     $('.formset_row-{{ formset.prefix }}').formset({
         addText: 'Add another',
         deleteText: 'Remove',
