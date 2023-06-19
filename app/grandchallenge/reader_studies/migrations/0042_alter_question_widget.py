@@ -23,10 +23,10 @@ class Migration(migrations.Migration):
                     ("NUMBER_INPUT", "Number input"),
                     ("TEXT_INPUT", "Text Input"),
                     ("TEXT_AREA", "Text Area"),
-                    ("SLCT_M", "Select Multiple"),
-                    ("CHCKB_SLCT_M", "Checkbox Select Multiple"),
+                    ("SELECT_MULTIPLE", "Select Multiple"),
+                    ("CHECKBOX_SELECT_MULTIPLE", "Checkbox Select Multiple"),
                 ],
-                max_length=13,
+                max_length=24,
             ),
         ),
     ]

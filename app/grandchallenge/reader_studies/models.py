@@ -1025,9 +1025,9 @@ class QuestionWidgetKindChoices(models.TextChoices):
     NUMBER_INPUT = "NUMBER_INPUT", "Number input"
     TEXT_INPUT = "TEXT_INPUT", "Text Input"
     TEXT_AREA = "TEXT_AREA", "Text Area"
-    SELECT_MULTIPLE = "SLCT_M", "Select Multiple"
+    SELECT_MULTIPLE = "SELECT_MULTIPLE", "Select Multiple"
     CHECKBOX_SELECT_MULTIPLE = (
-        "CHCKB_SLCT_M",
+        "CHECKBOX_SELECT_MULTIPLE",
         "Checkbox Select Multiple",
     )
 
@@ -1148,7 +1148,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
     )
     widget = models.CharField(
-        choices=QuestionWidgetKindChoices.choices, max_length=13, blank=True
+        choices=QuestionWidgetKindChoices.choices, max_length=24, blank=True
     )
     answer_max_value = models.SmallIntegerField(
         null=True,
