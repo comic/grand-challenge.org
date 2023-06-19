@@ -93,6 +93,13 @@ class PhaseAdmin(admin.ModelAdmin):
         "submission_kind",
         "challenge__short_name",
     )
+    autocomplete_fields = (
+        "inputs",
+        "outputs",
+        "algorithm_inputs",
+        "algorithm_outputs",
+        "archive",
+    )
     form = PhaseAdminForm
 
     @admin.display(boolean=True)
