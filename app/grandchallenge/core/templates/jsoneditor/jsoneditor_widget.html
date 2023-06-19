@@ -9,7 +9,7 @@
 {% with "schema_"|add:widget.attrs.id as schema_id %}
     {{ schema|json_script:schema_id }}
 
-    <script>
+    <script nonce="{{request.csp_nonce}}">
         $(document).ready(function () {
             const container = document.getElementById("jsoneditor_{{ widget.attrs.id }}");
             const options = {

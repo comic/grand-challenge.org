@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block script %}
-    <script type="text/javascript">
+    <script nonce="{{request.csp_nonce}}" type="text/javascript">
         function handleMessage(event, randomId) {
             const eventString = JSON.stringify(event.data)
             const node = document.createElement("li");

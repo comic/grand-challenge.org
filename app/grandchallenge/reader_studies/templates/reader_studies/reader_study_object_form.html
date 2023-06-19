@@ -17,7 +17,7 @@
     {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/unsavedform.js" %}"></script>
-    <script type="text/javascript">
+    <script nonce="{{request.csp_nonce}}" type="text/javascript">
         $(document).ready(() => {
             const toggleOptions = () => {
                 $(".options-formset").toggleClass('d-none', ["CHOI", "MCHO", "MCHD"].indexOf($("#id_answer_type").val()) === -1);

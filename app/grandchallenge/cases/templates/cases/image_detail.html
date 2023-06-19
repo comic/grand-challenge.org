@@ -12,7 +12,7 @@
 
 <script src="{% static 'vendored/openseadragon/openseadragon.min.js' %}"></script>
 
-<script type="text/javascript">
+<script nonce="{{request.csp_nonce}}" type="text/javascript">
     let viewer = OpenSeadragon({
         id: "openseadragonview",
         prefixUrl: "{% static 'vendored/openseadragon/images/' %}",

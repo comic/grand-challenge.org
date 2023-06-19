@@ -109,7 +109,7 @@
 {% block script %}
     {% include "grandchallenge/partials/script.html" %}
     {% include "timezones/partials/detect_timezone.html" %}
-    <script>
+    <script nonce="{{request.csp_nonce}}">
         {% if request.user.is_authenticated and request.user.user_profile.receive_newsletter == None  %}
             $(document).ready(function () {
                 $('#newsletterModal').modal('show');

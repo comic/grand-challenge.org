@@ -65,7 +65,7 @@
             type="text/javascript">
     </script>
 
-    <script type="text/javascript">
+    <script nonce="{{request.csp_nonce}}" type="text/javascript">
         (function () {
             $('#sessionModal').modal({show: true});
             const params = new URLSearchParams(window.location.search);

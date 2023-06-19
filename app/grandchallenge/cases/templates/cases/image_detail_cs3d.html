@@ -107,7 +107,7 @@
     <script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
     {{ object.pk|json_script:"imagePk" }}
-    <script>
+    <script nonce="{{request.csp_nonce}}">
         window.imagePk = JSON.parse(document.getElementById('imagePk').textContent);
         window.convertWorkerPath = "{% static 'js/typed_array_to_float32.js' %}";
     </script>

@@ -1,6 +1,6 @@
 {% load static %}
 
-<script>
+<script nonce="{{request.csp_nonce}}">
   $(window).on('load',function(){
   if (!sessionStorage.getItem('shown-alert')){
     $('#subscribeAlert').show();

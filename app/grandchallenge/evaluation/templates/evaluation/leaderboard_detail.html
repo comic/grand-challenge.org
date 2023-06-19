@@ -81,14 +81,14 @@
 {% block script %}
     {{ block.super }}
 
-    <script id="allowMetricsToggling" type="application/json">
+    <script nonce="{{request.csp_nonce}}" id="allowMetricsToggling" type="application/json">
         {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
             true
         {% else %}
             false
         {% endif %}
     </script>
-    <script id="displayLeaderboardDateButton" type="application/json">
+    <script nonce="{{request.csp_nonce}}" id="displayLeaderboardDateButton" type="application/json">
         {% if phase.result_display_choice == phase.ALL %}true{% else %}false{% endif %}
     </script>
 
