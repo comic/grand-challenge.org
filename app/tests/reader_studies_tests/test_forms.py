@@ -1259,7 +1259,14 @@ def test_display_set_add_interface_form():
             ],
         ),
         (AnswerType.CHOICE, BLANK_CHOICE_DASH),
-        (AnswerType.MULTIPLE_CHOICE, BLANK_CHOICE_DASH),
+        (
+            AnswerType.MULTIPLE_CHOICE,
+            [
+                BLANK_CHOICE_DASH[0],
+                ("SELECT_MULTIPLE", "Select Multiple"),
+                ("CHECKBOX_SELECT_MULTIPLE", "Checkbox Select Multiple"),
+            ],
+        ),
         (AnswerType.MULTIPLE_CHOICE_DROPDOWN, BLANK_CHOICE_DASH),
         (AnswerType.MASK, BLANK_CHOICE_DASH),
     ),
