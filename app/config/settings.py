@@ -238,7 +238,7 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 # Caching
 #
 ##############################################################################
-REDIS_ENDPOINT = os.environ.get("REDIS_ENDPOINT", "redis://redis:6379")
+REDIS_ENDPOINT = os.environ.get("REDIS_ENDPOINT", "redis://localhost:6379")
 
 CACHES = {
     "default": {

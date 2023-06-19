@@ -82,7 +82,6 @@ jobs:
         # The cache is required for compressing the files
         run: |
           echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
-          export REDIS_ENDPOINT=redis://localhost:6379
           docker compose up -d redis
           make build
       - name: Configure AWS credentials
