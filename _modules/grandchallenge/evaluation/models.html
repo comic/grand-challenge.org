@@ -894,8 +894,20 @@
     <span class="n">predictions_file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">submission_file_path</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">MimeTypeValidator</span><span class="p">(</span><span class="n">allowed_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;application/zip&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">)),</span>
-            <span class="n">ExtensionValidator</span><span class="p">(</span><span class="n">allowed_extensions</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;.zip&quot;</span><span class="p">,</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)),</span>
+            <span class="n">MimeTypeValidator</span><span class="p">(</span>
+                <span class="n">allowed_types</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;application/zip&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">ExtensionValidator</span><span class="p">(</span>
+                <span class="n">allowed_extensions</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;.zip&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.csv&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;.json&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
         <span class="p">],</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">protected_s3_storage</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
