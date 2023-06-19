@@ -246,6 +246,7 @@ class SubmissionForm(
                 "application/vnd.ms-excel",
                 "text/csv",
                 "text/plain",
+                "application/json",
             ]
         ),
         label="Predictions File",
