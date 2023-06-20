@@ -377,7 +377,7 @@ CSP_DEFAULT_SRC = "'none'"
 CSP_INCLUDE_NONCE_IN = ["script-src"]
 
 CSP_SCRIPT_SRC = (
-    "https://www.googletagmanager.com",
+    "https://www.googletagmanager.com",  # For Google Analytics
     "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
 )
 CSP_STYLE_SRC = (
@@ -386,7 +386,10 @@ CSP_STYLE_SRC = (
 )
 CSP_FONT_SRC = ("https://fonts.gstatic.com",)
 CSP_IMG_SRC = ("https://www.gravatar.com",)
-CSP_CONNECT_SRC = ("'self'",)
+CSP_CONNECT_SRC = (
+    "'self'",
+    "https://*.google-analytics.com",  # For Google Analytics
+)
 
 if STATIC_HOST:
     CSP_SCRIPT_SRC += (STATIC_HOST,)
