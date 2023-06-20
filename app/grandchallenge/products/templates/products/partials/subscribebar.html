@@ -1,14 +1,5 @@
 {% load static %}
 
-<script nonce="{{request.csp_nonce}}">
-  $(window).on('load',function(){
-  if (!sessionStorage.getItem('shown-alert')){
-    $('#subscribeAlert').show();
-    sessionStorage.setItem('shown-alert', 'true');
-  }
-});
-</script>
-
 <div class="alert alert-dismissible bg-radboud rounded-0 collapse" id="subscribeAlert" role="alert">
   <div class="container">
     <div class="col">
@@ -20,3 +11,5 @@
     </button>
   </div>
 </div>
+
+<script type="module" src="{% static 'products/js/subscribe_alert.mjs' %}"></script>
