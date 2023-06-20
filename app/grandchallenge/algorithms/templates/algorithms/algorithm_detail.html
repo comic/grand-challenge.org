@@ -8,6 +8,7 @@
 {% load remove_whitespace %}
 {% load naturaldelta %}
 {% load static %}
+{% load string %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -511,11 +512,8 @@
 {% block script %}
     {{ block.super }}
     <script src="{% static "js/refresh_sidebar.js" %}"></script>
-    <script nonce="{{request.csp_nonce}}">
-        document.body.addEventListener('htmx:configRequest', (event) => {
-            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
-            })
-    </script>
+    {{ csrf_token|to_string|json_script:"csrfToken" }}
+    <script type="module" src="{% static 'js/htmx_config_csrf.mjs' %}"></script>
 
     {% if object.usage_statistics and "change_algorithm" in algorithm_perms %}
         <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
