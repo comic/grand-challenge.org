@@ -639,6 +639,11 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                 "now": now().isoformat(),
                 "limit": 1000,
                 "user_teams": self.user_teams,
+                "allow_metrics_toggling": len(self.phase.extra_results_columns)
+                > 0
+                or self.phase.scoring_method_choice is not self.phase.ABSOLUTE,
+                "display_leaderboard_date_button": self.phase.result_display_choice
+                == self.phase.ALL,
             }
         )
         return context
