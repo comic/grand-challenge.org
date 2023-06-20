@@ -1,6 +1,7 @@
 {% extends "account/base.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load static %}
 
 {% block head_title %}{% trans "E-mail Addresses" %}{% endblock %}
 
@@ -65,17 +66,8 @@
 
 
 {% block extra_body %}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        (function () {
-            var message = "{% trans 'Do you really want to remove the selected e-mail address?' %}";
-            var actions = document.getElementsByName('action_remove');
-            if (actions.length) {
-                actions[0].addEventListener("click", function (e) {
-                    if (!confirm(message)) {
-                        e.preventDefault();
-                    }
-                });
-            }
-        })();
-    </script>
+    {% filter json_script:"emailConfirmMessage" %}
+        {% trans 'Do you really want to remove the selected e-mail address?' %}
+    {% endfilter %}
+    <script type="module" src="{% static 'profiles/js/email_remove.mjs' %}"></script>
 {% endblock %}
