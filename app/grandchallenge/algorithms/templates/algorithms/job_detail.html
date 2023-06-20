@@ -368,21 +368,10 @@
 
 {% block script %}
     {{ block.super }}
+
     {% include 'workstations/partials/session-control.html' %}
 
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $('#resultInfoModal').on('show.bs.modal', function (event) {
-            let button = $(event.relatedTarget);
-            let modal = $(this);
-            const json_element = document.getElementById(button.data('pk'));
-            if (json_element) {
-                modal.find('.modal-job-output').text(json_element.textContent);
-            } else {
-                modal.find('.modal-job-output').text(button.data('output'));
-            }
-            modal.find('.modal-title').text(button.data('title'));
-        })
-    </script>
+    <script type="module" src="{% static 'algorithms/js/display_result_text.mjs' %}"></script>
 
     <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
