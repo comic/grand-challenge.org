@@ -1,6 +1,5 @@
 function initialize_jsoneditor_widget(jsoneditorWidgetID) {
-    const schemaID = `schema_${jsoneditorWidgetID}`
-    const schema = JSON.parse(document.getElementById(schemaID).textContent)
+    const schema = JSON.parse(document.getElementById(`schema_${jsoneditorWidgetID}`).textContent)
     const container = document.getElementById(`jsoneditor_${jsoneditorWidgetID}`);
     const options = {
         mode: 'tree',

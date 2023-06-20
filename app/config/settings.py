@@ -1383,6 +1383,7 @@ CSP_IMG_SRC = (
     CSP_STATIC_HOST,
     CSP_MEDIA_HOST,
     "https://www.gravatar.com",
+    "data:",  # Used by jsoneditor
 )
 CSP_MEDIA_SRC = (CSP_MEDIA_HOST,)
 CSP_CONNECT_SRC = (
