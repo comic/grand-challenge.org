@@ -2,6 +2,7 @@
 {% load url %}
 {% load profiles %}
 {% load humanize %}
+{% load static %}
 
 {% block title %}
     Permission Requests - {{ block.super }}
@@ -87,17 +88,6 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('#usersTable').DataTable({
-                order: [[8, "asc"], [0, "desc"]],
-                "pageLength": 25,
-                "columnDefs": [{
-                    "targets": [-1],
-                    "searchable": false,
-                    "orderable": false
-                }]
-            });
-        });
-    </script>
+
+    <script type="module" src="{% static 'js/permission_request_display_table.mjs' %}"></script>
 {% endblock %}
