@@ -389,10 +389,10 @@ CSP_IMG_SRC = ("https://www.gravatar.com",)
 CSP_CONNECT_SRC = ("'self'",)
 
 if STATIC_HOST:
-    CSP_SCRIPT_SRC += (f"https://{STATIC_HOST}",)
-    CSP_STYLE_SRC += (f"https://{STATIC_HOST}",)
-    CSP_FONT_SRC += (f"https://{STATIC_HOST}",)
-    CSP_IMG_SRC += (f"https://{STATIC_HOST}",)
+    CSP_SCRIPT_SRC += (STATIC_HOST,)
+    CSP_STYLE_SRC += (STATIC_HOST,)
+    CSP_FONT_SRC += (STATIC_HOST,)
+    CSP_IMG_SRC += (STATIC_HOST,)
 else:
     CSP_SCRIPT_SRC += ("'self'",)
     CSP_STYLE_SRC += ("'self'",)
