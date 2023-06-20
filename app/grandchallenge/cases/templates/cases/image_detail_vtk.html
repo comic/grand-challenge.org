@@ -18,20 +18,6 @@
 <body>
     <div id="itk" class="viewer" data-url="{{ mh_url }}" data-is2d="{{ is_2d }}"></div>
     <script src="{% static 'vendored/itk-vtk-viewer/dist/itkVtkViewerCDN.js' %}"></script>
-    <script nonce="{{request.csp_nonce}}">
-        const el = document.getElementById('itk');
-        const files = [el.dataset.url];
-        const use2D = el.dataset.is2d === "True";
-        itkVtkViewer.createViewerFromUrl(el, { files, use2D }).then(viewer => {
-            viewer.setBackgroundColor([0, 0, 0]);
-            viewer.setUICollapsed(true);
-            viewer.setUnits('mm');
-            viewer.setRotateEnabled(false);
-
-            if (viewer.renderWindow && viewer.renderWindow.render) {
-                viewer.renderWindow.render()
-            }
-        });
-    </script>
+    <script type="module" src="{% static 'cases/js/vtk.mjs' %}"></script>
 </body>
 </html>

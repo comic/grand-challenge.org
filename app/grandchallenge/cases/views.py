@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.templatetags.static import static
 from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -97,7 +98,12 @@ class OSDImageDetail(
         except ObjectDoesNotExist:
             raise Http404
 
-        context.update({"dzi_url": dzi.file.url})
+        context.update(
+            {
+                "dzi_url": dzi.file.url,
+                "osd_images": static("vendored/openseadragon/images/"),
+            }
+        )
 
         return context
 
@@ -287,3 +293,10 @@ class CS3DImageDetail(
             raise Http404 from e
 
         return img
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"convert_worker_path": static("js/typed_array_to_float32.js")}
+        )
+        return context

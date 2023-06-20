@@ -107,10 +107,8 @@
     <script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
     {{ object.pk|json_script:"imagePk" }}
-    <script nonce="{{request.csp_nonce}}">
-        window.imagePk = JSON.parse(document.getElementById('imagePk').textContent);
-        window.convertWorkerPath = "{% static 'js/typed_array_to_float32.js' %}";
-    </script>
+    {{ convert_worker_path|json_script:"convertWorkerPath" }}
+    <script type="module" src="{% static 'cases/js/cornerstone_3d.mjs' %}"></script>
     <script type="module" src="{% static 'js/cornerstone/index.148ac445.js' %}"></script>
   </body>
 </html>

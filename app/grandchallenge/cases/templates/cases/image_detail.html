@@ -12,22 +12,9 @@
 
 <script src="{% static 'vendored/openseadragon/openseadragon.min.js' %}"></script>
 
-<script nonce="{{request.csp_nonce}}" type="text/javascript">
-    let viewer = OpenSeadragon({
-        id: "openseadragonview",
-        prefixUrl: "{% static 'vendored/openseadragon/images/' %}",
-        tileSources: "{{ dzi_url }}",
-        debugMode: false,
-        gestureSettingsMouse: {
-            flickEnabled: true,
-            clickToZoom: false,
-            dblClickToZoom: true,
-        },
-        zoomPerSecond: 0.5,
-        zoomPerScroll: 1.3,
-        showNavigator:  true,
-    });
-</script>
+{{ dzi_url|json_script:"dziURL" }}
+{{ osd_images|json_script:"osdImages" }}
+<script type="module" src="{% static 'cases/js/openseadragon.mjs' %}"></script>
 
 </body>
 </html>
