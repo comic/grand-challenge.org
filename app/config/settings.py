@@ -368,47 +368,6 @@ COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 LIBSASS_OUTPUT_STYLE = "compressed"
 COMPRESS_OFFLINE = strtobool(os.environ.get("COMPRESS_OFFLINE", "True"))
 
-##########################
-# CONTENT SECURITY POLICY
-##########################
-
-CSP_REPORT_ONLY = True
-CSP_DEFAULT_SRC = "'none'"
-CSP_INCLUDE_NONCE_IN = ["script-src"]
-
-CSP_SCRIPT_SRC = (
-    "https://www.googletagmanager.com",  # For Google Analytics
-    "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
-)
-CSP_STYLE_SRC = (
-    "https://fonts.googleapis.com",
-    "'unsafe-inline'",  # TODO fix inline styles
-)
-CSP_FONT_SRC = ("https://fonts.gstatic.com",)
-CSP_IMG_SRC = ("https://www.gravatar.com",)
-CSP_CONNECT_SRC = (
-    "'self'",
-    "https://*.google-analytics.com",  # For Google Analytics
-)
-
-if STATIC_HOST:
-    CSP_SCRIPT_SRC += (STATIC_HOST,)
-    CSP_STYLE_SRC += (STATIC_HOST,)
-    CSP_FONT_SRC += (STATIC_HOST,)
-    CSP_IMG_SRC += (STATIC_HOST,)
-else:
-    CSP_SCRIPT_SRC += ("'self'",)
-    CSP_STYLE_SRC += ("'self'",)
-    CSP_FONT_SRC += ("'self'",)
-    CSP_IMG_SRC += ("'self'",)
-
-if AWS_S3_ENDPOINT_URL:
-    CSP_IMG_SRC += (AWS_S3_ENDPOINT_URL,)
-else:
-    CSP_IMG_SRC += (
-        f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.amazonaws.com",
-    )
-
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "d=%^l=xa02an9jn-$!*hy1)5yox$a-$2(ejt-2smimh=j4%8*b"
@@ -1391,6 +1350,49 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
+
+##########################
+# CONTENT SECURITY POLICY
+##########################
+
+CSP_REPORT_ONLY = True
+CSP_DEFAULT_SRC = "'none'"
+CSP_INCLUDE_NONCE_IN = ["script-src"]
+CSP_STATIC_HOST = STATIC_HOST if STATIC_HOST else "'self'"
+CSP_MEDIA_HOST = (
+    AWS_S3_ENDPOINT_URL
+    if AWS_S3_ENDPOINT_URL
+    else f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.amazonaws.com"
+)
+
+CSP_SCRIPT_SRC = (
+    CSP_STATIC_HOST,
+    "https://www.googletagmanager.com",  # For Google Analytics
+    "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
+)
+CSP_STYLE_SRC = (
+    CSP_STATIC_HOST,
+    "https://fonts.googleapis.com",
+    "'unsafe-inline'",  # TODO fix inline styles
+)
+CSP_FONT_SRC = (
+    CSP_STATIC_HOST,
+    "https://fonts.gstatic.com",
+)
+CSP_IMG_SRC = (
+    CSP_STATIC_HOST,
+    CSP_MEDIA_HOST,
+    "https://www.gravatar.com",
+)
+CSP_MEDIA_SRC = (CSP_MEDIA_HOST,)
+CSP_CONNECT_SRC = (
+    "'self'",  # For subdomain leaderboards
+    *(
+        f"{DEFAULT_SCHEME}://{region}{SESSION_COOKIE_DOMAIN}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}"
+        for region in WORKSTATIONS_ACTIVE_REGIONS
+    ),
+    "https://*.google-analytics.com",  # For Google Analytics
+)
 
 ENABLE_DEBUG_TOOLBAR = False
 
