@@ -530,6 +530,17 @@ class JobProgressDetail(
         qs = super().get_queryset()
         return qs.select_related("algorithm_image__algorithm")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "job_detail_api": reverse(
+                    "api:algorithms-job-detail", kwargs={"pk": self.object.pk}
+                )
+            }
+        )
+        return context
+
 
 class JobsList(PaginatedTableListView):
     model = Job
