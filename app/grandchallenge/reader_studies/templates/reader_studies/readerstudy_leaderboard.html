@@ -2,6 +2,7 @@
 {% load url %}
 {% load humanize %}
 {% load user_profile_link_username from profiles %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -42,18 +43,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('.table').each(function() {
-                $(this).DataTable({
-                    pageLength: 100,
-                });
-            });
-        });
-        $(window).resize(function () {
-            $('.table').each(function() {
-                $(this).DataTable().columns.adjust();
-            });
-        });
-    </script>
+
+    <script type="module" src="{% static 'reader_studies/js/leaderboard.mjs' %}"></script>
+
 {% endblock %}
