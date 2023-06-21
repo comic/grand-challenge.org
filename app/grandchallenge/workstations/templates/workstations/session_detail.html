@@ -61,22 +61,9 @@
 {% block script %}
     {{ block.super }}
 
-    <script src="{% static 'workstations/js/session.js' %}"
-            type="text/javascript">
-    </script>
+    {{ object.workstation_url|json_script:"workstationUrl" }}
+    {{ session_detail_url|json_script:"sessionDetailUrl" }}
 
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        (function () {
-            $('#sessionModal').modal({show: true});
-            const params = new URLSearchParams(window.location.search);
-            const path = decodeURIComponent(params.has("path") ? params.get("path") : "");
-            const qs = decodeURIComponent(params.has("qs") ? params.get("qs") : "");
-            const workstationUrl = `{{ object.workstation_url }}/${path}?${qs}`;
-            getSessionStatus(
-                "{% url 'api:session-detail' pk=object.pk %}",
-                document.getElementById("sessionState"),
-                workstationUrl,
-            );
-        })();
-    </script>
+    <script type="module" src="{% static 'workstations/js/session.mjs' %}"></script>
+
 {% endblock %}
