@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load humanize %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -75,7 +76,7 @@
     <h3>Evaluations for this submission</h3>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm"
+        <table class="table sortable table-hover table-borderless table-sm"
                id="evaluationTable">
             <thead class="thead-light">
             <tr>
@@ -119,9 +120,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('#evaluationTable').DataTable();
-        });
-    </script>
+
+    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
+
 {% endblock %}

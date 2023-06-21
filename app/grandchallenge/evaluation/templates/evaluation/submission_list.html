@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load profiles %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -28,7 +29,7 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm" id="submissionsTable">
+        <table class="table sortable table-hover table-borderless table-sm" id="submissionsTable">
             <thead class="thead-light">
             <tr>
                 <th>Created</th>
@@ -86,13 +87,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('#submissionsTable').DataTable(
-                {
-                    order: [[0, "desc"]]
-                }
-            );
-        });
-    </script>
+
+    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
+
 {% endblock %}

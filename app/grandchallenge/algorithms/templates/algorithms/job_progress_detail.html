@@ -74,16 +74,8 @@
     {{ block.super }}
 
     {{ object.algorithm_image.algorithm.average_duration|json_script:"averageJobDuration" }}
+    {{ job_detail_api|json_script:"jobDetailAPI" }}
     <script src="{% static 'vendored/moment.js/moment.min.js' %}"></script>
-    <script src="{% static 'algorithms/js/job_session.js' %}"
-            type="text/javascript">
-    </script>
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        (function () {
-            getJobStatus(
-                 "{% url 'api:algorithms-job-detail' pk=object.pk %}"
-            );
-        })();
-    </script>
+    <script type="module" src="{% static 'algorithms/js/job_session.mjs' %}"></script>
 
 {% endblock %}

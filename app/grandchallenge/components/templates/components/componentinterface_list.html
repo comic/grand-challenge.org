@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load static %}
 
 {% block title %}
     {{ object_type|title }} {{ list_type|title }} Options - {{ block.super }}
@@ -89,11 +90,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('#interfacesTable').DataTable({
-                "pageLength": 100,
-            });
-        });
-    </script>
+
+    <script type="module" src="{% static 'components/js/interfaces_table.mjs' %}"></script>
+
 {% endblock %}

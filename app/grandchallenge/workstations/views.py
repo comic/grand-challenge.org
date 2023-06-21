@@ -28,6 +28,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.views import VerificationRequiredMixin
 from grandchallenge.workstations.forms import (
     DebugSessionForm,
@@ -339,6 +340,17 @@ class SessionDetail(
         f"{Session._meta.app_label}.view_{Session._meta.model_name}"
     )
     raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "session_detail_url": reverse(
+                    "api:session-detail", kwargs={"pk": self.object.pk}
+                )
+            }
+        )
+        return context
 
 
 def session_proxy(request, *, pk, path, **_):

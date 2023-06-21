@@ -60,12 +60,8 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        window.drf = {
-            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
-            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
-        };
-    </script>
-    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+
+    {% include 'grandchallenge/partials/drf_csrf.html' %}
+
     <script type="module" src="{% static "js/notifications/bulk_delete_update.js" %}"></script>
 {% endblock %}

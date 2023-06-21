@@ -1,5 +1,3 @@
-"use strict";
-
 const timeout = 5000;
 
 const cards = {
@@ -9,6 +7,7 @@ const cards = {
 };
 
 const averageJobDuration = moment.duration(JSON.parse(document.getElementById("averageJobDuration").textContent));
+const jobDetailAPI = JSON.parse(document.getElementById("jobDetailAPI").textContent);
 
 // Set anything less than 1s to "a few seconds"
 moment.relativeTimeThreshold('ss', 1);
@@ -22,7 +21,7 @@ function getJobStatus(jobUrl) {
 
 function handleJobStatus(job) {
     let jobStatus = job.status.toLowerCase();
-    let imageInputs = job.inputs.filter(i => ["Image","Heat Map","Segmentation"].includes(i.interface.kind));
+    let imageInputs = job.inputs.filter(i => ["Image", "Heat Map", "Segmentation"].includes(i.interface.kind));
 
     handleImageImports(jobStatus, imageInputs)
 
@@ -45,10 +44,10 @@ function handleJobStatus(job) {
     }
 }
 
-function handleImageImports(jobStatus, imageInputs){
-    if (imageInputs.length == 0){
+function handleImageImports(jobStatus, imageInputs) {
+    if (imageInputs.length == 0) {
         setCardInactiveMessage(cards.imageImport, "No images for this job");
-    } else if (imageInputs.every(i => i.image!= null)){
+    } else if (imageInputs.every(i => i.image != null)) {
         const msg = `Total of ${imageInputs.length} images`;
         setCardCompleteMessage(cards.imageImport, msg);
     } else {
@@ -78,7 +77,7 @@ function setCardActiveMessage(card, msg) {
 }
 
 function setCardCompleteMessage(card, msg) {
-    card.classList.remove("active", "border-light", "border-primary",  "text-muted");
+    card.classList.remove("active", "border-light", "border-primary", "text-muted");
     card.classList.add("border-success");
     card.querySelector(".statusMessage").innerHTML = msg;
     card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-success fa fa-check fa-2x\"></i>";
@@ -97,3 +96,5 @@ function setCardInactiveMessage(card, msg) {
     card.querySelector(".statusMessage").innerHTML = msg;
     card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-success fa fa-minus fa-2x\"></i>";
 }
+
+getJobStatus(jobDetailAPI);

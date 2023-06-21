@@ -1,5 +1,6 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load url %}
+{% load static %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -85,16 +86,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('#pagesTable').DataTable({
-                "pageLength": 10,
-                "columnDefs": [{
-                    "targets": [4, 5],
-                    "searchable": false,
-                    "orderable": false
-                }]
-            });
-        });
-    </script>
+
+    <script type="module" src="{% static 'pages/js/page_list.mjs' %}"></script>
+
 {% endblock %}

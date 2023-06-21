@@ -1,7 +1,14 @@
-"use strict";
-
 const timeout = 1000;
 const max_attempts = 60;
+
+const params = new URLSearchParams(window.location.search);
+const path = decodeURIComponent(params.has("path") ? params.get("path") : "");
+const qs = decodeURIComponent(params.has("qs") ? params.get("qs") : "");
+const workstationUrl = JSON.parse(document.getElementById("workstationUrl").textContent);
+const workstationUrlWithQuery = `${workstationUrl}/${path}?${qs}`;
+const sessionDetailUrl = JSON.parse(document.getElementById("sessionDetailUrl").textContent);
+
+const modal = $('#sessionModal');
 
 function getSessionStatus(statusUrl, statusButton, workstationUrl) {
     // Checks on the status of the Session (queued, running, started, etc)
@@ -67,3 +74,13 @@ function setButtonError(statusButton, msg) {
     statusButton.querySelector("#sessionStateBody").innerHTML = "<b>" + msg + "</b>";
     statusButton.querySelector("#sessionStateFooter").classList.remove("d-none");
 }
+
+modal.on("shown.bs.modal", function (e) {
+    getSessionStatus(
+        sessionDetailUrl,
+        document.getElementById("sessionState"),
+        workstationUrlWithQuery,
+    );
+});
+
+modal.modal("show");

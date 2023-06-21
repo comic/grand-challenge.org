@@ -22,15 +22,8 @@
     {% endfor %}
 
 </table>
-<script src="{% static 'js/jquery.formset.js' %}">
-</script>
-<script nonce="{{request.csp_nonce}}" type="text/javascript">
-    $('.formset_row-{{ formset.prefix }}').formset({
-        addText: 'Add another',
-        deleteText: 'Remove',
-        prefix: '{{ formset.prefix }}',
-        addCssClass: "btn btn-primary my-2",
-        deleteCssClass: "btn btn-danger delete-row mb-2",
-        hideLastAddForm: true,
-    });
-</script>
+
+<script src="{% static 'js/jquery.formset.js' %}"></script>
+
+{{ formset.prefix|json_script:"formsetPrefix" }}
+<script type="module" src="{% static 'js/formset.mjs' %}"></script>

@@ -78,20 +78,8 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('.table').each(function() {
-                $(this).DataTable({
-                    pageLength: 100,
-                    "order": [[ 1, "asc" ]]
-                });
-            });
-        });
-        $(window).resize(function () {
-            $('.table').each(function() {
-                $(this).DataTable().columns.adjust();
-            });
-        });
-    </script>
+
+    <script type="module" src="{% static 'reader_studies/js/statistics.mjs' %}"></script>
+
     {% include 'workstations/partials/session-control.html' %}
 {% endblock %}

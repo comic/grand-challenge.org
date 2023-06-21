@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}API Tokens - {{ block.super }}{% endblock %}
 
@@ -69,14 +70,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(function () {
-            $('.table').each(function () {
-                $(this).DataTable({
-                    "order": [[1, "desc"]],
-                    "paging": false,
-                });
-            });
-        });
-    </script>
+
+    <script type="module" src="{% static 'api_tokens/js/display_tokens.mjs' %}"></script>
+
 {% endblock %}

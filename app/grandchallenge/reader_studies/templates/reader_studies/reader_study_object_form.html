@@ -15,19 +15,9 @@
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript"
-            src="{% static "js/unsavedform.js" %}"></script>
-    <script nonce="{{request.csp_nonce}}" type="text/javascript">
-        $(document).ready(() => {
-            const toggleOptions = () => {
-                $(".options-formset").toggleClass('d-none', ["CHOI", "MCHO", "MCHD"].indexOf($("#id_answer_type").val()) === -1);
-            }
-            toggleOptions();
-            $("#id_answer_type").on("change", () => {
-                toggleOptions();
-            });
-        });
-    </script>
+
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+    <script type="module" src="{% static 'reader_studies/js/toggle_options.mjs' %}"></script>
 
     <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
 

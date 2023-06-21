@@ -81,16 +81,8 @@
 {% block script %}
     {{ block.super }}
 
-    <script nonce="{{request.csp_nonce}}" id="allowMetricsToggling" type="application/json">
-        {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
-            true
-        {% else %}
-            false
-        {% endif %}
-    </script>
-    <script nonce="{{request.csp_nonce}}" id="displayLeaderboardDateButton" type="application/json">
-        {% if phase.result_display_choice == phase.ALL %}true{% else %}false{% endif %}
-    </script>
+    {{ allow_metrics_toggling|json_script:"allowMetricsToggling" }}
+    {{ display_leaderboard_date_button|json_script:"displayLeaderboardDateButton" }}
 
     <script type="text/javascript" src="{% static 'js/evaluation/leaderboard.js' %}"></script>
 {% endblock %}

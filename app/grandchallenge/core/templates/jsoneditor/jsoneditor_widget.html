@@ -1,4 +1,8 @@
+{% load static %}
+
 <div id="jsoneditor_{{ widget.attrs.id }}"
+     class="jsoneditorWidget"
+     data-widget-id="{{ widget.attrs.id }}"
      style="width: 100%"></div>
 
 {# taken from https://github.com/django/django/blob/main/django/forms/widgets.py #}
@@ -8,35 +12,6 @@
 
 {% with "schema_"|add:widget.attrs.id as schema_id %}
     {{ schema|json_script:schema_id }}
-
-    <script nonce="{{request.csp_nonce}}">
-        $(document).ready(function () {
-            const container = document.getElementById("jsoneditor_{{ widget.attrs.id }}");
-            const options = {
-                mode: 'tree',
-                modes: ['code', 'tree'],
-                onChangeText: function (jsonString) {
-                    let widget = document.getElementById("{{ widget.attrs.id }}")
-                    try {
-                        JSON.parse(jsonString);
-                        widget.value = jsonString;
-                        widget.setCustomValidity("");
-                    } catch(err) {
-                        widget.setCustomValidity("JSON is invalid");
-                    }
-                }
-            };
-            const schema = JSON.parse(document.getElementById("{{ schema_id }}").textContent);
-
-            let editor = new JSONEditor(container, options);
-
-            editor.set(JSON.parse(document.getElementById("{{ widget.attrs.id }}").value));
-            editor.expandAll();
-
-            {% if schema %}
-                editor.setSchema(schema);
-            {% endif %}
-        })
-    </script>
-
 {% endwith %}
+
+<script type="module" src="{% static 'js/jsoneditor_widget.mjs' %}"></script>
