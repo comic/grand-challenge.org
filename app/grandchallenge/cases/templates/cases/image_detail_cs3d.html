@@ -108,7 +108,7 @@
 
     {{ object.pk|json_script:"imagePk" }}
     {{ convert_worker_path|json_script:"convertWorkerPath" }}
-    <script type="module" src="{% static 'cases/js/cornerstone_3d.mjs' %}"></script>
+    <script type="text/javascript" src="{% static 'cases/js/cornerstone_3d.js' %}"></script>
     <script type="module" src="{% static 'js/cornerstone/index.148ac445.js' %}"></script>
   </body>
 </html>
