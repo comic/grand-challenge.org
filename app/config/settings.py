@@ -577,6 +577,7 @@ LOCAL_APPS = [
     "grandchallenge.emails",
     "grandchallenge.hanging_protocols",
     "grandchallenge.charts",
+    "grandchallenge.forums",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
