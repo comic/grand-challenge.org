@@ -907,7 +907,7 @@ REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
 ###############################################################################
 
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
-CORS_ORIGIN_REGEX_WHITELIST = [
+CORS_ALLOWED_ORIGIN_REGEXES = [
     rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
 ]
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
@@ -1406,7 +1406,7 @@ ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
     # Allow localhost in development
-    CORS_ORIGIN_REGEX_WHITELIST += [r"^http://localhost:8888$"]
+    CORS_ALLOWED_ORIGIN_REGEXES += [r"^http://localhost:8888$"]
 
     LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
 
