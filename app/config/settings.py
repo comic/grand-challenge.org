@@ -1369,6 +1369,7 @@ CSP_MEDIA_HOST = (
 CSP_SCRIPT_SRC = (
     CSP_STATIC_HOST,
     "https://www.googletagmanager.com",  # For Google Analytics
+    "https://www.google-analytics.com",  # For Google Analytics
     "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
 )
 CSP_STYLE_SRC = (
@@ -1385,11 +1386,15 @@ CSP_IMG_SRC = (
     CSP_MEDIA_HOST,
     "https://www.gravatar.com",
     "https://www.googletagmanager.com",  # For Google Analytics
+    "https://www.google-analytics.com",  # For Google Analytics
     "data:",  # Used by jsoneditor
 )
 CSP_MEDIA_SRC = (CSP_MEDIA_HOST,)
 CSP_CONNECT_SRC = (
     "'self'",  # For subdomain leaderboards
+    # For workstation subdomain to main
+    f"{DEFAULT_SCHEME}://{SESSION_COOKIE_DOMAIN.lstrip('.')}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}",
+    # For main to workstation subdomain
     *(
         f"{DEFAULT_SCHEME}://{region}{SESSION_COOKIE_DOMAIN}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}"
         for region in WORKSTATIONS_ACTIVE_REGIONS
