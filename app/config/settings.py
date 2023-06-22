@@ -422,7 +422,7 @@ MIDDLEWARE = (
     # Keep whitenoise after security and before all else
     "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
-    "csp.middleware.CSPMiddleware",
+    "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
     "django_permissions_policy.PermissionsPolicyMiddleware",
@@ -1357,15 +1357,22 @@ RETINA_ADMINS_GROUP_NAME = "retina_admins"
 # CONTENT SECURITY POLICY
 ##########################
 
-CSP_REPORT_ONLY = True
-CSP_DEFAULT_SRC = "'none'"
+CSP_REPORT_ONLY = strtobool(os.environ.get("CSP_REPORT_ONLY", "True"))
+
+CSP_REPORT_URI = os.environ.get("CSP_REPORT_URI")
+CSP_REPORT_PERCENTAGE = float(os.environ.get("CSP_REPORT_PERCENTAGE", "0"))
+
 CSP_STATIC_HOST = STATIC_HOST if STATIC_HOST else "'self'"
 CSP_MEDIA_HOST = (
     AWS_S3_ENDPOINT_URL
     if AWS_S3_ENDPOINT_URL
-    else f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.amazonaws.com"
+    else (
+        f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.amazonaws.com",
+        f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
+    )
 )
 
+CSP_DEFAULT_SRC = "'none'"
 CSP_SCRIPT_SRC = (
     CSP_STATIC_HOST,
     "https://www.googletagmanager.com",  # For Google Analytics
@@ -1384,12 +1391,19 @@ CSP_FONT_SRC = (
 CSP_IMG_SRC = (
     CSP_STATIC_HOST,
     CSP_MEDIA_HOST,
-    "https://www.gravatar.com",
+    "https://www.gravatar.com",  # Used for default mugshots
     "https://www.googletagmanager.com",  # For Google Analytics
     "https://www.google-analytics.com",  # For Google Analytics
     "data:",  # Used by jsoneditor
+    # The following should be cleaned up
+    "https://user-images.githubusercontent.com",  # Used in blog posts
+    "https://*.googleusercontent.com",  # Used by some challenge pages
 )
-CSP_MEDIA_SRC = (CSP_MEDIA_HOST,)
+CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
+CSP_MEDIA_SRC = (
+    CSP_MEDIA_HOST,
+    "https://user-images.githubusercontent.com",  # Used in blog posts
+)
 CSP_CONNECT_SRC = (
     "'self'",  # For subdomain leaderboards
     # For workstation subdomain to main
