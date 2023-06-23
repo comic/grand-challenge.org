@@ -14,6 +14,4 @@ let viewer = OpenSeadragon({
     zoomPerSecond: 0.5,
     zoomPerScroll: 1.3,
     showNavigator: true,
-    loadTilesWithAjax: true,
-    ajaxWithCredentials: true,
 });
