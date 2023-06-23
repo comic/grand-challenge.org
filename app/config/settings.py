@@ -1394,14 +1394,18 @@ CSP_IMG_SRC = (
     *CSP_MEDIA_HOSTS,
     "https://www.gravatar.com",  # Used for default mugshots
     "https://www.googletagmanager.com",  # For Google Analytics
-    "https://www.google-analytics.com",  # For Google Analytics
+    "https://*.google-analytics.com",  # For Google Analytics
     "data:",  # Used by jsoneditor
+    "'self'",  # Used by Open Sea Dragon
     # The following should be cleaned up
     "https://user-images.githubusercontent.com",  # Used in blog posts
     # Used on Challenge Pages:
     "https://*.googleusercontent.com",
     "https://img.shields.io",
     "https://zenodo.org",
+    "https://www-users.cs.umn.edu",
+    "https://www.nih.gov",
+    "https://climb4kc.org",
 )
 CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
 CSP_MEDIA_SRC = (
@@ -1420,6 +1424,11 @@ CSP_CONNECT_SRC = (
     "https://*.google-analytics.com",  # For Google Analytics
     "https://*.ingest.sentry.io",  # For Sentry errors
 )
+
+if PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN:
+    # Used by Open Sea Dragon and countries json
+    CSP_IMG_SRC += (f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",)
+    CSP_CONNECT_SRC += (f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",)
 
 ENABLE_DEBUG_TOOLBAR = False
 
