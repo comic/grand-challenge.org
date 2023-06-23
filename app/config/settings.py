@@ -1357,7 +1357,7 @@ RETINA_ADMINS_GROUP_NAME = "retina_admins"
 # CONTENT SECURITY POLICY
 ##########################
 
-CSP_REPORT_ONLY = strtobool(os.environ.get("CSP_REPORT_ONLY", "True"))
+CSP_REPORT_ONLY = strtobool(os.environ.get("CSP_REPORT_ONLY", "False"))
 
 CSP_REPORT_URI = os.environ.get("CSP_REPORT_URI")
 CSP_REPORT_PERCENTAGE = float(os.environ.get("CSP_REPORT_PERCENTAGE", "0"))
@@ -1378,6 +1378,7 @@ CSP_SCRIPT_SRC = (
     "https://www.googletagmanager.com",  # For Google Analytics
     "https://www.google-analytics.com",  # For Google Analytics
     "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
+    "'self'",  # Used in the Django admin
 )
 CSP_STYLE_SRC = (
     CSP_STATIC_HOST,
@@ -1397,7 +1398,10 @@ CSP_IMG_SRC = (
     "data:",  # Used by jsoneditor
     # The following should be cleaned up
     "https://user-images.githubusercontent.com",  # Used in blog posts
-    "https://*.googleusercontent.com",  # Used by some challenge pages
+    # Used on Challenge Pages:
+    "https://*.googleusercontent.com",
+    "https://img.shields.io",
+    "https://zenodo.org",
 )
 CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
 CSP_MEDIA_SRC = (
@@ -1414,6 +1418,7 @@ CSP_CONNECT_SRC = (
         for region in WORKSTATIONS_ACTIVE_REGIONS
     ),
     "https://*.google-analytics.com",  # For Google Analytics
+    "https://*.ingest.sentry.io",  # For Sentry errors
 )
 
 ENABLE_DEBUG_TOOLBAR = False
