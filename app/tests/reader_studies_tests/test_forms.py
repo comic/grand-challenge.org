@@ -1258,7 +1258,11 @@ def test_display_set_add_interface_form():
                 ("ACCEPT_REJECT", "Accept/Reject Findings"),
             ],
         ),
-        (AnswerType.CHOICE, BLANK_CHOICE_DASH),
+        (
+            AnswerType.CHOICE,
+            ("SELECT", "Select"),
+            ("RADIO_SELECT", "Radio Select"),
+        ),
         (
             AnswerType.MULTIPLE_CHOICE,
             [

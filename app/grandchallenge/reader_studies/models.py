@@ -976,6 +976,7 @@ class AnswerType(models.TextChoices):
     def get_widget_required_types():
         return [
             AnswerType.TEXT,
+            AnswerType.CHOICE,
         ]
 
 
@@ -1030,6 +1031,8 @@ class QuestionWidgetKindChoices(models.TextChoices):
         "CHECKBOX_SELECT_MULTIPLE",
         "Checkbox Select Multiple",
     )
+    SELECT = "SELECT", "Select"
+    RADIO_SELECT = "RADIO_SELECT", "Radio Select"
 
 
 ANSWER_TYPE_TO_QUESTION_WIDGET = {
@@ -1054,7 +1057,10 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.MULTIPLE_POINTS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
     AnswerType.POLYGON: [],
     AnswerType.MULTIPLE_POLYGONS: [QuestionWidgetKindChoices.ACCEPT_REJECT],
-    AnswerType.CHOICE: [],
+    AnswerType.CHOICE: [
+        QuestionWidgetKindChoices.SELECT,
+        QuestionWidgetKindChoices.RADIO_SELECT,
+    ],
     AnswerType.MULTIPLE_CHOICE: [
         QuestionWidgetKindChoices.SELECT_MULTIPLE,
         QuestionWidgetKindChoices.CHECKBOX_SELECT_MULTIPLE,
