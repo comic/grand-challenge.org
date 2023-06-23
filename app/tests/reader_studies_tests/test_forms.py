@@ -1260,8 +1260,10 @@ def test_display_set_add_interface_form():
         ),
         (
             AnswerType.CHOICE,
-            ("SELECT", "Select"),
-            ("RADIO_SELECT", "Radio Select"),
+            [
+                ("SELECT", "Select"),
+                ("RADIO_SELECT", "Radio Select"),
+            ],
         ),
         (
             AnswerType.MULTIPLE_CHOICE,
