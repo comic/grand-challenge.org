@@ -3,6 +3,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
+from grandchallenge.cases.views import OSDImageDetail
 from grandchallenge.workstations.views import SessionDetail, session_proxy
 
 
@@ -35,5 +36,10 @@ urlpatterns = [
         "workstations/<slug>/sessions/<uuid:pk>/<path:path>",
         session_proxy,
         name="session-proxy",
+    ),
+    path(
+        "cases/images/<uuid:pk>/osd/",
+        OSDImageDetail.as_view(),
+        name="osd-image-detail",
     ),
 ]
