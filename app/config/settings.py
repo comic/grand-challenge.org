@@ -1388,6 +1388,7 @@ CSP_STYLE_SRC = (
 CSP_FONT_SRC = (
     CSP_STATIC_HOST,
     "https://fonts.gstatic.com",
+    "data:",  # TODO - appears on challenge pages on Chrome on Windows
 )
 CSP_IMG_SRC = (
     CSP_STATIC_HOST,
@@ -1406,6 +1407,13 @@ CSP_IMG_SRC = (
     "https://www-users.cs.umn.edu",
     "https://www.nih.gov",
     "https://climb4kc.org",
+    "https://orthopaedicresearchlab.nl",
+    "https://upload.wikimedia.org",
+    "https://i.ibb.co",
+    "https://www.gstatic.com",
+    "https://www.dementiastatistics.org",
+    "https://www-users.cs.umn.edu",
+    "https://i.creativecommons.org",
 )
 CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
 CSP_MEDIA_SRC = (
@@ -1425,10 +1433,18 @@ CSP_CONNECT_SRC = (
     "https://*.ingest.sentry.io",  # For Sentry errors
 )
 
+if STATIC_HOST:
+    CSP_CONNECT_SRC += (STATIC_HOST,)  # For the map json
+
 if PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN:
     # Used by Open Sea Dragon and countries json
     CSP_IMG_SRC += (f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",)
     CSP_CONNECT_SRC += (f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",)
+
+if UPLOADS_S3_USE_ACCELERATE_ENDPOINT:
+    CSP_CONNECT_SRC += (
+        f"https://{UPLOADS_S3_BUCKET_NAME}.s3-accelerate.amazonaws.com",
+    )
 
 ENABLE_DEBUG_TOOLBAR = False
 
