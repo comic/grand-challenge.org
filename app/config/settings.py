@@ -1414,6 +1414,7 @@ CSP_IMG_SRC = (
     "https://www.dementiastatistics.org",
     "https://www-users.cs.umn.edu",
     "https://i.creativecommons.org",
+    "https://licensebuttons.net",
 )
 CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
 CSP_MEDIA_SRC = (
