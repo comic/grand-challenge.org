@@ -1054,6 +1054,7 @@
     <span class="k">def</span> <span class="nf">get_widget_required_types</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">AnswerType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+            <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
         <span class="p">]</span></div>
 
 
@@ -1107,7 +1108,9 @@
     <span class="n">CHECKBOX_SELECT_MULTIPLE</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">&quot;CHECKBOX_SELECT_MULTIPLE&quot;</span><span class="p">,</span>
         <span class="s2">&quot;Checkbox Select Multiple&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+    <span class="n">SELECT</span> <span class="o">=</span> <span class="s2">&quot;SELECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Select&quot;</span>
+    <span class="n">RADIO_SELECT</span> <span class="o">=</span> <span class="s2">&quot;RADIO_SELECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Radio Select&quot;</span></div>
 
 
 <span class="n">ANSWER_TYPE_TO_QUESTION_WIDGET</span> <span class="o">=</span> <span class="p">{</span>
@@ -1132,7 +1135,10 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">ACCEPT_REJECT</span><span class="p">],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT</span><span class="p">,</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">RADIO_SELECT</span><span class="p">,</span>
+    <span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="p">[</span>
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">SELECT_MULTIPLE</span><span class="p">,</span>
         <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">CHECKBOX_SELECT_MULTIPLE</span><span class="p">,</span>
