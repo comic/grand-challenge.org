@@ -1063,3 +1063,25 @@ def test_algorithm_image_activate(settings, client, algorithm_io_image):
     assert i2.is_desired_version
     assert alg.active_image == i2
     assert i2.is_in_registry
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("interfaces_editable", (True, False))
+def test_algorithm_interfaces_editable(client, interfaces_editable):
+    creator = UserFactory()
+    VerificationFactory(user=creator, is_verified=True)
+
+    alg = AlgorithmFactory(interfaces_editable=interfaces_editable)
+    alg.add_editor(user=creator)
+
+    response = get_view_for_user(
+        viewname="algorithms:update",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        user=creator,
+    )
+
+    assert ("inputs" in response.context["form"].fields) is interfaces_editable
+    assert (
+        "outputs" in response.context["form"].fields
+    ) is interfaces_editable
