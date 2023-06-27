@@ -710,7 +710,8 @@ def test_create_algorithm_for_phase_presets(client):
     assert algorithm.view_content == phase.view_content
     assert algorithm.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
     assert algorithm.contact_email == admin.email
-    assert algorithm.display_editors
+    assert algorithm.display_editors is True
+    assert algorithm.interfaces_editable is False
     assert list(algorithm.structures.all()) == []
     assert list(algorithm.modalities.all()) == []
     assert algorithm.logo == phase.challenge.logo

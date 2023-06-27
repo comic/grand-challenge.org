@@ -427,6 +427,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "contact_email",
             "display_editors",
             "logo",
+            "interfaces_editable",
         )
         widgets = {
             "description": TextInput,
@@ -441,6 +442,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "modalities": MultipleHiddenInput(),
             "structures": MultipleHiddenInput(),
             "logo": HiddenInput(),
+            "interfaces_editable": HiddenInput(),
         }
         help_texts = {
             "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
@@ -493,6 +495,8 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self.fields["structures"].disabled = True
         self.fields["logo"].initial = logo
         self.fields["logo"].disabled = True
+        self.fields["interfaces_editable"].initial = False
+        self.fields["interfaces_editable"].disabled = True
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
 
@@ -578,9 +582,14 @@ class AlgorithmUpdateForm(AlgorithmForm):
     class Meta(AlgorithmForm.Meta):
         fields = AlgorithmForm.Meta.fields + ("repo_name",)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, interfaces_editable, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.helper.layout[0].append("repo_name")
+
+        if not interfaces_editable:
+            for field_key in ("inputs", "outputs"):
+                self.fields.pop(field_key)
 
 
 class AlgorithmImageForm(ContainerImageForm):

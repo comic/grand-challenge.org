@@ -146,6 +146,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_outputs", blank=False
     )
+    interfaces_editable = models.BooleanField(
+        default=True,
+        help_text="If true, the input and output interfaces to this algorithm are editable",
+    )
     publications = models.ManyToManyField(
         Publication,
         blank=True,

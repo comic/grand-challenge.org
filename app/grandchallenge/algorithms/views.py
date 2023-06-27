@@ -220,6 +220,11 @@ class AlgorithmUpdate(
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"interfaces_editable": self.object.interfaces_editable})
+        return kwargs
+
 
 class AlgorithmDescriptionUpdate(
     LoginRequiredMixin,
