@@ -28,3 +28,12 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 .custom-select-sm {
   padding-left: $custom-select-padding-x;
 }
+
+// Show heading permalinks only on hover
+:is(h1, h2, h3, h4, h5, h6) > .headerlink {
+    display: none;
+}
+
+:is(h1, h2, h3, h4, h5, h6):hover > .headerlink {
+    display: inline;
+}
