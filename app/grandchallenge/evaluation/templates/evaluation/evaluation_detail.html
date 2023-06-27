@@ -202,6 +202,45 @@
     {% if "change_challenge" in challenge_perms %}
         <div class="card card-danger border-danger">
             <div class="card-header bg-danger text-white">Evaluation Admin</div>
+
+            {% if incomplete_jobs %}
+                <div class="card-body">
+                    <h3 class="card-title">Incomplete Jobs</h3>
+
+                    <p>
+                        The following algorithm jobs need to complete before the evaluation method
+                        can be executed on the predictions.
+                    </p>
+
+                    <table class="table table-borderless table-hover table-sm">
+                        <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Created</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for job in incomplete_jobs %}
+                            <tr>
+                                <td><a href="{{ job.get_absolute_url }}">{{ job.pk }}</a></td>
+                                <td>{{ job.created }}</td>
+                                <td>
+                                    <span class="badge badge-{{ job.status_context }}">
+                                    {% if job.animate %}
+                                        <span class="spinner-border spinner-border-sm" role="status"
+                                            aria-hidden="true"></span>
+                                    {% endif %}
+                                    {{ job.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
             <div class="card-body">
                 <h3 class="card-title">Visibility</h3>
 

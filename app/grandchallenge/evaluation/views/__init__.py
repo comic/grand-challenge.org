@@ -20,7 +20,7 @@ from django.views.generic import (
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -500,6 +500,18 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
             ]:
                 json.append(output)
 
+        incomplete_jobs = filter_by_permission(
+            queryset=Job.objects.exclude(status=Job.SUCCESS)
+            .filter(
+                algorithm_image=self.object.submission.algorithm_image,
+                inputs__archive_items__archive=self.object.submission.phase.archive,
+            )
+            .distinct()
+            .order_by("status"),
+            user=self.request.user,
+            codename="view_job",
+        )
+
         context.update(
             {
                 "metrics": metrics,
@@ -508,6 +520,7 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
                 "thumbnails": thumbnails,
                 "json": json,
                 "predictions": predictions,
+                "incomplete_jobs": incomplete_jobs,
             }
         )
 
