@@ -231,9 +231,6 @@ class WorkstationImage(UUIDModel, ComponentImage):
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
 
-    def __str__(self):
-        return f"Viewer Image {self.pk}"
-
     def get_absolute_url(self):
         return reverse(
             "workstations:image-detail",

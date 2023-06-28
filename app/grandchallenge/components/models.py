@@ -22,6 +22,7 @@ from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
+from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
@@ -1618,6 +1619,14 @@ class ComponentImage(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._image_orig = self.image
+
+    def __str__(self):
+        out = f"{self._meta.verbose_name.title()} {self.pk}"
+
+        if self.comment:
+            out += f" ({truncatewords(self.comment, 4)})"
+
+        return out
 
     @cached_property
     def can_execute(self):

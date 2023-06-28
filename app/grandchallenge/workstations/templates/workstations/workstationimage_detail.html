@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% load url %}
+{% load user_profile_link from profiles %}
+{% load naturaldelta %}
+{% load guardian_tags %}
 
 {% block title %}Viewer Container Image - {{ block.super }}{% endblock %}
 
@@ -29,27 +32,56 @@
 
         <dt>Creator</dt>
         <dd>
-            <a href="{% url 'profile-detail' object.creator.username %}">{{ object.creator }}</a>
+            {{ object.creator|user_profile_link }}
         </dd>
 
         <dt>Created</dt>
         <dd>{{ object.created }}</dd>
 
-        <dt>Image</dt>
+        {% if object.image %}
+            <dt>Image</dt>
+            <dd>{{ object.image.name }}</dd>
+
+            <dt>Image Size</dt>
+            <dd>{{ object.image.size|naturalsize }}</dd>
+        {% endif %}
+
+        {% if object.image_sha256 %}
+            <dt>Image SHA256</dt>
+            <dd>{{ object.image_sha256 }}</dd>
+        {% endif %}
+
+        <dt>Import Status</dt>
         <dd>
-            {% if object.image %}
-                {{ object.image.name }}
-            {% endif %}
+            <span class="badge badge-{{ object.import_status_context }}">
+                {% if object.animate %}
+                    <span class="spinner-border spinner-border-sm" role="status"
+                          aria-hidden="true"></span>
+                {% endif %}
+                {{ object.get_import_status_display }}
+            </span>
         </dd>
 
-        <dt>Image SHA256</dt>
-        <dd>{{ object.image_sha256 }}</dd>
+        {% if object.is_manifest_valid is not None %}
+        <dt>Image Is Valid</dt>
+        <dd>
+            <span class="badge badge-{{ object.is_manifest_valid|yesno:'success,danger' }}">
+                {{ object.is_manifest_valid }}
+            </span>
+        </dd>
+        {% endif %}
 
-        <dt>Ready</dt>
-        <dd>{{ object.can_execute }}</dd>
+        {% if object.status %}
+            <dt>Validation Errors</dt>
+            <dd>{{ object.status }}</dd>
+        {% endif %}
 
-        <dt>Status</dt>
-        <dd>{{ object.status }}</dd>
+        <dt>Image Can Be Used</dt>
+        <dd>
+            <span class="badge badge-{{ object.can_execute|yesno:'success,danger' }}">
+                {{ object.can_execute }}
+            </span>
+        </dd>
 
         <dt>Initial Path</dt>
         <dd>{{ object.initial_path }}</dd>
@@ -60,14 +92,28 @@
         <dt>Websocket Port</dt>
         <dd>{{ object.websocket_port }}</dd>
 
+        <dt>Comment</dt>
+        <dd>{{ object.comment }}</dd>
+
     </dl>
 
+    {% get_obj_perms request.user for object as "image_perms" %}
+
+    {% if "change_workstationimage" in image_perms %}
     <p>
         <a class="btn btn-primary"
            href="{% url 'workstations:image-update' slug=object.workstation.slug pk=object.pk %}">
             <i class="fa fa-edit"></i> Edit the image settings
         </a>
+
+        {% if object.is_desired_version %}
+            <a class="btn btn-primary"
+                href="{% url 'workstations:image-move' slug=object.workstation.slug pk=object.pk %}">
+                <i class="fa fa-file-export"></i> Move image to another Viewer
+            </a>
+        {% endif %}
     </p>
+    {% endif %}
 
     <h3>Sessions For This Image</h3>
 

@@ -1,10 +1,17 @@
 from crispy_forms.helper import FormHelper
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms import ChoiceField, HiddenInput, ModelChoiceField, ModelForm
+from django.forms import (
+    ChoiceField,
+    Form,
+    HiddenInput,
+    ModelChoiceField,
+    ModelForm,
+)
 
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.workstations.models import (
     ENV_VARS_SCHEMA,
@@ -106,3 +113,54 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
         widgets = {
             "extra_env_vars": JSONEditorWidget(schema=ENV_VARS_SCHEMA),
         }
+
+
+class WorkstationImageMoveForm(SaveFormInitMixin, Form):
+    workstation_image = ModelChoiceField(
+        queryset=WorkstationImage.objects.none(),
+        widget=HiddenInput(),
+        disabled=True,
+    )
+    new_active_image = ModelChoiceField(
+        queryset=WorkstationImage.objects.none(),
+        widget=HiddenInput(),
+        disabled=True,
+        required=False,
+    )
+    new_workstation = ModelChoiceField(queryset=Workstation.objects.none())
+
+    def __init__(self, *args, workstation_image, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        workstation_executable_images = (
+            WorkstationImage.objects.executable_images()
+            .filter(workstation=workstation_image.workstation)
+            .order_by("-created")
+        )
+
+        self.fields["workstation_image"].queryset = filter_by_permission(
+            queryset=workstation_executable_images.filter(
+                pk=workstation_image.pk
+            ),
+            user=user,
+            codename="change_workstationimage",
+        )
+        self.fields["workstation_image"].initial = workstation_image
+
+        new_active_images = filter_by_permission(
+            queryset=workstation_executable_images.exclude(
+                pk=workstation_image.pk
+            ),
+            user=user,
+            codename="change_workstationimage",
+        )
+        self.fields["new_active_image"].queryset = new_active_images
+        self.fields["new_active_image"].initial = new_active_images.first()
+
+        self.fields["new_workstation"].queryset = filter_by_permission(
+            queryset=Workstation.objects.exclude(
+                pk=workstation_image.workstation.pk
+            ),
+            user=user,
+            codename="change_workstation",
+        )

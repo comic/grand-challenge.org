@@ -8,6 +8,7 @@ from grandchallenge.workstations.views import (
     WorkstationEditorsUpdate,
     WorkstationImageCreate,
     WorkstationImageDetail,
+    WorkstationImageMove,
     WorkstationImageUpdate,
     WorkstationList,
     WorkstationUpdate,
@@ -70,5 +71,10 @@ urlpatterns = [
         "<slug>/images/<uuid:pk>/update/",
         WorkstationImageUpdate.as_view(),
         name="image-update",
+    ),
+    path(
+        "<slug>/images/<uuid:pk>/move/",
+        WorkstationImageMove.as_view(),
+        name="image-move",
     ),
 ]

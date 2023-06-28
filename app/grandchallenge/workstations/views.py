@@ -9,7 +9,13 @@ from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    FormView,
+    ListView,
+    UpdateView,
+)
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework import mixins
@@ -35,6 +41,7 @@ from grandchallenge.workstations.forms import (
     SessionForm,
     WorkstationForm,
     WorkstationImageForm,
+    WorkstationImageMoveForm,
 )
 from grandchallenge.workstations.models import (
     Feedback,
@@ -209,10 +216,59 @@ class WorkstationImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):
     model = WorkstationImage
-    fields = ("initial_path", "http_port", "websocket_port")
+    fields = ("initial_path", "http_port", "websocket_port", "comment")
     template_name_suffix = "_update"
     permission_required = f"{WorkstationImage._meta.app_label}.change_{WorkstationImage._meta.model_name}"
     raise_exception = True
+
+
+class WorkstationImageMove(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    FormView,
+):
+    form_class = WorkstationImageMoveForm
+    template_name = "workstations/workstationimage_move.html"
+    permission_required = f"{WorkstationImage._meta.app_label}.change_{WorkstationImage._meta.model_name}"
+    raise_exception = True
+
+    @cached_property
+    def workstation_image(self):
+        return get_object_or_404(WorkstationImage, pk=self.kwargs["pk"])
+
+    def get_permission_object(self):
+        return self.workstation_image
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "workstation_image": self.workstation_image,
+                "user": self.request.user,
+            }
+        )
+        return kwargs
+
+    def get_success_url(self):
+        return self.workstation_image.get_absolute_url()
+
+    def form_valid(self, form):
+        try:
+            form.cleaned_data["new_active_image"].mark_desired_version()
+        except AttributeError:
+            # new_active_image was not set
+            pass
+
+        workstation_image = form.cleaned_data["workstation_image"]
+
+        workstation_image.workstation = form.cleaned_data["new_workstation"]
+        workstation_image.save()
+
+        workstation_image.mark_desired_version()
+
+        redirect = super().form_valid(form=form)
+
+        return redirect
 
 
 class UnsupportedBrowserWarningMixin:

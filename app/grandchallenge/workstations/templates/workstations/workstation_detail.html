@@ -131,7 +131,19 @@
 
         <ul>
             {% for image in object.workstationimage_set.all %}
-                <li><a href="{{ image.get_absolute_url }}">{{ image }}</a>
+                <li>
+                    <a href="{{ image.get_absolute_url }}">
+                        {{ image }}
+                        {% if image.can_execute and image == object.active_image %}
+                            <span class="badge badge-success">
+                                Active
+                            </span>
+                        {% else %}
+                            <span class="badge badge-danger">
+                                Inactive
+                            </span>
+                        {% endif %}
+                    </a>
                 </li>
             {% endfor %}
         </ul>
