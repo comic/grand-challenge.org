@@ -222,7 +222,18 @@ class AlgorithmUpdate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"interfaces_editable": self.object.interfaces_editable})
+
+        # Only users with the add_algorithm permission can change
+        # the input and output interfaces, other users must use
+        # the interfaces pre-set by the Phase
+        kwargs.update(
+            {
+                "interfaces_editable": self.request.user.has_perm(
+                    "algorithms.add_algorithm"
+                )
+            }
+        )
+
         return kwargs
 
 

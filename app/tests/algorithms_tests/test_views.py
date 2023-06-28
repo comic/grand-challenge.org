@@ -1071,7 +1071,10 @@ def test_algorithm_interfaces_editable(client, interfaces_editable):
     creator = UserFactory()
     VerificationFactory(user=creator, is_verified=True)
 
-    alg = AlgorithmFactory(interfaces_editable=interfaces_editable)
+    if interfaces_editable:
+        assign_perm("algorithms.add_algorithm", creator)
+
+    alg = AlgorithmFactory()
     alg.add_editor(user=creator)
 
     response = get_view_for_user(
