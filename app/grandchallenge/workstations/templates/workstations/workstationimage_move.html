@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Move Viewer Image -
+    {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewers</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ form.fields.workstation_image.initial.workstation.get_absolute_url }}">{{ form.fields.workstation_image.initial.workstation.title }}</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ form.fields.workstation_image.initial.get_absolute_url }}">{{ form.fields.workstation_image.initial }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Move</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Move Viewer Image</h2>
+
+    <p>
+        Submitting this page will reassign {{ form.fields.workstation_image.initial }}
+        to the selected Workstation.
+        {% if form.fields.new_active_image.initial %}
+            {{ form.fields.new_active_image.initial }}
+            will be made active for {{ form.fields.new_active_image.initial.workstation }}.
+        {% else %}
+            <i class="fa fa-exclamation-triangle text-warning"></i>
+            {{ form.fields.workstation_image.initial.workstation }} will be left without
+            an active image!
+        {% endif %}
+    </p>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input type="submit" value="Save" class="btn btn-primary"/>
+    </form>
+{% endblock %}

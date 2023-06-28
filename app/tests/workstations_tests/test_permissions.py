@@ -41,6 +41,7 @@ def test_create_view_permission(client):
         "workstations:image-create",
         "workstations:image-detail",
         "workstations:image-update",
+        "workstations:image-move",
         "workstations:editors-update",
         "workstations:users-update",
         "workstations:workstation-debug-session-create",
@@ -66,7 +67,11 @@ def test_workstation_editor_permissions(
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
-    if viewname in ["workstations:image-detail", "workstations:image-update"]:
+    if viewname in [
+        "workstations:image-detail",
+        "workstations:image-update",
+        "workstations:image-move",
+    ]:
         kwargs.update({"pk": two_workstation_sets.ws1.image.pk})
 
     for test in tests:

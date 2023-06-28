@@ -1450,6 +1450,11 @@ if UPLOADS_S3_USE_ACCELERATE_ENDPOINT:
     CSP_CONNECT_SRC += (
         f"https://{UPLOADS_S3_BUCKET_NAME}.s3-accelerate.amazonaws.com",
     )
+else:
+    if AWS_S3_ENDPOINT_URL:
+        CSP_CONNECT_SRC += (AWS_S3_ENDPOINT_URL,)
+    else:
+        CSP_CONNECT_SRC += f"https://{UPLOADS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com"
 
 ENABLE_DEBUG_TOOLBAR = False
 
