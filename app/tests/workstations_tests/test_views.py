@@ -554,3 +554,48 @@ def test_workstation_image(rf):
         view.setup(request, slug=WorkstationFactory().slug)
         del view.workstation_image
         _ = view.workstation_image
+
+
+@pytest.mark.django_db
+def test_workstation_image_move(client):
+    user = UserFactory()
+    old_workstation = WorkstationFactory()
+    new_workstation = WorkstationFactory()
+
+    move_image = WorkstationImageFactory(
+        workstation=old_workstation,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    _ = WorkstationImageFactory(
+        workstation=old_workstation,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=False,
+    )
+    replace_image = WorkstationImageFactory(
+        workstation=old_workstation,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=False,
+    )
+
+    old_workstation.add_editor(user=user)
+    new_workstation.add_editor(user=user)
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="workstations:image-move",
+        reverse_kwargs={"pk": move_image.pk, "slug": old_workstation.slug},
+        data={
+            "new_workstation": str(new_workstation.pk),
+        },
+        method=client.post,
+    )
+
+    assert response.status_code == 302
+
+    assert old_workstation.active_image == replace_image
+    assert new_workstation.active_image == move_image

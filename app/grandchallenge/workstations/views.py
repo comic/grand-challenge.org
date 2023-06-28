@@ -253,11 +253,8 @@ class WorkstationImageMove(
         return self.workstation_image.get_absolute_url()
 
     def form_valid(self, form):
-        try:
+        if form.cleaned_data["new_active_image"] is not None:
             form.cleaned_data["new_active_image"].mark_desired_version()
-        except AttributeError:
-            # new_active_image was not set
-            pass
 
         workstation_image = form.cleaned_data["workstation_image"]
 

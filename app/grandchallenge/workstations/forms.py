@@ -132,6 +132,10 @@ class WorkstationImageMoveForm(SaveFormInitMixin, Form):
     def __init__(self, *args, workstation_image, user, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # We only handle executable images here so that the
+        # change happens quickly. For support of non-executable
+        # images Celery tasks need to be invoked for both the
+        # old and new workstation images. See AlgorithmImageActivate.
         workstation_executable_images = (
             WorkstationImage.objects.executable_images()
             .filter(workstation=workstation_image.workstation)
