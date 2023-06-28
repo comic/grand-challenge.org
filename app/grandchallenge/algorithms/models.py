@@ -528,7 +528,12 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         ordering = ("created", "creator")
 
     def __str__(self):
-        return f"Algorithm image {self.pk} for {self.algorithm} ({truncatewords(self.comment, 4)})"
+        out = f"Algorithm image {self.pk} for {self.algorithm}"
+
+        if self.comment:
+            out += f" ({truncatewords(self.comment, 4)})"
+
+        return out
 
     def get_absolute_url(self):
         return reverse(

@@ -27,7 +27,6 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
@@ -1583,13 +1582,6 @@ class ComponentImage(models.Model):
         editable=False, max_length=8, default=""
     )
 
-    ready = deprecate_field(
-        models.BooleanField(
-            default=False,
-            editable=False,
-            help_text="Is this image ready to be used?",
-        )
-    )
     import_status = models.PositiveSmallIntegerField(
         choices=ImportStatusChoices.choices,
         default=ImportStatusChoices.INITIALIZED,
