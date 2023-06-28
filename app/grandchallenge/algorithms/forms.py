@@ -578,9 +578,14 @@ class AlgorithmUpdateForm(AlgorithmForm):
     class Meta(AlgorithmForm.Meta):
         fields = AlgorithmForm.Meta.fields + ("repo_name",)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, interfaces_editable, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.helper.layout[0].append("repo_name")
+
+        if not interfaces_editable:
+            for field_key in ("inputs", "outputs"):
+                self.fields.pop(field_key)
 
 
 class AlgorithmImageForm(ContainerImageForm):
