@@ -1380,7 +1380,7 @@ CSP_DEFAULT_SRC = "'none'"
 CSP_SCRIPT_SRC = (
     CSP_STATIC_HOST,
     "https://www.googletagmanager.com",  # For Google Analytics
-    "https://www.google-analytics.com",  # For Google Analytics
+    "https://*.google-analytics.com",  # For Google Analytics
     "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
     "'self'",  # Used in the Django admin
 )
@@ -1392,7 +1392,6 @@ CSP_STYLE_SRC = (
 CSP_FONT_SRC = (
     CSP_STATIC_HOST,
     "https://fonts.gstatic.com",
-    "data:",  # TODO - appears on challenge pages on Chrome on Windows
 )
 CSP_IMG_SRC = (
     CSP_STATIC_HOST,
@@ -1402,23 +1401,7 @@ CSP_IMG_SRC = (
     "https://*.google-analytics.com",  # For Google Analytics
     "data:",  # Used by jsoneditor
     "'self'",  # Used by Open Sea Dragon
-    # The following should be cleaned up
-    "https://user-images.githubusercontent.com",  # Used in blog posts
-    # Used on Challenge Pages:
-    "https://*.googleusercontent.com",
-    "https://img.shields.io",
-    "https://zenodo.org",
-    "https://www-users.cs.umn.edu",
-    "https://www.nih.gov",
-    "https://climb4kc.org",
-    "https://orthopaedicresearchlab.nl",
-    "https://upload.wikimedia.org",
-    "https://i.ibb.co",
-    "https://www.gstatic.com",
-    "https://www.dementiastatistics.org",
-    "https://www-users.cs.umn.edu",
-    "https://i.creativecommons.org",
-    "https://licensebuttons.net",
+    "https:",  # Arbitrary files used on blog posts and challenge pages
 )
 CSP_FRAME_SRC = ("https://mailchi.mp",)  # For products blog posts
 CSP_MEDIA_SRC = (
@@ -1454,7 +1437,9 @@ else:
     if AWS_S3_ENDPOINT_URL:
         CSP_CONNECT_SRC += (AWS_S3_ENDPOINT_URL,)
     else:
-        CSP_CONNECT_SRC += f"https://{UPLOADS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com"
+        CSP_CONNECT_SRC += (
+            f"https://{UPLOADS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
+        )
 
 ENABLE_DEBUG_TOOLBAR = False
 
