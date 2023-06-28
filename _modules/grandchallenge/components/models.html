@@ -100,6 +100,7 @@
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span> <span class="nn">django.forms</span> <span class="kn">import</span> <span class="n">ModelChoiceField</span>
 <span class="kn">from</span> <span class="nn">django.forms.models</span> <span class="kn">import</span> <span class="n">model_to_dict</span>
+<span class="kn">from</span> <span class="nn">django.template.defaultfilters</span> <span class="kn">import</span> <span class="n">truncatewords</span>
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.module_loading</span> <span class="kn">import</span> <span class="n">import_string</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
@@ -1696,6 +1697,14 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="n">truncatewords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+        <span class="k">return</span> <span class="n">out</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">can_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
