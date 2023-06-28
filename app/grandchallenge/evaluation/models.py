@@ -210,10 +210,10 @@ class Phase(UUIDModel, ViewContentMixin):
             "that will be displayed on the results page. An example that will display "
             "accuracy score with error would look like this: "
             "[{"
-                '"path": "accuracy.mean",'
-                '"order": "asc",'
-                '"title": "ASSD +/- std",'
-                '"error_path": "accuracy.std"'
+            '"path": "accuracy.mean",'
+            '"order": "asc",'
+            '"title": "ASSD +/- std",'
+            '"error_path": "accuracy.std"'
             "}]"
         ),
         validators=[JSONValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],
