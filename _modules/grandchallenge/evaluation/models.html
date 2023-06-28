@@ -285,7 +285,14 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;A JSON object that contains the extra columns from metrics.json &quot;</span>
-            <span class="s2">&quot;that will be displayed on the results page. &quot;</span>
+            <span class="s2">&quot;that will be displayed on the results page. An example that will display &quot;</span>
+            <span class="s2">&quot;accuracy score with error would look like this: &quot;</span>
+            <span class="s2">&quot;[{&quot;</span>
+            <span class="s1">&#39;&quot;path&quot;: &quot;accuracy.mean&quot;,&#39;</span>
+            <span class="s1">&#39;&quot;order&quot;: &quot;asc&quot;,&#39;</span>
+            <span class="s1">&#39;&quot;title&quot;: &quot;ASSD +/- std&quot;,&#39;</span>
+            <span class="s1">&#39;&quot;error_path&quot;: &quot;accuracy.std&quot;&#39;</span>
+            <span class="s2">&quot;}]&quot;</span>
         <span class="p">),</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">EXTRA_RESULT_COLUMNS_SCHEMA</span><span class="p">)],</span>
     <span class="p">)</span>
