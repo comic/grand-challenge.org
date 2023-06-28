@@ -207,7 +207,14 @@ class Phase(UUIDModel, ViewContentMixin):
         blank=True,
         help_text=(
             "A JSON object that contains the extra columns from metrics.json "
-            "that will be displayed on the results page. "
+            "that will be displayed on the results page. An example that will display "
+            "accuracy score with error would look like this: "
+            "[{"
+            '"path": "accuracy.mean",'
+            '"order": "asc",'
+            '"title": "ASSD +/- std",'
+            '"error_path": "accuracy.std"'
+            "}]"
         ),
         validators=[JSONValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],
     )
