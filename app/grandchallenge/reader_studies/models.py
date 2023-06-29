@@ -1024,7 +1024,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
     NUMBER_INPUT = "NUMBER_INPUT", "Number input"
-    SLIDER = "Slider", "Slider"
+    NUMBER_RANGE = "NUMBER_RANGE", "Number Range"
     TEXT_INPUT = "TEXT_INPUT", "Text Input"
     TEXT_AREA = "TEXT_AREA", "Text Area"
     SELECT_MULTIPLE = "SELECT_MULTIPLE", "Select Multiple"
@@ -1046,7 +1046,7 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.BOOL: [],
     AnswerType.NUMBER: [
         QuestionWidgetKindChoices.NUMBER_INPUT,
-        QuestionWidgetKindChoices.SLIDER,
+        QuestionWidgetKindChoices.NUMBER_RANGE,
     ],
     AnswerType.HEADING: [],
     AnswerType.BOUNDING_BOX_2D: [],

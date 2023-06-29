@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ("ACCEPT_REJECT", "Accept/Reject Findings"),
                     ("NUMBER_INPUT", "Number input"),
-                    ("Slider", "Slider"),
+                    ("NUMBER_RANGE", "Number Range"),
                     ("TEXT_INPUT", "Text Input"),
                     ("TEXT_AREA", "Text Area"),
                     ("SELECT_MULTIPLE", "Select Multiple"),
