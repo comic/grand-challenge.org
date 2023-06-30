@@ -1,3 +1,6 @@
+from datetime import datetime, timezone
+from unittest.mock import patch
+
 import pytest
 from actstream.actions import follow, is_following
 from actstream.models import Follow
@@ -87,7 +90,15 @@ def test_notification_deletion(client):
 
 
 @pytest.mark.django_db
-def test_notification_view_permissions(client):
+@patch(
+    "django.contrib.humanize.templatetags.humanize.datetime",
+    wraps=datetime,
+)
+def test_notification_view_permissions(mock_datetime, client):
+    mock_datetime.now.return_value = datetime.now(
+        timezone.utc
+    )  # Freeze time for humanize
+
     user1 = UserFactory()
     user2 = UserFactory()
     notification = NotificationFactory(
