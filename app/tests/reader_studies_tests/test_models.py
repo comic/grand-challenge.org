@@ -808,7 +808,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             pytest.raises(ValidationError),
             "Min and max values and the step size for answers "
             "can only be defined in combination with the "
-            "Number Input widget for answers of type Number.",
+            "Number Input or Number Range widgets for answers of type Number.",
         ),
         (
             AnswerType.NUMBER,
@@ -817,7 +817,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             pytest.raises(ValidationError),
             "Min and max values and the step size for answers "
             "can only be defined in combination with the "
-            "Number Input widget for answers of type Number.",
+            "Number Input or Number Range widgets for answers of type Number.",
         ),
         (
             AnswerType.NUMBER,
@@ -826,7 +826,7 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             pytest.raises(ValidationError),
             "Min and max values and the step size for answers "
             "can only be defined in combination with the "
-            "Number Input widget for answers of type Number.",
+            "Number Input or Number Range widgets for answers of type Number.",
         ),
         (
             AnswerType.NUMBER,
@@ -862,6 +862,35 @@ def test_clean_question_widget(answer_type, widget, interface, error):
             {
                 "answer_min_value": 0,
                 "answer_max_value": 0,
+            },
+            pytest.raises(ValidationError),
+            "Answer max value needs to be bigger than answer min value.",
+        ),
+        (
+            AnswerType.NUMBER,
+            QuestionWidgetKindChoices.NUMBER_RANGE,
+            {},
+            pytest.raises(ValidationError),
+            "Number Range widget requires answer min, max and step values to be set.",
+        ),
+        (
+            AnswerType.NUMBER,
+            QuestionWidgetKindChoices.NUMBER_RANGE,
+            {
+                "answer_step_size": 0.5,
+                "answer_min_value": 0,
+                "answer_max_value": 4,
+            },
+            nullcontext(),
+            None,
+        ),
+        (
+            AnswerType.NUMBER,
+            QuestionWidgetKindChoices.NUMBER_RANGE,
+            {
+                "answer_min_value": 0,
+                "answer_max_value": 0,
+                "answer_step_size": 1,
             },
             pytest.raises(ValidationError),
             "Answer max value needs to be bigger than answer min value.",
