@@ -1,6 +1,3 @@
-from datetime import datetime, timezone
-from unittest.mock import patch
-
 import pytest
 from actstream.actions import follow, is_following
 from actstream.models import Follow
@@ -90,15 +87,7 @@ def test_notification_deletion(client):
 
 
 @pytest.mark.django_db
-@patch(
-    "django.contrib.humanize.templatetags.humanize.datetime",
-    wraps=datetime,
-)
-def test_notification_view_permissions(mock_datetime, client):
-    mock_datetime.now.return_value = datetime.now(
-        timezone.utc
-    )  # Freeze time for humanize
-
+def test_notification_view_permissions(client):
     user1 = UserFactory()
     user2 = UserFactory()
     notification = NotificationFactory(
@@ -115,10 +104,7 @@ def test_notification_view_permissions(mock_datetime, client):
         user=user1,
     )
     assert response.status_code == 200
-    assert (
-        notification.print_notification(user=user1)
-        in response.rendered_content
-    )
+    assert notification in response.context["notification_list"]
 
     # user2 cannot see user1 notifications
     response = get_view_for_user(
@@ -128,10 +114,8 @@ def test_notification_view_permissions(mock_datetime, client):
         user=user2,
     )
     assert response.status_code == 200
-    assert (
-        notification.print_notification(user=user2)
-        not in response.rendered_content
-    )
+
+    assert notification not in response.context["notification_list"]
     assert "You have no notifications" in response.rendered_content
 
 
