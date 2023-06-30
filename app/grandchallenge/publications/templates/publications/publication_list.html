@@ -32,11 +32,11 @@
                         {{ publication.citation|clean }}
                     </div>
                     <div class="pt-1 pb-2 pl-3">
-                        <a class="btn btn-outline-primary btn-sm mb-1 mr-1" href="{{ publication.identifier.url }}"><i class="fa fa-link"></i></a>
+                        <a class="btn btn-outline-primary btn-sm" href="{{ publication.identifier.url }}"><i class="fa fa-link"></i></a>
                         {% get_associated_objects publication=publication checker=checker as publication_objects %}
                         {% if publication_objects %}
                             {% for obj, obj_model in publication_objects.items %}
-                                <a class="btn btn-outline-primary btn-sm mb-1 mr-1" href="{{ obj.get_absolute_url }}">{{ obj }}</a>
+                                <a class="btn btn-outline-primary btn-sm" href="{{ obj.get_absolute_url }}">{{ obj }}</a>
                             {% endfor %}
                         {% endif %}
                     </div>
