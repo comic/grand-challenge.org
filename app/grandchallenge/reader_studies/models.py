@@ -1024,6 +1024,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
 class QuestionWidgetKindChoices(models.TextChoices):
     ACCEPT_REJECT = "ACCEPT_REJECT", "Accept/Reject Findings"
     NUMBER_INPUT = "NUMBER_INPUT", "Number input"
+    NUMBER_RANGE = "NUMBER_RANGE", "Number Range"
     TEXT_INPUT = "TEXT_INPUT", "Text Input"
     TEXT_AREA = "TEXT_AREA", "Text Area"
     SELECT_MULTIPLE = "SELECT_MULTIPLE", "Select Multiple"
@@ -1043,7 +1044,10 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
     AnswerType.SINGLE_LINE_TEXT: [],
     AnswerType.MULTI_LINE_TEXT: [],
     AnswerType.BOOL: [],
-    AnswerType.NUMBER: [QuestionWidgetKindChoices.NUMBER_INPUT],
+    AnswerType.NUMBER: [
+        QuestionWidgetKindChoices.NUMBER_INPUT,
+        QuestionWidgetKindChoices.NUMBER_RANGE,
+    ],
     AnswerType.HEADING: [],
     AnswerType.BOUNDING_BOX_2D: [],
     AnswerType.MULTIPLE_2D_BOUNDING_BOXES: [
@@ -1160,13 +1164,13 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         null=True,
         blank=True,
         default=None,
-        help_text="Maximum value for answers of type Number. Can only be set in combination with the 'Number input' widget.",
+        help_text="Maximum value for answers of type Number. Can only be set in combination with the 'Number input' or 'Number Range' widgets.",
     )
     answer_min_value = models.SmallIntegerField(
         null=True,
         blank=True,
         default=None,
-        help_text="Minimum value for answers of type Number. Can only be set in combination with the 'Number input' widget.",
+        help_text="Minimum value for answers of type Number. Can only be set in combination with the 'Number input' or 'Number Range' widgets.",
     )
     answer_step_size = models.DecimalField(
         null=True,
@@ -1175,7 +1179,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         max_digits=6,
         decimal_places=3,
         validators=[MinValueValidator(limit_value=0.001)],
-        help_text="Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the 'Number input' widget.",
+        help_text="Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the 'Number input' or 'Number Range' widgets.",
     )
     answer_min_length = models.PositiveSmallIntegerField(
         null=True,
@@ -1365,21 +1369,36 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         is_number_validation_set = any(
             [is_step_size_set, is_min_value_set, is_max_value_set]
         )
+        is_range_configured = all(
+            [is_step_size_set, is_min_value_set, is_max_value_set]
+        )
 
         perform_number_validation = (
             self.answer_type == AnswerType.NUMBER
-            and self.widget == QuestionWidgetKindChoices.NUMBER_INPUT
+            and self.widget
+            in (
+                QuestionWidgetKindChoices.NUMBER_INPUT,
+                QuestionWidgetKindChoices.NUMBER_RANGE,
+            )
         )
         if is_number_validation_set and not perform_number_validation:
             # Server side number validation can only be done with AnswerType.NUMBER.
             # Currently, client side number validation is only done with
-            # QuestionWidgetKindChoices.NUMBER_INPUT. If we allowed number
-            # validation with other widgets here the readers may not get
-            # feedback from the viewer about why their answers are rejected
+            # QuestionWidgetKindChoices.NUMBER_INPUT or NUMBER_RANGE. If we
+            # allowed number validation with other widgets here the readers may
+            # not get feedback from the viewer about why their answers are rejected
             raise ValidationError(
                 "Min and max values and the step size for answers "
                 "can only be defined in combination with the "
-                "Number Input widget for answers of type Number."
+                "Number Input or Number Range widgets for answers of type Number."
+            )
+
+        if (
+            self.widget == QuestionWidgetKindChoices.NUMBER_RANGE
+            and not is_range_configured
+        ):
+            raise ValidationError(
+                "Number Range widget requires answer min, max and step values to be set."
             )
 
         if (

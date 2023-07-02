@@ -1200,7 +1200,11 @@ def test_display_set_add_interface_form():
         (AnswerType.BOOL, BLANK_CHOICE_DASH),
         (
             AnswerType.NUMBER,
-            [BLANK_CHOICE_DASH[0], ("NUMBER_INPUT", "Number input")],
+            [
+                BLANK_CHOICE_DASH[0],
+                ("NUMBER_INPUT", "Number input"),
+                ("NUMBER_RANGE", "Number Range"),
+            ],
         ),
         (AnswerType.POINT, BLANK_CHOICE_DASH),
         (
