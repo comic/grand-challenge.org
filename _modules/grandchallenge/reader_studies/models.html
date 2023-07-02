@@ -1102,6 +1102,7 @@
 <div class="viewcode-block" id="QuestionWidgetKindChoices"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionWidgetKindChoices">[docs]</a><span class="k">class</span> <span class="nc">QuestionWidgetKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
     <span class="n">ACCEPT_REJECT</span> <span class="o">=</span> <span class="s2">&quot;ACCEPT_REJECT&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept/Reject Findings&quot;</span>
     <span class="n">NUMBER_INPUT</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Number input&quot;</span>
+    <span class="n">NUMBER_RANGE</span> <span class="o">=</span> <span class="s2">&quot;NUMBER_RANGE&quot;</span><span class="p">,</span> <span class="s2">&quot;Number Range&quot;</span>
     <span class="n">TEXT_INPUT</span> <span class="o">=</span> <span class="s2">&quot;TEXT_INPUT&quot;</span><span class="p">,</span> <span class="s2">&quot;Text Input&quot;</span>
     <span class="n">TEXT_AREA</span> <span class="o">=</span> <span class="s2">&quot;TEXT_AREA&quot;</span><span class="p">,</span> <span class="s2">&quot;Text Area&quot;</span>
     <span class="n">SELECT_MULTIPLE</span> <span class="o">=</span> <span class="s2">&quot;SELECT_MULTIPLE&quot;</span><span class="p">,</span> <span class="s2">&quot;Select Multiple&quot;</span>
@@ -1121,7 +1122,10 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[</span><span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_INPUT</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_INPUT</span><span class="p">,</span>
+        <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_RANGE</span><span class="p">,</span>
+    <span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">:</span> <span class="p">[</span>
@@ -1238,13 +1242,13 @@
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Maximum value for answers of type Number. Can only be set in combination with the &#39;Number input&#39; widget.&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Maximum value for answers of type Number. Can only be set in combination with the &#39;Number input&#39; or &#39;Number Range&#39; widgets.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">answer_min_value</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SmallIntegerField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Minimum value for answers of type Number. Can only be set in combination with the &#39;Number input&#39; widget.&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Minimum value for answers of type Number. Can only be set in combination with the &#39;Number input&#39; or &#39;Number Range&#39; widgets.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">answer_step_size</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -1253,7 +1257,7 @@
         <span class="n">max_digits</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
         <span class="n">decimal_places</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MinValueValidator</span><span class="p">(</span><span class="n">limit_value</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)],</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the &#39;Number input&#39; widget.&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Step size for answers of type Number. Defaults to 1, allowing only integer values. Can only be set in combination with the &#39;Number input&#39; or &#39;Number Range&#39; widgets.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">answer_min_length</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -1443,21 +1447,36 @@
         <span class="n">is_number_validation_set</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
             <span class="p">[</span><span class="n">is_step_size_set</span><span class="p">,</span> <span class="n">is_min_value_set</span><span class="p">,</span> <span class="n">is_max_value_set</span><span class="p">]</span>
         <span class="p">)</span>
+        <span class="n">is_range_configured</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">is_step_size_set</span><span class="p">,</span> <span class="n">is_min_value_set</span><span class="p">,</span> <span class="n">is_max_value_set</span><span class="p">]</span>
+        <span class="p">)</span>
 
         <span class="n">perform_number_validation</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">AnswerType</span><span class="o">.</span><span class="n">NUMBER</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget</span> <span class="o">==</span> <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_INPUT</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget</span>
+            <span class="ow">in</span> <span class="p">(</span>
+                <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_INPUT</span><span class="p">,</span>
+                <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_RANGE</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">is_number_validation_set</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">perform_number_validation</span><span class="p">:</span>
             <span class="c1"># Server side number validation can only be done with AnswerType.NUMBER.</span>
             <span class="c1"># Currently, client side number validation is only done with</span>
-            <span class="c1"># QuestionWidgetKindChoices.NUMBER_INPUT. If we allowed number</span>
-            <span class="c1"># validation with other widgets here the readers may not get</span>
-            <span class="c1"># feedback from the viewer about why their answers are rejected</span>
+            <span class="c1"># QuestionWidgetKindChoices.NUMBER_INPUT or NUMBER_RANGE. If we</span>
+            <span class="c1"># allowed number validation with other widgets here the readers may</span>
+            <span class="c1"># not get feedback from the viewer about why their answers are rejected</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Min and max values and the step size for answers &quot;</span>
                 <span class="s2">&quot;can only be defined in combination with the &quot;</span>
-                <span class="s2">&quot;Number Input widget for answers of type Number.&quot;</span>
+                <span class="s2">&quot;Number Input or Number Range widgets for answers of type Number.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">widget</span> <span class="o">==</span> <span class="n">QuestionWidgetKindChoices</span><span class="o">.</span><span class="n">NUMBER_RANGE</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_range_configured</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Number Range widget requires answer min, max and step values to be set.&quot;</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
