@@ -37,3 +37,8 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 :is(h1, h2, h3, h4, h5, h6):hover > .headerlink {
     display: inline;
 }
+
+// Reserve space for focus box-shadow
+.btn {
+  margin: $btn-focus-width;
+}

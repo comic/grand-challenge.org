@@ -113,7 +113,7 @@
                 <h2 class="col-9 p-0">{{ object.title }}</h2>
                 {% if 'change_algorithm' in algorithm_perms %}
                     <span class="col-3 p-0 text-right my-auto">
-                        <a class="btn btn-primary btn-block mb-1"
+                        <a class="btn btn-primary btn-block"
                            href="{% url 'algorithms:update' slug=object.slug %}">
                             <i class="fa fa-cog"></i> Update Settings
                         </a>
@@ -170,7 +170,7 @@
                     <div class="col-9">
                         {% for publication in object.publications.all %}
                             <div class="row px-3">
-                                <div class="col-1 px-0 my-auto text-center align-middle"><a class="btn btn-outline-primary p-1 btn-sm btn-block mb-1 mr-1" href="{{ publication.identifier.url }}" target="_blank"
+                                <div class="col-1 px-0 my-auto text-center align-middle"><a class="btn btn-outline-primary p-1 btn-sm btn-block" href="{{ publication.identifier.url }}" target="_blank"
                                    title="{{ publication.title }}">
                                     <i class="fa fa-link"></i>
                                 </a></div>
