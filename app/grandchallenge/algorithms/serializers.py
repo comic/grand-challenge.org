@@ -255,6 +255,7 @@ class JobPostSerializer(JobSerializer):
                 validated_data["algorithm_image"].algorithm.editors_group
             ],
             input_civ_set=component_interface_values,
+            time_limit=validated_data["algorithm_image"].algorithm.time_limit,
         )
         job.sort_inputs_and_execute(
             upload_session_pks=upload_session_pks,
