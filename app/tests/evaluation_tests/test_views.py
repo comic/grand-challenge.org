@@ -626,6 +626,7 @@ def test_create_algorithm_for_phase_presets(client):
     phase.hanging_protocol = HangingProtocolFactory()
     phase.workstation_config = WorkstationConfigFactory()
     phase.view_content = {"main": [ci1.slug]}
+    phase.algorithm_time_limit = 10 * 60
     phase.save()
 
     response = get_view_for_user(
@@ -714,6 +715,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert list(algorithm.structures.all()) == []
     assert list(algorithm.modalities.all()) == []
     assert algorithm.logo == phase.challenge.logo
+    assert algorithm.time_limit == 10 * 60
 
     # try to set different values
     ci3, ci4 = ComponentInterfaceFactory.create_batch(2)

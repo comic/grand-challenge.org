@@ -1088,3 +1088,41 @@ def test_algorithm_interfaces_editable(client, interfaces_editable):
     assert (
         "outputs" in response.context["form"].fields
     ) is interfaces_editable
+
+
+@pytest.mark.django_db
+def test_job_time_limit(client):
+    algorithm = AlgorithmFactory(time_limit=600)
+    algorithm_image = AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    user = UserFactory()
+    algorithm.add_editor(user=user)
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
+    )
+    algorithm.inputs.set([ci])
+
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": algorithm.slug,
+        },
+        user=user,
+        follow=True,
+        data={ci.slug: '{"Foo": "bar"}'},
+    )
+
+    assert response.status_code == 200
+
+    job = Job.objects.get()
+
+    assert job.algorithm_image == algorithm_image
+    assert job.time_limit == 600

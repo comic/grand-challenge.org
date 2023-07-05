@@ -523,6 +523,7 @@ class JobCreate(
             algorithm_image=self.algorithm.active_image,
             extra_logs_viewer_groups=[self.algorithm.editors_group],
             input_civ_set=component_interface_values,
+            time_limit=self.algorithm.time_limit,
         )
         job.sort_inputs_and_execute(upload_session_pks=upload_session_pks)
 

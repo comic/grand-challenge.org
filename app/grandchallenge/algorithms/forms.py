@@ -427,6 +427,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "contact_email",
             "display_editors",
             "logo",
+            "time_limit",
         )
         widgets = {
             "description": TextInput,
@@ -441,6 +442,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "modalities": MultipleHiddenInput(),
             "structures": MultipleHiddenInput(),
             "logo": HiddenInput(),
+            "time_limit": HiddenInput(),
         }
         help_texts = {
             "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
@@ -493,6 +495,8 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self.fields["structures"].disabled = True
         self.fields["logo"].initial = logo
         self.fields["logo"].disabled = True
+        self.fields["time_limit"].initial = phase.algorithm_time_limit
+        self.fields["time_limit"].disabled = True
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
 

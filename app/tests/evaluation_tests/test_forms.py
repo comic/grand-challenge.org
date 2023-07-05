@@ -248,6 +248,7 @@ def test_algorithm_for_phase_form():
     assert form.fields["modalities"].disabled
     assert form.fields["contact_email"].disabled
     assert form.fields["logo"].disabled
+    assert form.fields["time_limit"].disabled
     assert not form.fields["title"].disabled
     assert not form.fields["description"].disabled
     assert not form.fields["image_requires_gpu"].disabled
@@ -265,6 +266,7 @@ def test_algorithm_for_phase_form():
         form.fields["modalities"],
         form.fields["contact_email"],
         form.fields["logo"],
+        form.fields["time_limit"],
     } == {field.field for field in form.hidden_fields()}
 
     assert {

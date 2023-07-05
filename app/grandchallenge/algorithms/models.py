@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Min, Q, Sum
 from django.db.models.signals import post_delete
@@ -173,6 +174,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         help_text=(
             "The number of credits that are required for each execution of this algorithm."
         ),
+    )
+    time_limit = models.PositiveSmallIntegerField(
+        default=60 * 60,
+        help_text="Time limit for inference jobs in seconds",
+        validators=[
+            MinValueValidator(limit_value=60),
+            MaxValueValidator(limit_value=3600),
+        ],
     )
     average_duration = models.DurationField(
         null=True,
