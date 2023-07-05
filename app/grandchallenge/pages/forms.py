@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django_summernote.widgets import SummernoteInplaceWidget
 
@@ -32,6 +33,17 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
                 "<b>⇧+⌥+⌘+V</b> on OS X."
             )
         }
+
+    def clean_display_title(self):
+        display_title = self.cleaned_data["display_title"]
+
+        if display_title.lower() in {"evaluation"}:
+            # evaluation results in a URL clash, especially with the update page.
+            raise ValidationError(
+                "Title not allowed, please select an alternative"
+            )
+
+        return display_title
 
 
 class PageUpdateForm(PageCreateForm):
