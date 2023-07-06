@@ -47,7 +47,7 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
 
         domain = email.split("@")[1].lower()
 
-        if domain in FREE_EMAIL_DOMAINS:
+        if domain in FREE_EMAIL_DOMAINS or "wecom" in domain:
             raise ValidationError(
                 f"Email hosted by {domain} cannot be used for verification, "
                 "please provide your work, corporate or institutional email."
