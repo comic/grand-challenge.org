@@ -431,6 +431,22 @@ def test_validate_answer():
 NUMBER_ANSWER_VALIDATION_INPUT = (
     (
         AnswerType.NUMBER,
+        None,
+        {
+            "required": False,
+        },
+        nullcontext(),
+    ),
+    (
+        AnswerType.NUMBER,
+        None,
+        {
+            "required": True,
+        },
+        pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.NUMBER,
         2,
         {
             "answer_min_value": 0,
@@ -512,8 +528,18 @@ TEXT_ANSWER_VALIDATION_INPUT = (
     (
         AnswerType.TEXT,
         "",
-        {},
+        {
+            "required": False,
+        },
         nullcontext(),
+    ),
+    (
+        AnswerType.TEXT,
+        "",
+        {
+            "required": True,
+        },
+        pytest.raises(ValidationError),
     ),
     (
         AnswerType.TEXT,
@@ -566,11 +592,20 @@ TEXT_ANSWER_VALIDATION_INPUT = (
     ),
     (
         AnswerType.TEXT,
-        "",
+        "not hello world",
         {
             "answer_match_pattern": r"^hello world$",
         },
         pytest.raises(ValidationError),
+    ),
+    (
+        AnswerType.TEXT,
+        "",
+        {
+            "answer_min_size": 1,
+            "required": False,
+        },
+        nullcontext(),
     ),
 )
 

@@ -973,6 +973,12 @@ class AnswerType(models.TextChoices):
         ]
 
     @staticmethod
+    def get_image_types():
+        return [
+            AnswerType.MASK,
+        ]
+
+    @staticmethod
     def get_widget_required_types():
         return [
             AnswerType.TEXT,
@@ -1441,6 +1447,24 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             self.AnswerType.NUMBER,
         ]
 
+    @property
+    def allow_blank_types(self):
+        return [
+            self.AnswerType.TEXT,
+            self.AnswerType.SINGLE_LINE_TEXT,
+            self.AnswerType.MULTI_LINE_TEXT,
+        ]
+
+    @property
+    def empty_answer_values(self):
+        """Returns a list of answer values which are considered to be empty"""
+        result = []
+        if self.answer_type in self.allow_null_types:
+            result.append(None)
+        if self.answer_type in self.allow_blank_types:
+            result.append("")
+        return result
+
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
         allowed_types = [{"$ref": f"#/definitions/{self.answer_type}"}]
@@ -1464,8 +1488,34 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
 
     @property
+    def validators(self):
+        if self.answer_min_value is not None:
+            yield MinValueValidator(self.answer_min_value)
+
+        if self.answer_max_value is not None:
+            yield MaxValueValidator(self.answer_max_value)
+
+        if self.answer_step_size:
+            yield StepValueValidator(
+                limit_value=self.answer_step_size,
+                offset=self.answer_min_value,
+            )
+
+        if self.answer_min_length is not None:
+            yield MinLengthValidator(self.answer_min_length)
+
+        if self.answer_max_length is not None:
+            yield MaxLengthValidator(self.answer_max_length)
+
+        if self.answer_match_pattern:
+            yield RegexValidator(
+                regex=self.answer_match_pattern,
+                message="Enter a valid answer that matches with the requested format",
+            )
+
+    @property
     def is_image_type(self):
-        return self.answer_type in [self.AnswerType.MASK]
+        return self.answer_type in self.AnswerType.get_image_types()
 
     def get_absolute_url(self):
         return self.reader_study.get_absolute_url() + "#questions"
@@ -1612,39 +1662,16 @@ class Answer(UUIDModel):
                     "Provided options are not valid for this question"
                 )
 
-        if (
-            question.answer_type
-            in (Question.AnswerType.NUMBER, Question.AnswerType.TEXT)
-            and question.required
-            and answer is None
-        ):
+        answer_is_empty = answer in question.empty_answer_values
+        answer_is_required = question.required and not question.is_image_type
+        if answer_is_required and answer_is_empty:
             raise ValidationError(
-                "Answer for required question cannot be None"
+                "Answer for required question cannot be empty"
             )
 
-        if question.answer_min_value is not None:
-            MinValueValidator(question.answer_min_value)(answer)
-
-        if question.answer_max_value is not None:
-            MaxValueValidator(question.answer_max_value)(answer)
-
-        if question.answer_step_size:
-            StepValueValidator(
-                limit_value=question.answer_step_size,
-                offset=question.answer_min_value,
-            )(answer)
-
-        if question.answer_min_length is not None:
-            MinLengthValidator(question.answer_min_length)(answer)
-
-        if question.answer_max_length is not None:
-            MaxLengthValidator(question.answer_max_length)(answer)
-
-        if question.answer_match_pattern:
-            RegexValidator(
-                regex=question.answer_match_pattern,
-                message="Enter a valid answer that matches with the requested format",
-            )(answer)
+        if not answer_is_empty:
+            for validator in question.validators:
+                validator(answer)
 
     @property
     def answer_text(self):

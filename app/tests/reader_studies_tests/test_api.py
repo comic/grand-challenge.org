@@ -782,10 +782,15 @@ def test_answer_creator_is_reader(client):
             },
             400,
         ),
+        (Question.AnswerType.TEXT, None, 400),
         (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
+        (Question.AnswerType.TEXT, "", 201),
+        (Question.AnswerType.SINGLE_LINE_TEXT, "", 201),
+        (Question.AnswerType.MULTI_LINE_TEXT, "", 201),
         (Question.AnswerType.BOOL, None, 400),
-        (Question.AnswerType.NUMBER, None, 400),
+        (Question.AnswerType.NUMBER, None, 201),
+        (Question.AnswerType.NUMBER, "", 400),
         (Question.AnswerType.HEADING, None, 400),
         (Question.AnswerType.BOUNDING_BOX_2D, None, 201),
         (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, None, 201),
@@ -797,9 +802,11 @@ def test_answer_creator_is_reader(client):
         (Question.AnswerType.MULTIPLE_POLYGONS, None, 201),
         (Question.AnswerType.ANGLE, None, 201),
         (Question.AnswerType.MULTIPLE_ANGLES, None, 201),
-        (Question.AnswerType.CHOICE, None, 400),
+        (Question.AnswerType.CHOICE, None, 201),
         (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
         (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
+        (Question.AnswerType.MULTIPLE_CHOICE, [], 201),
+        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, [], 201),
         (Question.AnswerType.ELLIPSE, "wwoljg", 400),
         (Question.AnswerType.ELLIPSE, True, 400),
         (Question.AnswerType.ELLIPSE, 42, 400),
@@ -916,7 +923,11 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
     reader = UserFactory()
     rs.add_reader(reader)
 
-    q = QuestionFactory(reader_study=rs, answer_type=answer_type)
+    q = QuestionFactory(
+        reader_study=rs,
+        answer_type=answer_type,
+        required=False,
+    )
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
