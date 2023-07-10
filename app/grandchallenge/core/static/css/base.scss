@@ -31,11 +31,11 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 
 // Show heading permalinks only on hover
 :is(h1, h2, h3, h4, h5, h6) > .headerlink {
-    display: none;
+    visibility: hidden;
 }
 
 :is(h1, h2, h3, h4, h5, h6):hover > .headerlink {
-    display: inline;
+    visibility: visible;
 }
 
 // Reserve space for focus box-shadow
