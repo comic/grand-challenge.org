@@ -1,13 +1,10 @@
-function removeCase(id, isDisplaySet) {
-    $('.hl-invalid').toggleClass('d-none', isDisplaySet);
+function removeCase(id) {
     $('#removeCase').data('case', id);
-    $('#removeCase').data('isDisplaySet', isDisplaySet);
     $('#removeCaseModal').modal('show');
 }
 
 $(document).ready(() => {
     $('#removeCase').on('click', (e) => {
-        const isDisplaySet = $(e.currentTarget).data('isDisplaySet');
         $.ajax({
             type: 'DELETE',
             url: $(e.currentTarget).data("case"),

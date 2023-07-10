@@ -79,7 +79,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.utils import strtobool
+from grandchallenge.core.utils import htmx_refresh, strtobool
 from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -1168,6 +1168,7 @@ class DisplaySetViewSet(
                 ds.values.add(assigned)
         return super().partial_update(request, pk)
 
+    @htmx_refresh
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if not instance.is_editable:
