@@ -219,7 +219,7 @@ class ChallengeRequestStatusUpdate(
 
     @htmx_refresh
     def form_valid(self, form):
-        response = super().form_valid(form)
+        super().form_valid(form)
         if (
             form.instance._orig_status
             == form.instance.ChallengeRequestStatusChoices.PENDING
@@ -235,7 +235,6 @@ class ChallengeRequestStatusUpdate(
             send_challenge_status_update_email(
                 challengerequest=form.instance, challenge=challenge
             )
-        return response
 
 
 class ChallengeRequestBudgetUpdate(
@@ -250,7 +249,7 @@ class ChallengeRequestBudgetUpdate(
 
     @htmx_refresh
     def form_valid(self, form):
-        return super().form_valid(form)
+        super().form_valid(form)
 
 
 class ChallengeCostOverview(
