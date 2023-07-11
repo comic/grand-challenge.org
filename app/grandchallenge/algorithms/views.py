@@ -16,7 +16,7 @@ from django.core.exceptions import (
 )
 from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -86,8 +86,7 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.utils import htmx_refresh
-from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.core.views import HtmxRefreshMixin, PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
@@ -982,6 +981,7 @@ class AlgorithmAddRepo(
 class AlgorithmPublishView(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    HtmxRefreshMixin,
     UpdateView,
 ):
     model = Algorithm
@@ -989,7 +989,6 @@ class AlgorithmPublishView(
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
-    @htmx_refresh
     def form_valid(self, form):
         super().form_valid(form)
         messages.add_message(
@@ -997,6 +996,7 @@ class AlgorithmPublishView(
             messages.SUCCESS,
             "Your algorithm has been published successfully.",
         )
+        return HttpResponse()
 
 
 class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
