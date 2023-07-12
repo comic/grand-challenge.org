@@ -763,6 +763,7 @@ class Method(UUIDModel, ComponentImage):
 
     def assign_permissions(self):
         assign_perm("view_method", self.phase.challenge.admins_group, self)
+        assign_perm("change_method", self.phase.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(

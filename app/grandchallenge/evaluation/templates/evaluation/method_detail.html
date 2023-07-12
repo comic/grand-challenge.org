@@ -1,6 +1,9 @@
 {% extends "pages/challenge_settings_base.html" %}
 {% load url %}
 {% load static %}
+{% load guardian_tags %}
+{% load user_profile_link from profiles %}
+{% load naturaldelta %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -20,9 +23,22 @@
 
 {% block content %}
 
-    <h2>Method {{ object.pk }}</h2>
+    <h2>Evaluation Method</h2>
+
+    {% get_obj_perms request.user for object as "method_perms" %}
+
+    {% if object.can_execute and "change_method" in method_perms %}
+        <a class="btn btn-primary"
+           href="{% url 'evaluation:method-update' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+            <i class="fa fa-edit"></i> Edit this Evaluation Method
+        </a><br>
+    {% endif %}
+
+    <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active Method for this Phase{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
 
     <dl class="inline">
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
 
         <dt>Challenge</dt>
         <dd><a href="{{ object.phase.challenge.get_absolute_url }}">{{ object.phase.challenge.short_name }}</a></dd>
@@ -31,33 +47,66 @@
         <dd>{{ object.phase.title }}</dd>
 
         <dt>Creator</dt>
-        <dd><a href="{% url 'profile-detail' object.creator.username %}">{{ object.creator }}</a></dd>
+        <dd>
+            {{ object.creator|user_profile_link }}
+        </dd>
 
         <dt>Created</dt>
         <dd>{{ object.created }}</dd>
 
-        <dt>Image</dt>
+        {% if object.image %}
+            <dt>Image</dt>
+            <dd>{{ object.image.name }}</dd>
+
+            <dt>Image Size</dt>
+            <dd>{{ object.image.size|naturalsize }}</dd>
+        {% endif %}
+
+        {% if object.image_sha256 %}
+            <dt>Image SHA256</dt>
+            <dd>{{ object.image_sha256 }}</dd>
+        {% endif %}
+
+        <dt>Import Status</dt>
         <dd>
-            {% if object.image %}
-                {{ object.image.name }}
-            {% endif %}
+            <span class="badge badge-{{ object.import_status_context }}">
+                {% if object.animate %}
+                    <span class="spinner-border spinner-border-sm" role="status"
+                          aria-hidden="true"></span>
+                {% endif %}
+                {{ object.get_import_status_display }}
+            </span>
         </dd>
 
-        <dt>Image SHA256</dt>
-        <dd>{{ object.image_sha256 }}</dd>
+        {% if object.is_manifest_valid is not None %}
+        <dt>Image Is Valid</dt>
+        <dd>
+            <span class="badge badge-{{ object.is_manifest_valid|yesno:'success,danger' }}">
+                {{ object.is_manifest_valid }}
+            </span>
+        </dd>
+        {% endif %}
 
-        <dt>Ready</dt>
-        <dd>{{ object.can_execute }}</dd>
+        {% if object.status %}
+            <dt>Validation Errors</dt>
+            <dd>{{ object.status }}</dd>
+        {% endif %}
 
-        <dt>Active method for {{ object.phase }}</dt>
-        <dd>{{ object.is_desired_version }}</dd>
+        <dt>Image Can Be Used</dt>
+        <dd>
+            <span class="badge badge-{{ object.can_execute|yesno:'success,danger' }}">
+                {{ object.can_execute }}
+            </span>
+        </dd>
 
-        <dt>Status</dt>
-        <dd>{{ object.status }}</dd>
+        <dt>Requires Memory</dt>
+        <dd>{{ object.requires_memory_gb }} GB</dd>
 
+        <dt>Comment</dt>
+        <dd>{{ object.comment }}</dd>
     </dl>
 
-    <h2>Evaluations for this method</h2>
+    <h2>Evaluations for this Evaluation Method</h2>
     <div class="table-responsive">
         <table class="table sortable table-hover table-borderless table-sm" id="evaluationTable">
             <thead class="thead-light">

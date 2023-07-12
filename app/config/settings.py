@@ -256,7 +256,9 @@ CACHES = {
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
 RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
+
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
+SITE_SERVER_PORT = os.environ.get("SITE_SERVER_PORT")
 
 # Workaround for https://github.com/ellmetha/django-machina/issues/219
 ABSOLUTE_URL_OVERRIDES = {
@@ -288,7 +290,9 @@ CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "True"))
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_NAME = "_csrftoken"
-CSRF_TRUSTED_ORIGINS = [f"{DEFAULT_SCHEME}://*{SESSION_COOKIE_DOMAIN}"]
+CSRF_TRUSTED_ORIGINS = [
+    f"{DEFAULT_SCHEME}://*{SESSION_COOKIE_DOMAIN}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}"
+]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = strtobool(os.environ.get("SECURE_SSL_REDIRECT", "True"))
 
@@ -297,7 +301,6 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = os.environ.get(
 )
 # Set the allowed hosts to the cookie domain
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
-SITE_SERVER_PORT = os.environ.get("SITE_SERVER_PORT")
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -912,7 +915,7 @@ REST_KNOX = {"AUTH_HEADER_PREFIX": "Bearer"}
 
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
+    rf"^{DEFAULT_SCHEME}:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}$",
 ]
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api

@@ -126,6 +126,12 @@ class TestObjectPermissionRequiredViews:
                 e.method,
             ),
             (
+                "method-update",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+                "change_method",
+                e.method,
+            ),
+            (
                 "submission-create",
                 {"slug": e.submission.phase.slug},
                 "create_phase_submission",
@@ -935,3 +941,32 @@ def test_evaluation_admin_list(client):
     )
     assert response.status_code == 200
     assert e in response.context[-1]["object_list"]
+
+
+@pytest.mark.django_db
+def test_method_update_view(client):
+    challenge = ChallengeFactory()
+    method = MethodFactory(
+        phase=challenge.phase_set.get(), requires_memory_gb=10
+    )
+    user = UserFactory()
+
+    challenge.add_admin(user=user)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:method-update",
+        reverse_kwargs={
+            "challenge_short_name": challenge.short_name,
+            "slug": method.phase.slug,
+            "pk": method.pk,
+        },
+        user=user,
+        method=client.post,
+        data={"requires_memory_gb": 20},
+    )
+
+    assert response.status_code == 302
+
+    method.refresh_from_db()
+    assert method.requires_memory_gb == 20
