@@ -947,7 +947,7 @@ def test_evaluation_admin_list(client):
 def test_method_update_view(client):
     challenge = ChallengeFactory()
     method = MethodFactory(
-        phase=challenge.phase_set.get(), requires_memory_gb=10
+        phase=challenge.phase_set.get(), requires_memory_gb=4
     )
     user = UserFactory()
 
@@ -963,7 +963,7 @@ def test_method_update_view(client):
         },
         user=user,
         method=client.post,
-        data={"requires_memory_gb": 20},
+        data={"requires_memory_gb": 16},
     )
 
     assert response.status_code == 302

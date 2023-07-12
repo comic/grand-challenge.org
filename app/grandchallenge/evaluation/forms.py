@@ -226,7 +226,7 @@ class MethodForm(ContainerImageForm):
 class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
     requires_memory_gb = forms.IntegerField(
         min_value=1,
-        max_value=30,
+        max_value=16,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
 
