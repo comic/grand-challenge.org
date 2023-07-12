@@ -969,4 +969,4 @@ def test_method_update_view(client):
     assert response.status_code == 302
 
     method.refresh_from_db()
-    assert method.requires_memory_gb == 20
+    assert method.requires_memory_gb == 16
