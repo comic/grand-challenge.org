@@ -223,6 +223,21 @@ class MethodForm(ContainerImageForm):
         fields = ("phase", *ContainerImageForm.Meta.fields)
 
 
+class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
+    requires_memory_gb = forms.IntegerField(
+        min_value=1,
+        max_value=16,
+        help_text="The maximum system memory required by the algorithm in gigabytes.",
+    )
+
+    class Meta:
+        model = Method
+        fields = (
+            "requires_memory_gb",
+            "comment",
+        )
+
+
 submission_fields = (
     "creator",
     "phase",

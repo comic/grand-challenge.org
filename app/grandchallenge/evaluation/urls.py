@@ -11,6 +11,7 @@ from grandchallenge.evaluation.views import (
     MethodCreate,
     MethodDetail,
     MethodList,
+    MethodUpdate,
     PhaseAlgorithmCreate,
     PhaseCreate,
     PhaseUpdate,
@@ -49,6 +50,11 @@ urlpatterns = [
         "<slug>/methods/<uuid:pk>/",
         MethodDetail.as_view(),
         name="method-detail",
+    ),
+    path(
+        "<slug>/methods/<uuid:pk>/update/",
+        MethodUpdate.as_view(),
+        name="method-update",
     ),
     path(
         "<slug>/submissions/create/",

@@ -32,6 +32,7 @@ from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
     MethodForm,
+    MethodUpdateForm,
     PhaseCreateForm,
     PhaseUpdateForm,
     SubmissionForm,
@@ -253,6 +254,23 @@ class MethodDetail(
     permission_required = "view_method"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+
+class MethodUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = Method
+    form_class = MethodUpdateForm
+    permission_required = "change_method"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"phase": self.object.phase})
+        return context
 
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):

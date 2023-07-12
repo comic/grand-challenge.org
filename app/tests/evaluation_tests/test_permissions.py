@@ -146,11 +146,11 @@ def test_unhiding_phase_updates_perms(django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_method_permissions():
-    """Only challenge admins should be able to view methods."""
+    """Only challenge admins should be able to view and change methods."""
     m: Method = MethodFactory()
 
     assert get_groups_with_set_perms(m) == {
-        m.phase.challenge.admins_group: {"view_method"}
+        m.phase.challenge.admins_group: {"view_method", "change_method"}
     }
     assert get_users_with_perms(m, with_group_users=False).count() == 0
 

@@ -12,12 +12,37 @@
         <li class="breadcrumb-item">
             <a href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name slug=phase.slug %}">Evaluation Methods</a>
         </li>
+        {% if object %}
+            <li class="breadcrumb-item">
+                <a href="{{ object.get_absolute_url }}">{{ object.pk }}</a>
+            </li>
+        {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">Create</li>
+            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Upload a new evaluation container image for {{ phase.title }}</h2>
+    <h2>
+        {{ object|yesno:"Update,Create" }} an Evaluation Method
+    </h2>
+
+    {% if object %}
+        <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active Method for this Phase{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+    {% endif %}
+
+    <dl class="inline">
+        {% if object %}
+            <dt>Method ID</dt>
+            <dd>{{ object.pk }}</dd>
+        {% endif %}
+
+        <dt>Challenge</dt>
+        <dd><a href="{{ challenge.get_absolute_url }}">{{ challenge.short_name }}</a></dd>
+
+        <dt>Phase</dt>
+        <dd>{{ phase.title }}</dd>
+    </dl>
+
     {% crispy form %}
 {% endblock %}
