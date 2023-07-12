@@ -32,8 +32,8 @@
                 <th class="nonSortable"></th>
                 <th class="nonSortable">Active</th>
                 <th>Created</th>
-                <th>Phase</th>
                 <th>Uploaded by</th>
+                <th>Comment</th>
                 <th class="nonSortable">Status</th>
             </tr>
             </thead>
@@ -45,10 +45,10 @@
                     </td>
                     <td class="d-flex justify-content-center">{% if method.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</td>
                     <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
-                    <td>{{ method.phase.title }}</td>
                     <td><a
                             href="{% url 'profile-detail' method.creator.username %}">{{ method.creator }}</a>
                     </td>
+                    <td>{{ method.comment }}</td>
                     <td>{{ method.status }}</td>
                 </tr>
             {% endfor %}
