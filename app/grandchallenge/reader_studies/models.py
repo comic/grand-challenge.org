@@ -1090,6 +1090,32 @@ ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
     for answer_type, options in ANSWER_TYPE_TO_QUESTION_WIDGET.items()
 }
 
+EMPTY_ANSWER_VALUES = {
+    AnswerType.SINGLE_LINE_TEXT: "",
+    AnswerType.MULTI_LINE_TEXT: "",
+    AnswerType.TEXT: "",
+    AnswerType.NUMBER: None,
+    AnswerType.CHOICE: None,
+    AnswerType.BOOL: None,
+    AnswerType.BOUNDING_BOX_2D: None,
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: None,
+    AnswerType.DISTANCE_MEASUREMENT: None,
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: None,
+    AnswerType.POINT: None,
+    AnswerType.MULTIPLE_POINTS: None,
+    AnswerType.POLYGON: None,
+    AnswerType.MULTIPLE_POLYGONS: None,
+    AnswerType.LINE: None,
+    AnswerType.MULTIPLE_LINES: None,
+    AnswerType.MASK: None,
+    AnswerType.ANGLE: None,
+    AnswerType.MULTIPLE_ANGLES: None,
+    AnswerType.ELLIPSE: None,
+    AnswerType.MULTIPLE_ELLIPSES: None,
+    AnswerType.MULTIPLE_CHOICE: [],
+    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
+}
+
 
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
@@ -1440,45 +1466,19 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
 
     @property
-    def allow_null_types(self):
-        return [
-            *self.AnswerType.get_annotation_types(),
-            self.AnswerType.CHOICE,
-            self.AnswerType.NUMBER,
-        ]
-
-    @property
-    def allow_blank_types(self):
-        return [
-            self.AnswerType.TEXT,
-            self.AnswerType.SINGLE_LINE_TEXT,
-            self.AnswerType.MULTI_LINE_TEXT,
-        ]
-
-    @property
-    def allow_empty_list_types(self):
-        return [
-            self.AnswerType.MULTIPLE_CHOICE,
-            self.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
-        ]
-
-    @property
-    def empty_answer_values(self):
-        """Returns a list of answer values which are considered to be empty"""
-        result = []
-        if self.answer_type in self.allow_null_types:
-            result.append(None)
-        if self.answer_type in self.allow_blank_types:
-            result.append("")
-        if self.answer_type in self.allow_empty_list_types:
-            result.append([])
-        return result
+    def empty_answer_value(self):
+        """Returns the answer value which is considered to be empty"""
+        if self.answer_type not in EMPTY_ANSWER_VALUES:
+            raise RuntimeError(
+                f"{self.answer_type} has no representation of an empty value."
+            )
+        return EMPTY_ANSWER_VALUES[self.answer_type]
 
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
         allowed_types = [{"$ref": f"#/definitions/{self.answer_type}"}]
 
-        if self.answer_type in self.allow_null_types:
+        if self.empty_answer_value is None:
             allowed_types.append({"$ref": "#/definitions/null"})
 
         try:
@@ -1671,9 +1671,11 @@ class Answer(UUIDModel):
                     "Provided options are not valid for this question"
                 )
 
-        answer_is_empty = answer in question.empty_answer_values
-        answer_is_required = question.required and not question.is_image_type
-        if answer_is_required and answer_is_empty:
+        answer_is_empty = (
+            answer == question.empty_answer_value
+            and not question.is_image_type
+        )
+        if question.required and answer_is_empty:
             raise ValidationError(
                 "Answer for required question cannot be empty"
             )
