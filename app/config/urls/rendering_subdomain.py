@@ -1,8 +1,10 @@
+from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
+from grandchallenge.serving.views import serve_images
 from grandchallenge.workstations.views import SessionDetail, session_proxy
 
 
@@ -35,5 +37,9 @@ urlpatterns = [
         "workstations/<slug>/sessions/<uuid:pk>/<path:path>",
         session_proxy,
         name="session-proxy",
+    ),
+    path(
+        f"media/{settings.IMAGE_FILES_SUBDIRECTORY}/<prefix:pa>/<prefix:pb>/<uuid:pk>/<path:path>",
+        serve_images,
     ),
 ]
