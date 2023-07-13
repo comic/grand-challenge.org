@@ -1,13 +1,12 @@
-function removeCase(id, isDisplaySet) {
-    $('.hl-invalid').toggleClass('d-none', isDisplaySet);
-    $('#removeCase').data('case', id);
-    $('#removeCase').data('isDisplaySet', isDisplaySet);
+function removeCase(event) {
+    const url = event.target.dataset.displaySetUrl;
+    $('.hl-invalid').toggleClass('d-none', true);
+    $('#removeCase').data('case', url);
     $('#removeCaseModal').modal('show');
 }
 
 $(document).ready(() => {
     $('#removeCase').on('click', (e) => {
-        const isDisplaySet = $(e.currentTarget).data('isDisplaySet');
         $.ajax({
             type: 'DELETE',
             url: $(e.currentTarget).data("case"),
@@ -36,7 +35,6 @@ $(document).ready(() => {
                 htmx.process(elem);
             }
         })
-
     });
 
     // Trigger htmx ajax request here, because using hx- attributes does not work in html loaded by datatables.js
@@ -46,6 +44,13 @@ $(document).ready(() => {
         if (!target.data("loaded")) {
             htmx.ajax('GET', target.data("hx-get"), {target: target.data("hx-target"), swap: target.data("hx-swap")});
             target.data("loaded", true);
+        }
+    });
+
+    document.body.addEventListener("htmx:afterSwap", function(evt) {
+        // Add the removeCase function to buttons swapped in by htmx
+        for (let elm of evt.target.getElementsByClassName("remove-display-set")) {
+            elm.addEventListener("click", removeCase);
         }
     });
 });
