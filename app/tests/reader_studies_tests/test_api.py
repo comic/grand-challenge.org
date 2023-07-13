@@ -950,7 +950,6 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
         (Question.AnswerType.SINGLE_LINE_TEXT, ""),
         (Question.AnswerType.MULTI_LINE_TEXT, ""),
         (Question.AnswerType.TEXT, ""),
-        (Question.AnswerType.TEXT, ""),
         # Null answers
         (Question.AnswerType.NUMBER, None),
         (Question.AnswerType.CHOICE, None),
