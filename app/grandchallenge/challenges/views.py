@@ -2,7 +2,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.db.models import F, Q
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.utils.functional import cached_property
@@ -27,7 +26,7 @@ from grandchallenge.challenges.forms import (
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.core.views import HtmxRefreshMixin
+from grandchallenge.core.utils import htmx_refresh
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.utils import (
     StatusChoices,
@@ -211,7 +210,6 @@ class ChallengeRequestDetail(
 class ChallengeRequestStatusUpdate(
     LoginRequiredMixin,
     PermissionRequiredMixin,
-    HtmxRefreshMixin,
     UpdateView,
 ):
     model = ChallengeRequest
@@ -219,6 +217,7 @@ class ChallengeRequestStatusUpdate(
     permission_required = "challenges.change_challengerequest"
     template_name = "challenges/challengerequest_status_form.html"
 
+    @htmx_refresh
     def form_valid(self, form):
         super().form_valid(form)
         if (
@@ -236,13 +235,11 @@ class ChallengeRequestStatusUpdate(
             send_challenge_status_update_email(
                 challengerequest=form.instance, challenge=challenge
             )
-        return HttpResponse()
 
 
 class ChallengeRequestBudgetUpdate(
     LoginRequiredMixin,
     PermissionRequiredMixin,
-    HtmxRefreshMixin,
     UpdateView,
 ):
     model = ChallengeRequest
@@ -250,9 +247,9 @@ class ChallengeRequestBudgetUpdate(
     permission_required = "challenges.change_challengerequest"
     template_name = "challenges/challengerequest_budget_form.html"
 
+    @htmx_refresh
     def form_valid(self, form):
         super().form_valid(form)
-        return HttpResponse()
 
 
 class ChallengeCostOverview(

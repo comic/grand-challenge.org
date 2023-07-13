@@ -239,13 +239,3 @@ class PermissionRequestUpdate(
             f"{self.redirect_namespace}:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
-
-
-class HtmxRefreshMixin:
-    """Mixin that adds the HX-Refresh header to any successful dispatch"""
-
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        if 200 <= response.status_code < 300:
-            response["HX-Refresh"] = "true"
-        return response
