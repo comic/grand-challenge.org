@@ -16,7 +16,7 @@ from django.core.exceptions import (
 )
 from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -86,7 +86,6 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.utils import htmx_refresh
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
@@ -989,9 +988,10 @@ class AlgorithmPublishView(
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
-    @htmx_refresh
     def form_valid(self, form):
-        response = super().form_valid(form)
+        super().form_valid(form)
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
         messages.add_message(
             self.request,
             messages.SUCCESS,

@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.db.models import F, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.utils.functional import cached_property
@@ -26,7 +27,6 @@ from grandchallenge.challenges.forms import (
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
-from grandchallenge.core.utils import htmx_refresh
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.utils import (
     StatusChoices,
@@ -217,9 +217,8 @@ class ChallengeRequestStatusUpdate(
     permission_required = "challenges.change_challengerequest"
     template_name = "challenges/challengerequest_status_form.html"
 
-    @htmx_refresh
     def form_valid(self, form):
-        response = super().form_valid(form)
+        super().form_valid(form)
         if (
             form.instance._orig_status
             == form.instance.ChallengeRequestStatusChoices.PENDING
@@ -235,6 +234,9 @@ class ChallengeRequestStatusUpdate(
             send_challenge_status_update_email(
                 challengerequest=form.instance, challenge=challenge
             )
+
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
         return response
 
 
@@ -248,9 +250,11 @@ class ChallengeRequestBudgetUpdate(
     permission_required = "challenges.change_challengerequest"
     template_name = "challenges/challengerequest_budget_form.html"
 
-    @htmx_refresh
     def form_valid(self, form):
-        return super().form_valid(form)
+        super().form_valid(form)
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response
 
 
 class ChallengeCostOverview(
