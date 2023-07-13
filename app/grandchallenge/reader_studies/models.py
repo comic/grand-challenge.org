@@ -1671,6 +1671,8 @@ class Answer(UUIDModel):
                     "Provided options are not valid for this question"
                 )
 
+        # Image types can have empty answers while an image is being uploaded,
+        # as such we never consider it empty.
         answer_is_empty = (
             answer == question.empty_answer_value
             and not question.is_image_type
