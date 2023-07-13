@@ -170,7 +170,7 @@ def create_display_sets_for_upload_session(
                 ds.values.add(civ)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
