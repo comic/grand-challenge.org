@@ -17,7 +17,7 @@
             type="button"
             class="btn btn-danger"
             hx-delete="{% url 'api:reader-studies-display-set-detail' pk=object.pk %}"
-            hx-confirm="Are you sure you wish to delete a display set ({{ object.pk }})?"
+            hx-confirm="Are you sure you wish to delete display set {{ object.pk }}?"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
         >
             Remove
