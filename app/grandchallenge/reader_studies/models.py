@@ -1476,6 +1476,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
+        if self.answer_type == Question.AnswerType.HEADING:  # Never valid
+            return False
+
         allowed_types = [{"$ref": f"#/definitions/{self.answer_type}"}]
 
         if self.empty_answer_value is None:
