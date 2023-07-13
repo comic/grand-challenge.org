@@ -1,6 +1,5 @@
 function removeCase(event) {
     const url = event.target.dataset.displaySetUrl;
-    $('.hl-invalid').toggleClass('d-none', true);
     $('#removeCase').data('case', url);
     $('#removeCaseModal').modal('show');
 }
