@@ -931,11 +931,20 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
         # Null answers
         (Question.AnswerType.NUMBER, None),
         (Question.AnswerType.CHOICE, None),
-        *(
-            (answer_type, None)
-            for answer_type in Question.AnswerType.get_annotation_types()
-            if answer_type not in Question.AnswerType.get_image_types()
-        ),
+        (Question.AnswerType.BOUNDING_BOX_2D, None),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, None),
+        (Question.AnswerType.DISTANCE_MEASUREMENT, None),
+        (Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS, None),
+        (Question.AnswerType.POINT, None),
+        (Question.AnswerType.MULTIPLE_POINTS, None),
+        (Question.AnswerType.POLYGON, None),
+        (Question.AnswerType.MULTIPLE_POLYGONS, None),
+        (Question.AnswerType.LINE, None),
+        (Question.AnswerType.MULTIPLE_LINES, None),
+        (Question.AnswerType.ANGLE, None),
+        (Question.AnswerType.MULTIPLE_ANGLES, None),
+        (Question.AnswerType.ELLIPSE, None),
+        (Question.AnswerType.MULTIPLE_ELLIPSES, None),
         # Empty-collection answers
         (Question.AnswerType.MULTIPLE_CHOICE, []),
         (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, []),
