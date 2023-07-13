@@ -991,12 +991,13 @@ class AlgorithmPublishView(
 
     @htmx_refresh
     def form_valid(self, form):
-        super().form_valid(form)
+        response = super().form_valid(form)
         messages.add_message(
             self.request,
             messages.SUCCESS,
             "Your algorithm has been published successfully.",
         )
+        return response
 
 
 class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
