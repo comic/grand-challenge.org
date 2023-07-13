@@ -23,7 +23,6 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDetail,
     ReaderStudyDisplaySetList,
     ReaderStudyExampleGroundTruth,
-    ReaderStudyImagesList,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
     ReaderStudyPermissionRequestCreate,
@@ -58,7 +57,6 @@ urlpatterns = [
         ReaderStudyLeaderBoard.as_view(),
         name="leaderboard",
     ),
-    path("<slug>/cases/", ReaderStudyImagesList.as_view(), name="images"),
     path(
         "<slug>/display-sets/",
         ReaderStudyDisplaySetList.as_view(),

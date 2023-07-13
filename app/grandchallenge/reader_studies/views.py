@@ -445,50 +445,6 @@ class ReaderStudyDisplaySetList(
         return qs
 
 
-class ReaderStudyImagesList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
-):
-    model = Image
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
-    raise_exception = True
-    template_name = "reader_studies/readerstudy_images_list.html"
-    row_template = "reader_studies/readerstudy_images_row.html"
-    search_fields = ["pk", "name"]
-    columns = [
-        Column(title="Name", sort_field="name"),
-        Column(title="Created", sort_field="created"),
-        Column(title="Creator", sort_field="origin__creator__username"),
-        Column(title="View"),
-        Column(title="Download"),
-        Column(title="Remove from Study"),
-    ]
-
-    @cached_property
-    def reader_study(self):
-        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.reader_study
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"reader_study": self.reader_study})
-        return context
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return (
-            qs.filter(readerstudies=self.reader_study)
-            .prefetch_related("files")
-            .select_related(
-                "origin__creator__user_profile",
-                "origin__creator__verification",
-            )
-        )
-
-
 class QuestionOptionMixin:
     def validate_options(self, form, _super):
         context = self.get_context_data()

@@ -13,7 +13,7 @@
           <button type="button" class="btn btn-outline-primary" hx-get="{% url 'reader-studies:display-set-detail' pk=object.pk slug=object.reader_study.slug %}" hx-target="#ds-content-{{ object.id }}" hx-swap="outerHTML">Back</button>
           <button type="submit" class="btn btn-primary">Save</button>
         </div>
-        <button type="button" class="btn btn-danger" onclick="removeCase('{% url 'api:reader-studies-display-set-detail' object.id %}', true)">Remove</button>
+        <button type="button" class="btn btn-danger remove-display-set" data-display-set-url="{% url 'api:reader-studies-display-set-detail' object.id %}">Remove</button>
       </div>
     </form>
   {% endif %}
