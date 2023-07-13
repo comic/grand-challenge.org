@@ -1456,6 +1456,13 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ]
 
     @property
+    def allow_empty_list_types(self):
+        return [
+            self.AnswerType.MULTIPLE_CHOICE,
+            self.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+        ]
+
+    @property
     def empty_answer_values(self):
         """Returns a list of answer values which are considered to be empty"""
         result = []
@@ -1463,6 +1470,8 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             result.append(None)
         if self.answer_type in self.allow_blank_types:
             result.append("")
+        if self.answer_type in self.allow_empty_list_types:
+            result.append([])
         return result
 
     def is_answer_valid(self, *, answer):
