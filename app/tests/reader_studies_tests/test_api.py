@@ -275,32 +275,24 @@ def test_answer_creator_is_reader(client):
     "answer_type,answer,expected",
     (
         (Question.AnswerType.BOOL, True, 201),
-        (Question.AnswerType.BOOL, None, 400),
         (Question.AnswerType.BOOL, "True", 400),
         (Question.AnswerType.BOOL, 12, 400),
         (Question.AnswerType.NUMBER, 12, 201),
-        (Question.AnswerType.NUMBER, None, 201),
         (Question.AnswerType.NUMBER, "12", 400),
         (Question.AnswerType.NUMBER, True, 400),
         (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds", 201),
-        (Question.AnswerType.SINGLE_LINE_TEXT, "", 201),
         (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
         (Question.AnswerType.SINGLE_LINE_TEXT, True, 400),
         (Question.AnswerType.SINGLE_LINE_TEXT, 12, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds", 201),
-        (Question.AnswerType.MULTI_LINE_TEXT, "", 201),
         (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, True, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, 12, 400),
-        (Question.AnswerType.CHOICE, None, 201),
-        (Question.AnswerType.MULTIPLE_CHOICE, [], 201),
         (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
-        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, [], 201),
         (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
         # Headings are always incorrect when answering
         (Question.AnswerType.HEADING, True, 400),
         (Question.AnswerType.HEADING, "null", 400),
-        (Question.AnswerType.HEADING, None, 400),
         # Annotations
         (Question.AnswerType.BOUNDING_BOX_2D, "", 400),
         (Question.AnswerType.BOUNDING_BOX_2D, True, 400),
@@ -795,16 +787,6 @@ def test_answer_creator_is_reader(client):
             },
             400,
         ),
-        (Question.AnswerType.BOUNDING_BOX_2D, None, 201),
-        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, None, 201),
-        (Question.AnswerType.DISTANCE_MEASUREMENT, None, 201),
-        (Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS, None, 201),
-        (Question.AnswerType.POINT, None, 201),
-        (Question.AnswerType.MULTIPLE_POINTS, None, 201),
-        (Question.AnswerType.POLYGON, None, 201),
-        (Question.AnswerType.MULTIPLE_POLYGONS, None, 201),
-        (Question.AnswerType.ANGLE, None, 201),
-        (Question.AnswerType.MULTIPLE_ANGLES, None, 201),
         (Question.AnswerType.ELLIPSE, "wwoljg", 400),
         (Question.AnswerType.ELLIPSE, True, 400),
         (Question.AnswerType.ELLIPSE, 42, 400),
@@ -921,11 +903,7 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
     reader = UserFactory()
     rs.add_reader(reader)
 
-    q = QuestionFactory(
-        reader_study=rs,
-        answer_type=answer_type,
-        required=False,
-    )
+    q = QuestionFactory(reader_study=rs, answer_type=answer_type)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
