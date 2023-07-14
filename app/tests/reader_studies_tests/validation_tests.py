@@ -232,7 +232,7 @@ def test_new_answer_type_listed():
     [
         ["STXT", False],
         ["MTXT", False],
-        ["BOOL", False],
+        ["BOOL", True],
         ["NUMB", True],
         ["2DBB", True],
         ["M2DB", True],

@@ -281,14 +281,19 @@ def test_answer_creator_is_reader(client):
         (Question.AnswerType.NUMBER, "12", 400),
         (Question.AnswerType.NUMBER, True, 400),
         (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds", 201),
+        (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
         (Question.AnswerType.SINGLE_LINE_TEXT, True, 400),
         (Question.AnswerType.SINGLE_LINE_TEXT, 12, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds", 201),
+        (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, True, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, 12, 400),
+        (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
+        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
+        # Headings are always incorrect when answering
         (Question.AnswerType.HEADING, True, 400),
         (Question.AnswerType.HEADING, "null", 400),
-        (Question.AnswerType.HEADING, None, 400),
+        # Annotations
         (Question.AnswerType.BOUNDING_BOX_2D, "", 400),
         (Question.AnswerType.BOUNDING_BOX_2D, True, 400),
         (Question.AnswerType.BOUNDING_BOX_2D, False, 400),
@@ -782,24 +787,6 @@ def test_answer_creator_is_reader(client):
             },
             400,
         ),
-        (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
-        (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
-        (Question.AnswerType.BOOL, None, 400),
-        (Question.AnswerType.NUMBER, None, 400),
-        (Question.AnswerType.HEADING, None, 400),
-        (Question.AnswerType.BOUNDING_BOX_2D, None, 201),
-        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, None, 201),
-        (Question.AnswerType.DISTANCE_MEASUREMENT, None, 201),
-        (Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS, None, 201),
-        (Question.AnswerType.POINT, None, 201),
-        (Question.AnswerType.MULTIPLE_POINTS, None, 201),
-        (Question.AnswerType.POLYGON, None, 201),
-        (Question.AnswerType.MULTIPLE_POLYGONS, None, 201),
-        (Question.AnswerType.ANGLE, None, 201),
-        (Question.AnswerType.MULTIPLE_ANGLES, None, 201),
-        (Question.AnswerType.CHOICE, None, 400),
-        (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
-        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
         (Question.AnswerType.ELLIPSE, "wwoljg", 400),
         (Question.AnswerType.ELLIPSE, True, 400),
         (Question.AnswerType.ELLIPSE, 42, 400),
@@ -935,16 +922,53 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "answer_type", (Question.AnswerType.CHOICE, Question.AnswerType.NUMBER)
+    "answer_type,answer",
+    (
+        # Blank answers
+        (Question.AnswerType.SINGLE_LINE_TEXT, ""),
+        (Question.AnswerType.MULTI_LINE_TEXT, ""),
+        (Question.AnswerType.TEXT, ""),
+        # Null answers
+        (Question.AnswerType.NUMBER, None),
+        (Question.AnswerType.CHOICE, None),
+        (Question.AnswerType.BOUNDING_BOX_2D, None),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, None),
+        (Question.AnswerType.DISTANCE_MEASUREMENT, None),
+        (Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS, None),
+        (Question.AnswerType.POINT, None),
+        (Question.AnswerType.MULTIPLE_POINTS, None),
+        (Question.AnswerType.POLYGON, None),
+        (Question.AnswerType.MULTIPLE_POLYGONS, None),
+        (Question.AnswerType.LINE, None),
+        (Question.AnswerType.MULTIPLE_LINES, None),
+        (Question.AnswerType.ANGLE, None),
+        (Question.AnswerType.MULTIPLE_ANGLES, None),
+        (Question.AnswerType.ELLIPSE, None),
+        (Question.AnswerType.MULTIPLE_ELLIPSES, None),
+        # Empty-collection answers
+        (Question.AnswerType.MULTIPLE_CHOICE, []),
+        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, []),
+    ),
 )
-def test_only_non_required_can_be_null(client, answer_type):
+@pytest.mark.parametrize(
+    "is_required,expected_status_code",
+    (
+        (False, 201),
+        (True, 400),
+    ),
+)
+def test_empty_answers(
+    client, answer_type, answer, is_required, expected_status_code
+):
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     reader = UserFactory()
     rs.add_reader(reader)
 
     q = QuestionFactory(
-        reader_study=rs, answer_type=answer_type, required=True
+        reader_study=rs,
+        answer_type=answer_type,
+        required=is_required,
     )
 
     response = get_view_for_user(
@@ -953,31 +977,13 @@ def test_only_non_required_can_be_null(client, answer_type):
         client=client,
         method=client.post,
         data={
-            "answer": None,
+            "answer": answer,
             "display_set": ds.api_url,
             "question": q.api_url,
         },
         content_type="application/json",
     )
-    assert response.status_code == 400
-
-    q = QuestionFactory(
-        reader_study=rs, answer_type=answer_type, required=False
-    )
-
-    response = get_view_for_user(
-        viewname="api:reader-studies-answer-list",
-        user=reader,
-        client=client,
-        method=client.post,
-        data={
-            "answer": None,
-            "display_set": ds.api_url,
-            "question": q.api_url,
-        },
-        content_type="application/json",
-    )
-    assert response.status_code == 201
+    assert response.status_code == expected_status_code
 
 
 @pytest.mark.django_db

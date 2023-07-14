@@ -973,6 +973,12 @@ class AnswerType(models.TextChoices):
         ]
 
     @staticmethod
+    def get_image_types():
+        return [
+            AnswerType.MASK,
+        ]
+
+    @staticmethod
     def get_widget_required_types():
         return [
             AnswerType.TEXT,
@@ -1082,6 +1088,32 @@ ANSWER_TYPE_TO_QUESTION_WIDGET = {
 ANSWER_TYPE_TO_QUESTION_WIDGET_CHOICES = {
     answer_type: [(option.name, option.label) for option in options]
     for answer_type, options in ANSWER_TYPE_TO_QUESTION_WIDGET.items()
+}
+
+EMPTY_ANSWER_VALUES = {
+    AnswerType.SINGLE_LINE_TEXT: "",
+    AnswerType.MULTI_LINE_TEXT: "",
+    AnswerType.TEXT: "",
+    AnswerType.NUMBER: None,
+    AnswerType.CHOICE: None,
+    AnswerType.BOOL: None,
+    AnswerType.BOUNDING_BOX_2D: None,
+    AnswerType.MULTIPLE_2D_BOUNDING_BOXES: None,
+    AnswerType.DISTANCE_MEASUREMENT: None,
+    AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS: None,
+    AnswerType.POINT: None,
+    AnswerType.MULTIPLE_POINTS: None,
+    AnswerType.POLYGON: None,
+    AnswerType.MULTIPLE_POLYGONS: None,
+    AnswerType.LINE: None,
+    AnswerType.MULTIPLE_LINES: None,
+    AnswerType.MASK: None,
+    AnswerType.ANGLE: None,
+    AnswerType.MULTIPLE_ANGLES: None,
+    AnswerType.ELLIPSE: None,
+    AnswerType.MULTIPLE_ELLIPSES: None,
+    AnswerType.MULTIPLE_CHOICE: [],
+    AnswerType.MULTIPLE_CHOICE_DROPDOWN: [],
 }
 
 
@@ -1434,18 +1466,22 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
 
     @property
-    def allow_null_types(self):
-        return [
-            *self.AnswerType.get_annotation_types(),
-            self.AnswerType.CHOICE,
-            self.AnswerType.NUMBER,
-        ]
+    def empty_answer_value(self):
+        """Returns the answer value which is considered to be empty"""
+        if self.answer_type not in EMPTY_ANSWER_VALUES:
+            raise RuntimeError(
+                f"{self.answer_type} has no representation of an empty value."
+            )
+        return EMPTY_ANSWER_VALUES[self.answer_type]
 
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
+        if self.answer_type == Question.AnswerType.HEADING:  # Never valid
+            return False
+
         allowed_types = [{"$ref": f"#/definitions/{self.answer_type}"}]
 
-        if self.answer_type in self.allow_null_types:
+        if self.empty_answer_value is None:
             allowed_types.append({"$ref": "#/definitions/null"})
 
         try:
@@ -1464,8 +1500,34 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
 
     @property
+    def validators(self):
+        if self.answer_min_value is not None:
+            yield MinValueValidator(self.answer_min_value)
+
+        if self.answer_max_value is not None:
+            yield MaxValueValidator(self.answer_max_value)
+
+        if self.answer_step_size:
+            yield StepValueValidator(
+                limit_value=self.answer_step_size,
+                offset=self.answer_min_value,
+            )
+
+        if self.answer_min_length is not None:
+            yield MinLengthValidator(self.answer_min_length)
+
+        if self.answer_max_length is not None:
+            yield MaxLengthValidator(self.answer_max_length)
+
+        if self.answer_match_pattern:
+            yield RegexValidator(
+                regex=self.answer_match_pattern,
+                message="Enter a valid answer that matches with the requested format",
+            )
+
+    @property
     def is_image_type(self):
-        return self.answer_type in [self.AnswerType.MASK]
+        return self.answer_type in self.AnswerType.get_image_types()
 
     def get_absolute_url(self):
         return self.reader_study.get_absolute_url() + "#questions"
@@ -1612,39 +1674,20 @@ class Answer(UUIDModel):
                     "Provided options are not valid for this question"
                 )
 
-        if (
-            question.answer_type
-            in (Question.AnswerType.NUMBER, Question.AnswerType.TEXT)
-            and question.required
-            and answer is None
-        ):
+        # Image types can have empty answers while an image is being uploaded,
+        # as such we never consider it empty.
+        answer_is_empty = (
+            answer == question.empty_answer_value
+            and not question.is_image_type
+        )
+        if question.required and answer_is_empty:
             raise ValidationError(
-                "Answer for required question cannot be None"
+                "Answer for required question cannot be empty"
             )
 
-        if question.answer_min_value is not None:
-            MinValueValidator(question.answer_min_value)(answer)
-
-        if question.answer_max_value is not None:
-            MaxValueValidator(question.answer_max_value)(answer)
-
-        if question.answer_step_size:
-            StepValueValidator(
-                limit_value=question.answer_step_size,
-                offset=question.answer_min_value,
-            )(answer)
-
-        if question.answer_min_length is not None:
-            MinLengthValidator(question.answer_min_length)(answer)
-
-        if question.answer_max_length is not None:
-            MaxLengthValidator(question.answer_max_length)(answer)
-
-        if question.answer_match_pattern:
-            RegexValidator(
-                regex=question.answer_match_pattern,
-                message="Enter a valid answer that matches with the requested format",
-            )(answer)
+        if not answer_is_empty:
+            for validator in question.validators:
+                validator(answer)
 
     @property
     def answer_text(self):
