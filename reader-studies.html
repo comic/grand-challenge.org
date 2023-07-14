@@ -110,6 +110,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.api_url"><code class="docutils literal notranslate"><span class="pre">Question.api_url</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.calculate_score"><code class="docutils literal notranslate"><span class="pre">Question.calculate_score()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.clean"><code class="docutils literal notranslate"><span class="pre">Question.clean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.empty_answer_value"><code class="docutils literal notranslate"><span class="pre">Question.empty_answer_value</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.is_answer_valid"><code class="docutils literal notranslate"><span class="pre">Question.is_answer_valid()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.is_fully_editable"><code class="docutils literal notranslate"><span class="pre">Question.is_fully_editable</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#grandchallenge.reader_studies.models.Question.save"><code class="docutils literal notranslate"><span class="pre">Question.save()</span></code></a></li>
@@ -697,6 +698,12 @@ to <code class="docutils literal notranslate"><span class="pre">answer</span></c
 called on every field by self.clean_fields. Any ValidationError raised
 by this method will not be associated with a particular field; it will
 have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.Question.empty_answer_value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty_answer_value</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.empty_answer_value" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the answer value which is considered to be empty</p>
 </dd></dl>
 
 <dl class="py method">
