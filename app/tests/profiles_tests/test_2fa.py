@@ -41,7 +41,7 @@ def test_2fa_required_for_staff(client):
         user=admin,
     )
     assertRedirects(
-        response, "/accounts/two_factor/setup", fetch_redirect_response=False
+        response, "/accounts/setup/", fetch_redirect_response=False
     )
 
 
@@ -55,7 +55,7 @@ def test_2fa_reset_flow(client):
         reverse_lazy("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
     )
-    assert "/accounts/two-factor-authenticate" in response.url
+    assert "/accounts/authenticate/" in response.url
 
     # The user ID should be in the session.
     assert client.session.get("allauth_2fa_user_id")
@@ -107,7 +107,7 @@ def test_2fa_setup(client):
         viewname="two-factor-setup",
         client=client,
         method=client.post,
-        data={"token": "12345"},
+        data={"otp_token": "12345"},
         user=user,
     )
     assert "The entered token is not valid" in str(
@@ -125,10 +125,10 @@ def test_2fa_setup(client):
         viewname="two-factor-setup",
         client=client,
         method=client.post,
-        data={"token": token},
+        data={"otp_token": token},
         user=user,
     )
-    assert "/accounts/two_factor/backup_tokens" in response.url
+    assert "/accounts/backup-tokens/" in response.url
 
     # upon next sign-in 2fa will be prompted
     client.logout()
@@ -139,7 +139,7 @@ def test_2fa_setup(client):
         reverse("account_login"),
         {"login": user.username, "password": SUPER_SECURE_TEST_PASSWORD},
     )
-    assert "/accounts/two-factor-authenticate" in response.url
+    assert "/accounts/authenticate/" in response.url
 
     # providing the token redirects the user to their profile page
     new_token = get_token_from_totp_device(user.totpdevice_set.get())
