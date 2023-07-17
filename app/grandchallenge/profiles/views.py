@@ -1,7 +1,4 @@
-from base64 import b32encode
-
-from allauth.account.adapter import get_adapter
-from allauth_2fa.views import TwoFactorAuthenticate, TwoFactorSetup
+from allauth_2fa.views import TwoFactorSetup
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
@@ -195,27 +192,8 @@ class UserProfileViewSet(GenericViewSet):
 
 
 class TwoFactorSetup(TwoFactorSetup):
-    def get_secret_key(self):
-        return b32encode(self.device.bin_key).decode("utf-8")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["secret_key"] = self.get_secret_key()
-        return context
-
     def form_invalid(self, form):
         response = super().form_invalid(form)
         # and display an error message
         messages.add_message(self.request, messages.ERROR, "Incorrect token.")
         return response
-
-
-class TwoFactorAuthenticate(TwoFactorAuthenticate):
-    # this is copied from the a pending PR on django-allauth-2fa repo:
-    # https://github.com/valohai/django-allauth-2fa/pull/131
-    def form_valid(self, form):
-        adapter = get_adapter(self.request)
-        # 2fa kicked in at `pre_login()`, so we need to continue from there.
-        login_kwargs = adapter.unstash_pending_login_kwargs(self.request)
-        adapter.login(self.request, form.user)
-        return adapter.post_login(self.request, form.user, **login_kwargs)
