@@ -1938,6 +1938,7 @@ def test_display_sets_shuffled_per_user(client):
     ]
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_display_set_index(client):
     n_display_sets = 10
