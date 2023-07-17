@@ -99,7 +99,7 @@
 <span class="kn">from</span> <span class="nn">django_extensions.db.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span> <span class="nn">guardian.models</span> <span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
-<span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">RefResolutionError</span>
+<span class="kn">from</span> <span class="nn">referencing.exceptions</span> <span class="kn">import</span> <span class="n">Unresolvable</span>
 <span class="kn">from</span> <span class="nn">simple_history.models</span> <span class="kn">import</span> <span class="n">HistoricalRecords</span>
 <span class="kn">from</span> <span class="nn">stdimage</span> <span class="kn">import</span> <span class="n">JPEGField</span>
 
@@ -1571,7 +1571,7 @@
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">except</span> <span class="n">RefResolutionError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">Unresolvable</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;#/definitions/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span><span class="si">}</span><span class="s2"> needs to be defined in &quot;</span>
                 <span class="s2">&quot;ANSWER_TYPE_SCHEMA.&quot;</span>
