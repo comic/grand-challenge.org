@@ -21,7 +21,7 @@ from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
-from jsonschema import RefResolutionError
+from referencing.exceptions import Unresolvable
 from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
@@ -1493,7 +1493,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
         except ValidationError:
             return False
-        except RefResolutionError:
+        except Unresolvable:
             raise RuntimeError(
                 f"#/definitions/{self.answer_type} needs to be defined in "
                 "ANSWER_TYPE_SCHEMA."
