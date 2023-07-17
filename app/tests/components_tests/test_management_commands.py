@@ -3,7 +3,7 @@ from celery.result import AsyncResult
 from django.core.management import CommandError, call_command
 
 from grandchallenge.components.models import InterfaceKind
-from tests.cases_tests.factories import ImageFactoryWithImageFile16Bit
+from tests.cases_tests.factories import ImageFactoryWithImageFile4D
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -15,7 +15,7 @@ def test_add_overlay_segments(settings, django_capture_on_commit_callbacks):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    im = ImageFactoryWithImageFile16Bit()
+    im = ImageFactoryWithImageFile4D()
     ci = ComponentInterfaceFactory(
         title="foo", kind=InterfaceKind.InterfaceKindChoices.SEGMENTATION
     )
@@ -54,4 +54,4 @@ def test_add_overlay_segments(settings, django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks(execute=True):
         call_command("add_overlay_segments", "foo", '{"255": "seg"}')
     im.refresh_from_db()
-    assert im.segments == [0]
+    assert im.segments == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
