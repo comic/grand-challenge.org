@@ -5,7 +5,7 @@ import os
 import subprocess
 import tempfile
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import jwt
 import requests
@@ -16,6 +16,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core import files
 from django.db.transaction import on_commit
+from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
@@ -165,7 +166,7 @@ def get_zipfile(*, pk):
                 raise
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def unlink_algorithm(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
@@ -174,4 +175,38 @@ def unlink_algorithm(*, pk):
     for repo in ghwm.payload["repositories"]:
         Algorithm.objects.filter(repo_name=repo["full_name"]).update(
             repo_name=""
+        )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def cleanup_expired_tokens():
+    GitHubUserToken = apps.get_model(  # noqa: N806
+        app_label="github", model_name="GitHubUserToken"
+    )
+    GitHubUserToken.objects.filter(refresh_token_expires__lt=now()).delete()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def refresh_user_token(*, pk):
+    GitHubUserToken = apps.get_model(  # noqa: N806
+        app_label="github", model_name="GitHubUserToken"
+    )
+    token = GitHubUserToken.objects.get(pk=pk)
+    token.refresh_access_token()
+    token.save()
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def refresh_expiring_user_tokens():
+    """Refresh user tokens expiring in the next 1 to 28 days"""
+    GitHubUserToken = apps.get_model(  # noqa: N806
+        app_label="github", model_name="GitHubUserToken"
+    )
+    queryset = GitHubUserToken.objects.filter(
+        refresh_token_expires__gt=now() + timedelta(days=1),
+        refresh_token_expires__lt=now() + timedelta(days=28),
+    )
+    for token in queryset.iterator():
+        on_commit(
+            refresh_user_token.signature(kwargs={"pk": token.pk}).apply_async
         )

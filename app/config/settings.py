@@ -1162,51 +1162,59 @@ WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 CELERY_BEAT_SCHEDULE = {
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
-        "schedule": crontab(minute=0, hour=0),
+        "schedule": crontab(hour=0, minute=0),
+    },
+    "refresh_expiring_user_tokens": {
+        "task": "grandchallenge.github.tasks.refresh_expiring_user_tokens",
+        "schedule": crontab(hour=0, minute=15),
+    },
+    "cleanup_expired_tokens": {
+        "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
+        "schedule": crontab(hour=0, minute=30),
     },
     "ping_google": {
         "task": "grandchallenge.core.tasks.ping_google",
-        "schedule": crontab(minute=30, hour=0),
+        "schedule": crontab(hour=0, minute=45),
     },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",
-        "schedule": crontab(minute=0, hour=1),
+        "schedule": crontab(hour=1, minute=0),
     },
     "update_publication_metadata": {
         "task": "grandchallenge.publications.tasks.update_publication_metadata",
-        "schedule": crontab(minute=30, hour=1),
+        "schedule": crontab(hour=1, minute=30),
     },
     "delete_old_user_uploads": {
         "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
-        "schedule": crontab(minute=0, hour=2),
+        "schedule": crontab(hour=2, minute=0),
     },
     "remove_inactive_container_images": {
         "task": "grandchallenge.components.tasks.remove_inactive_container_images",
-        "schedule": crontab(minute=30, hour=2),
+        "schedule": crontab(hour=2, minute=30),
     },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
-        "schedule": crontab(minute=0, hour=3),
+        "schedule": crontab(hour=3, minute=0),
     },
     "update_phase_statistics": {
         "task": "grandchallenge.evaluation.tasks.update_phase_statistics",
-        "schedule": crontab(minute=30, hour=3),
+        "schedule": crontab(hour=3, minute=30),
     },
     "send_unread_notification_emails": {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
-        "schedule": crontab(minute=0, hour=4),
+        "schedule": crontab(hour=4, minute=0),
     },
     "update_algorithm_credits": {
         "task": "grandchallenge.algorithms.tasks.set_credits_per_job",
-        "schedule": crontab(minute=30, hour=4),
+        "schedule": crontab(hour=4, minute=30),
     },
     "update_challenge_cost_statistics": {
         "task": "grandchallenge.challenges.tasks.update_challenge_cost_statistics",
-        "schedule": crontab(minute=0, hour=5),
+        "schedule": crontab(hour=5, minute=0),
     },
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
-        "schedule": crontab(minute=30, hour=5),
+        "schedule": crontab(hour=5, minute=30),
     },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
