@@ -922,10 +922,10 @@ class AlgorithmRepositoryUpdate(
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"github_app_install_url": self.github_app_install_url})
-        return context
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"github_app_install_url": self.github_app_install_url})
+        return kwargs
 
 
 class AlgorithmPublishView(

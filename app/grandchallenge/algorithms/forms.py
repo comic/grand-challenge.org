@@ -34,6 +34,7 @@ from django.forms import (
 from django.forms.widgets import MultipleHiddenInput, PasswordInput
 from django.urls import Resolver404, resolve
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
@@ -696,6 +697,7 @@ class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
 
 class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
     repo_name = autocomplete.Select2ListCreateChoiceField(
+        label="Repository Name",
         required=False,
         widget=autocomplete.ListSelect2(
             url="github:repositories-list",
@@ -707,7 +709,7 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, github_app_install_url, **kwargs):
         super().__init__(*args, **kwargs)
 
         if self.instance.repo_name:
@@ -715,6 +717,15 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
             self.fields["repo_name"].choices = [
                 (self.instance.repo_name, self.instance.repo_name),
             ]
+
+        self.fields["repo_name"].help_text = format_html(
+            (
+                "If you cannot find your desired repository here please "
+                "<a href='{}'>update the GitHub installation</a> "
+                "and ensure the application has access to that repository."
+            ),
+            github_app_install_url,
+        )
 
     def clean_repo_name(self):
         repo_name = self.cleaned_data.get("repo_name")
