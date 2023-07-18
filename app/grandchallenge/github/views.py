@@ -8,14 +8,13 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.transaction import non_atomic_requests
-from django.http import Http404, HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
-from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
+from grandchallenge.github.utils import decode_github_state
 
 
 @csrf_exempt
@@ -47,6 +46,8 @@ def post_install_redirect(request):
     Github apps only allow a single post install callback url.
     These cannot be dynamic, so we need a redirect to the correct alogrithm.
     """
+    state = decode_github_state(state=request.GET.get("state"))
+
     code = request.GET.get("code")
 
     resp = requests.post(
@@ -81,20 +82,4 @@ def post_install_redirect(request):
     user_token.github_user_id = github_user["id"]
     user_token.save()
 
-    slug = request.GET.get("state")
-    if slug == "None":
-        msg = mark_safe(
-            '<div class="mb-2">'
-            "Unfortunately something went wrong while trying to find the requested algorithm."
-            "</div>"
-            "<div>"
-            "If you were trying to link a github repository to an algorithm, "
-            "please do so manually in the algorithm's settings."
-            "</div>"
-        )
-        raise Http404(msg)
-
-    return redirect(
-        reverse("algorithms:add-repo", kwargs={"slug": slug})
-        + f"?{request.META['QUERY_STRING']}"
-    )
+    return redirect(state.redirect_url)

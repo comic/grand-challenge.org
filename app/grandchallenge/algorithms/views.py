@@ -90,6 +90,7 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.github.models import GitHubUserToken
+from grandchallenge.github.utils import encode_github_state
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
@@ -921,8 +922,14 @@ class GitHubTokenRequiredMixin:
     """
 
     @property
+    def github_state(self):
+        return encode_github_state(
+            redirect_url=self.request.build_absolute_uri()
+        )
+
+    @property
     def github_auth_url(self):
-        return f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&state={self.get_object().slug}"
+        return f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&state={self.github_state}"
 
     def dispatch(self, *args, **kwargs):
         try:
@@ -960,7 +967,7 @@ class AlgorithmAddRepo(
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}"
+                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.github_state}"
             }
         )
         return context
