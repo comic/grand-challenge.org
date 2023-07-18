@@ -1164,13 +1164,17 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
         "schedule": crontab(hour=0, minute=0),
     },
+    "refresh_expiring_user_tokens": {
+        "task": "grandchallenge.github.tasks.refresh_expiring_user_tokens",
+        "schedule": crontab(hour=0, minute=15),
+    },
     "cleanup_expired_tokens": {
         "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
-        "schedule": crontab(hour=0, minute=15),
+        "schedule": crontab(hour=0, minute=30),
     },
     "ping_google": {
         "task": "grandchallenge.core.tasks.ping_google",
-        "schedule": crontab(hour=0, minute=30),
+        "schedule": crontab(hour=0, minute=45),
     },
     "clear_sessions": {
         "task": "grandchallenge.core.tasks.clear_sessions",

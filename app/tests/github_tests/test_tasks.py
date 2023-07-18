@@ -6,7 +6,11 @@ import pytest
 from django.utils.timezone import now
 
 from grandchallenge.github.models import CloneStatusChoices, GitHubUserToken
-from grandchallenge.github.tasks import cleanup_expired_tokens, get_zipfile
+from grandchallenge.github.tasks import (
+    cleanup_expired_tokens,
+    get_zipfile,
+    refresh_expiring_user_tokens,
+)
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.github_tests.factories import (
     GitHubUserTokenFactory,
@@ -70,3 +74,26 @@ def test_cleanup_expired_tokens():
     cleanup_expired_tokens()
 
     assert GitHubUserToken.objects.get() == t1
+
+
+@pytest.mark.django_db
+def test_refresh_expiring_user_tokens(django_capture_on_commit_callbacks):
+    t1, t2, t3 = GitHubUserTokenFactory.create_batch(3)
+
+    t1.refresh_token_expires = now() + timedelta(days=180)
+    t1.save()
+
+    t2.refresh_token_expires = now() - timedelta(days=1)
+    t2.save()
+
+    t3.refresh_token_expires = now() + timedelta(days=2)
+    t3.save()
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        refresh_expiring_user_tokens()
+
+    assert len(callbacks) == 1
+    assert (
+        repr(callbacks[0])
+        == f"<bound method Signature.apply_async of grandchallenge.github.tasks.refresh_user_token(pk={t3.pk})>"
+    )
