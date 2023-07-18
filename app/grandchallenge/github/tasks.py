@@ -16,6 +16,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core import files
 from django.db.transaction import on_commit
+from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
@@ -165,7 +166,7 @@ def get_zipfile(*, pk):
                 raise
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
 def unlink_algorithm(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
@@ -175,3 +176,11 @@ def unlink_algorithm(*, pk):
         Algorithm.objects.filter(repo_name=repo["full_name"]).update(
             repo_name=""
         )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+def cleanup_expired_tokens():
+    GitHubUserToken = apps.get_model(  # noqa: N806
+        app_label="github", model_name="GitHubUserToken"
+    )
+    GitHubUserToken.objects.filter(refresh_token_expires__lt=now()).delete()

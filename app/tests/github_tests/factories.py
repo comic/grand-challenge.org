@@ -4,6 +4,7 @@ import factory
 from django.utils import timezone
 
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
+from tests.factories import UserFactory
 
 PAYLOAD = {
     "description": None,
@@ -31,6 +32,7 @@ class GitHubUserTokenFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = GitHubUserToken
 
+    user = factory.SubFactory(UserFactory)
     access_token = factory.fuzzy.FuzzyText(length=10, prefix="ghu")
     access_token_expires = factory.fuzzy.FuzzyDateTime(
         timezone.now() + timedelta(hours=8),

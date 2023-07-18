@@ -1,12 +1,17 @@
 import subprocess
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
+from django.utils.timezone import now
 
-from grandchallenge.github.models import CloneStatusChoices
-from grandchallenge.github.tasks import get_zipfile
+from grandchallenge.github.models import CloneStatusChoices, GitHubUserToken
+from grandchallenge.github.tasks import cleanup_expired_tokens, get_zipfile
 from tests.algorithms_tests.factories import AlgorithmFactory
-from tests.github_tests.factories import GitHubWebhookMessageFactory
+from tests.github_tests.factories import (
+    GitHubUserTokenFactory,
+    GitHubWebhookMessageFactory,
+)
 
 
 @pytest.mark.django_db
@@ -50,3 +55,18 @@ def test_get_zipfile(get_repo_url):
         get_zipfile(pk=ghwm2.pk)
 
     assert "Clone status was not pending" in str(error)
+
+
+@pytest.mark.django_db
+def test_cleanup_expired_tokens():
+    t1 = GitHubUserTokenFactory()
+    t2 = GitHubUserTokenFactory()
+
+    t2.refresh_token_expires = now() - timedelta(days=1)
+    t2.save()
+
+    assert GitHubUserToken.objects.count() == 2
+
+    cleanup_expired_tokens()
+
+    assert GitHubUserToken.objects.get() == t1
