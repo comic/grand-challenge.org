@@ -17,7 +17,7 @@ from django.core.exceptions import (
 from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -31,6 +31,7 @@ from django.views.generic import (
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
+from requests import HTTPError
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -912,10 +913,41 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
+class GitHubTokenRequiredMixin:
+    """
+    Adds a valid self.github_user_token to the view for the current user
+
+    Requires the user to be logged in, use after LoginRequiredMixin.
+    """
+
+    @property
+    def github_auth_url(self):
+        return f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&state={self.get_object().slug}"
+
+    def dispatch(self, *args, **kwargs):
+        try:
+            self.github_user_token = GitHubUserToken.objects.get(
+                user=self.request.user
+            )
+        except GitHubUserToken.DoesNotExist:
+            return redirect(self.github_auth_url)
+
+        if self.github_user_token.access_token_is_expired:
+            try:
+                self.github_user_token.refresh_access_token()
+                self.github_user_token.save()
+            except HTTPError:
+                self.github_user_token.delete()
+                return redirect(self.github_auth_url)
+
+        return super().dispatch(*args, **kwargs)
+
+
 class AlgorithmAddRepo(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     VerificationRequiredMixin,
+    GitHubTokenRequiredMixin,
     UpdateView,
 ):
     model = Algorithm
@@ -937,23 +969,9 @@ class AlgorithmAddRepo(
         """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
 
-        try:
-            user_token = GitHubUserToken.objects.get(user=self.request.user)
-        except GitHubUserToken.DoesNotExist:
-            kwargs.update({"repos": []})
-            return kwargs
-
-        if user_token.refresh_token_is_expired:
-            kwargs.update({"repos": []})
-            return kwargs
-
-        if user_token.access_token_is_expired:
-            user_token.refresh_access_token()
-            user_token.save()
-
         headers = {
             "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"token {user_token.access_token}",
+            "Authorization": f"token {self.github_user_token.access_token}",
         }
         params = {"per_page": 100, "page": 1}
 
