@@ -7,6 +7,7 @@ import pytest
 from requests.models import Response
 
 from grandchallenge.github.models import GitHubWebhookMessage
+from grandchallenge.github.utils import encode_github_state
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory
 from tests.github_tests.factories import GitHubUserTokenFactory
@@ -67,20 +68,8 @@ def test_redirect_view(get, post, client):
     post.return_value = resp
     get.return_value = resp
     user = UserFactory()
-    response = get_view_for_user(
-        client=client,
-        viewname="github:install-complete",
-        data={"state": "None"},
-        user=user,
-    )
-    assert response.status_code == 404
-    error_msg = (
-        '<div class="mb-2">Unfortunately something went wrong while trying '
-        "to find the requested algorithm.</div><div>If you were trying to "
-        "link a github repository to an algorithm, please do so manually in "
-        "the algorithm's settings.</div>"
-    )
-    assert error_msg in response.content.decode("utf-8")
+
+    state = encode_github_state(redirect_url="http://testserver/this/")
 
     alg = AlgorithmFactory()
     alg.add_editor(user)
@@ -88,22 +77,16 @@ def test_redirect_view(get, post, client):
     response = get_view_for_user(
         client=client,
         viewname="github:install-complete",
-        data={"state": alg.slug},
+        data={"state": state},
         user=user,
-        follow=True,
     )
+    assert response.status_code == 302
+    assert response.url == "http://testserver/this/"
 
-    # User is not verified
-    assert response.status_code == 403
-
-    VerificationFactory(user=user, is_verified=True)
     response = get_view_for_user(
         client=client,
         viewname="github:install-complete",
-        data={"state": alg.slug},
+        data={"state": state + "mod"},  # Modified state
         user=user,
-        follow=True,
     )
-
-    assert response.status_code == 200
-    assert f"Add GitHub repository to {alg.title}" in response.rendered_content
+    assert response.status_code == 403
