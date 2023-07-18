@@ -6,6 +6,7 @@ from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 @admin.register(GitHubUserToken)
 class GitHubUserTokenAdmin(admin.ModelAdmin):
     readonly_fields = (
+        "github_user_id",
         "user",
         "access_token",
         "access_token_expires",

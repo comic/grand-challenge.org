@@ -42,10 +42,6 @@ class GitHubUserToken(models.Model):
     def access_token_is_expired(self):
         return self.access_token_expires < timezone.now()
 
-    @property
-    def refresh_token_is_expired(self):
-        return self.access_token_expires < timezone.now()
-
     def refresh_access_token(self):
         resp = requests.post(
             "https://github.com/login/oauth/access_token",
@@ -56,7 +52,7 @@ class GitHubUserToken(models.Model):
                 "client_secret": settings.GITHUB_CLIENT_SECRET,
             },
             timeout=5,
-            headers={"Accept": "application/vnd.github.v3+json"},
+            headers={"Accept": "application/vnd.github+json"},
         )
         resp.raise_for_status()
         self.update_from_payload(payload=resp.json())

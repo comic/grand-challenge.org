@@ -42,7 +42,7 @@ def get_repo_url(payload):
     token = jwt.encode(msg, private_key, algorithm="RS256")
     headers = {
         "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github.v3+json",
+        "Accept": "application/vnd.github+json",
     }
     resp = requests.post(
         f"https://api.github.com/app/installations/{installation_id}/access_tokens",

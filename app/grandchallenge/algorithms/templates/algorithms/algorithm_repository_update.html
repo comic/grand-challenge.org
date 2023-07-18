@@ -4,26 +4,20 @@
 {% load guardian_tags %}
 
 {% block title %}
-    Algorithm Results - {{ block.super }}
+    GitHub Repository Link - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
         <li class="breadcrumb-item"><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Add repository</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ algorithm.repo_name|yesno:"Update,Add" }} GitHub Repository Link</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Add GitHub repository to {{ algorithm.title }}</h2>
+    <h2>{{ algorithm.repo_name|yesno:"Update,Add" }} GitHub Repository Link</h2>
 
     {% crispy form %}
-
-    {{ block.super }}
-
-    <div class="mt-3">
-        In case your repository is not listed, you can <a href="{{ github_app_install_url }}">link a new GitHub repo here</a>.
-    </div>
 
 {% endblock %}

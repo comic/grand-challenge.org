@@ -1,7 +1,5 @@
 import logging
 
-import requests
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -88,7 +86,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.github.models import GitHubUserToken
+from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
@@ -850,10 +848,9 @@ class AlgorithmPermissionRequestCreate(
     def form_valid(self, form):
         form.instance.user = self.request.user
         form.instance.algorithm = self.algorithm
-        try:
-            redirect = super().form_valid(form)
-            return redirect
 
+        try:
+            return super().form_valid(form)
         except ValidationError as e:
             form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
             return super().form_invalid(form)
@@ -912,69 +909,22 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
-class AlgorithmAddRepo(
+class AlgorithmRepositoryUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     VerificationRequiredMixin,
+    GitHubInstallationRequiredMixin,
     UpdateView,
 ):
     model = Algorithm
     form_class = AlgorithmRepoForm
-    template_name = "algorithms/algorithm_add_repo.html"
+    template_name = "algorithms/algorithm_repository_update.html"
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}"
-            }
-        )
-        return context
-
     def get_form_kwargs(self):
-        """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
-
-        try:
-            user_token = GitHubUserToken.objects.get(user=self.request.user)
-        except GitHubUserToken.DoesNotExist:
-            kwargs.update({"repos": []})
-            return kwargs
-
-        if user_token.refresh_token_is_expired:
-            kwargs.update({"repos": []})
-            return kwargs
-
-        if user_token.access_token_is_expired:
-            user_token.refresh_access_token()
-            user_token.save()
-
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"token {user_token.access_token}",
-        }
-        params = {"per_page": 100, "page": 1}
-
-        installations = requests.get(
-            "https://api.github.com/user/installations",
-            headers=headers,
-            params=params,
-            timeout=5,
-        ).json()
-        repos = []
-        for installation in installations.get("installations", []):
-            response = requests.get(
-                f"https://api.github.com/user/installations/{installation['id']}/repositories",
-                headers=headers,
-                params=params,
-                timeout=5,
-            ).json()
-
-            repos += [repo["full_name"] for repo in response["repositories"]]
-
-        kwargs.update({"repos": repos})
+        kwargs.update({"github_app_install_url": self.github_app_install_url})
         return kwargs
 
 
