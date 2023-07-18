@@ -408,12 +408,12 @@
                 <p>
                     {% if object.repo_name %}
                         <a class="btn btn-primary"
-                           href={% url "algorithms:add-repo" slug=object.slug %}>
+                           href={% url "algorithms:repository-update" slug=object.slug %}>
                            <i class="fa fa-code-branch"></i> Update Linked Repo
                         </a>
                     {% else %}
                         <a class="btn btn-success"
-                           href={% url "algorithms:add-repo" slug=object.slug %}>
+                           href={% url "algorithms:repository-update" slug=object.slug %}>
                             <i class="fa fa-code-branch"></i> Link GitHub Repo
                         </a>
                     {% endif %}

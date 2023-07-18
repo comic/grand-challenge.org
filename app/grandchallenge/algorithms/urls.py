@@ -1,7 +1,6 @@
 from django.urls import path
 
 from grandchallenge.algorithms.views import (
-    AlgorithmAddRepo,
     AlgorithmCreate,
     AlgorithmDescriptionUpdate,
     AlgorithmDetail,
@@ -15,6 +14,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmPermissionRequestList,
     AlgorithmPermissionRequestUpdate,
     AlgorithmPublishView,
+    AlgorithmRepositoryUpdate,
     AlgorithmUpdate,
     DisplaySetFromJobCreate,
     EditorsUpdate,
@@ -41,7 +41,11 @@ urlpatterns = [
         AlgorithmDescriptionUpdate.as_view(),
         name="description-update",
     ),
-    path("<slug>/add-repo/", AlgorithmAddRepo.as_view(), name="add-repo"),
+    path(
+        "<slug>/repository/",
+        AlgorithmRepositoryUpdate.as_view(),
+        name="repository-update",
+    ),
     path(
         "<slug>/images/create/",
         AlgorithmImageCreate.as_view(),

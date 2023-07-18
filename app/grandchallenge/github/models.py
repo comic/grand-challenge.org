@@ -52,7 +52,7 @@ class GitHubUserToken(models.Model):
                 "client_secret": settings.GITHUB_CLIENT_SECRET,
             },
             timeout=5,
-            headers={"Accept": "application/vnd.github.v3+json"},
+            headers={"Accept": "application/vnd.github+json"},
         )
         resp.raise_for_status()
         self.update_from_payload(payload=resp.json())

@@ -1,7 +1,5 @@
 import logging
 
-import requests
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -17,7 +15,7 @@ from django.core.exceptions import (
 from django.db.models import OuterRef, Subquery
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -31,7 +29,6 @@ from django.views.generic import (
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
-from requests import HTTPError
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -89,8 +86,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.github.models import GitHubUserToken
-from grandchallenge.github.utils import encode_github_state
+from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
@@ -852,10 +848,9 @@ class AlgorithmPermissionRequestCreate(
     def form_valid(self, form):
         form.instance.user = self.request.user
         form.instance.algorithm = self.algorithm
-        try:
-            redirect = super().form_valid(form)
-            return redirect
 
+        try:
+            return super().form_valid(form)
         except ValidationError as e:
             form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
             return super().form_invalid(form)
@@ -914,70 +909,7 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
-class GitHubInstallationRequiredMixin:
-    """
-    Ensures that the GitHub application is installed for the current user
-
-    Requires the user to be logged in, use after LoginRequiredMixin.
-    """
-
-    @property
-    def github_state(self):
-        return encode_github_state(
-            redirect_url=self.request.build_absolute_uri()
-        )
-
-    @property
-    def github_auth_url(self):
-        return f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&state={self.github_state}"
-
-    @property
-    def github_app_install_url(self):
-        return f"{settings.GITHUB_APP_INSTALL_URL}?state={self.github_state}"
-
-    @cached_property
-    def github_request_kwargs(self):
-        return {
-            "headers": {
-                "Accept": "application/vnd.github.v3+json",
-                "Authorization": f"token {self.github_user_token.access_token}",
-            },
-            "params": {"per_page": 100, "page": 1},
-            "timeout": 5,
-        }
-
-    @cached_property
-    def installations(self):
-        response = requests.get(
-            "https://api.github.com/user/installations",
-            **self.github_request_kwargs,
-        )
-        response.raise_for_status()
-        return response.json()["installations"]
-
-    def dispatch(self, *args, **kwargs):
-        try:
-            self.github_user_token = GitHubUserToken.objects.get(
-                user=self.request.user
-            )
-        except GitHubUserToken.DoesNotExist:
-            return redirect(self.github_auth_url)
-
-        if self.github_user_token.access_token_is_expired:
-            try:
-                self.github_user_token.refresh_access_token()
-                self.github_user_token.save()
-            except HTTPError:
-                self.github_user_token.delete()
-                return redirect(self.github_auth_url)
-
-        if not self.installations:
-            return redirect(self.github_app_install_url)
-
-        return super().dispatch(*args, **kwargs)
-
-
-class AlgorithmAddRepo(
+class AlgorithmRepositoryUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     VerificationRequiredMixin,
@@ -986,7 +918,7 @@ class AlgorithmAddRepo(
 ):
     model = Algorithm
     form_class = AlgorithmRepoForm
-    template_name = "algorithms/algorithm_add_repo.html"
+    template_name = "algorithms/algorithm_repository_update.html"
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
 
@@ -994,21 +926,6 @@ class AlgorithmAddRepo(
         context = super().get_context_data(**kwargs)
         context.update({"github_app_install_url": self.github_app_install_url})
         return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-
-        repos = []
-        for installation in self.installations:
-            response = requests.get(
-                f"https://api.github.com/user/installations/{installation['id']}/repositories",
-                **self.github_request_kwargs,
-            ).json()
-
-            repos += [repo["full_name"] for repo in response["repositories"]]
-
-        kwargs.update({"repos": repos})
-        return kwargs
 
 
 class AlgorithmPublishView(

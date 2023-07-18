@@ -12,6 +12,7 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
+from dal import autocomplete
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
@@ -20,7 +21,6 @@ from django.db.models import Count
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
-    ChoiceField,
     Form,
     HiddenInput,
     IntegerField,
@@ -34,7 +34,6 @@ from django.forms import (
 from django.forms.widgets import MultipleHiddenInput, PasswordInput
 from django.urls import Resolver404, resolve
 from django.utils.functional import cached_property
-from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
@@ -121,37 +120,6 @@ NON_ALGORITHM_INTERFACES = [
 ]
 
 
-class RepoNameValidationMixin:
-    def clean_repo_name(self):
-        repo_name = self.cleaned_data.get("repo_name")
-
-        if repo_name != "":
-            pattern = re.compile("^([^/]+/[^/]+)$")
-
-            if "github.com" in repo_name:
-                raise ValidationError(
-                    "Please only provide the repository name, not the full "
-                    "url. E.g. 'comic/grand-challenge.org'"
-                )
-
-            if not pattern.match(repo_name):
-                raise ValidationError(
-                    "Please make sure you provide the repository name in the "
-                    "format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
-                )
-
-            if (
-                Algorithm.objects.exclude(pk=self.instance.pk)
-                .filter(repo_name=repo_name)
-                .exists()
-            ):
-                raise ValidationError(
-                    "This repository is already linked to another algorithm"
-                )
-
-        return repo_name
-
-
 class AlgorithmIOValidationMixin:
     def clean(self):
         cleaned_data = super().clean()
@@ -170,7 +138,6 @@ class AlgorithmIOValidationMixin:
 
 
 class AlgorithmForm(
-    RepoNameValidationMixin,
     AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     ModelForm,
@@ -255,20 +222,6 @@ class AlgorithmForm(
         }
         widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {
-            "repo_name": format_html(
-                (
-                    "The full name of the repository to use as a source to build "
-                    "your algorithm images, in the form {{owner}}/{{repo}}. "
-                    "Please note that this is an optional field. Only fill "
-                    "out this field in case the "
-                    '<a href="{}" target="_blank">Grand Challenge GitHub app</a> '
-                    "has been installed for your repository. "
-                    "We strongly encourage users to use the 'Link GitHub repo' "
-                    "button under the 'Containers' menu item to link a repo "
-                    "instead of manually altering this field."
-                ),
-                settings.GITHUB_APP_INSTALL_URL,
-            ),
             "workstation_config": format_lazy(
                 (
                     "The viewer configuration to use for this algorithm. "
@@ -579,13 +532,8 @@ class AlgorithmDescriptionForm(ModelForm):
 
 
 class AlgorithmUpdateForm(AlgorithmForm):
-    class Meta(AlgorithmForm.Meta):
-        fields = AlgorithmForm.Meta.fields + ("repo_name",)
-
     def __init__(self, *args, interfaces_editable, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.helper.layout[0].append("repo_name")
 
         if not interfaces_editable:
             for field_key in ("inputs", "outputs"):
@@ -746,13 +694,56 @@ class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
         model = AlgorithmPermissionRequest
 
 
-class AlgorithmRepoForm(RepoNameValidationMixin, SaveFormInitMixin, ModelForm):
-    repo_name = ChoiceField()
+class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
+    repo_name = autocomplete.Select2ListCreateChoiceField(
+        required=False,
+        widget=autocomplete.ListSelect2(
+            url="github:repositories-list",
+            attrs={
+                "data-placeholder": "Search for a repository...",
+                "data-minimum-input-length": 3,
+                "data-theme": settings.CRISPY_TEMPLATE_PACK,
+            },
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
-        repos = kwargs.pop("repos")
         super().__init__(*args, **kwargs)
-        self.fields["repo_name"].choices = [(repo, repo) for repo in repos]
+
+        if self.instance.repo_name:
+            self.fields["repo_name"].initial = self.instance.repo_name
+            self.fields["repo_name"].choices = [
+                (self.instance.repo_name, self.instance.repo_name),
+            ]
+
+    def clean_repo_name(self):
+        repo_name = self.cleaned_data.get("repo_name")
+
+        if repo_name != "":
+            pattern = re.compile("^([^/]+/[^/]+)$")
+
+            if "github.com" in repo_name:
+                raise ValidationError(
+                    "Please only provide the repository name, not the full "
+                    "url. E.g. 'comic/grand-challenge.org'"
+                )
+
+            if not pattern.match(repo_name):
+                raise ValidationError(
+                    "Please make sure you provide the repository name in the "
+                    "format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
+                )
+
+            if (
+                Algorithm.objects.exclude(pk=self.instance.pk)
+                .filter(repo_name=repo_name)
+                .exists()
+            ):
+                raise ValidationError(
+                    "This repository is already linked to another algorithm"
+                )
+
+        return repo_name
 
     class Meta:
         model = Algorithm
