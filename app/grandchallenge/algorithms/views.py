@@ -914,9 +914,9 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
-class GitHubTokenRequiredMixin:
+class GitHubInstallationRequiredMixin:
     """
-    Adds a valid self.github_user_token to the view for the current user
+    Ensures that the GitHub application is installed for the current user
 
     Requires the user to be logged in, use after LoginRequiredMixin.
     """
@@ -930,6 +930,30 @@ class GitHubTokenRequiredMixin:
     @property
     def github_auth_url(self):
         return f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&state={self.github_state}"
+
+    @property
+    def github_app_install_url(self):
+        return f"{settings.GITHUB_APP_INSTALL_URL}?state={self.github_state}"
+
+    @cached_property
+    def github_request_kwargs(self):
+        return {
+            "headers": {
+                "Accept": "application/vnd.github.v3+json",
+                "Authorization": f"token {self.github_user_token.access_token}",
+            },
+            "params": {"per_page": 100, "page": 1},
+            "timeout": 5,
+        }
+
+    @cached_property
+    def installations(self):
+        response = requests.get(
+            "https://api.github.com/user/installations",
+            **self.github_request_kwargs,
+        )
+        response.raise_for_status()
+        return response.json()["installations"]
 
     def dispatch(self, *args, **kwargs):
         try:
@@ -947,6 +971,9 @@ class GitHubTokenRequiredMixin:
                 self.github_user_token.delete()
                 return redirect(self.github_auth_url)
 
+        if not self.installations:
+            return redirect(self.github_app_install_url)
+
         return super().dispatch(*args, **kwargs)
 
 
@@ -954,7 +981,7 @@ class AlgorithmAddRepo(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     VerificationRequiredMixin,
-    GitHubTokenRequiredMixin,
+    GitHubInstallationRequiredMixin,
     UpdateView,
 ):
     model = Algorithm
@@ -965,36 +992,17 @@ class AlgorithmAddRepo(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.github_state}"
-            }
-        )
+        context.update({"github_app_install_url": self.github_app_install_url})
         return context
 
     def get_form_kwargs(self):
-        """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
 
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"token {self.github_user_token.access_token}",
-        }
-        params = {"per_page": 100, "page": 1}
-
-        installations = requests.get(
-            "https://api.github.com/user/installations",
-            headers=headers,
-            params=params,
-            timeout=5,
-        ).json()
         repos = []
-        for installation in installations.get("installations", []):
+        for installation in self.installations:
             response = requests.get(
                 f"https://api.github.com/user/installations/{installation['id']}/repositories",
-                headers=headers,
-                params=params,
-                timeout=5,
+                **self.github_request_kwargs,
             ).json()
 
             repos += [repo["full_name"] for repo in response["repositories"]]
