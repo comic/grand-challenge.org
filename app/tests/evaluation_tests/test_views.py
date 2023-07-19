@@ -684,7 +684,7 @@ def test_create_algorithm_for_phase_presets(client):
         user=admin,
         data={
             "title": "Test algorithm",
-            "image_requires_memory_gb": 1,
+            "image_requires_memory_gb": 8,
             "inputs": [
                 response.context_data["form"]["inputs"].initial.get().pk
             ],
@@ -740,7 +740,7 @@ def test_create_algorithm_for_phase_presets(client):
         user=admin,
         data={
             "title": "Test algorithm",
-            "image_requires_memory_gb": 1,
+            "image_requires_memory_gb": 8,
             "inputs": [ci3.pk],
             "outputs": [ci2.pk],
             "workstation": ws.pk,
