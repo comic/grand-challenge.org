@@ -159,7 +159,6 @@ class Phase(UUIDModel, ViewContentMixin):
     title = models.CharField(
         max_length=64,
         help_text="The title of this phase.",
-        default="Challenge",
     )
     slug = AutoSlugField(populate_from="title", max_length=64)
     score_title = models.CharField(
