@@ -3,6 +3,7 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, ButtonHolder, Layout, Submit
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
@@ -225,8 +226,8 @@ class MethodForm(ContainerImageForm):
 
 class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
     requires_memory_gb = forms.IntegerField(
-        min_value=1,
-        max_value=32,
+        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
+        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text="The maximum system memory required by the algorithm in gigabytes.",
     )
 
