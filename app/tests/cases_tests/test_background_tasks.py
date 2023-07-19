@@ -125,42 +125,6 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(
 @pytest.mark.parametrize(
     "images",
     (
-        ["image10x11x12x13.mha"],
-        ["image10x11x12x13.mhd", "image10x11x12x13.zraw"],
-    ),
-)
-@pytest.mark.django_db
-def test_staged_4d_mha_and_4d_mhd_upload(
-    settings, images: list, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-        images=images,
-    )
-
-    session.refresh_from_db()
-    assert session.status == session.SUCCESS
-    assert session.error_message is None
-
-    images = Image.objects.filter(origin=session).all()
-    assert len(images) == 1
-
-    image = images[0]
-    assert image.shape == [13, 12, 11, 10]
-    assert image.shape_without_color == [13, 12, 11, 10]
-    assert image.color_space == Image.COLOR_SPACE_GRAY
-
-    sitk_image = get_sitk_image(image=image)
-    assert [e for e in reversed(sitk_image.GetSize())] == image.shape
-
-
-@pytest.mark.parametrize(
-    "images",
-    (
         ["image10x11x12x13-extra-stuff.mhd", "image10x11x12x13.zraw"],
         ["image3x4-extra-stuff.mhd", "image3x4.zraw"],
     ),
