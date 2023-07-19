@@ -185,7 +185,10 @@ class RepositoriesList(
         remaining_pages = (response["total_count"] - 1) // per_page
 
         for ii in range(remaining_pages):
-            repos += [repo["full_name"] for repo in get_page(page=ii + 2)]
+            repos += [
+                repo["full_name"]
+                for repo in get_page(page=ii + 2)["repositories"]
+            ]
 
         return repos
 
