@@ -144,12 +144,6 @@ class AlgorithmForm(
     ModelForm,
     ViewContentMixin,
 ):
-    image_requires_memory_gb = IntegerField(
-        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
-        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        initial=15,
-        help_text="The maximum system memory required by the algorithm in gigabytes.",
-    )
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
             slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
@@ -201,9 +195,6 @@ class AlgorithmForm(
             "job_create_page_markdown",
             "additional_terms_markdown",
             "result_template",
-            "image_requires_gpu",
-            "image_requires_memory_gb",
-            "recurse_submodules",
             "contact_email",
             "display_editors",
             "access_request_handling",
@@ -282,12 +273,9 @@ class AlgorithmForm(
                 "view_content",
                 "inputs",
                 "outputs",
-                "image_requires_gpu",
-                "image_requires_memory_gb",
                 "additional_terms_markdown",
                 "job_create_page_markdown",
                 "result_template",
-                "recurse_submodules",
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -363,6 +351,19 @@ class UserAlgorithmsForPhaseMixin:
 
 
 class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
+    image_requires_memory_gb = IntegerField(
+        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
+        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
+        label="Default New Algorithm Image Memory Requirement GB",
+        help_text=(
+            "The maximum system (CPU) memory required by new algorithm images "
+            " in gigabytes. "
+            "This is only the default for new algorithm images, to update the "
+            "memory requirements of an existing algorithm image please do so "
+            "on the algorithm image update page."
+        ),
+    )
+
     class Meta:
         model = Algorithm
         fields = (
@@ -398,8 +399,21 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "logo": HiddenInput(),
             "time_limit": HiddenInput(),
         }
+        labels = {
+            "image_requires_gpu": "Default New Algorithm Image GPU Supported",
+        }
         help_texts = {
-            "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
+            "description": (
+                "Short description of this algorithm, max 1024 characters. "
+                "This will appear in the info modal on the algorithm overview list."
+            ),
+            "image_requires_gpu": (
+                "If true, new algorithm images "
+                "will be marked as being able to use a GPU. "
+                "This is only the default for new algorithm images, to update "
+                "the GPU support of an existing algorithm image please do so "
+                "on the algorithm image update page."
+            ),
         }
 
     def __init__(
@@ -545,7 +559,7 @@ class AlgorithmImageForm(ContainerImageForm):
     requires_memory_gb = IntegerField(
         min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
         max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
-        help_text="The maximum system memory required by the algorithm in gigabytes.",
+        help_text="The maximum system (CPU) memory required by this algorithm image in gigabytes.",
     )
     algorithm = ModelChoiceField(widget=HiddenInput(), queryset=None)
 
@@ -572,15 +586,15 @@ class AlgorithmImageForm(ContainerImageForm):
         )
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {
-            "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"
+            "requires_gpu": "If true, inference jobs for this algorithm image will be assigned a GPU"
         }
 
 
 class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
     requires_memory_gb = IntegerField(
-        min_value=1,
-        max_value=30,
-        help_text="The maximum system memory required by the algorithm in gigabytes.",
+        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
+        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text="The maximum system (CPU) memory required by this algorithm image in gigabytes.",
     )
 
     class Meta:
@@ -588,7 +602,7 @@ class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
         fields = ("requires_gpu", "requires_memory_gb", "comment")
         labels = {"requires_gpu": "GPU Supported"}
         help_texts = {
-            "requires_gpu": "If true, inference jobs for this container will be assigned a GPU"
+            "requires_gpu": "If true, inference jobs for this algorithm image will be assigned a GPU"
         }
 
 
@@ -702,10 +716,23 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
         widget=autocomplete.ListSelect2(
             url="github:repositories-list",
             attrs={
-                "data-placeholder": "Search for a repository...",
+                "data-placeholder": "No repository selected, search for a repository here...",
                 "data-minimum-input-length": 3,
                 "data-theme": settings.CRISPY_TEMPLATE_PACK,
             },
+        ),
+    )
+    image_requires_memory_gb = IntegerField(
+        min_value=settings.ALGORITHMS_MIN_MEMORY_GB,
+        max_value=settings.ALGORITHMS_MAX_MEMORY_GB,
+        initial=15,
+        label="Default Built Algorithm Image Memory Requirement GB",
+        help_text=(
+            "The maximum system (CPU) memory required by algorithm images built "
+            "from your GitHub repository in gigabytes. "
+            "This is only the default for new algorithm images, to update the "
+            "memory requirements of an existing algorithm image please do so "
+            "on the algorithm image update page."
         ),
     )
 
@@ -722,7 +749,8 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
             (
                 "If you cannot find your desired repository here please "
                 "<a href='{}'>update the GitHub installation</a> "
-                "and ensure the application has access to that repository."
+                "and ensure the application has access to that repository, "
+                "then refresh this page."
             ),
             github_app_install_url,
         )
@@ -758,7 +786,28 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = Algorithm
-        fields = ("repo_name",)
+        fields = (
+            "repo_name",
+            "recurse_submodules",
+            "image_requires_gpu",
+            "image_requires_memory_gb",
+        )
+        labels = {
+            "image_requires_gpu": "Default Built Algorithm Image GPU Supported",
+        }
+        help_texts = {
+            "recurse_submodules": (
+                "Whether to recurse the git submodules when cloning your "
+                "GitHub repository."
+            ),
+            "image_requires_gpu": (
+                "If true, algorithm images built from your GitHub repository "
+                "will be marked as being able to use a GPU. "
+                "This is only the default for new algorithm images, to update "
+                "the GPU support of an existing algorithm image please do so "
+                "on the algorithm image update page."
+            ),
+        }
 
 
 class AlgorithmPublishForm(ModelForm):
