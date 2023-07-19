@@ -15,6 +15,7 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
+    PhaseFactory,
     SubmissionFactory,
 )
 from tests.factories import ChallengeFactory
@@ -56,12 +57,6 @@ def test_challenge_creation_from_request(challenge_request):
     assert challenge.short_name == challenge_request.short_name
     # requester is admin of challenge
     assert challenge_request.creator in challenge.admins_group.user_set.all()
-    # an algorithm submission phase has been created
-    assert challenge.phase_set.count() == 1
-    assert (
-        challenge.phase_set.get().submission_kind
-        == SubmissionKindChoices.ALGORITHM
-    )
 
 
 @pytest.mark.django_db
@@ -153,8 +148,8 @@ def test_challenge_request_budget_calculation(challenge_request):
 @pytest.mark.django_db
 def test_challenge_costs_calculation():
     ch1, ch2 = ChallengeFactory.create_batch(2)
-    phase1 = ch1.phase_set.first()
-    phase2 = ch2.phase_set.first()
+    phase1 = PhaseFactory(challenge=ch1)
+    phase2 = PhaseFactory(challenge=ch2)
     phase1.submission_kind = SubmissionKindChoices.ALGORITHM
     phase2.submission_kind = SubmissionKindChoices.ALGORITHM
     phase1.save()

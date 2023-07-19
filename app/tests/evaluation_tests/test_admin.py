@@ -3,6 +3,7 @@ import pytest
 from grandchallenge.evaluation.admin import PhaseAdmin
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory
 
 
@@ -31,7 +32,7 @@ def test_total_submission_limit(challenge_request):
     )
 
     ch = ChallengeFactory(short_name=challenge_request.short_name)
-    phase = ch.phase_set.first()
+    phase = PhaseFactory(challenge=ch)
 
     form = PhaseAdmin.form(
         instance=phase,

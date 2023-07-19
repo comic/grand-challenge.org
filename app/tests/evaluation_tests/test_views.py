@@ -242,6 +242,9 @@ class TestViewFilters:
     def test_challenge_filtered_views(self, client):
         c1, c2 = ChallengeFactory.create_batch(2, hidden=False)
 
+        PhaseFactory(challenge=c1)
+        PhaseFactory(challenge=c2)
+
         u = UserFactory()
         e1 = EvaluationFactory(
             method__phase=c1.phase_set.first(),
@@ -416,6 +419,7 @@ def test_evaluation_list(client, two_challenge_sets):
 @pytest.mark.django_db
 def test_hidden_phase_visible_for_admins_but_not_participants(client):
     ch = ChallengeFactory()
+    PhaseFactory(challenge=ch)
     u = UserFactory()
     ch.add_participant(u)
     visible_phase = ch.phase_set.first()
@@ -912,6 +916,7 @@ def test_evaluation_admin_list(client):
     u, admin = UserFactory.create_batch(2)
     ch = ChallengeFactory()
     ch.add_admin(admin)
+    PhaseFactory(challenge=ch)
     m = MethodFactory(phase=ch.phase_set.get())
     s = SubmissionFactory(phase=ch.phase_set.get(), creator=u)
     e = EvaluationFactory(
@@ -947,7 +952,7 @@ def test_evaluation_admin_list(client):
 def test_method_update_view(client):
     challenge = ChallengeFactory()
     method = MethodFactory(
-        phase=challenge.phase_set.get(), requires_memory_gb=4
+        phase=PhaseFactory(challenge=challenge), requires_memory_gb=4
     )
     user = UserFactory()
 
