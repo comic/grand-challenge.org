@@ -28,7 +28,8 @@ class ArchiveItemAdmin(admin.ModelAdmin):
     list_filter = ("archive__slug",)
     list_display = ("pk", "archive")
     list_select_related = ("archive",)
-    readonly_fields = ("values",)
+    readonly_fields = ("archive",)
+    autocomplete_fields = ("values",)
 
 
 @admin.register(ArchivePermissionRequest)
