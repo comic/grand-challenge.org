@@ -376,10 +376,10 @@ def test_combined_leaderboards():
         == 2
     )
 
-    combined = CombinedLeaderboardFactory(challenge=challenge)
-    combined.phases.set({*phases})
+    leaderboard = CombinedLeaderboardFactory(challenge=challenge)
+    leaderboard.phases.set({*phases})
 
-    ranks = combined.ranks
+    ranks = leaderboard.combined_ranks
 
     assert ranks[0]["combined_rank"] == 1
     assert ranks[0]["user"] == users[0].username

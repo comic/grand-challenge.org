@@ -1065,24 +1065,20 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         unique_together = (("challenge", "slug"),)
 
     @property
-    def ranks(self):
+    def combined_ranks(self):
         combined_ranks = []
 
-        for (
-            user,
-            best_evaluations_per_phase,
-        ) in self.users_best_evaluation_per_phase.items():
-            if len(best_evaluations_per_phase) == len(
-                self.phases.all()
-            ):  # Exclude missing data
+        for user, evaluations in self.users_best_evaluation_per_phase.items():
+            # Exclude missing data
+            if len(evaluations) == len(self.phases.all()):
                 combined_ranks.append(
                     {
                         "combined_rank": mean(
                             evaluation["rank"]
-                            for evaluation in best_evaluations_per_phase.values()
+                            for evaluation in evaluations.values()
                         ),
                         "user": user,
-                        "evaluations": best_evaluations_per_phase,
+                        "evaluations": evaluations,
                     }
                 )
 
