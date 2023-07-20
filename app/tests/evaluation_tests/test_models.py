@@ -7,8 +7,9 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.evaluation.tasks import create_evaluation
+from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -16,12 +17,13 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import (
+    CombinedLeaderboardFactory,
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
 )
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import ChallengeFactory, ImageFactory, UserFactory
 
 
 @pytest.fixture
@@ -314,3 +316,74 @@ def test_open_for_submission(
 
     assert phase.open_for_submissions == open_for_submissions
     assert expected_status in phase.submission_status_string
+
+
+@pytest.mark.django_db
+def test_combined_leaderboards():
+    challenge = ChallengeFactory()
+    phases = PhaseFactory.create_batch(
+        2,
+        challenge=challenge,
+        score_jsonpath="result",
+        score_default_sort="asc",
+    )
+    users = UserFactory.create_batch(3)
+    interface = ComponentInterface.objects.get(slug="metrics-json-file")
+
+    results = {
+        0: {
+            0: (1, 2),
+            1: (1, 2),
+        },
+        1: {
+            0: (3, 3),
+            1: (2, 3),
+        },
+        2: {
+            0: (2, 3),
+            1: (2, 3),
+        },
+    }
+
+    for phase_idx, phase in enumerate(phases):
+        for user_idx, user in enumerate(users):
+            for result in results[user_idx][phase_idx]:
+                evaluation = EvaluationFactory(
+                    submission__creator=user,
+                    submission__phase=phase,
+                    published=True,
+                    status=Evaluation.SUCCESS,
+                )
+
+                output_civ, _ = evaluation.outputs.get_or_create(
+                    interface=interface
+                )
+                output_civ.value = {"result": result}
+                output_civ.save()
+
+        calculate_ranks(phase_pk=phase.pk)
+
+    assert (
+        Evaluation.objects.filter(
+            submission__phase__challenge=challenge
+        ).count()
+        == 12
+    )
+    assert (
+        Evaluation.objects.filter(
+            submission__phase__challenge=challenge, rank=1
+        ).count()
+        == 2
+    )
+
+    combined = CombinedLeaderboardFactory(challenge=challenge)
+    combined.phases.set({*phases})
+
+    ranks = combined.ranks
+
+    assert ranks[0]["combined_rank"] == 1
+    assert ranks[0]["user"] == users[0].username
+    assert ranks[1]["combined_rank"] == 2
+    assert ranks[1]["user"] == users[2].username
+    assert ranks[2]["combined_rank"] == 3
+    assert ranks[2]["user"] == users[1].username

@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from statistics import mean
 
 from actstream.actions import follow, is_following
 from django.conf import settings
@@ -24,7 +25,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
     ExtensionValidator,
@@ -1042,3 +1043,90 @@ class EvaluationUserObjectPermission(UserObjectPermissionBase):
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
+
+
+class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
+    class CombinationMethodChoices(models.TextChoices):
+        AVERAGE = "AVERAGE", "Average"
+        MEDIAN = "MEDIAN", "Median"
+        SUM = "SUM", "Sum"
+
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.PROTECT, editable=False
+    )
+    phases = models.ManyToManyField(Phase, through="CombinedLeaderboardPhase")
+    combination_method = models.CharField(
+        max_length=7,
+        choices=CombinationMethodChoices.choices,
+        default=CombinationMethodChoices.AVERAGE,
+    )
+
+    class Meta:
+        unique_together = (("challenge", "slug"),)
+
+    @property
+    def ranks(self):
+        combined_ranks = []
+
+        for (
+            user,
+            best_evaluations_per_phase,
+        ) in self.users_best_evaluation_per_phase.items():
+            if len(best_evaluations_per_phase) == len(
+                self.phases.all()
+            ):  # Exclude missing data
+                combined_ranks.append(
+                    {
+                        "combined_rank": mean(
+                            evaluation["rank"]
+                            for evaluation in best_evaluations_per_phase.values()
+                        ),
+                        "user": user,
+                        "evaluations": best_evaluations_per_phase,
+                    }
+                )
+
+        combined_ranks.sort(key=lambda x: x["combined_rank"])
+
+        return combined_ranks
+
+    @property
+    def users_best_evaluation_per_phase(self):
+        evaluations = Evaluation.objects.filter(
+            submission__phase__in=self.phases.all(), rank__gt=0
+        ).values(
+            "submission__creator__username",
+            "submission__phase__pk",
+            "rank",
+            "pk",
+        )
+
+        users_best_evaluation_per_phase = {}
+
+        for evaluation in evaluations.iterator():
+            phase = evaluation["submission__phase__pk"]
+            user = evaluation["submission__creator__username"]
+
+            if user not in users_best_evaluation_per_phase:
+                users_best_evaluation_per_phase[user] = {}
+
+            if (
+                phase not in users_best_evaluation_per_phase[user]
+                or evaluation["rank"]
+                < users_best_evaluation_per_phase[user][phase]["rank"]
+            ):
+                users_best_evaluation_per_phase[user][phase] = {
+                    "pk": evaluation["pk"],
+                    "rank": evaluation["rank"],
+                }
+
+        return users_best_evaluation_per_phase
+
+
+class CombinedLeaderboardPhase(models.Model):
+    # Through table for the combined leaderboard
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+    combined_leaderboard = models.ForeignKey(
+        CombinedLeaderboard, on_delete=models.CASCADE
+    )
