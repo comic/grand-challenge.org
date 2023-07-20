@@ -506,6 +506,13 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
         evaluations=evaluations, final_positions=final_positions
     )
 
+    for leaderboard in phase.combinedleaderboard_set.all():
+        on_commit(
+            update_combined_leaderboard.signature(
+                kwargs={"pk": leaderboard.pk}
+            ).apply_async
+        )
+
 
 def _update_evaluations(*, evaluations, final_positions):
     Evaluation = apps.get_model(  # noqa: N806
@@ -530,6 +537,17 @@ def _update_evaluations(*, evaluations, final_positions):
     Evaluation.objects.bulk_update(
         evaluations, ["rank", "rank_score", "rank_per_metric"]
     )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@transaction.atomic
+def update_combined_leaderboard(*, pk):
+    CombinedLeaderboard = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="CombinedLeaderboard"
+    )
+
+    leaderboard = CombinedLeaderboard.objects.get(pk=pk)
+    leaderboard.update_combined_ranks_cache()
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])

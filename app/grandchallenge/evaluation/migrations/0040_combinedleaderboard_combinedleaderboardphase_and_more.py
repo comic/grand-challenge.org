@@ -53,12 +53,12 @@ class Migration(migrations.Migration):
                     "combination_method",
                     models.CharField(
                         choices=[
-                            ("AVERAGE", "Average"),
+                            ("MEAN", "Mean"),
                             ("MEDIAN", "Median"),
                             ("SUM", "Sum"),
                         ],
-                        default="AVERAGE",
-                        max_length=7,
+                        default="MEAN",
+                        max_length=6,
                     ),
                 ),
                 (

@@ -9,7 +9,11 @@ from django.utils.timezone import now
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
+from grandchallenge.evaluation.tasks import (
+    calculate_ranks,
+    create_evaluation,
+    update_combined_leaderboard,
+)
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -319,7 +323,7 @@ def test_open_for_submission(
 
 
 @pytest.mark.django_db
-def test_combined_leaderboards():
+def test_combined_leaderboards(django_capture_on_commit_callbacks):
     challenge = ChallengeFactory()
     phases = PhaseFactory.create_batch(
         2,
@@ -328,6 +332,8 @@ def test_combined_leaderboards():
         score_default_sort="asc",
     )
     users = UserFactory.create_batch(3)
+    leaderboard = CombinedLeaderboardFactory(challenge=challenge)
+    leaderboard.phases.set({*phases})
     interface = ComponentInterface.objects.get(slug="metrics-json-file")
 
     results = {
@@ -361,7 +367,16 @@ def test_combined_leaderboards():
                 output_civ.value = {"result": result}
                 output_civ.save()
 
-        calculate_ranks(phase_pk=phase.pk)
+        with django_capture_on_commit_callbacks() as callbacks:
+            calculate_ranks(phase_pk=phase.pk)
+
+        assert len(callbacks) == 1
+        assert (
+            repr(callbacks[0])
+            == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
+        )
+
+    update_combined_leaderboard(pk=leaderboard.pk)
 
     assert (
         Evaluation.objects.filter(
@@ -375,9 +390,6 @@ def test_combined_leaderboards():
         ).count()
         == 2
     )
-
-    leaderboard = CombinedLeaderboardFactory(challenge=challenge)
-    leaderboard.phases.set({*phases})
 
     ranks = leaderboard.combined_ranks
 

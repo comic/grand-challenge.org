@@ -1,10 +1,11 @@
 import logging
 from datetime import timedelta
-from statistics import mean
+from statistics import mean, median
 
 from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -37,6 +38,7 @@ from grandchallenge.evaluation.tasks import (
     assign_submission_permissions,
     calculate_ranks,
     create_evaluation,
+    update_combined_leaderboard,
 )
 from grandchallenge.evaluation.utils import (
     StatusChoices,
@@ -1047,7 +1049,7 @@ class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
 
 class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
     class CombinationMethodChoices(models.TextChoices):
-        AVERAGE = "AVERAGE", "Average"
+        MEAN = "MEAN", "Mean"
         MEDIAN = "MEDIAN", "Median"
         SUM = "SUM", "Sum"
 
@@ -1056,33 +1058,36 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
     )
     phases = models.ManyToManyField(Phase, through="CombinedLeaderboardPhase")
     combination_method = models.CharField(
-        max_length=7,
+        max_length=6,
         choices=CombinationMethodChoices.choices,
-        default=CombinationMethodChoices.AVERAGE,
+        default=CombinationMethodChoices.MEAN,
     )
 
     class Meta:
         unique_together = (("challenge", "slug"),)
 
     @property
+    def concrete_combination_method(self):
+        if self.combination_method == self.CombinationMethodChoices.MEAN:
+            return mean
+        elif self.combination_method == self.CombinationMethodChoices.MEDIAN:
+            return median
+        elif self.combination_method == self.CombinationMethodChoices.SUM:
+            return sum
+        else:
+            raise NotImplementedError
+
+    @property
     def combined_ranks(self):
-        combined_ranks = []
+        combined_ranks = cache.get(self.combined_ranks_cache_key)
 
-        for user, evaluations in self.users_best_evaluation_per_phase.items():
-            # Exclude missing data
-            if len(evaluations) == len(self.phases.all()):
-                combined_ranks.append(
-                    {
-                        "combined_rank": mean(
-                            evaluation["rank"]
-                            for evaluation in evaluations.values()
-                        ),
-                        "user": user,
-                        "evaluations": evaluations,
-                    }
-                )
-
-        combined_ranks.sort(key=lambda x: x["combined_rank"])
+        if combined_ranks is None:
+            on_commit(
+                update_combined_leaderboard.signature(
+                    kwargs={"pk": self.pk}
+                ).apply_async
+            )
+            combined_ranks = []
 
         return combined_ranks
 
@@ -1117,6 +1122,31 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
                 }
 
         return users_best_evaluation_per_phase
+
+    @property
+    def combined_ranks_cache_key(self):
+        return f"{self._meta.app_label}.{self._meta.model_name}.combined_ranks.{self.pk}"
+
+    def update_combined_ranks_cache(self):
+        combined_ranks = []
+
+        for user, evaluations in self.users_best_evaluation_per_phase.items():
+            # Exclude missing data
+            if len(evaluations) == len(self.phases.all()):
+                combined_ranks.append(
+                    {
+                        "combined_rank": self.concrete_combination_method(
+                            evaluation["rank"]
+                            for evaluation in evaluations.values()
+                        ),
+                        "user": user,
+                        "evaluations": evaluations,
+                    }
+                )
+
+        combined_ranks.sort(key=lambda x: x["combined_rank"])
+
+        cache.set(self.combined_ranks_cache_key, combined_ranks, timeout=None)
 
 
 class CombinedLeaderboardPhase(models.Model):
