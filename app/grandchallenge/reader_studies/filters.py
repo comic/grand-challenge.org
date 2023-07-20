@@ -7,6 +7,7 @@ from grandchallenge.reader_studies.models import Answer, ReaderStudy
 
 class ReaderStudyFilter(TitleDescriptionModalityStructureFilter):
     public = BooleanFilter(label="Public", field_name="public")
+
     class Meta(TitleDescriptionModalityStructureFilter.Meta):
         model = ReaderStudy
         search_fields = (

@@ -20,6 +20,7 @@ class JobViewsetFilter(FilterSet):
 
 class AlgorithmFilter(TitleDescriptionModalityStructureFilter):
     public = BooleanFilter(label="Public", field_name="public")
+
     class Meta(TitleDescriptionModalityStructureFilter.Meta):
         model = Algorithm
         search_fields = (
