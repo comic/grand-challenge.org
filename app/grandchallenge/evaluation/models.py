@@ -1066,6 +1066,10 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
     class Meta:
         unique_together = (("challenge", "slug"),)
 
+    @cached_property
+    def public_phases(self):
+        return self.phases.filter(public=True)
+
     @property
     def concrete_combination_method(self):
         if self.combination_method == self.CombinationMethodChoices.MEAN:
@@ -1094,12 +1098,16 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
     @property
     def users_best_evaluation_per_phase(self):
         evaluations = Evaluation.objects.filter(
-            submission__phase__in=self.phases.all(), rank__gt=0
+            submission__phase__in=self.public_phases,
+            published=True,
+            status=Evaluation.SUCCESS,
+            rank__gt=0,
         ).values(
             "submission__creator__username",
             "submission__phase__pk",
-            "rank",
             "pk",
+            "created",
+            "rank",
         )
 
         users_best_evaluation_per_phase = {}
@@ -1118,6 +1126,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
             ):
                 users_best_evaluation_per_phase[user][phase] = {
                     "pk": evaluation["pk"],
+                    "created": evaluation["created"],
                     "rank": evaluation["rank"],
                 }
 
@@ -1129,19 +1138,28 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
 
     def update_combined_ranks_cache(self):
         combined_ranks = []
-        num_phases = self.phases.count()
+        num_phases = self.public_phases.count()
 
         for user, evaluations in self.users_best_evaluation_per_phase.items():
-            # Exclude missing data
-            if len(evaluations) == num_phases:
+            if len(evaluations) == num_phases:  # Exclude missing data
                 combined_ranks.append(
                     {
+                        "user": user,
                         "combined_rank": self.concrete_combination_method(
                             evaluation["rank"]
                             for evaluation in evaluations.values()
                         ),
-                        "user": user,
-                        "evaluations": evaluations,
+                        "created": max(
+                            evaluation["created"]
+                            for evaluation in evaluations.values()
+                        ),
+                        "evaluations": {
+                            phase: {
+                                "pk": evaluation["pk"],
+                                "rank": evaluation["rank"],
+                            }
+                            for phase, evaluation in evaluations.items()
+                        },
                     }
                 )
 

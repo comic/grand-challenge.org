@@ -335,7 +335,7 @@ def test_combined_leaderboards(
     )
     users = UserFactory.create_batch(3)
     leaderboard = CombinedLeaderboardFactory(challenge=challenge)
-    leaderboard.phases.set({*phases})
+    leaderboard.phases.set(challenge.phase_set.all())
     interface = ComponentInterface.objects.get(slug="metrics-json-file")
 
     results = {

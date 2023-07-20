@@ -38,6 +38,7 @@ from grandchallenge.evaluation.forms import (
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import (
+    CombinedLeaderboard,
     Evaluation,
     Method,
     Phase,
@@ -798,4 +799,13 @@ class PhaseAlgorithmCreate(
                 "hide_form": self.hide_form(form=form),
             }
         )
+        return context
+
+
+class CombinedLeaderboardDetail(DetailView):
+    model = CombinedLeaderboard
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"combined_ranks": self.object.combined_ranks})
         return context
