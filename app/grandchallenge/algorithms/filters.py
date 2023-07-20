@@ -1,4 +1,4 @@
-from django_filters import FilterSet, filters
+from django_filters import BooleanFilter, FilterSet, filters
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.cases.models import Image
@@ -19,5 +19,10 @@ class JobViewsetFilter(FilterSet):
 
 
 class AlgorithmFilter(TitleDescriptionModalityStructureFilter):
+    public = BooleanFilter(label="Public", field_name="public")
     class Meta(TitleDescriptionModalityStructureFilter.Meta):
         model = Algorithm
+        search_fields = (
+            *TitleDescriptionModalityStructureFilter.Meta.search_fields,
+            "public",
+        )
