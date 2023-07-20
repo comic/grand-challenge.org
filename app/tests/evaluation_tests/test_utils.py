@@ -126,7 +126,7 @@ def test_calculate_ranks(django_assert_max_num_queries):
                 ]
                 phase.save()
 
-                with django_assert_max_num_queries(8):
+                with django_assert_max_num_queries(9):
                     calculate_ranks(phase_pk=phase.pk)
 
                 assert_ranks(

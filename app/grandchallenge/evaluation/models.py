@@ -1129,10 +1129,11 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
 
     def update_combined_ranks_cache(self):
         combined_ranks = []
+        num_phases = self.phases.count()
 
         for user, evaluations in self.users_best_evaluation_per_phase.items():
             # Exclude missing data
-            if len(evaluations) == len(self.phases.all()):
+            if len(evaluations) == num_phases:
                 combined_ranks.append(
                     {
                         "combined_rank": self.concrete_combination_method(

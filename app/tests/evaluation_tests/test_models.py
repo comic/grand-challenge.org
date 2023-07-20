@@ -323,7 +323,9 @@ def test_open_for_submission(
 
 
 @pytest.mark.django_db
-def test_combined_leaderboards(django_capture_on_commit_callbacks):
+def test_combined_leaderboards(
+    django_capture_on_commit_callbacks, django_assert_max_num_queries
+):
     challenge = ChallengeFactory()
     phases = PhaseFactory.create_batch(
         2,
@@ -376,7 +378,8 @@ def test_combined_leaderboards(django_capture_on_commit_callbacks):
             == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
         )
 
-    update_combined_leaderboard(pk=leaderboard.pk)
+    with django_assert_max_num_queries(5):
+        update_combined_leaderboard(pk=leaderboard.pk)
 
     assert (
         Evaluation.objects.filter(
