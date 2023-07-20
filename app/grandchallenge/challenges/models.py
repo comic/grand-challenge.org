@@ -366,7 +366,6 @@ class Challenge(ChallengeBase):
             self.update_permissions()
             self.create_forum_permissions()
             self.create_default_pages()
-            self.create_default_phases()
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
@@ -503,9 +502,6 @@ class Challenge(ChallengeBase):
             challenge=self,
             permission_level=Page.ALL,
         )
-
-    def create_default_phases(self):
-        self.phase_set.create(challenge=self)
 
     def is_admin(self, user) -> bool:
         """Determines if this user is an admin of this challenge."""
@@ -894,12 +890,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         challenge.modalities.set(self.modalities.all())
         challenge.structures.set(self.structures.all())
         challenge.save()
-
-        phase = challenge.phase_set.get()
-        phase.submission_kind = SubmissionKindChoices.ALGORITHM
-        phase.creator_must_be_verified = True
-        phase.full_clean()
-        phase.save()
 
         return challenge
 

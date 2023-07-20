@@ -193,6 +193,7 @@ def _create_demo_challenge(users, algorithm):
         challenge=demo, display_title="adm", permission_level="ADM"
     )
 
+    Phase.objects.create(challenge=demo, title="Phase 1")
     Phase.objects.create(challenge=demo, title="Phase 2")
 
     for phase_num, phase in enumerate(demo.phase_set.all()):

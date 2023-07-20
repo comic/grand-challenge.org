@@ -268,7 +268,7 @@ def test_challenge_card_status(
     phase_in_status,
 ):
     ch = ChallengeFactory(hidden=False)
-    phase1 = ch.phase_set.first()
+    phase1 = PhaseFactory(challenge=ch)
     phase2 = PhaseFactory(challenge=ch)
     u = UserFactory()
 

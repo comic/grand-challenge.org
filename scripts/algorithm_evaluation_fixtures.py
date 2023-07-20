@@ -14,7 +14,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.evaluation.models import Method
+from grandchallenge.evaluation.models import Method, Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.workstations.models import Workstation
 
@@ -122,7 +122,7 @@ def _create_challenge(
     )
     c.add_participant(participant)
 
-    p = c.phase_set.first()
+    p = Phase.objects.create(challenge=c, title="Phase 1")
 
     p.algorithm_inputs.set(inputs)
     p.algorithm_outputs.set(outputs)

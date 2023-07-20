@@ -37,7 +37,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import MethodFactory
+from tests.evaluation_tests.factories import MethodFactory, PhaseFactory
 from tests.factories import (
     SUPER_SECURE_TEST_PASSWORD,
     ChallengeFactory,
@@ -101,6 +101,8 @@ def generate_challenge_set():
     participant1 = UserFactory()
     challenge.add_participant(participant1)
     non_participant = UserFactory()
+
+    PhaseFactory(challenge=challenge)
 
     return ChallengeSet(
         challenge=challenge,

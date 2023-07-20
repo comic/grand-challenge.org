@@ -5,6 +5,7 @@ from django.core.management import CommandError, call_command
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
+from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import (
     ChallengeFactory,
     ImagingModalityFactory,
@@ -29,7 +30,7 @@ def test_copy_challenge():
     site.save()
     src = ChallengeFactory(short_name="foo")
     # toggle a boolean field
-    phase = src.phase_set.get()
+    phase = PhaseFactory(challenge=src)
     phase.show_supplementary_url = not phase.show_supplementary_url
     phase.save()
 
