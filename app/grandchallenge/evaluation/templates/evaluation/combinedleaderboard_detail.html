@@ -44,7 +44,7 @@
         <table class="table table-hover table-borderless table-sm" id="combinedRanksTable">
             <thead class="thead-light">
             <tr>
-                <th>Combined Rank</th>
+                <th>Combined Rank ({{ object.get_combination_method_display }})</th>
                 <th>User</th>
                 <th>Created</th>
                 {% for phase in object.public_phases %}
@@ -53,7 +53,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for combined_rank in combined_ranks %}
+            {% for combined_rank in object.combined_ranks %}
                 <tr>
                     <td>{{ combined_rank.combined_rank }}</td>
                     <td><a href="{% url 'profile-detail' username=combined_rank.user %}">{{ combined_rank.user }}</a></td>

@@ -1081,15 +1081,20 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         else:
             raise NotImplementedError
 
-    @property
+    @cached_property
     def combined_ranks(self):
         combined_ranks = cache.get(self.combined_ranks_cache_key)
 
-        if combined_ranks is None:
+        if (
+            combined_ranks is None
+            or combined_ranks["phases"]
+            != {phase.pk for phase in self.public_phases}
+            or combined_ranks["combination_method"] != self.combination_method
+        ):
             self.schedule_combined_ranks_update()
-            combined_ranks = []
-
-        return combined_ranks
+            return []
+        else:
+            return combined_ranks["results"]
 
     @property
     def users_best_evaluation_per_phase(self):
@@ -1163,7 +1168,13 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
 
         combined_ranks.sort(key=lambda x: x["combined_rank"])
 
-        cache.set(self.combined_ranks_cache_key, combined_ranks, timeout=None)
+        cache_object = {
+            "phases": {phase.pk for phase in self.public_phases},
+            "combination_method": self.combination_method,
+            "results": combined_ranks,
+        }
+
+        cache.set(self.combined_ranks_cache_key, cache_object, timeout=None)
 
     def schedule_combined_ranks_update(self):
         on_commit(
