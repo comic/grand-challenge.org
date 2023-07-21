@@ -507,11 +507,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
     )
 
     for leaderboard in phase.combinedleaderboard_set.all():
-        on_commit(
-            update_combined_leaderboard.signature(
-                kwargs={"pk": leaderboard.pk}
-            ).apply_async
-        )
+        leaderboard.schedule_combined_ranks_update()
 
 
 def _update_evaluations(*, evaluations, final_positions):

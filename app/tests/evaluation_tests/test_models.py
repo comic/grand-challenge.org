@@ -402,3 +402,74 @@ def test_combined_leaderboards(
     assert ranks[1]["user"] == users[2].username
     assert ranks[2]["combined_rank"] == 3
     assert ranks[2]["user"] == users[1].username
+
+
+@pytest.mark.django_db
+def test_combined_leaderboard_updated_on_save(
+    django_capture_on_commit_callbacks,
+):
+    leaderboard = CombinedLeaderboardFactory()
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        leaderboard.save()
+
+    assert len(callbacks) == 1
+    assert (
+        repr(callbacks[0])
+        == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
+    )
+
+
+@pytest.mark.django_db
+def test_combined_leaderboard_updated_on_phase_change(
+    django_capture_on_commit_callbacks,
+):
+    leaderboard = CombinedLeaderboardFactory()
+    phase = PhaseFactory()
+
+    def assert_callbacks(callbacks):
+        assert len(callbacks) == 1
+        assert (
+            repr(callbacks[0])
+            == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
+        )
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        leaderboard.phases.add(phase)
+
+    assert_callbacks(callbacks)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        leaderboard.phases.remove(phase)
+
+    assert_callbacks(callbacks)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        leaderboard.phases.set([phase])
+
+    assert_callbacks(callbacks)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        leaderboard.phases.clear()
+
+    assert_callbacks(callbacks)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        phase.combinedleaderboard_set.add(leaderboard)
+
+    assert_callbacks(callbacks)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        phase.combinedleaderboard_set.remove(leaderboard)
+
+    assert_callbacks(callbacks)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        phase.combinedleaderboard_set.set([leaderboard])
+
+    assert_callbacks(callbacks)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        phase.combinedleaderboard_set.clear()
+
+    assert_callbacks(callbacks)

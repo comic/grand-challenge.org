@@ -1086,11 +1086,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         combined_ranks = cache.get(self.combined_ranks_cache_key)
 
         if combined_ranks is None:
-            on_commit(
-                update_combined_leaderboard.signature(
-                    kwargs={"pk": self.pk}
-                ).apply_async
-            )
+            self.schedule_combined_ranks_update()
             combined_ranks = []
 
         return combined_ranks
@@ -1166,6 +1162,17 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         combined_ranks.sort(key=lambda x: x["combined_rank"])
 
         cache.set(self.combined_ranks_cache_key, combined_ranks, timeout=None)
+
+    def schedule_combined_ranks_update(self):
+        on_commit(
+            update_combined_leaderboard.signature(
+                kwargs={"pk": self.pk}
+            ).apply_async
+        )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.schedule_combined_ranks_update()
 
 
 class CombinedLeaderboardPhase(models.Model):
