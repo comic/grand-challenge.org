@@ -1094,6 +1094,8 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
     @property
     def users_best_evaluation_per_phase(self):
         evaluations = Evaluation.objects.filter(
+            # Note, only use public phases here to prevent leaking of
+            # evaluations for hidden phases
             submission__phase__in=self.public_phases,
             published=True,
             status=Evaluation.SUCCESS,
@@ -1173,6 +1175,15 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.schedule_combined_ranks_update()
+
+    def get_absolute_url(self):
+        return reverse(
+            "evaluation:combined-leaderboard-detail",
+            kwargs={
+                "challenge_short_name": self.challenge.short_name,
+                "slug": self.slug,
+            },
+        )
 
 
 class CombinedLeaderboardPhase(models.Model):

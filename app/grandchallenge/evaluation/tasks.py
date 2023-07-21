@@ -535,7 +535,7 @@ def _update_evaluations(*, evaluations, final_positions):
     )
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-micro-short"])
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 @transaction.atomic
 def update_combined_leaderboard(*, pk):
     CombinedLeaderboard = apps.get_model(  # noqa: N806

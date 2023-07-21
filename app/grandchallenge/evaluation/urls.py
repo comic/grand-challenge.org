@@ -30,7 +30,7 @@ urlpatterns = [
     path("phase/create/", PhaseCreate.as_view(), name="phase-create"),
     path("submissions/", SubmissionList.as_view(), name="submission-list"),
     path(
-        "leaderboards/<slug>/",
+        "combined-leaderboards/<slug>/",
         CombinedLeaderboardDetail.as_view(),
         name="combined-leaderboard-detail",
     ),
