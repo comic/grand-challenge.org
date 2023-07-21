@@ -30,6 +30,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
+    CombinedLeaderboardForm,
     LegacySubmissionForm,
     MethodForm,
     MethodUpdateForm,
@@ -802,10 +803,72 @@ class PhaseAlgorithmCreate(
         return context
 
 
+class CombinedLeaderboardCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = CombinedLeaderboard
+    form_class = CombinedLeaderboardForm
+    success_message = "A job has been scheduled to update the combined leaderboard ranks, please check back later."
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"challenge": self.request.challenge})
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.challenge = self.request.challenge
+        return super().form_valid(form)
+
+
 class CombinedLeaderboardDetail(DetailView):
     model = CombinedLeaderboard
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            CombinedLeaderboard,
+            challenge=self.request.challenge,
+            slug=self.kwargs["slug"],
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({"combined_ranks": self.object.combined_ranks})
         return context
+
+
+class CombinedLeaderboardUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
+    model = CombinedLeaderboard
+    form_class = CombinedLeaderboardForm
+    success_message = "A job has been scheduled to update the combined leaderboard ranks, please check back later."
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            CombinedLeaderboard,
+            challenge=self.request.challenge,
+            slug=self.kwargs["slug"],
+        )
+
+    def get_permission_object(self):
+        return self.get_object().challenge
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"challenge": self.object.challenge})
+        return kwargs

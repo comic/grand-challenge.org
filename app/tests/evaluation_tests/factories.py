@@ -50,3 +50,4 @@ class CombinedLeaderboardFactory(factory.django.DjangoModelFactory):
         model = CombinedLeaderboard
 
     challenge = factory.SubFactory(ChallengeFactory)
+    title = factory.sequence(lambda n: f"Combined Leaderboard {n}")

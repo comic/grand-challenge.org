@@ -10,13 +10,14 @@ from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
+    CombinedLeaderboardFactory,
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
@@ -975,3 +976,126 @@ def test_method_update_view(client):
 
     method.refresh_from_db()
     assert method.requires_memory_gb == 16
+
+
+@pytest.mark.django_db
+def test_combined_leaderboard_create(client):
+    ch1, ch2 = ChallengeFactory.create_batch(2)
+    ph1 = PhaseFactory(challenge=ch1)
+    _ = PhaseFactory(challenge=ch2)
+    user = UserFactory()
+
+    response = get_view_for_user(
+        viewname="evaluation:combined-leaderboard-create",
+        client=client,
+        user=user,
+        reverse_kwargs={"challenge_short_name": ch1.short_name},
+    )
+    assert response.status_code == 403
+
+    ch1.add_admin(user)
+
+    response = get_view_for_user(
+        viewname="evaluation:combined-leaderboard-create",
+        client=client,
+        user=user,
+        reverse_kwargs={"challenge_short_name": ch1.short_name},
+    )
+    assert response.status_code == 200
+    # Only phases for this challenge
+    assert {*response.context["form"].fields["phases"].queryset} == {ph1}
+
+    response = get_view_for_user(
+        viewname="evaluation:combined-leaderboard-create",
+        client=client,
+        method=client.post,
+        user=user,
+        reverse_kwargs={"challenge_short_name": ch1.short_name},
+        data={
+            "title": "combined",
+            "phases": [ph1.pk],
+            "combination_method": "MEAN",
+        },
+    )
+    assert response.status_code == 302
+
+    # Should be created for the first challenge
+    assert CombinedLeaderboard.objects.get().challenge == ch1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "viewtype",
+    (
+        "detail",
+        "update",
+    ),
+)
+def test_combined_leaderboard_only_visible_for_challenge(client, viewtype):
+    ch1, ch2 = ChallengeFactory.create_batch(2)
+    _ = PhaseFactory(challenge=ch1)
+    _ = PhaseFactory(challenge=ch2)
+    leaderboard = CombinedLeaderboardFactory(challenge=ch1)
+
+    user = UserFactory()
+    ch1.add_admin(user)
+    ch2.add_admin(user)
+
+    response = get_view_for_user(
+        viewname=f"evaluation:combined-leaderboard-{viewtype}",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": ch1.short_name,
+            "slug": leaderboard.slug,
+        },
+        user=user,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname=f"evaluation:combined-leaderboard-{viewtype}",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": ch2.short_name,
+            "slug": leaderboard.slug,
+        },
+        user=user,
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_update_view_permissions(client):
+    ch1 = ChallengeFactory()
+    ph1 = PhaseFactory(challenge=ch1)
+    _ = PhaseFactory()
+    leaderboard = CombinedLeaderboardFactory(challenge=ch1)
+
+    user = UserFactory()
+
+    response = get_view_for_user(
+        viewname="evaluation:combined-leaderboard-update",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": ch1.short_name,
+            "slug": leaderboard.slug,
+        },
+        user=user,
+    )
+    assert response.status_code == 403
+
+    ch1.add_admin(user)
+
+    response = get_view_for_user(
+        viewname="evaluation:combined-leaderboard-update",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": ch1.short_name,
+            "slug": leaderboard.slug,
+        },
+        user=user,
+    )
+    assert response.status_code == 200
+
+    # Only phases for this challenge
+    assert {*response.context["form"].fields["phases"].queryset} == {ph1}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load url %}
+{% load dict_lookup %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ object|yesno:"Update,Create" }} {{ object.title|title}} Combined Leaderboard - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">Leaderboards</a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                href="{{ object.get_absolute_url }}">{{ object.title|title }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+    </ol>
+{% endblock %}
+
+{% block topbar2 %}
+    {% if object %}
+        {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+    <h2>{{ object|yesno:"Update,Create" }} {{ object.title|title }} Combined Leaderboard</h2>
+
+    {% crispy form %}
+
+{% endblock %}

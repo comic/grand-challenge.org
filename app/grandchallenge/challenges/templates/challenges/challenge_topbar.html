@@ -51,7 +51,7 @@
                                     <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}"
+                                <a class="nav-link {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-create' %}active{% endif %}"
                                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
                                     <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>

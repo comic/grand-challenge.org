@@ -31,6 +31,15 @@
         <p>{{ object.description }}</p>
     {% endif %}
 
+    {% if "change_challenge" in challenge_perms %}
+        <p>
+            <a href="{% url "evaluation:combined-leaderboard-update" challenge_short_name=object.challenge slug=object.slug %}"
+               class="btn btn-primary">
+                <i class="fa fa-edit"></i> Edit Combined Leaderboard
+            </a>
+        </p>
+    {% endif %}
+
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="combinedRanksTable">
             <thead class="thead-light">
@@ -51,7 +60,9 @@
                     <td data-order="{{ combined_rank.created|date:"U" }}">{{ combined_rank.created }}</td>
                     {% for phase in object.public_phases %}
                         {% get_dict_values combined_rank.evaluations phase.pk as evaluation %}
-                        <td><a href="{% url 'evaluation:detail' challenge_short_name=challenge.short_name pk=evaluation.pk %}">{{ evaluation.rank }}</a></td>
+                        {% if evaluation %}
+                            <td><a href="{% url 'evaluation:detail' challenge_short_name=challenge.short_name pk=evaluation.pk %}">{{ evaluation.rank }}</a></td>
+                        {% endif %}
                     {% endfor %}
                 </tr>
             {% endfor %}
