@@ -105,7 +105,6 @@ class VerificationUserSet(models.Model):
 
 
 class VerificationUserSetUser(models.Model):
-    # Through table for the combined leaderboard
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
     user_set = models.ForeignKey(VerificationUserSet, on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
