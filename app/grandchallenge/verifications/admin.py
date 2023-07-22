@@ -2,7 +2,10 @@ from django.contrib import admin
 from django.utils.timezone import now
 from pyswot import is_academic
 
-from grandchallenge.verifications.models import Verification
+from grandchallenge.verifications.models import (
+    Verification,
+    VerificationUserSet,
+)
 
 
 @admin.action(
@@ -62,3 +65,21 @@ class VerificationAdmin(admin.ModelAdmin):
             return ("user", "email", *self.readonly_fields)
         else:
             return self.readonly_fields
+
+
+@admin.register(VerificationUserSet)
+class VerificationUserSetAdmin(admin.ModelAdmin):
+    readonly_fields = ("users",)
+    list_display = ("pk", "created", "modified", "usernames")
+    list_prefetch_related = ("users",)
+    search_fields = ("users__username",)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset.prefetch_related("users")
+        return queryset
+
+    def usernames(self, obj):
+        return ", ".join(
+            user.username for user in obj.users.order_by("username")
+        )

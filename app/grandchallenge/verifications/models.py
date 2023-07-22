@@ -93,3 +93,18 @@ def create_verification(email_address, *_, **__):
 
 
 email_confirmed.connect(create_verification)
+
+
+class VerificationUserSet(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    users = models.ManyToManyField(
+        get_user_model(), through="VerificationUserSetUser"
+    )
+
+
+class VerificationUserSetUser(models.Model):
+    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
+    user_set = models.ForeignKey(VerificationUserSet, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
