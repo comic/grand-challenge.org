@@ -49,7 +49,7 @@
             <tbody>
                 {% for submission in submissions %}
                     <tr>
-                        <td><a href="{{ submission.get_absolute_url }}">{{ submission.created }}</a></td>
+                        <td data-order='{{ submission.created|date:"U" }}'><a href="{{ submission.get_absolute_url }}">{{ submission.created }}</a></td>
                         <td>{{ submission.creator|user_profile_link }}</td>
                         <td>{{ submission.phase }}</td>
                         <td>{{ submission.phase.submissions_limit_per_user_per_period }} / {{ submission.phase.submission_limit_period }} day{{ submission.phase.submission_limit_period|pluralize }}</td>
