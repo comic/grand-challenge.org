@@ -70,7 +70,13 @@ class VerificationAdmin(admin.ModelAdmin):
 @admin.register(VerificationUserSet)
 class VerificationUserSetAdmin(admin.ModelAdmin):
     readonly_fields = ("users",)
-    list_display = ("pk", "created", "modified", "usernames")
+    list_display = (
+        "pk",
+        "created",
+        "modified",
+        "active_usernames",
+        "inactive_usernames",
+    )
     list_prefetch_related = ("users",)
     search_fields = ("users__username",)
 
@@ -79,7 +85,12 @@ class VerificationUserSetAdmin(admin.ModelAdmin):
         queryset.prefetch_related("users")
         return queryset
 
-    def usernames(self, obj):
+    def active_usernames(self, obj):
         return ", ".join(
-            user.username for user in obj.users.order_by("username")
+            user.username for user in obj.users.all() if user.is_active
+        )
+
+    def inactive_usernames(self, obj):
+        return ", ".join(
+            user.username for user in obj.users.all() if not user.is_active
         )

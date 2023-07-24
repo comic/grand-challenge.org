@@ -103,6 +103,12 @@ class VerificationUserSet(models.Model):
         get_user_model(), through="VerificationUserSetUser"
     )
 
+    def get_absolute_url(self):
+        return reverse(
+            "verifications:verification-user-set-detail",
+            kwargs={"pk": self.pk},
+        )
+
 
 class VerificationUserSetUser(models.Model):
     # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany

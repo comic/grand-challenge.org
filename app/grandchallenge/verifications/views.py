@@ -1,18 +1,25 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, FormView
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.evaluation.models import Submission
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.emails import send_verification_email
 from grandchallenge.verifications.forms import (
     ConfirmEmailForm,
     VerificationForm,
 )
-from grandchallenge.verifications.models import Verification
+from grandchallenge.verifications.models import (
+    Verification,
+    VerificationUserSet,
+)
 
 
 class VerificationRequiredMixin(UserPassesTestMixin):
@@ -87,3 +94,32 @@ class ConfirmEmailView(LoginRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse("verifications:detail")
+
+
+class VerificationUserSetDetail(
+    LoginRequiredMixin, PermissionRequiredMixin, DetailView
+):
+    model = VerificationUserSet
+    permission_required = "verifications.view_verificationuserset"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.prefetch_related(
+            "users__verification", "users__user_profile"
+        )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "submissions": Submission.objects.filter(
+                    creator__in=self.object.users.all()
+                ).select_related(
+                    "creator__verification",
+                    "creator__user_profile",
+                    "phase__challenge",
+                )
+            }
+        )
+        return context
