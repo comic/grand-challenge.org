@@ -58,8 +58,10 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
         ):
             raise ValidationError(
                 f"Email hosted by {domain} cannot be used for verification "
-                "due to abuse. Please contact support to verify your "
-                "account another way."
+                "due to abuse. Please send an email to support@grand-challenge.org "
+                "with your user name, institutional email address and a link to your "
+                "Google Scholar account, lab page, research gate profile "
+                "or similar so your email address can be verified."
             )
 
         if (
