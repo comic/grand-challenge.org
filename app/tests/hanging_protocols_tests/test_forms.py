@@ -259,3 +259,13 @@ def test_hanging_protocol_slice_plane_indicator():
         }
     )
     assert form.is_valid()
+
+
+def test_hanging_protocol_openseadragon():
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"specialized_view": "openseadragon", "viewport_name": "main"}]',
+        }
+    )
+    assert form.is_valid()
