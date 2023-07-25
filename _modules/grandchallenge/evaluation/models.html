@@ -78,10 +78,12 @@
   <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">statistics</span> <span class="kn">import</span> <span class="n">mean</span><span class="p">,</span> <span class="n">median</span>
 
 <span class="kn">from</span> <span class="nn">actstream.actions</span> <span class="kn">import</span> <span class="n">follow</span><span class="p">,</span> <span class="n">is_following</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">django.core.cache</span> <span class="kn">import</span> <span class="n">cache</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
@@ -102,7 +104,7 @@
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentJob</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">UUIDModel</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="n">protected_s3_storage</span><span class="p">,</span> <span class="n">public_s3_storage</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExtensionValidator</span><span class="p">,</span>
@@ -114,6 +116,7 @@
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
     <span class="n">calculate_ranks</span><span class="p">,</span>
     <span class="n">create_evaluation</span><span class="p">,</span>
+    <span class="n">update_combined_leaderboard</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">StatusChoices</span><span class="p">,</span>
@@ -1120,6 +1123,165 @@
 
 <span class="k">class</span> <span class="nc">EvaluationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">CombinedLeaderboard</span><span class="p">(</span><span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">CombinationMethodChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+        <span class="n">MEAN</span> <span class="o">=</span> <span class="s2">&quot;MEAN&quot;</span><span class="p">,</span> <span class="s2">&quot;Mean&quot;</span>
+        <span class="n">MEDIAN</span> <span class="o">=</span> <span class="s2">&quot;MEDIAN&quot;</span><span class="p">,</span> <span class="s2">&quot;Median&quot;</span>
+        <span class="n">SUM</span> <span class="o">=</span> <span class="s2">&quot;SUM&quot;</span><span class="p">,</span> <span class="s2">&quot;Sum&quot;</span>
+
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="n">phases</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">through</span><span class="o">=</span><span class="s2">&quot;CombinedLeaderboardPhase&quot;</span><span class="p">)</span>
+    <span class="n">combination_method</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">MEAN</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">),)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">public_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">public</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">concrete_combination_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">MEAN</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mean</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">MEDIAN</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">median</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CombinationMethodChoices</span><span class="o">.</span><span class="n">SUM</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">sum</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">combined_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">combined_ranks</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">combined_ranks</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;phases&quot;</span><span class="p">]</span>
+            <span class="o">!=</span> <span class="p">{</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="p">}</span>
+            <span class="ow">or</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;combination_method&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schedule_combined_ranks_update</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">users_best_evaluation_per_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">evaluations</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="c1"># Note, only use public phases here to prevent leaking of</span>
+            <span class="c1"># evaluations for hidden phases</span>
+            <span class="n">submission__phase__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="p">,</span>
+            <span class="n">published</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
+            <span class="n">rank__gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+            <span class="s2">&quot;submission__creator__username&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;submission__phase__pk&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pk&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;created&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rank&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">users_best_evaluation_per_phase</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">evaluation</span> <span class="ow">in</span> <span class="n">evaluations</span><span class="o">.</span><span class="n">iterator</span><span class="p">():</span>
+            <span class="n">phase</span> <span class="o">=</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;submission__phase__pk&quot;</span><span class="p">]</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;submission__creator__username&quot;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">user</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">users_best_evaluation_per_phase</span><span class="p">:</span>
+                <span class="n">users_best_evaluation_per_phase</span><span class="p">[</span><span class="n">user</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">phase</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">users_best_evaluation_per_phase</span><span class="p">[</span><span class="n">user</span><span class="p">]</span>
+                <span class="ow">or</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span>
+                <span class="o">&lt;</span> <span class="n">users_best_evaluation_per_phase</span><span class="p">[</span><span class="n">user</span><span class="p">][</span><span class="n">phase</span><span class="p">][</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">users_best_evaluation_per_phase</span><span class="p">[</span><span class="n">user</span><span class="p">][</span><span class="n">phase</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;pk&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;rank&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">],</span>
+                <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">users_best_evaluation_per_phase</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">combined_ranks_cache_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">.combined_ranks.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">update_combined_ranks_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">combined_ranks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">num_phases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">user</span><span class="p">,</span> <span class="n">evaluations</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users_best_evaluation_per_phase</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">evaluations</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_phases</span><span class="p">:</span>  <span class="c1"># Exclude missing data</span>
+                <span class="n">combined_ranks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="n">user</span><span class="p">,</span>
+                        <span class="s2">&quot;combined_rank&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">concrete_combination_method</span><span class="p">(</span>
+                            <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">evaluation</span> <span class="ow">in</span> <span class="n">evaluations</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span>
+                            <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">evaluation</span> <span class="ow">in</span> <span class="n">evaluations</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;evaluations&quot;</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="n">phase</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;pk&quot;</span><span class="p">],</span>
+                                <span class="s2">&quot;rank&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">],</span>
+                            <span class="p">}</span>
+                            <span class="k">for</span> <span class="n">phase</span><span class="p">,</span> <span class="n">evaluation</span> <span class="ow">in</span> <span class="n">evaluations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="p">},</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+
+        <span class="n">combined_ranks</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;combined_rank&quot;</span><span class="p">])</span>
+
+        <span class="n">cache_object</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;phases&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="p">},</span>
+            <span class="s2">&quot;combination_method&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span><span class="p">,</span>
+            <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="n">combined_ranks</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">,</span> <span class="n">cache_object</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">schedule_combined_ranks_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">on_commit</span><span class="p">(</span>
+            <span class="n">update_combined_leaderboard</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schedule_combined_ranks_update</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;evaluation:combined-leaderboard-detail&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                <span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">CombinedLeaderboardPhase</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># Through table for the combined leaderboard</span>
+    <span class="c1"># https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">combined_leaderboard</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">CombinedLeaderboard</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>
