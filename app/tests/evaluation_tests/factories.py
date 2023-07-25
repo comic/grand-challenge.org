@@ -1,6 +1,7 @@
 import factory
 
 from grandchallenge.evaluation.models import (
+    CombinedLeaderboard,
     Evaluation,
     Method,
     Phase,
@@ -42,3 +43,11 @@ class EvaluationFactory(factory.django.DjangoModelFactory):
 
     method = factory.SubFactory(MethodFactory)
     submission = factory.SubFactory(SubmissionFactory)
+
+
+class CombinedLeaderboardFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CombinedLeaderboard
+
+    challenge = factory.SubFactory(ChallengeFactory)
+    title = factory.sequence(lambda n: f"Combined Leaderboard {n}")

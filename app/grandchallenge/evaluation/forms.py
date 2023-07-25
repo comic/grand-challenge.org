@@ -24,6 +24,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
+    CombinedLeaderboard,
     Evaluation,
     Method,
     Phase,
@@ -459,3 +460,14 @@ class LegacySubmissionForm(SubmissionForm):
 
     class Meta(SubmissionForm.Meta):
         widgets = {"creator": Select2Widget, "phase": forms.HiddenInput}
+
+
+class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
+    def __init__(self, *args, challenge, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["phases"].queryset = challenge.phase_set.all()
+
+    class Meta:
+        model = CombinedLeaderboard
+        fields = ("title", "description", "phases", "combination_method")

@@ -32,6 +32,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.evaluation.models import (
+    CombinedLeaderboard,
     Evaluation,
     Method,
     Phase,
@@ -195,6 +196,11 @@ def _create_demo_challenge(users, algorithm):
 
     Phase.objects.create(challenge=demo, title="Phase 1")
     Phase.objects.create(challenge=demo, title="Phase 2")
+
+    combined = CombinedLeaderboard.objects.create(
+        title="overall", challenge=demo
+    )
+    combined.phases.set(demo.phase_set.all())
 
     for phase_num, phase in enumerate(demo.phase_set.all()):
 

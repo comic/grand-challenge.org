@@ -15,6 +15,7 @@ from grandchallenge.core.admin import (
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
+    CombinedLeaderboard,
     Evaluation,
     EvaluationGroupObjectPermission,
     EvaluationUserObjectPermission,
@@ -165,6 +166,14 @@ class EvaluationAdmin(admin.ModelAdmin):
         "runtime_metrics",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
+
+
+@admin.register(CombinedLeaderboard)
+class CombinedLeaderboardAdmin(admin.ModelAdmin):
+    readonly_fields = (
+        "challenge",
+        "phases",
+    )
 
 
 admin.site.register(PhaseUserObjectPermission, UserObjectPermissionAdmin)
