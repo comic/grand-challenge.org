@@ -95,7 +95,7 @@ def serve_component_interface_value(
         ("algorithms.view_job", "outputs"),
         ("algorithms.view_job", "inputs"),
         ("evaluation.view_evaluation", "outputs"),
-        ("evaluation.view_evaluation", "inputs"),
+        # ("evaluation.view_evaluation", "inputs"),
         ("archives.view_archiveitem", "values"),
         ("reader_studies.view_displayset", "values"),
     ):
