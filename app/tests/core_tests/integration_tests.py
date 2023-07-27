@@ -264,7 +264,6 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "expected_number_of_teams": 10,
             "number_of_tasks": 1,
         }
-        Verification.objects.get_or_create(user=user, is_verified=True)
         self._login(user)
         response = self.client.post(url, data)
         return response
@@ -302,6 +301,12 @@ class CreateChallengeRequestTest(GrandChallengeFrameworkTestCase):
     def test_cannot_create_request_with_weird_name(self):
         # A user who has created a project
         self.projectadmin = self._create_random_user("projectadmin")
+        Verification.objects.create(
+            user=self.projectadmin,
+            is_verified=True,
+            email=self.projectadmin.email,
+        )
+
         challenge_short_name = "under_score"
         response = self._try_create_challenge_request(
             self.projectadmin, challenge_short_name
