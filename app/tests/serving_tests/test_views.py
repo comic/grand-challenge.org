@@ -176,7 +176,10 @@ def test_civ_file_download(client):
     evaluation.output_interfaces.add(detection_interface)
     evaluation.outputs.add(output_civ)
     assign_perm("view_evaluation", user1, evaluation)
-    has_correct_access(user1, user2, evaluation.outputs.first().file.url)
+    # Evaluation inputs and outputs should always be denied
+    assert get_view_for_user(url=evaluation.outputs.first().file.url, client=client, user=None).status_code == 403
+    assert get_view_for_user(url=evaluation.outputs.first().file.url, client=client, user=user1).status_code == 403
+    assert get_view_for_user(url=evaluation.outputs.first().file.url, client=client, user=user2).status_code == 403
     evaluation.outputs.remove(output_civ)
 
     # test archive

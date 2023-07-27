@@ -684,7 +684,7 @@ class JobForm(SaveFormInitMixin, ModelForm):
     def clean_public(self):
         public = self.cleaned_data["public"]
         if public and not self.instance.status == ComponentJob.SUCCESS:
-            return ValidationError(
+            raise ValidationError(
                 "You can only publish successful algorithm jobs."
             )
         return public

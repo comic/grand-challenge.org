@@ -5,6 +5,7 @@ from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
 from django.db.models import F
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
+from guardian.utils import get_anonymous_user
 from knox.auth import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -18,7 +19,9 @@ from grandchallenge.serving.models import Download
 from grandchallenge.workstations.models import Feedback
 
 
-def protected_storage_redirect(*, name):
+def protected_storage_redirect(*, name, **kwargs):
+    _create_download(**kwargs)
+
     # Get the storage with the internal redirect and auth. This will prepend
     # settings.AWS_S3_ENDPOINT_URL to the url
     if not internal_protected_s3_storage.exists(name=name):
@@ -33,6 +36,46 @@ def protected_storage_redirect(*, name):
         response = HttpResponseRedirect(url)
 
     return response
+
+
+def _create_download(
+    *,
+    creator,
+    image=None,
+    submission=None,
+    component_interface_value=None,
+    challenge_request=None,
+    feedback=None,
+):
+    if creator.is_anonymous:
+        creator = get_anonymous_user()
+
+    kwargs = {"creator": creator}
+
+    if image is not None:
+        kwargs["image"] = image
+
+    if submission is not None:
+        kwargs["submission"] = submission
+
+    if component_interface_value is not None:
+        kwargs["component_interface_value"] = component_interface_value
+
+    if challenge_request is not None:
+        kwargs["challenge_request"] = challenge_request
+
+    if feedback is not None:
+        kwargs["feedback"] = feedback
+
+    if len(kwargs) != 2:
+        raise RuntimeError(
+            "creator and only one other foreign key must be set"
+        )
+
+    n_updated = Download.objects.filter(**kwargs).update(count=F("count") + 1)
+
+    if n_updated == 0:
+        Download.objects.create(**kwargs)
 
 
 def serve_images(request, *, pk, path, pa="", pb=""):
@@ -53,8 +96,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         user = request.user
 
     if user.has_perm("view_image", image):
-        _create_download(creator_id=user.pk, image_id=image.pk)
-        return protected_storage_redirect(name=name)
+        return protected_storage_redirect(name=name, creator=user, image=image)
 
     raise PermissionDenied
 
@@ -66,11 +108,10 @@ def serve_submissions(request, *, submission_pk, **_):
         raise Http404("Submission not found.")
 
     if request.user.has_perm("view_submission", submission):
-        _create_download(
-            creator_id=request.user.pk, submission_id=submission.pk
-        )
         return protected_storage_redirect(
-            name=submission.predictions_file.name
+            name=submission.predictions_file.name,
+            creator=request.user,
+            submission=submission,
         )
 
     raise PermissionDenied
@@ -94,8 +135,6 @@ def serve_component_interface_value(
     for perm, lookup in (
         ("algorithms.view_job", "outputs"),
         ("algorithms.view_job", "inputs"),
-        ("evaluation.view_evaluation", "outputs"),
-        # ("evaluation.view_evaluation", "inputs"),
         ("archives.view_archiveitem", "values"),
         ("reader_studies.view_displayset", "values"),
     ):
@@ -109,24 +148,11 @@ def serve_component_interface_value(
             .filter(**{lookup: civ})
             .exists()
         ):
-            return protected_storage_redirect(name=civ.file.name)
+            return protected_storage_redirect(
+                name=civ.file.name, creator=user, component_interface_value=civ
+            )
 
     raise PermissionDenied
-
-
-def _create_download(*, creator_id, image_id=None, submission_id=None):
-    kwargs = {"creator_id": creator_id}
-
-    if image_id is not None:
-        kwargs["image_id"] = image_id
-
-    if submission_id is not None:
-        kwargs["submission_id"] = submission_id
-
-    n_updated = Download.objects.filter(**kwargs).update(count=F("count") + 1)
-
-    if n_updated == 0:
-        Download.objects.create(**kwargs)
 
 
 def serve_structured_challenge_submission_form(
@@ -141,7 +167,9 @@ def serve_structured_challenge_submission_form(
 
     if request.user.has_perm("challenges.view_challengerequest"):
         return protected_storage_redirect(
-            name=challenge_request.structured_challenge_submission_form.name
+            name=challenge_request.structured_challenge_submission_form.name,
+            creator=request.user,
+            challenge_request=challenge_request,
         )
     else:
         raise PermissionDenied
@@ -154,6 +182,10 @@ def serve_session_feedback_screenshot(request, *, feedback_pk, **_):
         raise Http404("Feedback not found.")
 
     if request.user.is_staff:
-        return protected_storage_redirect(name=feedback.screenshot.name)
+        return protected_storage_redirect(
+            name=feedback.screenshot.name,
+            creator=request.user,
+            feedback=feedback,
+        )
     else:
         raise PermissionDenied
