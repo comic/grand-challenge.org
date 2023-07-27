@@ -60,7 +60,7 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "specialized_view": {
                 "type": "string",
-                "enum": ["minimap", "3D-sideview", "openseadragon"],
+                "enum": ["minimap", "3D-sideview", "clientside"],
             },
             "x": {
                 "type": "integer",
