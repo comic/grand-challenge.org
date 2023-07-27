@@ -60,7 +60,7 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "specialized_view": {
                 "type": "string",
-                "enum": ["minimap", "3D-sideview"],
+                "enum": ["minimap", "3D-sideview", "clientside"],
             },
             "x": {
                 "type": "integer",
@@ -128,7 +128,11 @@ HANGING_PROTOCOL_SCHEMA = {
             {
                 "if": {
                     "required": ["specialized_view"],
-                    "specialized_view": {"minLength": 1},
+                    "properties": {
+                        "specialized_view": {
+                            "enum": ["minimap", "3D-sideview"]
+                        },
+                    },
                 },
                 "then": {
                     "required": ["parent_id"],

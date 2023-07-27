@@ -259,3 +259,13 @@ def test_hanging_protocol_slice_plane_indicator():
         }
     )
     assert form.is_valid()
+
+
+def test_hanging_protocol_clientside():
+    form = HangingProtocolForm(
+        {
+            "title": "main",
+            "json": '[{"specialized_view": "clientside", "viewport_name": "main"}]',
+        }
+    )
+    assert form.is_valid()
