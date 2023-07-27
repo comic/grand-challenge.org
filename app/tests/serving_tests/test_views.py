@@ -177,9 +177,24 @@ def test_civ_file_download(client):
     evaluation.outputs.add(output_civ)
     assign_perm("view_evaluation", user1, evaluation)
     # Evaluation inputs and outputs should always be denied
-    assert get_view_for_user(url=evaluation.outputs.first().file.url, client=client, user=None).status_code == 403
-    assert get_view_for_user(url=evaluation.outputs.first().file.url, client=client, user=user1).status_code == 403
-    assert get_view_for_user(url=evaluation.outputs.first().file.url, client=client, user=user2).status_code == 403
+    assert (
+        get_view_for_user(
+            url=evaluation.outputs.first().file.url, client=client, user=None
+        ).status_code
+        == 403
+    )
+    assert (
+        get_view_for_user(
+            url=evaluation.outputs.first().file.url, client=client, user=user1
+        ).status_code
+        == 403
+    )
+    assert (
+        get_view_for_user(
+            url=evaluation.outputs.first().file.url, client=client, user=user2
+        ).status_code
+        == 403
+    )
     evaluation.outputs.remove(output_civ)
 
     # test archive
