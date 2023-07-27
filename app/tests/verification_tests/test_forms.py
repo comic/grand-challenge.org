@@ -16,7 +16,7 @@ class TestVerificationForm:
         (
             (
                 "user@mailinator.com",
-                "Email hosted by mailinator.com cannot be used for verification due to abuse. Please contact support to verify your account another way.",
+                "Email hosted by mailinator.com cannot be used for verification due to abuse. Please send an email to support@grand-challenge.org with your user name, institutional email address and a link to your Google Scholar account, lab page, research gate profile or similar so your email address can be verified.",
             ),
             (
                 "user@gmail.com",
