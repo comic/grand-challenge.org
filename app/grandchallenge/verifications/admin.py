@@ -28,6 +28,7 @@ def mark_not_verified(modeladmin, request, queryset):
 class VerificationAdmin(admin.ModelAdmin):
     list_display = (
         "user",
+        "user_sets",
         "user_info",
         "created",
         "signup_email",
@@ -51,6 +52,23 @@ class VerificationAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "email", "user__email")
     actions = (mark_verified, mark_not_verified)
     autocomplete_fields = ("user",)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.prefetch_related(
+            "user__verificationuserset_set__users"
+        )
+        return queryset
+
+    def user_sets(self, obj):
+        usernames = set()
+
+        for vus in obj.user.verificationuserset_set.all():
+            for user in vus.users.all():
+                if user != obj.user:
+                    usernames.add(user.username)
+
+        return ", ".join(usernames)
 
     @admin.display(boolean=True)
     def email_is_academic(self, instance):
