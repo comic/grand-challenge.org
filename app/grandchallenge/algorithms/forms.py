@@ -307,59 +307,41 @@ class UserAlgorithmsForPhaseMixin:
         )
 
     @cached_property
-    def get_user_algorithms_for_phase(self):
+    def user_algorithms_for_phase(self):
         inputs, outputs = self.get_phase_algorithm_inputs_outputs()
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
-                input_count=Count(
+                total_input_count=Count("inputs", distinct=True),
+                total_output_count=Count("outputs", distinct=True),
+                relevant_input_count=Count(
                     "inputs", filter=Q(inputs__in=inputs), distinct=True
                 ),
-                output_count=Count(
+                relevant_output_count=Count(
                     "outputs", filter=Q(outputs__in=outputs), distinct=True
                 ),
             )
             .filter(
-                inputs__in=inputs,
-                outputs__in=outputs,
-                input_count=len(inputs),
-                output_count=len(outputs),
+                total_input_count=len(inputs),
+                total_output_count=len(outputs),
+                relevant_input_count=len(inputs),
+                relevant_output_count=len(outputs),
             )
         )
 
     @cached_property
-    def get_user_active_images_for_phase(self):
-        inputs, outputs = self.get_phase_algorithm_inputs_outputs()
-        return (
-            get_objects_for_user(
-                user=self._user,
-                perms="algorithms.change_algorithmimage",
-                klass=AlgorithmImage.objects.active_images(),
-            )
+    def user_active_images_for_phase(self):
+        return get_objects_for_user(
+            user=self._user,
+            perms="algorithms.change_algorithmimage",
+            klass=AlgorithmImage.objects.active_images()
             .select_related("algorithm")
-            .annotate(
-                input_count=Count(
-                    "algorithm__inputs",
-                    filter=Q(algorithm__inputs__in=inputs),
-                    distinct=True,
-                ),
-                output_count=Count(
-                    "algorithm__outputs",
-                    filter=Q(algorithm__outputs__in=outputs),
-                    distinct=True,
-                ),
-            )
-            .filter(
-                algorithm__inputs__in=inputs,
-                algorithm__outputs__in=outputs,
-                input_count=len(inputs),
-                output_count=len(outputs),
-            )
+            .filter(algorithm__in=self.user_algorithms_for_phase),
         )
 
     @cached_property
     def user_algorithm_count(self):
-        return self.get_user_algorithms_for_phase.count()
+        return self.user_algorithms_for_phase.count()
 
 
 class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
