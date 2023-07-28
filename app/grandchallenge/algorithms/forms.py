@@ -17,7 +17,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.forms import (
     CharField,
@@ -312,8 +312,12 @@ class UserAlgorithmsForPhaseMixin:
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
-                input_count=Count("inputs", distinct=True),
-                output_count=Count("outputs", distinct=True),
+                input_count=Count(
+                    "inputs", filter=Q(inputs__in=inputs), distinct=True
+                ),
+                output_count=Count(
+                    "outputs", filter=Q(outputs__in=outputs), distinct=True
+                ),
             )
             .filter(
                 inputs__in=inputs,
@@ -334,8 +338,16 @@ class UserAlgorithmsForPhaseMixin:
             )
             .select_related("algorithm")
             .annotate(
-                input_count=Count("algorithm__inputs", distinct=True),
-                output_count=Count("algorithm__outputs", distinct=True),
+                input_count=Count(
+                    "algorithm__inputs",
+                    filter=Q(algorithm__inputs__in=inputs),
+                    distinct=True,
+                ),
+                output_count=Count(
+                    "algorithm__outputs",
+                    filter=Q(algorithm__outputs__in=outputs),
+                    distinct=True,
+                ),
             )
             .filter(
                 algorithm__inputs__in=inputs,
