@@ -321,7 +321,7 @@ class SubmissionForm(
 
             self.fields[
                 "algorithm_image"
-            ].queryset = self.get_user_active_images_for_phase.order_by(
+            ].queryset = self.user_active_images_for_phase.order_by(
                 "algorithm__title"
             )
 

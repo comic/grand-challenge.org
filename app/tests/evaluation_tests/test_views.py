@@ -833,14 +833,7 @@ def test_create_algorithm_for_phase_limits(client):
     assert "You have created 2 out of 3 possible algorithms" in str(
         response.content
     )
-    for alg in [alg1, alg4]:
-        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
-            response.content
-        )
-    for alg in [alg2, alg3, alg5, alg6]:
-        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
-            response.content
-        )
+    assert {*response.context["user_algorithms"]} == {alg1, alg4}
 
     # clicking on confirm will show the form
     response = get_view_for_user(
@@ -870,14 +863,7 @@ def test_create_algorithm_for_phase_limits(client):
         "You have created the maximum number of allowed algorithms for this phase!"
         in str(response.content)
     )
-    for alg in [alg1, alg2, alg3]:
-        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
-            response.content
-        )
-    for alg in [alg4, alg5, alg6]:
-        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
-            response.content
-        )
+    assert {*response.context["user_algorithms"]} == {alg1, alg2, alg3}
 
     # force submitting a form with data for a user that has reached the limit,
     # will not work, they will just get redirected to the page telling them that they
@@ -901,14 +887,7 @@ def test_create_algorithm_for_phase_limits(client):
         "You have created the maximum number of allowed algorithms for this phase!"
         in str(response.content)
     )
-    for alg in [alg1, alg2, alg3]:
-        assert f'<a href="{alg.get_absolute_url()}#containers"' in str(
-            response.content
-        )
-    for alg in [alg4, alg5, alg6]:
-        assert f'<a href="{alg.get_absolute_url()}#containers"' not in str(
-            response.content
-        )
+    assert {*response.context["user_algorithms"]} == {alg1, alg2, alg3}
     assert not Algorithm.objects.filter(title="foo").exists()
 
 

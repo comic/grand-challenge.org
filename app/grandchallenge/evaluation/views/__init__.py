@@ -795,7 +795,7 @@ class PhaseAlgorithmCreate(
         context.update(
             {
                 "user_algorithm_count": form.user_algorithm_count,
-                "user_algorithms": form.get_user_algorithms_for_phase,
+                "user_algorithms": form.user_algorithms_for_phase,
                 "max_num_algorithms": settings.ALGORITHMS_MAX_NUMBER_PER_USER_PER_PHASE,
                 "hide_form": self.hide_form(form=form),
             }
