@@ -471,3 +471,4 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = CombinedLeaderboard
         fields = ("title", "description", "phases", "combination_method")
+        widgets = {"phases": forms.CheckboxSelectMultiple}
