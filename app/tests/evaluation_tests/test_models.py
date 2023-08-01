@@ -8,7 +8,7 @@ from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
 from grandchallenge.evaluation.tasks import (
     calculate_ranks,
     create_evaluation,
@@ -338,7 +338,7 @@ def test_combined_leaderboards(
     leaderboard.phases.set(challenge.phase_set.all())
     interface = ComponentInterface.objects.get(slug="metrics-json-file")
 
-    results = {
+    results = {  # Lower is better
         0: {
             0: (1, 2),
             1: (1, 2),
@@ -402,6 +402,128 @@ def test_combined_leaderboards(
     assert ranks[1]["user"] == users[2].username
     assert ranks[2]["combined_rank"] == 3
     assert ranks[2]["user"] == users[1].username
+
+
+@pytest.mark.django_db
+def test_combined_leaderboards_with_non_public_components():
+    challenge = ChallengeFactory()
+    phases = PhaseFactory.create_batch(
+        2,
+        challenge=challenge,
+        score_jsonpath="result",
+        score_default_sort="asc",
+    )
+    users = UserFactory.create_batch(3)
+    leaderboard = CombinedLeaderboardFactory(
+        challenge=challenge,
+        combination_method=CombinedLeaderboard.CombinationMethodChoices.SUM,
+    )
+    leaderboard.phases.set(challenge.phase_set.all())
+    interface = ComponentInterface.objects.get(slug="metrics-json-file")
+
+    results = (
+        {  # Lower is better, values reflect the rank generated evaluation have
+            0: {
+                0: (1, 2, 7),
+                1: (1, 2),
+            },
+            1: {
+                0: (3, 4),
+                1: (3, 4),
+            },
+            2: {
+                0: (5, 6),
+                1: (5, 6),
+            },
+        }
+    )
+
+    for phase_idx, phase in enumerate(phases):
+        for user_idx, user in enumerate(users):
+            for result in results[user_idx][phase_idx]:
+                evaluation = EvaluationFactory(
+                    submission__creator=user,
+                    submission__phase=phase,
+                    published=True,
+                    status=Evaluation.SUCCESS,
+                )
+
+                output_civ, _ = evaluation.outputs.get_or_create(
+                    interface=interface
+                )
+                output_civ.value = {"result": result}
+                output_civ.save()
+
+    def update_leaderboards():
+        # The following are normally scheduled async but for testing purposes
+        # we call them directly
+        for p in phases:
+            calculate_ranks(phase_pk=p.pk)
+        update_combined_leaderboard(pk=leaderboard.pk)
+
+        # clear cached property
+        if hasattr(leaderboard, "combined_ranks"):
+            del leaderboard.combined_ranks
+
+    update_leaderboards()
+
+    assert (  # Sanity check
+        Evaluation.objects.filter(
+            submission__phase__challenge=challenge
+        ).count()
+        == 13
+    )
+    assert (  # Sanity check
+        Evaluation.objects.filter(
+            submission__phase__challenge=challenge, rank=1
+        ).count()
+        == 2
+    )
+
+    ranks = leaderboard.combined_ranks
+
+    # Default ranks, user 0 is ranked first
+    assert ranks[0]["combined_rank"] == 2
+    assert ranks[0]["user"] == users[0].username
+    assert ranks[1]["combined_rank"] == 6
+    assert ranks[1]["user"] == users[1].username
+    assert ranks[2]["combined_rank"] == 10
+    assert ranks[2]["user"] == users[2].username
+
+    # Retract the two best evaluations of user 0
+    phase = phases[0]
+    for rank in [1, 2]:
+        evaluation = Evaluation.objects.get(
+            submission__creator=users[0],
+            submission__phase=phase,
+            rank=rank,
+        )
+        evaluation.published = False
+        evaluation.save()
+
+    update_leaderboards()
+    new_ranks = leaderboard.combined_ranks
+
+    # New eval scores: 3, 4, 5, 6, 7
+    # New eval rank:   1, 2, 3, 4, 5
+
+    # New ranking should result in:
+    # user 0: 1 + 5 = 6
+    # user 1: 3 + 1 = 4
+    # user 2: 5 + 3 = 8
+
+    assert new_ranks[0]["combined_rank"] == 4
+    assert new_ranks[0]["user"] == users[1].username
+    assert new_ranks[1]["combined_rank"] == 6
+    assert new_ranks[1]["user"] == users[0].username
+    assert new_ranks[2]["combined_rank"] == 8
+    assert new_ranks[2]["user"] == users[2].username
+
+    phase.public = False
+    phase.save()
+
+    update_leaderboards()
+    assert len(leaderboard.combined_ranks) == 0
 
 
 @pytest.mark.django_db
