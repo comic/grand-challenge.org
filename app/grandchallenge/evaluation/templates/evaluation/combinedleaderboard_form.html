@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "pages/challenge_settings_base.html" %}
 {% load url %}
 {% load dict_lookup %}
 {% load static %}
@@ -14,7 +14,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">Leaderboards</a></li>
+                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">Combined Leaderboards</a></li>
         {% if object %}
             <li class="breadcrumb-item"><a
                 href="{{ object.get_absolute_url }}">{{ object.title|title }}</a></li>
@@ -24,15 +24,21 @@
     </ol>
 {% endblock %}
 
-{% block topbar2 %}
-    {% if object %}
-        {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
-    {% endif %}
-{% endblock %}
-
 {% block content %}
 
     <h2>{{ object|yesno:"Update,Create" }} {{ object.title|title }} Combined Leaderboard</h2>
+
+    {% if not object %}
+        <p>
+            Use this form to create a new combined leaderboard for your challenge.
+            Unlike the phase leaderboards, which only show the rank within that phase, the combined leaderboards combine
+            the ranks of multiple phases to calculate a new singular rank.
+        </p>
+
+        <p>
+            If a participant has not submitted to all the selected phases no combined rank is computed.
+        </p>
+    {% endif %}
 
     {% crispy form %}
 
