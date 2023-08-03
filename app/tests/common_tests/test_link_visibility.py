@@ -14,8 +14,8 @@ from tests.utils import validate_admin_only_view
         "participants:registration-list",
         "evaluation:phase-update",
         "evaluation:phase-create",
-        "evaluation:combinedleaderboard-create",
-        "evaluation:combinedleaderboard-update",
+        "evaluation:combined-leaderboard-create",
+        "evaluation:combined-leaderboard-update",
     ],
 )
 def test_admins_see_links(view, client, two_challenge_sets):
