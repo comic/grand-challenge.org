@@ -1166,7 +1166,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
                     }
                 )
 
-        combined_ranks.sort(key=lambda x: x["combined_rank"])
+        self._rank_combined_rank_scores(combined_ranks)
 
         cache_object = {
             "phases": {phase.pk for phase in self.public_phases},
@@ -1175,6 +1175,21 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         }
 
         cache.set(self.combined_ranks_cache_key, cache_object, timeout=None)
+
+    @staticmethod
+    def _rank_combined_rank_scores(combined_ranks):
+        """In-place addition of a rank based on the combined rank"""
+        combined_ranks.sort(key=lambda x: x["combined_rank"])
+        current_score = current_rank = None
+
+        for idx, score in enumerate(
+            cr["combined_rank"] for cr in combined_ranks
+        ):
+            if score != current_score:
+                current_score = score
+                current_rank = idx + 1
+
+            combined_ranks[idx]["rank"] = current_rank
 
     def schedule_combined_ranks_update(self):
         on_commit(

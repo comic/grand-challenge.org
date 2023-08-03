@@ -57,7 +57,7 @@
             <tbody>
             {% for combined_rank in object.combined_ranks %}
                 <tr>
-                    <td>{{ forloop.counter|ordinal }}</td>
+                    <td>{{ combined_rank.rank|ordinal }}</td>
                     <td><a href="{% url 'profile-detail' username=combined_rank.user %}">{{ combined_rank.user }}</a></td>
                     <td data-order="{{ combined_rank.created|date:"U" }}">{{ combined_rank.created|date:"j N Y" }}</td>
                     <td>{{ combined_rank.combined_rank }}</td>

@@ -596,3 +596,17 @@ def test_combined_leaderboard_updated_on_phase_change(
         phase.combinedleaderboard_set.clear()
 
     assert_callbacks(callbacks)
+
+
+@pytest.mark.parametrize(
+    "combined_ranks,expected_ranks",
+    (
+        ([], []),
+        ([10, 20, 30], [1, 2, 3]),
+        ([10, 20, 20, 30], [1, 2, 2, 4]),
+    ),
+)
+def test_combined_leaderboard_ranks(combined_ranks, expected_ranks):
+    combined_ranks = [{"combined_rank": cr} for cr in combined_ranks]
+    CombinedLeaderboard._rank_combined_rank_scores(combined_ranks)
+    assert [cr["rank"] for cr in combined_ranks] == expected_ranks
