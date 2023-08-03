@@ -519,6 +519,7 @@ def test_combined_leaderboards_with_non_public_components():
     assert new_ranks[2]["combined_rank"] == 8
     assert new_ranks[2]["user"] == users[2].username
 
+    # Retracting a phase should result in an empty leaderboard
     phase.public = False
     phase.save()
 
