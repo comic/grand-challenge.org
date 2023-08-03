@@ -14,7 +14,7 @@
             {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
                 <li class="nav-item">
                      <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:combined-leaderboard-update' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}"
-                        href="{% url 'evaluation:combined-leaderboard-detail' challenge_short_name=challenge.short_name slug=combined_leaderboard.slug %}"><i class="fa fa-medal fa-fw"></i>&nbsp;&nbsp;{{ combined_leaderboard.title|title }}</a>
+                        href="{% url 'evaluation:combined-leaderboard-detail' challenge_short_name=challenge.short_name slug=combined_leaderboard.slug %}"><i class="fa fa-trophy fa-lg fa-fw"></i>&nbsp;&nbsp;{{ combined_leaderboard.title|title }}</a>
                 </li>
             {% endfor %}
         {%  endif %}
