@@ -19,7 +19,10 @@ from tests.utils import validate_admin_only_view
     ],
 )
 def test_admins_see_links(view, client, two_challenge_sets):
-    if view == "evaluation:phase-update":
+    if view in [
+        "evaluation:phase-update",
+        "evaluation:combined-leaderboard-update",
+    ]:
         reverse_kwargs = {
             "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.get().slug
         }
