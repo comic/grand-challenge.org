@@ -10,7 +10,7 @@
        aria-expanded="false">
         Choose a Phase</a>
     <ul class="nav nav-pills col-12 mb-3">
-        {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:leaderboard' %}
+        {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:leaderboard,evaluation:detail' %}
             {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
                 <li class="nav-item">
                      <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}"
