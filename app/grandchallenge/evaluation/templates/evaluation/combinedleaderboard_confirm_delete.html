@@ -29,7 +29,7 @@
     <form action="" method="post">
         {% csrf_token %}
         <p>Are you sure that you want to delete the combined leaderboard called "{{ object.title|title }}"?</p>
-        <p>All linked phases and leaderboards will left intact.</p>
+        <p>All linked phases and leaderboards will be left intact.</p>
 
         <div class="alert alert-warning">
             <i class="fas fa-exclamation-circle"></i> You are not able to undo this action, once the combined leaderboard is deleted
