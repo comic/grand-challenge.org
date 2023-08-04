@@ -4,6 +4,7 @@ from datetime import timedelta
 import factory
 import pytest
 from django.conf import settings
+from django.core.cache import cache
 from django.db.models import signals
 from django.utils import timezone
 from factory.django import ImageField
@@ -11,6 +12,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.evaluation.models import CombinedLeaderboard, Evaluation
+from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import AlgorithmFactory
@@ -1003,12 +1005,49 @@ def test_combined_leaderboard_create(client):
 
 
 @pytest.mark.django_db
+def test_combined_leaderboard_delete(client):
+    challenge = ChallengeFactory()
+    _ = PhaseFactory(challenge=challenge)
+    leaderboard = CombinedLeaderboardFactory(challenge=challenge)
+    user = UserFactory()
+    update_combined_leaderboard(pk=leaderboard.pk)
+
+    # Sanity check
+    assert CombinedLeaderboard.objects.filter(pk=leaderboard.pk).exists()
+    assert cache.get(leaderboard.combined_ranks_cache_key) is not None
+
+    view_args = {
+        "viewname": "evaluation:combined-leaderboard-delete",
+        "client": client,
+        "user": user,
+        "reverse_kwargs": {
+            "challenge_short_name": challenge.short_name,
+            "slug": leaderboard.slug,
+        },
+    }
+
+    response = get_view_for_user(**view_args)
+    assert response.status_code == 403
+
+    challenge.add_admin(user)
+
+    response = get_view_for_user(**view_args)
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        method=client.post,
+        **view_args,
+    )
+    assert response.status_code == 302
+
+    assert not CombinedLeaderboard.objects.filter(pk=leaderboard.pk).exists()
+    assert cache.get(leaderboard.combined_ranks_cache_key) is None
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "viewtype",
-    (
-        "detail",
-        "update",
-    ),
+    ("detail", "update", "delete"),
 )
 def test_combined_leaderboard_only_visible_for_challenge(client, viewtype):
     ch1, ch2 = ChallengeFactory.create_batch(2)

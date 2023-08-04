@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.evaluation.views import (
     CombinedLeaderboardCreate,
+    CombinedLeaderboardDelete,
     CombinedLeaderboardDetail,
     CombinedLeaderboardUpdate,
     EvaluationAdminList,
@@ -45,6 +46,11 @@ urlpatterns = [
         "combined-leaderboards/<slug>/update/",
         CombinedLeaderboardUpdate.as_view(),
         name="combined-leaderboard-update",
+    ),
+    path(
+        "combined-leaderboards/<slug>/delete/",
+        CombinedLeaderboardDelete.as_view(),
+        name="combined-leaderboard-delete",
     ),
     path("<slug>/", EvaluationList.as_view(), name="list"),
     path(

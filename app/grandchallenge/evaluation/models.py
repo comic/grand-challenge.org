@@ -1211,6 +1211,10 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
             },
         )
 
+    def delete(self, *args, **kwargs):
+        cache.delete(self.combined_ranks_cache_key)
+        return super().delete(*args, **kwargs)
+
 
 class CombinedLeaderboardPhase(models.Model):
     # Through table for the combined leaderboard
