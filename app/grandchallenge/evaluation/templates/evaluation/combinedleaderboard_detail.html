@@ -2,6 +2,7 @@
 {% load url %}
 {% load dict_lookup %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}{{ object.title|title}} Leaderboard - {{ block.super }}{% endblock %}
 
@@ -44,9 +45,10 @@
         <table class="table table-hover table-borderless table-sm" id="combinedRanksTable">
             <thead class="thead-light">
             <tr>
-                <th>Combined Rank ({{ object.get_combination_method_display }})</th>
+                <th>#</th>
                 <th>User</th>
                 <th>Created</th>
+                <th>Combined Rank ({{ object.get_combination_method_display }})</th>
                 {% for phase in object.public_phases %}
                     <th>{{ phase.title|title }} Rank</th>
                 {% endfor %}
@@ -55,13 +57,14 @@
             <tbody>
             {% for combined_rank in object.combined_ranks %}
                 <tr>
-                    <td>{{ combined_rank.combined_rank }}</td>
+                    <td>{{ combined_rank.rank|ordinal }}</td>
                     <td><a href="{% url 'profile-detail' username=combined_rank.user %}">{{ combined_rank.user }}</a></td>
-                    <td data-order="{{ combined_rank.created|date:"U" }}">{{ combined_rank.created }}</td>
+                    <td data-order="{{ combined_rank.created|date:"U" }}">{{ combined_rank.created|date:"j N Y" }}</td>
+                    <td>{{ combined_rank.combined_rank }}</td>
                     {% for phase in object.public_phases %}
                         {% get_dict_values combined_rank.evaluations phase.pk as evaluation %}
                         {% if evaluation %}
-                            <td><a href="{% url 'evaluation:detail' challenge_short_name=challenge.short_name pk=evaluation.pk %}">{{ evaluation.rank }}</a></td>
+                            <td><a href="{% url 'evaluation:detail' challenge_short_name=challenge.short_name pk=evaluation.pk %}">{{ evaluation.rank|ordinal }}</a></td>
                         {% endif %}
                     {% endfor %}
                 </tr>
