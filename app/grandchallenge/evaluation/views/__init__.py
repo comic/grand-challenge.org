@@ -882,6 +882,13 @@ class CombinedLeaderboardDelete(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            CombinedLeaderboard,
+            challenge=self.request.challenge,
+            slug=self.kwargs["slug"],
+        )
+
     def get_success_url(self):
         return reverse(
             "update",
