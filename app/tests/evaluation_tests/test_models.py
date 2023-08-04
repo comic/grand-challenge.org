@@ -462,8 +462,8 @@ def test_combined_leaderboards_with_non_public_components():
         update_combined_leaderboard(pk=leaderboard.pk)
 
         # clear cached property
-        if hasattr(leaderboard, "combined_ranks"):
-            del leaderboard.combined_ranks
+        if hasattr(leaderboard, "_combined_ranks_object"):
+            del leaderboard._combined_ranks_object
 
     update_leaderboards()
 

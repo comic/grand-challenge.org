@@ -1100,12 +1100,16 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         combined_ranks = self._combined_ranks_object
         if combined_ranks is not None:
             return combined_ranks["results"]
+        else:
+            return []
 
     @property
     def combined_ranks_created(self):
         combined_ranks = self._combined_ranks_object
         if combined_ranks is not None:
             return combined_ranks["created"]
+        else:
+            return None
 
     @property
     def users_best_evaluation_per_phase(self):
