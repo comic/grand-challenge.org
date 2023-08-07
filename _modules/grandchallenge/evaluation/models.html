@@ -1160,19 +1160,34 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">combined_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">combined_ranks</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_combined_ranks_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
-            <span class="n">combined_ranks</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">or</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;phases&quot;</span><span class="p">]</span>
-            <span class="o">!=</span> <span class="p">{</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="p">}</span>
-            <span class="ow">or</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;combination_method&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span>
+            <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;phases&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="p">{</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="p">}</span>
+            <span class="ow">or</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;combination_method&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span>
         <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">schedule_combined_ranks_update</span><span class="p">()</span>
-            <span class="k">return</span> <span class="p">[]</span>
+            <span class="k">return</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">combined_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">combined_ranks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combined_ranks_object</span>
+        <span class="k">if</span> <span class="n">combined_ranks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">combined_ranks_created</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">combined_ranks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combined_ranks_object</span>
+        <span class="k">if</span> <span class="n">combined_ranks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">combined_ranks</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">users_best_evaluation_per_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1221,6 +1236,7 @@
         <span class="n">combined_ranks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">num_phases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
+        <span class="n">now</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">user</span><span class="p">,</span> <span class="n">evaluations</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users_best_evaluation_per_phase</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">evaluations</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_phases</span><span class="p">:</span>  <span class="c1"># Exclude missing data</span>
                 <span class="n">combined_ranks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -1249,6 +1265,7 @@
         <span class="n">cache_object</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;phases&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">public_phases</span><span class="p">},</span>
             <span class="s2">&quot;combination_method&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">combination_method</span><span class="p">,</span>
+            <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="n">now</span><span class="p">,</span>
             <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="n">combined_ranks</span><span class="p">,</span>
         <span class="p">}</span>
 
@@ -1288,6 +1305,10 @@
                 <span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">combined_ranks_cache_key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">CombinedLeaderboardPhase</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
