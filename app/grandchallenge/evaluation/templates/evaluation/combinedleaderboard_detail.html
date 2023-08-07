@@ -71,12 +71,12 @@
                         {% endif %}
                     {% endfor %}
                 </tr>
+            {% endfor %}
                 <tfoot>
                     <th colspan="5" class="text-muted" style="font-size: 0.85rem;">
                         This leaderboard was updated at {{ object.combined_ranks_created|date:"P" }} on {{ object.combined_ranks_created|date:"N j, Y" }}
                     </th>
                 </tfoot>
-            {% endfor %}
             </tbody>
         </table>
     </div>
