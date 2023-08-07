@@ -61,8 +61,16 @@ def user_profile_link(user: AbstractUser | None) -> str:
 
 @register.filter
 def user_profile_link_username(username: str) -> str:
+    return user_profile_links_from_usernames([username])[username]
+
+
+@register.simple_tag
+def user_profile_links_from_usernames(usernames):
     User = get_user_model()  # noqa: N806
-    return user_profile_link(User.objects.get(username=username))
+    users = User.objects.filter(username__in=usernames).select_related(
+        "user_profile", "verification"
+    )
+    return {user.username: user_profile_link(user) for user in users}
 
 
 @register.filter

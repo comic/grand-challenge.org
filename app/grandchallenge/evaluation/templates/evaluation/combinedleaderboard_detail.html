@@ -3,6 +3,7 @@
 {% load dict_lookup %}
 {% load static %}
 {% load humanize %}
+{% load profiles %}
 
 {% block title %}{{ object.title|title}} Leaderboard - {{ block.super }}{% endblock %}
 
@@ -55,10 +56,12 @@
             </tr>
             </thead>
             <tbody>
+            {% user_profile_links_from_usernames object.combined_ranks_users as user_profile_links %}
             {% for combined_rank in object.combined_ranks %}
                 <tr>
                     <td>{{ combined_rank.rank|ordinal }}</td>
-                    <td><a href="{% url 'profile-detail' username=combined_rank.user %}">{{ combined_rank.user }}</a></td>
+                    {% get_dict_values user_profile_links combined_rank.user as user_profile_link %}
+                    <td>{{ user_profile_link }}</td>
                     <td data-order="{{ combined_rank.created|date:"U" }}">{{ combined_rank.created|date:"j N Y" }}</td>
                     <td>{{ combined_rank.combined_rank }}</td>
                     {% for phase in object.public_phases %}
