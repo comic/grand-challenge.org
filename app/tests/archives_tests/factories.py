@@ -12,6 +12,7 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 class ArchiveFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Archive
+        skip_postgeneration_save = True
 
     title = factory.Sequence(lambda n: f"Archive {n}")
     logo = factory.django.ImageField()

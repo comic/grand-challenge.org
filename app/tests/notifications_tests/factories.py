@@ -37,6 +37,7 @@ class TopicFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Topic
+        skip_postgeneration_save = True
 
     # make sure that topic creation also results in post creation
     @factory.post_generation

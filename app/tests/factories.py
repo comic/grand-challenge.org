@@ -31,15 +31,20 @@ def hash_sha256(s):
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = settings.AUTH_USER_MODEL
+        skip_postgeneration_save = True
 
     username = factory.Sequence(lambda n: f"test_user_{n:04}")
     email = factory.LazyAttribute(lambda u: "%s@example.com" % u.username)
-    password = factory.PostGenerationMethodCall(
-        "set_password", SUPER_SECURE_TEST_PASSWORD
-    )
     is_active = True
     is_staff = False
     is_superuser = False
+
+    @factory.post_generation
+    def password(self, create, extracted, **kwargs):
+        if not create:
+            return
+        self.set_password(extracted or SUPER_SECURE_TEST_PASSWORD)
+        self.save()
 
 
 class GroupFactory(factory.django.DjangoModelFactory):
@@ -105,6 +110,7 @@ class UploadSessionFactory(factory.django.DjangoModelFactory):
 class ImageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Image
+        skip_postgeneration_save = True
 
     origin = factory.SubFactory(UploadSessionFactory)
     width = 128
