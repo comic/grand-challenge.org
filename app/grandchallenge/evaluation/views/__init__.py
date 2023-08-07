@@ -12,6 +12,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     ListView,
     RedirectView,
@@ -867,3 +868,34 @@ class CombinedLeaderboardUpdate(
         kwargs = super().get_form_kwargs()
         kwargs.update({"challenge": self.object.challenge})
         return kwargs
+
+
+class CombinedLeaderboardDelete(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
+):
+    model = CombinedLeaderboard
+    success_message = "The combined leaderboard was deleted."
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            CombinedLeaderboard,
+            challenge=self.request.challenge,
+            slug=self.kwargs["slug"],
+        )
+
+    def get_success_url(self):
+        return reverse(
+            "update",
+            kwargs={
+                "challenge_short_name": self.request.challenge.short_name,
+            },
+        )
+
+    def get_permission_object(self):
+        return self.get_object().challenge

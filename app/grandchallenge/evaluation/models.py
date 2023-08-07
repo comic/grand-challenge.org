@@ -1082,19 +1082,34 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
             raise NotImplementedError
 
     @cached_property
-    def combined_ranks(self):
-        combined_ranks = cache.get(self.combined_ranks_cache_key)
+    def _combined_ranks_object(self):
+        result = cache.get(self.combined_ranks_cache_key)
 
         if (
-            combined_ranks is None
-            or combined_ranks["phases"]
-            != {phase.pk for phase in self.public_phases}
-            or combined_ranks["combination_method"] != self.combination_method
+            result is None
+            or result["phases"] != {phase.pk for phase in self.public_phases}
+            or result["combination_method"] != self.combination_method
         ):
             self.schedule_combined_ranks_update()
-            return []
+            return None
         else:
+            return result
+
+    @property
+    def combined_ranks(self):
+        combined_ranks = self._combined_ranks_object
+        if combined_ranks is not None:
             return combined_ranks["results"]
+        else:
+            return []
+
+    @property
+    def combined_ranks_created(self):
+        combined_ranks = self._combined_ranks_object
+        if combined_ranks is not None:
+            return combined_ranks["created"]
+        else:
+            return None
 
     @property
     def users_best_evaluation_per_phase(self):
@@ -1143,6 +1158,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         combined_ranks = []
         num_phases = self.public_phases.count()
 
+        now = timezone.now()
         for user, evaluations in self.users_best_evaluation_per_phase.items():
             if len(evaluations) == num_phases:  # Exclude missing data
                 combined_ranks.append(
@@ -1171,6 +1187,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
         cache_object = {
             "phases": {phase.pk for phase in self.public_phases},
             "combination_method": self.combination_method,
+            "created": now,
             "results": combined_ranks,
         }
 
@@ -1210,6 +1227,10 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
                 "slug": self.slug,
             },
         )
+
+    def delete(self, *args, **kwargs):
+        cache.delete(self.combined_ranks_cache_key)
+        return super().delete(*args, **kwargs)
 
 
 class CombinedLeaderboardPhase(models.Model):
