@@ -1104,6 +1104,10 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
             return []
 
     @property
+    def combined_ranks_users(self):
+        return [cr["user"] for cr in self.combined_ranks]
+
+    @property
     def combined_ranks_created(self):
         combined_ranks = self._combined_ranks_object
         if combined_ranks is not None:
