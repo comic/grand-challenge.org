@@ -132,35 +132,41 @@ class JSONSchemaRegistry:
         cls, *, allowed_regexes=settings.ALLOWED_JSON_SCHEMA_REF_REGEXES
     ):
         lookup_key = cls._get_instance_lookup_key(allowed_regexes)
-        if lookup_key not in cls._instances:
-            retrieve_func = cls._gen_limited_retrieve(allowed_regexes)
-            cls._instances[lookup_key] = referencing.Registry(
-                retrieve=retrieve_func
+        instance = cls._instances.get(lookup_key)
+        if instance is None:
+            retrieve_func = cls._limited_retrieve(
+                allowed_regexes, retrieve=cls._retrieve_via_requests
             )
-        return cls._instances[lookup_key]
+            instance = referencing.Registry(retrieve=retrieve_func)
+            cls._instances[lookup_key] = instance
+        return instance
 
     @staticmethod
     def _get_instance_lookup_key(regexes):
-        """Returns a hash that uniquely identifies an allow list"""
+        """Returns a hash that identifies an allow list"""
         for regex in regexes:  # Sanity checks
             assert isinstance(regex, Hashable)
             re.compile(regex)
         # deduplicate
-        regexes = set(regexes)
+        regexes = list(set(regexes))
         # ensure order
-        regexes = sorted(list(regexes))
+        regexes.sort()
         return hash(tuple(regexes))
 
     @staticmethod
-    def _gen_limited_retrieve(allowed_regexes):
-        @referencing.retrieval.to_cached_resource()
-        def retrieve(uri):
+    @referencing.retrieval.to_cached_resource()
+    def _retrieve_via_requests(uri):
+        return requests.get(uri).text
+
+    @staticmethod
+    def _limited_retrieve(allowed_regexes, retrieve):
+        def wrapper(uri):
             for regex in allowed_regexes:
                 if re.match(regex, uri):
-                    return requests.get(uri).text
+                    return retrieve(uri)
             raise referencing.exceptions.NoSuchResource(uri)
 
-        return retrieve
+        return wrapper
 
 
 @deconstructible
