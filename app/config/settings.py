@@ -1373,7 +1373,7 @@ RETINA_ADMINS_GROUP_NAME = "retina_admins"
 ##########################
 # JSON SCHEMA
 ##########################
-ALLOWED_JSON_SCHEMA_REF_REGEXES = (
+ALLOWED_JSON_SCHEMA_REF_SRC_REGEXES = (
     "https://vega.github.io/schema/vega-lite/v5.json",
 )
 

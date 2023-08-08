@@ -141,7 +141,7 @@ class JSONSchemaRetrieve:
 @cache
 def get_json_schema_registry():
     retrieve = JSONSchemaRetrieve(
-        allowed_regexes=settings.ALLOWED_JSON_SCHEMA_REF_REGEXES,
+        allowed_regexes=settings.ALLOWED_JSON_SCHEMA_REF_SRC_REGEXES,
     )
     return referencing.Registry(retrieve=retrieve)
 
