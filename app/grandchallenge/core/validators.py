@@ -1,5 +1,5 @@
 import re
-from collections.abc import Hashable
+from functools import cache
 from pathlib import Path
 
 import magic
@@ -116,57 +116,34 @@ def get_file_mimetype(file):
     return mimetype
 
 
-class JSONSchemaRegistry:
+class JSONSchemaRetrieve:
     """
-    Registry for cached retrieval of external JSON-schema references.
+    A cached retrieve that can be used in referencing.Registry.
 
-    A set of allowed regexes can be provided: these will limit which
-    URIs are allowed to be retrieved.
-
-    Each set of regexes will result in a singleton registry with its own cache.
+    The URIs retrieved are limited to those that match the allowed_regexes.
     """
 
-    _instances = {}
-
-    def __new__(
-        cls, *, allowed_regexes=settings.ALLOWED_JSON_SCHEMA_REF_REGEXES
-    ):
-        lookup_key = cls._get_instance_lookup_key(allowed_regexes)
-        instance = cls._instances.get(lookup_key)
-        if instance is None:
-            retrieve_func = cls._limited_retrieve(
-                allowed_regexes, retrieve=cls._retrieve_via_requests
-            )
-            instance = referencing.Registry(retrieve=retrieve_func)
-            cls._instances[lookup_key] = instance
-        return instance
-
-    @staticmethod
-    def _get_instance_lookup_key(regexes):
-        """Returns a hash that identifies an allow list"""
-        for regex in regexes:  # Sanity checks
-            assert isinstance(regex, Hashable)
-            re.compile(regex)
-        # deduplicate
-        regexes = list(set(regexes))
-        # ensure order
-        regexes.sort()
-        return hash(tuple(regexes))
+    def __init__(self, *, allowed_regexes):
+        self.allowed_regexes = allowed_regexes
 
     @staticmethod
     @referencing.retrieval.to_cached_resource()
     def _retrieve_via_requests(uri):
         return requests.get(uri).text
 
-    @staticmethod
-    def _limited_retrieve(allowed_regexes, retrieve):
-        def wrapper(uri):
-            for regex in allowed_regexes:
-                if re.match(regex, uri):
-                    return retrieve(uri)
-            raise referencing.exceptions.NoSuchResource(uri)
+    def __call__(self, uri):
+        for regex in self.allowed_regexes:
+            if re.match(regex, uri):
+                return self._retrieve_via_requests(uri)
+        raise referencing.exceptions.NoSuchResource(uri)
 
-        return wrapper
+
+@cache
+def get_json_schema_registry():
+    retrieve = JSONSchemaRetrieve(
+        allowed_regexes=settings.ALLOWED_JSON_SCHEMA_REF_REGEXES,
+    )
+    return referencing.Registry(retrieve=retrieve)
 
 
 @deconstructible
@@ -177,11 +154,12 @@ class JSONValidator:
 
     def __init__(self, *, schema: dict):
         self.schema = schema
+        self.registry = get_json_schema_registry()
         super().__init__()
 
     def __call__(self, value):
         try:
-            validate(value, self.schema, registry=JSONSchemaRegistry())
+            validate(value, self.schema, registry=self.registry)
         except JSONValidationError as e:
             raise ValidationError(f"JSON does not fulfill schema: {e}")
 
