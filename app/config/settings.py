@@ -1369,6 +1369,15 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
+
+##########################
+# JSON SCHEMA
+##########################
+ALLOWED_JSON_SCHEMA_REF_REGEXES = (
+    "https://vega.github.io/schema/vega-lite/v5.json",
+)
+
+
 ##########################
 # CONTENT SECURITY POLICY
 ##########################

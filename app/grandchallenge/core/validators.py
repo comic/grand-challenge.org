@@ -1,6 +1,12 @@
+import re
+from collections.abc import Hashable
 from pathlib import Path
 
 import magic
+import referencing
+import referencing.retrieval
+import requests
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 from jsonschema import SchemaError
@@ -110,6 +116,53 @@ def get_file_mimetype(file):
     return mimetype
 
 
+class JSONSchemaRegistry:
+    """
+    Registry for cached retrieval of external JSON-schema references.
+
+    A set of allowed regexes can be provided: these will limit which
+    URIs are allowed to be retrieved.
+
+    Each set of regexes will result in a singleton registry with its own cache.
+    """
+
+    _instances = {}
+
+    def __new__(
+        cls, *, allowed_regexes=settings.ALLOWED_JSON_SCHEMA_REF_REGEXES
+    ):
+        lookup_key = cls._get_instance_lookup_key(allowed_regexes)
+        if lookup_key not in cls._instances:
+            retrieve_func = cls._gen_limited_retrieve(allowed_regexes)
+            cls._instances[lookup_key] = referencing.Registry(
+                retrieve=retrieve_func
+            )
+        return cls._instances[lookup_key]
+
+    @staticmethod
+    def _get_instance_lookup_key(regexes):
+        """Returns a hash that uniquely identifies an allow list"""
+        for regex in regexes:  # Sanity checks
+            assert isinstance(regex, Hashable)
+            re.compile(regex)
+        # deduplicate
+        regexes = set(regexes)
+        # ensure order
+        regexes = sorted(list(regexes))
+        return hash(tuple(regexes))
+
+    @staticmethod
+    def _gen_limited_retrieve(allowed_regexes):
+        @referencing.retrieval.to_cached_resource()
+        def retrieve(uri):
+            for regex in allowed_regexes:
+                if re.match(regex, uri):
+                    return requests.get(uri).text
+            raise referencing.exceptions.NoSuchResource(uri)
+
+        return retrieve
+
+
 @deconstructible
 class JSONValidator:
     """Uses jsonschema to validate json fields."""
@@ -122,7 +175,7 @@ class JSONValidator:
 
     def __call__(self, value):
         try:
-            validate(value, self.schema)
+            validate(value, self.schema, registry=JSONSchemaRegistry())
         except JSONValidationError as e:
             raise ValidationError(f"JSON does not fulfill schema: {e}")
 
