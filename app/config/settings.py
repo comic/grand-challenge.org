@@ -795,6 +795,13 @@ MACHINA_BASE_TEMPLATE_NAME = "base.html"
 MACHINA_PROFILE_AVATARS_ENABLED = False
 MACHINA_FORUM_NAME = "Grand Challenge Forums"
 MACHINA_MARKUP_WIDGET = "grandchallenge.core.widgets.MarkdownEditorWidget"
+MACHINA_MARKUP_LANGUAGE = (
+    "markdown2.markdown",
+    {
+        "safe_mode": True,
+        "extras": {"break-on-newline": True, "fenced-code-blocks": None},
+    },
+)
 
 AUTH_PASSWORD_VALIDATORS = [
     {
