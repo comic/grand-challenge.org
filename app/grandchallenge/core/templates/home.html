@@ -12,16 +12,16 @@
                     <div class="carousel-inner m-0 px-0">
                         {% for item in news_caroussel_items %}
                             <div class="carousel-item {% if forloop.counter == 1 %}active{% endif %}">
-                                <div class="d-md-flex d-sm-inline-flex justify-content-center align-items-center">
-                                    <div class="col-12 col-md-3 p-0 my-3 d-md-flex d-sm-inline-flex carousel-img-container w-100 justify-content-center align-items-center">
-                                        <a href="{{ item.get_absolute_url }}"><img class="rounded m-auto mh-100 mw-100 border-0"
+                                <div class="d-md-flex justify-content-center align-items-center">
+                                    <div class="col-12 col-md-3 p-0 my-3 d-md-flex carousel-img-container w-100 justify-content-center align-items-center">
+                                        <a href="{{ item.get_absolute_url }}"><img class="rounded m-auto mh-100 mw-100 border-0 img-flex"
                                              src="{{ item.logo.x20.url }}"
                                              srcset="{{ item.logo.x10.url }} 1x,
                                                      {{ item.logo.x15.url }} 1.5x,
                                                       {{ item.logo.x20.url }} 2x"
                                              alt="{{ item.title }}" loading="lazy"></a>
                                     </div>
-                                    <div class="col-12 col-md-7 text-primary text-truncate-container">
+                                    <div class="col-12 col-md-7 text-primary">
                                         <a class="stretched-link text-decoration-none text-primary"
                                            href="{{ item.get_absolute_url }}">
                                             <h4 class="p-3">{{ item.title }}</h4>
