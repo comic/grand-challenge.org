@@ -27,7 +27,7 @@
         <div class="alert alert-danger">This phase is no longer active. </div>
     {% endif %}
 
-    {% if "change_challenge" in challenge_perms and not phase.score_jsonpath %}
+    {% if "change_challenge" in challenge_perms %}
         {% if not phase.score_jsonpath %}
             <div class="alert alert-warning">
                 <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>&nbsp;&nbsp;
