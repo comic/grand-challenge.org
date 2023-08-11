@@ -27,6 +27,18 @@
         <div class="alert alert-danger">This phase is no longer active. </div>
     {% endif %}
 
+    {% if "change_challenge" in challenge_perms and not phase.score_jsonpath %}
+        {% if not phase.score_jsonpath %}
+            <div class="alert alert-warning">
+                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>&nbsp;&nbsp;
+                Kindly configure the scoring feature in the phase settings, as no evaluation results can be shown without it.
+            </div>
+        {% endif %}
+        <a href="{% url "evaluation:phase-update" challenge_short_name=challenge.short_name slug=phase.slug %}" class="btn btn-primary text-decoration-none">
+            <i class="fa fa-edit"></i>&nbsp;&nbsp;Edit Phase Settings
+        </a>
+    {% endif %}
+
     {% include "datatables/partials/datatable.html" with columns=columns %}
 
     {% if phase.result_display_choice == phase.BEST %}
