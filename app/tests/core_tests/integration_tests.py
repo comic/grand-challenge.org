@@ -51,9 +51,8 @@ class GrandChallengeFrameworkTestCase(TestCase):
             email="test@test.com",
             is_active=True,
             is_superuser=True,
+            password="testpassword",
         )
-        self.root.set_password("testpassword")
-        self.root.save()
 
         EmailAddress.objects.create(
             user=self.root, email=self.root.email, verified=True

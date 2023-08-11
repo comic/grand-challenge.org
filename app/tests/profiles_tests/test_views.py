@@ -15,9 +15,7 @@ class TestSignInRedirect:
     def get_redirect_response(self, client, next=None):
         password = "password"
 
-        self.user = UserFactory()
-        self.user.set_password(password)
-        self.user.save()
+        self.user = UserFactory(password=password)
 
         EmailAddress.objects.create(
             user=self.user, email=self.user.email, verified=True

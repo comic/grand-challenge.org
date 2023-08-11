@@ -114,10 +114,11 @@ def _create_users(usernames):
 
     for username in usernames:
         user = get_user_model().objects.create(
-            username=username, email=f"{username}@example.com", is_active=True
+            username=username,
+            email=f"{username}@example.com",
+            is_active=True,
+            password=username,
         )
-        user.set_password(username)
-        user.save()
 
         EmailAddress.objects.create(
             user=user,

@@ -37,6 +37,7 @@ class AlgorithmImageFactory(factory.django.DjangoModelFactory):
 class AlgorithmJobFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Job
+        skip_postgeneration_save = True
 
     algorithm_image = factory.SubFactory(AlgorithmImageFactory)
     creator = factory.SubFactory(UserFactory)

@@ -7,6 +7,7 @@ from tests.factories import UserFactory
 class PostFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Post
+        skip_postgeneration_save = True
 
     @factory.post_generation
     def authors(self, create, extracted, **kwargs):
