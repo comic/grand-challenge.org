@@ -144,8 +144,6 @@ class ChallengeRequestList(
 ):
     model = ChallengeRequest
     permission_required = "challenges.view_challengerequest"
-    paginate_by = 50
-    ordering = ["-created"]
 
 
 class ChallengeRequestDetail(
