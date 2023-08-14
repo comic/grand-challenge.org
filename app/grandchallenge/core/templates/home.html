@@ -12,8 +12,8 @@
                     <div class="carousel-inner m-0 px-0">
                         {% for item in news_caroussel_items %}
                             <div class="carousel-item {% if forloop.counter == 1 %}active{% endif %}">
-                                <div class="d-md-flex d-sm-inline-flex justify-content-center align-items-center">
-                                    <div class="col-12 col-md-3 p-0 my-3 d-md-flex d-sm-inline-flex carousel-img-container w-100 justify-content-center align-items-center">
+                                <div class="d-md-flex justify-content-center align-items-center">
+                                    <div class="col-12 col-md-3 p-0 my-3 d-md-flex carousel-img-container w-100 justify-content-center align-items-center text-center">
                                         <a href="{{ item.get_absolute_url }}"><img class="rounded m-auto mh-100 mw-100 border-0"
                                              src="{{ item.logo.x20.url }}"
                                              srcset="{{ item.logo.x10.url }} 1x,
