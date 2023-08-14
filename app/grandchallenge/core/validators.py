@@ -1,6 +1,12 @@
+import re
+from functools import cache
 from pathlib import Path
 
 import magic
+import referencing
+import referencing.retrieval
+import requests
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 from jsonschema import SchemaError
@@ -110,6 +116,36 @@ def get_file_mimetype(file):
     return mimetype
 
 
+class JSONSchemaRetrieve:
+    """
+    A cached retrieve that can be used in referencing.Registry.
+
+    The URIs retrieved are limited to those that match the allowed_regexes.
+    """
+
+    def __init__(self, *, allowed_regexes):
+        self.allowed_regexes = allowed_regexes
+
+    @staticmethod
+    @referencing.retrieval.to_cached_resource()
+    def _retrieve_via_requests(uri):
+        return requests.get(uri).text
+
+    def __call__(self, uri):
+        for regex in self.allowed_regexes:
+            if re.match(regex, uri):
+                return self._retrieve_via_requests(uri)
+        raise referencing.exceptions.NoSuchResource(uri)
+
+
+@cache
+def get_json_schema_registry():
+    retrieve = JSONSchemaRetrieve(
+        allowed_regexes=settings.ALLOWED_JSON_SCHEMA_REF_SRC_REGEXES,
+    )
+    return referencing.Registry(retrieve=retrieve)
+
+
 @deconstructible
 class JSONValidator:
     """Uses jsonschema to validate json fields."""
@@ -118,11 +154,12 @@ class JSONValidator:
 
     def __init__(self, *, schema: dict):
         self.schema = schema
+        self.registry = get_json_schema_registry()
         super().__init__()
 
     def __call__(self, value):
         try:
-            validate(value, self.schema)
+            validate(value, self.schema, registry=self.registry)
         except JSONValidationError as e:
             raise ValidationError(f"JSON does not fulfill schema: {e}")
 
