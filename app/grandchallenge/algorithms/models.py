@@ -97,11 +97,17 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    hanging_protocol = models.ForeignKey(
+    default_hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol",
+        related_name = "default_hanging_protocol",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
+    )
+    optional_hanging_protocols = models.ManyToManyField(
+        "hanging_protocols.HangingProtocol",
+        related_name = "optional_hanging_protocol",
+        blank=True,
     )
     public = models.BooleanField(
         default=False,

@@ -91,8 +91,8 @@ class JobSerializer(serializers.ModelSerializer):
     algorithm_title = CharField(
         source="algorithm_image.algorithm.title", read_only=True
     )
-    hanging_protocol = HangingProtocolSerializer(
-        source="algorithm_image.algorithm.hanging_protocol",
+    default_hanging_protocol = HangingProtocolSerializer(
+        source="algorithm_image.algorithm.default_hanging_protocol",
         read_only=True,
         allow_null=True,
     )
@@ -113,7 +113,8 @@ class JobSerializer(serializers.ModelSerializer):
             "algorithm_title",
             "started_at",
             "completed_at",
-            "hanging_protocol",
+            "default_hanging_protocol",
+            "optional_hanging_protocols"
             "view_content",
         ]
 
