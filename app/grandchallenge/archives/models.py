@@ -23,7 +23,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import ViewContentMixin, HangingProtocol
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -83,11 +83,18 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    hanging_protocol = models.ForeignKey(
+    default_hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol",
+        related_name="default_hanging_protocol_of_archive",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
+    )
+    optional_hanging_protocols = models.ManyToManyField(
+        HangingProtocol,
+        related_name="optional_hanging_protocols_of_archive",
+        blank=True,
+        help_text="Optional alternative hanging protocols for this archive",
     )
     algorithms = models.ManyToManyField(
         Algorithm,
