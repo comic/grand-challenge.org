@@ -119,6 +119,7 @@ def _create_users(usernames):
             is_active=True,
         )
         user.set_password(username)
+        user.save()
 
         EmailAddress.objects.create(
             user=user,
