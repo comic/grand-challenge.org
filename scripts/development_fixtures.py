@@ -117,8 +117,8 @@ def _create_users(usernames):
             username=username,
             email=f"{username}@example.com",
             is_active=True,
-            password=username,
         )
+        user.set_password(username)
 
         EmailAddress.objects.create(
             user=user,
