@@ -503,7 +503,7 @@
             <span class="s2">&quot;have access to their previous submissions and evaluations from this &quot;</span>
             <span class="s2">&quot;phase if they exist, and they will no longer see the &quot;</span>
             <span class="s2">&quot;respective submit and leaderboard tabs for this phase. &quot;</span>
-            <span class="s2">&quot;For you as admin these tabs remain visible.&quot;</span>
+            <span class="s2">&quot;For you as admin these tabs remain visible. &quot;</span>
             <span class="s2">&quot;Note that hiding a phase is only possible if submissions for &quot;</span>
             <span class="s2">&quot;this phase are closed for participants.&quot;</span>
         <span class="p">),</span>
@@ -529,7 +529,7 @@
     <span class="n">total_number_of_submissions_allowed</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Total number of submissions allowed for this phase for all users together.&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Total number of successful submissions allowed for this phase for all users together.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
@@ -735,7 +735,8 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">open_for_submissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">public</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exceeds_total_number_of_submissions_allowed</span>
         <span class="p">)</span>
@@ -747,18 +748,32 @@
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">percent_of_total_submissions_allowed</span> <span class="o">&gt;=</span> <span class="mi">100</span>
         <span class="p">)</span>
 
-    <span class="nd">@property</span>
+    <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">percent_of_total_submissions_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_submissions_allowed</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_submissions_allowed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_submissions_allowed</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">100</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Allow all submissions by challenge admins</span>
+            <span class="c1"># and do not count cancellations or failures</span>
             <span class="k">return</span> <span class="nb">round</span><span class="p">(</span>
                 <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                        <span class="n">evaluation__status__in</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
+                            <span class="n">Evaluation</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                        <span class="n">creator__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="o">.</span><span class="n">user_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+                    <span class="o">.</span><span class="n">count</span><span class="p">()</span>
                     <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_submissions_allowed</span>
                 <span class="p">)</span>
                 <span class="o">*</span> <span class="mi">100</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -795,13 +810,6 @@
             <span class="k">return</span> <span class="s2">&quot;Not accepting submissions&quot;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> not implemented&quot;</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">inconsistent_submission_information</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_period_is_open_now</span>
-        <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">active_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
