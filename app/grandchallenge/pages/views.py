@@ -16,6 +16,7 @@ from django.views.generic import (
 from django_countries import countries
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.evaluation.models import Submission
@@ -208,6 +209,10 @@ class ChallengeStatistics(TemplateView):
                     submission_kind=SubmissionKindChoices.ALGORITHM
                 ),
                 "statistics_for_phases": cache.get("statistics_for_phases"),
+                "challenge_request": ChallengeRequest.objects.filter(
+                    short_name=self.request.challenge.short_name,
+                    status=ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+                ).first(),
             }
         )
 

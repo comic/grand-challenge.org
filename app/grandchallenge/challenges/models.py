@@ -893,6 +893,24 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
         return challenge
 
+    @property
+    def budget_fields(self):
+        budget_fields = (
+            "expected_number_of_teams",
+            "number_of_tasks",
+            "inference_time_limit_in_minutes",
+            "average_size_of_test_image_in_mb",
+            "phase_1_number_of_submissions_per_team",
+            "phase_1_number_of_test_images",
+            "phase_2_number_of_submissions_per_team",
+            "phase_2_number_of_test_images",
+        )
+        return {
+            field.verbose_name: field.value_to_string(self)
+            for field in self._meta.fields
+            if field.name in budget_fields
+        }
+
     @cached_property
     def budget(self):
         if (
@@ -928,6 +946,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     self.phase_1_number_of_test_images
                     * self.average_size_of_test_image_in_mb
                     * s3_storage_costs
+                    * self.number_of_tasks
                     / 1000000
                     / 100
                     / 10,
@@ -941,6 +960,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     * self.expected_number_of_teams
                     * self.inference_time_limit_in_minutes
                     * compute_costs
+                    * self.number_of_tasks
                     / 60
                     / 100
                     / 10,
@@ -953,7 +973,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                         budget["Data storage cost for phase 1"]
                         + budget["Compute costs for phase 1"]
                     )
-                    * self.number_of_tasks
                     / 10,
                 )
                 * 10
@@ -964,6 +983,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     self.phase_2_number_of_test_images
                     * self.average_size_of_test_image_in_mb
                     * s3_storage_costs
+                    * self.number_of_tasks
                     / 1000000
                     / 100
                     / 10,
@@ -977,6 +997,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     * self.expected_number_of_teams
                     * self.inference_time_limit_in_minutes
                     * compute_costs
+                    * self.number_of_tasks
                     / 60
                     / 100
                     / 10,
@@ -989,7 +1010,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                         budget["Data storage cost for phase 2"]
                         + budget["Compute costs for phase 2"]
                     )
-                    * self.number_of_tasks
                     / 10,
                 )
                 * 10
