@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             name="total_number_of_submissions_allowed",
             field=models.PositiveSmallIntegerField(
                 blank=True,
-                help_text="Total number of submissions allowed for this phase for all users together.",
+                help_text="Total number of successful submissions allowed for this phase for all users together.",
                 null=True,
             ),
         ),

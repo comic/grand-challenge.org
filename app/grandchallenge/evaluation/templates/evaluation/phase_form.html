@@ -26,6 +26,8 @@
             Use this form to create a new phase for your challenge with a separate evaluation method.
             For instance, you could have a training and test phase, or have a phase for each task.
         </p>
+    {% else %}
+        {% include "evaluation/partials/phase_closed_warning.html" with phase=object %}
     {% endif %}
 
     {% crispy form %}

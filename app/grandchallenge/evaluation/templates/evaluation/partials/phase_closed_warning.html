@@ -1,0 +1,57 @@
+{% load url %}
+
+{% if not phase.active_image %}
+    <div class="alert alert-warning" role="alert">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        Nobody can submit to this phase as there is no valid evaluation method.
+        Please <a href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
+        upload a method container</a>.
+    </div>
+{% endif %}
+
+{% if not phase.open_for_submissions %}
+    <div class="alert alert-warning" role="alert">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Participants are not able to submit to this phase
+        as:
+        <ul class="mb-1">
+            {% if not phase.public %}
+                <li>
+                    The phase is not public. You can update this in the <a
+                        href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">Phase
+                    Settings</a>.
+                </li>
+            {% endif %}
+            {% if not phase.submission_period_is_open_now %}
+                <li>
+                    The submission period is closed.
+                    You can update the dates in the <a
+                        href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">Phase
+                    Settings</a>.
+                </li>
+            {% endif %}
+            {% if phase.submissions_limit_per_user_per_period == 0 %}
+                <li>
+                    The individual submission limit is 0.
+                    You can update this limit in the <a
+                        href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">Phase
+                    Settings</a>.
+                </li>
+            {% endif %}
+            {% if phase.exceeds_total_number_of_submissions_allowed %}
+                <li>
+                    The total number of submissions has exceeded the budgeted limit. Please contact support.
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+{% endif %}
+
+{% if not phase.score_jsonpath %}
+    <div class="alert alert-warning">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>&nbsp;&nbsp;
+        Results will not be displayed on the leaderboard as the score jsonpath is not set.
+        Please fill out your scoring details in the <a
+            href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">Phase
+        Settings</a>.
+    </div>
+{% endif %}

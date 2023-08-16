@@ -6,8 +6,9 @@ from django.db.models import ProtectedError
 from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.notifications.models import Notification
-from tests.evaluation_tests.factories import PhaseFactory, SubmissionFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import TopicFactory
 
@@ -100,10 +101,31 @@ def test_submission_limit_status():
         4, total_number_of_submissions_allowed=10
     )
     p5 = PhaseFactory()
-    SubmissionFactory.create_batch(10, phase=p1)
-    SubmissionFactory.create_batch(4, phase=p2)
-    SubmissionFactory.create_batch(8, phase=p3)
-    SubmissionFactory.create_batch(12, phase=p4)
+
+    admin = UserFactory()
+    p3.challenge.add_admin(user=admin)
+
+    EvaluationFactory.create_batch(
+        10, submission__phase=p1, status=Evaluation.SUCCESS
+    )
+    EvaluationFactory.create_batch(
+        4, submission__phase=p2, status=Evaluation.SUCCESS
+    )
+    EvaluationFactory.create_batch(
+        10, submission__phase=p2, status=Evaluation.FAILURE
+    )
+    EvaluationFactory.create_batch(
+        8, submission__phase=p3, status=Evaluation.SUCCESS
+    )
+    EvaluationFactory.create_batch(
+        8,
+        submission__phase=p3,
+        submission__creator=admin,
+        status=Evaluation.SUCCESS,
+    )
+    EvaluationFactory.create_batch(
+        12, submission__phase=p4, status=Evaluation.SUCCESS
+    )
 
     assert p1.percent_of_total_submissions_allowed == 100
     assert p2.percent_of_total_submissions_allowed == 40
