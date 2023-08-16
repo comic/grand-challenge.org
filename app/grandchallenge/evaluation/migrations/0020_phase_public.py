@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name="public",
             field=models.BooleanField(
                 default=True,
-                help_text="Uncheck this box to hide this phase's submission page and leaderboard from participants. Participants will then no longer have access to their previous submissions and evaluations from this phase if they exist, and they will no longer see the respective submit and leaderboard tabs for this phase. For you as admin these tabs remain visible.Note that hiding a phase is only possible if submissions for this phase are closed for participants.",
+                help_text="Uncheck this box to hide this phase's submission page and leaderboard from participants. Participants will then no longer have access to their previous submissions and evaluations from this phase if they exist, and they will no longer see the respective submit and leaderboard tabs for this phase. For you as admin these tabs remain visible. Note that hiding a phase is only possible if submissions for this phase are closed for participants.",
             ),
         ),
     ]
