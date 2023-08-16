@@ -43,11 +43,18 @@ class TestVerificationForm:
         u.user_profile.department = "Bar"
         u.user_profile.country = "US"
         u.user_profile.save()
-        form = VerificationForm(user=u, data={"email": u.email, "user": u.pk})
+        form = VerificationForm(
+            user=u, data={"email": u.email, "user": u.pk, "only_account": True}
+        )
         assert form.is_valid()
 
         form = VerificationForm(
-            user=u, data={"email": u.email.upper(), "user": u.pk}
+            user=u,
+            data={
+                "email": u.email.upper(),
+                "user": u.pk,
+                "only_account": True,
+            },
         )
         assert form.is_valid()
 
