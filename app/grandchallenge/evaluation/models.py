@@ -876,6 +876,17 @@ class Submission(UUIDModel):
     class Meta:
         unique_together = (("phase", "predictions_file", "algorithm_image"),)
 
+    @cached_property
+    def is_evaluated_with_active_image(self):
+        active_image = self.phase.active_image
+        if active_image:
+            return Evaluation.objects.filter(
+                submission=self, method=active_image
+            ).exists()
+        else:
+            # No active image, so nothing to do to evaluate with it
+            return True
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -939,6 +950,9 @@ class Evaluation(UUIDModel, ComponentJob):
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = models.JSONField(default=dict)
+
+    class Meta(UUIDModel.Meta, ComponentJob.Meta):
+        unique_together = ("submission", "method")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

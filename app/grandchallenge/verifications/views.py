@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import (
 )
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
+from django.utils.html import format_html
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, FormView
 from guardian.mixins import LoginRequiredMixin
@@ -34,8 +35,11 @@ class VerificationRequiredMixin(UserPassesTestMixin):
         if not verified:
             messages.error(
                 self.request,
-                "You need to verify your account before you can do this, "
-                "you can request this from your profile page.",
+                format_html(
+                    "You need to verify your account before you can do this, "
+                    "you can request this <a href='{}'>on this page</a>.",
+                    reverse("verifications:create"),
+                ),
             )
 
         return verified

@@ -14,6 +14,7 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     DetailView,
+    FormView,
     ListView,
     RedirectView,
     UpdateView,
@@ -32,6 +33,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     CombinedLeaderboardForm,
+    EvaluationForm,
     LegacySubmissionForm,
     MethodForm,
     MethodUpdateForm,
@@ -46,6 +48,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.evaluation.tasks import create_evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -398,6 +401,52 @@ class TeamContextMixin:
         context = super().get_context_data(*args, **kwargs)
         context.update({"user_teams": self.user_teams})
         return context
+
+
+class EvaluationCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = EvaluationForm
+    permission_required = "change_challenge"
+    login_url = reverse_lazy("account_login")
+    raise_exception = True
+    success_message = "A job to create the new evaluation is running, please check back later"
+    template_name = "evaluation/evaluation_form.html"
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    @cached_property
+    def submission(self):
+        return get_object_or_404(
+            Submission,
+            pk=self.kwargs["pk"],
+            phase__slug=self.kwargs["slug"],
+            phase__challenge=self.request.challenge,
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "submission": self.submission,
+            }
+        )
+        return kwargs
+
+    def get_success_url(self):
+        return self.submission.get_absolute_url()
+
+    def form_valid(self, form):
+        redirect = super().form_valid(form)
+        create_evaluation.apply_async(
+            kwargs={"submission_pk": str(form.cleaned_data["submission"].pk)}
+        )
+        return redirect
 
 
 class EvaluationList(

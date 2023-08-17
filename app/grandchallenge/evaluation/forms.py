@@ -19,7 +19,10 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_objects_for_user,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
@@ -472,3 +475,19 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         model = CombinedLeaderboard
         fields = ("title", "description", "phases", "combination_method")
         widgets = {"phases": forms.CheckboxSelectMultiple}
+
+
+class EvaluationForm(SaveFormInitMixin, forms.Form):
+    submission = ModelChoiceField(
+        queryset=None, disabled=True, widget=HiddenInput()
+    )
+
+    def __init__(self, submission, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["submission"].queryset = filter_by_permission(
+            queryset=Submission.objects.filter(pk=submission.pk),
+            user=user,
+            codename="view_submission",
+        )
+        self.fields["submission"].initial = submission
