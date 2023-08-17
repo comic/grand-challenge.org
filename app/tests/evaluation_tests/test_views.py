@@ -147,6 +147,12 @@ class TestObjectPermissionRequiredViews:
                 e.submission.phase.challenge,
             ),
             (
+                "evaluation-create",
+                {"slug": e.submission.phase.slug, "pk": e.submission.pk},
+                "change_challenge",
+                e.submission.phase.challenge,
+            ),
+            (
                 "submission-detail",
                 {"pk": e.submission.pk, "slug": e.submission.phase.slug},
                 "view_submission",

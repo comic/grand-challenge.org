@@ -97,7 +97,7 @@ urlpatterns = [
         name="submission-detail",
     ),
     path(
-        "<slug>/submissions/<uuid:submission_pk>/evaluations/create/",
+        "<slug>/submissions/<uuid:pk>/evaluations/create/",
         EvaluationCreate.as_view(),
         name="evaluation-create",
     ),

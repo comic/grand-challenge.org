@@ -414,6 +414,7 @@ class EvaluationCreate(
     login_url = reverse_lazy("account_login")
     raise_exception = True
     success_message = "A job to create the new evaluation is running, please check back later"
+    template_name = "evaluation/evaluation_form.html"
 
     def get_permission_object(self):
         return self.request.challenge
@@ -422,7 +423,7 @@ class EvaluationCreate(
     def submission(self):
         return get_object_or_404(
             Submission,
-            pk=self.kwargs["submission_pk"],
+            pk=self.kwargs["pk"],
             phase__slug=self.kwargs["slug"],
             phase__challenge=self.request.challenge,
         )
