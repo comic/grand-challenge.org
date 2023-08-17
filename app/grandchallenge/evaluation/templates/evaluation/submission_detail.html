@@ -73,6 +73,23 @@
 
     </dl>
 
+    {% if "change_challenge" in challenge_perms and not object.is_evaluated_with_active_image %}
+        <h3>Re-Evaluate Submission with Active Method</h3>
+
+        <p>
+            This submission has not been evaluated with the active evaluation method for this phase.
+        </p>
+
+        <form method="post"
+              action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug submission_pk=object.pk %}">
+            {% csrf_token %}
+                <input type="hidden" name="submission" value="{{ object.pk }}">
+                <button type="submit" class="btn btn-xs btn-primary">
+                    Re-Evaluate with the Active Method
+                </button>
+        </form>
+    {% endif %}
+
     <h3>Evaluations for this submission</h3>
 
     <div class="table-responsive">
