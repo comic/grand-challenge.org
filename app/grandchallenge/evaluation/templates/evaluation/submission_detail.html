@@ -81,7 +81,7 @@
         </p>
 
         <form method="post"
-              action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug submission_pk=object.pk %}">
+              action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
             {% csrf_token %}
                 <input type="hidden" name="submission" value="{{ object.pk }}">
                 <button type="submit" class="btn btn-xs btn-primary">
