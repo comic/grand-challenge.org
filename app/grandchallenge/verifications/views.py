@@ -12,7 +12,6 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.verifications.emails import send_verification_email
 from grandchallenge.verifications.forms import (
     ConfirmEmailForm,
     VerificationForm,
@@ -53,14 +52,6 @@ class VerificationCreate(LoginRequiredMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs.update({"user": self.request.user})
         return kwargs
-
-    def form_valid(self, form):
-        response = super().form_valid(form=form)
-
-        if not self.object.signup_email_is_trusted:
-            send_verification_email(verification=self.object)
-
-        return response
 
     def get_success_url(self):
         return reverse("verifications:detail")
