@@ -53,11 +53,6 @@ class VerificationCreate(LoginRequiredMixin, CreateView):
         kwargs.update({"user": self.request.user})
         return kwargs
 
-    def form_valid(self, form):
-        response = super().form_valid(form=form)
-
-        return response
-
     def get_success_url(self):
         return reverse("verifications:detail")
 
