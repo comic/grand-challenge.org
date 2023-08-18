@@ -22,7 +22,7 @@ def run():
     EmailAddress.objects.create(
         user=su, email=su.email, verified=True, primary=True
     )
-    Verification.objects.create(user=su, is_verified=True)
+    Verification.objects.create(user=su, email=su.email, is_verified=True)
 
     su.totpdevice_set.create()
     static_device = su.staticdevice_set.create(name="backup")

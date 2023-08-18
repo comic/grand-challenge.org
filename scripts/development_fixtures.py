@@ -129,7 +129,10 @@ def _create_users(usernames):
         )
 
         Verification.objects.create(
-            user=user, is_verified=True, email=user.email
+            user=user,
+            email_is_verified=True,
+            is_verified=True,
+            email=user.email,
         )
         user.user_profile.receive_newsletter = True
         user.user_profile.save()

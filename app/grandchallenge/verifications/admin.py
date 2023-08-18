@@ -13,7 +13,9 @@ from grandchallenge.verifications.models import (
     permissions=("change",),
 )
 def mark_verified(modeladmin, request, queryset):
-    queryset.update(is_verified=True, verified_at=now())
+    queryset.filter(email_is_verified=True).update(
+        is_verified=True, verified_at=now()
+    )
 
 
 @admin.action(
@@ -32,7 +34,6 @@ class VerificationAdmin(admin.ModelAdmin):
         "user_info",
         "created",
         "signup_email",
-        "signup_email_is_academic",
         "email",
         "email_is_academic",
         "email_is_verified",
@@ -74,9 +75,8 @@ class VerificationAdmin(admin.ModelAdmin):
     def email_is_academic(self, instance):
         return is_academic(email=instance.email)
 
-    @admin.display(boolean=True)
-    def signup_email_is_academic(self, instance):
-        return is_academic(email=instance.signup_email)
+    def signup_email(self, instance):
+        return instance.user.email
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
