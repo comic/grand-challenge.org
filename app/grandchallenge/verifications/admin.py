@@ -26,6 +26,17 @@ def mark_not_verified(modeladmin, request, queryset):
     queryset.update(is_verified=False, verified_at=None)
 
 
+@admin.action(
+    description="Resend confirmation email",
+    permissions=("change",),
+)
+def resend_confirmation_email(modeladmin, request, queryset):
+    for verification in queryset.filter(email_is_verified=False).exclude(
+        is_verified=True
+    ):
+        verification.send_verification_email()
+
+
 @admin.register(Verification)
 class VerificationAdmin(admin.ModelAdmin):
     list_display = (
@@ -51,7 +62,7 @@ class VerificationAdmin(admin.ModelAdmin):
         "verified_at",
     )
     search_fields = ("user__username", "email", "user__email")
-    actions = (mark_verified, mark_not_verified)
+    actions = (mark_verified, mark_not_verified, resend_confirmation_email)
     autocomplete_fields = ("user",)
 
     def get_queryset(self, request):
