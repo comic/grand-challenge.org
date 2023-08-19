@@ -9,7 +9,6 @@ from django.core.mail import send_mail
 from django.db import models
 from django.db.models import Q
 from django.utils.html import format_html
-from django.utils.timezone import now
 from pyswot import is_academic
 
 from grandchallenge.subdomains.utils import reverse
@@ -48,7 +47,6 @@ class Verification(models.Model):
             ).exists()
         ):
             self.email_is_verified = True
-            self.verified_at = now()
 
         super().save(*args, **kwargs)
 
