@@ -91,6 +91,12 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     hanging_protocol = HangingProtocolSerializer(
         source="reader_study.hanging_protocol", read_only=True, allow_null=True
     )
+    optional_hanging_protocols = HangingProtocolSerializer(
+        many=True,
+        source="algorithm_image.algorithm.optional_hanging_protocols",
+        read_only=True,
+        required=False,
+    )
     view_content = JSONField(
         source="reader_study.view_content", read_only=True
     )
@@ -115,6 +121,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "order",
             "api_url",
             "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
             "description",
             "index",

@@ -180,6 +180,7 @@ class ReaderStudyUpdateForm(
             "workstation",
             "workstation_config",
             "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
             "help_text_markdown",
             "shuffle_hanging_list",
@@ -200,6 +201,7 @@ class ReaderStudyUpdateForm(
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
+            "optional_hanging_protocols": Select2MultipleWidget,
         }
         widgets.update(ViewContentMixin.Meta.widgets)
         help_texts = {

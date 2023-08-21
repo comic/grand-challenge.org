@@ -49,7 +49,7 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.vendored.django.validators import StepValueValidator
-from grandchallenge.hanging_protocols.models import ViewContentMixin
+from grandchallenge.hanging_protocols.models import ViewContentMixin, HangingProtocol
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -201,6 +201,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
+    )
+    optional_hanging_protocols = models.ManyToManyField(
+        HangingProtocol,
+        related_name = "optional_hanging_protocols_of_reader_study",
+        blank=True,
     )
     public = models.BooleanField(
         default=False,
