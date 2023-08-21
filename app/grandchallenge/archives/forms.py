@@ -80,7 +80,7 @@ class ArchiveForm(
             "social_image",
             "workstation",
             "workstation_config",
-            "default_hanging_protocol",
+            "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
             "algorithms",
@@ -118,7 +118,7 @@ class ArchiveForm(
                 ),
                 reverse_lazy("publications:create"),
             ),
-            "default_hanging_protocol": format_lazy(
+            "hanging_protocol": format_lazy(
                 (
                     "The hanging protocol to use for this archive. "
                     "If a suitable protocol does not exist you can "
@@ -128,9 +128,9 @@ class ArchiveForm(
                 reverse_lazy("hanging-protocols:create"),
                 reverse_lazy("hanging-protocols:list"),
             ),
-            "default_hanging_protocol": format_lazy(
+            "optional_hanging_protocols": format_lazy(
                 (
-                    "Other optional hanging protocols that can be used for this algorithm. "
+                    "Other hanging protocols that can be used for this algorithm. "
                     "If a suitable protocol does not exist you can "
                     '<a href="{}">create a new one</a>. For a list of existing '
                     'hanging protocols, go <a href="{}">here</a>.'

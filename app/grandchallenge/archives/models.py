@@ -83,9 +83,8 @@ class Archive(UUIDModel, TitleSlugDescriptionModel, ViewContentMixin):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    default_hanging_protocol = models.ForeignKey(
+    hanging_protocol = models.ForeignKey(
         "hanging_protocols.HangingProtocol",
-        related_name="default_hanging_protocol_of_archive",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

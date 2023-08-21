@@ -24,8 +24,14 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
         read_only=True, view_name="api:archive-detail"
     )
     values = HyperlinkedComponentInterfaceValueSerializer(many=True)
-    default_hanging_protocol = HangingProtocolSerializer(
+    hanging_protocol = HangingProtocolSerializer(
         source="archive.hanging_protocol", read_only=True, allow_null=True
+    )
+    optional_hanging_protocols = HangingProtocolSerializer(
+        many=True,
+        source="archive.optional_hanging_protocols",
+        read_only=True,
+        required=False,
     )
     view_content = JSONField(source="archive.view_content", read_only=True)
 
@@ -35,8 +41,8 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
             "pk",
             "archive",
             "values",
-            "default_hanging_protocol",
-            "optional_hanging_protocol"
+            "hanging_protocol",
+            "optional_hanging_protocols",
             "view_content",
         )
 
