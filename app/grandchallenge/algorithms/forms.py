@@ -190,7 +190,7 @@ class AlgorithmForm(
             "outputs",
             "workstation",
             "workstation_config",
-            "default_hanging_protocol",
+            "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
             "job_create_page_markdown",
@@ -208,7 +208,7 @@ class AlgorithmForm(
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
-            "optional_hanging_protocol": Select2MultipleWidget,
+            "optional_hanging_protocols": Select2MultipleWidget,
             "organizations": Select2MultipleWidget,
             "display_editors": Select(
                 choices=(("", "-----"), (True, "Yes"), (False, "No"))
@@ -235,7 +235,7 @@ class AlgorithmForm(
                 reverse_lazy("publications:create"),
             ),
             "description": "Short description of this algorithm, max 1024 characters. This will appear in the info modal on the algorithm overview list.",
-            "default_hanging_protocol": format_lazy(
+            "hanging_protocol": format_lazy(
                 (
                     "The default hanging protocol to use for this algorithm. "
                     "If a suitable protocol does not exist you can "
@@ -281,7 +281,7 @@ class AlgorithmForm(
                 "social_image",
                 "workstation",
                 "workstation_config",
-                "default_hanging_protocol",
+                "hanging_protocol",
                 "optional_hanging_protocols",
                 "view_content",
                 "inputs",
@@ -382,7 +382,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
             "outputs",
             "workstation",
             "workstation_config",
-            "default_hanging_protocol",
+            "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
             "image_requires_gpu",
@@ -395,7 +395,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         widgets = {
             "description": TextInput,
             "workstation_config": HiddenInput(),
-            "default_hanging_protocol": HiddenInput(),
+            "hanging_protocol": HiddenInput(),
             "optional_hanging_protocols": MultipleHiddenInput(),
             "view_content": HiddenInput(),
             "display_editors": HiddenInput(),
@@ -429,8 +429,7 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         self,
         *args,
         workstation_config,
-        default_hanging_protocol,
-        optional_hanging_protocols,
+        hanging_protocol,
         view_content,
         display_editors,
         contact_email,
@@ -447,10 +446,8 @@ class AlgorithmForPhaseForm(UserAlgorithmsForPhaseMixin, ModelForm):
         super().__init__(*args, user=user, phase=phase, **kwargs)
         self.fields["workstation_config"].initial = workstation_config
         self.fields["workstation_config"].disabled = True
-        self.fields["default_hanging_protocol"].initial = default_hanging_protocol
-        self.fields["default_hanging_protocol"].disabled = True
-        self.fields["optional_hanging_protocols"].initial = optional_hanging_protocols
-        self.fields["optional_hanging_protocols"].disabled = True
+        self.fields["hanging_protocol"].initial = hanging_protocol
+        self.fields["hanging_protocol"].disabled = True
         self.fields["view_content"].initial = view_content
         self.fields["view_content"].disabled = True
         self.fields["display_editors"].initial = display_editors
